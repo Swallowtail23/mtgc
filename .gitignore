@@ -1,0 +1,9 @@
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+cardimg/
+.idea/
+./well-known
