@@ -57,5 +57,3 @@ PAGE LOAD SEQUENCE:
 5. Load page and framework (header, page content, overlays, menu, footer)
 
 Version check - 1st August 2020
-
-Working on scryfall database integration
