@@ -372,22 +372,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row[0]}",$logfile);
                             $setcode = strtolower($row['setcode']);
-                            $flipcard = fliptype($row['backid'], $row['manacost'], $row['meld']);
-                            if ($flipcard != 'no'):
-                                $backid = $row['backid'];
-                                $getflip = "SELECT * FROM cards_scry
-                                LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                                LEFT JOIN sets on cards_scry.setcode = sets.setcodeid 
-                                WHERE cards_scry.id = '$backid'";
-                                if($runflipqry = $db->query($getflip)):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for flip $backid",$logfile);
-                                else:    
-                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                endif;
-                                $fliprow = $runflipqry->fetch_array(MYSQLI_BOTH); //$fliprow now contains all card info about the flip side
-                            else:
-                                $backid = 0;
-                            endif;
+                            $backid = 0;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             if (empty($row['normal'])):
@@ -403,20 +388,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
                                 $uppercasesetcode = strtoupper($setcode);
-                                if ($flipcard == 'bfzfull'):
-                                    echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?setabbrv=$setcode&amp;number={$row['number']}&amp;id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']} full art</a>";
-                                else:
-                                    echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?setabbrv=$setcode&amp;number={$row['number']}&amp;id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
-                                endif;
+                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?setabbrv=$setcode&amp;number={$row['number']}&amp;id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
                                 $cellid = "cell" . $row['id'];
                                 ?>
                                 <table class='gridupdatetable'>
                                     <tr>
-                                        <?php
-                                        if (($flipcard === 'front') OR ( $flipcard === 'bfzfull') OR ( $flipcard === 'no')
-                                                OR ( $flipcard === 'kamigawafliptop') OR ( $flipcard === 'meldmain')
-                                                OR ( $flipcard === 'meldadd')):
-                                            ?>
                                             <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                                 <?php
                                                 if (!$row['promostatus']):
@@ -435,9 +411,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myqty = $(ths).val();
-                                                            var flip = '<?php echo $flipcard ?>';
-                                                            var flipback = '<?php echo $backid ?>';
-                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card + '&flip=' + flip + '&flipback=' + flipback;
+                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card;
                                                             if (myqty == '')
                                                             {
                                                                 alert("Enter a number");
@@ -467,22 +441,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             </td>
                                             <?php
                                             echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
-                                        elseif ($flipcard === 'meldcombined'):
-                                            echo "<td colspan='4' class='gridsubmit gridsubmit-l'>Meld card: quantity not available</td>";
-                                        else:
-                                            echo "<td colspan='2' class='gridsubmit gridsubmit-l'>Flip card, update front</td>";
-                                            if (empty($fliprow['normal'])):
-                                                $normalqty = 0;
-                                            else:
-                                                $normalqty = $fliprow['normal'];
-                                            endif;
-                                            echo "<td class='confirm-r' id=''>Normal: $normalqty</td>";
-                                        endif;
-
-                                        if (($flipcard === 'front') OR ( $flipcard === 'bfzfull') OR ( $flipcard === 'no')
-                                                OR ( $flipcard === 'kamigawafliptop') OR ( $flipcard === 'meldmain')
-                                                OR ( $flipcard === 'meldadd')):
-                                            echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
+                                        echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
                                                 <?php
@@ -501,9 +460,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myfoil = $(ths).val();
-                                                            var flip = '<?php echo $flipcard ?>';
-                                                            var flipback = '<?php echo $backid ?>';
-                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card + '&flip=' + flip + '&flipback=' + flipback;
+                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card;
                                                             if (myfoil == '')
                                                             {
                                                                 alert("Enter a number");
@@ -532,16 +489,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 </script>
                                             </td>
                                             <?php
-                                        elseif ($flipcard === 'meldcombined'):
-                                        //do nothing
-                                        else:
-                                            if (empty($fliprow['foil'])):
-                                                $flipfoil = 0;
-                                            else:
-                                                $flipfoil = $fliprow['foil'];
-                                            endif;
-                                            echo "<td class='gridsubmit gridsubmit-r'>Foil: $flipfoil</td>";
-                                        endif;
+                                       
                                         ?>
                                     </tr>
                                 </table>
@@ -555,7 +503,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
                             </div>
-        <?php endif ?>
+                        <?php endif ?>
 
                         <table class='bottompad'>
                             <tr>
@@ -573,75 +521,28 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <?php
                             while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                                 $setcode = strtolower($row['setcode']);
-                                $flipcard = fliptype($row['backid'], $row['manacost'], $row['meld']);
-                                if ($flipcard != 'no'):
-                                    $backid = $row['backid'];
-                                    $getflip = "SELECT * FROM cards_scry
-                                LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                                LEFT JOIN sets on cards_scry.setcode = sets.setcodeid 
-                                WHERE cards_scry.id = '$backid'";
-                                    if($runflip = $db->query($getflip)):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for flip $backid",$logfile);
-                                    else:    
-                                        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                    endif;
-                                    $fliprow = $runflip->fetch_array(MYSQLI_BOTH); //$fliprow now contains all card info about the flip side
-                                else:
-                                    $backid = 0;
-                                endif;
+                                $backid = 0;
                                 ?>
                                 <tr class='resultsrow item' <?php echo "data-href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row[0]}'"; ?>>
-                                    <?php 
-                                    if ((isset($flipcard) AND $flipcard === 'back') OR ((isset($flipcard) AND $flipcard === 'front')) OR ((isset($flipcard) AND substr($flipcard, 0, 8) === 'kamigawa'))): ?>
-                                        <td class="valuename"> <?php echo "{$row['name']} / {$fliprow['name']}"; ?> </td>
-                                    <?php 
-                                    else: ?>
-                                        <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
+                                    <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
             <?php
-            endif;
             $manac = symbolreplace($row['manacost']);
             ?>
                                     <td class="valuerarity"> <?php echo $row['rarity']; ?> </td>
-                                    <td class="valueset"> <?php echo $row['setname']; ?> </td>
-                                    <?php if ($flipcard == 'bfzfull'): ?>
-                                        <td class="valuetype"> <?php echo $row['type'] . " (full art)"; ?> </td>
-                                        <?php
-                                    else:
-                                        ?>
-                                        <td class="valuetype"> <?php echo $row['type']; ?> </td>
-            <?php
-            endif;
-            ?>
+                                    <td class="valueset"> <?php echo $row['set_name']; ?> </td>
+                                    <td class="valuetype"> <?php echo $row['type']; ?> </td>
                                     <td class="valuenumber"> <?php echo $row['number']; ?> </td>
                                     <td class="valuemana"> <?php echo $manac; ?> </td>
                                     <td class="valuecollection">
                                         <?php
-                                        if ($flipcard === 'no'):
-                                            echo $row['normal'] + $row['foil'];
-                                        elseif ($flipcard === 'back'):
-                                            echo $fliprow['normal'] + $fliprow['foil'];
-                                        elseif ($flipcard === 'front'):
-                                            echo $row['normal'] + $row['foil'];
-                                        elseif ($flipcard === 'kamigawafliptop'):
-                                            echo $row['normal'] + $row['foil'];
-                                        elseif ($flipcard === 'kamigawaflipbottom'):
-                                            echo $fliprow['normal'] + $fliprow['foil'];
-                                        elseif ($flipcard === 'meldmain'):
-                                            echo $row['normal'] + $row['foil'];
-                                        elseif ($flipcard === 'meldadd'):
-                                            echo $row['normal'] + $row['foil'];
-                                        elseif ($flipcard === 'meldcombined'):
-                                            echo "-";
-                                        else:
-                                            echo $row['normal'] + $row['foil'];
-                                        endif;
+                                        echo $row['normal'] + $row['foil'];
                                         ?>
                                     </td>
                                     <td class="valueabilities"> 
-            <?php
-            $ability = symbolreplace($row['ability']);
-            echo $ability;
-            ?> 
+                                        <?php
+                                        $ability = symbolreplace($row['ability']);
+                                        echo $ability;
+                                        ?> 
                                     </td>
                                 </tr>
                         <?php endwhile; ?>
@@ -653,7 +554,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
                             </div>
-        <?php endif ?>
+                        <?php endif ?>
 
                         <table class='bottompad'>
                             <tr>
@@ -671,45 +572,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         $x = 1;
                         while ($row = $result->fetch_array(MYSQLI_BOTH)):
                             $setcode = strtolower($row['setcode']);
-                            $flipcard = fliptype($row['backid'], $row['manacost'], $row['meld']);
                             $cardnumber = $row['number'];
-                            $imgname = getimgname($setcode, $cardnumber, $row[0], $flipcard);
-                            $imageurl = getImageNew($setcode,$imgname,$row[0],$ImgLocation,$flipcard,$cardnumber,$row['name']);
-                            if (($flipcard != 'no') AND ($flipcard != 'bfzfull')): 
-                                // Kamigawa backids are handled differently - a '-' at the start 
-                                // 
-                                if($flipcard == 'kamigawafliptop'): 
-                                    $backid = substr(substr($row['backid'],0,-1),1)."2"; 
-                                elseif($flipcard == 'kamigawaflipbottom'):
-                                    $backid = substr(substr($row['backid'],0,-1),1)."1";
-                                else:
-                                    $backid = $row['backid'];
-                                endif;
-                                $getflip = "SELECT * FROM cards_scry
-                                        LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                                        LEFT JOIN sets on cards_scry.setcode = sets.setcodeid 
-                                        LEFT JOIN cardprice on cards_scry.id = cardprice.id
-                                        LEFT JOIN setsPromo on cards_scry.setcode = setsPromo.promosetcode
-                                        WHERE cards_scry.id = '$backid'";
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Flip SQL query is $getflip",$logfile);
-                                if($runflip = $db->query($getflip)):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for flip $backid",$logfile);
-                                else:    
-                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                endif;
-                                $fliprow = $runflip->fetch_array(MYSQLI_BOTH); //$fliprow now contains all card info about the flip side
-                                $reverseflipcard = fliptype($fliprow['backid'],$fliprow['manacost'],$fliprow['meld']);
-                                $flipcardname = $fliprow['name'];
-                                $flipcardnumber = $fliprow['number'];
-                                $flipimgname = getflipimagename($flipcard,$setcode,$row['number'],$fliprow[0],$fliprow['number']);
-                                if (($flipcard === 'back') OR ($flipcard === 'kamigawaflipbottom')):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$backid,$logfile);
-                                    $id = "$backid"; //So update queries increment FRONT not BACK
-                                endif;
-                                $imageurlback = getImageNew($setcode,$flipimgname,$fliprow[0],$ImgLocation,$reverseflipcard,$flipcardnumber,$flipcardname);
-                            else:
-                                $backid = 0;
-                            endif;
+                            $imgname = getimgname($setcode, $cardnumber, $row[0],);
+                            $imageurl = getImageNew($setcode,$imgname,$row[0],$ImgLocation,$cardnumber,$row['name']);
+                            $backid = 0;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             // if (!isset($_POST["update"])) :    
@@ -730,12 +596,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         ?>
                                 <table class='gridupdatetable'>
                                     <tr>
-                                        <?php
-                                        if (($flipcard === 'front') OR ( $flipcard === 'bfzfull') OR ( $flipcard === 'no')
-                                                OR ( $flipcard === 'kamigawafliptop') OR ( $flipcard === 'meldmain')
-                                                OR ( $flipcard === 'meldadd')):
-                                            ?>
-                                            <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
+                                        <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
                                                 <?php
                                                 if (!$row['promostatus']):
                                                     echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
@@ -754,9 +615,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myqty = $(ths).val();
-                                                            var flip = '<?php echo $flipcard ?>';
-                                                            var flipback = '<?php echo $backid ?>';
-                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card + '&flip=' + flip + '&flipback=' + flipback;
+                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card;
                                                             if (myqty == '')
                                                             {
                                                                 alert("Enter a number");
@@ -786,21 +645,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             </td>
                                             <?php
                                             echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
-                                        elseif ($flipcard === 'meldcombined'):
-                                            echo "<td colspan='4' class='gridsubmit gridsubmit-l'>Meld card: quantity not available</td>";
-                                        else:
-                                            echo "<td colspan='2' class='gridsubmit gridsubmit-l'>Flip card, update front</td>";
-                                            if (empty($fliprow['normal'])):
-                                                $normalqty = 0;
-                                            else:
-                                                $normalqty = $fliprow['normal'];
-                                            endif;
-                                            echo "<td class='confirm-r' id=''>Normal: $normalqty</td>";
-                                        endif;
-
-                                        if (($flipcard === 'front') OR ( $flipcard === 'bfzfull') OR ( $flipcard === 'no')
-                                                OR ( $flipcard === 'kamigawafliptop') OR ( $flipcard === 'meldmain')
-                                                OR ( $flipcard === 'meldadd')):
                                             echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
@@ -820,9 +664,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myfoil = $(ths).val();
-                                                            var flip = '<?php echo $flipcard ?>';
-                                                            var flipback = '<?php echo $backid ?>';
-                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card + '&flip=' + flip + '&flipback=' + flipback;
+                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card;
                                                             if (myfoil == '')
                                                             {
                                                                 alert("Enter a number");
@@ -851,16 +693,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 </script>
                                             </td>
                                             <?php
-                                        elseif ($flipcard === 'meldcombined'):
-                                        //do nothing
-                                        else:
-                                            if (empty($fliprow['foil'])):
-                                                $flipfoil = 0;
-                                            else:
-                                                $flipfoil = $fliprow['foil'];
-                                            endif;
-                                            echo "<td class='gridsubmit gridsubmit-r'>Foil: $flipfoil</td>";
-                                        endif;
                                         ?>
                                     </tr>
                                 </table>
