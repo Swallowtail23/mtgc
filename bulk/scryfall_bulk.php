@@ -15,8 +15,26 @@ require ('../includes/functions_new.php');
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 
+// Lists
+$langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la'];
+$layouts_to_skip = ['double_faced_token','token','emblem'];
+$layouts_flips = ['transform','split','reversible_card','flip','meld','modal_dfc'];
+
+// How old to overwrite
 $stale = 43200;
+$max_fileage = 23 * 3600;
+
+// Scryfall bulk cards URL
 $url = "https://api.scryfall.com/bulk-data/default-cards";
+
+// Bulk file store point
+$file_location = $ImgLocation.'json/bulk.json';
+
+// Set counts
+$count_inc = 0;
+$count_skip = 0;
+$total_count = 0;
+
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching $url",$logfile);
 $ch = curl_init($url);
@@ -30,278 +48,414 @@ endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
 
-$bulkfile = $ImgLocation.'json/bulk.json';
-$bulkreturn = downloadbulk($bulk_uri,$bulkfile);
+if (time()-filemtime($file_location) > $max_fileage):
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
+    $bulkreturn = downloadbulk($bulk_uri,$file_location);
+else:
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
+endif;
 
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Local file: $bulkfile",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Local file: $file_location",$logfile);
 
-$data = Items::fromFile($ImgLocation.'json/bulk.json', ['decoder' => new ExtJsonDecoder(true)]);
+$data = Items::fromFile($file_location, ['decoder' => new ExtJsonDecoder(true)]);
 foreach($data AS $key => $value):
-    $multi1 = $multi2 = $multi3 = "";
-    $skip = 1; //skip by default
-    $layout = $value["layout"];
-    if($layout === 'double_faced_token' OR $layout === 'token' OR $layout === 'emblem'):
-        // keep going, change nothing (default is skip)
-    else:
-        foreach($value AS $key2 => $value2):
-            if($key2 == 'games'):
-                foreach($value2 as $game_type):
-                    if($game_type === 'paper'):
-                        $skip = 0;
-                    endif;
-                endforeach;
-            elseif($key2 == 'multiverse_ids'):
-                $loop = 1;
-                foreach($value2 as $m_id):
-                    ${'multi'.$loop} = $m_id;
-                    $loop = $loop + 1;
-                endforeach;
-            endif;    
-        endforeach; 
-    endif;
-
+    $total_count = $total_count + 1;
     $id = $value["id"];
-    if($row = $db->select('id,updatetime','cards_scry',"WHERE id='$id'")):
-        if ($row->num_rows === 0):
-            if($skip === 0):
+    $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $type_1 = $type_2 = $ability_1 = $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $image_1 = $image_2 = null;
+    $skip = 1; //skip by default
+    //  Skips need to be specified in here
+    /// Is it paper?
+    foreach($value AS $key2 => $value2):
+        if($key2 == 'games'):
+            foreach($value2 as $game_type):
+                if($game_type === 'paper'):
+                    $skip = 0;
+                endif;
+            endforeach;
+        endif;
+    endforeach;
+    if(in_array($value["lang"],$langs_to_skip) OR in_array($value["layout"],$layouts_to_skip)):
+        $skip = 1;
+    endif;
+    // Actions on skip value
+    if($skip === 1):
+        $count_skip = $count_skip + 1;
+        $stmt = $db->prepare("SELECT id FROM `cards_scry` WHERE id = ?");
+        if ($stmt === false):
+            trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+        endif;
+        $bind = $stmt->bind_param('s', $id);
+        if ($bind === false):
+            trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
+        else:     
+            if ($stmt->num_rows === 0):
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, not in db",$logfile);
+            elseif($stmt->num_rows === 1):
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, deleting",$logfile);
+                $stmt = $db->prepare("DELETE FROM `cards_scry` WHERE id = ?");
+                if ($stmt === false):
+                    trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                endif;
+                $bind = $stmt->bind_param('s', $id);
+                if ($bind === false):
+                    trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+                endif;
+                $exec = $stmt->execute();
+                if ($exec === false):
+                    trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
+                else:     
+                    $obj = new Message;
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipped row deleted",$logfile);
+                endif;
+                $stmt->close();
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, deleting but double-up when id is unique ($id)",$logfile);
+                $action = 'error';
+            endif;
+        endif;
+        $stmt->close();
+    elseif($skip === 0):
+        $count_inc = $count_inc + 1;
+        foreach($value AS $key2 => $value2):
+            if($key2 == 'card_faces'):
+                $face_loop = 1;
+                foreach($value2 as $key3 => $value3):
+                    if(isset($value3["name"])):
+                        ${'name_'.$face_loop} = $value3["name"];
+                    endif;
+                    if(isset($value3["mana_cost"])):
+                        ${'manacost_'.$face_loop} = $value3["mana_cost"];
+                    endif;
+                    if(isset($value3["power"])):
+                        ${'power_'.$face_loop} = $value3["power"];
+                    endif;
+                    if(isset($value3["toughness"])):
+                        ${'toughness_'.$face_loop} = $value3["toughness"];
+                    endif;
+                    if(isset($value3["loyalty"])):
+                        ${'loyaltyt_'.$face_loop} = $value3["loyalty"];
+                    endif;
+                    if(isset($value3["type_line"])):
+                        ${'type_'.$face_loop} = $value3["type_line"];
+                    endif;
+                    if(isset($value3["oracle_text"])):
+                        ${'ability_'.$face_loop} = $value3["oracle_text"];
+                    endif;
+                    if(isset($value3["colors"])):
+                        ${'colour_'.$face_loop} = json_encode($value3["colors"]);
+                    endif;
+                    if(isset($value3["artist"])):
+                        ${'artist_'.$face_loop} = $value3["artist"];
+                    endif;
+                    if(isset($value3["image_uris"]["normal"])):
+                        ${'image_'.$face_loop} = $value3["image_uris"]["normal"];
+                    endif;
+                    $face_loop = $face_loop + 1;
+                endforeach;
+            endif;
+            if($key2 == 'multiverse_ids'):
+                $multiverse_loop = 1;
+                foreach($value2 as $m_id):
+                    ${'multi_'.$multiverse_loop} = $m_id;
+                    $multiverse_loop = $multiverse_loop + 1;
+                endforeach;
+            endif;
+        endforeach;
+
+        // Check if it's already in db
+        if($row = $db->select('id,updatetime','cards_scry',"WHERE id='$id'")):
+            if ($row->num_rows === 0):
                 $obj = new Message;
                 $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, no existing record, adding",$logfile);
                 $action = 'add';
+            elseif($row->num_rows === 1):
+                $row = $row->fetch_assoc();
+                $lastupdate = $row["updatetime"];
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, matched an existing record...",$logfile);
+                if(time() - $lastupdate < $stale):
+                    $obj = new Message;
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record fresh",$logfile);
+                    $action = 'nothing';
+                else:
+                    $obj = new Message;
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record stale",$logfile);
+                    $action = 'update';
+                endif;
             else:
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, no existing record, skipping",$logfile);
-                $action = 'nothing';
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, double-ups when id is unique ($id)",$logfile);
+                $action = 'error';
             endif;
-        elseif($row->num_rows === 1):
-            $row = $row->fetch_assoc();
-            $lastupdate = $row["updatetime"];
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, matched an existing record...",$logfile);
-            if($skip === 1):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, on skip list, delete",$logfile);
-                $action = 'delete';
-            elseif(time() - $lastupdate < $stale):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record fresh",$logfile);
-                $action = 'nothing';
-            else:
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record stale",$logfile);
-                $action = 'update';
-            endif;
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, double-ups when id is unique ($id)",$logfile);
-            $action = 'error';
-        endif;
-    else:
-        $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API error",$logfile);
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, action is: $action",$logfile);
-    if($action == 'delete'):
-        if( $db->delete('cards_scry', "WHERE id = '$id'") === TRUE):
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API on skip list, deleting",$logfile);
         else:
             $obj = new Message;
             $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API error",$logfile);
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
-    elseif($action == 'add'):
-        $time = time();
-        if(isset($value["colors"])):
-            $colors = json_encode($value["colors"]);
+        $obj = new Message;
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, action is: $action",$logfile);
+        // Add or update, set values to send
+        if(($action == 'add') OR ($action == 'update')):
+            $time = time();
+            if(isset($value["colors"])):
+                $colors = json_encode($value["colors"]);
+            endif;
+            if(isset($value["games"])):
+                $game_types = json_encode($value["games"]);
+            endif; 
+            if(isset($value["color_identity"])):
+                $color_identity = json_encode($value["color_identity"]);
+            endif;
+            if(isset($value["keywords"])):
+                $keywords = json_encode($value["keywords"]);
+            endif;
+            if(isset($value["produced_mana"])):
+                $produced_mana = json_encode($value["produced_mana"]);
+            endif;
+            if(isset($value["collector_number"])):
+                $coll_no = $value["collector_number"];
+                if(isset($value["layout"]) AND $value["layout"] === 'meld'):
+                    $coll_no = str_replace('a', '', $coll_no);
+                    $coll_no = str_replace('b', '', $coll_no);
+                endif;
+                $coll_no = str_replace('-', '', $coll_no);
+                $coll_no = str_replace('a', '1', $coll_no);
+                $coll_no = str_replace('b', '2', $coll_no);
+                $coll_no = str_replace('c', '3', $coll_no);
+                $coll_no = str_replace('d', '4', $coll_no);
+                $coll_no = str_replace('e', '5', $coll_no);
+                $coll_no = str_replace('f', '6', $coll_no);
+                $coll_no = str_replace('g', '7', $coll_no);
+                $coll_no = str_replace('h', '8', $coll_no);
+                $coll_no = str_replace('E', '', $coll_no);
+                $coll_no = str_replace('★', '', $coll_no);
+                $coll_no = str_replace('*', '', $coll_no);
+                $coll_no = str_replace('†', '', $coll_no);
+                $coll_no = str_replace('U', '', $coll_no);
+                if(substr($coll_no, strlen($coll_no)-1) === 's'):
+                    $coll_no = str_replace('s', '', $coll_no);
+                    $coll_no = $coll_no + 2000;
+                endif;
+                if(substr($coll_no, strlen($coll_no)-1) === 'p'):
+                    $coll_no = str_replace('p', '', $coll_no);
+                endif;
+                $number_int = (int) $coll_no;
+            endif;
         endif;
-        if(isset($value["games"])):
-            $game_types = json_encode($value["games"]);
-        endif;        
-        if(isset($value["color_identity"])):
-            $color_identity = json_encode($value["color_identity"]);
-	endif;
-        if(isset($value["keywords"])):
-            $keywords = json_encode($value["keywords"]);
-	endif;
-        if(isset($value["produced_mana"])):
-            $produced_mana = json_encode($value["produced_mana"]);
+        if($action == 'add'):
+            $stmt = $db->prepare("INSERT INTO 
+                                    `cards_scry`
+                                    (id, oracle_id, tcgplayer_id, multiverse, multiverse2,
+                                    name, lang, release_date, api_uri, scryfall_uri, 
+                                    layout, image_uri, manacost, 
+                                    cmc, type, ability, power, toughness, loyalty, color, color_identity, 
+                                    keywords, generatedmana, legalitystandard, legalitypioneer, 
+                                    legalitymodern, legalitylegacy, legalitypauper, legalityvintage, 
+                                    legalitycommander, reserved, foil, nonfoil, oversized, promo, 
+                                    set_id, game_types, setcode, set_name, number,
+                                    number_import, rarity, flavor, backid, artist, price, price_foil, 
+                                    gatherer_uri, updatetime,
+                                    f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability, f1_colour, f1_artist, f1_image_uri,
+                                    f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_image_uri
+                                    )
+                                VALUES 
+                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            if ($stmt === false):
+                trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+            endif;
+            $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+                    $id, 
+                    $value["oracle_id"],
+                    $value["tcgplayer_id"],
+                    $multi_1,
+                    $multi_2,
+                    $value["name"],
+                    $value["lang"],
+                    $value["released_at"],
+                    $value["uri"],
+                    $value["scryfall_uri"],
+                    $value["layout"],
+                    $value["image_uris"]["normal"],
+                    $value["mana_cost"],
+                    $value["cmc"],
+                    $value["type_line"],
+                    $value["oracle_text"],
+                    $value["power"],
+                    $value["toughness"],
+                    $value["loyalty"],
+                    $colors,
+                    $color_identity,
+                    $keywords,
+                    $produced_mana,
+                    $value["legalities"]["standard"],
+                    $value["legalities"]["pioneer"],
+                    $value["legalities"]["modern"],
+                    $value["legalities"]["legacy"],
+                    $value["legalities"]["pauper"],
+                    $value["legalities"]["vintage"],
+                    $value["legalities"]["commander"],
+                    $value["reserved"],
+                    $value["foil"],
+                    $value["nonfoil"],
+                    $value["oversized"],
+                    $value["promo"],
+                    $value["set_id"],
+                    $game_types,
+                    $value["set"],
+                    $value["set_name"],
+                    $number_int,
+                    $value["collector_number"],
+                    $value["rarity"],
+                    $value["flavor_text"],
+                    $value["card_back_id"],
+                    $value["artist"],
+                    $value["prices"]["usd"],
+                    $value["prices"]["usd_foil"],
+                    $value["related_uris"]["gatherer"],
+                    $time,
+                    $name_1,
+                    $manacost_1,
+                    $power_1,
+                    $toughness_1,
+                    $loyalty_1,
+                    $type_1,
+                    $ability_1,
+                    $colour_1,
+                    $artist_1,
+                    $image_2,
+                    $name_2,
+                    $manacost_2,
+                    $power_2,
+                    $toughness_2,
+                    $loyalty_2,
+                    $type_2,
+                    $ability_2,
+                    $colour_2,
+                    $artist_2,
+                    $image_2
+                    );
+            if ($bind === false):
+                trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add card - no error returned",$logfile);
+            endif;
+            $stmt->close();
+        elseif ($action == 'update'):
+            $stmt = $db->prepare("UPDATE `cards_scry` SET
+                                    oracle_id=?, tcgplayer_id=?, multiverse=?, multiverse2=?, 
+                                    name=?, lang=?, release_date=?, api_uri=?, scryfall_uri=?, layout=?, 
+                                    image_uri=?, manacost=?, cmc=?, type=?, ability=?, power=?, toughness=?, 
+                                    loyalty=?, color=?, color_identity=?, keywords=?, generatedmana=?, 
+                                    legalitystandard=?, legalitypioneer=?, legalitymodern=?, legalitylegacy=?, 
+                                    legalitypauper=?, legalityvintage=?, legalitycommander=?, reserved=?, 
+                                    foil=?, nonfoil=?, oversized=?, promo=?, set_id=?, game_types=?, 
+                                    setcode=?, set_name=?, number=?, number_import=?, rarity=?, flavor=?, backid=?, artist=?, 
+                                    price=?, price_foil=?, gatherer_uri=?, updatetime=?,
+                                    f1_name=?, f1_manacost=?, f1_power=?, f1_toughness=?, f1_loyalty=?, f1_type=?, f1_ability=?, f1_colour=?, f1_artist=?, f1_image_uri=?,
+                                    f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_image_uri=?
+                                WHERE
+                                    id=?");
+            if ($stmt === false):
+                trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+            endif;
+            $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+                    $value["oracle_id"],
+                    $value["tcgplayer_id"],
+                    $multi_1,
+                    $multi_2,
+                    $value["name"],
+                    $value["lang"],
+                    $value["released_at"],
+                    $value["uri"],
+                    $value["scryfall_uri"],
+                    $value["layout"],
+                    $value["image_uris"]["normal"],
+                    $value["mana_cost"],
+                    $value["cmc"],
+                    $value["type_line"],
+                    $value["oracle_text"],
+                    $value["power"],
+                    $value["toughness"],
+                    $value["loyalty"],
+                    $colors,
+                    $color_identity,
+                    $keywords,
+                    $produced_mana,
+                    $value["legalities"]["standard"],
+                    $value["legalities"]["pioneer"],
+                    $value["legalities"]["modern"],
+                    $value["legalities"]["legacy"],
+                    $value["legalities"]["pauper"],
+                    $value["legalities"]["vintage"],
+                    $value["legalities"]["commander"],
+                    $value["reserved"],
+                    $value["foil"],
+                    $value["nonfoil"],
+                    $value["oversized"],
+                    $value["promo"],
+                    $value["set_id"],
+                    $game_types,
+                    $value["set"],
+                    $value["set_name"],
+                    $number_int,
+                    $value["collector_number"],
+                    $value["rarity"],
+                    $value["flavor_text"],
+                    $value["card_back_id"],
+                    $value["artist"],
+                    $value["prices"]["usd"],
+                    $value["prices"]["usd_foil"],
+                    $value["related_uris"]["gatherer"],
+                    $time,
+                    $name_1,
+                    $manacost_1,
+                    $power_1,
+                    $toughness_1,
+                    $loyalty_1,
+                    $type_1,
+                    $ability_1,
+                    $colour_1,
+                    $artist_1,
+                    $image_2,
+                    $name_2,
+                    $manacost_2,
+                    $power_2,
+                    $toughness_2,
+                    $loyalty_2,
+                    $type_2,
+                    $ability_2,
+                    $colour_2,
+                    $artist_2,
+                    $image_2,
+                    $id);
+            if ($bind === false):
+                trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                trigger_error("[ERROR] scryfall_bulk.php: Updating card details: " . $db->error, E_USER_ERROR);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update card - no error returned",$logfile);
+            endif;
+            $stmt->close();        
         endif;
-        $stmt = $db->prepare("INSERT INTO 
-                                `cards_scry`
-                                (id, oracle_id, tcgplayer_id, multiverse, multiverse2, multiverse3,
-                                name, lang, release_date, api_uri, scryfall_uri, 
-                                layout, image_uri, manacost, 
-                                cmc, type, ability, power, toughness, loyalty, color, color_identity, 
-                                keywords, generatedmana, legalitystandard, legalitypioneer, 
-                                legalitymodern, legalitylegacy, legalitypauper, legalityvintage, 
-                                legalitycommander, reserved, foil, nonfoil, oversized, promo, 
-                                set_id, game_types, setcode, set_name,
-                                number, rarity, flavor, backid, artist, price, price_foil, 
-				gatherer_uri, updatetime)
-                            VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        if ($stmt === false):
-            trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-        endif;
-        $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssss", 
-                $value["id"], 
-                $value["oracle_id"],
-                $value["tcgplayer_id"],
-                $multi1,
-                $multi2,
-                $multi3,
-                $value["name"],
-                $value["lang"],
-                $value["released_at"],
-                $value["uri"],
-                $value["scryfall_uri"],
-                $value["layout"],
-                $value["image_uris"]["normal"],
-                $value["mana_cost"],
-                $value["cmc"],
-                $value["type_line"],
-                $value["oracle_text"],
-                $value["power"],
-                $value["toughness"],
-                $value["loyalty"],
-                $colors,
-		$color_identity,
-		$keywords,
-		$produced_mana,
-                $value["legalities"]["standard"],
-                $value["legalities"]["pioneer"],
-                $value["legalities"]["modern"],
-                $value["legalities"]["legacy"],
-                $value["legalities"]["pauper"],
-                $value["legalities"]["vintage"],
-                $value["legalities"]["commander"],
-                $value["reserved"],
-                $value["foil"],
-                $value["nonfoil"],
-                $value["oversized"],
-                $value["promo"],
-                $value["set_id"],
-                $game_types,
-                $value["set"],
-                $value["set_name"],
-                $value["collector_number"],
-                $value["rarity"],
-                $value["flavor_text"],
-                $value["card_back_id"],
-                $value["artist"],
-                $value["prices"]["usd"],
-                $value["prices"]["usd_foil"],
-                $value["related_uris"]["gatherer"],
-                $time);
-        if ($stmt === false):
-            trigger_error('[ERROR] cards.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-        endif;
-        if (!$stmt->execute()):
-            trigger_error("[ERROR] cards.php: Writing new card details: " . $db->error, E_USER_ERROR);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add card - no error returned",$logfile);
-        endif;
-        $stmt->close();
-    elseif ($action == 'update'):
-        $time = time();
-        if(isset($value["multiverse_ids"])):
-            $multiverse = json_encode($value["multiverse_ids"]);
-        endif;
-        if(isset($value["colors"])):
-            $colors = json_encode($value["colors"]);
-        endif;
-        if(isset($value["games"])):
-            $game_types = json_encode($value["games"]);
-        endif; 
-        if(isset($value["color_identity"])):
-            $color_identity = json_encode($value["color_identity"]);
-	endif;
-        if(isset($value["keywords"])):
-            $keywords = json_encode($value["keywords"]);
-	endif;
-        if(isset($value["produced_mana"])):
-            $produced_mana = json_encode($value["produced_mana"]);
-        endif;
-        $stmt = $db->prepare("UPDATE `cards_scry` SET
-                                oracle_id=?, tcgplayer_id=?, multiverse=?, multiverse2=?, multiverse3=?, 
-                                name=?, lang=?, release_date=?, api_uri=?, scryfall_uri=?, layout=?, 
-                                image_uri=?, manacost=?, cmc=?, type=?, ability=?, power=?, toughness=?, 
-                                loyalty=?, color=?, color_identity=?, keywords=?, generatedmana=?, 
-                                legalitystandard=?, legalitypioneer=?, legalitymodern=?, legalitylegacy=?, 
-                                legalitypauper=?, legalityvintage=?, legalitycommander=?, reserved=?, 
-                                foil=?, nonfoil=?, oversized=?, promo=?, set_id=?, game_types=?, 
-                                setcode=?, set_name=?, number=?, rarity=?, flavor=?, backid=?, artist=?, 
-                                price=?, price_foil=?, gatherer_uri=?, updatetime=?
-                            WHERE
-                                id=?");
-        if ($stmt === false):
-            trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-        endif;
-        $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssss", 
-                $value["oracle_id"],
-                $value["tcgplayer_id"],
-                $multi1,
-                $multi2,
-                $multi3,
-                $value["name"],
-                $value["lang"],
-                $value["released_at"],
-                $value["uri"],
-                $value["scryfall_uri"],
-                $value["layout"],
-                $value["image_uris"]["normal"],
-                $value["mana_cost"],
-                $value["cmc"],
-                $value["type_line"],
-                $value["oracle_text"],
-                $value["power"],
-                $value["toughness"],
-                $value["loyalty"],
-                $colors,
-		$color_identity,
-		$keywords,
-		$produced_mana,
-                $value["legalities"]["standard"],
-                $value["legalities"]["pioneer"],
-                $value["legalities"]["modern"],
-                $value["legalities"]["legacy"],
-                $value["legalities"]["pauper"],
-                $value["legalities"]["vintage"],
-                $value["legalities"]["commander"],
-                $value["reserved"],
-                $value["foil"],
-                $value["nonfoil"],
-                $value["oversized"],
-                $value["promo"],
-                $value["set_id"],
-                $game_types,
-                $value["set"],
-                $value["set_name"],
-                $value["collector_number"],
-                $value["rarity"],
-                $value["flavor_text"],
-                $value["card_back_id"],
-                $value["artist"],
-                $value["prices"]["usd"],
-                $value["prices"]["usd_foil"],
-                $value["related_uris"]["gatherer"],
-                $time,
-                $value["id"]);
-        if ($stmt === false):
-            trigger_error('[ERROR] cards.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-        endif;
-        if (!$stmt->execute()):
-            trigger_error("[ERROR] cards.php: Updating card details: " . $db->error, E_USER_ERROR);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update card - no error returned",$logfile);
-        endif;
-        $stmt->close();        
     endif;
 endforeach;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Bulk update completed",$logfile);
+$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Bulk update completed: Total ".$total_count,", Skipped ".$count_skip,$logfile);

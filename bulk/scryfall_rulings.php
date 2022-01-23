@@ -15,7 +15,15 @@ require ('../includes/functions_new.php');
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 
+// How old to overwrite
+$max_fileage = 23 * 3600;
+
+// Scryfall rulings cards URL
 $url = "https://api.scryfall.com/bulk-data/rulings";
+
+// Bulk file store point
+$file_location = $ImgLocation.'json/rulings.json';
+
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: fetching $url",$logfile);
 $ch = curl_init($url);
@@ -29,10 +37,17 @@ endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
 
-$rulingfile = $ImgLocation.'json/rulings.json';
-$rulingreturn = downloadbulk($rulings_uri,$rulingfile);
+if (time()-filemtime($file_location) > $max_fileage):
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
+    $bulkreturn = downloadbulk($bulk_uri,$file_location);
+else:
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
+endif;
+$rulingreturn = downloadbulk($rulings_uri,$file_location);
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Local file: $rulingfile",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($ImgLocation.'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE rulings_scry')):

@@ -26,7 +26,7 @@ function autoLoader($class_name)
 spl_autoload_register('autoLoader');
 
 //Set error reporting based on ini file's dev setting
-$ini = new INI("/opt/mtg/mtg.ini");
+$ini = new INI("/opt/mtg/mtg_new.ini");
 $ini_array = $ini->data;
 if($ini_array['general']['tier'] === 'dev'):
     $tier = 'dev';
