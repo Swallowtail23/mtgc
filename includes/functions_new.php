@@ -480,28 +480,12 @@ function checkRemoteFile($url)
     endif;
 }
 
-function getimgname($setcode,$number,$cardid,$flip)
+function getimgname($setcode,$number,$cardid)
 {
     global $logfile;
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting image name - setcode: $setcode, number: $number, cardid: $cardid, flip: $flip",$logfile);
-    if ($flip == 'front'):
-        $imgname = $cardid.'.jpg';
-    // if (($flip == 'front') OR ($flip == 'kamigawafliptop')):
-    //     $imgname = $number.'a.jpg';
-    elseif (($flip == 'back') OR ($flip == 'kamigawaflipbottom')):
-        $imgname = $number.'b.jpg';
-    elseif ($flip == 'no'):
-        $imgname = $number.'.jpg';
-    elseif ($flip == 'bfzfull'):
-        $imgname = $number.'b.jpg';
-    elseif ($flip == 'meldmain'):
-        $imgname = $number.'a.jpg';
-    elseif ($flip == 'meldcombined'):
-        $imgname = $number.'b.jpg';
-    elseif ($flip == 'meldadd'):
-        $imgname = $number.'a.jpg';
-    endif;
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting image name - setcode: $setcode, number: $number, cardid: $cardid",$logfile);
+    $imgname = $cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": card image name is $imgname",$logfile);
     return $imgname;
 }
@@ -524,11 +508,11 @@ function getflipimagename($flipcard,$setcode,$number,$flipid,$flipnumber)
     return $flipimgname;
 }
 
-function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$fliptype = NULL,$cardnumber = NULL,$cardname,$scryfallimg = NULL)
+function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$cardnumber = NULL,$cardname,$scryfallimg = NULL)
 {
     global $db, $logfile;
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $imgname, $cardid, $ImgLocation, $fliptype, $cardnumber, $cardname, $scryfallimg",$logfile);
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $imgname, $cardid, $ImgLocation, $cardnumber, $cardname, $scryfallimg",$logfile);
     $localfile = $ImgLocation.$setcode.'/'.$imgname;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
     if (!file_exists($localfile)):
@@ -551,7 +535,7 @@ function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$fliptype = NULL,$ca
                 if (checkRemoteFile($imageurl) == false) :
                     //Give up and fetch a card back image to use
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Not available on Gatherer, using back.jpg",$logfile);
-                    $imageurl = 'https://www.mtgcollection.info/images/back.jpg';
+                    $imageurl = $ImgLocation.'back.jpg';
                 endif;
             endif;
             $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));

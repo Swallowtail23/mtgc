@@ -53,7 +53,7 @@ forcechgpwd();                              //Check if user is disabled or needs
                 if(image.context.naturalWidth === 0 ||
                 image.readyState === 'uninitialized'){    
                     jQuery(image).unbind("error").attr(
-                    "src", "/images/back.jpg"
+                    "src", "/cardimg/back.jpg"
                     ); 
                 } 
             }); 
