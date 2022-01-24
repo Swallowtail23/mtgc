@@ -388,8 +388,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
                                 $uppercasesetcode = strtoupper($setcode);
-                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?setabbrv=$setcode&amp;number={$row['number']}&amp;id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
-                                $cellid = "cell" . $row['id'];
+                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
+                                $cellid = "cell" . $row[0];
                                 ?>
                                 <table class='gridupdatetable'>
                                     <tr>
@@ -523,7 +523,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $setcode = strtolower($row['setcode']);
                                 $backid = 0;
                                 ?>
-                                <tr class='resultsrow item' <?php echo "data-href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row[0]}'"; ?>>
+                                <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row[0]}'"; ?>>
                                     <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
             <?php
             $manac = symbolreplace($row['manacost']);
@@ -591,8 +591,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox item'><?php
-                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?setabbrv=$setcode&amp;number={$row['number']}&amp;id={$row[0]}'><img class='cardimg' alt='{$row[0]}' src=$imageurl></a>";
-                                        $cellid = "cell" . $row['id'];
+                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row[0]}'><img class='cardimg' alt='{$row[0]}' src=$imageurl></a>";
+                                        $cellid = "cell" . $row[0];
                                         ?>
                                 <table class='gridupdatetable'>
                                     <tr>
