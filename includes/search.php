@@ -164,24 +164,23 @@ endif;
             <h4 class="h4">Set:</h4> Ctrl+click to select multiple sets:<br>
             <select class='setselect' size="8" multiple name="set[]">
                 <?php 
-                $result = $db->query('SELECT fullsetname,block,setcodeid from sets 
-                    LEFT JOIN blockSequence on sets.block = blockSequence.blockname 
-                    ORDER BY sequence DESC,releasedat DESC');
+                $result = $db->query(
+                       'SELECT 
+                            set_name,
+                            setcode,
+                            max(release_date) as date
+                        FROM 
+                            cards_scry 
+                        GROUP BY 
+                            set_name
+                        ORDER BY 
+                            date DESC');
                 if ($result === false):
                     trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
                 else:
                     $currentblock = null;
                     while ($row = $result->fetch_assoc()):
-                        if( $currentblock == null || $row['block'] != $currentblock ):
-                            if( $currentblock != null ):
-                                echo "</optgroup\n>";
-                            endif;
-                            echo "<optgroup class='optgroup' label='{$row['block']}'>\n";
-                            $currentblock = $row['block'];
-                            // $data = array('blockname' => $row['block']);
-                            // $db->insert('blockSequence',$data);
-                        endif;
-                        echo "<option value='{$row['setcodeid']}'>{$row['fullsetname']}</option>\n";
+                        echo "<option value='{$row['setcode']}'>{$row['set_name']}</option>\n";
                     endwhile;
                 endif;    
                 if( $currentblock != null ) echo "</optgroup>\n";
