@@ -84,7 +84,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box success'><span>success: </span>Writing table $mytable successful.</div>";    
             elseif ($newuserstatus === 1):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail password successfully recorded and checked.</div>";    
-                echo "<div class='alert-box error'><span>error: </span>Writing table $mytable failed. If it was a password reset all good, otherwise check manually.</div>"; 
+                echo "<div class='alert-box error'><span>error: </span>Writing table failed. If it was a password reset all good, otherwise check manually.</div>"; 
             else:
                 echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";    
             endif;
