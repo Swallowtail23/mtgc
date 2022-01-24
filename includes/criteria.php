@@ -371,4 +371,4 @@ elseif ($adv == "yes" ) :
         
     $query = $selectAll.$criteria.$order.$sorting;
     $validsearch = "true";
-endif; 
+endif;
