@@ -591,8 +591,7 @@ require('includes/menu.php'); //mobile menu
                             echo "<b>CMC: </b>".$row['cmc'];
                         endif;
                         echo "<br><br>";
-                        $ability = symbolreplace($row['ability']);
-                        echo "<b>Abilities: </b>".$ability;
+                        echo "<b>Abilities: </b>".symbolreplace($row['ability']);
                         if (strpos($row['type'],'reature') !== false):
                             echo "<br><b>Power / Toughness: </b>".$row['power']."/".$row['toughness']; 
                         elseif (strpos($row['type'],'laneswalker') !== false):
