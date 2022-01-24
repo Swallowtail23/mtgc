@@ -265,14 +265,12 @@ require('includes/menu.php'); //mobile menu
                     releasedat,
                     stdlegal,
                     mdnlegal,
-                    promostatus,
                     normal,
                     $mytable.foil,
                     notes
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 LEFT JOIN sets on UPPER(cards_scry.setcode) = sets.magiccardsid
-                LEFT JOIN setsPromo on sets.setcodeid = setsPromo.promosetcode
                 WHERE cards_scry.id = '$cardid'
                 LIMIT 1";
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query is: $searchqry",$logfile);
@@ -704,7 +702,7 @@ require('includes/menu.php'); //mobile menu
                         <form action="?" method="POST">
                         <h3 class="shallowh3">My collection</h3>
                         <?php
-                        if ($row['promostatus']): ?>
+                        if ((int)$row['cs_foil'] + (int)$row['cs_normal'] === 1): ?>
                             <table>
                                 <tr>
                                     <td>

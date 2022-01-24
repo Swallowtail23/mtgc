@@ -114,10 +114,24 @@ $legal = isset($_GET['legal']) ? filter_input(INPUT_GET, 'legal', FILTER_SANITIZ
 $foilonly = isset($_GET['foilonly']) ? filter_input(INPUT_GET, 'foilonly', FILTER_SANITIZE_STRING):'';
 
 // More general query building:
-$selectAll = "SELECT * FROM cards_scry
+$selectAll = "SELECT 
+                cards_scry.id,
+                price,
+                price_foil,
+                setcode,
+                normal,
+                `$mytable`.foil,
+                number,
+                name,
+                promostatus,
+                release_date,
+                rarity,
+                set_name,
+                type,
+                ability,
+                manacost
+                FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                LEFT JOIN sets on cards_scry.setcode = sets.setcodeid 
-                LEFT JOIN cardprice ON cards_scry.id = cardprice.id 
                 LEFT JOIN setsPromo ON cards_scry.setcode = setsPromo.promosetcode
                 WHERE ";
 $sorting = "LIMIT $start_from, $perpage";

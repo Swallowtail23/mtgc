@@ -353,9 +353,9 @@ elseif ($adv == "yes" ) :
         elseif ($sortBy == "cmcdown"):
             $order = "ORDER BY cards_scry.cmc DESC ";
         elseif ($sortBy == "set"):
-            $order = "ORDER BY sets.releasedat ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.id ASC, cards_scry.cmc DESC ";
+            $order = "ORDER BY cards_scry.release_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "setdown"):
-            $order = "ORDER BY sets.releasedat DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.id ASC, cards_scry.cmc DESC ";
+            $order = "ORDER BY cards_scry.release_date DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "powerup"):
             $order = "ORDER BY cards_scry.power ASC ";
         elseif ($sortBy == "powerdown"):

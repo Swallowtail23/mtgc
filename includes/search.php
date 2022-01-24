@@ -168,7 +168,7 @@ endif;
                        'SELECT 
                             set_name,
                             setcode,
-                            max(release_date) as date
+                            min(release_date) as date
                         FROM 
                             cards_scry 
                         GROUP BY 
@@ -180,7 +180,8 @@ endif;
                 else:
                     $currentblock = null;
                     while ($row = $result->fetch_assoc()):
-                        echo "<option value='{$row['setcode']}'>{$row['set_name']}</option>\n";
+                        $set_upper = strtoupper($row['setcode']);
+                        echo "<option value='{$row['setcode']}'>{$row['set_name']} ($set_upper)</option>\n";
                     endwhile;
                 endif;    
                 if( $currentblock != null ) echo "</optgroup>\n";
