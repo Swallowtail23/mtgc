@@ -81,10 +81,6 @@ function forcechgpwd()
 function check_input($value)
 {
     global $db;
-    if (get_magic_quotes_gpc()):
-        $value = stripslashes($value);
-    endif;  
-
     if (!is_numeric($value)):
         $value = "'" . mysqli_real_escape_string($db,$value) . "'";
     endif;
