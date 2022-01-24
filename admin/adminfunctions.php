@@ -28,7 +28,7 @@ function newuser($username, $postemail, $password)
     for($i=0; $i<$Salt_Length; $i++):
         $salt .= $Allowed_Chars[mt_rand(0,$Chars_Len)];
     endfor;
-    $bcrypt_salt = $Blowfish_Pre . $salt . $Blowfish_End;
+    $bcrypt_salt = $Blowfish_Pre.$salt.$Blowfish_End;
     $hashed_password = crypt($password, $bcrypt_salt);
     $query = "INSERT INTO users (username, reg_date, email, salt, password, status, groupid, grpinout) ".
         "VALUES ($username, '$mysql_date', $postemail, '$salt', '$hashed_password', 'chgpwd',1,0) "
