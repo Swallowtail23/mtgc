@@ -21,8 +21,8 @@ $layouts_to_skip = ['double_faced_token','token','emblem'];
 $layouts_flips = ['transform','split','reversible_card','flip','meld','modal_dfc'];
 
 // How old to overwrite
-$stale = 43200;
-$max_fileage = 23 * 3600;
+$stale = 23 * 3600;       // 23 hours for record age before replacing
+$max_fileage = 23 * 3600; // 23 hours for file age before downloading new one
 
 // Scryfall bulk cards URL
 $url = "https://api.scryfall.com/bulk-data/default-cards";
