@@ -435,6 +435,7 @@ function symbolreplace($str)
     $str = str_replace('#','',$str);
     $str = str_replace('{PWk}','Planeswalk',$str);
     $str = str_replace('{Ch}','Chaos',$str);
+    $str = str_replace("\n","<br>",$str);
     return $str;
 }
 
