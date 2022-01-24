@@ -473,14 +473,22 @@ require('includes/menu.php'); //mobile menu
                                     $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                     //If page is being loaded by admin, don't cache the main image
                                     if($admin == 1):
+                                        $obj = new Message;
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                         $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$imgname);
                                         $imagelocation = $imageurl.'?='.$imgmodtime;
                                     else:
                                         $imagelocation = $imageurl;
                                     endif;
+                                    $obj = new Message;
+                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
                                         echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
+                                    elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
+                                        echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
+                                    else:
+                                        echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
                                     endif;
                                     ?>
                                 </td>
