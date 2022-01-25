@@ -827,7 +827,7 @@ require('includes/menu.php'); //mobile menu
                             $others = 0;
                             while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
                                 if($userrow['status'] !== 'disabled'):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$userrow['username'],$logfile);
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
                                     if ($_SESSION["user"] !== $userrow['usernumber']):
                                         $usertable = $userrow['usernumber'].'collection';
                                         if($sqlqtyqry = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = '$row[0]'")):
