@@ -477,11 +477,11 @@ function checkRemoteFile($url)
     endif;
 }
 
-function getimgname($setcode,$number,$cardid)
+function getimgname($cardid)
 {
     global $logfile;
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting image name - setcode: $setcode, number: $number, cardid: $cardid",$logfile);
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting image name - cardid: $cardid",$logfile);
     $imgname = $cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": card image name is $imgname",$logfile);
     return $imgname;
@@ -505,35 +505,36 @@ function getflipimagename($flipcard,$setcode,$number,$flipid,$flipnumber)
     return $flipimgname;
 }
 
-function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$cardnumber = NULL,$cardname,$scryfallimg = NULL)
+function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$layout = NULL)
 {
     global $db, $logfile;
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $imgname, $cardid, $ImgLocation, $cardnumber, $cardname, $scryfallimg",$logfile);
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
     $localfile = $ImgLocation.$setcode.'/'.$imgname;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
     if (!file_exists($localfile)):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File not at $localfile, running get image function",$logfile);
-        $sql = "SELECT image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
+        $sql = "SELECT image_uri,layout,f1_image_uri,f2_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
         $result = $db->query($sql);
         if($result === false):
              trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL error: ".$db->error, E_USER_ERROR);
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Query $sql successful",$logfile);
             $coderow = $result->fetch_array(MYSQLI_ASSOC);
-            $imageurl = strtolower($coderow['image_uri']);
+            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
+            $imageurl = '';
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['image_uri']}  {$coderow['layout']}",$logfile);
+            if(isset($coderow['image_uri']) AND $coderow['image_uri'] !== ''):
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Standard card, {$coderow['image_uri']}",$logfile);
+                $imageurl = strtolower($coderow['image_uri']);
+            elseif((($coderow['image_uri'] === '') OR ($coderow['image_uri'] === null)) AND in_array($coderow['layout'],$flip_types)):
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['image_uri']}",$logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['f1_image_uri']}",$logfile);
+                $imageurl = strtolower($coderow['f1_image_uri']);
+            endif;
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile",$logfile);
             if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
-                $scryresult = 'fail';
-                // Try gatherer
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Not available on Scryfall, trying Gatherer",$logfile);
-                $imageurl = "http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid=".$cardid."&type=card";
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Gatherer URL being checked $imageurl",$logfile);
-                if (checkRemoteFile($imageurl) == false) :
-                    //Give up and fetch a card back image to use
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Not available on Gatherer, using back.jpg",$logfile);
-                    $imageurl = $ImgLocation.'back.jpg';
-                endif;
+                $imageurl = '';
             endif;
             $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
             $context  = stream_context_create($options);
