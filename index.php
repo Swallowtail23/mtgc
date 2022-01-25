@@ -132,7 +132,13 @@ $selectAll = "SELECT
                 type,
                 ability,
                 manacost,
-                layout
+                layout,
+                p1_component,
+                p2_component,
+                p3_component,
+                p1_name,
+                p2_name,
+                p3_name
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 LEFT JOIN setsPromo ON cards_scry.setcode = setsPromo.promosetcode
@@ -389,6 +395,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
+                            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                                $meld = 'meld_result';
+                            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                                $meld = 'meld_part';
+                            else:
+                                $meld = '';
+                            endif;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             if (empty($row['normal'])):
@@ -411,8 +424,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                             <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                                 <?php
-                                                if (!$row['promostatus']):
+                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
                                                     echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                                elseif($meld === 'meld_result'):
+                                                    echo "Meld card";
                                                 else:
                                                     echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 endif;
@@ -461,7 +476,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
                                                 <?php
-                                                if (!$row['promostatus']):
+                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
                                                     echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;
@@ -530,13 +545,20 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         </table>    
 
                     </div>
-                        <?php elseif ($layout == 'list'):
+          <?php elseif ($layout == 'list'):
                             ?>
                     <div id='results' class='wrap'>
                         <table>
                             <?php
                             while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                                 $setcode = strtolower($row['setcode']);
+                                if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                                    $meld = 'meld_result';
+                                elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                                    $meld = 'meld_part';
+                                else:
+                                    $meld = '';
+                                endif;
                                 ?>
                                 <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row['cs_id']}'"; ?>>
                                     <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
@@ -587,6 +609,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         $x = 1;
                         while ($row = $result->fetch_array(MYSQLI_BOTH)):
                             $setcode = strtolower($row['setcode']);
+                            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                                $meld = 'meld_result';
+                            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                                $meld = 'meld_part';
+                            else:
+                                $meld = '';
+                            endif;
                             $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
                             $imageurl = $imagefunction['front'];
                             if(!is_null($imagefunction['back'])):
@@ -614,8 +643,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
                                                 <?php
-                                                if (!$row['promostatus']):
+                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
                                                     echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                                elseif($meld === 'meld_result'):
+                                                    echo "Meld card";
                                                 else:
                                                     echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 endif;
@@ -665,7 +696,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
                                                 <?php
-                                                if (!$row['promostatus']):
+                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
                                                     echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;

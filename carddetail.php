@@ -181,7 +181,7 @@ require('includes/menu.php'); //mobile menu
     <?php
 
     // Check that we have an id before calling SQL query
-    if(isset($_GET["id"])):
+    if(isset($_GET["id"]) OR isset($_POST["id"])) :
         $cardid = $db->escape($cardid,'str');
         $searchqry = 
                "SELECT 
@@ -323,6 +323,13 @@ require('includes/menu.php'); //mobile menu
             $id = $db->escape($row['cs_id'],'str');
             $colour = colourfunction($db->escape($row['color'],'str'));
             $cardnumber = $db->escape($row['number'],'int');
+            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                $meld = 'meld_result';
+            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                $meld = 'meld_part';
+            else:
+                $meld = '';
+            endif;
             //Populate JSON data
             $scryfalljson = scryfall($setcode,$id,null,$cardname,$cardnumber);
             if(isset($scryfalljson['layout']) AND $scryfalljson['layout'] === "normal"):
@@ -369,15 +376,14 @@ require('includes/menu.php'); //mobile menu
                 endif;
                 $sqlmyqty = $db->escape($myqty,'int');
                 $sqlmyfoil = $db->escape($myfoil,'int');
-                $sqlid = $db->escape($id,'str');
                 $sqlnotes = $db->escape($notes,'str');
                 $updatequery = "
                         INSERT INTO `$mytable` (normal,foil,notes,id)
-                        VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$sqlid')
+                        VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$id')
                         ON DUPLICATE KEY UPDATE 
                         normal=$sqlmyqty, foil=$sqlmyfoil, notes='$sqlnotes'";
                 // write out collection record prior to update to log
-                if($sqlbefore = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$mytable` WHERE id = '$sqlid'")):
+                if($sqlbefore = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -400,7 +406,7 @@ require('includes/menu.php'); //mobile menu
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL update failure: " . $db->error, E_USER_ERROR);
                 endif;
                 // Retrieve new record to display
-                if($sqlcheck = $db->select('*',"`$mytable`","WHERE id = '$sqlid'")):
+                if($sqlcheck = $db->select('*',"`$mytable`","WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL check query succeeded",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL check failure: " . $db->error, E_USER_ERROR);
@@ -611,6 +617,10 @@ require('includes/menu.php'); //mobile menu
                     <div id="carddetailinfo">
                         <h3 class="shallowh3">Details</h3>
                         <?php 
+                        if($meld === 'meld_result'):
+                            echo "<b><i>(Meld card)</i></b>";
+                            echo "<br>";
+                        endif;
                         echo "<b>Type: </b>".$row['type'];
                         echo "<br>";
                         echo "<b>Rarity: </b>";
@@ -625,8 +635,10 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         echo "<br>";
                         $manacost = symbolreplace($row['manacost']);
-                        echo "<b>Mana cost: </b>".$manacost;
-                        echo "<br>";
+                        if($manacost !== ''):
+                            echo "<b>Mana cost: </b>".$manacost;
+                            echo "<br>";
+                        endif;
                         if(isset($scryfalljson['cmc']) AND $scryfalljson['cmc'] !== ""):
                             $scryfalljson['cmc'] = htmlentities($scryfalljson['cmc'],ENT_QUOTES,"UTF-8");
                             echo "<b>CMC: </b>".$scryfalljson['cmc'];
@@ -639,6 +651,44 @@ require('includes/menu.php'); //mobile menu
                             echo "<br><b>Power / Toughness: </b>".$row['power']."/".$row['toughness']; 
                         elseif (strpos($row['type'],'laneswalker') !== false):
                             echo "<br><b>Loyalty: </b>".$row['loyalty']; 
+                        endif;
+                        if($meld === 'meld_part'):
+                            if($row['p1_component'] === 'meld_part' AND $row['p1_name'] !== $row['name']):
+                                $meld_partner_id = $row['p1_id'];
+                                $meld_partner_name = $row['p1_name'];
+                            elseif($row['p2_component'] === 'meld_part' AND $row['p2_name'] !== $row['name']):
+                                $meld_partner_id = $row['p2_id'];
+                                $meld_partner_name = $row['p2_name'];
+                            else:
+                                $meld_partner_id = $row['p3_id'];
+                                $meld_partner_name = $row['p3_name'];
+                            endif;
+                            echo "<br><b>Melds with:</b><br>";
+                            echo "<a href='carddetail.php?id=$meld_partner_id'>$meld_partner_name</a>&nbsp;";
+                            echo "<br><b>to:</b><br>";
+                            if($row['p1_component'] === 'meld_result'):
+                                $meld_result_id = $row['p1_id'];
+                                $meld_result_name = $row['p1_name'];
+                            elseif($row['p2_component'] === 'meld_result'):
+                                $meld_result_id = $row['p2_id'];
+                                $meld_result_name = $row['p2_name'];
+                            else:
+                                $meld_result_id = $row['p3_id'];
+                                $meld_result_name = $row['p3_name'];
+                            endif;
+                            echo "<a href='carddetail.php?id=$meld_result_id'>$meld_result_name</a>&nbsp;";
+                        elseif($meld === 'meld_result'):
+                            echo "<br><b>Melds from:</b><br>";
+                            if($row['p1_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p1_id']}'>{$row['p1_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p2_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p2_id']}'>{$row['p2_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p3_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p3_id']}'>{$row['p3_name']}</a>&nbsp;<br>";
+                            endif;
+                            echo "<br>";
                         endif;
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
                             echo "<br><br>";
@@ -717,8 +767,6 @@ require('includes/menu.php'); //mobile menu
                         echo "<br><br><b>Art by: </b>".$row['artist'];
                         if(isset($admin) AND $admin == 1):
                             echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>"; 
-                        else:
-                            echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID: ".$lookupid."<br>";
                         endif;
                         if (!empty($row['comment'])):
                             echo "<b>Comment: </b>".$row['comment']."<br><br>";
@@ -735,322 +783,324 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         ?>                
                     </div>
-                    <div id="carddetailupdate">
-                        <form action="?" method="POST">
-                        <h3 class="shallowh3">My collection</h3>
-                        <?php
-                        if ((int)$row['cs_foil'] + (int)$row['cs_normal'] === 1): ?>
-                            <table>
-                                <tr>
-                                    <td>
-                                        Quantity
-                                    </td>
-                                </tr>
-                                <?php if (isset($_POST["update"])) :
-                                    $checkresult['normal'] = htmlentities($checkresult['normal'],ENT_QUOTES,"UTF-8");           
-                                    $checkresult['foil'] = htmlentities($checkresult['foil'],ENT_QUOTES,"UTF-8");
-                                    $checkresult['notes'] = htmlentities($checkresult['notes'],ENT_QUOTES,"UTF-8");
-                                    echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
-                                    echo "<tr><td>My notes</td></tr>";
-                                    echo "<tr><td><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
-                                else: 
-                                    echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$myqty."></td>";
-                                    echo "<tr><td>My notes</td></tr>";
-                                    echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
-                                endif; ?>
-                            </table>
-                        <?php else: ?>
-                            <table>
-                                <tr>
-                                    <td>
-                                        Normal
-                                    </td>
-                                    <td>
-                                        Foil
-                                    </td>
-                                </tr>
-                                <?php if (isset($_POST["update"])) :
-                                    echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
-                                    echo "<td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=".$checkresult['foil']."></td></tr>";
-                                    echo "<tr><td colspan='2'>My notes</td></tr>";
-                                    echo "<tr><td colspan='2'><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
-                                else: 
-                                    echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=$myqty></td>";
-                                    echo "<td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=$myfoil></td></tr>";
-                                    echo "<tr><td colspan='2'>My notes</td></tr>";
-                                    echo "<tr><td colspan='2'><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
-                                endif; ?>
-                            </table>
-                        <?php 
-                        endif;
-                        echo "<input type='hidden' name='id' value=".$row["cs_id"].">";
-                        echo "<input type='hidden' name='update' value='yes'>";?>
-                        <input class='inline_button stdwidthbutton updatebutton' type="submit" value="UPDATE">
-                        </form>
-                        <hr class='hr324'>
-                        <?php 
-
-                        // Price section
-                        if(
-                            (isset($scryfalljson["tcgplayer_id"]) AND $scryfalljson["tcgplayer_id"] !== "")
-                                AND
-                            (isset($scryfalljson["object"]) AND $scryfalljson["object"] === "card")
-                                AND
-                            (isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== "")
-                                AND
-                            (isset($scryfalljson["prices"]["usd"]) AND $scryfalljson["prices"]["usd"] !== "")
-                          ):
-                            $scryfall_tcgid = $scryfalljson["tcgplayer_id"];
-                        else:
-                            $scryfall_tcgid = 0;
-                        endif;
-                        if ((($row['tcgsetoverride'] != 'none') AND ($row['tcgfullname'] != 'none')) OR $scryfall_tcgid !== 0):
-                            echo "<b>Price and link</b>";
-                            if(isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== ""):
-                                $tcgdirectlink = htmlentities($scryfalljson["purchase_uris"]["tcgplayer"],ENT_QUOTES,"UTF-8");
-                            endif;?>
-                            <table id='tcgplayer'>
-                                <tr>
-                                    <td class="buycellleft">
-                                        <i>US$</i>
-                                    </td>
-                                    <td class="buycell">
-                                        Scryfall
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Normal
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?php echo $scryfalljson["prices"]["usd"]; ?>
-                                    </td>
-                                    <td rowspan=2 class='buycellright inline_button buybutton sglrow'>
-                                        <a href='<?php echo $tcgdirectlink ?>' target='_blank'>BUY</a>
-                                    </td>
-                                </tr>
-                                <?php 
-                                if(
-                                    (isset($scryfalljson["prices"]["usd_foil"]) AND $scryfalljson["prices"]["usd_foil"] !== "")):
-                                ?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Foil
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?php echo $scryfalljson["prices"]["usd_foil"]; ?>
-                                    </td>
-                                </tr>
+                  <?php if($meld !== 'meld_result'): ?>
+                            <div id="carddetailupdate">
+                                <form action="?" method="POST">
+                                <h3 class="shallowh3">My collection</h3>
                                 <?php
+                                if ((int)$row['cs_foil'] + (int)$row['cs_normal'] === 1): ?>
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                Quantity
+                                            </td>
+                                        </tr>
+                                  <?php if (isset($_POST["update"])) :
+                                            $checkresult['normal'] = htmlentities($checkresult['normal'],ENT_QUOTES,"UTF-8");           
+                                            $checkresult['foil'] = htmlentities($checkresult['foil'],ENT_QUOTES,"UTF-8");
+                                            $checkresult['notes'] = htmlentities($checkresult['notes'],ENT_QUOTES,"UTF-8");
+                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
+                                            echo "<tr><td>My notes</td></tr>";
+                                            echo "<tr><td><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
+                                        else: 
+                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$myqty."></td>";
+                                            echo "<tr><td>My notes</td></tr>";
+                                            echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
+                                        endif; ?>
+                                    </table>
+                          <?php else: ?>
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                Normal
+                                            </td>
+                                            <td>
+                                                Foil
+                                            </td>
+                                        </tr>
+                                        <?php if (isset($_POST["update"])) :
+                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
+                                            echo "<td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=".$checkresult['foil']."></td></tr>";
+                                            echo "<tr><td colspan='2'>My notes</td></tr>";
+                                            echo "<tr><td colspan='2'><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
+                                        else: 
+                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=$myqty></td>";
+                                            echo "<td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=$myfoil></td></tr>";
+                                            echo "<tr><td colspan='2'>My notes</td></tr>";
+                                            echo "<tr><td colspan='2'><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
+                                        endif; ?>
+                                    </table>
+                                <?php 
                                 endif;
-                                ?>
-                            </table>
-                        <hr class='hr324'>
-                        <?php
+                                echo "<input type='hidden' name='id' value=".$lookupid.">";
+                                echo "<input type='hidden' name='update' value='yes'>";?>
+                                <input class='inline_button stdwidthbutton updatebutton' type="submit" value="UPDATE">
+                                </form>
+                                <hr class='hr324'>
+                                <?php 
 
-                        // Others with this card section 
-                        echo "<b>Others with this card</b><br>";
-                        if($usergrprow = $db->select_one('grpinout,groupid','users',"WHERE usernumber = $user")):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                        else:
-                            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                        endif;
-                        if ($usergrprow['grpinout'] == 1):
-                            if($sqluserqry = $db->query('SELECT usernumber, username, status FROM users')):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                            else:
-                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                            endif;
-                            $others = 0;
-                            while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
-                                if($userrow['status'] !== 'disabled'):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
-                                    if ($_SESSION["user"] !== $userrow['usernumber']):
-                                        $usertable = $userrow['usernumber'].'collection';
-                                        if($sqlqtyqry = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = '$row[0]'")):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                                        else:
-                                            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                        endif;
-                                        if($sqlqtyqry->num_rows !== 0):
-                                            $userqtyresult = $sqlqtyqry->fetch_array(MYSQLI_ASSOC);
-                                            if (($userqtyresult['normal'] > 0) OR ($userqtyresult['foil'] > 0)):
-                                                if (empty($userqtyresult['normal'])):
-                                                    $userqtyresult['normal'] = 0;
-                                                endif;
-                                                if (empty($userqtyresult['foil'])):
-                                                    $userqtyresult['foil'] = 0;
-                                                endif;
-                                                $others = 1;
-                                                $userrow['username'] = htmlentities($userrow['username'],ENT_QUOTES,"UTF-8");
-                                                $userqtyresult['normal'] = htmlentities($userqtyresult['normal'],ENT_QUOTES,"UTF-8");
-                                                $userqtyresult['foil'] = htmlentities($userqtyresult['foil'],ENT_QUOTES,"UTF-8");
-                                                echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> ",$userqtyresult['normal']," &nbsp;&nbsp;<i>Foil:</i> ",$userqtyresult['foil'],"<br>";
-                                            endif;
-                                        endif;
-                                    endif;
-                                endif;
-                            endwhile;
-                            if ($others == 0):
-                                echo "N/A<br>";
-                            endif;
-                        else:
-                            echo "Opt in for groups in Profile";
-                        endif;
-                        ?>
-                        <hr class='hr324'>
-
-                        <div id="deckadd">
-                        <?php
-                        // Add to decks
-
-                        // Logic on handling input from submitted form
-                        // $decktoaddto is the number of the deck (decks.decknumber), or 'newdeck'
-                        // $newdeckname is the deck name if $decktoaddto is 'newdeck'
-                        // $deckqty is the quantity to add
-
-                        if (isset($decktoaddto)):
-                            $obj = new Message;
-                            $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
-                            // If the deck is new, is the new name unique? If yes, create it.
-                            $decksuccess = 0;
-                            if($decktoaddto == "newdeck"):
-                                $newdeckname = $db->escape($newdeckname,'str');
-                                if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
-                                    ?>
-                                    <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Deck name exists
-                                        <img class = "x" align="right" src="images/close.gif" alt="x"></div>
-                                    <?php
-                                    $decksuccess = 10; //set flag so we know to break.
+                                // Price section
+                                if(
+                                    (isset($scryfalljson["tcgplayer_id"]) AND $scryfalljson["tcgplayer_id"] !== "")
+                                        AND
+                                    (isset($scryfalljson["object"]) AND $scryfalljson["object"] === "card")
+                                        AND
+                                    (isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== "")
+                                        AND
+                                    (isset($scryfalljson["prices"]["usd"]) AND $scryfalljson["prices"]["usd"] !== "")
+                                  ):
+                                    $scryfall_tcgid = $scryfalljson["tcgplayer_id"];
                                 else:
-                                    //Create new deck
-                                    $data = array(
-                                        'owner' => $user,
-                                        'deckname' => "$newdeckname"
-                                    );
-                                    if($runsql = $db->insert('decks',$data) === TRUE):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                    $scryfall_tcgid = 0;
+                                endif;
+                                if ((($row['tcgsetoverride'] != 'none') AND ($row['tcgfullname'] != 'none')) OR $scryfall_tcgid !== 0):
+                                    echo "<b>Price and link</b>";
+                                    if(isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== ""):
+                                        $tcgdirectlink = htmlentities($scryfalljson["purchase_uris"]["tcgplayer"],ENT_QUOTES,"UTF-8");
+                                    endif;?>
+                                    <table id='tcgplayer'>
+                                        <tr>
+                                            <td class="buycellleft">
+                                                <i>US$</i>
+                                            </td>
+                                            <td class="buycell">
+                                                Scryfall
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="buycellleft">
+                                                Normal
+                                            </td>
+                                            <td class="buycell mid">
+                                                <?php echo $scryfalljson["prices"]["usd"]; ?>
+                                            </td>
+                                            <td rowspan=2 class='buycellright inline_button buybutton sglrow'>
+                                                <a href='<?php echo $tcgdirectlink ?>' target='_blank'>BUY</a>
+                                            </td>
+                                        </tr>
+                                        <?php 
+                                        if(
+                                            (isset($scryfalljson["prices"]["usd_foil"]) AND $scryfalljson["prices"]["usd_foil"] !== "")):
+                                        ?>
+                                        <tr>
+                                            <td class="buycellleft">
+                                                Foil
+                                            </td>
+                                            <td class="buycell mid">
+                                                <?php echo $scryfalljson["prices"]["usd_foil"]; ?>
+                                            </td>
+                                        </tr>
+                                        <?php
+                                        endif;
+                                        ?>
+                                    </table>
+                                <hr class='hr324'>
+                                <?php
+
+                                // Others with this card section 
+                                echo "<b>Others with this card</b><br>";
+                                if($usergrprow = $db->select_one('grpinout,groupid','users',"WHERE usernumber = $user")):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                                else:
+                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                endif;
+                                if ($usergrprow['grpinout'] == 1):
+                                    if($sqluserqry = $db->query('SELECT usernumber, username, status FROM users')):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                                     else:
                                         trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                     endif;
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
-                                    $checksql = "SELECT decknumber FROM decks
-                                                    WHERE owner = $user AND deckname = '$newdeckname' LIMIT 1";
-                                    if($runquery = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
-                                        ?>
-                                        <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'>
-                                            <span>Success: </span>Deck created
-                                            <img class = "x" align="right" src="images/close.gif" alt="x">
-                                        </div>
-                                        <?php 
-                                        $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
-                                        $decktoaddto = $runquery['decknumber'];
-                                    else:    
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
-                                        ?>
-                                        <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
-                                            <span>error: </span>Deck creation failed
-                                            <img class = "x" align="right" src="images/close.gif" alt="x">
-                                        </div>
-                                        <?php
-                                        $decksuccess = 10; //set flag so we know to break.
+                                    $others = 0;
+                                    while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
+                                        if($userrow['status'] !== 'disabled'):
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
+                                            if ($_SESSION["user"] !== $userrow['usernumber']):
+                                                $usertable = $userrow['usernumber'].'collection';
+                                                if($sqlqtyqry = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = '$row[0]'")):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                                                else:
+                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                                endif;
+                                                if($sqlqtyqry->num_rows !== 0):
+                                                    $userqtyresult = $sqlqtyqry->fetch_array(MYSQLI_ASSOC);
+                                                    if (($userqtyresult['normal'] > 0) OR ($userqtyresult['foil'] > 0)):
+                                                        if (empty($userqtyresult['normal'])):
+                                                            $userqtyresult['normal'] = 0;
+                                                        endif;
+                                                        if (empty($userqtyresult['foil'])):
+                                                            $userqtyresult['foil'] = 0;
+                                                        endif;
+                                                        $others = 1;
+                                                        $userrow['username'] = htmlentities($userrow['username'],ENT_QUOTES,"UTF-8");
+                                                        $userqtyresult['normal'] = htmlentities($userqtyresult['normal'],ENT_QUOTES,"UTF-8");
+                                                        $userqtyresult['foil'] = htmlentities($userqtyresult['foil'],ENT_QUOTES,"UTF-8");
+                                                        echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> ",$userqtyresult['normal']," &nbsp;&nbsp;<i>Foil:</i> ",$userqtyresult['foil'],"<br>";
+                                                    endif;
+                                                endif;
+                                            endif;
+                                        endif;
+                                    endwhile;
+                                    if ($others == 0):
+                                        echo "N/A<br>";
                                     endif;
-                                endif;
-                            else:
-                                $decktoaddto = $db->escape($decktoaddto,'str');
-                                // Check that the proposed deck exists and belongs to owner.
-                                if (deckownercheck($decktoaddto,$user) == FALSE): ?>
-                                    <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>You don't have that deck
-                                        <img class = "x" align="right" src="images/close.gif" alt="x"></div> 
-                                    <?php
-                                    $decksuccess = 10;
                                 else:
-                                    $decksuccess = 2;
+                                    echo "Opt in for groups in Profile";
                                 endif;
-                            endif;
-                            // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
-                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
-                            if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
-                                if ($decksuccess === 2): //Not a new deck, run card check
+                                ?>
+                                <hr class='hr324'>
+
+                                <div id="deckadd">
+                                <?php
+                                // Add to decks
+
+                                // Logic on handling input from submitted form
+                                // $decktoaddto is the number of the deck (decks.decknumber), or 'newdeck'
+                                // $newdeckname is the deck name if $decktoaddto is 'newdeck'
+                                // $deckqty is the quantity to add
+
+                                if (isset($decktoaddto)):
                                     $obj = new Message;
-                                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
-                                    if($resultchk = $db->select_one('cardnumber','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid'
-                                                            AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))")):
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$resultchk['cardnumber']} is already in that deck",$logfile);
-                                        ?>
-                                        <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
-                                            <span>error: </span>Card is already in deck
-                                            <img class = "x" align="right" src="images/close.gif" alt="x">
-                                        </div>
-                                        <?php
-                                        $cardchecksuccess = 0;
-                                    else:    
-                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
-                                        $cardchecksuccess = 1;
-                                    endif;
-                                elseif ($decksuccess = 1):
-                                    $cardchecksuccess = 2;
-                                endif;
-                                //Insert card to deck
-                                if (($cardchecksuccess === 1) OR ($cardchecksuccess === 2)):
-                                    $deckqty = $db->escape($deckqty,'int');
-                                    adddeckcard($decktoaddto,$cardid,'main',$deckqty);
-                                    if($resultchkins = $db->select_one('cardnumber, cardqty','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid' AND cardqty = '$deckqty'")):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
-                                        if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
+                                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
+                                    // If the deck is new, is the new name unique? If yes, create it.
+                                    $decksuccess = 0;
+                                    if($decktoaddto == "newdeck"):
+                                        $newdeckname = $db->escape($newdeckname,'str');
+                                        if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
                                             ?>
-                                            <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'><span>Success: </span>Card added
+                                            <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Deck name exists
                                                 <img class = "x" align="right" src="images/close.gif" alt="x"></div>
                                             <?php
-                                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
-                                        else:?>
-                                            <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
-                                                <img class = "x" align="right" src="images/close.gif" alt="x"></div>
-                                            <?php 
-                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                            $decksuccess = 10; //set flag so we know to break.
+                                        else:
+                                            //Create new deck
+                                            $data = array(
+                                                'owner' => $user,
+                                                'deckname' => "$newdeckname"
+                                            );
+                                            if($runsql = $db->insert('decks',$data) === TRUE):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                            else:
+                                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                            endif;
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
+                                            $checksql = "SELECT decknumber FROM decks
+                                                            WHERE owner = $user AND deckname = '$newdeckname' LIMIT 1";
+                                            if($runquery = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
+                                                ?>
+                                                <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'>
+                                                    <span>Success: </span>Deck created
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                </div>
+                                                <?php 
+                                                $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
+                                                $decktoaddto = $runquery['decknumber'];
+                                            else:    
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
+                                                ?>
+                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
+                                                    <span>error: </span>Deck creation failed
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                </div>
+                                                <?php
+                                                $decksuccess = 10; //set flag so we know to break.
+                                            endif;
                                         endif;
                                     else:
-                                        ?>
-                                        <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
-                                            <img class = "x" align="right" src="images/close.gif" alt="x"></div>
-                                        <?php 
-                                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                        $decktoaddto = $db->escape($decktoaddto,'str');
+                                        // Check that the proposed deck exists and belongs to owner.
+                                        if (deckownercheck($decktoaddto,$user) == FALSE): ?>
+                                            <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>You don't have that deck
+                                                <img class = "x" align="right" src="images/close.gif" alt="x"></div> 
+                                            <?php
+                                            $decksuccess = 10;
+                                        else:
+                                            $decksuccess = 2;
+                                        endif;
                                     endif;
-                                endif;
-                            endif;
-                        endif; ?>
+                                    // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
+                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
+                                    if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
+                                        if ($decksuccess === 2): //Not a new deck, run card check
+                                            $obj = new Message;
+                                            $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
+                                            if($resultchk = $db->select_one('cardnumber','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid'
+                                                                    AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))")):
+                                                $obj = new Message;
+                                                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$resultchk['cardnumber']} is already in that deck",$logfile);
+                                                ?>
+                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
+                                                    <span>error: </span>Card is already in deck
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                </div>
+                                                <?php
+                                                $cardchecksuccess = 0;
+                                            else:    
+                                                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
+                                                $cardchecksuccess = 1;
+                                            endif;
+                                        elseif ($decksuccess = 1):
+                                            $cardchecksuccess = 2;
+                                        endif;
+                                        //Insert card to deck
+                                        if (($cardchecksuccess === 1) OR ($cardchecksuccess === 2)):
+                                            $deckqty = $db->escape($deckqty,'int');
+                                            adddeckcard($decktoaddto,$cardid,'main',$deckqty);
+                                            if($resultchkins = $db->select_one('cardnumber, cardqty','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid' AND cardqty = '$deckqty'")):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                                if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
+                                                    ?>
+                                                    <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'><span>Success: </span>Card added
+                                                        <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                    <?php
+                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
+                                                else:?>
+                                                    <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
+                                                        <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                    <?php 
+                                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                                endif;
+                                            else:
+                                                ?>
+                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                <?php 
+                                                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                            endif;
+                                        endif;
+                                    endif;
+                                endif; ?>
 
-                        <!-- Display Add to Deck form -->
+                                <!-- Display Add to Deck form -->
 
-                        <b>Add card to my decks</b><br>
+                                <b>Add card to my decks</b><br>
 
-                        <form id="addtodeck" action="<?php echo basename(__FILE__); ?>#deck" method="GET">
-                            <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                            echo "<input type='hidden' name='number' value=".$row['number'].">";
-                            echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
-                            <select id='deckselect' name='decktoaddto'>
-                                <option value='none'>Select</option>
-                                <option value='newdeck'>Add to new deck...</option>
-                                <?php 
-                                $decklist = $db->select('decknumber, deckname','decks',"WHERE owner = $user ORDER BY deckname ASC");
-                                while ($dlrow = $decklist->fetch_array(MYSQLI_NUM)):
-                                    $dlrow[0] = htmlentities($dlrow[0],ENT_QUOTES,"UTF-8");
-                                    $dlrow[1] = htmlentities($dlrow[1],ENT_QUOTES,"UTF-8");
-                                    echo "<option value='{$dlrow[0]}'>$dlrow[1]</option>";
-                                endwhile;
-                                ?>
-                            </select>
-                            Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
-                            <br><br>
-                            <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19'/>
-                            <input class='inline_button addtodeckbutton' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
-                        </form>
-                        </div>
-                    </div>
+                                <form id="addtodeck" action="<?php echo basename(__FILE__); ?>#deck" method="GET">
+                                    <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
+                                    echo "<input type='hidden' name='number' value=".$row['number'].">";
+                                    echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
+                                    <select id='deckselect' name='decktoaddto'>
+                                        <option value='none'>Select</option>
+                                        <option value='newdeck'>Add to new deck...</option>
+                                        <?php 
+                                        $decklist = $db->select('decknumber, deckname','decks',"WHERE owner = $user ORDER BY deckname ASC");
+                                        while ($dlrow = $decklist->fetch_array(MYSQLI_NUM)):
+                                            $dlrow[0] = htmlentities($dlrow[0],ENT_QUOTES,"UTF-8");
+                                            $dlrow[1] = htmlentities($dlrow[1],ENT_QUOTES,"UTF-8");
+                                            echo "<option value='{$dlrow[0]}'>$dlrow[1]</option>";
+                                        endwhile;
+                                        ?>
+                                    </select>
+                                    Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
+                                    <br><br>
+                                    <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19'/>
+                                    <input class='inline_button addtodeckbutton' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
+                                </form>
+                                </div>
+                            </div>
                     <?php 
+                        endif;
                     endif;
                     ?>
                 </div>
@@ -1089,7 +1139,7 @@ require('includes/menu.php'); //mobile menu
                                         $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                         //If page is being loaded by admin, don't cache the main image
                                         if($admin == 1):
-                                            $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$row['cs_id']."_b.jpg");
+                                            $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$lookupid."_b.jpg");
                                             $imagelocationback = $imagebackurl.'?='.$imgmodtime;
                                         else:
                                             $imagelocationback = $imagebackurl;
@@ -1098,11 +1148,11 @@ require('includes/menu.php'); //mobile menu
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
                                         if(isset($row['multiverse2'])):
                                             $multiverse_id_2 = $row['multiverse2'];
-                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='{$row['cs_id']}' id='cardimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
                                         elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
                                             echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
                                         else:
-                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='{$row['cs_id']}' id='cardimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
                                         endif;
                                         ?>
                                     </td>
