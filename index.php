@@ -416,7 +416,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 else:
                                                     echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 endif;
-                                                echo "<input class='card' type='hidden' name='card' value=" . $row[0] . ">";
+                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 ?>
                                                 <script type="text/javascript">
                                                     function isInteger(x) {
@@ -427,7 +427,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myqty = $(ths).val();
-                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card;
+                                                            var poststring = 'newqty=' + myqty + '&cardid=' + card;
                                                             if (myqty == '')
                                                             {
                                                                 alert("Enter a number");
@@ -476,7 +476,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myfoil = $(ths).val();
-                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card;
+                                                            var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
                                                             if (myfoil == '')
                                                             {
                                                                 alert("Enter a number");
@@ -587,9 +587,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         $x = 1;
                         while ($row = $result->fetch_array(MYSQLI_BOTH)):
                             $setcode = strtolower($row['setcode']);
-                            $cardnumber = $row['number'];
-                            $imgname = getimgname($row['cs_id'],);
-                            $imageurl = getImageNew($setcode,$imgname,$row['cs_id'],$ImgLocation,$row['layout']);
+                            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
+                            $imageurl = $imagefunction['front'];
+                            if(!is_null($imagefunction['back'])):
+                                $imagebackurl = $imagefunction['back'];
+                            endif;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             // if (!isset($_POST["update"])) :    
@@ -629,7 +631,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myqty = $(ths).val();
-                                                            var poststring = 'newqty=' + myqty + '&cardnumber=' + card;
+                                                            var poststring = 'newqty=' + myqty + '&cardid=' + card;
                                                             if (myqty == '')
                                                             {
                                                                 alert("Enter a number");
@@ -665,7 +667,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 <?php
                                                 if (!$row['promostatus']):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
-                                                    echo "<input class='card' type='hidden' name='card' value=" . $row[0] . ">";
+                                                    echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;
                                                 ?>
                                                 <script type="text/javascript">
@@ -678,7 +680,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                             var ths = this;
                                                             var card = $(ths).siblings(".card").val();
                                                             var myfoil = $(ths).val();
-                                                            var poststring = 'newfoil=' + myfoil + '&cardnumber=' + card;
+                                                            var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
                                                             if (myfoil == '')
                                                             {
                                                                 alert("Enter a number");
