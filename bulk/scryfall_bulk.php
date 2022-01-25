@@ -72,6 +72,7 @@ foreach($data AS $key => $value):
     $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
     $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
     $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
+    $colors = $game_types = $color_identity = $keywords = $produced_mana = null;
     $skip = 1; //skip by default
     //  Skips need to be specified in here
     /// Is it paper?
