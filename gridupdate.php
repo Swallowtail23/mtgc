@@ -21,26 +21,24 @@ require ('includes/functions_new.php');      //Includes basic functions for non-
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
 
-$flipinfo = filter_input(INPUT_GET, 'flip', FILTER_SANITIZE_STRING); 
-$flipbackid = filter_input(INPUT_GET, 'flipback', FILTER_SANITIZE_STRING); 
-$cardnumber = filter_input(INPUT_GET, 'cardnumber', FILTER_SANITIZE_STRING); 
+$cardid = filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_STRING); 
 
 //Process and log new quantity request
 if (isset($_GET['newqty'])): 
     $qty = filter_input(INPUT_GET, 'newqty', FILTER_SANITIZE_STRING); 
     if(is_int($qty / 1) AND $qty > -1):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardnumber, request: Normal:$qty",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardnumber",$logfile);
+        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardid",$logfile);
         echo "<img src='/images/error.png' alt='error'>";
         exit;
     endif;
 elseif (isset($_GET['newfoil'])): 
     $qty = filter_input(INPUT_GET, 'newfoil', FILTER_SANITIZE_STRING); 
     if(is_int($qty / 1) AND $qty > -1):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardnumber, request: Foil:$qty",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardnumber",$logfile);
+        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardid",$logfile);
         echo "<img src='/images/error.png' alt='error'>";
         exit;
     endif;
@@ -52,15 +50,25 @@ endif;
 //Should only be here if newqty or newfoil are set
 //Set up variables
 $sqlqty = $db->escape($qty);
-$sqlid = $db->escape(filter_input(INPUT_GET, 'cardnumber', FILTER_SANITIZE_STRING));
+$sqlid = $db->escape(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_STRING));
 
 //Check existing quantity
 $beforeresult = $db->select_one('normal, foil',"$mytable","WHERE id = '$sqlid'");
 if($beforeresult === false):
     trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
 else:
+    if (empty($beforeresult['normal'])):
+        $myqty = 0;
+    else:
+        $myqty = $db->escape($beforeresult['normal'],'int');
+    endif;
+    if (empty($beforeresult['foil'])):
+        $myfoil = 0;
+    else:
+        $myfoil = $db->escape($beforeresult['foil'],'int');
+    endif;
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:{$beforeresult['normal']}, Foil:{$beforeresult['foil']}",$logfile);
+    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil",$logfile);
 endif;
 // Run update
 if (isset($_GET['newqty'])): 
