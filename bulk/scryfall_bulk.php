@@ -23,7 +23,9 @@ $layouts_flips = ['transform','split','reversible_card','flip','meld','modal_dfc
 // How old to overwrite
 $stale = 23 * 3600;       // 23 hours for record age before replacing
 $max_fileage = 23 * 3600; // 23 hours for file age before downloading new one
-
+$now = new DateTime();
+$today_date = $now->format('d');
+$dates_to_full_update = [1,9,17,25];
 // Scryfall bulk cards URL
 $url = "https://api.scryfall.com/bulk-data/default-cards";
 
@@ -31,9 +33,7 @@ $url = "https://api.scryfall.com/bulk-data/default-cards";
 $file_location = $ImgLocation.'json/bulk.json';
 
 // Set counts
-$count_inc = 0;
-$count_skip = 0;
-$total_count = 0;
+$count_inc = $count_skip = $count_add = $count_delete = $count_update = $count_price_update = $total_count = $count_nothing = 0;
 
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching $url",$logfile);
@@ -46,25 +46,32 @@ if(isset($scryfall_bulk["type"]) AND $scryfall_bulk["type"] === "default_cards")
     $bulk_uri = $scryfall_bulk["download_uri"];
 endif;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
 
 if (time()-filemtime($file_location) > $max_fileage):
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
     $bulkreturn = downloadbulk($bulk_uri,$file_location);
 else:
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
 endif;
 
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Local file: $file_location",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($file_location, ['decoder' => new ExtJsonDecoder(true)]);
 foreach($data AS $key => $value):
     $total_count = $total_count + 1;
     $id = $value["id"];
-    $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $type_1 = $type_2 = $ability_1 = $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $image_1 = $image_2 = null;
+    $obj = new Message;
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Record $id: $total_count",$logfile);
+    $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $power_1 = $power_2 = null;
+    $toughness_1 = $toughness_2 = $loyalty_1 = $loyalty_2 = $type_1 = $type_2 = $ability_1 = null;
+    $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $image_1 = $image_2 = null;
+    $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
+    $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
+    $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
     $skip = 1; //skip by default
     //  Skips need to be specified in here
     /// Is it paper?
@@ -93,14 +100,14 @@ foreach($data AS $key => $value):
         endif;
         $exec = $stmt->execute();
         if ($exec === false):
-            trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
+            trigger_error("[ERROR] scryfall_bulk.php: Executing SQL" . $db->error, E_USER_ERROR);
         else:     
             if ($stmt->num_rows === 0):
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, not in db",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, ignoring skip record not in db",$logfile);
             elseif($stmt->num_rows === 1):
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, deleting",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, deleting skip record",$logfile);
                 $stmt = $db->prepare("DELETE FROM `cards_scry` WHERE id = ?");
                 if ($stmt === false):
                     trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
@@ -111,15 +118,16 @@ foreach($data AS $key => $value):
                 endif;
                 $exec = $stmt->execute();
                 if ($exec === false):
-                    trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
-                else:     
+                    trigger_error("[ERROR] scryfall_bulk.php: Executing SQL" . $db->error, E_USER_ERROR);
+                else:
+                    $count_delete = $count_delete + 1;
                     $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipped row deleted",$logfile);
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, skip record deleted",$logfile);
                 endif;
                 $stmt->close();
             else:
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, skipping, deleting but double-up when id is unique ($id)",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, skip record, deleting but double-up when id is unique ($id)",$logfile);
                 $action = 'error';
             endif;
         endif;
@@ -163,6 +171,27 @@ foreach($data AS $key => $value):
                     $face_loop = $face_loop + 1;
                 endforeach;
             endif;
+            if($key2 == 'all_parts'):
+                $all_parts_loop = 1;
+                foreach($value2 as $key4 => $value4):
+                    if(isset($value4["id"])):
+                        ${'id_p'.$all_parts_loop} = $value4["id"];
+                    endif;
+                    if(isset($value4["component"])):
+                        ${'component_p'.$all_parts_loop} = $value4["component"];
+                    endif;
+                    if(isset($value4["name"])):
+                        ${'name_p'.$all_parts_loop} = $value4["name"];
+                    endif;
+                    if(isset($value4["type_line"])):
+                        ${'type_line_p'.$all_parts_loop} = $value4["type_line"];
+                    endif;
+                    if(isset($value4["uri"])):
+                        ${'uri_p'.$all_parts_loop} = $value4["uri"];
+                    endif;
+                    $all_parts_loop = $all_parts_loop + 1;
+                endforeach;
+            endif;
             if($key2 == 'multiverse_ids'):
                 $multiverse_loop = 1;
                 foreach($value2 as $m_id):
@@ -173,37 +202,43 @@ foreach($data AS $key => $value):
         endforeach;
 
         // Check if it's already in db
+        $obj = new Message;
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Kept: $count_inc",$logfile);
         if($row = $db->select('id,updatetime','cards_scry',"WHERE id='$id'")):
             if ($row->num_rows === 0):
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, no existing record, adding",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, no existing record, adding $id",$logfile);
                 $action = 'add';
             elseif($row->num_rows === 1):
                 $row = $row->fetch_assoc();
                 $lastupdate = $row["updatetime"];
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, matched an existing record...",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, matched an existing record...",$logfile);
                 if(time() - $lastupdate < $stale):
                     $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record fresh",$logfile);
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, existing record fresh",$logfile);
                     $action = 'nothing';
+                elseif(in_array($today_date,$dates_to_full_update)):
+                    $obj = new Message;
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, existing record stale, full update",$logfile);
+                    $action = 'update';
                 else:
                     $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, existing record stale",$logfile);
-                    $action = 'update';
+                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, existing record stale, price update",$logfile);
+                    $action = 'price_update';                    
                 endif;
             else:
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, double-ups when id is unique ($id)",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, double-ups when id is unique ($id)",$logfile);
                 $action = 'error';
             endif;
         else:
             $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API error",$logfile);
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API error",$logfile);
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
         $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, action is: $action",$logfile);
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, action is: $action",$logfile);
         // Add or update, set values to send
         if(($action == 'add') OR ($action == 'update')):
             $time = time();
@@ -251,8 +286,13 @@ foreach($data AS $key => $value):
                 endif;
                 $number_int = (int) $coll_no;
             endif;
+        elseif($action === 'price_update'):
+            $time = time();
+            $price = $value["prices"]["usd"];
+            $foilprice = $value["prices"]["usd_foil"];
         endif;
         if($action == 'add'):
+            $count_add = $count_add +1;
             $stmt = $db->prepare("INSERT INTO 
                                     `cards_scry`
                                     (id, oracle_id, tcgplayer_id, multiverse, multiverse2,
@@ -266,14 +306,17 @@ foreach($data AS $key => $value):
                                     number_import, rarity, flavor, backid, artist, price, price_foil, 
                                     gatherer_uri, updatetime,
                                     f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability, f1_colour, f1_artist, f1_image_uri,
-                                    f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_image_uri
+                                    f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_image_uri,
+                                    p1_id, p1_component, p1_name, p1_type_line, p1_uri,
+                                    p2_id, p2_component, p2_name, p2_type_line, p2_uri,
+                                    p3_id, p3_component, p3_name, p3_type_line, p3_uri
                                     )
                                 VALUES 
-                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             if ($stmt === false):
                 trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $id, 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
@@ -342,20 +385,36 @@ foreach($data AS $key => $value):
                     $ability_2,
                     $colour_2,
                     $artist_2,
-                    $image_2
+                    $image_2,
+                    $id_p1,
+                    $component_p1,
+                    $name_p1,
+                    $type_line_p1,
+                    $uri_p1,
+                    $id_p2,
+                    $component_p2,
+                    $name_p2,
+                    $type_line_p2,
+                    $uri_p2,
+                    $id_p3,
+                    $component_p3,
+                    $name_p3,
+                    $type_line_p3,
+                    $uri_p3
                     );
             if ($bind === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
             endif;
             $exec = $stmt->execute();
             if ($exec === false):
-                trigger_error("[ERROR] scryfall_bulk.php: Writing new card details ".$number_int." ".$value["collector_number"]." : " . $db->error, E_USER_ERROR);
+                trigger_error("[ERROR] scryfall_bulk.php: Writing new card details: " . $db->error, E_USER_ERROR);
             else:
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add card - no error returned",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Add card - no error returned",$logfile);
             endif;
             $stmt->close();
         elseif ($action == 'update'):
+            $count_update = $count_update +1;
             $stmt = $db->prepare("UPDATE `cards_scry` SET
                                     oracle_id=?, tcgplayer_id=?, multiverse=?, multiverse2=?, 
                                     name=?, lang=?, release_date=?, api_uri=?, scryfall_uri=?, layout=?, 
@@ -367,13 +426,16 @@ foreach($data AS $key => $value):
                                     setcode=?, set_name=?, number=?, number_import=?, rarity=?, flavor=?, backid=?, artist=?, 
                                     price=?, price_foil=?, gatherer_uri=?, updatetime=?,
                                     f1_name=?, f1_manacost=?, f1_power=?, f1_toughness=?, f1_loyalty=?, f1_type=?, f1_ability=?, f1_colour=?, f1_artist=?, f1_image_uri=?,
-                                    f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_image_uri=?
+                                    f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_image_uri=?,
+                                    p1_id=?, p1_component=?, p1_name=?, p1_type_line=?, p1_uri=?,
+                                    p2_id=?, p2_component=?, p2_name=?, p2_type_line=?, p2_uri=?,
+                                    p3_id=?, p3_component=?, p3_name=?, p3_type_line=?, p3_uri=?
                                 WHERE
                                     id=?");
             if ($stmt === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
                     $multi_1,
@@ -442,6 +504,21 @@ foreach($data AS $key => $value):
                     $colour_2,
                     $artist_2,
                     $image_2,
+                    $id_p1,
+                    $component_p1,
+                    $name_p1,
+                    $type_line_p1,
+                    $uri_p1,
+                    $id_p2,
+                    $component_p2,
+                    $name_p2,
+                    $type_line_p2,
+                    $uri_p2,
+                    $id_p3,
+                    $component_p3,
+                    $name_p3,
+                    $type_line_p3,
+                    $uri_p3,
                     $id);
             if ($bind === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
@@ -451,11 +528,41 @@ foreach($data AS $key => $value):
                 trigger_error("[ERROR] scryfall_bulk.php: Updating card details: " . $db->error, E_USER_ERROR);
             else:
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update card - no error returned",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Update card - no error returned",$logfile);
             endif;
             $stmt->close();        
+        elseif ($action == 'price_update'): 
+            $count_price_update = $count_price_update + 1;
+            $stmt = $db->prepare("UPDATE `cards_scry` SET
+                                    price=?, price_foil=?
+                                WHERE
+                                    id=uuid_to_bin(?,true)");
+            if ($stmt === false):
+                trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+            endif;
+            $bind = $stmt->bind_param("sss", 
+                    $price,
+                    $foilprice,
+                    $id);
+            if ($bind === false):
+                trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                trigger_error("[ERROR] scryfall_bulk.php: Updating card details: " . $db->error, E_USER_ERROR);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Update price - no error returned",$logfile);
+            endif;
+            $stmt->close();             
+        elseif($action = 'nothing'):
+            $count_nothing = $count_nothing + 1;
         endif;
     endif;
 endforeach;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Bulk update completed: Total ".$total_count,", Skipped ".$count_skip,$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Bulk update completed: Total $total_count, skipped $count_skip",$logfile);
+$from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+$subject = "Obelix bulk update completed"; 
+$message = "Total: $total_count; total skipped: $count_skip; total added: $count_add; total deleted: $count_delete; total refreshed: $count_update; total price updated: $count_price_update; total no action: $count_nothing";
+mail($adminemail, $subject, $message, $from); 
