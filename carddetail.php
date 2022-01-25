@@ -301,11 +301,15 @@ require('includes/menu.php'); //mobile menu
             endif;
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall image location called by $useremail: $scryfallimg",$logfile);
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getimgname by $useremail with $setcode, $cardnumber, $cardname, $cardid",$logfile);
-            $imgname = getimgname($setcode, $cardnumber, $cardid);
+            $imgname = $cardid.".jpg";
+            $imgname_2 = $cardid."_b.jpg";
             $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$imgname,$id,$ImgLocation, $cardnumber, $cardname, $scryfallimg",$logfile);
-            $imageurl = getImageNew($setcode,$imgname,$row[0],$ImgLocation,$cardnumber,$cardname,$scryfallimg);
-            $settotal = $row['total'];
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
+            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
+            $imageurl = $imagefunction['front'];
+            if(!is_null($imagefunction['back'])):
+                $imagebackurl = $imagefunction['back'];
+            endif;$settotal = $row['total'];
             // If the current record has null fields set the variables to 0 so the update query works 
             if (empty($row['normal'])):
                 $myqty = 0;
