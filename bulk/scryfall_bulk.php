@@ -68,7 +68,7 @@ foreach($data AS $key => $value):
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Record $id: $total_count",$logfile);
     $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $power_1 = $power_2 = null;
     $toughness_1 = $toughness_2 = $loyalty_1 = $loyalty_2 = $type_1 = $type_2 = $ability_1 = null;
-    $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $image_1 = $image_2 = null;
+    $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $flavor_1 = $flavor_2 = $image_1 = $image_2 = null;
     $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
     $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
     $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
