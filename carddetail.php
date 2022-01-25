@@ -218,7 +218,41 @@ require('includes/menu.php'); //mobile menu
                     keywords,
                     watermark,
                     printnumber,
-                    backid,
+                    f1_name,
+                    f1_manacost,
+                    f1_type,
+                    f1_ability,
+                    f1_colour,
+                    f1_artist,
+                    f1_flavor,
+                    f1_power,
+                    f1_toughness,
+                    f1_loyalty,
+                    f2_name,
+                    f2_manacost,
+                    f2_type,
+                    f2_ability,
+                    f2_colour,
+                    f2_artist,
+                    f2_flavor,
+                    f2_power,
+                    f2_toughness,
+                    f2_loyalty,
+                    p1_id,
+                    p1_component,
+                    p1_name,
+                    p1_type_line,
+                    p1_uri,
+                    p2_id,
+                    p2_component,
+                    p2_name,
+                    p2_type_line,
+                    p2_uri,
+                    p3_id,
+                    p3_component,
+                    p3_name,
+                    p3_type_line,
+                    p3_uri,
                     reserved,
                     cards_scry.foil as cs_foil,
                     nonfoil as cs_normal,
@@ -421,7 +455,6 @@ require('includes/menu.php'); //mobile menu
             $row['loyalty'] = htmlentities($row['loyalty'],ENT_QUOTES,"UTF-8");
             $row['artist'] = htmlentities($row['artist'],ENT_QUOTES,"UTF-8");
             $row['comment'] = htmlentities($row['comment'],ENT_QUOTES,"UTF-8");           
-            $row['backid'] = htmlentities($row['backid'],ENT_QUOTES,"UTF-8");           
             if(isset($myqty)): 
                 $myqty = htmlentities($myqty,ENT_QUOTES,"UTF-8");
             endif;
@@ -1040,7 +1073,132 @@ require('includes/menu.php'); //mobile menu
                         echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;";
                     endif;?>
                 </div>
-                <?php
+            
+                <!-- Flip card -->
+
+                <?php 
+                $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
+                if (in_array($row['layout'],$flip_types)): ?>
+                    <div id="carddetailflip">
+                        <div id="carddetailflipimg">    
+                            <table>
+                               <tr> 
+                                    <td colspan="2">
+                                        
+                                        <?php 
+                                        $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
+                                        //If page is being loaded by admin, don't cache the main image
+                                        if($admin == 1):
+                                            $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$row['cs_id']."_b.jpg");
+                                            $imagelocationback = $imagebackurl.'?='.$imgmodtime;
+                                        else:
+                                            $imagelocationback = $imagebackurl;
+                                        endif;
+                                        $obj = new Message;
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
+                                        if(isset($row['multiverse2'])):
+                                            $multiverse_id_2 = $row['multiverse2'];
+                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='{$row['cs_id']}' id='cardimg' src=$imagelocationback></a>"; 
+                                        elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
+                                            echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
+                                        else:
+                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='{$row['cs_id']}' id='cardimg' src=$imagelocationback></a>"; 
+                                        endif;
+                                        ?>
+                                    </td>
+                                </tr>
+                            </table>
+                            <?php // if ($flipcard == 'meldmain'): ?>
+                                <!-- <div id="meldmainopaque">
+                                </div>
+                            <?php // elseif ($flipcard == 'meldadd'): ?>
+                                <div id="meldaddopaque">
+                                </div> -->
+                            <?php // endif; ?>
+                        </div>
+                        <div id="carddetailflipinfo">
+                            <h3 class="shallowh3">Flip details</h3>
+                            <?php 
+                            echo "<b>Type: </b>".$row['f2_type'];
+                            echo "<br>";
+                            echo "<b>Rarity: </b>";
+                            if (strpos($row['rarity'],"R") !== false):
+                                echo "Rare";
+                            elseif (strpos($row['rarity'],"M") !== false):
+                                echo "Mythic Rare";
+                            elseif (strpos($row['rarity'],"U") !== false):
+                                echo "Uncommon";
+                            else:
+                                echo "Common";
+                            endif;
+                            echo "<br>";
+                            $flipmanacost = symbolreplace($row['f2_manacost']);
+                            echo "<b>Mana cost: </b>".$flipmanacost;
+                            echo "<br>";
+                            $flipability = str_replace('£','<br>',$row['f2_ability']);
+                            $flipability = symbolreplace($flipability);
+                            echo "<b>Abilities: </b>".$flipability;
+                            echo "<br>";
+                            if (strpos($row['f2_type'],'reature') !== false):
+                                echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f2_toughness']; 
+                            elseif (strpos($row['f2_type'],'laneswalker') !== false):
+                                echo "<b>Loyalty: </b>".$row['f2_loyalty']; 
+                            endif;
+                            echo "<br>";
+                            echo "<b>Art by: </b>".$row['f2_artist'];
+                            $flipflavor = symbolreplace($row['f2_flavor']);
+                            echo "<br><br><i>".$flipflavor."</i>";
+                            ?>                
+                        </div>
+                    </div>
+                    <div id="flipcarddetailrulings">
+                        <?php
+                        // if ($fliprow['ruling']!= ""):
+                        //     $ruling = $fliprow['ruling'];
+                        //     $date = finddates($ruling);
+                        //     foreach ($date as $key => $value):
+                        //         $olddateparts = explode('/', $value); //Converting mm/dd/yyyy to dd/mm/yyyy
+                        //         $newdate = $olddateparts[1].'-'.$olddateparts[0].'-'.$olddateparts[2];
+                        //         $ruling = str_replace($value,"</div><div class='ruling'><b>".$newdate."</b>",$ruling);
+                        //         $ruling = '<div '.ltrim($ruling, "</div>"); //trim the break from the first line, then re-add the B tag that gets taken too.
+                        //     endforeach;
+                        //     $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
+                        //     $ruling = symbolreplace($ruling)."</div>";
+                        //     echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."<br>&nbsp;";
+                        // endif;?>
+                    </div>
+                <?php 
+                elseif ($row['p1_component'] === 'meld_result' OR $row['p2_component'] === 'meld_result' OR $row['p3_component'] === 'meld_result'): ?>
+                    <div id="meldcardsinfo">
+                        <h3 class="shallowh3">Meld card details</h3>
+                        <?php 
+                        // $meldcards = explode('/',$row['backid']);
+                        // if($runmeld0 = $db->select_one('name,number','cards',"WHERE cards.id = '$meldcards[0]'")):
+                        //     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                        //     $meldname0 = htmlentities($runmeld0['name'],ENT_QUOTES,"UTF-8");
+                        //     $meldnumber0 = htmlentities($runmeld0['number'],ENT_QUOTES,"UTF-8");
+                        //     $meldURL0 = "carddetail.php?setabbrv=$setcode&number=$meldnumber0&id={$meldcards[0]}";
+                        // else:
+                        //     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                        // endif;
+                        // if($runmeld1 = $db->select_one('name,number','cards',"WHERE cards.id = '$meldcards[1]'")):
+                        //     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                        //     $meldname1 = htmlentities($runmeld1['name'],ENT_QUOTES,"UTF-8");
+                        //     $meldnumber1 = htmlentities($runmeld1['number'],ENT_QUOTES,"UTF-8");
+                        //     $meldURL1 = "carddetail.php?setabbrv=$setcode&number=$meldnumber1&id=$meldcards[1]";
+                        // else:
+                        //     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                        // endif;
+                        // echo "This card melds from:<br>";
+                        // echo "<a href='$meldURL0' target='_blank'>$meldname0</a>";
+                        // echo "<br>";
+                        // echo "<a href='$meldURL1' target='_blank'>$meldname1</a>";
+                        // echo "&nbsp;<br>&nbsp;<br>";
+                        // ?>
+                    </div>
+          <?php endif; ?>
+        <!-- Disqus -->
+        <?php
                     $page_url = strtok(get_full_url(),'?')."?id=".$cardid;
                     if (strpos($page_url,'obelix') !== false):
                         $disqus_site = 'https://mtgdev.disqus.com/embed.js';
