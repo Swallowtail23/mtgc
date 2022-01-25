@@ -67,7 +67,7 @@ foreach($data AS $key => $value):
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Record $id: $total_count",$logfile);
     $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $power_1 = $power_2 = null;
-    $toughness_1 = $toughness_2 = $loyalty_1 = $loyalty_2 = $type_1 = $type_2 = $ability_1 = null;
+    $toughness_1 = $toughness_2 = $loyalty_1 = $loyalty_2 = $type_1 = $type_2 = $ability_1 = $cmc_1 = $cmc_2 = null;
     $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $flavor_1 = $flavor_2 = $image_1 = $image_2 = null;
     $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
     $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
@@ -171,6 +171,9 @@ foreach($data AS $key => $value):
                     endif;
                     if(isset($value3["image_uris"]["normal"])):
                         ${'image_'.$face_loop} = $value3["image_uris"]["normal"];
+                    endif;
+                    if(isset($value3["cmc"])):
+                        ${'cmc_'.$face_loop} = $value3["cmc"];
                     endif;
                     $face_loop = $face_loop + 1;
                 endforeach;
@@ -309,18 +312,18 @@ foreach($data AS $key => $value):
                                     set_id, game_types, setcode, set_name, number,
                                     number_import, rarity, flavor, backid, artist, price, price_foil, 
                                     gatherer_uri, updatetime,
-                                    f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability, f1_colour, f1_artist, f1_flavor, f1_image_uri,
-                                    f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_flavor, f2_image_uri,
+                                    f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability, f1_colour, f1_artist, f1_flavor, f1_image_uri, f1_cmc,
+                                    f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_flavor, f2_image_uri, f2_cmc,
                                     p1_id, p1_component, p1_name, p1_type_line, p1_uri,
                                     p2_id, p2_component, p2_name, p2_type_line, p2_uri,
                                     p3_id, p3_component, p3_name, p3_type_line, p3_uri
                                     )
                                 VALUES 
-                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             if ($stmt === false):
                 trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $id, 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
@@ -381,6 +384,7 @@ foreach($data AS $key => $value):
                     $artist_1,
                     $flavor_1,
                     $image_1,
+                    $cmc_1,
                     $name_2,
                     $manacost_2,
                     $power_2,
@@ -392,6 +396,7 @@ foreach($data AS $key => $value):
                     $artist_2,
                     $flavor_2,
                     $image_2,
+                    $cmc_2,
                     $id_p1,
                     $component_p1,
                     $name_p1,
@@ -431,8 +436,8 @@ foreach($data AS $key => $value):
                                     foil=?, nonfoil=?, oversized=?, promo=?, set_id=?, game_types=?, 
                                     setcode=?, set_name=?, number=?, number_import=?, rarity=?, flavor=?, backid=?, artist=?, 
                                     price=?, price_foil=?, gatherer_uri=?, updatetime=?,
-                                    f1_name=?, f1_manacost=?, f1_power=?, f1_toughness=?, f1_loyalty=?, f1_type=?, f1_ability=?, f1_colour=?, f1_artist=?, f1_flavor=? ,f1_image_uri=?,
-                                    f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_flavor=? f2_image_uri=?,
+                                    f1_name=?, f1_manacost=?, f1_power=?, f1_toughness=?, f1_loyalty=?, f1_type=?, f1_ability=?, f1_colour=?, f1_artist=?, f1_flavor=? ,f1_image_uri=?, f1_cmc=?,
+                                    f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_flavor=? f2_image_uri=?, f2_cmc=?,
                                     p1_id=?, p1_component=?, p1_name=?, p1_type_line=?, p1_uri=?,
                                     p2_id=?, p2_component=?, p2_name=?, p2_type_line=?, p2_uri=?,
                                     p3_id=?, p3_component=?, p3_name=?, p3_type_line=?, p3_uri=?
@@ -441,7 +446,7 @@ foreach($data AS $key => $value):
             if ($stmt === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
                     $multi_1,
@@ -501,6 +506,7 @@ foreach($data AS $key => $value):
                     $artist_1,
                     $flavor_1,
                     $image_1,
+                    $cmc_1,
                     $name_2,
                     $manacost_2,
                     $power_2,
@@ -512,6 +518,7 @@ foreach($data AS $key => $value):
                     $artist_2,
                     $flavor_2,
                     $image_2,
+                    $cmc_2,
                     $id_p1,
                     $component_p1,
                     $name_p1,
