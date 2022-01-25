@@ -115,7 +115,7 @@ $foilonly = isset($_GET['foilonly']) ? filter_input(INPUT_GET, 'foilonly', FILTE
 
 // More general query building:
 $selectAll = "SELECT 
-                cards_scry.id,
+                cards_scry.id as cs_id,
                 price,
                 price_foil,
                 setcode,
@@ -129,7 +129,8 @@ $selectAll = "SELECT
                 set_name,
                 type,
                 ability,
-                manacost
+                manacost,
+                layout
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 LEFT JOIN setsPromo ON cards_scry.setcode = setsPromo.promosetcode
@@ -384,7 +385,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row[0]}",$logfile);
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $backid = 0;
                             // If the current record has null fields set the variables to 0 so updates
@@ -402,8 +403,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
                                 $uppercasesetcode = strtoupper($setcode);
-                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row[0]}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
-                                $cellid = "cell" . $row[0];
+                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
+                                $cellid = "cell" . $row['cs_id'];
                                 ?>
                                 <table class='gridupdatetable'>
                                     <tr>
@@ -461,7 +462,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 <?php
                                                 if (!$row['promostatus']):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
-                                                    echo "<input class='card' type='hidden' name='card' value=" . $row[0] . ">";
+                                                    echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;
                                                 ?>
                                                 <script type="text/javascript">
@@ -537,7 +538,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $setcode = strtolower($row['setcode']);
                                 $backid = 0;
                                 ?>
-                                <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row[0]}'"; ?>>
+                                <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row['cs_id']}'"; ?>>
                                     <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
             <?php
             $manac = symbolreplace($row['manacost']);
@@ -605,8 +606,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox item'><?php
-                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row[0]}'><img class='cardimg' alt='{$row[0]}' src=$imageurl></a>";
-                                        $cellid = "cell" . $row[0];
+                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img class='cardimg' alt='{$row['cs_id']}' src=$imageurl></a>";
+                                        $cellid = "cell" . $row['cs_id'];
                                         ?>
                                 <table class='gridupdatetable'>
                                     <tr>
@@ -617,7 +618,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 else:
                                                     echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 endif;
-                                                echo "<input class='card' type='hidden' name='card' value=" . $row[0] . ">";
+                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 ?>
                                                 <script type="text/javascript">
                                                     function isInteger(x) {
