@@ -1,6 +1,6 @@
 <?php
-/* Version:     4.0
-    Date:       13/01/20
+/* Version:     5.0
+    Date:       25/01/2022
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -14,6 +14,8 @@
  *              Moved from writelog to Message class
  *  4.0
  *              Moved to mysqli
+ *  5.0
+ *              Re-factoring for cards_scry
 */
 
 //Call script initiation mechs
@@ -387,7 +389,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
-                            $backid = 0;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             if (empty($row['normal'])):
@@ -536,7 +537,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <?php
                             while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                                 $setcode = strtolower($row['setcode']);
-                                $backid = 0;
                                 ?>
                                 <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row['cs_id']}'"; ?>>
                                     <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
@@ -590,7 +590,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $cardnumber = $row['number'];
                             $imgname = getimgname($setcode, $cardnumber, $row[0],);
                             $imageurl = getImageNew($setcode,$imgname,$row[0],$ImgLocation,$cardnumber,$row['name']);
-                            $backid = 0;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             // if (!isset($_POST["update"])) :    
