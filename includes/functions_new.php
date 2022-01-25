@@ -1099,3 +1099,6 @@ function downloadbulk($url, $dest)
         return true;
     endif;
   }
+  
+  function validateTrueDecimal($v) 
+{	return(floor($v) != $v);		}
