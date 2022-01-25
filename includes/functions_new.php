@@ -505,51 +505,105 @@ function getflipimagename($flipcard,$setcode,$number,$flipid,$flipnumber)
     return $flipimgname;
 }
 
-function getImageNew($setcode,$imgname,$cardid,$ImgLocation,$layout = NULL)
+function getImageNew($setcode,$cardid,$ImgLocation,$layout)
 {
     global $db, $logfile;
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
-    $localfile = $ImgLocation.$setcode.'/'.$imgname;
+    $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
+    $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
+    if(in_array($layout,$flip_types)):
+        $localfile_b = $ImgLocation.$setcode.'/'.$cardid.'_b.jpg';
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Back file should be at $localfile_b",$logfile);
+    endif;
+    // Front face
     if (!file_exists($localfile)):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File not at $localfile, running get image function",$logfile);
-        $sql = "SELECT image_uri,layout,f1_image_uri,f2_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $localfile missing, running get image function",$logfile);
+        $sql = "SELECT image_uri,layout,f1_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
         $result = $db->query($sql);
         if($result === false):
              trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL error: ".$db->error, E_USER_ERROR);
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Query $sql successful",$logfile);
             $coderow = $result->fetch_array(MYSQLI_ASSOC);
-            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
             $imageurl = '';
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['image_uri']}  {$coderow['layout']}",$logfile);
-            if(isset($coderow['image_uri']) AND $coderow['image_uri'] !== ''):
+            if(isset($coderow['image_uri']) AND !is_null($coderow['image_uri'])):
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Standard card, {$coderow['image_uri']}",$logfile);
                 $imageurl = strtolower($coderow['image_uri']);
-            elseif((($coderow['image_uri'] === '') OR ($coderow['image_uri'] === null)) AND in_array($coderow['layout'],$flip_types)):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['image_uri']}",$logfile);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$coderow['f1_image_uri']}",$logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile",$logfile);
+            elseif(isset($coderow['f1_image_uri']) AND !is_null($coderow['f1_image_uri'])):
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card, {$coderow['f1_image_uri']}",$logfile);
                 $imageurl = strtolower($coderow['f1_image_uri']);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile",$logfile);
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile",$logfile);
             if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
                 $imageurl = '';
-            endif;
-            $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
-            $context  = stream_context_create($options);
-            $image = file_get_contents($imageurl, false, $context);
-            if (!file_exists($ImgLocation.$setcode)):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
-                mkdir($ImgLocation.$setcode);
-            endif;
+            else:
+                $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
+                $context  = stream_context_create($options);
+                $image = file_get_contents($imageurl, false, $context);
+                if (!file_exists($ImgLocation.$setcode)):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
+                    mkdir($ImgLocation.$setcode);
+                endif;
             file_put_contents($localfile, $image);
+            $relativepath = strpos($localfile,'cardimg');
+            $frontimg = substr($localfile,$relativepath);
+            endif;
         endif;
     else:
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File at $localfile",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File exists already at $localfile",$logfile);
     endif;
     $relativepath = strpos($localfile,'cardimg');
-    $imageurl = substr($localfile,$relativepath);
+    $frontimg = substr($localfile,$relativepath);
+    $imageurl = array('front' => $frontimg,
+                      'back' => '');
+    //Back face
+    if (isset($localfile_b)):
+        if(!file_exists($localfile_b)):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $localfile_b missing, running get image function",$logfile);
+            $sql = "SELECT layout,f2_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
+            $result2 = $db->query($sql);
+            if($result2 === false):
+                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL error: ".$db->error, E_USER_ERROR);
+            else:
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Query $sql successful",$logfile);
+                $coderow2 = $result2->fetch_array(MYSQLI_ASSOC);
+                $imageurl_2 = '';
+                if(isset($coderow2['f2_image_uri']) AND !is_null($coderow2['f2_image_uri'])):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back, {$coderow2['f2_image_uri']}",$logfile);
+                    $imageurl = strtolower($coderow2['f2_image_uri']);
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile_b",$logfile);
+                endif;
+
+
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back image, {$coderow2['f2_image_uri']}",$logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
+                $imageurl_2 = strtolower($coderow2['f2_image_uri']);
+                if ((checkRemoteFile($imageurl_2) == false) OR ($imageurl_2 === '')):
+                    $imageurl_2 = '';
+                else:
+                    $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
+                    $context  = stream_context_create($options);
+                    $image2 = file_get_contents($imageurl_2, false, $context);
+                    if (!file_exists($ImgLocation.$setcode)):
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
+                        mkdir($ImgLocation.$setcode);
+                    endif;
+                    file_put_contents($localfile_b, $image2);
+                    $relativepath_2 = strpos($localfile_b,'cardimg');
+                    $backimg = substr($localfile_b,$relativepath_2);
+                endif;
+            endif;
+        elseif (file_exists($localfile_b)):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File exists already at $localfile_b",$logfile);
+            $relativepath_2 = strpos($localfile_b,'cardimg');
+            $backimg = substr($localfile_b,$relativepath_2);
+        endif;
+        $imageurl = array('front' => $frontimg,
+                          'back' => $backimg);        
+    endif;
     return $imageurl;
 }
 
