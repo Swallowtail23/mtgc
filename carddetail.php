@@ -564,7 +564,7 @@ require('includes/menu.php'); //mobile menu
                                 <tr>
                                     <td colspan="2" align="center">
                                     <button class=inline_button onClick="rotateImg() ">
-                                    <img src="images/arrowup.png " />
+                                    <img src="images/reload.png " />
                                     </button>
                                     </td>
                                 </tr>
