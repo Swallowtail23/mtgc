@@ -73,6 +73,8 @@ foreach($data AS $key => $value):
     $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
     $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
     $colors = $game_types = $color_identity = $keywords = $produced_mana = null;
+    $maxpower = $minpower = $maxtoughness = $mintoughness = null;
+    $maxloyalty = $minloyalty = null;
     $skip = 1; //skip by default
     //  Skips need to be specified in here
     /// Is it paper?
@@ -207,7 +209,48 @@ foreach($data AS $key => $value):
                 endforeach;
             endif;
         endforeach;
-
+        $powerarray = array();
+        $toughnessarray = array();
+        $loyaltyarray = array();
+        if(isset($value['power'])):
+            array_push($powerarray,(int)$value['power']);
+        endif;
+        if(isset($power_1)):
+            array_push($powerarray,(int)$power_1);
+        endif;
+        if(isset($power_2)):
+            array_push($powerarray,(int)$power_2);
+        endif;
+        if(!empty($powerarray)):
+            $maxpower = max($powerarray);
+            $minpower = min($powerarray);
+        endif;
+        if(isset($value['toughness'])):
+            array_push($toughnessarray,(int)$value['toughness']);
+        endif;
+        if(isset($toughness_1)):
+            array_push($toughnessarray,(int)$toughness_1);
+        endif;
+        if(isset($toughness_2)):
+            array_push($toughnessarray,(int)$toughness_2);
+        endif;
+        if(!empty($toughnessarray)):
+            $maxtoughness = max($toughnessarray);
+            $mintoughness = min($toughnessarray);
+        endif;
+        if(isset($value['loyalty'])):
+            array_push($loyaltyarray,(int)$value['loyalty']);
+        endif;
+        if(isset($loyalty_1)):
+            array_push($loyaltyarray,(int)$loyalty_1);
+        endif;
+        if(isset($loyalty_2)):
+            array_push($loyaltyarray,(int)$loyalty_2);
+        endif;
+        if(!empty($loyaltyarray)):
+            $maxloyalty = max($loyaltyarray);
+            $minloyalty = min($loyaltyarray);
+        endif;
         // Check if it's already in db
         $obj = new Message;
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Kept: $count_inc",$logfile);
@@ -316,14 +359,15 @@ foreach($data AS $key => $value):
                                     f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_flavor, f2_image_uri, f2_cmc,
                                     p1_id, p1_component, p1_name, p1_type_line, p1_uri,
                                     p2_id, p2_component, p2_name, p2_type_line, p2_uri,
-                                    p3_id, p3_component, p3_name, p3_type_line, p3_uri
+                                    p3_id, p3_component, p3_name, p3_type_line, p3_uri,
+                                    maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty
                                     )
                                 VALUES 
-                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             if ($stmt === false):
                 trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $id, 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
@@ -411,7 +455,13 @@ foreach($data AS $key => $value):
                     $component_p3,
                     $name_p3,
                     $type_line_p3,
-                    $uri_p3
+                    $uri_p3,
+                    $maxpower,
+                    $minpower,
+                    $maxtoughness,
+                    $mintoughness,
+                    $maxloyalty,
+                    $minloyalty
                     );
             if ($bind === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
@@ -440,13 +490,14 @@ foreach($data AS $key => $value):
                                     f2_name=?, f2_manacost=?, f2_power=?, f2_toughness=?, f2_loyalty=?, f2_type=?, f2_ability=?, f2_colour=?, f2_artist=?, f2_flavor=? f2_image_uri=?, f2_cmc=?,
                                     p1_id=?, p1_component=?, p1_name=?, p1_type_line=?, p1_uri=?,
                                     p2_id=?, p2_component=?, p2_name=?, p2_type_line=?, p2_uri=?,
-                                    p3_id=?, p3_component=?, p3_name=?, p3_type_line=?, p3_uri=?
+                                    p3_id=?, p3_component=?, p3_name=?, p3_type_line=?, p3_uri=?,
+                                    maxpower=?, minpower=?, maxtoughness=?, mintoughness=?, maxloyalty=?, minloyalty=?
                                 WHERE
                                     id=?");
             if ($stmt === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
             endif;
-            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+            $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                     $value["oracle_id"],
                     $value["tcgplayer_id"],
                     $multi_1,
@@ -534,6 +585,12 @@ foreach($data AS $key => $value):
                     $name_p3,
                     $type_line_p3,
                     $uri_p3,
+                    $maxpower,
+                    $minpower,
+                    $maxtoughness,
+                    $mintoughness,
+                    $maxloyalty,
+                    $minloyalty,
                     $id);
             if ($bind === false):
                 trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
