@@ -988,9 +988,9 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                         ?>
                                     </table>
-                                <hr class='hr324'>
-                                <?php
-
+                                    <hr class='hr324'>
+                                    <?php
+                                endif;
                                 // Others with this card section 
                                 echo "<b>Others with this card</b><br>";
                                 if($usergrprow = $db->select_one('grpinout,groupid','users',"WHERE usernumber = $user")):
@@ -1194,7 +1194,7 @@ require('includes/menu.php'); //mobile menu
                                 </div>
                             </div>
                     <?php 
-                        endif;
+
                     endif;
                     ?>
                 </div>
@@ -1205,6 +1205,7 @@ require('includes/menu.php'); //mobile menu
                     <?php 
                     $ruling_sql = "SELECT source,published_at,comment FROM rulings_scry WHERE oracle_id = ?";
                     $stmt = $db->prepare($ruling_sql);
+                    $ruling = '';
                     if ($stmt === false):
                         trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": Preparing SQL: " . $db->error, E_USER_ERROR);
                     endif;
@@ -1222,7 +1223,6 @@ require('includes/menu.php'); //mobile menu
                             // no rulings
                         else:
                             echo("<div id='carddetailrulings'>");
-                            $ruling = '';
                             while($rulingrow = $result->fetch_array(MYSQLI_ASSOC)):
                                 $olddateparts = explode('-', $rulingrow['published_at']); //Converting yyyy/mm/dd to dd/mm/yyyy
                                 $newdate = "<b>".$olddateparts[2].'-'.$olddateparts[1].'-'.$olddateparts[0]."</b>";
