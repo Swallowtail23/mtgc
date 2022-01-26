@@ -1,12 +1,14 @@
 <?php
-/* Version:     1.0
-    Date:       17/10/16
+/* Version:     2.0
+    Date:       26/01/22
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
  * 
     1.0
                 Initial version
+    2.0
+                Cards_scry refactoring
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -19,7 +21,7 @@ elseif (!$adv == "yes" ) :
     // Not an advanced search called
     if (strlen($name) > 2): // Needs to have more than 2 characters to search
         if ($exact === "yes"):
-            $criteria = "cards_scry.name LIKE '$name' ";
+            $criteria = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' ";
         else:
             $criteria = "cards_scry.name LIKE '%$name%' ";
         endif;
@@ -42,7 +44,11 @@ elseif ($adv == "yes" ) :
         $criteriaNTA .= "cards_scry.name LIKE '%$name%' ";
     else:
         if ($searchname === "yes"):
-            $criteriaNTA = "cards_scry.name LIKE '%$name%' ";
+            if ($exact === "yes"):
+                $criteriaNTA = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name'";
+            else:
+                $criteriaNTA = "cards_scry.name LIKE '%$name%' ";
+            endif;
         endif;
         if ($searchtype === "yes"):
             if (!empty($criteriaNTA)) :
