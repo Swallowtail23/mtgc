@@ -66,7 +66,7 @@ elseif ($adv == "yes" ) :
             if (!empty($criteriaNTA)) :
                 $criteriaNTA .= "OR ";
             endif;
-            $criteriaNTA .= "MATCH (cards_scry.ability) AGAINST ('$abilitytext' IN BOOLEAN MODE) ";
+            $criteriaNTA .= "MATCH (cards_scry.ability,cards_scry.f1_ability,cards_scry.f2_ability) AGAINST ('$abilitytext' IN BOOLEAN MODE) ";
         elseif ($searchabilityexact === "yes"):
             if (!empty($criteriaNTA)) :
                 $criteriaNTA .= "OR ";
