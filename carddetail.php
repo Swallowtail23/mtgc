@@ -161,6 +161,20 @@ function(){
         });
 });
 </script>
+<!-- following script rotates flipimage -->
+<script type="text/javascript">
+    function rotateImg() {
+        if ( document.querySelector(".mainimg").style.transform == '' ){
+            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
+        } 
+        else if ( document.querySelector(".mainimg").style.transform == 'none' ){
+            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
+        } 
+        else {
+            document.querySelector(".mainimg").style.transform = "none";
+        }
+    }
+</script>
 </head>
 
 <body class="body">
@@ -470,7 +484,7 @@ require('includes/menu.php'); //mobile menu
                 <div id="carddetailheader">
                     <table>
                         <tr>
-                            <td class="h2pad">
+                            <td class="h2pad" id='nameheading'>
                                 <?php 
                                     echo $row['name'];
                                 ?>
@@ -535,15 +549,26 @@ require('includes/menu.php'); //mobile menu
                                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
-                                        echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
+                                        echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
                                         echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
                                     else:
                                         echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocation></a>"; 
                                     endif;
+                                    
+                                        
                                     ?>
                                 </td>
                             </tr>
+                      <?php if($row['layout'] === 'flip'): ?>
+                                <tr>
+                                    <td colspan="2" align="center">
+                                    <button class=inline_button onClick="rotateImg() ">
+                                    <img src="images/arrowup.png " />
+                                    </button>
+                                    </td>
+                                </tr>
+                      <?php endif; ?>
                             <tr>
                                 <td colspan="1" class="previousbutton">
                                     <?php if ($row['number'] > 1):
@@ -1269,7 +1294,9 @@ require('includes/menu.php'); //mobile menu
                                         else:
                                             echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
                                         endif;
-                                        ?>
+                                        
+                                        ?>      
+
                                     </td>
                                 </tr>
                             </table>
