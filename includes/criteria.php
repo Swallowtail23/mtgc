@@ -135,25 +135,25 @@ elseif ($adv == "yes" ) :
         // Then rarity
     $criteriaRty = "";
     if ($common === "yes"):
-        $criteriaRty = "cards_scry.rarity LIKE '%C%' ";
+        $criteriaRty = "cards_scry.rarity LIKE 'common' ";
     endif;
     if ($uncommon === "yes"):
         if (!empty($criteriaRty)) :
             $criteriaRty .= "OR ";
         endif;
-        $criteriaRty .= "cards_scry.rarity LIKE '%U%' ";
+        $criteriaRty .= "cards_scry.rarity LIKE 'uncommon' ";
     endif;
     if ($rare === "yes"):
         if (!empty($criteriaRty)) :
             $criteriaRty .= "OR ";
         endif;
-        $criteriaRty .= "cards_scry.rarity LIKE '%R%' ";
+        $criteriaRty .= "cards_scry.rarity LIKE 'rare' ";
     endif;
     if ($mythic === "yes"):
         if (!empty($criteriaRty)) :
             $criteriaRty .= "OR ";
         endif;
-        $criteriaRty .= "cards_scry.rarity LIKE '%M%' ";
+        $criteriaRty .= "cards_scry.rarity LIKE 'mythic' ";
     endif;
     if (!empty($criteriaRty)) :
         $criteria .= "AND (".$criteriaRty.") ";
@@ -287,38 +287,110 @@ elseif ($adv == "yes" ) :
     //CMC / Power / toughness / loyalty
     if (!empty($cmcvalue)):
         if ($cmcoperator === "ltn"):
-            $criteria .= "AND (cards_scry.cmc < ".$cmcvalue.") ";
+            $criteria .= "AND (
+                   (cards_scry.cmc IS NOT NULL AND cards_scry.cmc < ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f1_cmc IS NOT NULL AND cards_scry.f1_cmc < ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f2_cmc IS NOT NULL AND cards_scry.f2_cmc < ".$cmcvalue.")
+                     ) ";
         elseif ($cmcoperator === "gtr"):
-            $criteria .= "AND (cards_scry.cmc > ".$cmcvalue.") ";
+            $criteria .= "AND (
+                   (cards_scry.cmc IS NOT NULL AND cards_scry.cmc > ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f1_cmc IS NOT NULL AND cards_scry.f1_cmc > ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f2_cmc IS NOT NULL AND cards_scry.f2_cmc > ".$cmcvalue.")
+                     ) ";
         elseif ($cmcoperator === "eq"):
-            $criteria .= "AND (cards_scry.cmc = ".$cmcvalue.") ";        
+            $criteria .= "AND (
+                   (cards_scry.cmc IS NOT NULL AND cards_scry.cmc = ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f1_cmc IS NOT NULL AND cards_scry.f1_cmc = ".$cmcvalue.")
+                     OR 
+                   (cards_scry.f2_cmc IS NOT NULL AND cards_scry.f2_cmc = ".$cmcvalue.")
+                     ) ";
         endif;
     endif;
     if (!empty($power)):
         if ($poweroperator === "ltn"):
-            $criteria .= "AND (cards_scry.power < ".$power.") ";
+            $criteria .= "AND (
+                   (cards_scry.power IS NOT NULL AND cards_scry.power < ".$power.")
+                     OR 
+                   (cards_scry.f1_power IS NOT NULL AND cards_scry.f1_power < ".$power.")
+                     OR 
+                   (cards_scry.f2_power IS NOT NULL AND cards_scry.f2_power < ".$power.")
+                     ) ";
         elseif ($poweroperator === "gtr"):
-            $criteria .= "AND (cards_scry.power > ".$power.") ";
+            $criteria .= "AND (
+                   (cards_scry.power IS NOT NULL AND cards_scry.power > ".$power.")
+                     OR 
+                   (cards_scry.f1_power IS NOT NULL AND cards_scry.f1_power > ".$power.")
+                     OR 
+                   (cards_scry.f2_power IS NOT NULL AND cards_scry.f2_power > ".$power.")
+                     ) ";
         elseif ($poweroperator === "eq"):
-            $criteria .= "AND (cards_scry.power = ".$power.") ";        
+            $criteria .= "AND (
+                   (cards_scry.power IS NOT NULL AND cards_scry.power = ".$power.")
+                     OR 
+                   (cards_scry.f1_power IS NOT NULL AND cards_scry.f1_power = ".$power.")
+                     OR 
+                   (cards_scry.f2_power IS NOT NULL AND cards_scry.f2_power = ".$power.")
+                     ) ";
         endif;
     endif;
     if (!empty($tough)):
         if ($toughoperator === "ltn"):
-            $criteria .= "AND (cards_scry.toughness < ".$tough.") ";
+            $criteria .= "AND (
+                   (cards_scry.toughness IS NOT NULL AND cards_scry.toughness < ".$tough.")
+                     OR 
+                   (cards_scry.f1_toughness IS NOT NULL AND cards_scry.f1_toughness < ".$tough.")
+                     OR 
+                   (cards_scry.f2_toughness IS NOT NULL AND cards_scry.f2_toughness < ".$tough.")
+                     ) ";
         elseif ($toughoperator === "gtr"):
-            $criteria .= "AND (cards_scry.toughness > ".$tough.") ";
+            $criteria .= "AND (
+                   (cards_scry.toughness IS NOT NULL AND cards_scry.toughness > ".$tough.")
+                     OR 
+                   (cards_scry.f1_toughness IS NOT NULL AND cards_scry.f1_toughness > ".$tough.")
+                     OR 
+                   (cards_scry.f2_toughness IS NOT NULL AND cards_scry.f2_toughness > ".$tough.")
+                     ) ";
         elseif ($toughoperator === "eq"):
-            $criteria .= "AND (cards_scry.toughness = ".$tough.") ";        
+            $criteria .= "AND (
+                   (cards_scry.toughness IS NOT NULL AND cards_scry.toughness = ".$tough.")
+                     OR 
+                   (cards_scry.f1_toughness IS NOT NULL AND cards_scry.f1_toughness = ".$tough.")
+                     OR 
+                   (cards_scry.f2_toughness IS NOT NULL AND cards_scry.f2_toughness = ".$tough.")
+                     ) ";    
         endif;
     endif;
     if (!empty($loyalty)):
         if ($loyaltyoperator === "ltn"):
-            $criteria .= "AND (cards_scry.loyalty < ".$loyalty.") ";
+            $criteria .= "AND (
+                   (cards_scry.loyalty IS NOT NULL AND cards_scry.loyalty < ".$loyalty.")
+                     OR 
+                   (cards_scry.f1_loyalty IS NOT NULL AND cards_scry.f1_loyalty < ".$loyalty.")
+                     OR 
+                   (cards_scry.f2_loyalty IS NOT NULL AND cards_scry.f2_loyalty < ".$loyalty.")
+                     ) ";
         elseif ($loyaltyoperator === "gtr"):
-            $criteria .= "AND (cards_scry.loyalty > ".$loyalty.") ";
+            $criteria .= "AND (
+                   (cards_scry.loyalty IS NOT NULL AND cards_scry.loyalty > ".$loyalty.")
+                     OR 
+                   (cards_scry.f1_loyalty IS NOT NULL AND cards_scry.f1_loyalty > ".$loyalty.")
+                     OR 
+                   (cards_scry.f2_loyalty IS NOT NULL AND cards_scry.f2_loyalty > ".$loyalty.")
+                     ) ";
         elseif ($loyaltyoperator === "eq"):
-            $criteria .= "AND (cards_scry.loyalty = ".$loyalty.") ";        
+            $criteria .= "AND (
+                   (cards_scry.loyalty IS NOT NULL AND cards_scry.loyalty = ".$loyalty.")
+                     OR 
+                   (cards_scry.f1_loyalty IS NOT NULL AND cards_scry.f1_loyalty = ".$loyalty.")
+                     OR 
+                   (cards_scry.f2_loyalty IS NOT NULL AND cards_scry.f2_loyalty = ".$loyalty.")
+                     ) ";     
         endif;
     endif;
     
@@ -327,19 +399,19 @@ elseif ($adv == "yes" ) :
     endif;
     
     if ($legal === 'std'):
-        $criteria .= "AND (cards_scry.legalitystandard = '1') ";
+        $criteria .= "AND (cards_scry.legalitystandard = 'legal') ";
     endif;
     
     if ($legal === 'mdn'):
-        $criteria .= "AND (cards_scry.legalitymodern = '1') ";
+        $criteria .= "AND (cards_scry.legalitymodern = 'legal') ";
     endif;
     
     if ($legal === 'vin'):
-        $criteria .= "AND (cards_scry.legalityvintage = '1') ";
+        $criteria .= "AND (cards_scry.legalityvintage = 'legal' OR cards_scry.legalityvintage = 'restricted') ";
     endif;
     
     if ($legal === 'lgc'):
-        $criteria .= "AND (cards_scry.legalitylegacy = '1') ";
+        $criteria .= "AND (cards_scry.legalitylegacy = 'legal' OR cards_scry.legalitylegacy = 'restricted') ";
     endif;
       
     if ($foilonly === 'foilonly'):
@@ -363,13 +435,13 @@ elseif ($adv == "yes" ) :
         elseif ($sortBy == "setdown"):
             $order = "ORDER BY cards_scry.release_date DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "powerup"):
-            $order = "ORDER BY cards_scry.power ASC ";
+            $order = "ORDER BY cards_scry.maxpower * 1 ASC ";
         elseif ($sortBy == "powerdown"):
-            $order = "ORDER BY cards_scry.power DESC ";
+            $order = "ORDER BY cards_scry.minpower * 1 DESC ";
         elseif ($sortBy == "toughup"):
-            $order = "ORDER BY cards_scry.toughness ASC ";
+            $order = "ORDER BY cards_scry.maxtoughness * 1 ASC ";
         elseif ($sortBy == "toughdown"):
-            $order = "ORDER BY cards_scry.toughness DESC ";        
+            $order = "ORDER BY cards_scry.mintoughness * 1 DESC ";        
         else:
             $order = "ORDER BY cards_scry.name ASC ";
         endif;
