@@ -152,7 +152,7 @@ foreach($data AS $key => $value):
                         ${'toughness_'.$face_loop} = $value3["toughness"];
                     endif;
                     if(isset($value3["loyalty"])):
-                        ${'loyaltyt_'.$face_loop} = $value3["loyalty"];
+                        ${'loyalty_'.$face_loop} = $value3["loyalty"];
                     endif;
                     if(isset($value3["type_line"])):
                         ${'type_'.$face_loop} = $value3["type_line"];
