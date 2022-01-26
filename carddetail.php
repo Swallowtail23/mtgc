@@ -209,15 +209,11 @@ require('includes/menu.php'); //mobile menu
                     color_identity,
                     generatedmana,
                     number,
+                    number_import,
                     layout,
                     rarity,
-                    rating,
-                    ruling,
-                    variation,
                     ability,
                     keywords,
-                    watermark,
-                    printnumber,
                     f1_name,
                     f1_manacost,
                     f1_type,
@@ -277,12 +273,9 @@ require('includes/menu.php'); //mobile menu
                     legalitypeasant,
                     legalitypauper,
                     legalitypioneer,
-                    tcgsetoverride,
-                    tcgnameoverride,
                     updatetime,
                     price,
                     price_foil,
-                    comment,
                     no,
                     setcodeid,
                     magiccardsid,
@@ -462,7 +455,6 @@ require('includes/menu.php'); //mobile menu
             $row['toughness'] = htmlentities($row['toughness'],ENT_QUOTES,"UTF-8");
             $row['loyalty'] = htmlentities($row['loyalty'],ENT_QUOTES,"UTF-8");
             $row['artist'] = htmlentities($row['artist'],ENT_QUOTES,"UTF-8");
-            $row['comment'] = htmlentities($row['comment'],ENT_QUOTES,"UTF-8");           
             if(isset($myqty)): 
                 $myqty = htmlentities($myqty,ENT_QUOTES,"UTF-8");
             endif;
@@ -472,6 +464,7 @@ require('includes/menu.php'); //mobile menu
             if(isset($notes)):
                 $notes = htmlentities($notes,ENT_QUOTES,"UTF-8");
             endif;
+            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -803,9 +796,6 @@ require('includes/menu.php'); //mobile menu
 
                             endif;
                         endif;    
-                        if (!empty($row['comment'])):
-                            echo "<b>Comment: </b>".$row['comment']."<br><br>";
-                        endif;
                         if($row['layout'] === 'adventure'):
                             echo "<h3>Adventure: </h3>";
                             echo "<b>Name: </b>".$row['f2_name'];
@@ -956,7 +946,7 @@ require('includes/menu.php'); //mobile menu
                                 else:
                                     $scryfall_tcgid = 0;
                                 endif;
-                                if ((($row['tcgsetoverride'] != 'none') AND ($row['tcgfullname'] != 'none')) OR $scryfall_tcgid !== 0):
+                                if ($scryfall_tcgid !== 0):
                                     echo "<b>Price and link</b>";
                                     if(isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== ""):
                                         $tcgdirectlink = htmlentities($scryfalljson["purchase_uris"]["tcgplayer"],ENT_QUOTES,"UTF-8");
@@ -1212,23 +1202,47 @@ require('includes/menu.php'); //mobile menu
 
                 <div id="carddetailrulings">
                     <?php 
-                    if ($row['ruling']!= ""):
-                        $ruling = $row['ruling'];
-                        $date = finddates($ruling);
-                        foreach ($date as $key => $value):
-                            $olddateparts = explode('/', $value); //Converting mm/dd/yyyy to dd/mm/yyyy
-                            $newdate = $olddateparts[1].'-'.$olddateparts[0].'-'.$olddateparts[2];
-                            $ruling = str_replace($value,"</div><div class='ruling'><b>".$newdate."</b>",$ruling);
-                            $ruling = '<div '.ltrim($ruling, "</div>"); //trim the break from the first line, then re-add the B tag that gets taken too.
-                        endforeach;
-                        $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
-                        $ruling = symbolreplace($ruling)."</div>";
-                        echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;";
-                    endif;?>
+                    $ruling_sql = "SELECT source,published_at,comment FROM rulings_scry WHERE oracle_id = ?";
+                    $stmt = $db->prepare($ruling_sql);
+                    if ($stmt === false):
+                        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": Preparing SQL: " . $db->error, E_USER_ERROR);
+                    endif;
+                    $bind = $stmt->bind_param('s', $row['oracle_id']);
+                    if ($bind === false):
+                        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": Binding SQL: " . $db->error, E_USER_ERROR);
+                    endif;
+                    $exec = $stmt->execute();
+                    if($exec === false):
+                        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": Executing SQL: " . $db->error, E_USER_ERROR);
+                    else:     
+                        $result = $stmt->get_result();
+                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
+                        if ($result->num_rows === 0):
+                            // no rulings
+                        else:
+                            echo("<div id='carddetailrulings'>");
+                            $ruling = '';
+                            while($rulingrow = $result->fetch_array(MYSQLI_ASSOC)):
+                                $olddateparts = explode('-', $rulingrow['published_at']); //Converting yyyy/mm/dd to dd/mm/yyyy
+                                $newdate = "<b>".$olddateparts[2].'-'.$olddateparts[1].'-'.$olddateparts[0]."</b>";
+                                if($rulingrow['source'] === 'wotc'):
+                                    $source = 'WOTC';
+                                elseif($rulingrow['source'] === 'scryfall'):
+                                    $source = 'Scryfall';
+                                else:
+                                    $source = $rulingrow['source'];
+                                endif;
+                                $ruling = $ruling.$newdate.": ".$rulingrow['comment']." (".$source.")<br>";
+                            endwhile;
+                            $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
+                            if (!in_array($row['layout'],$flip_types)):
+                                echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;";
+                            endif;
+                        endif;
+                    endif; ?>
                 </div>
                 <!-- Flip card -->
                <?php 
-                $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
                 if (in_array($row['layout'],$flip_types)): ?>
                     <div id="carddetailflip">
                         <div id="carddetailflipimg">    
@@ -1306,20 +1320,7 @@ require('includes/menu.php'); //mobile menu
                         </div>
                     </div>
                     <div id="flipcarddetailrulings">
-                        <?php
-                        // if ($fliprow['ruling']!= ""):
-                        //     $ruling = $fliprow['ruling'];
-                        //     $date = finddates($ruling);
-                        //     foreach ($date as $key => $value):
-                        //         $olddateparts = explode('/', $value); //Converting mm/dd/yyyy to dd/mm/yyyy
-                        //         $newdate = $olddateparts[1].'-'.$olddateparts[0].'-'.$olddateparts[2];
-                        //         $ruling = str_replace($value,"</div><div class='ruling'><b>".$newdate."</b>",$ruling);
-                        //         $ruling = '<div '.ltrim($ruling, "</div>"); //trim the break from the first line, then re-add the B tag that gets taken too.
-                        //     endforeach;
-                        //     $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
-                        //     $ruling = symbolreplace($ruling)."</div>";
-                        //     echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."<br>&nbsp;";
-                        // endif;?>
+                        <?php echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;"; ?>
                     </div> <?php
                 endif; 
                 ?>
