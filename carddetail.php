@@ -464,7 +464,8 @@ require('includes/menu.php'); //mobile menu
             if(isset($notes)):
                 $notes = htmlentities($notes,ENT_QUOTES,"UTF-8");
             endif;
-            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
+            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];  // Set flip types which trigger a second (reverse) card section
+                                                                                     // See around section <!-- Flip card -->
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -1242,7 +1243,7 @@ require('includes/menu.php'); //mobile menu
                     endif; ?>
                 </div>
                 <!-- Flip card -->
-               <?php 
+                <?php 
                 if (in_array($row['layout'],$flip_types)): ?>
                     <div id="carddetailflip">
                         <div id="carddetailflipimg">    
