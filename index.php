@@ -124,6 +124,7 @@ $selectAll = "SELECT
                 `$mytable`.normal,
                 `$mytable`.foil,
                 number,
+                number_import,
                 name,
                 promostatus,
                 release_date,
@@ -416,7 +417,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
-                                $uppercasesetcode = strtoupper($setcode);
                                 echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
                                 $cellid = "cell" . $row['cs_id'];
                                 ?>
@@ -609,6 +609,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         $x = 1;
                         while ($row = $result->fetch_array(MYSQLI_BOTH)):
                             $setcode = strtolower($row['setcode']);
+                            $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
                             elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
@@ -636,7 +637,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox item'><?php
-                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img class='cardimg' alt='{$row['cs_id']}' src=$imageurl></a>";
+                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src=$imageurl></a>";
                                         $cellid = "cell" . $row['cs_id'];
                                         ?>
                                 <table class='gridupdatetable'>
