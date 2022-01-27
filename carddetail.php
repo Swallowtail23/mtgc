@@ -177,37 +177,51 @@ function(){
 <script type="text/javascript"> 
 jQuery( function($) {
     $(".mainimg").mousemove(function(e)
-    {         
-        $(".imgfloat").show();         
-        $(".imgfloat").css(
-            {
-                top: (e.pageY - 170) + "px",
-                left: (e.pageX + 95) + "px"
+        {         
+            if (document.querySelector(".mainimg").style.transform == 'rotate(180deg)' ){
+                $(".imgfloat").show();         
+                $(".imgfloat").css(
+                    {
+                        top: (e.pageY - 170) + "px",
+                        left: (e.pageX + 95) + "px",
+                        transform: 'rotate(180deg)'
+                    }
+                );     
+            } else {
+                $(".imgfloat").show();         
+                $(".imgfloat").css(
+                    {
+                        top: (e.pageY - 170) + "px",
+                        left: (e.pageX + 95) + "px",
+                        transform: ''
+                    }
+                );     
             }
-        );     
-    });     
+        });
     $(".mainimg").mouseout(function(e)
-    {
-        $(".imgfloat").hide();     
-    });
+        {
+            $(".imgfloat").hide();
+        }
+    );
 });
 </script>
 <script type="text/javascript"> 
 jQuery( function($) {
     $(".backimg").mousemove(function(e)
-    {         
-        $(".backimgfloat").show();         
-        $(".backimgfloat").css(
-            {
-                top: (e.pageY - 170) + "px",
-                left: (e.pageX + 95) + "px"
-            }
-        );     
-    });     
+        {         
+            $(".backimgfloat").show();         
+            $(".backimgfloat").css(
+                {
+                    top: (e.pageY - 170) + "px",
+                    left: (e.pageX + 95) + "px"
+                }
+            );     
+        });     
     $(".backimg").mouseout(function(e)
-    {
-        $(".backimgfloat").hide();     
-    });
+        {
+            $(".backimgfloat").hide();     
+        }
+    );
 });
 </script> 
 </head>
@@ -606,7 +620,8 @@ require('includes/menu.php'); //mobile menu
                                     ?>
                                 </td>
                             </tr>
-                      <?php if($row['layout'] === 'flip'): ?>
+                      <?php if($row['layout'] === 'flip'): 
+                                ?>
                                 <tr>
                                     <td colspan="2" align="center">
                                     <button class=inline_button onClick="rotateImg() ">
@@ -1332,7 +1347,6 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
-                                        // Set classes for hover image
                                         ?>
                                             <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
                                                 <img alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
