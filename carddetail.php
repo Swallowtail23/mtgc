@@ -167,7 +167,9 @@ function(){
         if ( document.querySelector(".mainimg").style.transform == 'none' ){
             document.querySelector(".mainimg").style.transform = "rotate(180deg)";
         } 
-        else {
+        else if ( document.querySelector(".mainimg").style.transform == '' ){
+            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
+        } else {
             document.querySelector(".mainimg").style.transform = "none";
         }
     }
