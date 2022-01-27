@@ -355,12 +355,18 @@ require('includes/menu.php'); //mobile menu
             $id = $db->escape($row['cs_id'],'str');
             if($row['color'] !== null):
                 $card_colour = colourfunction($row['color']);
+            else:
+                $card_colour = '';
             endif;
             if($row['f1_colour'] !== null):
                 $f1_colour = colourfunction($row['f1_colour']);
+            else:
+                $f1_colour = '';
             endif;
             if($row['f2_colour'] !== null):
                 $f2_colour = colourfunction($row['f2_colour']);
+            else:
+                $f2_colour = '';
             endif;
             if($card_colour !== ''):
                 $colour = $card_colour;
