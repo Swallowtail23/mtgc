@@ -353,7 +353,24 @@ require('includes/menu.php'); //mobile menu
             $setname = stripslashes($db->escape($row['cs_setname'],'str'));
             $cardname = stripslashes($db->escape($row['name'],'str'));
             $id = $db->escape($row['cs_id'],'str');
-            $colour = colourfunction($row['color']);
+            if($row['color'] !== null):
+                $card_colour = colourfunction($row['color']);
+            endif;
+            if($row['f1_colour'] !== null):
+                $f1_colour = colourfunction($row['f1_colour']);
+            endif;
+            if($row['f2_colour'] !== null):
+                $f2_colour = colourfunction($row['f2_colour']);
+            endif;
+            if($card_colour !== ''):
+                $colour = $card_colour;
+            elseif($f1_colour !== ''):
+                $colour = $f1_colour;
+            elseif($f2_colour !== ''):
+                $colour = $f2_colour;
+            else:
+                $colour = '';
+            endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                 $meld = 'meld_result';

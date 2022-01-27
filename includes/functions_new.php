@@ -1,6 +1,6 @@
 <?php
-/* Version:     8.0
-    Date:       11/01/20
+/* Version:     9.0
+    Date:       28/01/22
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -36,6 +36,8 @@
  * 9.0
  *              Marking tcgplayer function to be deprecated; improving scryfall 
  *              image function (+ get by set and number)
+ * 10.0
+ *              Refactoring for cards_scry
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
