@@ -353,7 +353,7 @@ require('includes/menu.php'); //mobile menu
             $setname = stripslashes($db->escape($row['cs_setname'],'str'));
             $cardname = stripslashes($db->escape($row['name'],'str'));
             $id = $db->escape($row['cs_id'],'str');
-            $colour = colourfunction($db->escape($row['color'],'str'));
+            $colour = colourfunction($row['color']);
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                 $meld = 'meld_result';
@@ -829,6 +829,7 @@ require('includes/menu.php'); //mobile menu
                                 else:
                                     echo "no";
                                 endif;
+                                echo "<br>";
                         endif;    
                         if($row['layout'] === 'adventure'):
                             echo "<h3>Adventure: </h3>";

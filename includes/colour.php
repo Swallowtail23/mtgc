@@ -22,6 +22,12 @@ function colourfunction($colourcode)
 {
     global $logfile;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": run with input: $colourcode",$logfile);
+    $temp = json_decode($colourcode);
+    $colourcode = '';
+    foreach($temp as $value):
+        $colourcode = $colourcode.$value;
+    endforeach;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.$colourcode,$logfile);
     if (strlen($colourcode) === 1):
         if ($colourcode === "B") :
             $colour = "black";
