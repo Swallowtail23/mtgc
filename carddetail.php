@@ -164,10 +164,7 @@ function(){
 <!-- following script rotates flipimage -->
 <script type="text/javascript">
     function rotateImg() {
-        if ( document.querySelector(".mainimg").style.transform == '' ){
-            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
-        } 
-        else if ( document.querySelector(".mainimg").style.transform == 'none' ){
+        if ( document.querySelector(".mainimg").style.transform == 'none' ){
             document.querySelector(".mainimg").style.transform = "rotate(180deg)";
         } 
         else {
@@ -175,6 +172,42 @@ function(){
         }
     }
 </script>
+<script type="text/javascript"> 
+jQuery( function($) {
+    $(".mainimg").mousemove(function(e)
+    {         
+        $(".imgfloat").show();         
+        $(".imgfloat").css(
+            {
+                top: (e.pageY - 170) + "px",
+                left: (e.pageX + 95) + "px"
+            }
+        );     
+    });     
+    $(".mainimg").mouseout(function(e)
+    {
+        $(".imgfloat").hide();     
+    });
+});
+</script>
+<script type="text/javascript"> 
+jQuery( function($) {
+    $(".backimg").mousemove(function(e)
+    {         
+        $(".backimgfloat").show();         
+        $(".backimgfloat").css(
+            {
+                top: (e.pageY - 170) + "px",
+                left: (e.pageX + 95) + "px"
+            }
+        );     
+    });     
+    $(".backimg").mouseout(function(e)
+    {
+        $(".backimgfloat").hide();     
+    });
+});
+</script> 
 </head>
 
 <body class="body">
@@ -547,6 +580,17 @@ require('includes/menu.php'); //mobile menu
                                     endif;
                                     $obj = new Message;
                                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
+                                    // Set classes for hover image
+                                    if($row['layout'] === 'split' OR $row['layout'] === 'planar'):
+                                        $hoverclass = 'imgfloat splitfloat';
+                                    else:
+                                        $hoverclass = 'imgfloat';
+                                    endif;
+                                    ?>
+                                        <div class='<?php echo $hoverclass; ?>' id='image-<?php echo $row['cs_id'];?>'>
+                                            <img alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
+                                        </div>
+                                    <?php
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
                                         echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
@@ -1286,13 +1330,19 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
+                                        // Set classes for hover image
+                                        ?>
+                                            <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
+                                                <img alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
+                                            </div>
+                                        <?php
                                         if(isset($row['multiverse2'])):
                                             $multiverse_id_2 = $row['multiverse2'];
-                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                            echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         else:
-                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         endif;
                                         
                                         ?>      

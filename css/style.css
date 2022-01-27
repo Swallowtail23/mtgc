@@ -1774,13 +1774,17 @@ label.importlabel input[type="file"] {
     border: 1px solid rgba(0,0,0,0.44);
 }
 
-.deckcardimgdiv
+.deckcardimgdiv, .imgfloat, .backimgfloat
 {
     display:none;
     position: fixed;
     left: 50px;
     top: 170px;
     z-index: 100000;
+}
+.splitfloat
+{
+    transform: rotate(90deg);
 }
 
 .deckcardimg
