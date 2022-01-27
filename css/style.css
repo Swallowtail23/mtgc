@@ -602,8 +602,8 @@ table
     font-size: 14px;
     width: 311px;
     padding-right: 6px;
-    padding-top: 6px;
-    padding-bottom: 3px;
+    padding-top: 2px;
+    padding-bottom: 2px;
     padding-left: 2px;
 }
 
@@ -2284,6 +2284,26 @@ hr.styled
 { 
     color: #e32;
     content: ' *';
+}
+
+.material-icons.green
+{ 
+    color: #4CAF50; 
+}
+
+.material-icons.red 
+{ 
+    color: #F41E0E; 
+}
+
+.material-icons.md-14 
+{ 
+    font-size: 14px; 
+}
+
+.material-icons.md-16
+{ 
+    font-size: 16px; 
 }
 
 /* Media Queries from here  */

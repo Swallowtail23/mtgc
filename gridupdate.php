@@ -106,21 +106,21 @@ else:
         if ($sqlqty === $checkresult['normal']): 
             $obj = new Message;
             $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}",$logfile);
-            echo "<img src='/images/success.png' alt='success'>";
+            echo "<span class='material-icons md-18 green'>check</span>";
         else:
             $obj = new Message;
             $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}",$logfile);
-            echo "<img src='/images/error.png' alt='error'>"." ".$checkresult['normal'];
+            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['normal'];
         endif;
     elseif (isset($_GET['newfoil'])): 
         if ($sqlqty === $checkresult['foil']): 
             $obj = new Message;
             $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}",$logfile);
-            echo "<img src='/images/success.png' alt='success'>";
+            echo "<span class='material-icons md-18 green'>check</span>";
         else:
             $obj = new Message;
             $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}",$logfile);
-            echo "<img src='/images/error.png' alt='error'>"." ".$checkresult['foil'];
+            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['foil'];
         endif;
     endif;
 endif;?> 

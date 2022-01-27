@@ -382,7 +382,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             endif;
         endif;
         ?>
-
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        rel="stylesheet">  
         <div id='page'>
             <span id="printtitle" class="headername">
                 <img src="images/white_m.png">MtG collection
@@ -396,6 +397,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
+                            $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
                             elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
@@ -552,6 +554,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <?php
                             while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                                 $setcode = strtolower($row['setcode']);
+                                $uppercasesetcode = strtoupper($setcode);
                                 if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                     $meld = 'meld_result';
                                 elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):

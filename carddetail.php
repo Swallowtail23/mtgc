@@ -235,7 +235,8 @@ require('includes/overlays.php');
 require('includes/header.php'); 
 require('includes/menu.php'); //mobile menu
 ?>
-    
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">    
 <div id="page">
     <div id="carddetail">
         <div id="printtitle" class="headername">
@@ -474,9 +475,9 @@ require('includes/menu.php'); //mobile menu
                 $checkresult['foil'] = $db->escape($checkresult['foil'],'int');
                 $checkresult['notes'] = $db->escape($checkresult['notes'],'str');
                 if (($sqlmyqty === $checkresult['normal']) AND ($sqlmyfoil === $checkresult['foil']) AND ($sqlnotes === $checkresult['notes'])): ?>
-                    <div class="alert-box success" id="cardupdate"><span>success: </span>Updated.</div>
+                    <div class="alert-box success" id="cardupdate">Updated</div>
                 <?php else: ?>
-                    <div class="alert-box error" id="cardupdate"><span>error: </span>Failed.</div>
+                    <div class="alert-box error" id="cardupdate">Failed</div>
                 <?php endif;
             endif; 
             //Process image change if it's been called by an admin.
@@ -1034,7 +1035,7 @@ require('includes/menu.php'); //mobile menu
                                     $scryfall_tcgid = 0;
                                 endif;
                                 if ($scryfall_tcgid !== 0):
-                                    echo "<b>Price and link</b>";
+                                    echo "<b>Price and links</b>";
                                     if(isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== ""):
                                         $tcgdirectlink = htmlentities($scryfalljson["purchase_uris"]["tcgplayer"],ENT_QUOTES,"UTF-8");
                                     endif;?>
