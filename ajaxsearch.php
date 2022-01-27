@@ -1,6 +1,6 @@
 <?php 
-/* Version:     2.1
-    Date:       11/01/20
+/* Version:     3.0
+    Date:       27/01/22
     Name:       ajaxsearch.php
     Purpose:    PHP script to run ajax search from header
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -13,6 +13,8 @@
  *              Migrated to Mysqli_Manager
  *  2.1
  *              Moved from writelog to Message class
+ *  3.0
+ *              Refactor for cards_scry
 */
 
 session_start();
@@ -42,7 +44,7 @@ else:
     if($_POST):
         $r = $_POST['search'];
         $q =  $db->escape($r);
-        $sql = "SELECT setcode,name FROM cards JOIN sets ON cards.setcode = sets.setcodeid WHERE name like '%$q%' ORDER BY sets.releasedat DESC, cards.name ASC LIMIT 20"; 
+        $sql = "SELECT id,setcode,name,release_date FROM cards_scry WHERE name like '%$q%' ORDER BY release_date DESC, name ASC LIMIT 20"; 
         $obj = new Message;
         $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Running partial string query: $sql",$logfile);
         $sql_res = $db->query($sql);
@@ -55,7 +57,8 @@ else:
                 $ajaxname = $db->escape($name);
                 $setcode = $row['setcode'];
                 $sqlsetcode = $db->escape($row['setcode']);
-                $getajax = $db->select_one('id,number','cards',"WHERE name like '$ajaxname' AND setcode like '$sqlsetcode'");
+                $displaysetcode = strtoupper($setcode);
+                $getajax = $db->select_one('id,number','cards_scry',"WHERE name like '$ajaxname' AND setcode like '$sqlsetcode'");
                 if ($getajax === false):
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                 else:
@@ -66,7 +69,7 @@ else:
                 endif;
                 ?>
                 <tr>
-                    <td class="name"><?php echo "<a href='carddetail.php?setabbrv=$setcode&number=$ajaxnumber&id=$ajaxid'>$setcode - $final_name</a></td>"; ?>
+                    <td class="name"><?php echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - $final_name</a></td>"; ?>
                 </tr>
                 <?php
             endwhile; ?>

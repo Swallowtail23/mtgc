@@ -917,26 +917,30 @@ function get_full_url()
     return $myUrl;
 }
 
-function scryfall($set,$cardid,$method = null,$cardname,$cardnumber = null)
-// Fetch JSON data about the card from scryfall.com
+function scryfall($cardid)
+// Fetch TCG buy URI from scryfall.com
 {
     //Set up the function
     global $db,$logfile,$useremail;
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with parameters $set, $cardid, $method, $cardnumber, $cardname",$logfile);
-    if(!isset($set) OR !isset($cardid) OR !isset($cardname)):
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail for $cardid",$logfile);
+    if(!isset($cardid)):
         $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail without required card parameters",$logfile);
+        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail without required card id",$logfile);
         exit;
     endif;
     $baseurl = "https://api.scryfall.com/";
-    $cardname = $db->escape($cardname);
     $cardid = $db->escape($cardid);
-    
+    $time = time();
+    //Set the URL
+    $url = $baseurl."cards/".$cardid;
+    $obj = new Message;
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $cardid is $url",$logfile);
+        
     if($row = $db->select('id','cards_scry',"WHERE id='$cardid'")):
         if ($row->num_rows === 0):
             $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, no card with these parameters - exiting (2)",$logfile);
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, no card with this id - exiting (2)",$logfile);
             exit;
         elseif ($row->num_rows === 1):
             $scrymethod = 'id';
@@ -948,40 +952,28 @@ function scryfall($set,$cardid,$method = null,$cardname,$cardnumber = null)
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif;
     
-    //Set the URL
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail Scryfall json method for $set, $cardname, $cardid is $scrymethod",$logfile);
-    if($scrymethod === 'id'):
-        $url = $baseurl."cards/".$cardid;
-    else:
-        // catch errors
-    endif;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $set, $cardname, $cardid, $cardnumber is $url",$logfile);
-    
-    // Check for existing data not too old or contain error code and set required action
-    $row = $db->select_one('jsonupdatetime, jsondata', 'scryfalljson',"WHERE id='$cardid'");
+    // Check for existing data, not too old, and set required action
+    $row = $db->select_one('jsonupdatetime, tcg_buy_uri','scryfalljson',"WHERE id='$cardid'");
     if ($row !== null):
         $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data exists for $set, $cardname, $cardid",$logfile);
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data exists for $cardid",$logfile);
         $lastjsontime = $row['jsonupdatetime'];
-        $scry_json_test = json_decode($row['jsondata'],true);
-        if ((time() - $lastjsontime) > 43200 OR ($scry_json_test["object"] !== 'card')):
-            //Old data or error, fetch and update:
+        if ((time() - $lastjsontime) > 43200):
+            //Old data, fetch and update:
             $scryaction = 'update';
             $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale or has error for $set, $cardname, $cardid, running '$scryaction'",$logfile);
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale or has error for $cardid, running '$scryaction'",$logfile);
         else:
             //data is there and is current:
             $scryaction = 'read';
             $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data already current for $set, $cardname, $cardid, running '$scryaction'",$logfile);
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data already current for $cardid, running '$scryaction'",$logfile);
         endif;
     else:
         //No data, fetch and insert:
         $scryaction = 'get';
         $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: No data exists for $set, $cardname, $cardid, running '$scryaction'",$logfile);
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: No data exists for $cardid, running '$scryaction'",$logfile);
     endif;
             
     // Actions:
@@ -997,26 +989,36 @@ function scryfall($set,$cardid,$method = null,$cardname,$cardnumber = null)
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with update: $curlresult",$logfile);
         curl_close($ch);
         $scryfall_result = json_decode($curlresult,true);
-        if($scryfall_result['object'] !== 'card'):
-            //New data does not contain a card definition, skip overwrite
+        $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
+        $price = $scryfall_result["prices"]["usd"];
+        $price_foil = $scryfall_result["prices"]["usd_foil"];
+        $data = array(
+            'tcg_buy_uri' => $tcg_buy_uri
+            );
+        if ($db->update('scryfalljson', $data, "WHERE id='$cardid'")):
             $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data does not contain a card definition, skipping write",$logfile);
-            $scryfall_result['object'] = 'error';
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, tcg uri updated",$logfile);
         else:
-            $data = array(
-                'jsondata' => $curlresult
-                );
-            if ($db->update('scryfalljson', $data, "WHERE id='$cardid'")):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, data updated",$logfile);
-            else:
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, data update failed",$logfile);
-            endif;
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, tcg uri update failed",$logfile);
         endif;
+        $data = array(
+            'price' => $price,
+            'price_foil' => $price_foil,
+            );
+        if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
+        endif;
+
     // READ
     elseif($scryaction === 'read'):
-        $scryfall_result = json_decode($row['jsondata'],true);
+        $tcg_buy_uri = $row['tcg_buy_uri'];
+        $obj = new Message;
+        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning {$row['tcg_buy_uri']}",$logfile);
     
     // GET and INSERT
     elseif($scryaction === 'get'):
@@ -1029,21 +1031,40 @@ function scryfall($set,$cardid,$method = null,$cardname,$cardnumber = null)
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with get: $curlresult",$logfile);
         curl_close($ch);
         $scryfall_result = json_decode($curlresult,true);
-        $time = time();
-        $data = array(
-            'jsondata' => $curlresult,
-            'id' => $cardid,
-            'jsonupdatetime' => $time
-        );
-        if ($db->insert('scryfalljson', $data) === TRUE):
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $set, $cardname: Insert ID: ".$db->insert_id,$logfile);
-        else:
+        $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
+        $price = $scryfall_result["prices"]["usd"];
+        $price_foil = $scryfall_result["prices"]["usd_foil"];
+        $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
+        $stmt = $db->prepare($query);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $query",$logfile);
+        $stmt->bind_param('sss', $cardid, $time, $tcg_buy_uri);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
             $obj = new Message;
             $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Adding update notice: failed ".$db->error, E_USER_ERROR,$logfile);
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
+        endif;
+        $data = array(
+            'price' => $price,
+            'price_foil' => $price_foil,
+            );
+        if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
         endif;
     endif;
-    return $scryfall_result;
+    return $tcg_buy_uri;
 }
 
 function loginstamp($useremail)

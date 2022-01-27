@@ -435,13 +435,13 @@ elseif ($adv == "yes" ) :
         elseif ($sortBy == "setdown"):
             $order = "ORDER BY cards_scry.release_date DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "powerup"):
-            $order = "ORDER BY cards_scry.maxpower * 1 ASC ";
+            $order = "ORDER BY cards_scry.maxpower * 1 ASC, cards_scry.cmc ASC ";
         elseif ($sortBy == "powerdown"):
-            $order = "ORDER BY cards_scry.minpower * 1 DESC ";
+            $order = "ORDER BY cards_scry.minpower * 1 DESC, cards_scry.cmc DESC ";
         elseif ($sortBy == "toughup"):
-            $order = "ORDER BY cards_scry.maxtoughness * 1 ASC ";
+            $order = "ORDER BY cards_scry.maxtoughness * 1 ASC, cards_scry.cmc ASC ";
         elseif ($sortBy == "toughdown"):
-            $order = "ORDER BY cards_scry.mintoughness * 1 DESC ";        
+            $order = "ORDER BY cards_scry.mintoughness * 1 DESC, cards_scry.cmc DESC ";        
         else:
             $order = "ORDER BY cards_scry.name ASC ";
         endif;

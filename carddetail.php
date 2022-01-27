@@ -321,49 +321,22 @@ require('includes/menu.php'); //mobile menu
                     oversized,
                     promo,
                     gatherer_uri,
+                    image_uri,
                     api_uri,
                     scryfall_uri,
-                    legalityblock
-                    legaitystandard,
-                    legalityextended,
+                    legalityblock,
+                    legalitystandard,
                     legalitymodern,
                     legalitylegacy,
                     legalityvintage,
-                    legalityhighlander,
-                    legalityfrenchcommander,
-                    legalitytinyleaderscommander,
-                    legalitymodernduelcommander,
-                    legalitycommander,
-                    legalitypeasant,
-                    legalitypauper,
-                    legalitypioneer,
                     updatetime,
                     price,
                     price_foil,
-                    no,
-                    setcodeid,
-                    magiccardsid,
-                    fullsetname,
-                    tcgfullname,
-                    block,
-                    websearch,
-                    settype,
-                    description,
-                    common,
-                    uncommon,
-                    rare,
-                    mythicrare,
-                    basicland,
-                    total,
-                    releasedat,
-                    stdlegal,
-                    mdnlegal,
                     normal,
                     $mytable.foil,
                     notes
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                LEFT JOIN sets on UPPER(cards_scry.setcode) = sets.magiccardsid
                 WHERE cards_scry.id = '$cardid'
                 LIMIT 1";
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query is: $searchqry",$logfile);
@@ -390,9 +363,9 @@ require('includes/menu.php'); //mobile menu
                 $meld = '';
             endif;
             //Populate JSON data
-            $scryfalljson = scryfall($setcode,$id,null,$cardname,$cardnumber);
-            if(isset($scryfalljson['layout']) AND $scryfalljson['layout'] === "normal"):
-                $scryfallimg = $scryfalljson['image_uris']['normal'];
+            $tcg_buy_uri = scryfall($id);
+            if(isset($row['layout']) AND $row['layout'] === "normal"):
+                $scryfallimg = $row['image_uri'];
             else:
                 $scryfallimg = null;
             endif;
@@ -409,7 +382,8 @@ require('includes/menu.php'); //mobile menu
             $imageurl = $imagefunction['front'];
             if(!is_null($imagefunction['back'])):
                 $imagebackurl = $imagefunction['back'];
-            endif;$settotal = $row['total'];
+            endif;
+            $settotal = 0;
             // If the current record has null fields set the variables to 0 so the update query works 
             if (empty($row['normal'])):
                 $myqty = 0;
@@ -611,12 +585,11 @@ require('includes/menu.php'); //mobile menu
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
                                         echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
-                                    elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                        echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
+                                    elseif(isset($row['scryfall_uri'])):
+                                        echo "<a href='".$row['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     else:
                                         echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     endif;
-                                    
                                         
                                     ?>
                                 </td>
@@ -714,7 +687,8 @@ require('includes/menu.php'); //mobile menu
                     <div id="carddetailinfo">
                         <h3 class="shallowh3">Details</h3>
                         <?php 
-                        if($row["layout"] !== 'reversible_card'):
+                        echo "<i>".$setname." (".strtoupper($setcode).") no. ".$row['number_import']."</i><br>";
+                        if($row["layout"] !== 'reversible_card'): // no details at card level for reversible cards
                             echo "<b>Type: </b>".$row['type'];
                             echo "<br>";
                             echo "<b>Rarity: </b>";
@@ -732,11 +706,11 @@ require('includes/menu.php'); //mobile menu
                                 $row['cmc'] = round($row['cmc']);
                             endif;
                             echo "<b>CMC: </b>".$row['cmc'];
-                            echo "<br><br>";
+                            echo "<br>";
                         endif;
                         $layouts_double = array ('transform','modal_dfc','adventure','split','reversible_card','flip');
                         if(in_array($row["layout"],$layouts_double)):
-                            echo "<b>Name: </b>".$row['f1_name'];
+                            echo "<br><b>Name: </b>".$row['f1_name'];
                             echo "<br>";
                             if($row['layout'] === 'reversible_card'):
                                 if(validateTrueDecimal($row['f1_cmc']) === false):
@@ -753,10 +727,13 @@ require('includes/menu.php'); //mobile menu
                             echo "<b>Type: </b>".$row['f1_type'];
                             echo "<br>";
                             echo "<b>Abilities: </b>".symbolreplace($row['f1_ability']);
+                            echo "<br>";
                             if (strpos($row['f1_type'],'reature') !== false):
-                                echo "<br><b>Power / Toughness: </b>".$row['f1_power']."/".$row['f1_toughness']; 
+                                echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f1_toughness']; 
+                                echo "<br>";
                             elseif (strpos($row['f1_type'],'laneswalker') !== false):
-                                echo "<br><b>Loyalty: </b>".$row['f1_loyalty']; 
+                                echo "<b>Loyalty: </b>".$row['f1_loyalty'];
+                                echo "<br>";
                             endif;
                         else:
                             $manacost = symbolreplace($row['manacost']);
@@ -765,10 +742,13 @@ require('includes/menu.php'); //mobile menu
                                 echo "<br>";
                             endif;
                             echo "<b>Abilities: </b>".symbolreplace($row['ability']);
+                            echo "<br>";
                             if (strpos($row['type'],'reature') !== false):
-                                echo "<br><b>Power / Toughness: </b>".$row['power']."/".$row['toughness']; 
+                                echo "<b>Power / Toughness: </b>".$row['power']."/".$row['toughness']; 
+                                echo "<br>";
                             elseif (strpos($row['type'],'laneswalker') !== false):
-                                echo "<br><b>Loyalty: </b>".$row['loyalty']; 
+                                echo "<b>Loyalty: </b>".$row['loyalty']; 
+                                echo "<br>";
                             endif;
                         endif;
                         if($meld === 'meld_part'):
@@ -782,9 +762,9 @@ require('includes/menu.php'); //mobile menu
                                 $meld_partner_id = $row['p3_id'];
                                 $meld_partner_name = $row['p3_name'];
                             endif;
-                            echo "<br><b>Melds with:</b><br>";
-                            echo "<a href='carddetail.php?id=$meld_partner_id'>$meld_partner_name</a>&nbsp;";
-                            echo "<br><b>to:</b><br>";
+                            echo "<b>Melds with:</b><br>";
+                            echo "<a href='carddetail.php?id=$meld_partner_id'>$meld_partner_name</a>&nbsp;<br>";
+                            echo "<b>to:</b><br>";
                             if($row['p1_component'] === 'meld_result'):
                                 $meld_result_id = $row['p1_id'];
                                 $meld_result_name = $row['p1_name'];
@@ -795,9 +775,8 @@ require('includes/menu.php'); //mobile menu
                                 $meld_result_id = $row['p3_id'];
                                 $meld_result_name = $row['p3_name'];
                             endif;
-                            echo "<a href='carddetail.php?id=$meld_result_id'>$meld_result_name</a>&nbsp;";
+                            echo "<a href='carddetail.php?id=$meld_result_id'>$meld_result_name</a>&nbsp;<br>";
                         elseif($meld === 'meld_result'):
-                            echo "<br><br>";
                             echo "<b>Melds from:</b><br>";
                             if($row['p1_component'] === 'meld_part'):
                                 echo "<a href='carddetail.php?id={$row['p1_id']}'>{$row['p1_name']}</a>&nbsp;<br>";
@@ -809,80 +788,47 @@ require('includes/menu.php'); //mobile menu
                                 echo "<a href='carddetail.php?id={$row['p3_id']}'>{$row['p3_name']}</a>&nbsp;<br>";
                             endif;
                         endif;
-                        echo "<br><b>Art by: </b>".$row['artist'];
+                        echo "<b>Art by: </b>".$row['artist'];
+                        echo "<br>";
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
-                            echo "<br><br>";
                             echo "<b>Legality:</b>";    
-                            if(isset($scryfalljson['object']) AND $scryfalljson['object'] !== "error"):
-                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall data ok, using scryfall method for legalities for $setcode, $cardname, $id",$logfile);
-                                echo " Standard - ";
-                                    if(isset($scryfalljson['legalities']['standard']) AND $scryfalljson['legalities']['standard'] === "legal"):
-                                        echo "yes";
-                                    else:    
-                                        echo "no";
-                                    endif;
-                                echo "; Modern - ";
-                                    if(isset($scryfalljson['legalities']['modern']) AND $scryfalljson['legalities']['modern'] === "legal"):
-                                        echo "yes";
-                                    else:    
-                                        echo "no";
-                                    endif;
-                                echo "<br>Vintage - ";
-                                    if(isset($scryfalljson['legalities']['vintage']) AND $scryfalljson['legalities']['vintage'] === "legal"):
-                                        echo "yes";
-                                    elseif(isset($scryfalljson['legalities']['vintage']) AND $scryfalljson['legalities']['vintage'] === "restricted"):
-                                        echo "restricted";
-                                    else:    
-                                        echo "no";
-                                    endif;
-                                echo "; Legacy - ";
-                                    if(isset($scryfalljson['legalities']['legacy']) AND $scryfalljson['legalities']['legacy'] === "legal"):
-                                        echo "yes";
-                                    else:
-                                        echo "no";
-                                    endif;
-                                echo "<br>Pioneer - ";
-                                    if(isset($scryfalljson['legalities']['pioneer']) AND $scryfalljson['legalities']['pioneer'] === "legal"):
-                                        echo "yes";
-                                    elseif(isset($scryfalljson['legalities']['pioneer']) AND $scryfalljson['legalities']['pioneer'] === "not_legal"):
-                                        echo "no";
-                                    endif;
-                                echo "; Commander - ";
-                                    if(isset($scryfalljson['legalities']['commander']) AND $scryfalljson['legalities']['commander'] === "legal"):
-                                        echo "yes";
-                                    elseif(isset($scryfalljson['legalities']['commander']) AND ($scryfalljson['legalities']['commander'] === "not_legal" OR $scryfalljson['legalities']['commander'] === "banned")):
-                                        echo "no";
-                                    endif;
-                            elseif(isset($scryfalljson['object']) AND $scryfalljson['object'] === "error"):
-                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall data error, using legacy method for legalities for $setcode, $cardname, $id",$logfile);
-                                echo " (DB) Standard - ";
-                                    if($row['legalitystandard'] == 1):
-                                        echo "yes";
-                                    else:
-                                        echo "no";
-                                    endif;
-                                echo "; Modern - ";
-                                    if($row['legalitymodern'] == 1):
-                                        echo "yes";
-                                    else:
-                                        echo "no";
-                                    endif;
-                                echo "<br>Vintage - ";
-                                    if($row['legalityvintage'] == 1):
-                                        echo "yes";
-                                    elseif($row['legalityvintage'] == 2):
-                                        echo "restricted";
-                                    else:
-                                        echo "no";
-                                    endif;
-                                echo "; Legacy - ";
-                                    if($row['legalitylegacy'] == 1):
-                                        echo "yes";
-                                    else:
-                                        echo "no";
-                                    endif;
-
-                            endif;
+                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
+                            echo " Standard - ";
+                                if($row['legalitystandard'] == 'legal'):
+                                    echo "yes";
+                                elseif($row['legalitystandard'] == 'banned'):
+                                    echo "banned";
+                                else:
+                                    echo "no";
+                                endif;
+                            echo "; Modern - ";
+                                if($row['legalitymodern'] == 'legal'):
+                                    echo "yes";
+                                elseif($row['legalitymodern'] == 'banned'):
+                                    echo "banned";
+                                else:
+                                    echo "no";
+                                endif;
+                            echo "<br>Vintage - ";
+                                if($row['legalityvintage'] == 'legal'):
+                                    echo "yes";
+                                elseif($row['legalityvintage'] == 'banned'):
+                                    echo "banned";
+                                elseif($row['legalityvintage'] == 'restricted'):
+                                    echo "restricted";
+                                else:
+                                    echo "no";
+                                endif;
+                            echo "; Legacy - ";
+                                if($row['legalitylegacy'] == 'legal'):
+                                    echo "yes";
+                                elseif($row['legalitylegacy'] == 'banned'):
+                                    echo "banned";
+                                elseif($row['legalitylegacy'] == 'restricted'):
+                                    echo "restricted";
+                                else:
+                                    echo "no";
+                                endif;
                         endif;    
                         if($row['layout'] === 'adventure'):
                             echo "<h3>Adventure: </h3>";
@@ -904,20 +850,8 @@ require('includes/menu.php'); //mobile menu
                             elseif (strpos($row['f2_type'],'laneswalker') !== false):
                                 echo "<b>Loyalty: </b>".$row['f2_loyalty']."<br>"; 
                             endif;
-                            echo "<br><a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; 
-                            if(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                echo "<br><a href='".$scryfalljson['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
-                            else:
-                                $namehtml = str_replace("//","",$namehtml);
-                                $namehtml = str_replace("  ","%20",$namehtml);
-                                $namehtml = str_replace(" ","%20",$namehtml);
-                                echo "<br><a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search cardname on Scryfall</a>";
-                            endif;
-                            if(isset($admin) AND $admin == 1):
-                                echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>"; 
-                            endif;
                         elseif($row['layout'] === 'split' OR $row['layout'] === 'flip'):
-                            echo "<br><br><b>Name: </b>".$row['f2_name'];
+                            echo "<br><b>Name: </b>".$row['f2_name'];
                             echo "<br>";
                             $flipmanacost = symbolreplace($row['f2_manacost']);
                             if($flipmanacost !== ''):
@@ -935,32 +869,9 @@ require('includes/menu.php'); //mobile menu
                             elseif (strpos($row['f2_type'],'laneswalker') !== false):
                                 echo "<b>Loyalty: </b>".$row['f2_loyalty']."<br>"; 
                             endif;
-                            echo "<br><a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; 
-                            if(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                echo "<br><a href='".$scryfalljson['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
-                            else:
-                                $namehtml = str_replace("//","",$namehtml);
-                                $namehtml = str_replace("  ","%20",$namehtml);
-                                $namehtml = str_replace(" ","%20",$namehtml);
-                                echo "<br><a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search cardname on Scryfall</a>";
-                            endif;
-                            if(isset($admin) AND $admin == 1):
-                                echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>"; 
-                            endif;
-                        elseif($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
-                        else:
-                            echo "<br><br><a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; 
-                            if(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                echo "<br><a href='".$scryfalljson['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
-                            else:
-                                $namehtml = str_replace("//","",$namehtml);
-                                $namehtml = str_replace("  ","%20",$namehtml);
-                                $namehtml = str_replace(" ","%20",$namehtml);
-                                echo "<br><a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search cardname on Scryfall</a>";
-                            endif;
-                            if(isset($admin) AND $admin == 1):
-                                echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
-                            endif;
+                        endif;
+                        if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
+                            echo "ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
                         endif;
                         ?>                
                     </div>
@@ -1021,63 +932,66 @@ require('includes/menu.php'); //mobile menu
                                 <?php 
 
                                 // Price section
-                                if(
-                                    (isset($scryfalljson["tcgplayer_id"]) AND $scryfalljson["tcgplayer_id"] !== "")
-                                        AND
-                                    (isset($scryfalljson["object"]) AND $scryfalljson["object"] === "card")
-                                        AND
-                                    (isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== "")
-                                        AND
-                                    (isset($scryfalljson["prices"]["usd"]) AND $scryfalljson["prices"]["usd"] !== "")
-                                  ):
-                                    $scryfall_tcgid = $scryfalljson["tcgplayer_id"];
+                                echo "<b>Price and links</b>";
+                                if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
+                                    $tcgdirectlink = $tcg_buy_uri;
                                 else:
-                                    $scryfall_tcgid = 0;
-                                endif;
-                                if ($scryfall_tcgid !== 0):
-                                    echo "<b>Price and links</b>";
-                                    if(isset($scryfalljson["purchase_uris"]["tcgplayer"]) AND $scryfalljson["purchase_uris"]["tcgplayer"] !== ""):
-                                        $tcgdirectlink = htmlentities($scryfalljson["purchase_uris"]["tcgplayer"],ENT_QUOTES,"UTF-8");
-                                    endif;?>
-                                    <table id='tcgplayer'>
-                                        <tr>
-                                            <td class="buycellleft">
-                                                <i>US$</i>
-                                            </td>
-                                            <td class="buycell">
-                                                Scryfall
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="buycellleft">
-                                                Normal
-                                            </td>
-                                            <td class="buycell mid">
-                                                <?php echo $scryfalljson["prices"]["usd"]; ?>
-                                            </td>
-                                            <td rowspan=2 class='buycellright inline_button buybutton sglrow'>
-                                                <a href='<?php echo $tcgdirectlink ?>' target='_blank'>BUY</a>
-                                            </td>
-                                        </tr>
-                                        <?php 
-                                        if(
-                                            (isset($scryfalljson["prices"]["usd_foil"]) AND $scryfalljson["prices"]["usd_foil"] !== "")):
-                                        ?>
-                                        <tr>
-                                            <td class="buycellleft">
-                                                Foil
-                                            </td>
-                                            <td class="buycell mid">
-                                                <?php echo $scryfalljson["prices"]["usd_foil"]; ?>
-                                            </td>
-                                        </tr>
+                                    $tcgdirectlink = null;
+                                endif;?>
+                                <table id='tcgplayer' width="100%">
+                          <?php if((isset($row["price"]) AND $row["price"] !== "")):?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Normal
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?php echo $row["price"]; ?>
+                                        </td>
+                                    </tr>
+                          <?php endif;      
+                                if((isset($row["price_foil"]) AND $row["price_foil"] !== "")):?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Foil
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?php echo $row["price_foil"]; ?>
+                                        </td>
+                                    </tr>
+                          <?php endif; ?>
+                                    <tr>
+                                        <td colspan=2 class="buycellleft">
+                                            <?php
+                                            if(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== ""):
+                                                echo "<a href='".$row['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
+                                            else:
+                                                $namehtml = str_replace("//","",$namehtml);
+                                                $namehtml = str_replace("  ","%20",$namehtml);
+                                                $namehtml = str_replace(" ","%20",$namehtml);
+                                                echo "<a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
+                                            endif;
+                                            ?>
+                                        </td>
+                                    </tr>
+                          <?php if(isset($tcgdirectlink) AND $tcgdirectlink !== null): ?>
+                                    <tr>
+                                        <td colspan=2 class="buycellleft">
                                         <?php
-                                        endif;
+                                        echo "<a href='".$tcgdirectlink."' target='_blank'>Card on TCGPlayer</a>";
                                         ?>
-                                    </table>
-                                    <hr class='hr324'>
-                                    <?php
-                                endif;
+                                        </td>
+                                    </tr>
+                                    <?php 
+                                endif; ?>
+                                    <tr>
+                                        <td colspan=2 class="buycellleft">
+                                            <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <hr class='hr324'>
+                                <?php
+                                    
                                 // Others with this card section 
                                 echo "<b>Others with this card</b><br>";
                                 if($usergrprow = $db->select_one('grpinout,groupid','users',"WHERE usernumber = $user")):
@@ -1326,6 +1240,7 @@ require('includes/menu.php'); //mobile menu
                             if (!in_array($row['layout'],$flip_types)):
                                 echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;";
                             endif;
+                            echo("</div>");
                         endif;
                     endif; ?>
                 </div>
@@ -1356,8 +1271,8 @@ require('includes/menu.php'); //mobile menu
                                         if(isset($row['multiverse2'])):
                                             $multiverse_id_2 = $row['multiverse2'];
                                             echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
-                                        elseif(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                            echo "<a href='".$scryfalljson['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
+                                        elseif(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== ""):
+                                            echo "<a href='".$row['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         else:
                                             echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         endif;
@@ -1399,17 +1314,8 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             echo "<b>Art by: </b>".$row['f2_artist']."<br>";
-                            echo "<br><a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; 
-                            if(isset($scryfalljson['scryfall_uri']) AND $scryfalljson['scryfall_uri'] !== ""):
-                                echo "<br><a href='".$scryfalljson['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
-                            else:
-                                $namehtml = str_replace("//","",$namehtml);
-                                $namehtml = str_replace("  ","%20",$namehtml);
-                                $namehtml = str_replace(" ","%20",$namehtml);
-                                echo "<br><a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search cardname on Scryfall</a>";
-                            endif;
                             if(isset($admin) AND $admin == 1):
-                                echo "<br>$setname (".strtoupper($setcode).") no. ".$row['number']." <br>ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
+                                echo "ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
                             endif;
                             ?>                
                         </div>

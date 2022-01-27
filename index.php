@@ -126,7 +126,7 @@ $selectAll = "SELECT
                 number,
                 number_import,
                 name,
-                promostatus,
+                promo,
                 release_date,
                 rarity,
                 set_name,
@@ -142,7 +142,6 @@ $selectAll = "SELECT
                 p3_name
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                LEFT JOIN setsPromo ON cards_scry.setcode = setsPromo.promosetcode
                 WHERE ";
 $sorting = "LIMIT $start_from, $perpage";
 $maxresults = 1000;
@@ -426,7 +425,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                             <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                                 <?php
-                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
+                                                if (!$row['promo'] AND $meld !== 'meld_result'):
                                                     echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 elseif($meld === 'meld_result'):
                                                     echo "Meld card";
@@ -478,7 +477,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
                                                 <?php
-                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
+                                                if (!$row['promo'] AND $meld !== 'meld_result'):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
                                                     echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;
@@ -647,7 +646,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
                                                 <?php
-                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
+                                                if (!$row['promo'] AND $meld !== 'meld_result'):
                                                     echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
                                                 elseif($meld === 'meld_result'):
                                                     echo "Meld card";
@@ -700,7 +699,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
                                                 <?php
-                                                if (!$row['promostatus'] AND $meld !== 'meld_result'):
+                                                if (!$row['promo'] AND $meld !== 'meld_result'):
                                                     echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
                                                     echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                                 endif;
