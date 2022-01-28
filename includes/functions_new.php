@@ -164,55 +164,6 @@ function username($user)
     endif;
 }
 
-function fliptype($backid, $manacost, $meld = null)
-// Gets flipcard status and returns kamigawafliptop; kamigawaflipbottom; back; front; meldcombined, meldmain, meldadd or no
-{
-    global $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with $backid,$manacost,$meld",$logfile);
-    if ($backid != ''): 
-        if (substr($backid,0,1) === '-'): 
-            // Kamigawa flip card
-            $backid = substr($backid,1); // gets the related ID
-            if (substr($backid,-1,1) === '2'):
-                //Playable half of a Kamigawa flip
-                $fliptype = 'kamigawafliptop';
-            elseif (substr($backid,-1,1) === '1'):
-                //Flip half of a Kamigawa flip
-                $fliptype = 'kamigawaflipbottom';
-            endif;
-        elseif ($meld != null):
-            // Meld card (part or combined)
-            if ($meld == 'combo'):
-                //Combined meld
-                $fliptype = 'meldcombined';
-            elseif ($meld == 'main'):    
-                //Main partner card for meld
-                $fliptype = 'meldmain';
-            elseif ($meld == 'add'):    
-                //Addition to meld
-                $fliptype = 'meldadd';
-            endif;
-        elseif ($backid == 'bfzfull'):
-            // it's a Full art land card
-            $fliptype = 'bfzfull';
-        else: 
-            if ($manacost === ''):
-                // it's a flip BACK
-                $fliptype = 'back';
-            elseif ($manacost != ''): 
-                // it's a flip FRONT
-                $fliptype = 'front';
-            else:
-                $fliptype = 'no';
-            endif;
-        endif;
-    else:
-        $fliptype = 'no';
-    endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Returning $fliptype",$logfile);
-    return $fliptype;
-}
-
 function deckownercheck($deck,$user)
 {
     global $db, $logfile;
@@ -490,24 +441,6 @@ function getimgname($cardid)
     return $imgname;
 }
 
-function getflipimagename($flipcard,$setcode,$number,$flipid,$flipnumber)
-{
-    global $logfile;
-    if (($flipcard === 'front') OR ($flipcard === 'kamigawafliptop')):
-        $flipimgname = getimgname($setcode,$number,$flipid,'back');
-    elseif (($flipcard === 'back') OR ($flipcard === 'kamigawaflipbottom')):
-        $flipimgname = getimgname($setcode,$number,$flipid,'front');
-    elseif ($flipcard === 'meldcombined'):
-        $flipimgname = getimgname($setcode,$number,$flipid,'front');
-    elseif ($flipcard === 'meldmain'):
-        $flipimgname = getimgname($setcode,$number,$flipid,'back');
-    elseif ($flipcard === 'meldadd'):
-        $flipimgname = getimgname($setcode,$flipnumber,$flipid,'back');
-    endif; 
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": card image name is $flipimgname",$logfile);
-    return $flipimgname;
-}
-
 function getImageNew($setcode,$cardid,$ImgLocation,$layout)
 {
     global $db, $logfile;
@@ -674,7 +607,7 @@ function exportMysqlToCsv($table,$filename = 'export.csv')
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
 	$table = $db->escape($table);
-        $sql = "SELECT setcode,number,name,normal,foil,$table.id FROM $table JOIN cards ON $table.id = cards.id WHERE (($table.normal > 0) OR ($table.foil > 0))";
+        $sql = "SELECT setcode,set_name,number_import,name,normal,$table.foil,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0))";
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection SQL: $sql",$logfile);
         
 	// Gets the data from the database
@@ -745,131 +678,6 @@ function importmapcheck($import_id)
         endif;
         return $import_id;
     endif;
-}
-
-function getPrice($card_id,$card_name) 
-    // See getpricefunctionold.php for code that worked with deckbrew.com
-    // Price is no longer retrieved on the fly, but is updated nightly from MTGPrice.com and stored in the database.
-{
-echo "<br><font color=red> Low: </font>$-.-- <font color=blue>Median: </font>$-.-- <font color=green>High: </font>$-.--";
-}
-
-function backidtype($back,$mana)
-{
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": backid type request received for $back , with mana cost of $mana",$logfile);
-    if (substr($back,0,1) === '-'): 
-        // Kamigawa flip card
-        $backid = substr($back,1); // gets the related ID
-        if (substr($backid,-1,1) === '2'):
-            //Playable half of a Kamigawa flip
-            $flipcard = 'kamigawafliptop';
-        elseif (substr($backid,-1,1) === '1'):
-            //Flip half of a Kamigawa flip
-            $flipcard = 'kamigawaflipbottom';
-        endif;
-    else: //elseif ($back > 0): 
-        if ($mana == ''): 
-            // it's a flip BACK
-            $flipcard = 'back';
-        elseif ($mana != ''): 
-            // it's a flip FRONT
-            $flipcard = 'front';
-        else:
-            $flipcard = 'no';
-        endif;
-        $backid = $back;
-    endif;
-    return array ($flipcard, $backid);
-}
-
-// Note - this is to be deprecated
-function tcgplayer($cardname, $set, $lastpricetime, $tcglowdb, $tcgavgdb, $tcghidb, $tcgfoildb, $tcglinkdb, $idfortcg)
-{
-    global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with $cardname and $set, id is $idfortcg",$logfile);
-    $cardname = str_replace("Æ","ae",$cardname);
-    $cardname = str_replace("'","%27",$cardname);
-    $cardname = str_replace("//","%2F%2F",$cardname);
-    $cardname = str_replace("  ","%20",$cardname);
-    $cardname = str_replace(" ","%20",$cardname);
-    $cardname = str_replace(":","%3a",$cardname);
-    $set = str_replace("Æ","ae",$set);
-    $set = str_replace("'","%27",$set);
-    $set = str_replace(" ","%20",$set);
-    if (((time() - $lastpricetime) > 43200) OR (empty($tcglinkdb)) OR ($tcglowdb + $tcgavgdb + $tcghidb + $tcgfoildb == 0)):
-        $xml = @file_get_contents("http://partner.tcgplayer.com/x3/phl.asmx/p?pk=MTGCOLLECT&s=$set&p=$cardname");
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting TCGplayer data from http://partner.tcgplayer.com/x3/phl.asmx/p?pk=MTGCOLLECT&s=$set&p=$cardname",$logfile);
-        if ($xml !== false):
-            $xmlobject = simplexml_load_string($xml);
-            if(isset($xmlobject->message) AND $xmlobject->message == 'Product not found.'):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Product not found",$logfile);
-                $tcgxml['valid'] = 0;
-            else:
-                $hiprice = $tcgxml['hiprice'] = ($xmlobject->product->hiprice);
-                $lowprice = $tcgxml['lowprice'] = ($xmlobject->product->lowprice);
-                $avgprice = $tcgxml['avgprice'] = ($xmlobject->product->avgprice);
-                $foilprice = $tcgxml['foilprice'] = ($xmlobject->product->foilavgprice);
-                $tcglink = $tcgxml['tcglink'] = ($xmlobject->product->link);
-                $tcgxml['cached'] = 0;
-                $time = time();
-                $sql = "INSERT INTO cardprice
-                                (tcglow,tcgavg,tcghi,tcgfoil,id, tcgupdatetime,tcglink) 
-                                VALUES 
-                                ('$lowprice','$avgprice','$hiprice','$foilprice','$idfortcg','$time','$tcglink')
-                                ON DUPLICATE KEY 
-                                UPDATE tcglow='$lowprice', tcgavg='$avgprice', tcghi='$hiprice', tcgfoil='$foilprice', tcgupdatetime='$time', tcglink='$tcglink'";
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Calling update with query: $sql",$logfile);
-                if ($db->query($sql) === false):
-                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-                    $tcgxml['valid'] = 0;
-                else:
-                    $affected_rows = $db->affected_rows;
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updated tcg price for: $cardname",$logfile);
-                    $tcgxml['valid'] = 2;
-                endif;
-            endif;
-        else:
-            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting TCGplayer data failed",$logfile);
-            $tcgxml['valid'] = 0;
-        endif;
-    else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Using cached pricing",$logfile);
-        $hiprice = $tcgxml['hiprice'] = $tcghidb;
-        $lowprice = $tcgxml['lowprice'] = $tcglowdb;
-        $avgprice = $tcgxml['avgprice'] = $tcgavgdb;
-        $foilprice = $tcgxml['foilprice'] = $tcgfoildb;
-        $tcgxml['tcglink'] = $tcglinkdb;
-        $tcgxml['valid'] = 2;
-        $tcgxml['cached'] = 1;
-    endif;
-    if ($tcgxml['valid'] !== 0):
-        if (        ($tcgxml['hiprice'] != 0) 
-                OR  ($tcgxml['avgprice'] != 0) 
-                OR  ($tcgxml['lowprice'] != 0) 
-                OR  ($tcgxml['foilprice'] != 0)): 
-            $tcgxml['validwithprice'] = 1;
-            $tcgxml['valid'] = 1;
-        else:
-            if (!empty($tcgxml['tcglink'])):
-                $tcgxml['validwithnoprice'] = 1;
-                $tcgxml['valid'] = 1;
-            endif;
-        endif;
-        if (        ($tcgxml['hiprice'] != 0) 
-                OR  ($tcgxml['avgprice'] != 0) 
-                OR  ($tcgxml['lowprice'] != 0)): 
-            $tcgxml['normal'] = 1;
-        else:
-            $tcgxml['normal'] = 0;
-        endif;
-        if ($tcgxml['foilprice'] != 0):
-            $tcgxml['foil'] = 1;
-        else:
-            $tcgxml['foil'] = 0;
-        endif;
-    endif;
-    return $tcgxml;
 }
 
 function autolink($str, $attributes=array()) {
