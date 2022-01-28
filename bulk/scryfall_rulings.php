@@ -41,13 +41,14 @@ $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
 
 $fileage = filemtime($file_location);
+$file_date = date('d-m-Y H:i',$fileage);
 if (time()-$fileage > $max_fileage):
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File old ($fileage), downloading: $rulings_uri",$logfile);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File old ($file_date), downloading: $rulings_uri",$logfile);
     $bulkreturn = downloadbulk($rulings_uri,$file_location);
 else:
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File fresh ($file_location, $fileage), skipping download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File fresh ($file_location, $file_date), skipping download",$logfile);    
 endif;
 $rulingreturn = downloadbulk($rulings_uri,$file_location);
 $obj = new Message;
