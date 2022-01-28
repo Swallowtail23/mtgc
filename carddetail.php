@@ -350,6 +350,7 @@ require('includes/menu.php'); //mobile menu
         if (!$qtyresults == 0) :
             $row = $result->fetch_array(MYSQLI_BOTH);
             $setcode = $db->escape(strtolower($row['cs_setcode']),'str');
+            $setcodeupper = strtoupper($setcode);
             $setname = stripslashes($db->escape($row['cs_setname'],'str'));
             $cardname = stripslashes($db->escape($row['name'],'str'));
             $id = $db->escape($row['cs_id'],'str');
@@ -433,11 +434,23 @@ require('includes/menu.php'); //mobile menu
                 $sqlmyqty = $db->escape($myqty,'int');
                 $sqlmyfoil = $db->escape($myfoil,'int');
                 $sqlnotes = $db->escape($notes,'str');
+                if(isset($row['price']) AND !is_null($row['price'])):
+                    $price = $row['price'];
+                endif;
+                if(isset($row['price_foil']) AND !is_null($row['price_foil'])):
+                    $foilprice = $row['price_foil'];
+                endif;
+                if($myfoil == 0):
+                    $topvalue = $row['price'];
+                else:
+                    $topvalue = $row['price_foil'];
+                endif;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$myqty." ".$price." ".$myfoil." ".$foilprice,$logfile);
                 $updatequery = "
-                        INSERT INTO `$mytable` (normal,foil,notes,id)
-                        VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$id')
+                        INSERT INTO `$mytable` (normal,foil,notes,id,topvalue)
+                        VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$id',$topvalue)
                         ON DUPLICATE KEY UPDATE 
-                        normal=$sqlmyqty, foil=$sqlmyfoil, notes='$sqlnotes'";
+                        normal=$sqlmyqty, foil=$sqlmyfoil, notes='$sqlnotes', topvalue=$topvalue";
                 // write out collection record prior to update to log
                 if($sqlbefore = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);
@@ -710,7 +723,12 @@ require('includes/menu.php'); //mobile menu
                     <div id="carddetailinfo">
                         <h3 class="shallowh3">Details</h3>
                         <?php 
-                        echo "<i>".$setname." (".strtoupper($setcode).") no. ".$row['number_import']."</i><br>";
+                        
+                        if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
+                            echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
+                        else:
+                            echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
+                        endif;
                         if($row["layout"] !== 'reversible_card'): // no details at card level for reversible cards
                             echo "<b>Type: </b>".$row['type'];
                             echo "<br>";
@@ -893,9 +911,6 @@ require('includes/menu.php'); //mobile menu
                             elseif (strpos($row['f2_type'],'laneswalker') !== false):
                                 echo "<b>Loyalty: </b>".$row['f2_loyalty']."<br>"; 
                             endif;
-                        endif;
-                        if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
-                            echo "ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
                         endif;
                         ?>                
                     </div>
@@ -1338,9 +1353,6 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             echo "<b>Art by: </b>".$row['f2_artist']."<br>";
-                            if(isset($admin) AND $admin == 1):
-                                echo "ID:<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'> ".$lookupid."</a><br>";
-                            endif;
                             ?>                
                         </div>
                     </div>
