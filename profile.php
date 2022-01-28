@@ -163,13 +163,18 @@ require('includes/menu.php');
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
         //6. Update pricing in case any new cards have been added to collection
-        if($findnormal = $db->query("SELECT `$mytable`.id AS id,normal,foil,notes,
-                                    topvalue,price,foilprice,tcglow,tcgavg,tcghi,
-                                    tcgfoil,tcgupdatetime,tcglink
-                                    FROM `$mytable` LEFT JOIN `cardprice` 
-                                    ON `$mytable`.id = `cardprice`.id 
-                                    WHERE `normal` / `normal` IS TRUE 
-                                    AND `foil` / `foil` IS NOT TRUE")):
+        if($findnormal = $db->query("SELECT
+                                    `$mytable`.id AS id,
+                                    `$mytable`.normal AS mynormal,
+                                    `$mytable`.foil AS myfoil,
+                                    notes,
+                                    topvalue,
+                                    price,
+                                    price_foil AS foilprice
+                                    FROM `$mytable` LEFT JOIN `cards_scry` 
+                                    ON `$mytable`.id = `cards_scry`.id 
+                                    WHERE `$mytable`.normal / `$mytable`.normal IS TRUE 
+                                    AND `$mytable`.foil / `$mytable`.foil IS NOT TRUE")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
             while($row = $findnormal->fetch_array(MYSQLI_ASSOC)):
                 if($row['price'] == ''):
@@ -190,12 +195,17 @@ require('includes/menu.php');
         else: 
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
-        if($findfoil = $db->query("SELECT `$mytable`.id AS id,normal,foil,notes,
-                                        topvalue,price,foilprice,tcglow,tcgavg,tcghi,
-                                        tcgfoil,tcgupdatetime,tcglink
-                                        FROM `$mytable` LEFT JOIN `cardprice` 
-                                        ON `$mytable`.id = `cardprice`.id 
-                                        WHERE foil / foil IS TRUE")):
+        if($findfoil = $db->query("SELECT
+                                    `$mytable`.id AS id,
+                                    `$mytable`.normal AS mynormal,
+                                    `$mytable`.foil AS myfoil,
+                                    notes,
+                                    topvalue,
+                                    price,
+                                    price_foil AS foilprice
+                                    FROM `$mytable` LEFT JOIN `cards_scry` 
+                                    ON `$mytable`.id = `cards_scry`.id 
+                                    WHERE `$mytable`.foil / `$mytable`.foil IS TRUE")):            
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
             while($foilrow = $findfoil->fetch_array(MYSQLI_ASSOC)):
                 if($foilrow['foilprice'] == ''):
@@ -224,7 +234,7 @@ require('includes/menu.php');
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
 
-        $sqlvalue = "SELECT (SUM(normal * price) + SUM(foil * foilprice)) as TOTAL FROM `$mytable` LEFT JOIN cardprice ON `$mytable`.id = cardprice.id";
+        $sqlvalue = "SELECT (SUM(`$mytable`.normal * price) + SUM(`$mytable`.foil * price_foil)) as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
         if($totalvalue = $db->query($sqlvalue)):
             $rowvalue = $totalvalue->fetch_assoc();
         else:
@@ -241,17 +251,16 @@ require('includes/menu.php');
         <div id="mycollection">
             <h2 class='h2pad'>My Collection</h2>
             <?php
-            if($mtgprice != false):
+            
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $collectionmoney = $a->format($rowvalue['TOTAL']); 
                 $collectionvalue = "Total value approximately USD".$collectionmoney;
                 $rowcounttotal = number_format($rowcount['TOTAL']);
                 echo "$collectionvalue over $rowcounttotal cards.<br>";
-                echo "This is based on normal and foil pricing where applicable from <a href='http://www.mtgprice.com/' target='_blank'>MTGPrice.com</a>.<br>";
-            else:
+                echo "This is based on normal and foil pricing where applicable from <a href='http://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com, in USD.<br>";
+            
                 $rowcounttotal = number_format($rowcount['TOTAL']);
                 echo "Total $rowcounttotal cards.<br>";  
-            endif;
             ?>
         </div>
         <div id="changepassword">
