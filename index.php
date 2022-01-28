@@ -609,7 +609,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         $x = 1;
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)):
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)): 
+                            $flipbutton = $row['cs_id']."flip";
+                            $img_id = $row['cs_id']."img";
                             $setcode = strtolower($row['setcode']);
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
@@ -624,6 +626,22 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             if(!is_null($imagefunction['back'])):
                                 $imagebackurl = $imagefunction['back'];
                             endif;
+                            ?>
+                            <script type="text/javascript">
+                                function swapImage(img_id,card_id,imageurl,imagebackurl){
+                                    var ImageId = document.getElementById(img_id);
+                                    var FrontImg = card_id + ".jpg";
+                                    var BackImg = card_id + "_b.jpg";
+                                    if (ImageId.src.match(FrontImg))
+                                    { 
+                                        document.getElementById(img_id).src = imagebackurl; 
+                                    } else if (ImageId.src.match(BackImg))
+                                    {
+                                        document.getElementById(img_id).src = imageurl; 
+                                    }
+                                };
+                            </script>
+                            <?php
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
                             // if (!isset($_POST["update"])) :    
@@ -638,8 +656,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $myfoil = $row['foil'];
                             endif;
                             ?>
-                            <div class='gridbox item'><?php
-                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src=$imageurl></a>";
+                            <div class='gridbox item'>
+                                <?php
+                                if($row['layout'] === 'transform'):
+                                    echo "<div class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
+                                endif;    
+                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src='$imageurl'></a>";
                                         $cellid = "cell" . $row['cs_id'];
                                         ?>
                                 <table class='gridupdatetable'>
@@ -695,7 +717,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             </td>
                                             <?php
                                             echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
-                                            echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
+                                      echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
                                             ?>
                                             <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
                                                 <?php
