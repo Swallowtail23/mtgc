@@ -1,6 +1,6 @@
 <?php 
-/* Version:     2.0
-    Date:       17/10/16
+/* Version:     3.0
+    Date:       28/01/2022
     Name:       sets.php
     Purpose:    Lists all setcodes and sets in the database
     Notes:      This page is the only one NOT mobile responsive design. 
@@ -12,6 +12,8 @@
                 Initial version
     2.0         
                 Moved to use Mysqli_Manager library
+ *  3.0
+ *              Refactoring for cards_scry
 */
 
 session_start();
@@ -42,7 +44,33 @@ require('includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <?php 
-        $sets = $db->select('setcodeid,fullsetname','sets');
+        $stmt = $db->prepare("SELECT 
+                                set_name,
+                                setcode,
+                                min(release_date) as date
+                            FROM 
+                                cards_scry 
+                            GROUP BY 
+                                set_name
+                            ORDER BY 
+                                date DESC");
+        if ($stmt === false):
+            trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Preparing SQL: " . $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Executing SQL: " . $db->error, E_USER_ERROR);
+        else: 
+            $result = $stmt->get_result();
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$result->num_rows." results",$logfile);
+            if ($result->num_rows === 0):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": No results ". $db->error, E_USER_ERROR);
+            elseif($result->num_rows > 0):
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$stmt->num_rows." results",$logfile);
+            endif;
+        endif;
         ?>
         <h2 class='h2pad'>Sets Information</h2>
         <table id='setlist'>
@@ -55,25 +83,27 @@ require('includes/menu.php');
                 </td>
             </tr>
             <?php
-            if($sets === false):
-                trigger_error('[ERROR] sets.php: Wrong SQL: Error: ' . $db->error, E_USER_ERROR); ?>
+            if($result === false):
+                // Should never get here with catches above
+                $obj = new Message;
+                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Error retrieving data",$logfile); ?>
                 <tr>
                     <td colspan="2">Error retrieving data</td>
                 </tr> <?php
             else:
-                while ($row = $sets->fetch_assoc()): ?>
+                while ($row = $result->fetch_assoc()): 
+                    $setcodeupper = strtoupper($row['setcode']);?>
                     <tr>
                         <td>
-                            <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D={$row['setcodeid']}&amp;sortBy=setdown&amp;layout=bulk'>{$row['setcodeid']}</a>"; ?>
+                            <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=bulk'>$setcodeupper</a>"; ?>
                         </td>
                         <td>
-                            <?php echo $row['fullsetname']; ?>
+                            <?php echo $row['set_name']; ?>
                         </td>
                     </tr>
                     <?php 
                 endwhile;
             endif;
-            $sets->close();
             ?>
         </table>
         <br>&nbsp; <?php
