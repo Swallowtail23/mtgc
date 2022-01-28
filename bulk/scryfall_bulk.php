@@ -46,13 +46,14 @@ endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
 
-if (time()-filemtime($file_location) > $max_fileage):
+$fileage = filemtime($file_location);
+if (time()-$fileage > $max_fileage):
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old ($fileage), downloading: $bulk_uri",$logfile);
     $bulkreturn = downloadbulk($bulk_uri,$file_location);
 else:
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh ($file_location, $fileage), skipping download",$logfile);    
 endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Local file: $file_location",$logfile);
@@ -434,6 +435,6 @@ endforeach;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Bulk update completed: Total $total_count, skipped $count_skip, included $count_inc, added: $count_add, updated: $count_update",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-$subject = "Obelix bulk update completed"; 
+$subject = "MTG bulk update completed"; 
 $message = "Total: $total_count; total skipped: $count_skip; total included: $count_inc; total added: $count_add; total updated: $count_update";
 mail($adminemail, $subject, $message, $from); 

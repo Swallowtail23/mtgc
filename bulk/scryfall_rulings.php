@@ -24,6 +24,9 @@ $url = "https://api.scryfall.com/bulk-data/rulings";
 // Bulk file store point
 $file_location = $ImgLocation.'json/rulings.json';
 
+// Set counts
+$total_count = 0;
+
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: fetching $url",$logfile);
 $ch = curl_init($url);
@@ -37,13 +40,14 @@ endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
 
-if (time()-filemtime($file_location) > $max_fileage):
+$fileage = filemtime($file_location);
+if (time()-$fileage > $max_fileage):
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old, downloading: $bulk_uri",$logfile);
-    $bulkreturn = downloadbulk($bulk_uri,$file_location);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File old ($fileage), downloading: $rulings_uri",$logfile);
+    $bulkreturn = downloadbulk($rulings_uri,$file_location);
 else:
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh (".$file_location."), skipping download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: File fresh ($file_location, $fileage), skipping download",$logfile);    
 endif;
 $rulingreturn = downloadbulk($rulings_uri,$file_location);
 $obj = new Message;
@@ -54,7 +58,7 @@ if ($result = $db->query('TRUNCATE TABLE rulings_scry')):
     $obj = new Message;
     $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Old rulings cleared",$logfile);
 else:
-    trigger_error('[ERROR] scryfall_bulk.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+    trigger_error('[ERROR] scryfall_rulings.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
 endif;
 foreach($data AS $key => $value):
     $oracle_id = $value["oracle_id"];
@@ -67,7 +71,7 @@ foreach($data AS $key => $value):
                             VALUES 
                                 (?,?,?,?)");
     if ($stmt === false):
-        trigger_error('[ERROR] scryfall_bulk: Preparing SQL: ' . $db->error, E_USER_ERROR);
+        trigger_error('[ERROR] scryfall_rulings: Preparing SQL: ' . $db->error, E_USER_ERROR);
     endif;
     $stmt->bind_param("ssss", 
             $oracle_id,
@@ -75,15 +79,20 @@ foreach($data AS $key => $value):
             $published,
             $comment);
     if ($stmt === false):
-        trigger_error('[ERROR] scryfall_bulk: Binding parameters: ' . $db->error, E_USER_ERROR);
+        trigger_error('[ERROR] scryfall_rulings: Binding parameters: ' . $db->error, E_USER_ERROR);
     endif;
     if (!$stmt->execute()):
-        trigger_error("[ERROR] scryfall_bulk: Writing new ruling details: " . $db->error, E_USER_ERROR);
+        trigger_error("[ERROR] scryfall_rulings: Writing new ruling details: " . $db->error, E_USER_ERROR);
     else:
         $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add ruling - no error returned",$logfile);
+        $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add ruling $total_count - no error returned ",$logfile);
+        $total_count = $total_count + 1;
     endif;
     $stmt->close();
 endforeach;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Bulk Rulings completed",$logfile);
+$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk rulings completed",$logfile);
+$from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+$subject = "MTG rulings update completed"; 
+$message = "Total: $total_count";
+mail($adminemail, $subject, $message, $from); 
