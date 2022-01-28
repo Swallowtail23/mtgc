@@ -658,7 +658,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox item'>
                                 <?php
-                                if($row['layout'] === 'transform'):
+                                if($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
                                     echo "<div class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 endif;    
                                         echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src='$imageurl'></a>";
