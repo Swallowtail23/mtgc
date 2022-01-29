@@ -1257,7 +1257,13 @@ require('includes/menu.php'); //mobile menu
                     else:     
                         $result = $stmt->get_result();
                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
-                        if ($result->num_rows === 0):
+                        if (($result->num_rows === 0) AND !in_array($row['layout'],$flip_types)):
+                            // no rulings ?>
+                            <div id='carddetailrulings'>
+                            <h3 class='shallowh3'>Rulings</h3>&nbsp;
+                            None
+                            </div> <?php
+                        elseif ($result->num_rows === 0):
                             // no rulings
                         else:
                             echo("<div id='carddetailrulings'>");
@@ -1355,7 +1361,13 @@ require('includes/menu.php'); //mobile menu
                         </div>
                     </div>
                     <div id="flipcarddetailrulings">
-                        <?php echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;"; ?>
+                        <?php 
+                        if($ruling === ''):
+                            echo "<h3 class='shallowh3'>Rulings</h3>";
+                            echo "None";
+                        else:
+                            echo "<h3 class='shallowh3'>Rulings</h3> ".$ruling."&nbsp;";
+                        endif; ?>
                     </div> <?php
                 endif; 
                 ?>
