@@ -1,6 +1,6 @@
 # README #
 
-### How do I get set up? ###
+### How do I get set up? ### 
 
 * Summary of set up
 * Configuration
