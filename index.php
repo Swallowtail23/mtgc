@@ -495,7 +495,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
                         <table class='bottompad'>
@@ -555,7 +555,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
                         <table class='bottompad'>
@@ -737,7 +737,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
                             </div>
                   <?php endif ?>
                         <table class='bottompad'>
