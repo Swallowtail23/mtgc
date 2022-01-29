@@ -251,14 +251,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
-        <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
-        <script type="text/javascript">
-            jQuery(function ($) {
-                $('tbody tr[data-href]').addClass('clickable').click(function () {
-                    window.location = $(this).attr('data-href');
-                });
-            });
-        </script>
         <script type="text/javascript">
             // Selecting Notes search deselects other scope options, and vice versa. Need to functionalise this.
             jQuery(function ($) {
@@ -307,13 +299,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         </script>
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load IAS script if this is a results call ?>
+            <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
             <script type="text/javascript">
                 $(document).ready(function () { // Infinite Ajax Scroll configuration
-                    $(".previous").hide();
+                    $(".top").hide();
                     let ias = new InfiniteAjaxScroll('.wrap', {
                         item: '.item', // single items
-                        next: '.nav a',
-                        pagination: '.nav', // page navigation
+                        next: '.next',
+                        pagination: '.pagination', // page navigation
                         negativeMargin: 250,
                         spinner: {
                             element: '.spinner',
@@ -328,16 +321,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     });
                     
                     ias.on('page', (event) => {
-                        var phppagevalue = 
-                            <?php
-                            if (empty($page)):$page = 1;
-                            endif;
-                            echo $page;
-                            ?>;
-                        if (phppagevalue > 0)
-                        {
-                            $(".previous").show(200);
-                        }
+                        $(".top").show(200);
                     });
 
                     ias.on('last', function() {
@@ -351,7 +335,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
     <body>
 <?php include_once("includes/analyticstracking.php") ?>
         <?php $getString = getStringParameters($_GET, 'page'); ?>
-        <div class="previous"> <?php echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
+        <div class="top"> <?php echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
         </div>
         <?php
         require('includes/overlays.php'); //menus
@@ -517,7 +501,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
                         <table class='bottompad'>
@@ -577,7 +561,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
                         <table class='bottompad'>
@@ -759,7 +743,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
+                            <div class="pagination"> <?php echo "<a href='index.php{$getString}' class='next'>Next</a>"; ?>
                             </div>
                   <?php endif ?>
                         <table class='bottompad'>

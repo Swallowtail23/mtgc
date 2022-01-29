@@ -1441,7 +1441,7 @@ table
     line-height: 26px;
     height: 24px;
 }
-.previous
+.top
 {
     display: none;
     text-align:center;
@@ -1482,16 +1482,16 @@ table
     background:transparent url('/images/searchh.png') center no-repeat;
 }
 
-.previous a
+.top a
 {
     display: inline-block; 
     text-align:center;
 }
-.previous a:link, .previous a:visited
+.top a:link, .top a:visited
 {
     
 }
- .previous a:hover, .previous a:active
+ .top a:hover, .top a:active
  {
      
  }
@@ -2482,7 +2482,7 @@ hr.styled
 }
 @media (max-width: 900px) 
 {
-    .previous
+    .top
     {
         left: 25px;
         top: 98px;
