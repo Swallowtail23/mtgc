@@ -251,7 +251,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
-        <script type="text/javascript" src="/js/jquery-ias.min.js"></script>
+        <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
         <script type="text/javascript">
             jQuery(function ($) {
                 $('tbody tr[data-href]').addClass('clickable').click(function () {
@@ -305,61 +305,48 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 });
             });
         </script>
-        <script type="text/javascript">
-            $(document).ready(function () {
-                // Infinite Ajax Scroll configuration
-                var ias = jQuery.ias({
-                    container: '.wrap', // main container where data goes to append
-                    item: '.item', // single items
-                    pagination: '.nav', // page navigation
-                    next: '.nav a', // next page selector
-                    negativeMargin: 250
-                });
-                ias.extension(new IASNoneLeftExtension({
-                    text: "NO MORE RESULTS"
-                }));
-                ias.extension(new IASSpinnerExtension({
-                    src: '/images/ajax-loader.gif'
-                }));
-                ias.extension(new IASPagingExtension());
-                $(document).ready(function () {
-                    var phppagevalue = <?php
-        if (empty($page)):$page = 1;
-        endif;
-        echo $page;
-        ?>;
-                    if (phppagevalue === 1)
-                    {
-                        $(".previous").hide();
-                    } else
-                    {
-                        $(".previous").show();
-                    }
-                });
-                jQuery.ias().on('pageChange', function (pageNum, scrollOffset, url) {
-                    var queryParameters = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
-                    while (m = re.exec(queryString)) {
-                        queryParameters[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
-                    }
-                    if (queryParameters['page'] > 1)
-                    {
-                        $(".previous").show();
-                    } else if (pageNum > 1) {
-                        $(".previous").show();
-                    } else {
-                        $(".previous").hide(200);
-                    }
-                });
-                jQuery.ias().on('rendered', function () {
-                    jQuery(function ($) {
-                        $('tbody tr[data-href]').addClass('clickable').click(function () {
-                            window.location = $(this).attr('data-href');
-                        });
+        <?php
+        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load IAS script if this is a results call ?>
+            <script type="text/javascript">
+                $(document).ready(function () { // Infinite Ajax Scroll configuration
+                    $(".previous").hide();
+                    let ias = new InfiniteAjaxScroll('.wrap', {
+                        item: '.item', // single items
+                        next: '.nav a',
+                        pagination: '.nav', // page navigation
+                        negativeMargin: 250,
+                        spinner: {
+                            element: '.spinner',
+                            delay: 600,
+                            show: function(element) {
+                                element.style.opacity = '1'; // default behaviour
+                            },
+                            hide: function(element) {
+                                element.style.opacity = '0'; // default behaviour
+                            }
+                        }
+                    });
+                    
+                    ias.on('page', (event) => {
+                        var phppagevalue = 
+                            <?php
+                            if (empty($page)):$page = 1;
+                            endif;
+                            echo $page;
+                            ?>;
+                        if (phppagevalue > 0)
+                        {
+                            $(".previous").show(200);
+                        }
+                    });
+
+                    ias.on('last', function() {
+                        let el = document.querySelector('.ias-no-more');
+                        el.style.opacity = '1';
                     });
                 })
-            });
-        </script>
-
+            </script>
+  <?php endif;?>
     </head>
     <body>
 <?php include_once("includes/analyticstracking.php") ?>
@@ -389,8 +376,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             </span>
             <?php
             if ((isset($qtyresults)) AND ( $qtyresults != 0)):
-                if ($layout == 'bulk') :
-                    ?>
+                if ($layout == 'bulk') : ?>
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
@@ -423,111 +409,109 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 ?>
                                 <table class='gridupdatetable'>
                                     <tr>
-                                            <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
-                                                <?php
-                                                if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                    echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
-                                                elseif($meld === 'meld_result'):
-                                                    echo "Meld card";
-                                                else:
-                                                    echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
-                                                endif;
-                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
-                                                ?>
-                                                <script type="text/javascript">
-                                                    function isInteger(x) {
-                                                        return x % 1 === 0;
-                                                    }
-                                                    $(function () {
-                                                        $("#<?php echo $cellid . "myqty"; ?>").change(function () {
-                                                            var ths = this;
-                                                            var card = $(ths).siblings(".card").val();
-                                                            var myqty = $(ths).val();
-                                                            var poststring = 'newqty=' + myqty + '&cardid=' + card;
-                                                            if (myqty == '')
-                                                            {
-                                                                alert("Enter a number");
-                                                                $("#content").focus();
-                                                            } else if (!isInteger(myqty))
-                                                            {
-                                                                alert("Enter an integer");
-                                                                $("#content").focus();
-                                                            } else
-                                                            {
-                                                                $.ajax({
-                                                                    type: "GET",
-                                                                    url: "gridupdate.php",
-                                                                    data: poststring,
-                                                                    cache: true,
-                                                                    success: function (data) {
-                                                                        jQuery('#<?php echo $cellid . "flash"; ?>').fadeOut(200).fadeIn(200, function () {
-                                                                            jQuery(this).html(data);
-                                                                        });
-                                                                    }
-                                                                });
-                                                            }
-                                                            return false;
-                                                        });
-                                                    });
-                                                </script>
-                                            </td>
+                                        <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                             <?php
-                                            echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
-                                        echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
+                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                                echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                            elseif($meld === 'meld_result'):
+                                                echo "Meld card";
+                                            else:
+                                                echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                            endif;
+                                            echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                             ?>
-                                            <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
-                                                <?php
-                                                if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                    echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
-                                                    echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
-                                                endif;
-                                                ?>
-                                                <script type="text/javascript">
-                                                    function isInteger(x) {
-                                                        return x % 1 === 0;
-                                                    }
-
-                                                    $(function () {
-                                                        $("#<?php echo $cellid . "myfoil"; ?>").change(function () {
-                                                            var ths = this;
-                                                            var card = $(ths).siblings(".card").val();
-                                                            var myfoil = $(ths).val();
-                                                            var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
-                                                            if (myfoil == '')
-                                                            {
-                                                                alert("Enter a number");
-                                                                $("#content").focus();
-                                                            } else if (!isInteger(myfoil))
-                                                            {
-                                                                alert("Enter an integer");
-                                                                $("#content").focus();
-                                                            } else
-                                                            {
-                                                                $.ajax({
-                                                                    type: "GET",
-                                                                    url: "gridupdate.php",
-                                                                    data: poststring,
-                                                                    cache: true,
-                                                                    success: function (data) {
-                                                                        jQuery('#<?php echo $cellid . "flashfoil"; ?>').fadeOut(200).fadeIn(200, function () {
-                                                                            jQuery(this).html(data);
-                                                                        });
-                                                                    }
-                                                                });
-                                                            }
-                                                            return false;
-                                                        });
+                                            <script type="text/javascript">
+                                                function isInteger(x) {
+                                                    return x % 1 === 0;
+                                                }
+                                                $(function () {
+                                                    $("#<?php echo $cellid . "myqty"; ?>").change(function () {
+                                                        var ths = this;
+                                                        var card = $(ths).siblings(".card").val();
+                                                        var myqty = $(ths).val();
+                                                        var poststring = 'newqty=' + myqty + '&cardid=' + card;
+                                                        if (myqty == '')
+                                                        {
+                                                            alert("Enter a number");
+                                                            $("#content").focus();
+                                                        } else if (!isInteger(myqty))
+                                                        {
+                                                            alert("Enter an integer");
+                                                            $("#content").focus();
+                                                        } else
+                                                        {
+                                                            $.ajax({
+                                                                type: "GET",
+                                                                url: "gridupdate.php",
+                                                                data: poststring,
+                                                                cache: true,
+                                                                success: function (data) {
+                                                                    jQuery('#<?php echo $cellid . "flash"; ?>').fadeOut(200).fadeIn(200, function () {
+                                                                        jQuery(this).html(data);
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        return false;
                                                     });
-                                                </script>
-                                            </td>
-                                            <?php
-                                       
+                                                });
+                                            </script>
+                                        </td>
+                                        <?php
+                                        echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
+                                        echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
                                         ?>
+                                        <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
+                                            <?php
+                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                                echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
+                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
+                                            endif;
+                                            ?>
+                                            <script type="text/javascript">
+                                                function isInteger(x) {
+                                                    return x % 1 === 0;
+                                                }
+
+                                                $(function () {
+                                                    $("#<?php echo $cellid . "myfoil"; ?>").change(function () {
+                                                        var ths = this;
+                                                        var card = $(ths).siblings(".card").val();
+                                                        var myfoil = $(ths).val();
+                                                        var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
+                                                        if (myfoil == '')
+                                                        {
+                                                            alert("Enter a number");
+                                                            $("#content").focus();
+                                                        } else if (!isInteger(myfoil))
+                                                        {
+                                                            alert("Enter an integer");
+                                                            $("#content").focus();
+                                                        } else
+                                                        {
+                                                            $.ajax({
+                                                                type: "GET",
+                                                                url: "gridupdate.php",
+                                                                data: poststring,
+                                                                cache: true,
+                                                                success: function (data) {
+                                                                    jQuery('#<?php echo $cellid . "flashfoil"; ?>').fadeOut(200).fadeIn(200, function () {
+                                                                        jQuery(this).html(data);
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        return false;
+                                                    });
+                                                });
+                                            </script>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>    
-                        <?php endwhile; ?>
-
+                  <?php endwhile; ?>
+                        <div class="ias-no-more">NO MORE RESULTS</div>
+                        <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
                         if (isset($next)):
@@ -536,7 +520,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
-
                         <table class='bottompad'>
                             <tr>
                                 <td>
@@ -544,48 +527,51 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 </td>
                             </tr>
                         </table>    
-
                     </div>
-          <?php elseif ($layout == 'list'):
-                            ?>
+          <?php elseif ($layout == 'list'):?>
                     <div id='results' class='wrap'>
-                        <table>
-                            <?php
-                            while ($row = $result->fetch_array(MYSQLI_BOTH)) :
-                                $setcode = strtolower($row['setcode']);
-                                $uppercasesetcode = strtoupper($setcode);
-                                if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
-                                    $meld = 'meld_result';
-                                elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
-                                    $meld = 'meld_part';
-                                else:
-                                    $meld = '';
-                                endif;
-                                ?>
-                                <tr class='resultsrow item' <?php echo "data-href='carddetail.php?id={$row['cs_id']}'"; ?>>
-                                    <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
-                                        <?php
-                                        $manac = symbolreplace($row['manacost']);
-                                        ?>
-                                    <td class="valuerarity"> <?php echo $row['rarity']; ?> </td>
-                                    <td class="valueset"> <?php echo $row['set_name']; ?> </td>
-                                    <td class="valuetype"> <?php echo $row['type']; ?> </td>
-                                    <td class="valuenumber"> <?php echo $row['number']; ?> </td>
-                                    <td class="valuemana"> <?php echo $manac; ?> </td>
-                                    <td class="valuecollection">
-                                        <?php
-                                        echo $row['normal'] + $row['foil'];
-                                        ?>
-                                    </td>
-                                    <td class="valueabilities"> 
-                                        <?php
-                                        $ability = symbolreplace($row['ability']);
-                                        echo $ability;
-                                        ?> 
-                                    </td>
-                                </tr>
-                        <?php endwhile; ?>
-                        </table>
+                        <?php
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : ?>
+                            <div class='item' style="cursor: pointer;" onclick="location.href='carddetail.php?id=<?php echo $row['cs_id'];?>';">
+                                <table> <?php
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
+                                    $setcode = strtolower($row['setcode']);
+                                    $uppercasesetcode = strtoupper($setcode);
+                                    if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                                        $meld = 'meld_result';
+                                    elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                                        $meld = 'meld_part';
+                                    else:
+                                        $meld = '';
+                                    endif;
+                                    ?>
+                                    <tr class='resultsrow'>
+                                        <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
+                                            <?php
+                                            $manac = symbolreplace($row['manacost']);
+                                            ?>
+                                        <td class="valuerarity"> <?php echo $row['rarity']; ?> </td>
+                                        <td class="valueset"> <?php echo $row['set_name']; ?> </td>
+                                        <td class="valuetype"> <?php echo $row['type']; ?> </td>
+                                        <td class="valuenumber"> <?php echo $row['number']; ?> </td>
+                                        <td class="valuemana"> <?php echo $manac; ?> </td>
+                                        <td class="valuecollection">
+                                            <?php
+                                            echo $row['normal'] + $row['foil'];
+                                            ?>
+                                        </td>
+                                        <td class="valueabilities"> 
+                                            <?php
+                                            $ability = symbolreplace($row['ability']);
+                                            echo $ability;
+                                            ?> 
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                  <?php endwhile; ?>
+                        <div class="ias-no-more">NO MORE RESULTS</div>
+                        <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
                         if (isset($next)):
@@ -594,7 +580,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
                             </div>
                         <?php endif ?>
-
                         <table class='bottompad'>
                             <tr>
                                 <td>
@@ -602,7 +587,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 </td>
                             </tr>
                         </table>    
-
                     </div>
           <?php elseif ($layout == 'grid') :
                         ?>
@@ -667,111 +651,109 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 <table class='gridupdatetable'>
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
-                                                <?php
-                                                if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                    echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
-                                                elseif($meld === 'meld_result'):
-                                                    echo "Meld card";
-                                                else:
-                                                    echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
-                                                endif;
-                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
-                                                ?>
-                                                <script type="text/javascript">
-                                                    function isInteger(x) {
-                                                        return x % 1 === 0;
-                                                    }
-
-                                                    $(function () {
-                                                        $("#<?php echo $cellid . "myqty"; ?>").change(function () {
-                                                            var ths = this;
-                                                            var card = $(ths).siblings(".card").val();
-                                                            var myqty = $(ths).val();
-                                                            var poststring = 'newqty=' + myqty + '&cardid=' + card;
-                                                            if (myqty == '')
-                                                            {
-                                                                alert("Enter a number");
-                                                                $("#content").focus();
-                                                            } else if (!isInteger(myqty))
-                                                            {
-                                                                alert("Enter an integer");
-                                                                $("#content").focus();
-                                                            } else
-                                                            {
-                                                                $.ajax({
-                                                                    type: "GET",
-                                                                    url: "gridupdate.php",
-                                                                    data: poststring,
-                                                                    cache: true,
-                                                                    success: function (data) {
-                                                                        jQuery('#<?php echo $cellid . "flash"; ?>').fadeOut(200).fadeIn(200, function () {
-                                                                            jQuery(this).html(data);
-                                                                        });
-                                                                    }
-                                                                });
-                                                            }
-                                                            return false;
-                                                        });
-                                                    });
-                                                </script>
-                                            </td>
                                             <?php
-                                            echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
-                                      echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
+                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                                echo " Normal: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                            elseif($meld === 'meld_result'):
+                                                echo "Meld card";
+                                            else:
+                                                echo " Quantity: <input class='textinput' id='" . $cellid . "myqty' type='number' step='1' min='0' name='myqty' value=" . $myqty . ">";
+                                            endif;
+                                            echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
                                             ?>
-                                            <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
-                                                <?php
-                                                if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                    echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
-                                                    echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
-                                                endif;
-                                                ?>
-                                                <script type="text/javascript">
-                                                    function isInteger(x) {
-                                                        return x % 1 === 0;
-                                                    }
+                                            <script type="text/javascript">
+                                                function isInteger(x) {
+                                                    return x % 1 === 0;
+                                                }
 
-                                                    $(function () {
-                                                        $("#<?php echo $cellid . "myfoil"; ?>").change(function () {
-                                                            var ths = this;
-                                                            var card = $(ths).siblings(".card").val();
-                                                            var myfoil = $(ths).val();
-                                                            var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
-                                                            if (myfoil == '')
-                                                            {
-                                                                alert("Enter a number");
-                                                                $("#content").focus();
-                                                            } else if (!isInteger(myfoil))
-                                                            {
-                                                                alert("Enter an integer");
-                                                                $("#content").focus();
-                                                            } else
-                                                            {
-                                                                $.ajax({
-                                                                    type: "GET",
-                                                                    url: "gridupdate.php",
-                                                                    data: poststring,
-                                                                    cache: true,
-                                                                    success: function (data) {
-                                                                        jQuery('#<?php echo $cellid . "flashfoil"; ?>').fadeOut(200).fadeIn(200, function () {
-                                                                            jQuery(this).html(data);
-                                                                        });
-                                                                    }
-                                                                });
-                                                            }
-                                                            return false;
-                                                        });
+                                                $(function () {
+                                                    $("#<?php echo $cellid . "myqty"; ?>").change(function () {
+                                                        var ths = this;
+                                                        var card = $(ths).siblings(".card").val();
+                                                        var myqty = $(ths).val();
+                                                        var poststring = 'newqty=' + myqty + '&cardid=' + card;
+                                                        if (myqty == '')
+                                                        {
+                                                            alert("Enter a number");
+                                                            $("#content").focus();
+                                                        } else if (!isInteger(myqty))
+                                                        {
+                                                            alert("Enter an integer");
+                                                            $("#content").focus();
+                                                        } else
+                                                        {
+                                                            $.ajax({
+                                                                type: "GET",
+                                                                url: "gridupdate.php",
+                                                                data: poststring,
+                                                                cache: true,
+                                                                success: function (data) {
+                                                                    jQuery('#<?php echo $cellid . "flash"; ?>').fadeOut(200).fadeIn(200, function () {
+                                                                        jQuery(this).html(data);
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        return false;
                                                     });
-                                                </script>
-                                            </td>
-                                            <?php
+                                                });
+                                            </script>
+                                        </td>
+                                        <?php
+                                        echo "<td class='confirm-l' id='" . $cellid . "flash'></td>";
+                                    echo "<td class='confirm-r' id='" . $cellid . "flashfoil'></td>";
                                         ?>
+                                        <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
+                                            <?php
+                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                                echo " Foil: <input class='textinput' id='" . $cellid . "myfoil' type='number' step='1' min='0' name='myfoil' value=" . $myfoil . ">";
+                                                echo "<input class='card' type='hidden' name='card' value=" . $row['cs_id'] . ">";
+                                            endif;
+                                            ?>
+                                            <script type="text/javascript">
+                                                function isInteger(x) {
+                                                    return x % 1 === 0;
+                                                }
+
+                                                $(function () {
+                                                    $("#<?php echo $cellid . "myfoil"; ?>").change(function () {
+                                                        var ths = this;
+                                                        var card = $(ths).siblings(".card").val();
+                                                        var myfoil = $(ths).val();
+                                                        var poststring = 'newfoil=' + myfoil + '&cardid=' + card;
+                                                        if (myfoil == '')
+                                                        {
+                                                            alert("Enter a number");
+                                                            $("#content").focus();
+                                                        } else if (!isInteger(myfoil))
+                                                        {
+                                                            alert("Enter an integer");
+                                                            $("#content").focus();
+                                                        } else
+                                                        {
+                                                            $.ajax({
+                                                                type: "GET",
+                                                                url: "gridupdate.php",
+                                                                data: poststring,
+                                                                cache: true,
+                                                                success: function (data) {
+                                                                    jQuery('#<?php echo $cellid . "flashfoil"; ?>').fadeOut(200).fadeIn(200, function () {
+                                                                        jQuery(this).html(data);
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        return false;
+                                                    });
+                                                });
+                                            </script>
+                                        </td>
                                     </tr>
                                 </table>
-
                             </div>    
-                        <?php endwhile; ?>
-
+                  <?php endwhile; ?>
+                        <div class="ias-no-more">NO MORE RESULTS</div>
+                        <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
                         if (isset($next)):
@@ -779,7 +761,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class="nav"> <?php echo "<a href='index.php" . $getString . "&amp;page=$next'>Next</a>"; ?>
                             </div>
-        <?php endif ?>
+                  <?php endif ?>
                         <table class='bottompad'>
                             <tr>
                                 <td>
@@ -794,7 +776,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 require('includes/search.php');
             endif;
             ?>
-
         </div>
 <?php require('includes/footer.php'); ?>
     </body>

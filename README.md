@@ -57,3 +57,13 @@ PAGE LOAD SEQUENCE:
 5. Load page and framework (header, page content, overlays, menu, footer)
 
 Version check - 1st August 2020
+
+Changes, January 2022
+- composer for json-machine (used for bulk scripts)
+- install npm on the server for https://github.com/webcreate/infinite-ajax-scroll
+- npm install --save @webcreate/infinite-ajax-scroll
+mysql configuration changes:
+- following changes on BL01 (2GB RAM)
+[mysqld]
+sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+innodb_buffer_pool_size = 1G

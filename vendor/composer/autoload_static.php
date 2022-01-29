@@ -7,37 +7,20 @@ namespace Composer\Autoload;
 class ComposerStaticInitb7a59000c4cad0fd05a882b8ef27c0af
 {
     public static $files = array (
-        '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         'ace6d88241f812b4accb2d847454aef6' => __DIR__ . '/..' . '/halaxa/json-machine/src/functions.php',
     );
 
     public static $prefixLengthsPsr4 = array (
-        'P' => 
-        array (
-            'Psr\\Container\\' => 14,
-        ),
         'J' => 
         array (
             'JsonMachine\\' => 12,
         ),
-        'F' => 
-        array (
-            'Faker\\' => 6,
-        ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Psr\\Container\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/psr/container/src',
-        ),
         'JsonMachine\\' => 
         array (
             0 => __DIR__ . '/..' . '/halaxa/json-machine/src',
-        ),
-        'Faker\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
         ),
     );
 

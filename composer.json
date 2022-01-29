@@ -1,6 +1,5 @@
 {
     "require": {
-        "halaxa/json-machine": "^0.8.0",
-        "fakerphp/faker": "^1.17"
+        "halaxa/json-machine": "^0.8.0"
     }
 }

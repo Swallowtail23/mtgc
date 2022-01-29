@@ -6,7 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'JsonMachine\\' => array($vendorDir . '/halaxa/json-machine/src'),
-    'Faker\\' => array($vendorDir . '/fakerphp/faker/src/Faker'),
 );
