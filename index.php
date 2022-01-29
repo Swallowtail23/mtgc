@@ -285,15 +285,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             });
         </script>
         <script type="text/javascript">
-            jQuery(window).load(function () {
-                jQuery("img").each(function () {
-                    var image = jQuery(this);
-                    if (image.context.naturalWidth == 0 ||
-                            image.readyState == 'uninitialized') {
-                        jQuery(image).unbind("error").attr(
-                                "src", "/cardimg/back.jpg"
-                                );
-                    }
+            jQuery(document).ready(function(){
+                $("img").each(function(){
+                $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
                 });
             });
         </script>

@@ -66,33 +66,27 @@ $deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_STRING);
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
 <?php include('includes/googlefonts.php');?>
 <script src="/js/jquery.js"></script>
-<script type="text/javascript"> 
-    jQuery(window).load(function() { 
-        jQuery("img").each(function(){ 
-            var image = jQuery(this);             
-            if(image.context.naturalWidth == 0 ||
-            image.readyState == 'uninitialized'){    
-                jQuery(image).unbind("error").attr(
-                "src", "/cardimg/back.jpg"
-                ); 
-            } 
-        }); 
-    }); 
+<script type="text/javascript">
+    jQuery(document).ready(function(){
+        $("img").each(function(){
+        $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
+        });
+    });
 </script>
 <script type="text/javascript">   
     jQuery( function($) {
         $('#deckselect').change(function (event) {
             if($('#deckselect').val() === 'newdeck'){
-                $('#newdeckname').removeAttr("disabled"); 
-                $('#newdeckname').attr("placeholder", "New deck name"); 
+                $('#newdeckname').removeAttr("disabled");
+                $('#newdeckname').attr("placeholder", "New deck name");
             } else {
-                $('#newdeckname').attr("disabled", "disabled"); 
-                $('#newdeckname').attr("placeholder", "N/A"); 
+                $('#newdeckname').attr("disabled", "disabled");
+                $('#newdeckname').attr("placeholder", "N/A");
             }
             if($('#deckselect').val() !== 'none'){
-                $('#addtodeckbutton').removeAttr("disabled"); 
+                $('#addtodeckbutton').removeAttr("disabled");
                 $('#deckqty').removeAttr("disabled");
-                $('#deckqty').attr("placeholder", ""); 
+                $('#deckqty').attr("placeholder", "");
             } else {
                 $('#addtodeckbutton').attr("disabled", "disabled"); 
                 $('#deckqty').attr("disabled", "disabled"); 
@@ -147,8 +141,7 @@ $deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_STRING);
     });
 </script>
 <script type="text/javascript">
-$(document).ready(
-function(){
+$(document).ready(function(){
     $("#importsubmit").attr('disabled',true);
     $("#importfile").change(
         function(){
@@ -436,14 +429,18 @@ require('includes/menu.php'); //mobile menu
                 $sqlnotes = $db->escape($notes,'str');
                 if(isset($row['price']) AND !is_null($row['price'])):
                     $price = $row['price'];
+                else:
+                    $price = 0.00;
                 endif;
                 if(isset($row['price_foil']) AND !is_null($row['price_foil'])):
                     $foilprice = $row['price_foil'];
+                else:
+                    $foilprice = 0.00;
                 endif;
                 if($myfoil == 0):
-                    $topvalue = $row['price'];
+                    $topvalue = $price;
                 else:
-                    $topvalue = $row['price_foil'];
+                    $topvalue = $foilprice;
                 endif;
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$myqty." ".$price." ".$myfoil." ".$foilprice,$logfile);
                 $updatequery = "
@@ -451,6 +448,7 @@ require('includes/menu.php'); //mobile menu
                         VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$id',$topvalue)
                         ON DUPLICATE KEY UPDATE 
                         normal=$sqlmyqty, foil=$sqlmyfoil, notes='$sqlnotes', topvalue=$topvalue";
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$updatequery,$logfile);
                 // write out collection record prior to update to log
                 if($sqlbefore = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);

@@ -46,18 +46,12 @@ forcechgpwd();                              //Check if user is disabled or needs
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript"> 
-        jQuery(window).load(function() { 
-            jQuery("img").each(function(){ 
-                var image = jQuery(this);             
-                if(image.context.naturalWidth === 0 ||
-                image.readyState === 'uninitialized'){    
-                    jQuery(image).unbind("error").attr(
-                    "src", "/cardimg/back.jpg"
-                    ); 
-                } 
-            }); 
-        }); 
+    <script type="text/javascript">
+        jQuery(document).ready(function(){
+            $("img").each(function(){
+            $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
+            });
+        });
     </script>
     <script type="text/javascript"> 
         $(document).ready(function() {
