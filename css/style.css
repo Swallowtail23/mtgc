@@ -2328,6 +2328,11 @@ hr.styled
     color: #F41E0E; 
 }
 
+.material-icons.orange 
+{ 
+    color: #ff8c00; 
+}
+
 .material-icons.md-14 
 { 
     font-size: 14px; 

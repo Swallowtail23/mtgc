@@ -95,7 +95,7 @@ require('includes/menu.php');
                     $setcodeupper = strtoupper($row['setcode']);?>
                     <tr>
                         <td>
-                            <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=bulk'>$setcodeupper</a>"; ?>
+                            <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td>
                             <?php echo $row['set_name']; ?>
