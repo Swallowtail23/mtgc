@@ -22,6 +22,7 @@ endif;
         <a id="nav_email" href="/profile.php"><?php echo $useremail; ?></a>
     </div>
     <div class='nav_nodivider'><a title="Home" href="/">Home</a></div>
+    <div class='nav_nodivider'><a title="Decks" href="/sets.php">Sets</a></div>
     <!-- <div class='nav_nodivider'><a title="Decks" href="/decks.php">Decks</a></div> -->
     <div class='nav_nodivider'><a title="About" href="/info.php">About</a>
         <?php

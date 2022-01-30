@@ -391,6 +391,7 @@ require('includes/menu.php');
                             $count = 0;
                             $total = 0;
                             while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
+                                $idimport = 0;
                                 if ($i === 0):
                                     if (       (strpos($data[0],'setcode') === FALSE) 
                                             OR (strpos($data[1],'number') === FALSE) 
@@ -405,32 +406,68 @@ require('includes/menu.php');
                                     endif;
                                 elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
                                     $obj = new Message;
-                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $i of import file contains minimum data - escaping data",$logfile);
+                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $i of import file contains setcode({$data[0]}), number({$data[1]}) and  name ({$data[2]}) - escaping data",$logfile);
                                     $data0 = $db->real_escape_string($data[0]);
                                     $data1 = $db->real_escape_string($data[1]);
                                     $data2 = $db->real_escape_string($data[2]);
-                                    if (!empty($data[3])):
+                                    if (!empty($data[3])): // normal qty
                                         $data3 = $db->real_escape_string($data[3]);
                                     else:
                                         $data3 = 0;
                                     endif;
-                                    if (!empty($data[4])):
+                                    if (!empty($data[4])): // foil qty
                                         $data4 = $db->real_escape_string($data[4]);
                                     else:
                                         $data4 = 0;
                                     endif;
-                                    $data5 = $db->real_escape_string($data[5]);
-                                    if (!empty($data0) AND !empty($data1)):
+                                    $data5 = $db->real_escape_string($data[5]); // id
+                                    if (!empty($data5)):
+                                        echo "Row ",$i+1,": Data in Row $i has an ID ($data5), checking for a match...<br>";
                                         $obj = new Message;
-                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i place 1 ($data0) and place 2 ($data1) - getting ID",$logfile);
-                                        if($getid = $db->select_one('id','cards',"WHERE setcode = '$data0' AND number = '$data1'")):
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i has an ID ($data5), checking for a match...",$logfile);
+                                        if($getid = $db->select_one('id','cards_scry',"WHERE id = '$data5'")):
+                                            $obj = new Message;
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Match found for ID $data5, will import",$logfile);
+                                            echo "Row ",$i+1,": ",$data0," ",$data1," ",$data[2]," ",$data5;
+                                            $import="INSERT into `$mytable` (id,normal,foil) values('$data5','$data3','$data4') ON DUPLICATE KEY UPDATE normal='$data3', foil='$data4'";
+                                            $obj = new Message;
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query is $import",$logfile);
+                                            if($runimport = $db->query($import)):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query ran OK - checking...",$logfile);
+                                                if($sqlcheck = $db->select_one('normal,foil',$mytable,"WHERE id = '$data5'")):
+                                                    $obj = new Message;
+                                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
+                                                    echo " Normal: ",$sqlcheck['normal']," Foil: ",$sqlcheck['foil'];
+                                                    if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4)): ?>
+                                                        ID import OK: <img src='/images/success.png' alt='Success'><br>
+                                                        <?php   $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'];
+                                                                $count = $count + 1;
+                                                                $idimport = 1;?>
+                                                    <?php
+                                                    else: ?>
+                                                        <img src='/images/error.png' alt='Failure'><br>
+                                                        <?php
+                                                    endif;
+                                                else:
+                                                    trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
+                                                endif;
+                                            else:    
+                                                trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
+                                            endif;
+                                        else:
+                                            $obj = new Message;
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"ID $data5 does not map to a card in database, falling back to setcode/number...",$logfile);
+                                            echo "Row ",$i+1,": ID $data5 does not map to a card in database, falling back to setcode/number...<br>";
+                                        endif;
+                                    endif;
+                                    if (!empty($data0) AND !empty($data1) AND $idimport === 0):
+                                        $obj = new Message;
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i place 1 ($data0) and place 2 ($data1) without ID - getting ID",$logfile);
+                                        echo "Row ",$i+1,": Data in Row $i has no matched ID, using setcode and number...<br>";
+                                        if($getid = $db->select_one('id','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")):
                                             $data5 = $getid['id'];
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
-                                            // If the sets contain flip cards, check that we are not importing the backs, and assign the correct ID
-                                            $data5 = importmapcheck($data5);
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Post flip-map ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
                                             if (!empty($data5)):
                                                 echo "Row ",$i+1,": ",$data0," ",$data1," ",$data[2]," ",$data5;
                                                 $import="INSERT into `$mytable` (id,normal,foil) values('$data5','$data3','$data4') ON DUPLICATE KEY UPDATE normal='$data3', foil='$data4'";
@@ -443,7 +480,7 @@ require('includes/menu.php');
                                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
                                                         echo " Normal: ",$sqlcheck['normal']," Foil: ",$sqlcheck['foil'];
                                                         if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4)): ?>
-                                                            <img src='/images/success.png' alt='Success'><br>
+                                                            Setcode/number import OK: <img src='/images/success.png' alt='Success'><br>
                                                             <?php $total = $total + $sqlcheck['normal'] + $sqlcheck['foil']?>
                                                             <?php $count = $count + 1?>
                                                         <?php
@@ -461,8 +498,10 @@ require('includes/menu.php');
                                                 echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
                                             endif;
                                         else:
-                                            trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
+                                            echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
                                         endif;
+                                    elseif($idimport === 1):
+                                        // do nothing
                                     else:
                                         echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
                                     endif;

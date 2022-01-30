@@ -607,7 +607,7 @@ function exportMysqlToCsv($table,$filename = 'export.csv')
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
 	$table = $db->escape($table);
-        $sql = "SELECT setcode,set_name,number_import,name,normal,$table.foil,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0))";
+        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0))";
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection SQL: $sql",$logfile);
         
 	// Gets the data from the database

@@ -115,6 +115,20 @@ $scope = isset($_GET['scope']) ? filter_input(INPUT_GET, 'scope', FILTER_SANITIZ
 $legal = isset($_GET['legal']) ? filter_input(INPUT_GET, 'legal', FILTER_SANITIZE_STRING):'';
 $foilonly = isset($_GET['foilonly']) ? filter_input(INPUT_GET, 'foilonly', FILTER_SANITIZE_STRING):'';
 
+// Does the user have a collection table?
+$tablecheck = "SELECT * FROM $mytable";
+$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+if($db->query($tablecheck) === FALSE):
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+    $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+    if($db->query($query2) === TRUE):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+    else:
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+    endif;
+endif;
+    
 // More general query building:
 $selectAll = "SELECT 
                 cards_scry.id as cs_id,
@@ -291,6 +305,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 });
             });
         </script>
+        
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load IAS script if this is a results call ?>
             <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
@@ -603,6 +618,18 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     }
                                 };
                             </script>
+                            <script type="text/javascript">
+                                function rotateImg(img_id) {
+                                    if ( document.getElementById(img_id).style.transform == 'none' ){
+                                        document.getElementById(img_id).style.transform = "rotate(180deg)";
+                                    } 
+                                    else if ( document.getElementById(img_id).style.transform == '' ){
+                                        document.getElementById(img_id).style.transform = "rotate(180deg)";
+                                    } else {
+                                        document.getElementById(img_id).style.transform = "none";
+                                    }
+                                }
+                            </script>                            
                             <?php
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
@@ -621,8 +648,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class='gridbox item'>
                                 <?php
                                 if($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
-                                    echo "<div class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
-                                endif;    
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
+                                elseif($row['layout'] === 'flip'):
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
+                                endif;
                                         echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src='$imageurl'></a>";
                                         $cellid = "cell" . $row['cs_id'];
                                         ?>

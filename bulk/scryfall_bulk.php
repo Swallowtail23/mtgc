@@ -43,18 +43,30 @@ $scryfall_bulk = json_decode($curlresult,true);
 if(isset($scryfall_bulk["type"]) AND $scryfall_bulk["type"] === "default_cards"):
     $bulk_uri = $scryfall_bulk["download_uri"];
 endif;
+
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
-
-$fileage = filemtime($file_location);
-$file_date = date('d-m-Y H:i',$fileage);
-if (time()-$fileage > $max_fileage):
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old ($file_date), downloading: $bulk_uri",$logfile);
-    $bulkreturn = downloadbulk($bulk_uri,$file_location);
+if (file_exists($file_location)):
+    $fileage = filemtime($file_location);
+    $file_date = date('d-m-Y H:i',$fileage);
+    if (time()-$fileage > $max_fileage):
+        $download = 2;
+        $obj = new Message;
+        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old ($file_date), downloading: $bulk_uri",$logfile);
+    else:
+        $download = 0;
+        $obj = new Message;
+        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+    endif;
 else:
+    $download = 1;
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: No file at ($file_location), downloading: $url",$logfile);
+endif;
+if($download > 0):
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: downloading: $url",$logfile);
+    $bulkreturn = downloadbulk($bulk_uri,$file_location);
 endif;
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Local file: $file_location",$logfile);
