@@ -11,7 +11,7 @@ Install under web server as applicable.
 - Sample config restricts bulk and setup folders to localhost access
 
 ### Ini file ###
-The application expects an ini file located at: /opt/mtg/mtg.ini. It must include:
+The application expects an ini file located at: /opt/mtg/mtg_new.ini. It must include:
 
     [general]
     tier = "dev"                            //either 'dev' or 'prod'
