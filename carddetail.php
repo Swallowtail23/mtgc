@@ -592,6 +592,11 @@ require('includes/menu.php'); //mobile menu
                 </div> 
                 <div id="carddetailmain">
                     <div id="carddetailimage">
+                  <?php if($row['layout'] === 'flip'): ?>
+                            <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
+                                <span class='material-icons md-24'>refresh</span>
+                            </div>
+                  <?php endif; ?>
                         <table>
                             <tr> 
                                 <td colspan="2">
@@ -631,16 +636,6 @@ require('includes/menu.php'); //mobile menu
                                     ?>
                                 </td>
                             </tr>
-                      <?php if($row['layout'] === 'flip'): 
-                                ?>
-                                <tr>
-                                    <td colspan="2" align="center">
-                                    <button class=inline_button onClick="rotateImg() ">
-                                    <img src="images/reload.png " />
-                                    </button>
-                                    </td>
-                                </tr>
-                      <?php endif; ?>
                             <tr>
                                 <td colspan="1" class="previousbutton">
                                     <?php if ($row['number'] > 1):

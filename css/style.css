@@ -1384,6 +1384,16 @@ table
     z-index:5;
 }
 
+.fliprotate
+{
+    position:absolute;
+    width:50px;
+    color:white;
+    top:215px;
+    left:260px;
+    z-index:5;
+}
+
 .bottompad, .bottompad tr, .bottompad td
 {
     clear:both;
