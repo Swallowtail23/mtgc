@@ -1,11 +1,16 @@
 # README # (v29/01/2022)
 
-### How do I get set up? ### 
+## How do I get set up? ## 
 
 * Summary of set up
 * Configuration
 
+### Web server ###
 Install under web server as applicable.
+- See setup/mtgc.conf for sample Apache configuration file
+- Sample config restricts bulk and setup folders to localhost access
+
+### Ini file ###
 The application expects an ini file located at: /opt/mtg/mtg.ini. It must include:
 
     [general]
@@ -35,7 +40,28 @@ If AdminIP is empty, then an admin user can access admin pages from any IP addre
 If AdminIP contains an IP address, then an admin user can access admin pages from
 that IP address only.
 
-PAGE LOAD SEQUENCE:
+### MySQL ###
+
+- Database structure is noted in setup/mtg_new.sql
+- You will also need:
+in `admin`:
+
+    INSERT INTO `admin` (`key`, `usemin`, `tier`, `mtce`) VALUES
+    (1, 0, 'dev', 0);
+
+Note: Set dev or prod as appropriate (sets header colour for identification)
+
+    INSERT INTO `groups` (`groupnumber`, `groupname`, `owner`) VALUES
+    (1, 'Masters', 1);
+
+### Initial user ###
+
+Run command line:
+- php initial.php username password from webserver's console in the setup folder
+- note the supplied username, salt and password, and write into the database for initial user
+- copy collectionTemplate database table to {usernumber}collection, e.g. 1collection
+
+### PAGE LOAD SEQUENCE ###
 
 1. Load ini.php
 2. Ini.php sets:
