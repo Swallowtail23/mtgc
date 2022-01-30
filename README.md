@@ -1,17 +1,37 @@
 # README # (v29/01/2022)
 
 ## How do I get set up? ## 
-
 * Summary of set up
 * Configuration
 
 ### Web server ###
-Install under web server as applicable.
+Install under web server as applicable
 - See setup/mtgc.conf for sample Apache configuration file
 - Sample config restricts bulk and setup folders to localhost access
 
+### Dependencies ###
+#### JsonMachine ####
+Used for bulk script parsing
+- installed by composer to 'vendors' folder, and autoloaded by ini.php
+
+#### JQuery and IAS ####
+Works with JQuery 3.6:  <script src="/js/jquery.js"></script>
+IAS pulled down from CDN on index.php: <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
+Should work over npm, issue raised
+- install npm on the server for https://github.com/webcreate/infinite-ajax-scroll
+- npm install --save @webcreate/infinite-ajax-scroll
+
+### File locations ###
+Create a new folder at /opt/mtg
+Copy the ini file (see next section) and bulk scripts to it (samples are in setup folder),
+altering as needed so they point to where the bulk scripts are.
+Make sure the logfile location specified in the ini file exists and is web-server-writable.
+Make sure the ImgLocation folder exists and is web-server-writable.
+
 ### Ini file ###
-The application expects an ini file located at: /opt/mtg/mtg_new.ini. It must include:
+The application expects an ini file located at: /opt/mtg/mtg_new.ini. 
+Apache must be able to read this file (no write required).
+It must include:
 
     [general]
     tier = "dev"                            //either 'dev' or 'prod'
@@ -54,6 +74,12 @@ Note: Set dev or prod as appropriate (sets header colour for identification)
     INSERT INTO `groups` (`groupnumber`, `groupname`, `owner`) VALUES
     (1, 'Masters', 1);
 
+Edit my.cnf and set as follows:
+(first line is to remove GROUP BY, check existing server config and remove that, don't copy the line):
+    [mysqld]
+    sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    innodb_buffer_pool_size = 1G
+
 ### Initial user ###
 
 Run command line:
@@ -81,15 +107,3 @@ Run command line:
     - get the user's collection table
     - check if the site is in maintenance mode, and if it is: trigger a message and logout
 5. Load page and framework (header, page content, overlays, menu, footer)
-
-Version check - 1st August 2020
-
-Changes, January 2022
-- composer for json-machine (used for bulk scripts)
-- install npm on the server for https://github.com/webcreate/infinite-ajax-scroll
-- npm install --save @webcreate/infinite-ajax-scroll
-mysql configuration changes:
-- following changes on BL01 (2GB RAM)
-[mysqld]
-sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
-innodb_buffer_pool_size = 1G
