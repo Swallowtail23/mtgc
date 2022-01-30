@@ -390,7 +390,7 @@ require('includes/menu.php');
                             $i = 0;
                             $count = 0;
                             $total = 0;
-                            $warningsummary = '';
+                            $warningsummary = 'Warning type, Setcode, Number, Import Name, Import Normal, Import Foil, Database Name (if applicable), Database ID (if applicable)\n';
                             while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
                                 $idimport = 0;
                                 $row_no = $i + 1;
@@ -489,7 +489,7 @@ require('includes/menu.php');
                                                             if($db_name != $data[2]):
                                                                 echo "WARNING: Imported on setcode/number, but name in import file ($data[2]) does not match database name ($db_name)";
                                                                 echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                                $newwarning = "Name warning: Row number $row_no, Setcode: $data0, Number: $data1, Name: $data[2]], Number/Foil: $data3,$data4, Imported as: $db_name ($data5)\n";
+                                                                $newwarning = "Name warning, $row_no, $data0, $data1, $data[2], $data3, $data4, $db_name, $data5\n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                             endif;
                                                         else: ?>
@@ -504,19 +504,19 @@ require('includes/menu.php');
                                                 endif;
                                             else:
                                                 echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                                $newwarning = "Failure: Row number $row_no, Setcode: $data0, Number: $data1, Name: $data2, Number/Foil: $data3,$data4\n";
+                                                $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4\n";
                                                 $warningsummary = $warningsummary.$newwarning;
                                             endif;
                                         else:
                                             echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                            $newwarning = "Failure: Row number $row_no, Setcode: $data0, Number: $data1, Name: $data2, Number/Foil: $data3,$data4\n";
+                                            $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                         endif;
                                     elseif($idimport === 1):
                                         // do nothing
                                     else:
                                         echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
-                                        $newwarning = "Failure: Row number $row_no, Check row - not enough data to identify card\n";
+                                        $newwarning = "Failure, $row_no, Check row - not enough data to identify card\n";
                                         $warningsummary = $warningsummary.$newwarning;
                                     endif;
                                 else:
