@@ -87,6 +87,10 @@ Run command line:
 - note the supplied username, salt and password, and write into the database for initial user
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection
 
+### Cron jobs ###
+
+Setup cron job to run bulk files from /opt/mtg (run as root)
+
 ### PAGE LOAD SEQUENCE ###
 
 1. Load ini.php
