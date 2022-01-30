@@ -52,7 +52,7 @@ if($download > 0):
     $setsreturn = downloadbulk($url,$file_location);
 endif;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Rulings API: Local file: $file_location",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($ImgLocation.'json/sets.json', ['decoder' => new ExtJsonDecoder(true)]);
 
