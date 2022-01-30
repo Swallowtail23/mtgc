@@ -1,6 +1,6 @@
 <?php
 /* Version:     2.0
-    Date:       11/01/20
+    Date:       28/01/22
     Name:       colour.php
     Purpose:    PHP script with function to return colour name
     Notes:      
@@ -9,6 +9,8 @@
                 Initial version
  *  2.0
  *              Moved to Message class from writelog
+ *  3.0
+ *              Fixes for cards_scry database
  * 
  *  TO DO
  *              Should move to be database lookup rather than PHP?

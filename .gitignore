@@ -7,3 +7,4 @@ nbdist/
 cardimg/
 .idea/
 ./well-known
+/.well-known/

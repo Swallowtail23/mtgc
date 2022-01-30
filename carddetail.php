@@ -42,8 +42,11 @@ require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 require ('includes/colour.php');
 
-//If it's admin running the page, set variable
+// If it's admin running the page, set variable
 $admin = check_admin_control($adminip);
+
+// Enable / disable deck functionality
+$decks_on = 0;
 
 // Pass data to this form by e.g. ?id=123456 
 // GET is used from results page, POST is used for database update query.
@@ -1080,161 +1083,164 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                                 ?>
                                 <hr class='hr324'>
-
-                                <div id="deckadd">
                                 <?php
-                                // Add to decks
+                                $obj = new Message;
+                                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decks enabled: $decks_on",$logfile);
+                                if($decks_on === 1):
+                                    echo "<div id='deckadd'>";
+                                    
+                                    // Add to decks
 
-                                // Logic on handling input from submitted form
-                                // $decktoaddto is the number of the deck (decks.decknumber), or 'newdeck'
-                                // $newdeckname is the deck name if $decktoaddto is 'newdeck'
-                                // $deckqty is the quantity to add
+                                    // Logic on handling input from submitted form
+                                    // $decktoaddto is the number of the deck (decks.decknumber), or 'newdeck'
+                                    // $newdeckname is the deck name if $decktoaddto is 'newdeck'
+                                    // $deckqty is the quantity to add
 
-                                if (isset($decktoaddto)):
-                                    $obj = new Message;
-                                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
-                                    // If the deck is new, is the new name unique? If yes, create it.
-                                    $decksuccess = 0;
-                                    if($decktoaddto == "newdeck"):
-                                        $newdeckname = $db->escape($newdeckname,'str');
-                                        if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
-                                            ?>
-                                            <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Deck name exists
-                                                <img class = "x" align="right" src="images/close.gif" alt="x"></div>
-                                            <?php
-                                            $decksuccess = 10; //set flag so we know to break.
-                                        else:
-                                            //Create new deck
-                                            $data = array(
-                                                'owner' => $user,
-                                                'deckname' => "$newdeckname"
-                                            );
-                                            if($runsql = $db->insert('decks',$data) === TRUE):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
-                                            else:
-                                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                            endif;
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
-                                            $checksql = "SELECT decknumber FROM decks
-                                                            WHERE owner = $user AND deckname = '$newdeckname' LIMIT 1";
-                                            if($runquery = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
+                                    if (isset($decktoaddto)):
+                                        $obj = new Message;
+                                        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
+                                        // If the deck is new, is the new name unique? If yes, create it.
+                                        $decksuccess = 0;
+                                        if($decktoaddto == "newdeck"):
+                                            $newdeckname = $db->escape($newdeckname,'str');
+                                            if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
                                                 ?>
-                                                <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'>
-                                                    <span>Success: </span>Deck created
-                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
-                                                </div>
-                                                <?php 
-                                                $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
-                                                $decktoaddto = $runquery['decknumber'];
-                                            else:    
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
-                                                ?>
-                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
-                                                    <span>error: </span>Deck creation failed
-                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
-                                                </div>
+                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Deck name exists
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x"></div>
                                                 <?php
                                                 $decksuccess = 10; //set flag so we know to break.
-                                            endif;
-                                        endif;
-                                    else:
-                                        $decktoaddto = $db->escape($decktoaddto,'str');
-                                        // Check that the proposed deck exists and belongs to owner.
-                                        if (deckownercheck($decktoaddto,$user) == FALSE): ?>
-                                            <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>You don't have that deck
-                                                <img class = "x" align="right" src="images/close.gif" alt="x"></div> 
-                                            <?php
-                                            $decksuccess = 10;
-                                        else:
-                                            $decksuccess = 2;
-                                        endif;
-                                    endif;
-                                    // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
-                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
-                                    if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
-                                        if ($decksuccess === 2): //Not a new deck, run card check
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
-                                            if($resultchk = $db->select_one('cardnumber','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid'
-                                                                    AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))")):
-                                                $obj = new Message;
-                                                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$resultchk['cardnumber']} is already in that deck",$logfile);
-                                                ?>
-                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
-                                                    <span>error: </span>Card is already in deck
-                                                    <img class = "x" align="right" src="images/close.gif" alt="x">
-                                                </div>
-                                                <?php
-                                                $cardchecksuccess = 0;
-                                            else:    
-                                                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
-                                                $cardchecksuccess = 1;
-                                            endif;
-                                        elseif ($decksuccess = 1):
-                                            $cardchecksuccess = 2;
-                                        endif;
-                                        //Insert card to deck
-                                        if (($cardchecksuccess === 1) OR ($cardchecksuccess === 2)):
-                                            $deckqty = $db->escape($deckqty,'int');
-                                            adddeckcard($decktoaddto,$cardid,'main',$deckqty);
-                                            if($resultchkins = $db->select_one('cardnumber, cardqty','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid' AND cardqty = '$deckqty'")):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
-                                                if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
+                                            else:
+                                                //Create new deck
+                                                $data = array(
+                                                    'owner' => $user,
+                                                    'deckname' => "$newdeckname"
+                                                );
+                                                if($runsql = $db->insert('decks',$data) === TRUE):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                                else:
+                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                                endif;
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
+                                                $checksql = "SELECT decknumber FROM decks
+                                                                WHERE owner = $user AND deckname = '$newdeckname' LIMIT 1";
+                                                if($runquery = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
                                                     ?>
-                                                    <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'><span>Success: </span>Card added
-                                                        <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                    <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'>
+                                                        <span>Success: </span>Deck created
+                                                        <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                    </div>
+                                                    <?php 
+                                                    $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
+                                                    $decktoaddto = $runquery['decknumber'];
+                                                else:    
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
+                                                    ?>
+                                                    <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
+                                                        <span>error: </span>Deck creation failed
+                                                        <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                    </div>
                                                     <?php
-                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
-                                                else:?>
+                                                    $decksuccess = 10; //set flag so we know to break.
+                                                endif;
+                                            endif;
+                                        else:
+                                            $decktoaddto = $db->escape($decktoaddto,'str');
+                                            // Check that the proposed deck exists and belongs to owner.
+                                            if (deckownercheck($decktoaddto,$user) == FALSE): ?>
+                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>You don't have that deck
+                                                    <img class = "x" align="right" src="images/close.gif" alt="x"></div> 
+                                                <?php
+                                                $decksuccess = 10;
+                                            else:
+                                                $decksuccess = 2;
+                                            endif;
+                                        endif;
+                                        // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
+                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
+                                        if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
+                                            if ($decksuccess === 2): //Not a new deck, run card check
+                                                $obj = new Message;
+                                                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
+                                                if($resultchk = $db->select_one('cardnumber','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid'
+                                                                        AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))")):
+                                                    $obj = new Message;
+                                                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$resultchk['cardnumber']} is already in that deck",$logfile);
+                                                    ?>
+                                                    <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'>
+                                                        <span>error: </span>Card is already in deck
+                                                        <img class = "x" align="right" src="images/close.gif" alt="x">
+                                                    </div>
+                                                    <?php
+                                                    $cardchecksuccess = 0;
+                                                else:    
+                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
+                                                    $cardchecksuccess = 1;
+                                                endif;
+                                            elseif ($decksuccess = 1):
+                                                $cardchecksuccess = 2;
+                                            endif;
+                                            //Insert card to deck
+                                            if (($cardchecksuccess === 1) OR ($cardchecksuccess === 2)):
+                                                $deckqty = $db->escape($deckqty,'int');
+                                                adddeckcard($decktoaddto,$cardid,'main',$deckqty);
+                                                if($resultchkins = $db->select_one('cardnumber, cardqty','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid' AND cardqty = '$deckqty'")):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                                    if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
+                                                        ?>
+                                                        <div class="alert-box success carddetailnewdeck" onclick='CloseMe(this)'><span>Success: </span>Card added
+                                                            <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                        <?php
+                                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
+                                                    else:?>
+                                                        <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
+                                                            <img class = "x" align="right" src="images/close.gif" alt="x"></div>
+                                                        <?php 
+                                                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                                    endif;
+                                                else:
+                                                    ?>
                                                     <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
                                                         <img class = "x" align="right" src="images/close.gif" alt="x"></div>
                                                     <?php 
                                                     $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
                                                 endif;
-                                            else:
-                                                ?>
-                                                <div class="alert-box error carddetailnewdeck" onclick='CloseMe(this)'><span>error: </span>Card add failed
-                                                    <img class = "x" align="right" src="images/close.gif" alt="x"></div>
-                                                <?php 
-                                                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
                                             endif;
                                         endif;
-                                    endif;
+                                    endif; ?>
+
+                                    <!-- Display Add to Deck form -->
+
+                                    <b>Add card to my decks</b><br>
+
+                                    <form id="addtodeck" action="<?php echo basename(__FILE__); ?>#deck" method="GET">
+                                        <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
+                                        echo "<input type='hidden' name='number' value=".$row['number'].">";
+                                        echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
+                                        <select id='deckselect' name='decktoaddto'>
+                                            <option value='none'>Select</option>
+                                            <option value='newdeck'>Add to new deck...</option>
+                                            <?php 
+                                            $decklist = $db->select('decknumber, deckname','decks',"WHERE owner = $user ORDER BY deckname ASC");
+                                            while ($dlrow = $decklist->fetch_array(MYSQLI_NUM)):
+                                                $dlrow[0] = htmlentities($dlrow[0],ENT_QUOTES,"UTF-8");
+                                                $dlrow[1] = htmlentities($dlrow[1],ENT_QUOTES,"UTF-8");
+                                                echo "<option value='{$dlrow[0]}'>$dlrow[1]</option>";
+                                            endwhile;
+                                            ?>
+                                        </select>
+                                        Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
+                                        <br><br>
+                                        <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19'/>
+                                        <input class='inline_button addtodeckbutton' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
+                                    </form>
+                                    </div>
+                                <?php 
                                 endif; ?>
-
-                                <!-- Display Add to Deck form -->
-
-                                <b>Add card to my decks</b><br>
-
-                                <form id="addtodeck" action="<?php echo basename(__FILE__); ?>#deck" method="GET">
-                                    <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                    echo "<input type='hidden' name='number' value=".$row['number'].">";
-                                    echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
-                                    <select id='deckselect' name='decktoaddto'>
-                                        <option value='none'>Select</option>
-                                        <option value='newdeck'>Add to new deck...</option>
-                                        <?php 
-                                        $decklist = $db->select('decknumber, deckname','decks',"WHERE owner = $user ORDER BY deckname ASC");
-                                        while ($dlrow = $decklist->fetch_array(MYSQLI_NUM)):
-                                            $dlrow[0] = htmlentities($dlrow[0],ENT_QUOTES,"UTF-8");
-                                            $dlrow[1] = htmlentities($dlrow[1],ENT_QUOTES,"UTF-8");
-                                            echo "<option value='{$dlrow[0]}'>$dlrow[1]</option>";
-                                        endwhile;
-                                        ?>
-                                    </select>
-                                    Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
-                                    <br><br>
-                                    <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19'/>
-                                    <input class='inline_button addtodeckbutton' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
-                                </form>
-                                </div>
                             </div>
                     <?php 
-
-                    endif;
-                    ?>
+                    endif; ?>
                 </div>
 
                 <!-- Rulings -->
