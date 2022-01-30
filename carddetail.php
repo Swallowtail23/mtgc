@@ -239,7 +239,20 @@ require('includes/menu.php'); //mobile menu
             <img src="images/white_m.png">MtG collection
         </div>
     <?php
-
+    // Does the user have a collection table?
+    $tablecheck = "SELECT * FROM $mytable";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+    if($db->query($tablecheck) === FALSE):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+        $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+        if($db->query($query2) === TRUE):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+        else:
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+        endif;
+    endif;
+    
     // Check that we have an id before calling SQL query
     if(isset($_GET["id"]) OR isset($_POST["id"])) :
         $cardid = $db->escape($cardid,'str');

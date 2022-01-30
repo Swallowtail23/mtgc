@@ -115,6 +115,20 @@ $scope = isset($_GET['scope']) ? filter_input(INPUT_GET, 'scope', FILTER_SANITIZ
 $legal = isset($_GET['legal']) ? filter_input(INPUT_GET, 'legal', FILTER_SANITIZE_STRING):'';
 $foilonly = isset($_GET['foilonly']) ? filter_input(INPUT_GET, 'foilonly', FILTER_SANITIZE_STRING):'';
 
+// Does the user have a collection table?
+$tablecheck = "SELECT * FROM $mytable";
+$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+if($db->query($tablecheck) === FALSE):
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+    $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+    if($db->query($query2) === TRUE):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+    else:
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+    endif;
+endif;
+    
 // More general query building:
 $selectAll = "SELECT 
                 cards_scry.id as cs_id,
