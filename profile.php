@@ -423,14 +423,10 @@ require('includes/menu.php');
                                     if (!empty($data0) AND !empty($data1)):
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i place 1 ($data0) and place 2 ($data1) - getting ID",$logfile);
-                                        if($getid = $db->select_one('id','cards',"WHERE setcode = '$data0' AND number = '$data1'")):
+                                        if($getid = $db->select_one('id','cards_scry',"WHERE setcode = '$data0' AND number = '$data1'")):
                                             $data5 = $getid['id'];
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
-                                            // If the sets contain flip cards, check that we are not importing the backs, and assign the correct ID
-                                            $data5 = importmapcheck($data5);
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Post flip-map ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
                                             if (!empty($data5)):
                                                 echo "Row ",$i+1,": ",$data0," ",$data1," ",$data[2]," ",$data5;
                                                 $import="INSERT into `$mytable` (id,normal,foil) values('$data5','$data3','$data4') ON DUPLICATE KEY UPDATE normal='$data3', foil='$data4'";
