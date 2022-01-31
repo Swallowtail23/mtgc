@@ -16,6 +16,7 @@
  *              Moved to mysqli
  *  5.0
  *              Re-factoring for cards_scry
+ *              Javascript simplification and Ajax changes
 */
 
 //Call script initiation mechs
