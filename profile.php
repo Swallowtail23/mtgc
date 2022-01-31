@@ -33,7 +33,7 @@ require ('includes/secpagesetup.php');      //Setup page variables
     <title>MtG collection profile</title>
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css"> 
 <?php include('includes/googlefonts.php');?>
-<!-- <script src="/js/jquery.js"></script> -->
+<script src="/js/jquery.js"></script>
 </head>
 
 <body class="body">
@@ -567,9 +567,9 @@ endif; ?>
                                                                         // Card is a double name or flip card in the database, and the database name starts with the full import name
                                                                     endif;
                                                                 else: // Card is NOT a double name or flip card in the database, or otherwise the compare has failed, so a name variation is a concern
-                                                                    echo "WARNING: Imported on setcode/number, but name in import file ($data[2]) does not match database name ($db_name) ";
+                                                                    echo "WARNING: Imported on setcode/number, but name in import file ($data2) does not match database name ($db_name) ";
                                                                     echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                                    $newwarning = "Name warning, $row_no, $data0, $data1, $data[2], $data3, $data4, $db_name, $data5"."\n";
+                                                                    $newwarning = "Name warning, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
                                                                     $warningsummary = $warningsummary.$newwarning;
                                                                 endif;
                                                             endif;

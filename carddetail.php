@@ -551,6 +551,8 @@ require('includes/menu.php'); //mobile menu
             $row['toughness'] = htmlentities($row['toughness'],ENT_QUOTES,"UTF-8");
             $row['loyalty'] = htmlentities($row['loyalty'],ENT_QUOTES,"UTF-8");
             $row['artist'] = htmlentities($row['artist'],ENT_QUOTES,"UTF-8");
+            $card_normal = $row['cs_normal'];
+            $card_foil = $row['cs_foil'];
             if(isset($myqty)): 
                 $myqty = htmlentities($myqty,ENT_QUOTES,"UTF-8");
             endif;
@@ -936,25 +938,42 @@ require('includes/menu.php'); //mobile menu
                                 <form action="?" method="POST">
                                 <h3 class="shallowh3">My collection</h3>
                                 <?php
-                                if ((int)$row['cs_foil'] + (int)$row['cs_normal'] === 1): ?>
+                                if ((int)$card_foil + (int)$card_normal === 1): ?>
                                     <table>
                                         <tr>
                                             <td>
                                                 Quantity
                                             </td>
                                         </tr>
-                                  <?php if (isset($_POST["update"])) :
-                                            $checkresult['normal'] = htmlentities($checkresult['normal'],ENT_QUOTES,"UTF-8");           
-                                            $checkresult['foil'] = htmlentities($checkresult['foil'],ENT_QUOTES,"UTF-8");
-                                            $checkresult['notes'] = htmlentities($checkresult['notes'],ENT_QUOTES,"UTF-8");
-                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
-                                            echo "<tr><td>My notes</td></tr>";
-                                            echo "<tr><td><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
-                                        else: 
-                                            echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$myqty."></td>";
-                                            echo "<tr><td>My notes</td></tr>";
-                                            echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
-                                        endif; ?>
+                                        <?php
+                                        if((int)$card_normal === 1 AND (int)$card_foil !== 1): // No foils
+                                            if (isset($_POST["update"])) :
+                                                $checkresult['normal'] = htmlentities($checkresult['normal'],ENT_QUOTES,"UTF-8");           
+                                                $checkresult['foil'] = htmlentities($checkresult['foil'],ENT_QUOTES,"UTF-8");
+                                                $checkresult['notes'] = htmlentities($checkresult['notes'],ENT_QUOTES,"UTF-8");
+                                                echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$checkresult['normal']."></td>";
+                                                echo "<tr><td>My notes</td></tr>";
+                                                echo "<tr><td><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
+                                            else: 
+                                                echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myqty' min='0' value=".$myqty."></td>";
+                                                echo "<tr><td>My notes</td></tr>";
+                                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
+                                            endif; 
+                                        elseif((int)$card_normal !== 1 AND (int)$card_foil === 1): // No foils
+                                            if (isset($_POST["update"])) :
+                                                $checkresult['normal'] = htmlentities($checkresult['normal'],ENT_QUOTES,"UTF-8");           
+                                                $checkresult['foil'] = htmlentities($checkresult['foil'],ENT_QUOTES,"UTF-8");
+                                                $checkresult['notes'] = htmlentities($checkresult['notes'],ENT_QUOTES,"UTF-8");
+                                                echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=".$checkresult['foil']."></td>";
+                                                echo "<tr><td>My notes</td></tr>";
+                                                echo "<tr><td><textarea class='textinput' name='notes' rows='2' cols='40'>{$checkresult['notes']}</textarea></td></tr>";
+                                            else: 
+                                                echo "<tr><td><input class='carddetailqtyinput textinput' type='number' name='myfoil' min='0' value=".$myfoil."></td>";
+                                                echo "<tr><td>My notes</td></tr>";
+                                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>";
+                                            endif; 
+                                        endif;
+                                        ?>
                                     </table>
                           <?php else: ?>
                                     <table>

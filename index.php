@@ -142,6 +142,8 @@ $selectAll = "SELECT
                 number_import,
                 name,
                 promo,
+                cards_scry.foil as cs_foil,
+                cards_scry.nonfoil as cs_normal,
                 release_date,
                 rarity,
                 set_name,
@@ -426,6 +428,15 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
+                            $card_normal = $row['cs_normal'];
+                            $card_foil = $row['cs_foil'];
+                            if($card_normal != 1 AND $card_foil == 1):
+                                $cardtypes = 'foilonly';
+                            elseif($card_normal == 1 AND $card_foil != 1):
+                                $cardtypes = 'normalonly';
+                            else:
+                                $cardtypes = 'normalandfoil';
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -457,10 +468,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                            if (!$row['promo'] AND $meld !== 'meld_result' AND $cardtypes !== 'foilonly'):
                                                 echo "Normal: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
                                             elseif($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
                                             else:
                                                 echo "Quantity: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
                                             endif;
@@ -470,7 +483,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         <td class='confirm-r'>&nbsp;</td>
                                         <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                            if (!$row['promo'] AND $meld !== 'meld_result' AND $cardtypes !== 'normalonly'):
                                                 echo "Foil: <input class='textinput' id='{$cellid}myfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxFoil(\"$scryid\",\"$cellid\",\"$myfoil\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif; ?>
@@ -595,6 +608,15 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $img_id = $row['cs_id']."img";
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
+                            $card_normal = $row['cs_normal'];
+                            $card_foil = $row['cs_foil'];
+                            if($card_normal != 1 AND $card_foil == 1):
+                                $cardtypes = 'foilonly';
+                            elseif($card_normal == 1 AND $card_foil != 1):
+                                $cardtypes = 'normalonly';
+                            else:
+                                $cardtypes = 'normalandfoil';
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -648,10 +670,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                            if (!$row['promo'] AND $meld !== 'meld_result' AND $cardtypes !== 'foilonly'):
                                                 echo "Normal: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
                                             elseif($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
                                             else:
                                                 echo "Quantity: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
                                             endif;
@@ -660,7 +684,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         <td class='confirm-r'>&nbsp;</td>
                                         <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
+                                            if (!$row['promo'] AND $meld !== 'meld_result' AND $cardtypes !== 'normalonly'):
                                                 echo "Foil: <input class='textinput' id='{$cellid}myfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxFoil(\"$scryid\",\"$cellid\",\"$myfoil\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif; ?>
