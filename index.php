@@ -332,6 +332,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         let el = document.querySelector('.ias-no-more');
                         el.style.opacity = '1';
                     });
+                    // update title and url when scrolling through pages
+                    ias.on('page', (e) => {
+                        document.title = e.title;
+                        let state = history.state;
+                        history.replaceState(state, e.title, e.url);
+                    });
                 });
             </script>
             <script type="text/javascript">
