@@ -443,7 +443,7 @@ function getimgname($cardid)
 
 function getImageNew($setcode,$cardid,$ImgLocation,$layout)
 {
-    global $db, $logfile;
+    global $db, $logfile, $serveremail, $adminemail;
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
     $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
@@ -475,6 +475,11 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
             endif;
             if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
                 $imageurl = '';
+                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+                $subject = "Invalid image from Scryfall API"; 
+                $message = "$imageurl for card $cardid does not exist - check database entry against API, has it been deleted?";
+                mail($adminemail, $subject, $message, $from); 
+                $frontimg = 'error';
             else:
                 $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
                 $context  = stream_context_create($options);
@@ -483,16 +488,16 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
                     mkdir($ImgLocation.$setcode);
                 endif;
-            file_put_contents($localfile, $image);
-            $relativepath = strpos($localfile,'cardimg');
-            $frontimg = substr($localfile,$relativepath);
+                file_put_contents($localfile, $image);
+                $relativepath = strpos($localfile,'cardimg');
+                $frontimg = substr($localfile,$relativepath);
             endif;
         endif;
     else:
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File exists already at $localfile",$logfile);
+        $relativepath = strpos($localfile,'cardimg');
+        $frontimg = substr($localfile,$relativepath);
     endif;
-    $relativepath = strpos($localfile,'cardimg');
-    $frontimg = substr($localfile,$relativepath);
     $imageurl = array('front' => $frontimg,
                       'back' => '');
     //Back face
@@ -511,14 +516,14 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back, {$coderow2['f2_image_uri']}",$logfile);
                     $imageurl = strtolower($coderow2['f2_image_uri']);
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile_b",$logfile);
+                    $imageurl_2 = strtolower($coderow2['f2_image_uri']);
                 endif;
-
-
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back image, {$coderow2['f2_image_uri']}",$logfile);
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
-                $imageurl_2 = strtolower($coderow2['f2_image_uri']);
-                if ((checkRemoteFile($imageurl_2) == false) OR ($imageurl_2 === '')):
-                    $imageurl_2 = '';
+                if ($imageurl_2 === ''):
+                    $backimg = 'empty';
+                elseif(checkRemoteFile($imageurl_2) == false):
+                    $backimg = 'error';
                 else:
                     $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
                     $context  = stream_context_create($options);
@@ -538,7 +543,7 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
             $backimg = substr($localfile_b,$relativepath_2);
         endif;
         $imageurl = array('front' => $frontimg,
-                          'back' => $backimg);        
+                          'back' => $backimg);
     endif;
     return $imageurl;
 }
@@ -841,9 +846,22 @@ function scryfall($cardid)
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with get: $curlresult",$logfile);
         curl_close($ch);
         $scryfall_result = json_decode($curlresult,true);
-        $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
-        $price = $scryfall_result["prices"]["usd"];
-        $price_foil = $scryfall_result["prices"]["usd_foil"];
+        if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
+            $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a tcg link",$logfile);
+            $tcg_buy_uri = 0;
+            return '';
+        endif;
+        if(isset($scryfall_result["prices"])):
+            $price = $scryfall_result["prices"]["usd"];
+            $price_foil = $scryfall_result["prices"]["usd_foil"];
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
+            $prices = 0;
+        endif;
         $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
         $stmt = $db->prepare($query);
         if ($stmt === false):
@@ -862,16 +880,18 @@ function scryfall($cardid)
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
         endif;
-        $data = array(
-            'price' => $price,
-            'price_foil' => $price_foil,
-            );
-        if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
+        if($prices !== 0):
+            $data = array(
+                'price' => $price,
+                'price_foil' => $price_foil,
+                );
+            if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
+            endif;
         endif;
     endif;
     return $tcg_buy_uri;

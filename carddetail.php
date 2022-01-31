@@ -412,9 +412,17 @@ require('includes/menu.php'); //mobile menu
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
             $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
-            $imageurl = $imagefunction['front'];
+            if($imagefunction['front'] == 'error'):
+                $imageurl = '/cardimg/back.jpg';
+            else:
+                $imageurl = $imagefunction['front'];
+            endif;
             if(!is_null($imagefunction['back'])):
-                $imagebackurl = $imagefunction['back'];
+                if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
+                    $imagebackurl = '/cardimg/back.jpg';
+                else:
+                    $imagebackurl = $imagefunction['back'];
+                endif;
             endif;
             $settotal = 0;
             // If the current record has null fields set the variables to 0 so the update query works 
@@ -616,7 +624,7 @@ require('includes/menu.php'); //mobile menu
                                     <?php 
                                     $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                     //If page is being loaded by admin, don't cache the main image
-                                    if($admin == 1):
+                                    if(($admin == 1) AND ($imageurl !== '/cardimg/back.jpg')):
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                         $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$imgname);
@@ -1312,12 +1320,15 @@ require('includes/menu.php'); //mobile menu
                                         <?php 
                                         $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                         //If page is being loaded by admin, don't cache the main image
-                                        if($admin == 1):
+                                        if(($admin == 1) AND ($imagebackurl !== '/cardimg/back.jpg')):
+                                            $obj = new Message;
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                             $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$lookupid."_b.jpg");
                                             $imagelocationback = $imagebackurl.'?='.$imgmodtime;
                                         else:
                                             $imagelocationback = $imagebackurl;
                                         endif;
+                                        
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
                                         ?>

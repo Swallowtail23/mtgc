@@ -298,13 +298,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 });
             });
         </script>
-        <script type="text/javascript">
-            jQuery(document).ready(function(){
-                $("img").each(function(){
-                $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
-                });
-            });
-        </script>
         
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load IAS script if this is a results call ?>
@@ -599,9 +592,18 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $meld = '';
                             endif;
                             $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
-                            $imageurl = $imagefunction['front'];
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
+                            
                             if(!is_null($imagefunction['back'])):
-                                $imagebackurl = $imagefunction['back'];
+                                if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
+                                    $imagebackurl = '/cardimg/back.jpg';
+                                else:
+                                    $imagebackurl = $imagefunction['back'];
+                                endif;
                             endif;
                             ?>
                             <script type="text/javascript">
@@ -647,14 +649,15 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox item'>
                                 <?php
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
                                 if($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
                                 endif;
-                                        echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src='$imageurl'></a>";
-                                        $cellid = "cell" . $row['cs_id'];
-                                        ?>
+                                echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id={$row['cs_id']}'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='{$row['cs_id']}' src='$imageurl'></a>";
+                                $cellid = "cell" . $row['cs_id'];
+                                ?>
                                 <table class='gridupdatetable'>
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
