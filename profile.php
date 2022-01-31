@@ -33,7 +33,7 @@ require ('includes/secpagesetup.php');      //Setup page variables
     <title>MtG collection profile</title>
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css"> 
 <?php include('includes/googlefonts.php');?>
-<script src="/js/jquery.js"></script>
+<!-- <script src="/js/jquery.js"></script> -->
 </head>
 
 <body class="body">
@@ -42,7 +42,20 @@ include_once("includes/analyticstracking.php");
 require('includes/overlays.php');  
 require('includes/header.php');
 require('includes/menu.php');
-?>
+
+// Does the user have a collection table?
+$tablecheck = "SELECT * FROM $mytable";
+$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+if($db->query($tablecheck) === FALSE):
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+    $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+    if($db->query($query2) === TRUE):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+    else:
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+    endif;
+endif; ?>
 
 <div id='page'>
     <div class='staticpagecontent'>
@@ -388,7 +401,7 @@ require('includes/menu.php');
                             $i = 0;
                             $count = 0;
                             $total = 0;
-                            $warningsummary = 'Warning type, Setcode, Number, Import Name, Import Normal, Import Foil, Database Name (if applicable), Database ID (if applicable)\n';
+                            $warningsummary = 'Warning type, Setcode, Number, Import Name, Import Normal, Import Foil, Database Name (if applicable), Database ID (if applicable)'."\n";
                             while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
                                 $idimport = 0;
                                 $row_no = $i + 1;
@@ -406,43 +419,76 @@ require('includes/menu.php');
                                     endif;
                                 elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
                                     $obj = new Message;
-                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $i of import file contains setcode({$data[0]}), number({$data[1]}) and  name ({$data[2]}) - escaping data",$logfile);
-                                    $data0 = $db->real_escape_string($data[0]);
-                                    $data1 = $db->real_escape_string($data[1]);
-                                    $data2 = $db->real_escape_string($data[2]);
+                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data[0]}), number({$data[1]}), name ({$data[2]}), normal ({$data[3]}), foil ({$data[4]}), id ({$data[5]})",$logfile);
+                                    $data0 = $data[0];
+                                    $data1 = $data[1];
+                                    $data2 = $data[2];
                                     if (!empty($data[3])): // normal qty
-                                        $data3 = $db->real_escape_string($data[3]);
+                                        $data3 = $data[3];
                                     else:
                                         $data3 = 0;
                                     endif;
                                     if (!empty($data[4])): // foil qty
-                                        $data4 = $db->real_escape_string($data[4]);
+                                        $data4 = $data[4];
                                     else:
                                         $data4 = 0;
                                     endif;
-                                    $data5 = $db->real_escape_string($data[5]); // id
-                                    if (!empty($data5)):
-                                        echo "Row ",$i+1,": Data in Row $i has an ID ($data5), checking for a match...<br>";
+                                    $data5 = $data[5]; // id
+                                    if (!empty($data5)): // ID has been supplied, run an ID check / import first
+                                        echo "Row $row_no: Data has an ID ($data5), checking for a match...<br>";
                                         $obj = new Message;
-                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i has an ID ($data5), checking for a match...",$logfile);
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data has an ID ($data5), checking for a match",$logfile);
                                         if($getid = $db->select_one('id','cards_scry',"WHERE id = '$data5'")):
                                             $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Match found for ID $data5, will import",$logfile);
-                                            echo "Row ",$i+1,": ",$data0," ",$data1," ",$data[2]," ",$data5;
-                                            $import="INSERT into `$mytable` (id,normal,foil) values('$data5','$data3','$data4') ON DUPLICATE KEY UPDATE normal='$data3', foil='$data4'";
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query is $import",$logfile);
-                                            if($runimport = $db->query($import)):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query ran OK - checking...",$logfile);
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Match found for ID $data5, will import",$logfile);
+                                            echo "Row $row_no: $data0, $data1, $data2, $data5<br>";
+                                            $stmt = $db->prepare("  INSERT INTO
+                                                                        `$mytable`
+                                                                        (id,normal,foil)
+                                                                    VALUES
+                                                                        (?,?,?)
+                                                                    ON DUPLICATE KEY UPDATE
+                                                                        id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil)
+                                                                ");
+                                            if ($stmt === false):
+                                                trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                                            endif;
+                                            $bind = $stmt->bind_param("sss",
+                                                            $data5,
+                                                            $data3,
+                                                            $data4
+                                                        );
+                                            if ($bind === false):
+                                                trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+                                            endif;
+                                            $exec = $stmt->execute();
+                                            if ($exec === false):
+                                                trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
+                                            else:
+                                                $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
+                                                if($status === 1):
+                                                    echo "Row $row_no: New, added: $data0, $data1, $data2, $data5<br>";
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
+                                                elseif($status === 2):
+                                                    echo "Row $row_no: Updated: $data0, $data1, $data2, $data5<br>";
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
+                                                else:
+                                                    $obj = new Message;
+                                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
+                                                endif;
+                                            endif;
+                                            $stmt->close();
+                                            if($status === 1 OR $status === 2 OR $status === 0):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran - checking",$logfile);
                                                 if($sqlcheck = $db->select_one('normal,foil',$mytable,"WHERE id = '$data5'")):
                                                     $obj = new Message;
-                                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
-                                                    echo " Normal: ",$sqlcheck['normal']," Foil: ",$sqlcheck['foil'];
-                                                    if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4)): ?>
-                                                        ID import OK: <img src='/images/success.png' alt='Success'><br>
-                                                        <?php   $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'];
-                                                                $count = $count + 1;
-                                                                $idimport = 1;?>
+                                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
+                                                    echo "Row $row_no: Normal: ",$sqlcheck['normal']," Foil: ",$sqlcheck['foil']."<br>";
+                                                    if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4)):
+                                                        echo "Row $row_no: Normal: ID import OK: <img src='/images/success.png' alt='Success'><br>";
+                                                        $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'];
+                                                        $count = $count + 1;
+                                                        $idimport = 1;?>
                                                     <?php
                                                     else: ?>
                                                         <img src='/images/error.png' alt='Failure'><br>
@@ -451,44 +497,81 @@ require('includes/menu.php');
                                                 else:
                                                     trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
-                                            else:    
-                                                trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
                                             endif;
                                         else:
                                             $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"ID $data5 does not map to a card in database, falling back to setcode/number...",$logfile);
-                                            echo "Row ",$i+1,": ID $data5 does not map to a card in database, falling back to setcode/number...<br>";
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data5 does not map to a card in database, falling back to setcode/number...",$logfile);
+                                            echo "Row $row_no: ID $data5 does not map to a card in database, falling back to setcode/number<br>";
                                         endif;
                                     endif;
                                     if (!empty($data0) AND !empty($data1) AND $idimport === 0):
                                         $obj = new Message;
-                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Data in Row $i place 1 ($data0) and place 2 ($data1) without ID - getting ID",$logfile);
-                                        echo "Row ",$i+1,": Data in Row $i has no matched ID, using setcode and number...<br>";
+                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0) and place 2 (number - $data1) without ID - getting ID",$logfile);
+                                        echo "Row $row_no:  Data in Row $row_no has no matched ID, using setcode and number<br>";
                                         if($getid = $db->select_one('id,name','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")):
                                             $data5 = $getid['id'];
                                             $db_name = $getid['name'];
                                             $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
                                             if (!empty($data5)):
-                                                echo "Row ",$i+1,": ",$data0," ",$data1," ",$data[2]," ",$data5;
-                                                $import="INSERT into `$mytable` (id,normal,foil) values('$data5','$data3','$data4') ON DUPLICATE KEY UPDATE normal='$data3', foil='$data4'";
-                                                $obj = new Message;
-                                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query is $import",$logfile);
-                                                if($runimport = $db->query($import)):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import query ran OK - checking...",$logfile);
+                                                echo "Row $row_no: $data0, $data1, $data2, ,$data5<br>";
+                                                $stmt = $db->prepare("  INSERT INTO
+                                                                            `$mytable`
+                                                                            (id,normal,foil)
+                                                                        VALUES
+                                                                            (?,?,?)
+                                                                        ON DUPLICATE KEY UPDATE
+                                                                            id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil)
+                                                                    ");
+                                                if ($stmt === false):
+                                                    trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                                                endif;
+                                                $bind = $stmt->bind_param("sss",
+                                                                $data5,
+                                                                $data3,
+                                                                $data4
+                                                            );
+                                                if ($bind === false):
+                                                    trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+                                                endif;
+                                                $exec = $stmt->execute();
+                                                if ($exec === false):
+                                                    trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
+                                                else:
+                                                    $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
+                                                    if($status === 1):
+                                                        echo "Row $row_no: New, added: $data0, $data1, $data2, $data5<br>";
+                                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
+                                                    elseif($status === 2):
+                                                        echo "Row $row_no: Updated: $data0, $data1, $data2, $data5<br>";
+                                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
+                                                    else:
+                                                        $obj = new Message;
+                                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
+                                                    endif;
+                                                endif;
+                                                $stmt->close();
+                                                if($status === 1 OR $status === 2 OR $status === 0):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran OK - checking...",$logfile);
                                                     if($sqlcheck = $db->select_one('normal,foil',$mytable,"WHERE id = '$data5'")):
                                                         $obj = new Message;
-                                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
-                                                        echo " Normal: ".$sqlcheck['normal']." Foil: ".$sqlcheck['foil']." <br>";
+                                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}",$logfile);
+                                                        echo "Row $row_no: Normal: ".$sqlcheck['normal']." Foil: ".$sqlcheck['foil']." <br>";
                                                         if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4)):
-                                                            echo "Setcode/number import OK: <img src='/images/success.png' alt='Success'><br>";
+                                                            echo "Row $row_no: Normal: Setcode/number import OK: <img src='/images/success.png' alt='Success'><br>";
                                                             $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'];
                                                             $count = $count + 1;
-                                                            if($db_name != $data[2]):
-                                                                echo "WARNING: Imported on setcode/number, but name in import file ($data[2]) does not match database name ($db_name)";
-                                                                echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                                $newwarning = "Name warning, $row_no, $data0, $data1, $data[2], $data3, $data4, $db_name, $data5\n";
-                                                                $warningsummary = $warningsummary.$newwarning;
+                                                            if($db_name != $data2):
+                                                                if(strpos($db_name,' // ') !== false): // Card is a double name or flip card in the database
+                                                                    if(strpos((string)$db_name,(string)$data2) === 0):
+                                                                        // Card is a double name or flip card in the database, and the database name starts with the full import name
+                                                                    endif;
+                                                                else: // Card is NOT a double name or flip card in the database, or otherwise the compare has failed, so a name variation is a concern
+                                                                    echo "WARNING: Imported on setcode/number, but name in import file ($data[2]) does not match database name ($db_name) ";
+                                                                    echo "<img src='/images/warning.png' alt='Warning'><br>";
+                                                                    $newwarning = "Name warning, $row_no, $data0, $data1, $data[2], $data3, $data4, $db_name, $data5"."\n";
+                                                                    $warningsummary = $warningsummary.$newwarning;
+                                                                endif;
                                                             endif;
                                                         else: ?>
                                                             <img src='/images/error.png' alt='Failure'><br>
@@ -497,24 +580,22 @@ require('includes/menu.php');
                                                     else:
                                                         trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
                                                     endif;
-                                                else:    
-                                                    trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
                                             else:
                                                 echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                                $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4\n";
+                                                $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4"."\n";
                                                 $warningsummary = $warningsummary.$newwarning;
                                             endif;
                                         else:
                                             echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                            $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4\n";
+                                            $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                         endif;
                                     elseif($idimport === 1):
                                         // do nothing
                                     else:
                                         echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
-                                        $newwarning = "Failure, $row_no, Check row - not enough data to identify card\n";
+                                        $newwarning = "Failure, $row_no, Check row - not enough data to identify card"."\n";
                                         $warningsummary = $warningsummary.$newwarning;
                                     endif;
                                 else:

@@ -15,7 +15,7 @@ Used for bulk script parsing
 - installed by composer to 'vendors' folder, and autoloaded by ini.php
 
 #### JQuery and IAS ####
-Works with JQuery 3.6:  <script src="/js/jquery.js"></script>
+Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
 IAS pulled down from CDN on index.php: <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
 Should work over npm, issue raised
 - install npm on the server for https://github.com/webcreate/infinite-ajax-scroll

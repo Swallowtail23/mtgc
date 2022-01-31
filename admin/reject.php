@@ -23,7 +23,7 @@ endif;?>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
     <?php include('../includes/googlefonts.php');?>
-    <script src="../js/jquery.js"></script>
+    <!-- <script src="/js/jquery.js"></script> -->
     </head>
     <body id="body" class="body">
 

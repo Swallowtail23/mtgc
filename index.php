@@ -322,7 +322,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             }
                         }
                     });
-                    
                     ias.on('page', (event) => {
                         $(".top").show(200);
                     });
@@ -501,7 +500,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
           <?php elseif ($layout == 'list'):?>
                     <div id='results' class='wrap'>
                         <?php
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : ?>
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : 
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
+                            $scryid = $row['cs_id']; ?>
                             <div class='item' style="cursor: pointer;" onclick="location.href='carddetail.php?id=<?php echo $scryid;?>';">
                                 <table> <?php
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: $scryid",$logfile);
@@ -521,7 +522,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             <?php
                                             $manac = symbolreplace($row['manacost']);
                                             ?>
-                                        <td class="valuerarity"> <?php echo $row['rarity']; ?> </td>
+                                        <td class="valuerarity"> <?php echo ucfirst($row['rarity']); ?> </td>
                                         <td class="valueset"> <?php echo $row['set_name']; ?> </td>
                                         <td class="valuetype"> <?php echo $row['type']; ?> </td>
                                         <td class="valuenumber"> <?php echo $row['number']; ?> </td>

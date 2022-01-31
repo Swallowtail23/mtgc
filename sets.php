@@ -30,7 +30,7 @@ forcechgpwd();                              //Check if user is disabled or needs
     <title>MtG collection sets</title>
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
-    <script src="/js/jquery.js"></script>
+    <!-- <script src="/js/jquery.js"></script> -->
 </head>
 
 <body class="body">
