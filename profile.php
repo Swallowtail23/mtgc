@@ -247,7 +247,12 @@ endif; ?>
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
 
-        $sqlvalue = "SELECT (SUM(`$mytable`.normal * price) + SUM(`$mytable`.foil * price_foil)) as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
+        $sqlvalue = "SELECT (
+                        COALESCE(SUM(`$mytable`.normal * price),0)
+                        + 
+                        COALESCE(SUM(`$mytable`.foil * price_foil),0)
+                            ) 
+                        as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
         if($totalvalue = $db->query($sqlvalue)):
             $rowvalue = $totalvalue->fetch_assoc();
         else:
@@ -438,7 +443,32 @@ endif; ?>
                                         echo "Row $row_no: Data has an ID ($data5), checking for a match...<br>";
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data has an ID ($data5), checking for a match",$logfile);
-                                        if($getid = $db->select_one('id','cards_scry',"WHERE id = '$data5'")):
+                                        if($getid = $db->select_one('id,foil,nonfoil','cards_scry',"WHERE id = '$data5'")):
+                                            $card_normal = $getid['nonfoil'];
+                                            $card_foil = $getid['foil'];
+                                            if($card_normal != 1 AND $card_foil == 1):
+                                                $cardtypes = 'foilonly';
+                                                if($data3 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    $i = $i + 1;
+                                                    continue;
+                                                endif;
+                                            elseif($card_normal == 1 AND $card_foil != 1):
+                                                $cardtypes = 'normalonly';
+                                                if($data4 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    $i = $i + 1;
+                                                    continue;
+                                                endif;
+                                            else:
+                                                $cardtypes = 'normalandfoil'; // Keep going
+                                            endif;
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Match found for ID $data5, will import",$logfile);
                                             echo "Row $row_no: $data0, $data1, $data2, $data5<br>";
@@ -508,9 +538,34 @@ endif; ?>
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0) and place 2 (number - $data1) without ID - getting ID",$logfile);
                                         echo "Row $row_no:  Data in Row $row_no has no matched ID, using setcode and number<br>";
-                                        if($getid = $db->select_one('id,name','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")):
+                                        if($getid = $db->select_one('id,name,foil,nonfoil','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")):
                                             $data5 = $getid['id'];
                                             $db_name = $getid['name'];
+                                            $card_normal = $getid['nonfoil'];
+                                            $card_foil = $getid['foil'];
+                                            if($card_normal != 1 AND $card_foil == 1):
+                                                $cardtypes = 'foilonly';
+                                                if($data3 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    $i = $i + 1;
+                                                    continue;
+                                                endif;
+                                            elseif($card_normal == 1 AND $card_foil != 1):
+                                                $cardtypes = 'normalonly';
+                                                if($data4 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    $i = $i + 1;
+                                                    continue;
+                                                endif;
+                                            else:
+                                                $cardtypes = 'normalandfoil'; // Keep going
+                                            endif;
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
                                             if (!empty($data5)):
