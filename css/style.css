@@ -1394,6 +1394,38 @@ table
     z-index:5;
 }
 
+.confirm-l-bulk, .confirm-r-bulk,.confirm-l-grid, .confirm-r-grid
+{
+    display: none;
+    position:absolute;
+    width:50px;
+    z-index:5;
+}
+
+.confirm-l-bulk
+{
+    top:35px;
+    left:120px;
+}
+
+.confirm-r-bulk
+{
+    top:35px;
+    left:190px;    
+}
+
+.confirm-l-grid
+{
+    top:456px;
+    left:120px;
+}
+
+.confirm-r-grid
+{
+    top:456px;
+    left:190px;    
+}
+
 .bottompad, .bottompad tr, .bottompad td
 {
     clear:both;
