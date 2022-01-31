@@ -380,6 +380,7 @@ function symbolreplace($str)
     $str = str_replace('{PR}','<img src="images/pr.png" alt="{PR}" class="manaimg">',$str);
     $str = str_replace('{PG}','<img src="images/pg.png" alt="{PG}" class="manaimg">',$str);
     $str = str_replace('{CHAOS}','<img src="images/chaos.png" alt="{PG}" class="manaimg">',$str);
+    $str = str_replace('{G/U/P}','<img src="images/gup.png" alt="{G/U/P}" class="manaimg">',$str);
     $str = str_replace('?','-',$str);
     $str = str_replace('£','<br>',$str);
     $str = str_replace('#','',$str);
