@@ -599,7 +599,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             
                             if(!is_null($imagefunction['back'])):
-                                $imagebackurl = $imagefunction['back'];
+                                if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
+                                    $imagebackurl = '/cardimg/back.jpg';
+                                else:
+                                    $imagebackurl = $imagefunction['back'];
+                                endif;
                             endif;
                             ?>
                             <script type="text/javascript">

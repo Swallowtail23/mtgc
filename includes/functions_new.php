@@ -516,14 +516,14 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back, {$coderow2['f2_image_uri']}",$logfile);
                     $imageurl = strtolower($coderow2['f2_image_uri']);
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile_b",$logfile);
+                    $imageurl_2 = strtolower($coderow2['f2_image_uri']);
                 endif;
-
-
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back image, {$coderow2['f2_image_uri']}",$logfile);
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
-                $imageurl_2 = strtolower($coderow2['f2_image_uri']);
-                if ((checkRemoteFile($imageurl_2) == false) OR ($imageurl_2 === '')):
-                    $imageurl_2 = '';
+                if ($imageurl_2 === ''):
+                    $backimg = 'empty';
+                elseif(checkRemoteFile($imageurl_2) == false):
+                    $backimg = 'error';
                 else:
                     $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
                     $context  = stream_context_create($options);
