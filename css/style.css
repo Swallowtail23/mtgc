@@ -333,7 +333,7 @@ table
 
 #carddetailflipimg
 {
-    height: 485px;
+    height: 445px;
 }
 
 #carddetailimage
@@ -367,7 +367,16 @@ table
     float: left;
     padding-left: 10px;
     max-width: 324px;
+}
+
+#carddetailinfo
+{
     min-height: 490px;
+}
+
+#carddetailflipinfo
+{
+    min-height: 440px;
 }
 
 #carddetailupdate
