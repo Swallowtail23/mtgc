@@ -323,28 +323,26 @@ require('includes/menu.php');
                 endif;
                 ?> 
             <h2 id='h2'>Import / Export</h2>
-            <b>Import guidelines - read carefully!</b><br>
-                        Import will ADD to your existing collection. If a card entry already exists, the quantity in the import file will over-write the existing quantity.<br>
-                        Import file must be a comma-delimited file.<br>
-                        Delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):<br><br>
-                        <pre>
+                <b>Import guidelines - read carefully!</b><br>
+                <ul>
+                    <li>Import will <b>ADD</b> to your existing collection</li>
+                    <li>If a card entry already exists, the quantity in the import file will <b>over-write</b> the existing quantity</li>
+                    <li>Import file must be a comma-delimited file</li>
+                    <li>Delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):</li></ul>
+        <pre>
         setcode,number,name,normal,foil,id
         M15,2,Ajani's Pridemate,5,0,383181
-        M15,3,"Avacyn, Guardian Angel",2,0,383185
-                        </pre>
-                        The only mandatory fields are setcode and collector number. 
-                        Name and id are for your reference only. <br>
-                        Set codes MUST be as per the following list for successful import:<br>
-                        <a href='sets.php'>Set codes</a><br>
-
-                        Unless you are 100% confident that the cards are in the database, only import normal cards, not promos or specials. There<br>
-                        is no consistent naming convention for non-standard sets.<br>
-                        Check the last line of exported files to make sure that it has been closed properly - it should have terminating quotes and a newline.<br>
-                        This can be seen in an app like Notepad++ (don't use Excel).<br>
-                        <br>
-                        The import process imports a line, then does a follow-up check to see if it has been successfully written to the database. <br>
-                        A green tick or a red cross is then shown dependent on the result.
-                        Make a note of any failures for checking.<br>
+        M15,3,"Avacyn, Guardian Angel",2,0,383185</pre>
+                <ul>
+                    <li>The only mandatory fields are setcode and collector number.</li>
+                    <li>If id is included and is a valid Scryfall UUID value, the line will be imported as that id without checking anything else, otherwise, name and id are for your reference only</li>
+                    <li>Set codes MUST be as per the list <a href='sets.php'> here (Set codes) </a>for successful import</li>
+                    <li>Unless you are 100% confident that the cards are in the database, only import normal cards, not promos or specials. There is no consistent naming convention for non-standard sets</li>
+                    <li>Check the last line of exported files to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen in an app like Notepad++ (don't use Excel)</li>
+                    <li>The import process imports a line, then does a follow-up check to see if it has been successfully written to the database</li>
+                    <li>A green tick, red cross or warning is shown dependent on each line's result</li>
+                    <li>Make a note of any failures for checking, including 'name warnings' where the card has been imported based on setcode and number but the name does not match</li>
+                    <li>The process will email you a list of the failures and warnings at the end of the import process</li></ul>
                 
                         <span id='importspan'><b>Import</b></span>
                             <?php if (!isset($_POST['import'])): 

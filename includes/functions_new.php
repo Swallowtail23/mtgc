@@ -880,7 +880,7 @@ function scryfall($cardid)
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
         endif;
-        if($prices !== 0):
+        if(!isset($prices)):
             $data = array(
                 'price' => $price,
                 'price_foil' => $price_foil,
