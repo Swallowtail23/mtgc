@@ -133,7 +133,7 @@ if((isset($update)) AND ( $update == 1) OR (isset($addcard)) AND ( $addcard == 1
     
     //Get existing values from the Database
     $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Getting existing card details for $id",$logfile);
-    $result = $db->select('*','cards',"WHERE id = '$id'");
+    $result = $db->select('*','cards_scry',"WHERE id = '$id'");
     if ($result === false):
         trigger_error("[ERROR] cards.php: Retrieving existing card details: Error: " . $db->error, E_USER_ERROR);
     else:
@@ -141,7 +141,7 @@ if((isset($update)) AND ( $update == 1) OR (isset($addcard)) AND ( $addcard == 1
             $row = $result->fetch_assoc();
             $oldid = $row['id'];
             $oldname = $row['name'];
-            $oldsetname = $row['setname'];
+            $oldsetname = $row['set_name'];
             $oldsetcode = $row['setcode'];
             $oldtype = $row['type'];
             $oldpower = $row['power'];
@@ -154,26 +154,17 @@ if((isset($update)) AND ( $update == 1) OR (isset($addcard)) AND ( $addcard == 1
             $oldcolor = $row['color'];
             $oldgeneratedmana = $row['generatedmana'];
             $oldnumber = $row['number'];
+            $oldnumber_import = $row['number_import'];
             $oldrarity = $row['rarity'];
-            $oldruling = $row['ruling'];
             $oldability = $row['ability'];
-            $oldbackid = $row['backid'];
-            $oldmeld = $row['meld'];
-            $oldcomment = $row['comment'];
-            $oldtcgsetoverride = $row['tcgsetoverride'];
-            $oldtcgnameoverride = $row['tcgnameoverride'];
-            $oldscrynameoverride = $row['scrynameoverride'];          
             $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Existing card parameters:",$logfile);
             $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"id: $oldid; name: $oldname;"
                     . " setname: $oldsetname; setcode: $oldsetcode;"
                     . " type: $oldtype; power: $oldpower; toughness: $oldtoughness; loyalty: $oldloyalty;"
                     . " manacost: $oldmanacost; cmc: $oldcmc; artist: $oldartist;"
                     . " flavor: $oldflavor; color: $oldcolor; generatedmana: $oldgeneratedmana;"
-                    . " number: $oldnumber; rarity: $oldrarity;  ruling: $oldruling;"
-                    . " ability: $oldability;  backid: $oldbackid;  meld: $oldmeld;"
-                    . " comment: $oldcomment; tcgsetoverride: $oldtcgsetoverride;"
-                    . " tcgnameoverride: $oldtcgnameoverride;"
-                    . " scrynameoverride: $oldscrynameoverride",$logfile);
+                    . " number: $oldnumber; number(import): $oldnumber_import; rarity: $oldrarity;"
+                    . " ability: $oldability",$logfile);
         else:
             $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"No such card - adding new one!",$logfile);
         endif;
@@ -183,22 +174,17 @@ if((isset($update)) AND ( $update == 1) OR (isset($addcard)) AND ( $addcard == 1
                     . " type: $type; power: $power; toughness: $toughness; loyalty: $loyalty;"
                     . " manacost: $manacost; cmc: $cmc; artist: $artist;"
                     . " flavor: $flavor; color: $color; generatedmana: $generatedmana;"
-                    . " number: $number; rarity: $rarity;  ruling: $ruling;"
-                    . " ability: $ability;  backid: $backid;  meld: $meld;"
-                    . " comment: $comment; tcgsetoverride: $tcgsetoverride;"
-                    . " tcgnameoverride: $tcgnameoverride;"
-                    . " scrynameoverride: $scrynameoverride",$logfile);
+                    . " number: $number; number(import): $number_import; rarity: $rarity;"
+                    . " ability: $ability",$logfile);
 
-        $stmt = $db->prepare("INSERT INTO cards (id, name, setname, setcode,
+        $stmt = $db->prepare("INSERT INTO cards (id, name, set_name, setcode,
                     type, power, toughness, loyalty, manacost, cmc, artist, flavor,
-                    color, generatedmana, number, rarity, ruling, ability,
-                    backid, meld, comment, tcgsetoverride, tcgnameoverride,
-                    scrynameoverride)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    color, generatedmana, number, number_import, rarity, ability)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     ON DUPLICATE KEY UPDATE 
                     id=VALUES(id),
                     name=VALUES(name),
-                    setname=VALUES(setname),
+                    set_name=VALUES(set_name),
                     setcode=VALUES(setcode),
                     type=VALUES(type),
                     power=VALUES(power),
@@ -211,22 +197,15 @@ if((isset($update)) AND ( $update == 1) OR (isset($addcard)) AND ( $addcard == 1
                     color=VALUES(color),
                     generatedmana=VALUES(generatedmana),
                     number=VALUES(number),
+                    number_import=VALUES(number_import),
                     rarity=VALUES(rarity),
-                    ruling=VALUES(ruling),
-                    ability=VALUES(ability),
-                    backid=VALUES(backid),
-                    meld=VALUES(meld),
-                    comment=VALUES(comment),
-                    tcgsetoverride=VALUES(tcgsetoverride),
-                    tcgnameoverride=VALUES(tcgnameoverride),
-                    scrynameoverride=VALUES(scrynameoverride)");
+                    ability=VALUES(ability)");
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $stmt->bind_param("sssssiiisissssisssssssss", $id, $name, $setname, $setcode, 
+        $stmt->bind_param("ssssssssssssssssss", $id, $name, $setname, $setcode, 
                 $type, $power, $toughness, $loyalty, $manacost, $cmc, $artist, $flavor,
-                $color, $generatedmana, $number, $rarity, $ruling, $ability, $backid,
-                $meld, $comment, $tcgsetoverride, $tcgnameoverride, $scrynameoverride);
+                $color, $generatedmana, $number, $number_import, $rarity, $ability);
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Binding parameters: ' . $db->error, E_USER_ERROR);
         endif;
@@ -245,12 +224,12 @@ elseif ((isset($_POST['delete'])) AND ( $_POST['delete'] == 'DELETE')):
         $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_STRING);
     endif;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    $sql = "DELETE FROM cards WHERE id = '$id'";
+    $sql = "DELETE FROM cards_scry WHERE id = '$id'";
     $result = $db->query($sql);
     if ($result === false):
         trigger_error("[ERROR] cards.php: Deleting card: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
     else:
-        $sql = "SELECT id FROM cards WHERE id = '$id'";
+        $sql = "SELECT id FROM cards_scry WHERE id = '$id'";
         $result = $db->query($sql);
         $rowcount = $result->num_rows;
         if ($result === false):
@@ -260,83 +239,6 @@ elseif ((isset($_POST['delete'])) AND ( $_POST['delete'] == 'DELETE')):
             ?>
             <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
         endif;
-    endif;
-elseif(isset($setforpromos)):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Add pre-release promos for $setforpromos called by $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    $highptc = $db->select_one('number','cards',"WHERE setcode = 'PTC' ORDER by number DESC");
-    if ($highptc !== null):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Highest existing PTC card number is {$highptc['number']}",$logfile);
-        $cardsinsetforpromos = $db->select('id,name,setname,setcode,type,power,toughness,'
-                . 'loyalty,manacost,cmc,artist,flavor,color,generatedmana,number,rarity,'
-                . 'ruling,ability,watermark,backid,meld,comment,tcgsetoverride,'
-                . 'tcgnameoverride,scrynameoverride','cards',
-                "WHERE setcode = '$setforpromos'
-                AND rarity IN ('M','R') ORDER by number ASC");
-        if ($cardsinsetforpromos === false):
-            trigger_error("[ERROR] cards.php: Retrieving existing card details: Error: " . $db->error, E_USER_ERROR);
-        else:
-            $prereleasecount = $cardsinsetforpromos->num_rows;
-            $nextptc = $highptc['number'] + 1;
-            $qtytry = $qtysuccess = 0;
-            while ($cardsforpromo = $cardsinsetforpromos->fetch_assoc()):
-                $cardescapedname = $db->escape($cardsforpromo['name']);
-                if($ptccheck = $db->select_one('id','cards',"WHERE watermark = '$setforpromos' AND name = '$cardescapedname'")):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Skipping {$cardsforpromo['name']} $setforpromos pre-release, already there",$logfile);
-                else:
-                    $cardsforpromo['id'] = 'PTC_'.$nextptc;
-                    $cardsforpromo['number'] = $nextptc;
-                    $cardsforpromo['setname'] = 'Prerelease Events';
-                    $cardsforpromo['watermark'] = $cardsforpromo['setcode'];
-                    $cardsforpromo['setcode'] = 'PTC';
-                    $stmt = $db->prepare("INSERT INTO cards (id, name, setname, setcode,
-                                type, power, toughness, loyalty, manacost, cmc, artist, flavor,
-                                color, generatedmana, number, rarity, ruling, ability, watermark,
-                                backid, meld, comment)
-                                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                    if ($stmt === false):
-                        trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $stmt->bind_param("sssssiiisissssisssssss",
-                            $cardsforpromo['id'],
-                            $cardsforpromo['name'],
-                            $cardsforpromo['setname'],
-                            $cardsforpromo['setcode'],
-                            $cardsforpromo['type'],
-                            $cardsforpromo['power'],
-                            $cardsforpromo['toughness'],
-                            $cardsforpromo['loyalty'],
-                            $cardsforpromo['manacost'],
-                            $cardsforpromo['cmc'],
-                            $cardsforpromo['artist'],
-                            $cardsforpromo['flavor'],
-                            $cardsforpromo['color'],
-                            $cardsforpromo['generatedmana'],
-                            $cardsforpromo['number'],
-                            $cardsforpromo['rarity'],
-                            $cardsforpromo['ruling'],
-                            $cardsforpromo['ability'],
-                            $cardsforpromo['watermark'],
-                            $cardsforpromo['backid'],
-                            $cardsforpromo['meld'],
-                            $cardsforpromo['comment']);
-                    if ($stmt === false):
-                        trigger_error('[ERROR] cards.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $result = $stmt->execute();
-                    if ($result === false):
-                        trigger_error("[ERROR] cards.php: Writing new pre-release card details: " . $db->error, E_USER_ERROR);
-                    else:
-                        $qtysuccess = $qtysuccess + 1;
-                        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Prerelease card ($qtytry) {$cardsforpromo['name']}/{$cardsforpromo['id']} - no error returned",$logfile);
-                    endif;
-                    $stmt->close();
-                    $nextptc = $nextptc + 1;
-                endif;
-            endwhile;
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Attempted to write $prereleasecount Prerelease cards, $qtysuccess written",$logfile);
-        endif;
-    else:
-        trigger_error("[ERROR] cards.php: Can't get highest existing Prerelease card number. Error: " . $db->error, E_USER_ERROR);
     endif;
 endif;
 ?>
@@ -392,21 +294,6 @@ endif;
                 }
             });
         });
-        $(function () {
-            $(".legalcheck").change(function () {
-                var ths = this;
-                var myqty = $(ths).val();
-                if (myqty > 1)
-                {
-                    alert("Legal can only be 0 ('No') or 1 ('Yes')");
-                    $(ths).focus();
-                } else if (!isInteger(myqty))
-                {
-                    alert("Legal can only be 0 ('No') or 1 ('Yes')");
-                    $(ths).focus();
-                }
-            });
-        });
     </script>
 </head>
 <body id="body" class="body">    
@@ -440,7 +327,7 @@ require('../includes/menu.php');
                     endif;
                 if ((isset($editcard) AND $editcard == 1) OR ( isset($update) AND $update == 1) OR ( isset($addcard) AND $addcard == 1)):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Card edit: Getting card details for $cardtoedit",$logfile);
-                    $sql = "SELECT * FROM cards WHERE id = '$cardtoedit' LIMIT 1";
+                    $sql = "SELECT * FROM cards_scry WHERE id = '$cardtoedit' LIMIT 1";
                     $result = $db->query($sql);
                     if ($result === false):
                         trigger_error("[ERROR] cards.php: Card details retrieval: Wrong SQL ($sql) Error: " . $db->error, E_USER_ERROR);
@@ -527,7 +414,7 @@ require('../includes/menu.php');
                                         </td>
                                         <td colspan='3'>
                                             <?php
-                                            echo "<textarea class='textinput requiredvalue' id='editsetname' name='setname' rows='2' cols='20'>{$row['setname']}</textarea>";
+                                            echo "<textarea class='textinput requiredvalue' id='editsetname' name='setname' rows='2' cols='20'>{$row['set_name']}</textarea>";
                                             ?>
                                         </td>
                                         <td>
@@ -576,15 +463,6 @@ require('../includes/menu.php');
                                         <td>
                                             Generated mana
                                         </td>
-                                        <td>
-                                            Back ID
-                                        </td>
-                                        <td>
-                                            Meld
-                                        </td>
-                                        <td>
-                                            Comment
-                                        </td>
                                     </tr>
                                     <tr>
                                         <td>
@@ -627,21 +505,6 @@ require('../includes/menu.php');
                                             echo "<textarea class='textinput' name='generatedmana' rows='2' cols='14'>{$row['generatedmana']}</textarea>";
                                             ?>
                                         </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='backid' rows='2' cols='10'>{$row['backid']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='meld' rows='2' cols='10'>{$row['meld']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='comment' rows='2' cols='15'>{$row['comment']}</textarea>";
-                                            ?>
-                                        </td>
                                     </tr>
                                     <tr class="admintable">
                                         <td colspan='2'>
@@ -650,18 +513,6 @@ require('../includes/menu.php');
                                         <td colspan='3'>
                                             Flavor
                                         </td>
-                                        <td colspan='3'>
-                                            Ruling
-                                        </td>
-                                        <td>
-                                            TCG set
-                                        </td>
-                                        <td>
-                                            TCG name
-                                        </td>
-                                        <td>
-                                            Scryfall ID
-                                        </td>                                        
                                     </tr>
                                     <tr>
                                         <td colspan='2'>
@@ -672,26 +523,6 @@ require('../includes/menu.php');
                                         <td colspan='3'>
                                             <?php
                                             echo "<textarea class='textinput' name='flavor' rows='8' cols='20'>{$row['flavor']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td colspan='3'>
-                                            <?php
-                                            echo "<textarea class='textinput' name='ruling' rows='8' cols='33'>{$row['ruling']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='tcgsetoverride' rows='8' cols='10'>{$row['tcgsetoverride']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='tcgnameoverride' rows='8' cols='10'>{$row['tcgnameoverride']}</textarea>";
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo "<textarea class='textinput' name='scrynameoverride' rows='8' cols='15'>{$row['scrynameoverride']}</textarea>";
                                             ?>
                                         </td>
                                     </tr>
@@ -955,51 +786,6 @@ require('../includes/menu.php');
                 <?php
                 endif;
                 ?>
-                <br>
-                To copy a card, edit the original, change (at a minimum) the Card ID, and 'Update'.<br><br>
-                After adding any cards, and after checking Standard set, etc., run <a href='/admin/legality.php'>legality check</a> to reset legalities.
-                <h3>Prerelease Promo cards</h3>
-                <ul>
-                    <li>Clicking on 'ADD PROMOS' will add Rares and Mythics from the selected set to the Prerelease Events set.</li>
-                    <li>Sets appear in this list only if they were BFZ or later, and if they have "prerelease" in the SETTYPE field (see the "SETS" page)</li>
-                    <li>If this function has been used to generate prerelease cards, it cannot repeat them (the original set is recorded in the WATERMARK field)</li>
-                    <li>Sets added manually should have "prerelease" removed from SETTYPE to prevent inadvertent creation of duplicates</li>
-                    <li>At the moment this won't work with sets with meld or double-sided cards.</li>
-                    <li>New sets also tend to have 'extra' rares at the end (usually with number > number of cards in the set). Currently these will also copy and will need to be deleted manually.</li>
-                </ul>
-                <?php
-                $sql = "select fullsetname,setcodeid from sets WHERE `releasedat` > '2015-10-01' AND settype = 'prerelease' ORDER BY fullsetname ASC";
-                $result = $db->query($sql);
-                if ($result === false):
-                    trigger_error("[ERROR] cards.php: Set image retrieval: Wrong SQL ($sql) Error: " . $db->error, E_USER_ERROR);
-                else:
-                    ?>
-                    <table>
-                        <tr>
-                            <td>
-                                <form id='prpromos' action="?" method="GET">
-                                    <select size="1" name="setforpromos">
-                                        <?php
-                                        echo "<option selected disabled>Choose set from dropdown list</option>";
-                                        while ($row = $result->fetch_assoc()):
-                                            echo "<option value='{$row['setcodeid']}'>{$row['fullsetname']}</option>";
-                                        endwhile;
-                                        ?>
-                                    </select>
-                                    <input type='submit' class='inline_button stdwidthbutton updatebutton' name="setprereleasepromos" value="ADD PROMOS" 
-                                           onclick="return confirm('Please confirm: add these Pre-release promo cards?')"/>
-                                </form>
-                            </td>
-                        </tr>
-                    </table>
-                <?php
-                    if(isset($prereleasecount) AND isset($qtysuccess)):
-                        echo "<div class='alert-box notice'><span>notice: </span>Attempted to write $prereleasecount Prerelease cards, $qtysuccess written</div>";
-                    endif;
-                endif;
-                ?>
-                <h3>Banlist Management</h3>
-                - Banlist management<br>
                 
             </div>
         </div>

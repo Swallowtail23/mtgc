@@ -84,31 +84,31 @@ elseif ($adv == "yes" ) :
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol = "(cards_scry.color LIKE '%U%' OR cards_scry.f1_colour LIKE '%U%' OR cards_scry.f2_colour LIKE '%U%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%U%' OR cards_scry.f1_colour LIKE '%U%' OR cards_scry.f2_colour LIKE '%U%' )";
     endif;
     if ($black === "yes"):
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol = "(cards_scry.color LIKE '%B%' OR cards_scry.f1_colour LIKE '%B%' OR cards_scry.f2_colour LIKE '%B%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%B%' OR cards_scry.f1_colour LIKE '%B%' OR cards_scry.f2_colour LIKE '%B%' )";
     endif;
     if ($red === "yes"):
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol = "(cards_scry.color LIKE '%R%' OR cards_scry.f1_colour LIKE '%R%' OR cards_scry.f2_colour LIKE '%R%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%R%' OR cards_scry.f1_colour LIKE '%R%' OR cards_scry.f2_colour LIKE '%R%' )";
     endif;
     if ($green === "yes"):
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol = "(cards_scry.color LIKE '%G%' OR cards_scry.f1_colour LIKE '%G%' OR cards_scry.f2_colour LIKE '%G%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%G%' OR cards_scry.f1_colour LIKE '%G%' OR cards_scry.f2_colour LIKE '%G%' )";
     endif;
     if ($colourless === "yes"):
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol = "(cards_scry.color LIKE '%C%' OR cards_scry.f1_colour LIKE '%C%' OR cards_scry.f2_colour LIKE '%C%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%C%' OR cards_scry.f1_colour LIKE '%C%' OR cards_scry.f2_colour LIKE '%C%' )";
     endif;
     if (!empty($criteriaCol)) :
         $criteria .= "AND (".$criteriaCol.") ";
