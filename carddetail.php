@@ -1318,7 +1318,7 @@ require('includes/menu.php'); //mobile menu
                                 else:
                                     $source = $rulingrow['source'];
                                 endif;
-                                $ruling = $ruling.$newdate.": ".$rulingrow['comment']." (".$source.")<br>";
+                                $ruling = $ruling.$newdate.": ".symbolreplace($rulingrow['comment'])." (".$source.")<br>";
                             endwhile;
                             $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
                             if (!in_array($row['layout'],$flip_types)):

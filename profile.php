@@ -448,9 +448,18 @@ endif; ?>
                                             $card_foil = $getid['foil'];
                                             if($card_normal != 1 AND $card_foil == 1):
                                                 $cardtypes = 'foilonly';
-                                                if($data3 > 0):
-                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
-                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                if($data3 > 0 and $data4 === 0):
+                                                    echo "Row $row_no: WARNING: This matches to a Foil-only ID, but import contains Normal cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/warning.png' alt='Warning'><br>";
+                                                    $newwarning = "Foil/Normal warning (swapping), $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    // swap $data3 and $data4
+                                                    $data3 = $data3 + $data4;
+                                                    $data4 = $data3 - $data4;
+                                                    $data3 = $data3 - $data4;
+                                                elseif($data3 > 0 and $data4 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
@@ -458,9 +467,18 @@ endif; ?>
                                                 endif;
                                             elseif($card_normal == 1 AND $card_foil != 1):
                                                 $cardtypes = 'normalonly';
-                                                if($data4 > 0):
-                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
-                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                if($data4 > 0 and $data3 === 0):
+                                                    echo "Row $row_no: WARNING: This matches to a Normal-only ID, but import contains Foil cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/warning.png' alt='Warning'><br>";
+                                                    $newwarning = "Foil/Normal warning, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    // swap $data3 and $data4
+                                                    $data3 = $data3 + $data4;
+                                                    $data4 = $data3 - $data4;
+                                                    $data3 = $data3 - $data4;
+                                                elseif($data4 > 0 and $data3 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
@@ -545,9 +563,18 @@ endif; ?>
                                             $card_foil = $getid['foil'];
                                             if($card_normal != 1 AND $card_foil == 1):
                                                 $cardtypes = 'foilonly';
-                                                if($data3 > 0):
-                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
-                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                if($data3 > 0 and $data4 === 0):
+                                                    echo "Row $row_no: WARNING: This matches to a Foil-only ID, but import contains Normal cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/warning.png' alt='Warning'><br>";
+                                                    $newwarning = "Foil/Normal warning (swapping), $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    // swap $data3 and $data4
+                                                    $data3 = $data3 + $data4;
+                                                    $data4 = $data3 - $data4;
+                                                    $data3 = $data3 - $data4;
+                                                elseif($data3 > 0 and $data4 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
@@ -555,9 +582,18 @@ endif; ?>
                                                 endif;
                                             elseif($card_normal == 1 AND $card_foil != 1):
                                                 $cardtypes = 'normalonly';
-                                                if($data4 > 0):
-                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
-                                                    echo "<img src='/images/error.png' alt='Failure'><br>";
+                                                if($data4 > 0 and $data3 === 0):
+                                                    echo "Row $row_no: WARNING: This matches to a Normal-only ID, but import contains Foil cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/warning.png' alt='Warning'><br>";
+                                                    $newwarning = "Foil/Normal warning, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $warningsummary = $warningsummary.$newwarning;
+                                                    // swap $data3 and $data4
+                                                    $data3 = $data3 + $data4;
+                                                    $data4 = $data3 - $data4;
+                                                    $data3 = $data3 - $data4;
+                                                elseif($data4 > 0 and $data3 > 0):
+                                                    echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;

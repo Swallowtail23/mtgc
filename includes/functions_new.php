@@ -346,6 +346,11 @@ function symbolreplace($str)
     $str = str_replace('{2B}','<img src="images/2b.png" alt="{2B}" class="manaimg">',$str);
     $str = str_replace('{2R}','<img src="images/2r.png" alt="{2R}" class="manaimg">',$str);
     $str = str_replace('{2G}','<img src="images/2g.png" alt="{2G}" class="manaimg">',$str);
+    $str = str_replace('{2/W}','<img src="images/2w.png" alt="{2/W}" class="manaimg">',$str);
+    $str = str_replace('{2/B}','<img src="images/2b.png" alt="{2/B}" class="manaimg">',$str);
+    $str = str_replace('{2/G}','<img src="images/2g.png" alt="{2/G}" class="manaimg">',$str);
+    $str = str_replace('{2/U}','<img src="images/2u.png" alt="{2/U}" class="manaimg">',$str);
+    $str = str_replace('{2/R}','<img src="images/2r.png" alt="{2/R}" class="manaimg">',$str);
     
     $str = str_replace('{X}','<img src="images/x.png" alt="{X}" class="manaimg">',$str);
     $str = str_replace('{Y}','<img src="images/y.png" alt="{Y}" class="manaimg">',$str);
@@ -379,13 +384,10 @@ function symbolreplace($str)
     $str = str_replace('{PB}','<img src="images/pb.png" alt="{PB}" class="manaimg">',$str);
     $str = str_replace('{PR}','<img src="images/pr.png" alt="{PR}" class="manaimg">',$str);
     $str = str_replace('{PG}','<img src="images/pg.png" alt="{PG}" class="manaimg">',$str);
+
     $str = str_replace('{CHAOS}','<img src="images/chaos.png" alt="{PG}" class="manaimg">',$str);
-    $str = str_replace('{2/W}','<img src="images/2w.png" alt="{2/W}" class="manaimg">',$str);
     $str = str_replace('{G/U/P}','<img src="images/gup.png" alt="{G/U/P}" class="manaimg">',$str);
-    $str = str_replace('{2/B}','<img src="images/2b.png" alt="{2/B}" class="manaimg">',$str);
-    $str = str_replace('{2/G}','<img src="images/2g.png" alt="{2/G}" class="manaimg">',$str);
-    $str = str_replace('{2/U}','<img src="images/2u.png" alt="{2/U}" class="manaimg">',$str);
-    $str = str_replace('{2/R}','<img src="images/2r.png" alt="{2/R}" class="manaimg">',$str);
+
     $str = str_replace('?','-',$str);
     $str = str_replace('£','<br>',$str);
     $str = str_replace('#','',$str);
