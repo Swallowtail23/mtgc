@@ -743,7 +743,8 @@ require('includes/menu.php'); //mobile menu
                         <h3 class="shallowh3">Details</h3>
                         <?php 
                         
-                        if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
+                        if(isset($admin) AND $admin == 1):
+                        // if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
                             echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
                         else:
                             echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
