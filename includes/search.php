@@ -25,7 +25,7 @@ endif;
             <input type="hidden" name="adv" value="yes">
             <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
-            <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php echo $name ; ?>"><br>
+            <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT'><br>
             <span class="parametermed checkbox-group">
                 <input id='cb1' type="checkbox" class="checkbox notnotes" name="searchname" value="yes" checked="checked">
