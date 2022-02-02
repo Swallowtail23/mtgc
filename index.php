@@ -96,6 +96,7 @@ $planeswalker = isset($_GET['planeswalker']) ? filter_input(INPUT_GET, 'planeswa
 $tribal = isset($_GET['tribal']) ? filter_input(INPUT_GET, 'tribal', FILTER_SANITIZE_STRING):'';
 $tribe = isset($_GET['tribe']) ? filter_input(INPUT_GET, 'tribe', FILTER_SANITIZE_STRING):'';
 $legendary = isset($_GET['legendary']) ? filter_input(INPUT_GET, 'legendary', FILTER_SANITIZE_STRING):'';
+$token = isset($_GET['token']) ? filter_input(INPUT_GET, 'token', FILTER_SANITIZE_STRING):'';
 $rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
 $exact = isset($_GET['exact']) ? filter_input(INPUT_GET, 'exact', FILTER_SANITIZE_STRING):'';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
@@ -142,6 +143,8 @@ $selectAll = "SELECT
                 number_import,
                 name,
                 promo,
+                cards_scry.foil as cs_foil,
+                cards_scry.nonfoil as cs_normal,
                 release_date,
                 rarity,
                 set_name,
@@ -301,11 +304,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         </script>
         
         <?php
-        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call ?>
-            <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
-            <script type="text/javascript">
+        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
+            // Only load IAS if results are more than a page-full per page type
+            if( ($layout == 'bulk' AND ( $qtyresults > $bulkperpage)) OR ($layout == 'list' AND ( $qtyresults > $listperpage)) OR ($layout == 'grid' AND ( $qtyresults > $gridperpage) AND (isset($validsearch) AND ($validsearch !== "toomany")))  ) :   
+                // IAS will be needed ?>
+                <script src="/js/infinite-ajax-scroll.min.js"></script>
+                <script type="text/javascript">
                 $(document).ready(function () { // Infinite Ajax Scroll configuration
-                    $(".top").hide();
                     let ias = new InfiniteAjaxScroll('.wrap', {
                         item: '.item', // single items
                         next: '.next',
@@ -322,27 +327,42 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             }
                         }
                     });
-                    
                     ias.on('page', (event) => {
                         $(".top").show(200);
                     });
-
                     ias.on('last', function() {
                         let el = document.querySelector('.ias-no-more');
                         el.style.opacity = '1';
                     });
+                    // update title and url when scrolling through pages
+                    ias.on('page', (e) => {
+                        document.title = e.title;
+                        let state = history.state;
+                        history.replaceState(state, e.title, e.url);
+                    });
                 });
-            </script>
+                </script>   
+                <?php
+            endif; ?>
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    $(".top").hide();
+                    var UrlVars = getUrlVars();
+                    if (UrlVars["page"] > 1) {
+                        $(".top").show();
+                    }
+                });
+            </script>                    
             <script type="text/javascript">
                 function isInteger(x) {
                     return x % 1 === 0;
                 };
             </script>
             <script type="text/javascript">
-                function ajaxNormal(cardid,cellid,qty) {
-                    var activeCell = document.getElementById(cellid + "myqty");
-                    var activeFlash = document.getElementById(cellid + "flash");
-                    var poststring = 'newqty=' + (activeCell.value) + '&cardid=' + cardid;
+                function ajaxUpdate(cardid,cellid,qty,flash,type) {
+                    var activeCell = document.getElementById(cellid);
+                    var activeFlash = document.getElementById(flash);
+                    var poststring = type + '=' + (activeCell.value) + '&cardid=' + cardid;
                     if ((activeCell.value) == '') {
                         alert("Enter a number");
                         activeCell.focus();
@@ -365,30 +385,22 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 };
             </script>
             <script type="text/javascript">
-                function ajaxFoil(cardid,cellid,qty) {
-                    var activeCell = document.getElementById(cellid + "myfoil");
-                    var activeFlash = document.getElementById(cellid + "flashfoil");
-                    var poststring = 'newfoil=' + (activeCell.value) + '&cardid=' + cardid;
-                    if ((activeCell.value) == '') {
-                        alert("Enter a number");
-                        activeCell.focus();
-                    } else if (!isInteger(activeCell.value)) {
-                        alert("Enter an integer");
-                        activeCell.focus();
-                    } else {
-                        $.ajax({
-                            type: "GET",
-                            url: "gridupdate.php",
-                            data: poststring,
-                            cache: true,
-                            success: function (data) {
-                                $(activeFlash).hide(300);
-                                $(activeFlash).show(300);
-                            }
-                        });
+                function getUrlVars()
+                    {
+                        var vars = [], hash; 
+                        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&'); // cut the URL string down to just everything after the ?, split this into an array with information like this: array [0] = "var=xxx"; array [1] = "var2=yyy";
+                        //loop through each item in that array
+                        for(var i = 0; i < hashes.length; i++)
+                        {   //split the item at the "="
+                            hash = hashes[i].split('=');
+                            //put the value name of the first variable into the "vars" array
+                            vars.push(hash[0]);
+                            //assign the value to the variable name, now you can access it like this:
+                            // alert(vars["var1"]); //alerts the value of the var1 variable from the url string
+                            vars[hash[0]] = hash[1];
+                        }
+                        return vars;
                     }
-                    return false;
-                };
             </script>
   <?php endif;?>
     </head>
@@ -427,6 +439,16 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
+                            $card_normal = $row['cs_normal'];
+                            $card_foil = $row['cs_foil'];
+                            $promo = $row['promo'];
+                            if($card_normal != 1 AND $card_foil == 1):
+                                $cardtypes = 'foilonly';
+                            elseif($card_normal == 1 AND $card_foil != 1):
+                                $cardtypes = 'normalonly';
+                            else:
+                                $cardtypes = 'normalandfoil';
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -449,8 +471,17 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
-                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
+                                if(stristr($row['name'],' // ') !== false):
+                                    $bulkname = substr($row['name'], 0, strpos($row['name'], " // "))." //...";
+                                else:
+                                    $bulkname = $row['name'];
+                                endif;
+                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
                                 $cellid = "cell".$scryid;
+                                $cellidqty = $cellid.'myqty';
+                                $cellidfoil = $cellid.'myfoil';
+                                $cellidflash = $cellid.'flash';
+                                $cellidfoilflash = $cellid.'flashfoil';
                                 echo "<div class='confirm-l-bulk' id='{$cellid}flash'><span class='material-icons md-24 green'>check</span></div>";
                                 echo "<div class='confirm-r-bulk' id='{$cellid}flashfoil'><span class='material-icons md-24 green'>check</span></div>";
                                 ?>
@@ -458,21 +489,35 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                echo "Normal: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
-                                            elseif($meld === 'meld_result'):
+                                            if($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                $poststring = 'newfoil';
+                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'normalonly'):
+                                                $poststring = 'newqty';
+                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'normalandfoil'):
+                                                $poststring = 'newqty';
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             else:
-                                                echo "Quantity: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
+                                                $poststring = 'newqty';
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             endif;
-                                            echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            ?>
+                                            echo "<input class='card' type='hidden' name='card' value='$scryid'>"; ?>
                                         </td>
                                         <td class='confirm-r'>&nbsp;</td>
                                         <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                echo "Foil: <input class='textinput' id='{$cellid}myfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxFoil(\"$scryid\",\"$cellid\",\"$myfoil\");'>";
+                                            if($meld === 'meld_result'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normalonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normalandfoil'):
+                                                $poststring = 'newfoil';
+                                                echo "Foil: <input class='textinput' id='$cellidfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidfoil\",\"$myfoil\",\"$cellidfoilflash\",\"$poststring\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif; ?>
                                         </td>
@@ -501,7 +546,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
           <?php elseif ($layout == 'list'):?>
                     <div id='results' class='wrap'>
                         <?php
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : ?>
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : 
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
+                            $scryid = $row['cs_id']; ?>
                             <div class='item' style="cursor: pointer;" onclick="location.href='carddetail.php?id=<?php echo $scryid;?>';">
                                 <table> <?php
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: $scryid",$logfile);
@@ -521,7 +568,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             <?php
                                             $manac = symbolreplace($row['manacost']);
                                             ?>
-                                        <td class="valuerarity"> <?php echo $row['rarity']; ?> </td>
+                                        <td class="valuerarity"> <?php echo ucfirst($row['rarity']); ?> </td>
                                         <td class="valueset"> <?php echo $row['set_name']; ?> </td>
                                         <td class="valuetype"> <?php echo $row['type']; ?> </td>
                                         <td class="valuenumber"> <?php echo $row['number']; ?> </td>
@@ -594,6 +641,16 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $img_id = $row['cs_id']."img";
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
+                            $card_normal = $row['cs_normal'];
+                            $card_foil = $row['cs_foil'];
+                            $promo = $row['promo'];
+                            if($card_normal != 1 AND $card_foil == 1):
+                                $cardtypes = 'foilonly';
+                            elseif($card_normal == 1 AND $card_foil != 1):
+                                $cardtypes = 'normalonly';
+                            else:
+                                $cardtypes = 'normalandfoil';
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -633,34 +690,55 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class='gridbox item'>
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
-                                if($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
+                                $reversible_layouts = ['transform','modal_dfc','reversible_card','double_faced_token'];
+                                if(in_array($row['layout'],$reversible_layouts)):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
                                 endif;
-                                echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='$scryid' src='$imageurl'></a>";
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
-                                echo "<div class='confirm-l-grid' id='{$cellid}flash'><span class='material-icons md-24 green'>check</span></div>";
-                                echo "<div class='confirm-r-grid' id='{$cellid}flashfoil'><span class='material-icons md-24 green'>check</span></div>";
+                                $cellidqty = $cellid.'myqty';
+                                $cellidfoil = $cellid.'myfoil';
+                                $cellidflash = $cellid.'flash';
+                                $cellidfoilflash = $cellid.'flashfoil';
+                                echo "<div class='confirm-l-grid' id='$cellidflash'><span class='material-icons md-24 green'>check</span></div>";
+                                echo "<div class='confirm-r-grid' id='$cellidfoilflash'><span class='material-icons md-24 green'>check</span></div>";
                                 ?>
                                 <table class='gridupdatetable'>
                                     <tr>
                                         <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                echo "Normal: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
-                                            elseif($meld === 'meld_result'):
+                                            if($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                $poststring = 'newfoil';
+                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'normalonly'):
+                                                $poststring = 'newqty';
+                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'normalandfoil'):
+                                                $poststring = 'newqty';
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             else:
-                                                echo "Quantity: <input class='textinput' id='{$cellid}myqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxNormal(\"$scryid\",\"$cellid\",\"$myqty\");'>";
+                                                $poststring = 'newqty';
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             endif;
                                             echo "<input class='card' type='hidden' name='card' value='$scryid'>"; ?>
                                         </td>
+                                        <td class='confirm-l'>&nbsp;</td>
                                         <td class='confirm-r'>&nbsp;</td>
                                         <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
                                             <?php
-                                            if (!$row['promo'] AND $meld !== 'meld_result'):
-                                                echo "Foil: <input class='textinput' id='{$cellid}myfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxFoil(\"$scryid\",\"$cellid\",\"$myfoil\");'>";
+                                            if($meld === 'meld_result'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'foilonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normalonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normalandfoil'):
+                                                $poststring = 'newfoil';
+                                                echo "Foil: <input class='textinput' id='$cellidfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidfoil\",\"$myfoil\",\"$cellidfoilflash\",\"$poststring\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif; ?>
                                         </td>

@@ -15,11 +15,8 @@ Used for bulk script parsing
 - installed by composer to 'vendors' folder, and autoloaded by ini.php
 
 #### JQuery and IAS ####
-Works with JQuery 3.6:  <script src="/js/jquery.js"></script>
-IAS pulled down from CDN on index.php: <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
-Should work over npm, issue raised
-- install npm on the server for https://github.com/webcreate/infinite-ajax-scroll
-- npm install --save @webcreate/infinite-ajax-scroll
+Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
+IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 ### File locations ###
 Create a new folder at /opt/mtg

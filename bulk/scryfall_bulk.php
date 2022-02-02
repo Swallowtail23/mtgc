@@ -17,7 +17,8 @@ use JsonMachine\Items;
 
 // Lists
 $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la'];
-$layouts_to_skip = ['double_faced_token','token','emblem'];
+// $layouts_to_skip = ['double_faced_token','token','emblem'];
+$layouts_to_skip = [];
 $layouts_flips = ['transform','split','reversible_card','flip','meld','modal_dfc'];
 
 // How old to overwrite

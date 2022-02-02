@@ -1,6 +1,6 @@
 <?php 
-/* Version:     3.1
-    Date:       11/01/20
+/* Version:     4.0
+    Date:       02/02/22
     Name:       decks.php
     Purpose:    Main decks list page
     Notes:       
@@ -14,6 +14,8 @@
  *              Mysqli_Manager conversion
  *  3.1
  *              Moved from writelog to Message class
+ *  4.0 
+ *              Refactoring for cards_scry data
 */
 
 session_start();
@@ -132,44 +134,64 @@ require('includes/menu.php'); //mobile menu
         
         // Delete a deck
         if($deletedeck == "yes"):
-            $checkexists = "SELECT decknumber FROM decks
-                            LEFT JOIN users ON users.usernumber = decks.owner
-                            WHERE usernumber = $user AND
-                            decknumber = '$decktodelete' LIMIT 1";
-            if($deletedeckquery = $db->query($checkexists)):
-                if ($deletedeckquery->num_rows > 0):
-                    //Delete deck
-                    $deldecksql = "DELETE FROM decks WHERE decknumber = $decktodelete";
-                    $delcardsql = "DELETE FROM deckcards WHERE decknumber = $decktodelete";
-                    $obj = new Message;
-                    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Running $deldecksql and $delcardsql",$logfile);
-                    $rundecksql = $db->query($deldecksql);
-                    $runcardsql = $db->query($delcardsql);
-
-                    $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = '$decktodelete' LIMIT 1";
-                    $runquery1 = $db->query($checkgone1);
-                    $result1=$runquery1->fetch_assoc();
-
-                    $checkgone2 = "SELECT decknumber FROM deckcards WHERE decknumber = '$decktodelete' LIMIT 1";
-                    $runquery2 = $db->query($checkgone2);
-                    $result2=$runquery2->fetch_assoc();
-                    if (($result1['decknumber'] =="") AND ($result2['decknumber'] =="")):
-                        ?>
-                        <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
-                            <br>
-                            Deck deleted
-                            <br>
-                            <span id='dismiss'>CLICK TO DISMISS</span>
-                        </div>
-                        <?php
-                    else:
-                        trigger_error('[ERROR] decks.php: Deck delete error', E_USER_ERROR);
-                    endif;
-                else:
-                    trigger_error('[ERROR] decks.php: Invalid deck', E_USER_ERROR);
-                endif;
+            $stmt = $db->prepare("DELETE FROM decks WHERE decknumber=?");
+            if ($stmt === false):
+                trigger_error('[ERROR] decks.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+            endif;
+            $bind = $stmt->bind_param("i", $decktodelete); 
+            if ($bind === false):
+                trigger_error('[ERROR] decks.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                trigger_error("[ERROR] decks.php: Deleting deck: " . $db->error, E_USER_ERROR);
             else:
-                trigger_error('[ERROR] decks.php: Delete deck check SQL error', E_USER_ERROR);
+                $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = '$decktodelete' LIMIT 1";
+                $runquery1 = $db->query($checkgone1);
+                $result1=$runquery1->fetch_assoc();
+                if ($result1 === null):
+                    $deck_deleted = 1;
+                else:
+                    $deck_deleted = 0;
+                endif;
+            endif;
+            $stmt->close();
+            $stmt = $db->prepare("DELETE FROM deckcards WHERE decknumber=?");
+            if ($stmt === false):
+                trigger_error('[ERROR] decks.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+            endif;
+            $bind = $stmt->bind_param("i", $decktodelete); 
+            if ($bind === false):
+                trigger_error('[ERROR] decks.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                trigger_error("[ERROR] decks.php: Deleting deckcards: " . $db->error, E_USER_ERROR);
+            else:
+                $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decktodelete' LIMIT 1";
+                $runquery2 = $db->query($checkgone2);
+                $result2=$runquery2->fetch_assoc();
+                if ($result2 === null):
+                    $deckcards_deleted = 1;
+                else:
+                    $deckcards_deleted = 0;
+                endif;
+            endif;
+            $stmt->close();
+            if($deck_deleted === 1 AND $deckcards_deleted === 1):?>
+                <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
+                    <br>
+                    Deck deleted
+                    <br>
+                    <span id='dismiss'>CLICK TO DISMISS</span>
+                </div> <?php
+            else:?>
+                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
+                    <br>
+                    Deck and / or cards not deleted
+                    <br>
+                    <span id='dismiss'>CLICK TO DISMISS</span>
+                </div> <?php
             endif;
         endif;
         // List decks
@@ -181,7 +203,7 @@ require('includes/menu.php'); //mobile menu
             <table class="decklist">
                 <?php 
                 while ($row = $sqlquery->fetch_assoc()): ?>
-                    <tr class='resultsrow' <?php echo "data-href='deckdetail.php?deck={$row['decknumber']}'"; ?>>
+                    <tr class='resultsrow' style='cursor: pointer;' <?php echo "data-href='deckdetail.php?deck={$row['decknumber']}'"; ?>>
                     <?php echo "<td>".$row['deckname']."</td>"; ?>
                     </tr>
                 <?php 
@@ -193,7 +215,7 @@ require('includes/menu.php'); //mobile menu
             <form name="newdeck" action="decks.php" method="post">
                 <input type='hidden' name="newdeck" value="yes">
                 <input class='textinput' title="Please enter deck title" placeholder="DECK TITLE" id="deckname" name="deckname" type="text" size="24" maxlength="150" /><br><br>
-                <input class='inline_button stdwidthbutton' type="submit" value="CREATE DECK" />
+                <input class='inline_button stdwidthbutton' style='cursor: pointer;' type="submit" value="CREATE DECK" />
             </form>
             <h3>Delete a deck</h3>
             <form id="deletedeck" action="decks.php" method="POST">
@@ -206,7 +228,7 @@ require('includes/menu.php'); //mobile menu
                     endwhile;
                     ?>
                 </select><br><br>
-                <input class='inline_button stdwidthbutton' id="deletebutton" type="submit" value="DELETE DECK">
+                <input class='inline_button stdwidthbutton' style='cursor: pointer;' id="deletebutton" type="submit" value="DELETE DECK">
             </form>
             <br> &nbsp;
         <?php

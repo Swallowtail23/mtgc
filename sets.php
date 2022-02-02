@@ -27,6 +27,7 @@ forcechgpwd();                              //Check if user is disabled or needs
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1">
     <title>MtG collection sets</title>
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

@@ -43,12 +43,9 @@ require('includes/menu.php');
         </div>
         <h2 class='h2pad'>Known issues and bugs</h2>
     <ul>
-        <li><b>The scrolling results page never goes past the first page.</b> Turn off AdBlock for the site. No idea why this works, but it does.</li>
-        <li><b>Searching for "+1/+1" or "-1/-1" fails to load beyond the first page of results.</b>
-            This is a bug with the Infinite Ajax Scroll script, and so far I have been unable to resolve it.</li>
+        <li><b>The scrolling results page never goes past the first page.</b> Turn off AdBlock for the site</li>
         <li><b>No way to add, remove or interact with Groups.</b> A bit of work in this, it's on the list.</li>
         <li><b>The type search does an OR search.</b> Correct, workaround for now is to use fuzzy type search. AND / OR is on the list.</li>
-        <li><b>Image for card {xyz} looks poor quality.</b> High definition images are not available for all cards. Let me know and I will check.</li>
     </ul>
 &nbsp;
 </div>

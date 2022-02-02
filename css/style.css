@@ -176,13 +176,9 @@ table
 { 
     left:278px;
 }
-#bulkcmd, #adminsets
+#bulkcmd, #admincards
 {
     left:326px;
-}
-#admincards
-{
-    left:374px;
 }
 
 #header, #headermobile
@@ -333,7 +329,7 @@ table
 
 #carddetailflipimg
 {
-    height: 485px;
+    height: 445px;
 }
 
 #carddetailimage
@@ -367,7 +363,16 @@ table
     float: left;
     padding-left: 10px;
     max-width: 324px;
+}
+
+#carddetailinfo
+{
     min-height: 490px;
+}
+
+#carddetailflipinfo
+{
+    min-height: 440px;
 }
 
 #carddetailupdate
@@ -427,13 +432,16 @@ table
     position: fixed;
     top: 26px;
 }
-#searchname
+#searchname, #searchnametip
 {
     font-style:italic;
     font-weight: 300;
-    text-transform: capitalize;
     padding-left: 10px;
     padding-right: 10px;
+}
+#searchname
+{
+    text-transform: capitalize;
 }
 #resultscount
 {
@@ -969,7 +977,6 @@ table
 .gridsubmit-l
 {
     padding-left: 12px !important;
-    width: 130px !important;
     overflow: hidden;
     white-space: nowrap;
     border: 0px !important;
@@ -2542,9 +2549,13 @@ hr.styled
         height: -webkit-calc(100% - 78px); /* google, safari */
         height: -moz-calc(100% - 78px); /* firefox */    
     }
-    #footer, #headerdivider, #searchname
+    #footer, #headerdivider
     {
         display: none;
+    }
+    #searchname, #searchnametip
+    {
+        font-size: 14px;
     }
     #menu
     {

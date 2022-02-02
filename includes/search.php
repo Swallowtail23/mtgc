@@ -25,7 +25,7 @@ endif;
             <input type="hidden" name="adv" value="yes">
             <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
-            <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php echo $name ; ?>"><br>
+            <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT'><br>
             <span class="parametermed checkbox-group">
                 <input id='cb1' type="checkbox" class="checkbox notnotes" name="searchname" value="yes" checked="checked">
@@ -258,20 +258,20 @@ endif;
                     <span class="box"></span>Tribal
                 </label>
             </span><br>
-            <span class="parametersmall checkbox-group">
+            <span class="parametermed checkbox-group">
                 <input id='cb23' type="checkbox" class="checkbox" name="land" value="yes">
                 <label for='cb23'>
                     <span class="check"></span>
                     <span class="box"></span>Land
                 </label>
             </span>
-            <!--<span class="checkbox-group">
-                <input id='cb24' type="checkbox" class="checkbox" name="flipcard" value="yes">
+            <span class="checkbox-group">
+                <input id='cb24' type="checkbox" class="checkbox" name="token" value="yes">
                 <label for='cb24'>
                     <span class="check"></span>
-                    <span class="box"></span>Double sided card
+                    <span class="box"></span>Token
                 </label>
-            </span> --> </div><br>
+            </span></div><br>
             <h4 class="h4">Tribe</h4>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>
