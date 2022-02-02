@@ -46,7 +46,7 @@ require ('includes/colour.php');
 $admin = check_admin_control($adminip);
 
 // Enable / disable deck functionality
-$decks_on = 0;
+$decks_on = 1;
 
 // Pass data to this form by e.g. ?id=123456 
 // GET is used from results page, POST is used for database update query.

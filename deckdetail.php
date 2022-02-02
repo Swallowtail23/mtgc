@@ -1,6 +1,6 @@
 <?php
-/* Version:     10.0
-    Date:       11/01/20
+/* Version:     11.0
+    Date:       02/02/22
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -26,6 +26,8 @@
  *              Move to use scryfall image function
  *  10.0
  *              Moved from writelog to Message class
+ *  11.0
+ *              Refactoring for cards_scry
 */
 
 session_start();
@@ -92,13 +94,13 @@ elseif (isset($_POST["deck"])):
     $updatenotes    = filter_input(INPUT_POST, 'updatenotes', FILTER_SANITIZE_STRING);
     $newnotes       = $db->escape(filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_STRING));
     $newsidenotes   = $db->escape(filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_STRING));
-else:
-    echo "<div id='page'>";
-    echo "<div class='staticpagecontent'>";
-    echo "<h3>No decknumber given - returning to your deck list...</h3>";
-    echo "<meta http-equiv='refresh' content='2;url=decks.php'>";
-    echo "</div>";
-    echo "</div>";
+else: ?>
+    <div id='page'>
+    <div class='staticpagecontent'>
+    <h3>No decknumber given - returning to your deck list...</h3>
+    <meta http-equiv='refresh' content='2;url=decks.php'>
+    </div>
+    </div> <?php
     require('includes/footer.php');
     exit();
 endif;
@@ -114,13 +116,13 @@ $minusside   = isset($_GET['minusside']) ? filter_input(INPUT_GET, 'minusside', 
 $commander   = isset($_GET['commander']) ? filter_input(INPUT_GET, 'commander', FILTER_SANITIZE_STRING):'';
 
 // Check to see if the called deck belongs to the logged in user.
-if(deckownercheck($decknumber,$user) == FALSE):
-    echo "<div id='page'>";
-    echo "<div class='staticpagecontent'>";
-    echo "<h3>This deck is not yours - returning to your deck page...</h3>";
-    echo "<meta http-equiv='refresh' content='2;url=decks.php'>";
-    echo "</div>";
-    echo "</div>";
+if(deckownercheck($decknumber,$user) == FALSE): ?>
+    <div id='page'>
+    <div class='staticpagecontent'>
+    <h3>This deck is not yours... returning to your deck page...</h3>
+    <meta http-equiv='refresh' content='2;url=decks.php'>
+    </div>
+    </div> <?php
     require('includes/footer.php');
     exit();
 endif;
@@ -188,9 +190,8 @@ if (isset($_GET["quickadd"])):
     $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
     $quickaddcard = $db->escape($quickaddcard);
     if($quickaddset == ''):
-        if ($quickaddcardid = $db->query("SELECT cards.id,cards.setcode from cards
-                                     LEFT JOIN sets ON cards.setcode = sets.setcodeid
-                                     WHERE name = '$quickaddcard' ORDER BY sets.releasedat DESC LIMIT 1")):
+        if ($quickaddcardid = $db->query("SELECT id,setcode from cards_scry
+                                     WHERE name = '$quickaddcard' ORDER BY release_date DESC LIMIT 1")):
             if ($quickaddcardid->num_rows > 0):
                 while ($results = $quickaddcardid->fetch_assoc()):
                     $cardtoadd = $results['id'];
@@ -202,9 +203,8 @@ if (isset($_GET["quickadd"])):
             trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
         endif;
     else:
-        if ($quickaddcardid = $db->query("SELECT cards.id,cards.setcode from cards
-                                     LEFT JOIN sets ON cards.setcode = sets.setcodeid
-                                     WHERE name = '$quickaddcard' AND sets.setcodeid = '$quickaddset' LIMIT 1")):
+        if ($quickaddcardid = $db->query("SELECT id,setcode from cards_scry
+                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' LIMIT 1")):
             if ($quickaddcardid->num_rows > 0):
                 while ($results = $quickaddcardid->fetch_assoc()):
                     $cardtoadd = $results['id'];
@@ -262,15 +262,15 @@ elseif($commander == 'no'):
 endif;
 
 //Get card list
-$result = $db->query("SELECT *,cards.id AS cardsid FROM deckcards 
-                    LEFT JOIN cards ON deckcards.cardnumber = cards.id 
-                    LEFT JOIN cardprice ON cards.id = cardprice.id 
-                    LEFT JOIN $mytable ON cards.id = $mytable.id 
+$result = $db->query("SELECT *,cards_scry.id AS cardsid 
+                        FROM deckcards 
+                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
+                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
                     WHERE decknumber = $decknumber AND cardqty > 0 ORDER BY name");
-$sideresult = $db->query("SELECT *,cards.id AS cardsid FROM deckcards 
-                    LEFT JOIN cards ON deckcards.cardnumber = cards.id 
-                    LEFT JOIN cardprice ON cards.id = cardprice.id 
-                    LEFT JOIN $mytable ON cards.id = $mytable.id 
+$sideresult = $db->query("SELECT *,cards_scry.id AS cardsid 
+                        FROM deckcards 
+                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
+                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
                     WHERE decknumber = $decknumber AND sideqty > 0 ORDER BY name");
 //Initialise variables to 0
 $cdr = $creatures = $instantsorcery = $other = $lands = $deckvalue = 0;
@@ -311,7 +311,7 @@ if($uniquecardscount > 0):
     $shortqty = array_fill(0,$uniquecardscount,'0');
     foreach($resultnames as $key=>$value):
         $searchname = $db->escape($value);
-        $query = "SELECT SUM(IFNULL(foil, 0)) + SUM(IFNULL(normal, 0)) as allcopies from cards LEFT JOIN $mytable ON cards.id = $mytable.id WHERE name = '$searchname'";
+        $query = "SELECT SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
         if ($totalresult = $db->query($query)):
             $totalrow = $totalresult->fetch_assoc();
             $total = $totalrow['allcopies'];
@@ -343,16 +343,12 @@ while ($row = $result->fetch_assoc()):
     elseif (strpos($row['type'],'Land') !== false):
         $lands = $lands + $row['cardqty'];
     endif;
-    if (fliptype($row['backid'],$row['manacost']) === 'no'):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'no');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    elseif ((fliptype($row['backid'], $row['manacost']) === 'front') OR (fliptype($row['backid'], $row['manacost']) === 'kamigawafliptop')):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'front');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    elseif ((fliptype($row['backid'], $row['manacost']) === 'back') OR (fliptype($row['backid'], $row['manacost']) === 'kamigawaflipbottom')):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'back');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    endif; 
+    $imagefunction = getImageNew($cardset,$row['cardsid'],$ImgLocation,$row['layout']);
+    if($imagefunction['front'] == 'error'):
+        $imageurl = '/cardimg/back.jpg';
+    else:
+        $imageurl = $imagefunction['front'];
+    endif;
     $deckcardname = str_replace("'",'&#39;',$row["name"]); 
     $deckvalue = $deckvalue + ($row['price'] * $row['cardqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
@@ -366,16 +362,12 @@ endwhile;
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
     $cardset = strtolower($row["setcode"]);
-    if (fliptype($row['backid'],$row['manacost']) === 'no'):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'no');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    elseif ((fliptype($row['backid'], $row['manacost']) === 'front') OR (fliptype($row['backid'], $row['manacost']) === 'kamigawafliptop')):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'front');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    elseif ((fliptype($row['backid'], $row['manacost']) === 'back') OR (fliptype($row['backid'], $row['manacost']) === 'kamigawaflipbottom')):
-        $imgname = getimgname($cardset,$row['number'],$row['cardsid'],'back');
-        $imageurl = getImageNew($cardset,$imgname,$row['cardsid'],$ImgLocation,null,$row['number'],$row['name']);
-    endif;  
+    $imagefunction = getImageNew($cardset,$row['cardsid'],$ImgLocation,$row['layout']);
+    if($imagefunction['front'] == 'error'):
+        $imageurl = '/cardimg/back.jpg';
+    else:
+        $imageurl = $imagefunction['front'];
+    endif;
     $deckvalue = $deckvalue + ($row['price'] * $row['sideqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
     ?>
@@ -480,7 +472,7 @@ endif;
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number"];
-                                $cardcmc = $row["cmc"];
+                                $cardcmc = round($row["cmc"]);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                 if ($cardcmc > 5):
                                     $cardcmc = 6;
@@ -560,7 +552,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            $cardcmc = $row["cmc"];
+                            $cardcmc = round($row["cmc"]);
                             $cardlegendary = $row["type"];
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
@@ -639,7 +631,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            $cardcmc = $row["cmc"];
+                            $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
                                 $cardcmc = 6;
@@ -712,7 +704,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            $cardcmc = $row["cmc"];
+                            $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
                                 $cardcmc = 6;
