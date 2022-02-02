@@ -2382,6 +2382,12 @@ hr.styled
     font-size: 16px; 
 }
 
+.seticon
+{
+    height: 24px;
+    width: 24px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {

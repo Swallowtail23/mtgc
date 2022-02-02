@@ -23,7 +23,7 @@ Create a new folder at /opt/mtg
 Copy the ini file (see next section) and bulk scripts to it (samples are in setup folder),
 altering as needed so they point to where the bulk scripts are.
 Make sure the logfile location specified in the ini file exists and is web-server-writable.
-Make sure the ImgLocation folder exists and is web-server-writable.
+Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache
 
 ### Ini file ###
 The application expects an ini file located at: /opt/mtg/mtg_new.ini. 

@@ -348,6 +348,27 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Table structure for table `sets`
+--
+
+DROP TABLE IF EXISTS `sets`;
+CREATE TABLE IF NOT EXISTS `sets` (
+  `id` varchar(36) COLLATE utf8mb4_general_ci NOT NULL,
+  `code` varchar(8) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `api_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `scryfall_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `search_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `release_date` date DEFAULT NULL,
+  `set_type` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `card_count` int DEFAULT NULL,
+  `parent_set_code` varchar(8) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nonfoil_only` tinyint(1) DEFAULT NULL,
+  `foil_only` tinyint(1) DEFAULT NULL,
+  `icon_svg_uri` varchar(256) COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- Indexes for dumped tables
 --
 
@@ -453,6 +474,13 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `usernumber` (`usernumber`);
+
+--
+-- Indexes for table `sets`
+--
+ALTER TABLE `sets`
+  ADD UNIQUE KEY `id` (`id`),
+  ADD FULLTEXT KEY `code` (`code`);
 
 --
 -- AUTO_INCREMENT for dumped tables

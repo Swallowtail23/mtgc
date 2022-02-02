@@ -352,7 +352,7 @@ while ($row = $result->fetch_assoc()):
         $imageurl = $imagefunction['front'];
     endif;
     $deckcardname = str_replace("'",'&#39;',$row["name"]); 
-    $deckvalue = $deckvalue + ($row['price'] * $row['cardqty']);
+    $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
     ?>
     <div class='deckcardimgdiv' id='card-<?php echo $cardref;?>'>
@@ -370,7 +370,7 @@ while ($row = $sideresult->fetch_assoc()):
     else:
         $imageurl = $imagefunction['front'];
     endif;
-    $deckvalue = $deckvalue + ($row['price'] * $row['sideqty']);
+    $deckvalue = $deckvalue + ($row['price_sort'] * $row['sideqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
     ?>
     <div class='deckcardimgdiv' id='side-<?php echo $cardref;?>'>

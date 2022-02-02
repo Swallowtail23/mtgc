@@ -48,9 +48,14 @@ require('includes/menu.php');
         $stmt = $db->prepare("SELECT 
                                 set_name,
                                 setcode,
-                                min(release_date) as date
-                            FROM 
-                                cards_scry 
+                                parent_set_code,
+                                set_type,
+                                card_count,
+                                nonfoil_only,
+                                foil_only,
+                                min(cards_scry.release_date) as date
+                            FROM cards_scry 
+                            LEFT JOIN sets ON cards_scry.set_id = sets.id
                             GROUP BY 
                                 set_name
                             ORDER BY 
@@ -77,10 +82,19 @@ require('includes/menu.php');
         <table id='setlist'>
             <tr>
                 <td>
+                    <b>Set icon</b>
+                </td>
+                <td>
                     <b>Set code</b>
                 </td>
                 <td>
                     <b>Set name</b>
+                </td>
+                <td>
+                    <b>Set type</b>
+                </td>
+                <td>
+                    <b>Parent set</b>
                 </td>
             </tr>
             <?php
@@ -96,10 +110,19 @@ require('includes/menu.php');
                     $setcodeupper = strtoupper($row['setcode']);?>
                     <tr>
                         <td>
+                            <?php echo "<img class='seticon' src='cardimg/seticons/{$row['parent_set_code']}.svg' alt='$setcodeupper'>"; ?>
+                        </td>
+                        <td>
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td>
                             <?php echo $row['set_name']; ?>
+                        </td>
+                        <td>
+                            <?php echo ucfirst($row['set_type']); ?>
+                        </td>
+                        <td>
+                            <?php echo strtoupper($row['parent_set_code']); ?>
                         </td>
                     </tr>
                     <?php 
