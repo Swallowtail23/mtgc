@@ -205,7 +205,8 @@ CREATE TABLE IF NOT EXISTS `cards_scry` (
   `legalitypioneer` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `updatetime` bigint NOT NULL,
   `price` decimal(8,2) DEFAULT NULL,
-  `price_foil` decimal(8,2) DEFAULT NULL
+  `price_foil` decimal(8,2) DEFAULT NULL,
+  `price_sort` decimal(8,2) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
