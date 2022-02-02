@@ -22,10 +22,6 @@ if ($_SERVER['PHP_SELF'] == "/admin/admin.php"):
         <a href='/admin/users.php'>USERS</a>
     </div>
 
-    <div id='adminsets' class='gridlist fullsize'>
-        <a href='/admin/sets.php'>SETS</a>
-    </div>
-
     <div id='admincards' class='gridlist fullsize'>
         <a href='/admin/cards.php'>CARDS</a>
     </div>
@@ -38,10 +34,6 @@ elseif ($_SERVER['PHP_SELF'] == "/admin/users.php"):
 
     <div id='adminusers' class='activegridlist fullsize'>
         USERS
-    </div>
-
-    <div id='adminsets' class='gridlist fullsize'>
-        <a href='/admin/sets.php'>SETS</a>
     </div>
 
     <div id='admincards' class='gridlist fullsize'>
@@ -58,10 +50,6 @@ elseif ($_SERVER['PHP_SELF'] == "/admin/sets.php"):
         <a href='/admin/users.php'>USERS</a>
     </div>
 
-    <div id='adminsets' class='activegridlist fullsize'>
-        SETS
-    </div>
-
     <div id='admincards' class='gridlist fullsize'>
         <a href='/admin/cards.php'>CARDS</a>
     </div>
@@ -74,10 +62,6 @@ elseif ($_SERVER['PHP_SELF'] == "/admin/cards.php"):
 
     <div id='adminusers' class='gridlist fullsize'>
         <a href='/admin/users.php'>USERS</a>
-    </div>
-
-    <div id='adminsets' class='gridlist fullsize'>
-        <a href='/admin/sets.php'>SETS</a>
     </div>
 
     <div id='admincards' class='activegridlist fullsize'>

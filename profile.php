@@ -679,6 +679,15 @@ endif; ?>
                                             endif;
                                         else:
                                             echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
                                             $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                         endif;

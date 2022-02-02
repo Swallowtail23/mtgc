@@ -176,13 +176,9 @@ table
 { 
     left:278px;
 }
-#bulkcmd, #adminsets
+#bulkcmd, #admincards
 {
     left:326px;
-}
-#admincards
-{
-    left:374px;
 }
 
 #header, #headermobile
