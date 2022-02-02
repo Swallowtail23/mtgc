@@ -454,7 +454,7 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
     global $db, $logfile, $serveremail, $adminemail;
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
-    $flip_types = ['transform','art_series','modal_dfc','reversible_card'];
+    $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token'];
     $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
     if(in_array($layout,$flip_types)):

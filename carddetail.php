@@ -387,6 +387,9 @@ require('includes/menu.php'); //mobile menu
             else:
                 $colour = '';
             endif;
+            if($row['f2_ability'] !== null):
+                $flipability = $row['f2_ability'];
+            endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                 $meld = 'meld_result';
@@ -562,8 +565,8 @@ require('includes/menu.php'); //mobile menu
             if(isset($notes)):
                 $notes = htmlentities($notes,ENT_QUOTES,"UTF-8");
             endif;
-            $flip_types = ['transform','art_series','modal_dfc','reversible_card'];  // Set flip types which trigger a second (reverse) card section
-                                                                                     // See around section <!-- Flip card -->
+            $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token'];  // Set flip types which trigger a second (reverse) card section
+            $token_layouts = ['double_faced_token','token','emblem'];
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -744,13 +747,14 @@ require('includes/menu.php'); //mobile menu
                         <?php 
                         
                         if(isset($admin) AND $admin == 1):
-                        // if(isset($admin) AND $admin == 1 AND !in_array($row['layout'],$flip_types)):
                             echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
                         else:
                             echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
                         endif;
-                        if($row["layout"] !== 'reversible_card'): // no details at card level for reversible cards
-                            echo "<b>Type: </b>".$row['type'];
+                        if($row["layout"] !== 'reversible_card' AND $row["layout"] !== 'double_faced_token'): // no details at card level for reversible cards
+                            if(isset($row['type']) AND $row['type'] != ''):
+                                echo "<b>Type: </b>".$row['type'];
+                            endif;
                             echo "<br>";
                             echo "<b>Rarity: </b>";
                             if (strpos($row['rarity'],"rare") !== false):
@@ -766,10 +770,12 @@ require('includes/menu.php'); //mobile menu
                             if(validateTrueDecimal($row['cmc']) === false):
                                 $row['cmc'] = round($row['cmc']);
                             endif;
-                            echo "<b>CMC: </b>".$row['cmc'];
-                            echo "<br>";
+                            if(!in_array($row['layout'],$token_layouts)):
+                                echo "<b>CMC: </b>".$row['cmc'];
+                                echo "<br>";
+                            endif;
                         endif;
-                        $layouts_double = array ('transform','modal_dfc','adventure','split','reversible_card','flip');
+                        $layouts_double = array ('transform','modal_dfc','adventure','split','reversible_card','flip','double_faced_token');
                         if(in_array($row["layout"],$layouts_double)):
                             echo "<br><b>Name: </b>".$row['f1_name'];
                             echo "<br>";
@@ -785,10 +791,14 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Mana cost: </b>".$manacost;
                                 echo "<br>";
                             endif;
-                            echo "<b>Type: </b>".$row['f1_type'];
-                            echo "<br>";
-                            echo "<b>Abilities: </b>".symbolreplace($row['f1_ability']);
-                            echo "<br>";
+                            if(isset($row['f1_type']) AND $row['f1_type'] != ''):
+                                echo "<b>Type: </b>".$row['f1_type'];
+                                echo "<br>";
+                            endif;
+                            if($row['f1_ability'] != ''):
+                                echo "<b>Abilities: </b>".symbolreplace($row['f1_ability']);
+                                echo "<br>";
+                            endif;
                             if (strpos($row['f1_type'],'reature') !== false):
                                 echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f1_toughness']; 
                                 echo "<br>";
@@ -802,8 +812,10 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Mana cost: </b>".$manacost;
                                 echo "<br>";
                             endif;
-                            echo "<b>Abilities: </b>".symbolreplace($row['ability']);
-                            echo "<br>";
+                            if($row['ability'] != ''):
+                                echo "<b>Abilities: </b>".symbolreplace($row['ability']);
+                                echo "<br>";
+                            endif;
                             if (strpos($row['type'],'reature') !== false):
                                 echo "<b>Power / Toughness: </b>".$row['power']."/".$row['toughness']; 
                                 echo "<br>";
@@ -849,8 +861,10 @@ require('includes/menu.php'); //mobile menu
                                 echo "<a href='carddetail.php?id={$row['p3_id']}'>{$row['p3_name']}</a>&nbsp;<br>";
                             endif;
                         endif;
-                        echo "<b>Art by: </b>".$row['artist'];
-                        echo "<br>";
+                        if($row['artist'] != ''):
+                            echo "<b>Art by: </b>".$row['artist'];
+                            echo "<br>";
+                        endif;
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
                             echo "<b>Legality:</b>";    
                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
@@ -901,12 +915,14 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Mana cost: </b>".$flipmanacost;
                                 echo "<br>";
                             endif;
-                            echo "<b>Type: </b>".$row['f2_type'];
-                            echo "<br>";
-                            $flipability = str_replace('£','<br>',$row['f2_ability']);
-                            $flipability = symbolreplace($flipability);
-                            echo "<b>Abilities: </b>".$flipability;
-                            echo "<br>";
+                            if(isset($row['f2_type']) AND $row['f2_type'] != ''):
+                                echo "<b>Type: </b>".$row['f2_type'];
+                                echo "<br>";
+                            endif;
+                            if(isset($flipability) AND $flipability != ''):
+                                echo "<b>Abilities: </b>".$flipability;
+                                echo "<br>";
+                            endif;
                             if (strpos($row['f2_type'],'reature') !== false):
                                 echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f2_toughness']."<br>"; 
                             elseif (strpos($row['f2_type'],'laneswalker') !== false):
@@ -920,12 +936,15 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Mana cost: </b>".$flipmanacost;
                                 echo "<br>";
                             endif;
-                            echo "<b>Type: </b>".$row['f2_type'];
-                            echo "<br>";
-                            $flipability = str_replace('£','<br>',$row['f2_ability']);
-                            $flipability = symbolreplace($flipability);
-                            echo "<b>Abilities: </b>".$flipability;
-                            echo "<br>";
+                            if(isset($row['f2_type']) AND $row['f2_type'] != ''):
+                                echo "<b>Type: </b>".$row['f2_type'];
+                                echo "<br>";
+                            endif;
+                            if(isset($flipability) AND $flipability != ''):
+                                $flipability = symbolreplace($flipability);
+                                echo "<b>Abilities: </b>".$flipability;
+                                echo "<br>";
+                            endif;
                             if (strpos($row['f2_type'],'reature') !== false):
                                 echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f2_toughness']."<br>"; 
                             elseif (strpos($row['f2_type'],'laneswalker') !== false):
@@ -1389,19 +1408,25 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Mana cost: </b>".$flipmanacost;
                                 echo "<br>";
                             endif;
-                            echo "<b>Type: </b>".$row['f2_type'];
-                            echo "<br>";
-                            $flipability = str_replace('£','<br>',$row['f2_ability']);
-                            $flipability = symbolreplace($flipability);
-                            echo "<b>Abilities: </b>".$flipability;
-                            echo "<br>";
-                            if (strpos($row['f2_type'],'reature') !== false):
-                                echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f2_toughness']; 
-                            elseif (strpos($row['f2_type'],'laneswalker') !== false):
-                                echo "<b>Loyalty: </b>".$row['f2_loyalty']; 
+                            if(isset($row['f2_type']) AND $row['f2_type'] != ''):
+                                echo "<b>Type: </b>".$row['f2_type'];
+                                echo "<br>";
                             endif;
-                            echo "<br>";
-                            echo "<b>Art by: </b>".$row['f2_artist']."<br>";
+                            if(isset($flipability) AND $flipability != ''):
+                                $flipability = symbolreplace($flipability);
+                                echo "<b>Abilities: </b>".$flipability;
+                                echo "<br>";
+                            endif;
+                            if (strpos($row['f2_type'],'reature') !== false):
+                                echo "<b>Power / Toughness: </b>".$row['f1_power']."/".$row['f2_toughness'];
+                                echo "<br>";
+                            elseif (strpos($row['f2_type'],'laneswalker') !== false):
+                                echo "<b>Loyalty: </b>".$row['f2_loyalty'];
+                                echo "<br>";
+                            endif;
+                            if($row['f2_artist'] != ''):
+                                echo "<b>Art by: </b>".$row['f2_artist']."<br>";
+                            endif;
                             ?>                
                         </div>
                     </div>

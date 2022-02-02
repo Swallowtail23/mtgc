@@ -654,7 +654,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class='gridbox item'>
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
-                                if($row['layout'] === 'transform' OR $row['layout'] === 'modal_dfc' OR $row['layout'] === 'reversible_card'):
+                                $reversible_layouts = ['transform','modal_dfc','reversible_card','double_faced_token'];
+                                if(in_array($row['layout'],$reversible_layouts)):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
