@@ -237,6 +237,25 @@ foreach($data AS $key => $value):
         if(isset($value["produced_mana"])):
             $produced_mana = json_encode($value["produced_mana"]);
         endif;
+        if(isset($value["prices"]['usd'])):
+            $normal_price = $value["prices"]['usd'];
+        else:
+            $normal_price = null;
+        endif;
+        if(isset($value["prices"]['usd_foil'])):
+            $foil_price = $value["prices"]['usd_foil'];
+        else:
+            $foil_price = null;
+        endif;
+        if($foil_price === null AND $normal_price === null):
+            $price_sort = null;
+        elseif($foil_price === null):
+            $price_sort = $normal_price;
+        elseif($normal_price === null):
+            $price_sort = $foil_price;
+        else:
+            $price_sort = min($normal_price,$foil_price);
+        endif;
         if(isset($value["collector_number"])):
             $coll_no = $value["collector_number"];
             if(isset($value["layout"]) AND $value["layout"] === 'meld'):
@@ -283,10 +302,10 @@ foreach($data AS $key => $value):
                                 p1_id, p1_component, p1_name, p1_type_line, p1_uri,
                                 p2_id, p2_component, p2_name, p2_type_line, p2_uri,
                                 p3_id, p3_component, p3_name, p3_type_line, p3_uri,
-                                maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty
+                                maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
@@ -320,12 +339,12 @@ foreach($data AS $key => $value):
                                 p3_id = VALUES(p3_id), p3_component = VALUES(p3_component), p3_name = VALUES(p3_name), 
                                 p3_type_line = VALUES(p3_type_line), p3_uri = VALUES(p3_uri),
                                 maxpower = VALUES(maxpower), minpower = VALUES(minpower), maxtoughness = VALUES(maxtoughness), 
-                                mintoughness = VALUES(mintoughness), maxloyalty = VALUES(maxloyalty), minloyalty = VALUES(minloyalty)
+                                mintoughness = VALUES(mintoughness), maxloyalty = VALUES(maxloyalty), minloyalty = VALUES(minloyalty), price_sort = VALUES(price_sort)
                             ");
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
@@ -419,7 +438,8 @@ foreach($data AS $key => $value):
                 $maxtoughness,
                 $mintoughness,
                 $maxloyalty,
-                $minloyalty
+                $minloyalty,
+                $price_sort
                 );
         if ($bind === false):
             trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);

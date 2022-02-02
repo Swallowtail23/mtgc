@@ -431,7 +431,7 @@ elseif ($adv == "yes" ) :
         elseif ($sortBy == "price" AND $scope === "mycollection"):
             $order = "ORDER BY $mytable.topvalue DESC ";
         elseif ($sortBy == "price"):
-            $order = "ORDER BY cards_scry.price DESC ";
+            $order = "ORDER BY cards_scry.price_sort DESC ";
         elseif ($sortBy == "cmc"):
             $order = "ORDER BY cards_scry.cmc ASC ";
         elseif ($sortBy == "cmcdown"):
