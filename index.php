@@ -471,7 +471,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
-                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' target='carddetail' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} {$row['name']}</a>";
+                                if(stristr($row['name'],' // ') !== false):
+                                    $bulkname = substr($row['name'], 0, strpos($row['name'], " // "))." //...";
+                                else:
+                                    $bulkname = $row['name'];
+                                endif;
+                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
                                 $cellid = "cell".$scryid;
                                 $cellidqty = $cellid.'myqty';
                                 $cellidfoil = $cellid.'myfoil';
@@ -691,7 +696,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
                                 endif;
-                                echo "<a class='gridlink' target='carddetail' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='$scryid' src='$imageurl'></a>";
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
                                 $cellidqty = $cellid.'myqty';
                                 $cellidfoil = $cellid.'myfoil';
