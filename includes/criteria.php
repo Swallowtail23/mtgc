@@ -212,6 +212,12 @@ elseif ($adv == "yes" ) :
         endif;
         $criteriaType .= "cards_scry.type LIKE '%land%' ";
     endif;
+    if ($token == "yes"):
+        if (!empty($criteriaType)) :
+            $criteriaType .= "OR ";
+        endif;
+        $criteriaType .= "(cards_scry.layout LIKE '%token%' OR cards_scry.layout LIKE '%emblem%') ";
+    endif;
     if (!empty($criteriaType)) :
         $criteria .= "AND (".$criteriaType.") ";
     endif;  

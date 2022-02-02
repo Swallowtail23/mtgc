@@ -96,6 +96,7 @@ $planeswalker = isset($_GET['planeswalker']) ? filter_input(INPUT_GET, 'planeswa
 $tribal = isset($_GET['tribal']) ? filter_input(INPUT_GET, 'tribal', FILTER_SANITIZE_STRING):'';
 $tribe = isset($_GET['tribe']) ? filter_input(INPUT_GET, 'tribe', FILTER_SANITIZE_STRING):'';
 $legendary = isset($_GET['legendary']) ? filter_input(INPUT_GET, 'legendary', FILTER_SANITIZE_STRING):'';
+$token = isset($_GET['token']) ? filter_input(INPUT_GET, 'token', FILTER_SANITIZE_STRING):'';
 $rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
 $exact = isset($_GET['exact']) ? filter_input(INPUT_GET, 'exact', FILTER_SANITIZE_STRING):'';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
