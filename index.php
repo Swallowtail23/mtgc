@@ -347,6 +347,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             <script type="text/javascript">
                 $(document).ready(function () {
                     $(".top").hide();
+                    var UrlVars = getUrlVars();
+                    if (UrlVars["page"] > 1) {
+                        $(".top").show();
+                    }
                 });
             </script>                    
             <script type="text/javascript">
@@ -379,6 +383,24 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     }
                     return false;
                 };
+            </script>
+            <script type="text/javascript">
+                function getUrlVars()
+                    {
+                        var vars = [], hash; 
+                        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&'); // cut the URL string down to just everything after the ?, split this into an array with information like this: array [0] = "var=xxx"; array [1] = "var2=yyy";
+                        //loop through each item in that array
+                        for(var i = 0; i < hashes.length; i++)
+                        {   //split the item at the "="
+                            hash = hashes[i].split('=');
+                            //put the value name of the first variable into the "vars" array
+                            vars.push(hash[0]);
+                            //assign the value to the variable name, now you can access it like this:
+                            // alert(vars["var1"]); //alerts the value of the var1 variable from the url string
+                            vars[hash[0]] = hash[1];
+                        }
+                        return vars;
+                    }
             </script>
   <?php endif;?>
     </head>
