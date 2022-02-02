@@ -304,11 +304,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         </script>
         
         <?php
-        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call ?>
-            <script src="https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js"></script>
-            <script type="text/javascript">
+        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
+            // Only load IAS if results are more than a page-full per page type
+            if( ($layout == 'bulk' AND ( $qtyresults > $bulkperpage)) OR ($layout == 'list' AND ( $qtyresults > $listperpage)) OR ($layout == 'grid' AND ( $qtyresults > $gridperpage))  ) :   
+                // IAS will be needed ?>
+                <script src="/js/infinite-ajax-scroll.min.js"></script>
+                <script type="text/javascript">
                 $(document).ready(function () { // Infinite Ajax Scroll configuration
-                    $(".top").hide();
                     let ias = new InfiniteAjaxScroll('.wrap', {
                         item: '.item', // single items
                         next: '.next',
@@ -328,7 +330,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     ias.on('page', (event) => {
                         $(".top").show(200);
                     });
-
                     ias.on('last', function() {
                         let el = document.querySelector('.ias-no-more');
                         el.style.opacity = '1';
@@ -340,7 +341,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         history.replaceState(state, e.title, e.url);
                     });
                 });
-            </script>
+                </script>   
+                <?php
+            endif; ?>
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    $(".top").hide();
+                });
+            </script>                    
             <script type="text/javascript">
                 function isInteger(x) {
                     return x % 1 === 0;
