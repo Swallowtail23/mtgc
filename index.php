@@ -136,6 +136,7 @@ $selectAll = "SELECT
                 cards_scry.id as cs_id,
                 price,
                 price_foil,
+                price_sort,
                 setcode,
                 `$mytable`.normal,
                 `$mytable`.foil,
@@ -219,7 +220,7 @@ if (($sortBy == 'price') AND ( $scope == 'mycollection')):
     endif;
 endif;
 //Set variable to ignore maxresults if this is a collection search
-if ( $scope == 'mycollection'):
+if ( $scope == 'mycollection' OR $sortBy == 'price'): // Price search waives the limit
     $collectionsearch = true;
 else:
     $collectionsearch = false;
