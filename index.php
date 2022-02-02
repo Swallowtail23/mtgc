@@ -306,7 +306,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
             // Only load IAS if results are more than a page-full per page type
-            if( ($layout == 'bulk' AND ( $qtyresults > $bulkperpage)) OR ($layout == 'list' AND ( $qtyresults > $listperpage)) OR ($layout == 'grid' AND ( $qtyresults > $gridperpage))  ) :   
+            if( ($layout == 'bulk' AND ( $qtyresults > $bulkperpage)) OR ($layout == 'list' AND ( $qtyresults > $listperpage)) OR ($layout == 'grid' AND ( $qtyresults > $gridperpage) AND (isset($validsearch) AND ($validsearch !== "toomany")))  ) :   
                 // IAS will be needed ?>
                 <script src="/js/infinite-ajax-scroll.min.js"></script>
                 <script type="text/javascript">

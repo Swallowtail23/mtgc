@@ -106,27 +106,25 @@ endif;
             id='header' class='fullsize'> 
        
     <div id='headerresults'>
-        <span id="searchname">
             <?php 
             if (isset($validsearch) AND ($validsearch === "true")) :
                 if(isset($nametrim)):
-                    echo $nametrim; 
+                    echo "<span id='searchname'>$nametrim;</span>";
                 endif;
                 if ($qtyresults === 0) :
-                    echo ' - No results found &nbsp;';
+                    echo "<span id='searchnametip'> - No results found &nbsp;</span>";
                 endif;
             elseif (isset($validsearch) AND ($validsearch === "toomany")):
                 $qtyresults = 0;
-                echo "More than $maxresults results, narrow the search";
+                echo "<span id='searchnametip'>{$maxresults}+ results, try again</span>";
             elseif (isset($validsearch) AND ($validsearch === "zero")):
                 $qtyresults = 0;
-                echo 'No results';
+                echo "<span id='searchnametip'>No results</span>";
             elseif (empty($validsearch)) :
-                echo '';
+                echo "<span id='searchnametip'>&nbsp;</span>";
             else:
-                echo 'Search for 4 characters or more';
+                echo "<span id='searchnametip'>Search for 4 characters or more</span>";
             endif; ?>
-            </span>
             <span id="resultscount">
             <?php
             if (isset($validsearch) AND ($validsearch === "true")) :
