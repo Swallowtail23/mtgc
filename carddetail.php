@@ -1141,11 +1141,18 @@ require('includes/menu.php'); //mobile menu
                                 <?php
                                 $obj = new Message;
                                 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decks enabled: $decks_on",$logfile);
-                                if($decks_on === 1):
-                                    echo "<div id='deckadd'>";
+                                    if(in_array($row['layout'],$token_layouts)):
+                                        $decks_on = 0;
+                                    endif;
+                                    if($decks_on === 1):
+                                        echo "<div id='deckadd'>";
                                     
                                     // Add to decks
-
+                                    
+                                
+                                    
+                                    
+                                
                                     // Logic on handling input from submitted form
                                     // $decktoaddto is the number of the deck (decks.decknumber), or 'newdeck'
                                     // $newdeckname is the deck name if $decktoaddto is 'newdeck'

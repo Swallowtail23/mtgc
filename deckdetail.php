@@ -114,6 +114,7 @@ $minusmain   = isset($_GET['minusmain']) ? filter_input(INPUT_GET, 'minusmain', 
 $plusside   = isset($_GET['plusside']) ? filter_input(INPUT_GET, 'plusside', FILTER_SANITIZE_STRING):'';
 $minusside   = isset($_GET['minusside']) ? filter_input(INPUT_GET, 'minusside', FILTER_SANITIZE_STRING):'';
 $commander   = isset($_GET['commander']) ? filter_input(INPUT_GET, 'commander', FILTER_SANITIZE_STRING):'';
+$token_layouts = ['double_faced_token','token','emblem']; // cannot be included
 
 // Check to see if the called deck belongs to the logged in user.
 if(deckownercheck($decknumber,$user) == FALSE): ?>
@@ -189,9 +190,10 @@ if (isset($_GET["quickadd"])):
     $obj = new Message;
     $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
     $quickaddcard = $db->escape($quickaddcard);
+    
     if($quickaddset == ''):
-        if ($quickaddcardid = $db->query("SELECT id,setcode from cards_scry
-                                     WHERE name = '$quickaddcard' ORDER BY release_date DESC LIMIT 1")):
+        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
+                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
             if ($quickaddcardid->num_rows > 0):
                 while ($results = $quickaddcardid->fetch_assoc()):
                     $cardtoadd = $results['id'];
@@ -203,8 +205,8 @@ if (isset($_GET["quickadd"])):
             trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
         endif;
     else:
-        if ($quickaddcardid = $db->query("SELECT id,setcode from cards_scry
-                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' LIMIT 1")):
+        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
+                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
             if ($quickaddcardid->num_rows > 0):
                 while ($results = $quickaddcardid->fetch_assoc()):
                     $cardtoadd = $results['id'];
