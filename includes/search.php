@@ -162,25 +162,34 @@ endif;
                 </label>
             </span><br>
             <h4 class="h4">Set:</h4> Ctrl+click to select multiple sets:<br>
-            <select class='setselect' size="8" multiple name="set[]">
+            <select class='setselect' size="15" multiple name="set[]">
                 <?php 
                 $result = $db->query(
                        'SELECT 
                             set_name,
                             setcode,
-                            min(release_date) as date
-                        FROM 
-                            cards_scry 
+                            min(sets.release_date) as date,
+                            parent_set_code
+                        FROM cards_scry 
+                        LEFT JOIN sets ON cards_scry.setcode = sets.code
                         GROUP BY 
                             set_name
                         ORDER BY 
-                            date DESC');
+                            date DESC, parent_set_code DESC');
                 if ($result === false):
                     trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
                 else:
                     $currentblock = null;
                     while ($row = $result->fetch_assoc()):
                         $set_upper = strtoupper($row['setcode']);
+                        $parent_set_upper = strtoupper($row['parent_set_code']);
+                        if( $currentblock == null || $parent_set_upper != $currentblock ):
+                            if( $currentblock != null ):
+                                echo "</optgroup\n>";
+                            endif;
+                            echo "<optgroup class='optgroup' label='$parent_set_upper'>\n";
+                            $currentblock = $parent_set_upper;
+                        endif;
                         echo "<option value='{$row['setcode']}'>{$row['set_name']} ($set_upper)</option>\n";
                     endwhile;
                 endif;    

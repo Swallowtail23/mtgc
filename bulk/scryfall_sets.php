@@ -75,6 +75,8 @@ foreach($data AS $key => $value):
             $card_count = $value2["card_count"];
             if(isset($value2["parent_set_code"])):
                 $parent_set_code = $value2["parent_set_code"];
+            else:
+                $parent_set_code = $value2["code"];
             endif;
             $nonfoil_only = $value2["nonfoil_only"];
             $foil_only = $value2["foil_only"];
