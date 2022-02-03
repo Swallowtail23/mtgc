@@ -171,35 +171,36 @@ $(document).ready(function(){
     }
 </script>
 <script type="text/javascript"> 
-jQuery( function($) {
-    $(".mainimg").mousemove(function(e)
-        {         
-            if (document.querySelector(".mainimg").style.transform == 'rotate(180deg)' ){
-                $(".imgfloat").show();         
-                $(".imgfloat").css(
-                    {
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: 'rotate(180deg)'
-                    }
-                );     
-            } else {
-                $(".imgfloat").show();         
-                $(".imgfloat").css(
-                    {
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: ''
-                    }
-                );     
+    jQuery( function($) {
+        $(".mainimg").mousemove(function(e)
+            {         
+                if (  document.querySelector(".mainimg").style.transform == 'rotate(180deg)' &&  (window.innerWidth > 1208)  ) {
+                    $(".imgfloat").show();         
+                    $(".imgfloat").css(
+                        {
+                            top: (e.pageY - 170) + "px",
+                            left: (e.pageX + 95) + "px",
+                            transform: 'rotate(180deg)'
+                        }
+                    );     
+                } else if (window.innerWidth > 1208) {
+                    $(".imgfloat").show();         
+                    $(".imgfloat").css(
+                        {
+                            top: (e.pageY - 170) + "px",
+                            left: (e.pageX + 95) + "px",
+                            transform: ''
+                        }
+                    );     
+                }
+            });
+        $(".mainimg").mouseout(function(e)
+            {
+                $(".imgfloat").hide();
             }
-        });
-    $(".mainimg").mouseout(function(e)
-        {
-            $(".imgfloat").hide();
-        }
-    );
-});
+        );
+    });
+
 </script>
 <script type="text/javascript"> 
 jQuery( function($) {
@@ -220,6 +221,20 @@ jQuery( function($) {
     );
 });
 </script> 
+<script type="text/javascript">
+    function swapImage(img_id,card_id,imageurl,imagebackurl){
+        var ImageId = document.getElementById(img_id);
+        var FrontImg = card_id + ".jpg";
+        var BackImg = card_id + "_b.jpg";
+        if (ImageId.src.match(FrontImg))
+        { 
+            document.getElementById(img_id).src = imagebackurl; 
+        } else if (ImageId.src.match(BackImg))
+        {
+            document.getElementById(img_id).src = imageurl; 
+        }
+    };
+</script>
 </head>
 
 <body class="body">
@@ -633,7 +648,9 @@ require('includes/menu.php'); //mobile menu
                             <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
                                 <span class='material-icons md-24'>refresh</span>
                             </div>
-                  <?php endif; ?>
+                  <?php endif; 
+                        $img_id = 'cardimg';
+                        echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";?>
                         <table>
                             <tr> 
                                 <td colspan="2">
