@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       11/01/20
+/* Version:     5.0
+    Date:       02/02/22
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -17,6 +17,8 @@
  *  4.0
  *              Errors running under php7.4 resolved (primarily null variable
  *                  issues)
+ *  5.0
+ *              Refactoring of import for new database structure, and adding emailed report
 */
 
 session_start();
@@ -341,12 +343,17 @@ endif; ?>
                 endif;
                 ?> 
             <h2 id='h2'>Import / Export</h2>
+                <b>Deleting your collection</b><br>
+                <ul>
+                    <li><a href='help.php'>Send me a request</a>, or export your collection, set the qties all to 0 and re-import the file below</li>
+                </ul>
                 <b>Import guidelines - read carefully!</b><br>
                 <ul>
-                    <li>Import will <b>ADD</b> to your existing collection</li>
-                    <li>If a card entry already exists, the quantity in the import file will <b>over-write</b> the existing quantity</li>
-                    <li>Import file must be a comma-delimited file</li>
-                    <li>Delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):</li></ul>
+                    <li>It is <b>strongly recommended</b> that you export (backup) your collection before doing an import; save that file, and if it goes wrong, reset your database and rollback by importing the original collection</li>
+                    <li>Ideally only do a full import to an empty collection</li>
+                    <li>If a card is not in your collection Import will <b>add</b> it with imported quantities; if a card is in your collection Import will <b>over-write</b> the existing quantity with imported quantities; 
+                        note if it imports incorrectly over an existing card entry you may lose existing card entries</li>
+                    <li>Import file must be a comma-delimited file; delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):</li></ul>
         <pre>
         setcode,number,name,normal,foil,id
         M15,2,Ajani's Pridemate,5,0,383181
@@ -355,12 +362,14 @@ endif; ?>
                     <li>The only mandatory fields are setcode and collector number.</li>
                     <li>If id is included and is a valid Scryfall UUID value, the line will be imported as that id without checking anything else, otherwise, name and id are for your reference only</li>
                     <li>Set codes MUST be as per the list <a href='sets.php'> here (Set codes) </a>for successful import</li>
-                    <li>Unless you are 100% confident that the cards are in the database, only import normal cards, not promos or specials. There is no consistent naming convention for non-standard sets</li>
-                    <li>Check the last line of exported files to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen in an app like Notepad++ (don't use Excel)</li>
+                    <li>For an example of the right format export first and use that file as a template</li>
+                    <li>Unless you are 100% confident that the cards are in the database (ideally include Scryfall ID), only import normal cards, not promos or specials. 
+                        There is no consistent naming convention for non-standard sets</li>
+                    <li>Check the last line of exported files before importing to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen in an app like Notepad++ (don't use Excel)</li>
                     <li>The import process imports a line, then does a follow-up check to see if it has been successfully written to the database</li>
                     <li>A green tick, red cross or warning is shown dependent on each line's result</li>
                     <li>Make a note of any failures for checking, including 'name warnings' where the card has been imported based on setcode and number but the name does not match</li>
-                    <li>The process will email you a list of the failures and warnings at the end of the import process</li></ul>
+                    <li>You will be sent a list of the failures and warnings at the end of the import</li></ul>
                 
                         <span id='importspan'><b>Import</b></span>
                             <?php if (!isset($_POST['import'])): 
@@ -422,7 +431,7 @@ endif; ?>
                                         $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} does not contain header row",$logfile);
                                         exit;
                                     endif;
-                                elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
+                                elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])): //we have a setcode, a number and a name
                                     $obj = new Message;
                                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data[0]}), number({$data[1]}), name ({$data[2]}), normal ({$data[3]}), foil ({$data[4]}), id ({$data[5]})",$logfile);
                                     $data0 = $data[0];
@@ -552,30 +561,30 @@ endif; ?>
                                             echo "Row $row_no: ID $data5 does not map to a card in database, falling back to setcode/number<br>";
                                         endif;
                                     endif;
-                                    if (!empty($data0) AND !empty($data1) AND $idimport === 0):
+                                    if (!empty($data0) AND !empty($data1) AND $idimport === 0): // ID import has not been successful, try with setcode and number
                                         $obj = new Message;
                                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0) and place 2 (number - $data1) without ID - getting ID",$logfile);
                                         echo "Row $row_no:  Data in Row $row_no has no matched ID, using setcode and number<br>";
-                                        if($getid = $db->select_one('id,name,foil,nonfoil','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")):
-                                            $data5 = $getid['id'];
+                                        if($getid = $db->select_one('id,name,foil,nonfoil','cards_scry',"WHERE setcode = '$data0' AND number_import = '$data1'")): // get card from db with this setcode and number
+                                            $data5 = $getid['id']; // Write the obtained ID into the ID field
                                             $db_name = $getid['name'];
                                             $card_normal = $getid['nonfoil'];
                                             $card_foil = $getid['foil'];
                                             if($card_normal != 1 AND $card_foil == 1):
                                                 $cardtypes = 'foilonly';
                                                 if($data3 > 0 and $data4 === 0):
-                                                    echo "Row $row_no: WARNING: This matches to a Foil-only ID, but import contains Normal cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "Row $row_no: WARNING: This matches to a Foil-only ID, but import contains Normal cards - swapping ($data0, $data1, '$data2', $data3, $data4, '$db_name', $data5) ";
                                                     echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                    $newwarning = "Foil/Normal warning (swapping), $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $newwarning = "Foil/Normal warning (swapping), $row_no, $data0, $data1, '$data2', $data3, $data4, '$db_name', $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     // swap $data3 and $data4
                                                     $data3 = $data3 + $data4;
                                                     $data4 = $data3 - $data4;
                                                     $data3 = $data3 - $data4;
                                                 elseif($data3 > 0 and $data4 > 0):
-                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal AND Foil cards ($data0, $data1, '$data2', $data3, $data4, '$db_name', $data5) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
-                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, '$data2', $data3, $data4, '$db_name', $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
                                                     continue;
@@ -583,9 +592,9 @@ endif; ?>
                                             elseif($card_normal == 1 AND $card_foil != 1):
                                                 $cardtypes = 'normalonly';
                                                 if($data4 > 0 and $data3 === 0):
-                                                    echo "Row $row_no: WARNING: This matches to a Normal-only ID, but import contains Foil cards - swapping ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
+                                                    echo "Row $row_no: WARNING: This matches to a Normal-only ID, but import contains Foil cards - swapping ($data0, $data1, '$data2', $data3, $data4, '$db_name', $data5) ";
                                                     echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                    $newwarning = "Foil/Normal warning, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $newwarning = "Foil/Normal warning, $row_no, $data0, $data1, '$data2', $data3, $data4, '$db_name', $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     // swap $data3 and $data4
                                                     $data3 = $data3 + $data4;
@@ -594,7 +603,7 @@ endif; ?>
                                                 elseif($data4 > 0 and $data3 > 0):
                                                     echo "Row $row_no: ERROR: This matches to a Normal-only ID, but import contains Normal AND Foil cards ($data0, $data1, $data2, $data3, $data4, $db_name, $data5) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
-                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                    $newwarning = "Foil/Normal error, $row_no, $data0, $data1, '$data2', $data3, $data4, '$db_name', $data5"."\n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
                                                     continue;
@@ -603,8 +612,8 @@ endif; ?>
                                                 $cardtypes = 'normalandfoil'; // Keep going
                                             endif;
                                             $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID for row $i place 1 ($data0) and place 2 ($data1) is $data5",$logfile);
-                                            if (!empty($data5)):
+                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID for row $i setcode ($data0) and number_import ($data1) is $data5",$logfile);
+                                            if (!empty($data5)): //write the import
                                                 echo "Row $row_no: $data0, $data1, $data2, ,$data5<br>";
                                                 $stmt = $db->prepare("  INSERT INTO
                                                                             `$mytable`
@@ -658,9 +667,9 @@ endif; ?>
                                                                         // Card is a double name or flip card in the database, and the database name starts with the full import name
                                                                     endif;
                                                                 else: // Card is NOT a double name or flip card in the database, or otherwise the compare has failed, so a name variation is a concern
-                                                                    echo "WARNING: Imported on setcode/number, but name in import file ($data2) does not match database name ($db_name) ";
+                                                                    echo "WARNING: Imported on setcode/number, but name in import file ('$data2') does not match database name ('$db_name') ";
                                                                     echo "<img src='/images/warning.png' alt='Warning'><br>";
-                                                                    $newwarning = "Name warning, $row_no, $data0, $data1, $data2, $data3, $data4, $db_name, $data5"."\n";
+                                                                    $newwarning = "Name warning (setcode/number/name mismatch), $row_no, $data0, $data1, '$data2', $data3, $data4, '$db_name', $data5"."\n";
                                                                     $warningsummary = $warningsummary.$newwarning;
                                                                 endif;
                                                             endif;
@@ -674,21 +683,32 @@ endif; ?>
                                                 endif;
                                             else:
                                                 echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                                $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4"."\n";
+                                                $newwarning = "Failure, $row_no, $data0, $data1, '$data2', $data3, $data4"."\n";
                                                 $warningsummary = $warningsummary.$newwarning;
                                             endif;
-                                        else:
-                                            echo "Row ",$i+1,": Setcode $data0 and number $data1 do not map to a card in database <img src='/images/error.png' alt='Failure'><br>";
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
-                                        
-                                            $newwarning = "Failure, $row_no, $data0, $data1, $data2, $data3, $data4"."\n";
+                                        else: // no card in db with this setcode and number
+                                            $stmt = $db->prepare("SELECT `setcodeid`,`fullsetname` FROM `sets_old` WHERE setcodeid = ?");
+                                            if ($stmt === false):
+                                                trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                                            endif;
+                                            $bind = $stmt->bind_param("s",$data0);
+                                            if ($bind === false):
+                                                trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+                                            endif;
+                                            $exec = $stmt->execute();
+                                            if ($exec === false):
+                                                trigger_error("[ERROR] profile.php: Checking old setcode: " . $db->error, E_USER_ERROR);
+                                            else:
+                                                $result = $stmt->get_result();
+                                                $row = $result->fetch_assoc();
+                                                if($result->num_rows === 0 OR $result->num_rows > 1):
+                                                    $oldsetname = "no match found";
+                                                else:
+                                                    $oldsetname = $row['fullsetname'];
+                                                endif;
+                                            endif;
+                                            echo "Row ",$i+1,": Setcode $data0 (was '$oldsetname)/number $data1 ('$data2') do not map to a card id <img src='/images/error.png' alt='Failure'><br>";
+                                            $newwarning = "Failure, $row_no, $data0 (was '$oldsetname'), $data1, '$data2', $data3, $data4"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                         endif;
                                     elseif($idimport === 1):
@@ -704,10 +724,11 @@ endif; ?>
                                 $i = $i + 1;
                             endwhile;
                             fclose($handle);
-                            print "Import done - $count unique cards, $total in total.";
+                            $summary = "Import done - $count unique cards, $total in total.";
+                            print $summary;
                             $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
                             $subject = "Import failures / warnings"; 
-                            $message = "$warningsummary";
+                            $message = "$warningsummary \n \n $summary";
                             mail($useremail, $subject, $message, $from); 
                         else: ?>
                             <div id='exportdiv'>
