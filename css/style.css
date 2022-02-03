@@ -2633,7 +2633,7 @@ hr.styled
 }
 @media (min-width: 1209px) 
 {
-    .flipbuttondetail
+    .flipbuttondetail, .imgfloat, .backimgfloat
     {
         display: none;
     }

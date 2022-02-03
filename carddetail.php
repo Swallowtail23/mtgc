@@ -171,35 +171,36 @@ $(document).ready(function(){
     }
 </script>
 <script type="text/javascript"> 
-jQuery( function($) {
-    $(".mainimg").mousemove(function(e)
-        {         
-            if (document.querySelector(".mainimg").style.transform == 'rotate(180deg)' ){
-                $(".imgfloat").show();         
-                $(".imgfloat").css(
-                    {
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: 'rotate(180deg)'
-                    }
-                );     
-            } else {
-                $(".imgfloat").show();         
-                $(".imgfloat").css(
-                    {
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: ''
-                    }
-                );     
+    jQuery( function($) {
+        $(".mainimg").mousemove(function(e)
+            {         
+                if (  document.querySelector(".mainimg").style.transform == 'rotate(180deg)' &&  (window.innerWidth > 1208)  ) {
+                    $(".imgfloat").show();         
+                    $(".imgfloat").css(
+                        {
+                            top: (e.pageY - 170) + "px",
+                            left: (e.pageX + 95) + "px",
+                            transform: 'rotate(180deg)'
+                        }
+                    );     
+                } else if (window.innerWidth > 1208) {
+                    $(".imgfloat").show();         
+                    $(".imgfloat").css(
+                        {
+                            top: (e.pageY - 170) + "px",
+                            left: (e.pageX + 95) + "px",
+                            transform: ''
+                        }
+                    );     
+                }
+            });
+        $(".mainimg").mouseout(function(e)
+            {
+                $(".imgfloat").hide();
             }
-        });
-    $(".mainimg").mouseout(function(e)
-        {
-            $(".imgfloat").hide();
-        }
-    );
-});
+        );
+    });
+
 </script>
 <script type="text/javascript"> 
 jQuery( function($) {
