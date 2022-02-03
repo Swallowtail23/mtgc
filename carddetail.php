@@ -220,6 +220,20 @@ jQuery( function($) {
     );
 });
 </script> 
+<script type="text/javascript">
+    function swapImage(img_id,card_id,imageurl,imagebackurl){
+        var ImageId = document.getElementById(img_id);
+        var FrontImg = card_id + ".jpg";
+        var BackImg = card_id + "_b.jpg";
+        if (ImageId.src.match(FrontImg))
+        { 
+            document.getElementById(img_id).src = imagebackurl; 
+        } else if (ImageId.src.match(BackImg))
+        {
+            document.getElementById(img_id).src = imageurl; 
+        }
+    };
+</script>
 </head>
 
 <body class="body">
@@ -633,7 +647,9 @@ require('includes/menu.php'); //mobile menu
                             <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
                                 <span class='material-icons md-24'>refresh</span>
                             </div>
-                  <?php endif; ?>
+                  <?php endif; 
+                        $img_id = 'cardimg';
+                        echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";?>
                         <table>
                             <tr> 
                                 <td colspan="2">

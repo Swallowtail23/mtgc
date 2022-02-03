@@ -1381,7 +1381,7 @@ table
     height: 60px;
 }
 
-.flipbutton
+.flipbutton, .flipbuttondetail
 {
     position:absolute;
     width:50px;
@@ -2528,7 +2528,7 @@ hr.styled
         width: -moz-calc(100% - 20px); /* firefox */
     }
 }
-@media (max-width: 700px) 
+@media (max-width: 695px) 
 {
     #gridcmd, #bulkcmd
     {
@@ -2616,9 +2616,24 @@ hr.styled
         top: 48px;
     }
 }
-@media (max-width: 1200px) 
+@media (max-width: 1208px) 
 {
     #listcmd
+    {
+        display: none;
+    }
+    #carddetailinfo
+    {
+        min-height: 515px;
+    }
+    #carddetailflipimg
+    {
+        display: none;
+    }
+}
+@media (min-width: 1209px) 
+{
+    .flipbuttondetail
     {
         display: none;
     }
