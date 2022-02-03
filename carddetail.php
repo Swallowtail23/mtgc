@@ -650,7 +650,9 @@ require('includes/menu.php'); //mobile menu
                             </div>
                   <?php endif; 
                         $img_id = 'cardimg';
-                        echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";?>
+                        if (in_array($row['layout'],$flip_types)):
+                            echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
+                        endif; ?>
                         <table>
                             <tr> 
                                 <td colspan="2">
@@ -898,62 +900,66 @@ require('includes/menu.php'); //mobile menu
                             echo "<br>";
                         endif;
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
-                            echo "<b>Legality: </b>";    
+                            echo "<b>Legal in: </b>";    
                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
                             $legalitystring = '';
                             
                             if($row['legalitystandard'] == 'legal'):
                                 $legalitystring = "Standard";
-                            elseif($row['legalitystandard'] == 'banned'):
-                                $legalitystring = "Standard: banned";
+                            // elseif($row['legalitystandard'] == 'banned'):
+                            //     $legalitystring = "Standard: banned";
                             endif;
                             
-                            if($legalitystring !== ''):
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
                                 $legalitystring .= "; ";
                             endif;
                             
                             if($row['legalitypioneer'] == 'legal'):
                                 $legalitystring .= "Pioneer";
-                            elseif($row['legalitypioneer'] == 'banned'):
-                                $legalitystring .= "Pioneer: banned";
+                            // elseif($row['legalitypioneer'] == 'banned'):
+                            //     $legalitystring .= "Pioneer: banned";
                             endif;
                             
-                            if($legalitystring !== ''):
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
                                 $legalitystring .= "; ";
                             endif;
                             
                             if($row['legalitymodern'] == 'legal'):
                                 $legalitystring .= "Modern";
-                            elseif($row['legalitymodern'] == 'banned'):
-                                $legalitystring .= "Modern: banned";
+                            // elseif($row['legalitymodern'] == 'banned'):
+                            //     $legalitystring .= "Modern: banned";
                             endif;
                             
-                            if($legalitystring !== ''):
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
                                 $legalitystring .= "; ";
                             endif;
                             
                             if($row['legalityvintage'] == 'legal'):
                                 $legalitystring .= "Vintage";
-                            elseif($row['legalityvintage'] == 'banned'):
-                                $legalitystring .= "Vintage: banned";
+                            // elseif($row['legalityvintage'] == 'banned'):
+                            //     $legalitystring .= "Vintage: banned";
                             elseif($row['legalityvintage'] == 'restricted'):
                                 $legalitystring .= "Vintage: restricted";
                             endif;
                             
-                            if($legalitystring !== ''):
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
                                 $legalitystring .= "; ";
                             endif;
                             
                             if($row['legalitylegacy'] == 'legal'):
                                 $legalitystring .= "Legacy";
-                            elseif($row['legalitylegacy'] == 'banned'):
-                                $legalitystring .= "Legacy: banned";
+                            // elseif($row['legalitylegacy'] == 'banned'):
+                            //     $legalitystring .= "Legacy: banned";
                             elseif($row['legalitylegacy'] == 'restricted'):
                                 $legalitystring .= "Legacy: restricted";
                             endif;
                             
-                            if(substr($legalitystring,-2) === ", "):
-                                $legalitystring = substr($legalitystring,0,2);
+                            if($legalitystring !== '' AND substr($legalitystring,-2) === "; "):
+                                $legalitystring = substr($legalitystring,0,-2);
+                            endif;
+                            
+                            if($legalitystring === ''):
+                                $legalitystring = 'None';
                             endif;
                             
                             echo $legalitystring."<br>";

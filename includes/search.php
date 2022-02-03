@@ -71,9 +71,10 @@ endif;
             </span><br>
             
             <h4 class="h4">Legality</h4>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="any" checked><span class="outer"><span class="inner"></span></span>Any</label></span><br>
-            <label class="radio"><input type="radio" name="legal" value="std"><span class="outer"><span class="inner"></span></span>Standard</label>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span><br>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="any" checked><span class="outer"><span class="inner"></span></span>Any</label></span>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="std"><span class="outer"><span class="inner"></span></span>Standard</label></span>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="pnr"><span class="outer"><span class="inner"></span></span>Pioneer</label></span><br>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="vin"><span class="outer"><span class="inner"></span></span>Vintage</label></span>
             <label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label>
             <h4 class="h4">Colour search criteria</h4>
