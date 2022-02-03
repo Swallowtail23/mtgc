@@ -18,12 +18,12 @@ endif;
     <br>
     &copy; <?php echo $copyright;?>
     <br><br>
-    <a href="http://jigsaw.w3.org/css-validator/validator?uri=http://www.mtgcollection.info/style<?php echo $cssver?>.css">
+    <a href="https://jigsaw.w3.org/css-validator/validator?uri=https://www.mtgcollection.info/css/style.css<?php echo $cssver?>.css">
                 <img
                 src="/images/valid_css3.png"
                 alt="Valid CSS!" />
     </a><br><br>
-    <a href="http://validator.w3.org/check?uri=https://www.mtgcollection.info">
+    <a href="https://validator.w3.org/check?uri=https://www.mtgcollection.info">
                 <img
                 src="/images/valid_html5.png"
                 alt="Valid HTML5!" />

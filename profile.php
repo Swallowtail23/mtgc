@@ -277,7 +277,7 @@ endif; ?>
                 $collectionvalue = "Total value approximately USD".$collectionmoney;
                 $rowcounttotal = number_format($rowcount['TOTAL']);
                 echo "$collectionvalue over $rowcounttotal cards.<br>";
-                echo "This is based on normal and foil pricing where applicable from <a href='http://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com, in USD.<br>";
+                echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com, in USD.<br>";
             
                 $rowcounttotal = number_format($rowcount['TOTAL']);
                 echo "Total $rowcounttotal cards.<br>";  

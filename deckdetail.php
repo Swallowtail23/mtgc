@@ -1032,7 +1032,7 @@ endif;
                     <?php echo "<input type='hidden' name='filename' value='{$filename}_needed'>"; ?>
                 </form>
                 <br>
-                TCGPlayer: <a href="http://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
+                TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
             <?php
             endif;
             echo "<h4>Quick add</h4>";

@@ -682,11 +682,11 @@ require('includes/menu.php'); //mobile menu
                                     <?php
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
-                                        echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
+                                        echo "<a href='https://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     elseif(isset($row['scryfall_uri'])):
                                         echo "<a href='".$row['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     else:
-                                        echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
+                                        echo "<a href='https://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     endif;
                                         
                                     ?>
@@ -1121,7 +1121,7 @@ require('includes/menu.php'); //mobile menu
                                                 $namehtml = str_replace("//","",$namehtml);
                                                 $namehtml = str_replace("  ","%20",$namehtml);
                                                 $namehtml = str_replace(" ","%20",$namehtml);
-                                                echo "<a href='http://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
+                                                echo "<a href='https://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
                                             endif;
                                             ?>
                                         </td>
@@ -1442,11 +1442,11 @@ require('includes/menu.php'); //mobile menu
                                         <?php
                                         if(isset($row['multiverse2'])):
                                             $multiverse_id_2 = $row['multiverse2'];
-                                            echo "<a href='http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='https://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id_2."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         elseif(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== ""):
                                             echo "<a href='".$row['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         else:
-                                            echo "<a href='http://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
+                                            echo "<a href='https://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='backimg' src=$imagelocationback></a>"; 
                                         endif;
                                         
                                         ?>      
