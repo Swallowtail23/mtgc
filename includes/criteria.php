@@ -416,6 +416,10 @@ elseif ($adv == "yes" ) :
         $criteria .= "AND (cards_scry.legalitystandard = 'legal') ";
     endif;
     
+    if ($legal === 'pnr'):
+        $criteria .= "AND (cards_scry.legalitypioneer = 'legal') ";
+    endif;
+    
     if ($legal === 'mdn'):
         $criteria .= "AND (cards_scry.legalitymodern = 'legal') ";
     endif;
