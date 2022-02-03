@@ -75,7 +75,8 @@ Edit my.cnf and set as follows:
 (first line is to remove GROUP BY, check existing server config and remove that, don't copy the line):
     [mysqld]
     sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
-    innodb_buffer_pool_size = 1G
+    innodb_buffer_pool_size = 2G 
+Note 2G sizing is based on 4G or more server RAM.
 
 ### Initial user ###
 
