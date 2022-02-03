@@ -2534,7 +2534,12 @@ hr.styled
     {
         display: none;
     }
+    #carddetailinfo
+    {
+        min-height: 0px !important;
+    }
 }
+
 @media (max-width:740px) {
    #importexport 
    {
@@ -2624,7 +2629,7 @@ hr.styled
     }
     #carddetailinfo
     {
-        min-height: 515px;
+        min-height: 523px;
     }
     #carddetailflipimg
     {

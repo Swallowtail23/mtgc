@@ -1385,14 +1385,14 @@ require('includes/menu.php'); //mobile menu
                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
                         if (($result->num_rows === 0) AND !in_array($row['layout'],$flip_types)):
                             // no rulings ?>
-                            <div id='carddetailrulings'>
+                            <div>
                             <h3 class='shallowh3'>Rulings</h3>&nbsp;
                             None
                             </div> <?php
                         elseif ($result->num_rows === 0):
                             // no rulings
                         else:
-                            echo("<div id='carddetailrulings'>");
+                            echo("<div>");
                             while($rulingrow = $result->fetch_array(MYSQLI_ASSOC)):
                                 $olddateparts = explode('-', $rulingrow['published_at']); //Converting yyyy/mm/dd to dd/mm/yyyy
                                 $newdate = "<b>".$olddateparts[2].'-'.$olddateparts[1].'-'.$olddateparts[0]."</b>";
