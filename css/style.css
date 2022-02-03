@@ -367,12 +367,12 @@ table
 
 #carddetailinfo
 {
-    min-height: 490px;
+
 }
 
 #carddetailflipinfo
 {
-    min-height: 440px;
+
 }
 
 #carddetailupdate
@@ -1659,6 +1659,7 @@ table
 .shallowh3
 {
     margin-top: 5px;
+    padding-top: 10px;
     margin-bottom: 10px;
 }
 
