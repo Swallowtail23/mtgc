@@ -321,10 +321,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             element: '.spinner',
                             delay: 600,
                             show: function(element) {
-                                element.style.opacity = '1'; // default behaviour
+                                element.style.opacity = '1';
                             },
                             hide: function(element) {
-                                element.style.opacity = '0'; // default behaviour
+                                element.style.opacity = '0';
                             }
                         }
                     });
@@ -344,6 +344,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 });
                 </script>   
                 <?php
+            else: //Results > 0 but < a page, show the No More Results footer at the end ?>
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        let el = document.querySelector('.ias-no-more');
+                        el.style.opacity = '1';
+                    });
+                </script>
+            <?php
             endif; ?>
             <script type="text/javascript">
                 $(document).ready(function () {
