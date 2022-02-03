@@ -26,10 +26,11 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
-// Change these to alter default numbers per page
+// Default numbers per page and max
 $listperpage = 30;
 $gridperpage = 30;
 $bulkperpage = 100;
+$maxresults = 2500;
 
 // Define layout and results per page for each layout type
 if (isset($_GET['layout'])):
@@ -142,13 +143,14 @@ $selectAll = "SELECT
                 `$mytable`.foil,
                 number,
                 number_import,
-                name,
+                cards_scry.name,
                 promo,
                 cards_scry.foil as cs_foil,
                 cards_scry.nonfoil as cs_normal,
-                release_date,
+                cards_scry.release_date,
+                sets.release_date as set_date,
                 rarity,
-                set_name,
+                cards_scry.set_name,
                 type,
                 ability,
                 manacost,
@@ -161,9 +163,9 @@ $selectAll = "SELECT
                 p3_name
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
+                LEFT JOIN `sets` ON cards_scry.setcode = sets.code
                 WHERE ";
 $sorting = "LIMIT $start_from, $perpage";
-$maxresults = 1000;
 require('includes/criteria.php'); //Builds $criteria and assesses validity
 // If search is Mycollection / Sort By Price: 
 // Update pricing in case any new cards have been added to collection
