@@ -264,6 +264,8 @@ require('includes/menu.php'); //mobile menu
                     multiverse,
                     multiverse2,
                     name,
+                    printed_name,
+                    flavor_name,
                     lang,
                     release_date,
                     set_name as cs_setname,
@@ -298,6 +300,8 @@ require('includes/menu.php'); //mobile menu
                     f1_toughness,
                     f1_loyalty,
                     f1_cmc,
+                    f1_printed_name,
+                    f1_flavor_name,
                     f2_name,
                     f2_manacost,
                     f2_type,
@@ -309,6 +313,8 @@ require('includes/menu.php'); //mobile menu
                     f2_toughness,
                     f2_loyalty,
                     f2_cmc,
+                    f2_printed_name,
+                    f2_flavor_name,
                     p1_id,
                     p1_component,
                     p1_name,
@@ -338,6 +344,7 @@ require('includes/menu.php'); //mobile menu
                     legalitymodern,
                     legalitylegacy,
                     legalityvintage,
+                    legalitypioneer,
                     updatetime,
                     price,
                     price_foil,
@@ -573,7 +580,11 @@ require('includes/menu.php'); //mobile menu
                         <tr>
                             <td class="h2pad" id='nameheading'>
                                 <?php 
-                                    echo $row['name'];
+                                    if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
+                                        echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                                    else:
+                                        echo $row['name'];
+                                    endif;
                                 ?>
                             </td>
                             <td id="carddetailset">
@@ -777,7 +788,11 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         $layouts_double = array ('transform','modal_dfc','adventure','split','reversible_card','flip','double_faced_token');
                         if(in_array($row["layout"],$layouts_double)):
-                            echo "<br><b>Name: </b>".$row['f1_name'];
+                            if(isset($row['f1_flavor_name']) AND $row['f1_flavor_name'] !== ''):
+                                echo "<b>Name: </b>{$row['f1_flavor_name']} <i>({$row['f1_name']})</i>";
+                            else:
+                                echo "<b>Name: </b>".$row['f1_name'];
+                            endif;
                             echo "<br>";
                             if($row['layout'] === 'reversible_card'):
                                 if(validateTrueDecimal($row['f1_cmc']) === false):
@@ -866,45 +881,65 @@ require('includes/menu.php'); //mobile menu
                             echo "<br>";
                         endif;
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
-                            echo "<b>Legality:</b>";    
+                            echo "<b>Legality: </b>";    
                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
-                            echo " Standard - ";
-                                if($row['legalitystandard'] == 'legal'):
-                                    echo "yes";
-                                elseif($row['legalitystandard'] == 'banned'):
-                                    echo "banned";
-                                else:
-                                    echo "no";
-                                endif;
-                            echo "; Modern - ";
-                                if($row['legalitymodern'] == 'legal'):
-                                    echo "yes";
-                                elseif($row['legalitymodern'] == 'banned'):
-                                    echo "banned";
-                                else:
-                                    echo "no";
-                                endif;
-                            echo "<br>Vintage - ";
-                                if($row['legalityvintage'] == 'legal'):
-                                    echo "yes";
-                                elseif($row['legalityvintage'] == 'banned'):
-                                    echo "banned";
-                                elseif($row['legalityvintage'] == 'restricted'):
-                                    echo "restricted";
-                                else:
-                                    echo "no";
-                                endif;
-                            echo "; Legacy - ";
-                                if($row['legalitylegacy'] == 'legal'):
-                                    echo "yes";
-                                elseif($row['legalitylegacy'] == 'banned'):
-                                    echo "banned";
-                                elseif($row['legalitylegacy'] == 'restricted'):
-                                    echo "restricted";
-                                else:
-                                    echo "no";
-                                endif;
-                                echo "<br>";
+                            $legalitystring = '';
+                            
+                            if($row['legalitystandard'] == 'legal'):
+                                $legalitystring = "Standard";
+                            elseif($row['legalitystandard'] == 'banned'):
+                                $legalitystring = "Standard: banned";
+                            endif;
+                            
+                            if($legalitystring !== ''):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalitypioneer'] == 'legal'):
+                                $legalitystring .= "Pioneer";
+                            elseif($row['legalitypioneer'] == 'banned'):
+                                $legalitystring .= "Pioneer: banned";
+                            endif;
+                            
+                            if($legalitystring !== ''):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalitymodern'] == 'legal'):
+                                $legalitystring .= "Modern";
+                            elseif($row['legalitymodern'] == 'banned'):
+                                $legalitystring .= "Modern: banned";
+                            endif;
+                            
+                            if($legalitystring !== ''):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalityvintage'] == 'legal'):
+                                $legalitystring .= "Vintage";
+                            elseif($row['legalityvintage'] == 'banned'):
+                                $legalitystring .= "Vintage: banned";
+                            elseif($row['legalityvintage'] == 'restricted'):
+                                $legalitystring .= "Vintage: restricted";
+                            endif;
+                            
+                            if($legalitystring !== ''):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalitylegacy'] == 'legal'):
+                                $legalitystring .= "Legacy";
+                            elseif($row['legalitylegacy'] == 'banned'):
+                                $legalitystring .= "Legacy: banned";
+                            elseif($row['legalitylegacy'] == 'restricted'):
+                                $legalitystring .= "Legacy: restricted";
+                            endif;
+                            
+                            if(substr($legalitystring,-2) === ", "):
+                                $legalitystring = substr($legalitystring,0,2);
+                            endif;
+                            
+                            echo $legalitystring."<br>";
                         endif;    
                         if($row['layout'] === 'adventure'):
                             echo "<h3>Adventure: </h3>";
@@ -1400,7 +1435,11 @@ require('includes/menu.php'); //mobile menu
                         <div id="carddetailflipinfo">
                             <h3 class="shallowh3">Flip details</h3>
                             <?php 
-                            echo "<b>Name: </b>".$row['f2_name'];
+                            if(isset($row['f2_flavor_name']) AND $row['f2_flavor_name'] !== ''):
+                                echo "<b>Name: </b>{$row['f2_flavor_name']} <i>({$row['f2_name']})</i>";
+                            else:
+                                echo "<b>Name: </b>".$row['f2_name'];
+                            endif;
                             echo "<br>";
                             if(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === false):
                                 $row['cmc'] = round($row['cmc']);
