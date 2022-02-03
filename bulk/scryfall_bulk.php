@@ -78,7 +78,9 @@ foreach($data AS $key => $value):
     $id = $value["id"];
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Record $id: $total_count",$logfile);
-    $multi_1 = $multi_2 = $name_1 = $name_2 = $manacost_1 = $manacost_2 = $power_1 = $power_2 = null;
+    $multi_1 = $multi_2 = $name_1 = $name_2 = null;
+    $printed_name_1 = $printed_name_2 = $manacost_1 = $manacost_2 = null;
+    $flavor_name_1 = $flavor_name_2 = $power_1 = $power_2 = null;
     $toughness_1 = $toughness_2 = $loyalty_1 = $loyalty_2 = $type_1 = $type_2 = $ability_1 = $cmc_1 = $cmc_2 = null;
     $ability_2 = $colour_1 = $colour_2 = $artist_1 = $artist_2 = $flavor_1 = $flavor_2 = $image_1 = $image_2 = null;
     $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
@@ -114,6 +116,12 @@ foreach($data AS $key => $value):
                 foreach($value2 as $key3 => $value3):
                     if(isset($value3["name"])):
                         ${'name_'.$face_loop} = $value3["name"];
+                    endif;
+                    if(isset($value3["printed_name"])):
+                        ${'printed_name_'.$face_loop} = $value3["printed_name"];
+                    endif;
+                    if(isset($value3["flavor_name"])):
+                        ${'flavor_name_'.$face_loop} = $value3["flavor_name"];
                     endif;
                     if(isset($value3["mana_cost"])):
                         ${'manacost_'.$face_loop} = $value3["mana_cost"];
@@ -288,7 +296,7 @@ foreach($data AS $key => $value):
         $stmt = $db->prepare("INSERT INTO 
                                 `cards_scry`
                                 (id, oracle_id, tcgplayer_id, multiverse, multiverse2,
-                                name, lang, release_date, api_uri, scryfall_uri, 
+                                name, printed_name, flavor_name, lang, release_date, api_uri, scryfall_uri, 
                                 layout, image_uri, manacost, 
                                 cmc, type, ability, power, toughness, loyalty, color, color_identity, 
                                 keywords, generatedmana, legalitystandard, legalitypioneer, 
@@ -297,18 +305,23 @@ foreach($data AS $key => $value):
                                 set_id, game_types, setcode, set_name, number,
                                 number_import, rarity, flavor, backid, artist, price, price_foil, 
                                 gatherer_uri, updatetime,
-                                f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability, f1_colour, f1_artist, f1_flavor, f1_image_uri, f1_cmc,
-                                f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability, f2_colour, f2_artist, f2_flavor, f2_image_uri, f2_cmc,
+                                f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability,
+                                f1_colour, f1_artist, f1_flavor, f1_image_uri, f1_cmc,
+                                f1_printed_name, f1_flavor_name,
+                                f2_name, f2_manacost, f2_power, f2_toughness, f2_loyalty, f2_type, f2_ability,
+                                f2_colour, f2_artist, f2_flavor, f2_image_uri, f2_cmc,
+                                f2_printed_name, f2_flavor_name,
                                 p1_id, p1_component, p1_name, p1_type_line, p1_uri,
                                 p2_id, p2_component, p2_name, p2_type_line, p2_uri,
                                 p3_id, p3_component, p3_name, p3_type_line, p3_uri,
                                 maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
+                                printed_name = VALUES(printed_name), flavor_name = VALUES(flavor_name), 
                                 lang = VALUES(lang), release_date = VALUES(release_date), api_uri = VALUES(api_uri), 
                                 scryfall_uri = VALUES(scryfall_uri), layout = VALUES(layout), image_uri = VALUES(image_uri), 
                                 manacost = VALUES(manacost), cmc = VALUES(cmc), type = VALUES(type), ability = VALUES(ability), 
@@ -327,11 +340,11 @@ foreach($data AS $key => $value):
                                 f1_name = VALUES(f1_name), f1_manacost = VALUES(f1_manacost), f1_power = VALUES(f1_power), f1_toughness = VALUES(f1_toughness),
                                 f1_loyalty = VALUES(f1_loyalty), f1_type = VALUES(f1_type), f1_ability = VALUES(f1_ability), 
                                 f1_colour = VALUES(f1_colour), f1_artist = VALUES(f1_artist), f1_flavor = VALUES(f1_flavor), 
-                                f1_image_uri = VALUES(f1_image_uri), f1_cmc = VALUES(f1_cmc), 
+                                f1_image_uri = VALUES(f1_image_uri), f1_cmc = VALUES(f1_cmc), f1_printed_name = VALUES(f1_printed_name), f1_flavor_name = VALUES(f1_flavor_name),
                                 f2_name = VALUES(f2_name), f2_manacost = VALUES(f2_manacost), f2_power = VALUES(f2_power), f2_toughness = VALUES(f2_toughness),
                                 f2_loyalty = VALUES(f2_loyalty), f2_type = VALUES(f2_type), f2_ability = VALUES(f2_ability), 
                                 f2_colour = VALUES(f2_colour), f2_artist = VALUES(f2_artist), f2_flavor = VALUES(f2_flavor), 
-                                f2_image_uri = VALUES(f2_image_uri), f2_cmc = VALUES(f2_cmc), 
+                                f2_image_uri = VALUES(f2_image_uri), f2_cmc = VALUES(f2_cmc),  f2_printed_name = VALUES(f2_printed_name), f2_flavor_name = VALUES(f2_flavor_name),
                                 p1_id = VALUES(p1_id), p1_component = VALUES(p1_component), p1_name = VALUES(p1_name), 
                                 p1_type_line = VALUES(p1_type_line), p1_uri = VALUES(p1_uri),
                                 p2_id = VALUES(p2_id), p2_component = VALUES(p2_component), p2_name = VALUES(p2_name), 
@@ -344,13 +357,15 @@ foreach($data AS $key => $value):
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
                 $multi_1,
                 $multi_2,
                 $value["name"],
+                $value["printed_name"],
+                $value["flavor_name"],
                 $value["lang"],
                 $value["released_at"],
                 $value["uri"],
@@ -406,6 +421,8 @@ foreach($data AS $key => $value):
                 $flavor_1,
                 $image_1,
                 $cmc_1,
+                $printed_name_1,
+                $flavor_name_1,
                 $name_2,
                 $manacost_2,
                 $power_2,
@@ -418,6 +435,8 @@ foreach($data AS $key => $value):
                 $flavor_2,
                 $image_2,
                 $cmc_2,
+                $printed_name_2,
+                $flavor_name_2,
                 $id_p1,
                 $component_p1,
                 $name_p1,

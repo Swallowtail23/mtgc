@@ -109,7 +109,7 @@ endif;
             <?php 
             if (isset($validsearch) AND ($validsearch === "true")) :
                 if(isset($nametrim)):
-                    echo "<span id='searchname'>$nametrim;</span>";
+                    echo "<span id='searchname'>$nametrim</span>";
                 endif;
                 if ($qtyresults === 0) :
                     echo "<span id='searchnametip'> - No results found &nbsp;</span>";

@@ -21,9 +21,13 @@ elseif (!$adv == "yes" ) :
     // Not an advanced search called
     if (strlen($name) > 2): // Needs to have more than 2 characters to search
         if ($exact === "yes"):
-            $criteria = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' ";
+            $criteria = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' 
+                        OR cards_scry.printed_name LIKE '$name' OR cards_scry.f1_printed_name LIKE '$name' OR cards_scry.f2_printed_name LIKE '$name'
+                        OR cards_scry.flavor_name LIKE '$name' OR cards_scry.f1_flavor_name LIKE '$name' OR cards_scry.f2_flavor_name LIKE '$name' ";
         else:
-            $criteria = "cards_scry.name LIKE '%$name%' ";
+            $criteria = "cards_scry.name LIKE '%$name%' OR cards_scry.f1_name LIKE '%$name%' OR cards_scry.f2_name LIKE '%$name%'
+                        OR cards_scry.printed_name LIKE '%$name%' OR cards_scry.f1_printed_name LIKE '%$name%' OR cards_scry.f2_printed_name LIKE '%$name%'
+                        OR cards_scry.flavor_name LIKE '%$name%' OR cards_scry.f1_flavor_name LIKE '%$name%' OR cards_scry.f2_flavor_name LIKE '%$name%' ";
         endif;
         $order = "ORDER BY cards_scry.name ASC ";
         $query = $selectAll.$criteria.$order.$sorting;
@@ -45,9 +49,13 @@ elseif ($adv == "yes" ) :
     else:
         if ($searchname === "yes"):
             if ($exact === "yes"):
-                $criteriaNTA = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name'";
+                $criteriaNTA = "cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' 
+                        OR cards_scry.printed_name LIKE '$name' OR cards_scry.f1_printed_name LIKE '$name' OR cards_scry.f2_printed_name LIKE '$name'
+                        OR cards_scry.flavor_name LIKE '$name' OR cards_scry.f1_flavor_name LIKE '$name' OR cards_scry.f2_flavor_name LIKE '$name' ";
             else:
-                $criteriaNTA = "cards_scry.name LIKE '%$name%' ";
+                $criteriaNTA = "cards_scry.name LIKE '%$name%' OR cards_scry.f1_name LIKE '%$name%' OR cards_scry.f2_name LIKE '%$name%'
+                        OR cards_scry.printed_name LIKE '%$name%' OR cards_scry.f1_printed_name LIKE '%$name%' OR cards_scry.f2_printed_name LIKE '%$name%'
+                        OR cards_scry.flavor_name LIKE '%$name%' OR cards_scry.f1_flavor_name LIKE '%$name%' OR cards_scry.f2_flavor_name LIKE '%$name%' ";
             endif;
         endif;
         if ($searchtype === "yes"):
