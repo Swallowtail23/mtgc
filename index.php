@@ -504,10 +504,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "Meld card";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
-                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
                                             elseif ($cardtypes === 'normalonly'):
                                                 $poststring = 'newqty';
-                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             elseif ($cardtypes === 'normalandfoil'):
                                                 $poststring = 'newqty';
                                                 echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
@@ -724,10 +724,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "Meld card";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
-                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
                                             elseif ($cardtypes === 'normalonly'):
                                                 $poststring = 'newqty';
-                                                echo "Quantity: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
                                             elseif ($cardtypes === 'normalandfoil'):
                                                 $poststring = 'newqty';
                                                 echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
