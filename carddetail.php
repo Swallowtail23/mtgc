@@ -437,13 +437,14 @@ require('includes/menu.php'); //mobile menu
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
             $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImageNew result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
             if($imagefunction['front'] == 'error'):
                 $imageurl = '/cardimg/back.jpg';
             else:
                 $imageurl = $imagefunction['front'];
             endif;
             if(!is_null($imagefunction['back'])):
-                if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
+                if($imagefunction['back'] === '' OR $imagefunction['back'] === 'error' OR $imagefunction['back'] === 'empty'):
                     $imagebackurl = '/cardimg/back.jpg';
                 else:
                     $imagebackurl = $imagefunction['back'];
@@ -1427,7 +1428,7 @@ require('includes/menu.php'); //mobile menu
                                         if(($admin == 1) AND ($imagebackurl !== '/cardimg/back.jpg')):
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
-                                            $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$lookupid."_b.jpg");
+                                            $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$imgname_2);
                                             $imagelocationback = $imagebackurl.'?='.$imgmodtime;
                                         else:
                                             $imagelocationback = $imagebackurl;

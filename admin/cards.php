@@ -74,7 +74,7 @@ elseif ((isset($_GET['deleteimg'])) AND ( $_GET['deleteimg'] == 'DELETEIMG')):
                 $imagedelete = 'success'; 
             endif;
         endif;
-        if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error'):
+        if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
             $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
             $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
             if (!unlink($imagebackurl)): 
