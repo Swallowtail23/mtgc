@@ -526,18 +526,17 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                 $imageurl_2 = '';
                 if(isset($coderow2['f2_image_uri']) AND !is_null($coderow2['f2_image_uri'])):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back, {$coderow2['f2_image_uri']}",$logfile);
-                    $imageurl = strtolower($coderow2['f2_image_uri']);
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile_b",$logfile);
                     $imageurl_2 = strtolower($coderow2['f2_image_uri']);
                 endif;
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back image, {$coderow2['f2_image_uri']}",$logfile);
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
-                if ($imageurl_2 === ''):
-                    $backimg = 'empty';
                 if (strpos($imageurl_2,'.jpg?') !== false):
-                    $imageurl_2 = substr($imageurl, 0, (strpos($imageurl_2, ".jpg?") + 5))."1";
+                    $imageurl_2 = substr($imageurl_2, 0, (strpos($imageurl_2, ".jpg?") + 5))."1";
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Imageurl_2 is $imageurl_2",$logfile);
                 endif;
+                if ($imageurl_2 === ''):
+                    $backimg = 'empty';
                 elseif(checkRemoteFile($imageurl_2) == false):
                     $backimg = 'error';
                 else:
