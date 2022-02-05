@@ -481,6 +481,10 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                 $imageurl = strtolower($coderow['f1_image_uri']);
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile",$logfile);
             endif;
+            if (strpos($imageurl,'.jpg?') !== false):
+                $imageurl = substr($imageurl, 0, (strpos($imageurl, ".jpg?") + 5))."1";
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Imageurl is $imageurl",$logfile);
+            endif;
             if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
                 $imageurl = '';
                 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
@@ -530,6 +534,10 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
                 if ($imageurl_2 === ''):
                     $backimg = 'empty';
+                if (strpos($imageurl_2,'.jpg?') !== false):
+                    $imageurl_2 = substr($imageurl, 0, (strpos($imageurl_2, ".jpg?") + 5))."1";
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Imageurl_2 is $imageurl_2",$logfile);
+                endif;
                 elseif(checkRemoteFile($imageurl_2) == false):
                     $backimg = 'error';
                 else:
