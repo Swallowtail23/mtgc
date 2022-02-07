@@ -947,7 +947,7 @@ if(!function_exists('hash_equals')):
 endif;
 
 function downloadbulk($url, $dest)
-  {
+{
     $options = array(
       CURLOPT_FILE => is_resource($dest) ? $dest : fopen($dest, 'w'),
       CURLOPT_FOLLOWLOCATION => true,
@@ -965,7 +965,44 @@ function downloadbulk($url, $dest)
     else:
         return true;
     endif;
-  }
+}
   
-  function validateTrueDecimal($v) 
-{	return(floor($v) != $v);		}
+function validateTrueDecimal($v) 
+{	
+    return(floor($v) != $v);
+}
+
+function refresh_image($cardid)
+{
+    global $db, $logfile, $ImgLocation;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$logfile);
+    $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$cardid' LIMIT 1";
+    $result = $db->query($sql);
+    if ($result === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
+    else:
+        $row = $result->fetch_assoc();
+        $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout']); //$ImgLocation is set in ini
+        if($imagefunction['front'] != 'error'):
+            $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
+            $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
+            if (!unlink($imageurl)): 
+                $imagedelete = 'failure'; 
+            else:
+                $imagedelete = 'success'; 
+            endif;
+        endif;
+        if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
+            $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
+            $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
+            if (!unlink($imagebackurl)): 
+                $imagebackdelete = 'failure'; 
+            else:
+                $imagebackdelete = 'success'; 
+            endif;
+        endif;
+    endif;
+    //Refresh image
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
+    $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout']); //$ImgLocation is set in ini
+}
