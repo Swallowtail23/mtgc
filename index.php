@@ -707,7 +707,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
                                 endif;
-                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ({$row['set_name']}) no. {$row['number_import']}' class='cardimg' alt='$scryid' src='$imageurl'></a>";
+                                $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
+                                $number_import = $row['number_import'];
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='cardimg' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
                                 $cellidqty = $cellid.'myqty';
                                 $cellidfoil = $cellid.'myfoil';
