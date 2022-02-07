@@ -58,6 +58,9 @@ endif;
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_STRING);
 $newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_STRING);
 $deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_STRING);
+if (isset($_GET["refreshimage"])):
+    $refreshimage = filter_input(INPUT_GET, 'refreshimage', FILTER_SANITIZE_STRING);
+endif;
 ?> 
 
 <!DOCTYPE html>
@@ -553,14 +556,18 @@ require('includes/menu.php'); //mobile menu
                         if(!move_uploaded_file( $_FILES['filename']['tmp_name'], $upload_name)):
                             echo "<div class='alert-box error carddetailnewdeck' onclick='CloseMe(this)'><span>Error: </span>Image write failed";
                             echo "<img class='x' align='right' src='images/close.gif' alt='x'></div>";
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Image upload for {$row['id']} by $useremail failed",$logfile);
+                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail failed",$logfile);
                         else:
                             //Image upload successful. Set variable to load card page 'fresh' at completion (see end of script)
                             $ctrlf5 = 1;
-                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload for {$row['id']} by $useremail ok",$logfile);
+                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail ok",$logfile);
                         endif;
                     endif;
                 endif;
+            endif;
+            if (isset($refreshimage) AND $refreshimage === 'REFRESH' AND $admin == 1):
+                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image refresh called for $cardid by $useremail",$logfile);
+                refresh_image($cardid);
             endif;
             $setcode = htmlentities($setcode,ENT_QUOTES,"UTF-8");
             $setname = htmlentities($setname,ENT_QUOTES,"UTF-8");
@@ -656,7 +663,7 @@ require('includes/menu.php'); //mobile menu
                         endif; ?>
                         <table>
                             <tr> 
-                                <td colspan="2">
+                                <td colspan="6">
                                     <?php 
                                     $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                     //If page is being loaded by admin, don't cache the main image
@@ -694,7 +701,7 @@ require('includes/menu.php'); //mobile menu
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="1" class="previousbutton">
+                                <td colspan="3" class="previousbutton">
                                     <?php if ($row['number'] > 1):
                                         // Find the next number card's ID
                                         $prevcard = $cardnumber - 1;
@@ -711,13 +718,13 @@ require('includes/menu.php'); //mobile menu
                                                 <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
                                                 echo "<input type='hidden' name='id' value=".$prevcardid.">";
                                                 echo "<input type='hidden' name='number' value=".$prevcard.">"; ?>
-                                                <input type="submit" class="inline_button previousbutton" name="prevcard" value="PREVIOUS">
+                                                <input type="submit" style="cursor: pointer;" class="inline_button previousbutton" name="prevcard" value="PREVIOUS">
                                             </form>
                                             <?php
                                         endif;
                                     endif; ?>
                                 </td>
-                                <td colspan="1" class="nextbutton">
+                                <td colspan="3" class="nextbutton">
                                     <?php if (($row['number'] < $settotal) OR (empty($settotal))): 
                                         // Find the next number card's ID
                                         $nextcard = $cardnumber + 1;
@@ -734,7 +741,7 @@ require('includes/menu.php'); //mobile menu
                                                 <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
                                                 echo "<input type='hidden' name='id' value=".$nextcardid.">";
                                                 echo "<input type='hidden' name='number' value=".$nextcard.">"; ?>
-                                                <input type="submit" class="inline_button nextbutton" name="nextcard" value="NEXT">
+                                                <input type="submit" style="cursor: pointer;" class="inline_button nextbutton" name="nextcard" value="NEXT">
                                             </form>
                                         <?php endif;
                                     endif; ?>
@@ -742,26 +749,29 @@ require('includes/menu.php'); //mobile menu
                             </tr>
                             <?php 
 
-                            //If if's an admin, show controls to change the image for the card.
+                            //If if's an admin, show controls to change/refresh the image(s) for the card.
                             if ($admin == 1):
                                 // Form to change the image
                                 ?>
                                 <tr>
-                                    <td colspan='2'>
-                                        <form action = "?" method = "POST" enctype = "multipart/form-data">
+                                    <td colspan='4'>
+                                        <form id="imgreplace" action = "?" method = "GET" enctype = "multipart/form-data">
+                                            <input type='hidden' name='setabbrv' value="<?php echo $row['cs_setcode']; ?>">
+                                            <input type='hidden' name='id' value="<?php echo $row[0]; ?>">
+                                            <input type='hidden' name='number' value="<?php echo $row['number']; ?>">
                                             <table>
                                                 <tr>
                                                     <td class='imgreplace'>
-                                                        <label class='importlabel' id='imgpick'>
-                                                            <input id='importfile' type='file' name='filename'>
+                                                        <label class='importlabel' style="cursor: pointer;" id='imgpick'>
+                                                            <input class='importlabel' id='importfile' type='file' name='filename'>
                                                             <span>IMAGE</span>
                                                         </label>
                                                     </td>
                                                     <td class="imgreplace">
-                                                        <input class='profilebutton' id='importsubmit' type='submit' name='import' value='REPLACE' disabled>
-                                                        <input type='hidden' name='setabbrv' value="<?php echo $row['cs_setcode']; ?>">
-                                                        <input type='hidden' name='id' value="<?php echo $row[0]; ?>">
-                                                        <input type='hidden' name='number' value="<?php echo $row['number']; ?>">
+                                                        <button class='importlabel' style="cursor: pointer;" id='importsubmit' type='submit' name='import' value='REPLACE' disabled>REPLACE</button>
+                                                    </td>
+                                                    <td class="imgreplace">
+                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>REFRESH</button>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -1080,7 +1090,7 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                                 echo "<input type='hidden' name='id' value=".$lookupid.">";
                                 echo "<input type='hidden' name='update' value='yes'>";?>
-                                <input class='inline_button stdwidthbutton updatebutton' type="submit" value="UPDATE">
+                                <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="submit" value="UPDATE">
                                 </form>
                                 <hr class='hr324'>
                                 <?php 
@@ -1547,7 +1557,7 @@ require('includes/menu.php'); //mobile menu
 </div>
 <?php 
 if (isset($ctrlf5)):
-    echo "<meta http-equiv='refresh' content='0;url=carddetail.php?setabbrv={$row['cs_setcode']}&id=$cardid&number={$row['number']}'>";
+    echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
 endif;
 require('includes/footer.php'); ?>    
 </body>

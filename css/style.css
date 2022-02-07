@@ -1693,17 +1693,13 @@ table
 
 .profilebutton
 {
-    width: 80px;
+    width: 100px;
     height: 26px;
     background: #3f51b5;
     border: 0px;
     color: #fff;
     font-size: 14px;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-}
-#importsubmit, #exportsubmit
-{
-    width: 115px;
 }
 
 #importsubmit:disabled
@@ -1723,8 +1719,7 @@ label.importlabel input[type="file"] {
 }
 .importlabel {
     padding: 1px;
-    width: 80px;
-    margin-right: 70px;
+    width: 90px;
     height: 24px;
     background: #3f51b5;
     border: 0px;
@@ -1733,6 +1728,11 @@ label.importlabel input[type="file"] {
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     display: inline-block;
     text-align: center;
+}
+#imgpick
+{
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 .importlabel:hover, .profilebutton:hover
 {
@@ -2345,11 +2345,7 @@ hr.styled
     padding-left: 6px;
     padding-bottom: 6px;
     text-align: center;
-}
-
-#imgpick
-{
-    width: 115px;
+    width: 99px;
 }
 
 .required:after 
