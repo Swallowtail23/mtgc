@@ -57,33 +57,7 @@ elseif ((isset($_GET['deleteimg'])) AND ( $_GET['deleteimg'] == 'DELETEIMG')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_STRING);
     endif;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Delete card image for $id called by $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$id' LIMIT 1";
-    $result = $db->query($sql);
-    if ($result === false):
-        trigger_error("[ERROR] cards.php: Deleting card image: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
-    else:
-        $row = $result->fetch_assoc();
-        $imagefunction = getImageNew($row['setcode'],$id,$ImgLocation,$row['layout']);
-        if($imagefunction['front'] != 'error'):
-            $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
-            $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
-            if (!unlink($imageurl)): 
-                $imagedelete = 'failure'; 
-            else:
-                $imagedelete = 'success'; 
-            endif;
-        endif;
-        if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
-            $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
-            $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
-            if (!unlink($imagebackurl)): 
-                $imagebackdelete = 'failure'; 
-            else:
-                $imagebackdelete = 'success'; 
-            endif;
-        endif;
-    endif;
+    refresh_image($id);
 endif;
 ?>
 
