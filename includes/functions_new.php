@@ -331,15 +331,25 @@ function symbolreplace($str)
     $str = str_replace('{1000000}','<img src="images/1m.png" alt="{1000000}" class="manaimg">',$str);
     
     $str = str_replace('{WU}','<img src="images/wu.png" alt="{WU}" class="manaimg">',$str);
+    $str = str_replace('{W/U}','<img src="images/wu.png" alt="{WU}" class="manaimg">',$str);
     $str = str_replace('{WB}','<img src="images/wb.png" alt="{WB}" class="manaimg">',$str);
+    $str = str_replace('{W/B}','<img src="images/wb.png" alt="{WB}" class="manaimg">',$str);
     $str = str_replace('{UB}','<img src="images/ub.png" alt="{UB}" class="manaimg">',$str);
+    $str = str_replace('{U/B}','<img src="images/ub.png" alt="{UB}" class="manaimg">',$str);
     $str = str_replace('{UR}','<img src="images/ur.png" alt="{UR}" class="manaimg">',$str);
+    $str = str_replace('{U/R}','<img src="images/ur.png" alt="{UR}" class="manaimg">',$str);
     $str = str_replace('{BR}','<img src="images/br.png" alt="{BR}" class="manaimg">',$str);
+    $str = str_replace('{B/R}','<img src="images/br.png" alt="{BR}" class="manaimg">',$str);
     $str = str_replace('{BG}','<img src="images/bg.png" alt="{BG}" class="manaimg">',$str);
+    $str = str_replace('{B/G}','<img src="images/bg.png" alt="{BG}" class="manaimg">',$str);
     $str = str_replace('{RW}','<img src="images/rw.png" alt="{RW}" class="manaimg">',$str);
+    $str = str_replace('{R/W}','<img src="images/rw.png" alt="{RW}" class="manaimg">',$str);
     $str = str_replace('{RG}','<img src="images/rg.png" alt="{RG}" class="manaimg">',$str);
+    $str = str_replace('{R/G}','<img src="images/rg.png" alt="{RG}" class="manaimg">',$str);
     $str = str_replace('{GW}','<img src="images/gw.png" alt="{GW}" class="manaimg">',$str);
+    $str = str_replace('{G/W}','<img src="images/gw.png" alt="{GW}" class="manaimg">',$str);
     $str = str_replace('{GU}','<img src="images/gu.png" alt="{GU}" class="manaimg">',$str);
+    $str = str_replace('{G/U}','<img src="images/gu.png" alt="{GU}" class="manaimg">',$str);
     
     $str = str_replace('{2W}','<img src="images/2w.png" alt="{2W}" class="manaimg">',$str);
     $str = str_replace('{2U}','<img src="images/2u.png" alt="{2U}" class="manaimg">',$str);
@@ -380,10 +390,15 @@ function symbolreplace($str)
     $str = str_replace('{20}','<img src="images/20.png" alt="{20}" class="manaimg">',$str);
     
     $str = str_replace('{PW}','<img src="images/pw.png" alt="{PW}" class="manaimg">',$str);
+    $str = str_replace('{W/P}','<img src="images/pw.png" alt="{W/P}" class="manaimg">',$str);
     $str = str_replace('{PU}','<img src="images/pu.png" alt="{PU}" class="manaimg">',$str);
+    $str = str_replace('{U/P}','<img src="images/pu.png" alt="{U/P}" class="manaimg">',$str);
     $str = str_replace('{PB}','<img src="images/pb.png" alt="{PB}" class="manaimg">',$str);
+    $str = str_replace('{B/P}','<img src="images/pb.png" alt="{B/P}" class="manaimg">',$str);
     $str = str_replace('{PR}','<img src="images/pr.png" alt="{PR}" class="manaimg">',$str);
+    $str = str_replace('{R/P}','<img src="images/pr.png" alt="{R/P}" class="manaimg">',$str);
     $str = str_replace('{PG}','<img src="images/pg.png" alt="{PG}" class="manaimg">',$str);
+    $str = str_replace('{G/P}','<img src="images/pg.png" alt="{G/P}" class="manaimg">',$str);
 
     $str = str_replace('{CHAOS}','<img src="images/chaos.png" alt="{PG}" class="manaimg">',$str);
     $str = str_replace('{G/U/P}','<img src="images/gup.png" alt="{G/U/P}" class="manaimg">',$str);
@@ -848,7 +863,7 @@ function scryfall($cardid)
     elseif($scryaction === 'read'):
         $tcg_buy_uri = $row['tcg_buy_uri'];
         $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning {$row['tcg_buy_uri']}",$logfile);
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning {$row['tcg_buy_uri']}",$logfile);
     
     // GET and INSERT
     elseif($scryaction === 'get'):
