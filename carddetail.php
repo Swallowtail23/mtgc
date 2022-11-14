@@ -796,6 +796,9 @@ require('includes/menu.php'); //mobile menu
                             if(isset($row['type']) AND $row['type'] != ''):
                                 echo "<b>Type: </b>".$row['type'];
                             endif;
+                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
+                                echo "<br><b>Lang: </b>".langreplace($row['lang']);
+                            endif;
                             echo "<br>";
                             echo "<b>Rarity: </b>";
                             if (strpos($row['rarity'],"rare") !== false):
@@ -838,6 +841,10 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             if(isset($row['f1_type']) AND $row['f1_type'] != ''):
                                 echo "<b>Type: </b>".$row['f1_type'];
+                                echo "<br>";
+                            endif;
+                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
+                                echo "<b>Lang: </b>".langreplace($row['lang']);
                                 echo "<br>";
                             endif;
                             if($row['f1_ability'] != ''):
@@ -988,6 +995,10 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['f2_type'];
                                 echo "<br>";
                             endif;
+                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
+                                echo "<b>Lang: </b>".langreplace($row['lang']);
+                                echo "<br>";
+                            endif;
                             if(isset($flipability) AND $flipability != ''):
                                 echo "<b>Abilities: </b>".$flipability;
                                 echo "<br>";
@@ -1007,6 +1018,10 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             if(isset($row['f2_type']) AND $row['f2_type'] != ''):
                                 echo "<b>Type: </b>".$row['f2_type'];
+                                echo "<br>";
+                            endif;
+                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
+                                echo "<b>Lang: </b>".langreplace($row['lang']);
                                 echo "<br>";
                             endif;
                             if(isset($flipability) AND $flipability != ''):
@@ -1490,6 +1505,10 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             if(isset($row['f2_type']) AND $row['f2_type'] != ''):
                                 echo "<b>Type: </b>".$row['f2_type'];
+                                echo "<br>";
+                            endif;
+                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
+                                echo "<b>Lang: </b>".langreplace($row['lang']);
                                 echo "<br>";
                             endif;
                             if(isset($flipability) AND $flipability != ''):
