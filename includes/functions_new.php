@@ -412,6 +412,12 @@ function symbolreplace($str)
     return $str;
 }
 
+function langreplace($str)
+{
+    $str = str_replace("ja","Japanese",$str);
+    return $str;
+}
+
 function finddates($str)
 {
     $matches = array();
