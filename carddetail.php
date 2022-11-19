@@ -348,6 +348,26 @@ require('includes/menu.php'); //mobile menu
                     p3_name,
                     p3_type_line,
                     p3_uri,
+                    p4_id,
+                    p4_component,
+                    p4_name,
+                    p4_type_line,
+                    p4_uri,
+                    p5_id,
+                    p5_component,
+                    p5_name,
+                    p5_type_line,
+                    p5_uri,
+                    p6_id,
+                    p6_component,
+                    p6_name,
+                    p6_type_line,
+                    p6_uri,
+                    p7_id,
+                    p7_component,
+                    p7_name,
+                    p7_type_line,
+                    p7_uri,
                     reserved,
                     cards_scry.foil as cs_foil,
                     nonfoil as cs_normal,
@@ -416,9 +436,22 @@ require('includes/menu.php'); //mobile menu
                 $flipability = $row['f2_ability'];
             endif;
             $cardnumber = $db->escape($row['number'],'int');
-            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
+                 OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) 
+                 OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])
+                 OR ($row['p4_component'] === 'meld_result' AND $row['p4_name'] === $row['name'])
+                 OR ($row['p5_component'] === 'meld_result' AND $row['p5_name'] === $row['name'])
+                 OR ($row['p6_component'] === 'meld_result' AND $row['p6_name'] === $row['name'])
+                 OR ($row['p7_component'] === 'meld_result' AND $row['p7_name'] === $row['name'])):
                 $meld = 'meld_result';
-            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+            elseif($row['p1_component'] === 'meld_part' 
+                 OR $row['p2_component'] === 'meld_part' 
+                 OR $row['p3_component'] === 'meld_part'
+                 OR $row['p4_component'] === 'meld_part'
+                 OR $row['p5_component'] === 'meld_part'
+                 OR $row['p5_component'] === 'meld_part'
+                 OR $row['p6_component'] === 'meld_part'
+                 OR $row['p7_component'] === 'meld_part'):
                 $meld = 'meld_part';
             else:
                 $meld = '';
@@ -883,9 +916,21 @@ require('includes/menu.php'); //mobile menu
                             elseif($row['p2_component'] === 'meld_part' AND $row['p2_name'] !== $row['name']):
                                 $meld_partner_id = $row['p2_id'];
                                 $meld_partner_name = $row['p2_name'];
-                            else:
+                            elseif($row['p3_component'] === 'meld_part' AND $row['p3_name'] !== $row['name']):
                                 $meld_partner_id = $row['p3_id'];
                                 $meld_partner_name = $row['p3_name'];
+                            elseif($row['p4_component'] === 'meld_part' AND $row['p4_name'] !== $row['name']):
+                                $meld_partner_id = $row['p4_id'];
+                                $meld_partner_name = $row['p4_name'];
+                            elseif($row['p5_component'] === 'meld_part' AND $row['p5_name'] !== $row['name']):
+                                $meld_partner_id = $row['p5_id'];
+                                $meld_partner_name = $row['p5_name'];
+                            elseif($row['p6_component'] === 'meld_part' AND $row['p6_name'] !== $row['name']):
+                                $meld_partner_id = $row['p6_id'];
+                                $meld_partner_name = $row['p6_name'];
+                            else:
+                                $meld_partner_id = $row['p7_id'];
+                                $meld_partner_name = $row['p7_name'];
                             endif;
                             echo "<b>Melds with:</b><br>";
                             echo "<a href='carddetail.php?id=$meld_partner_id'>$meld_partner_name</a>&nbsp;<br>";
@@ -896,9 +941,21 @@ require('includes/menu.php'); //mobile menu
                             elseif($row['p2_component'] === 'meld_result'):
                                 $meld_result_id = $row['p2_id'];
                                 $meld_result_name = $row['p2_name'];
-                            else:
+                            elseif($row['p3_component'] === 'meld_result'):
                                 $meld_result_id = $row['p3_id'];
                                 $meld_result_name = $row['p3_name'];
+                            elseif($row['p4_component'] === 'meld_result'):
+                                $meld_result_id = $row['p4_id'];
+                                $meld_result_name = $row['p4_name'];
+                            elseif($row['p5_component'] === 'meld_result'):
+                                $meld_result_id = $row['p5_id'];
+                                $meld_result_name = $row['p5_name'];
+                            elseif($row['p6_component'] === 'meld_result'):
+                                $meld_result_id = $row['p6_id'];
+                                $meld_result_name = $row['p6_name'];
+                            else:
+                                $meld_result_id = $row['p7_id'];
+                                $meld_result_name = $row['p7_name'];
                             endif;
                             echo "<a href='carddetail.php?id=$meld_result_id'>$meld_result_name</a>&nbsp;<br>";
                         elseif($meld === 'meld_result'):
@@ -911,6 +968,18 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             if($row['p3_component'] === 'meld_part'):
                                 echo "<a href='carddetail.php?id={$row['p3_id']}'>{$row['p3_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p4_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p4_id']}'>{$row['p4_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p5_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p5_id']}'>{$row['p5_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p6_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p6_id']}'>{$row['p6_name']}</a>&nbsp;<br>";
+                            endif;
+                            if($row['p7_component'] === 'meld_part'):
+                                echo "<a href='carddetail.php?id={$row['p7_id']}'>{$row['p7_name']}</a>&nbsp;<br>";
                             endif;
                         endif;
                         if($row['artist'] != ''):
