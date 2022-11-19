@@ -7,7 +7,7 @@
         
     1.0         Downloads Scryfall bulk file, checks, adds, updates cards_scry table
  
-    2.0         Cope with up to 5 card parts
+    2.0         Cope with up to 7 card parts
 */
 
 require ('bulk_ini.php');

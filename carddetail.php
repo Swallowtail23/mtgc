@@ -1,6 +1,6 @@
 <?php 
-/* Version:     10.0
-    Date:       23/01/22
+/* Version:     11.0
+    Date:       19/11/22
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -32,6 +32,8 @@
  *              Moving price away from TCGPlayer partner API to use Scryfall-provided pricing
  * 10.0
  *              Refactoring for new database
+ * 11.0
+ *              Add extra card parts (related cards) handling, up to 7
 */
 
 session_start();
