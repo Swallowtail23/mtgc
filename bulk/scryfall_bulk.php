@@ -168,22 +168,24 @@ foreach($data AS $key => $value):
             if($key2 == 'all_parts'):
                 $all_parts_loop = 1;
                 foreach($value2 as $key4 => $value4):
-                    if(isset($value4["id"])):
-                        ${'id_p'.$all_parts_loop} = $value4["id"];
+                    if(isset($value4["component"]) AND $value4["component"] != "combo_piece"):
+                        if(isset($value4["id"])):
+                            ${'id_p'.$all_parts_loop} = $value4["id"];
+                        endif;
+                        if(isset($value4["component"])):
+                            ${'component_p'.$all_parts_loop} = $value4["component"];
+                        endif;
+                        if(isset($value4["name"])):
+                            ${'name_p'.$all_parts_loop} = $value4["name"];
+                        endif;
+                        if(isset($value4["type_line"])):
+                            ${'type_line_p'.$all_parts_loop} = $value4["type_line"];
+                        endif;
+                        if(isset($value4["uri"])):
+                            ${'uri_p'.$all_parts_loop} = $value4["uri"];
+                        endif;
+                        $all_parts_loop = $all_parts_loop + 1;
                     endif;
-                    if(isset($value4["component"])):
-                        ${'component_p'.$all_parts_loop} = $value4["component"];
-                    endif;
-                    if(isset($value4["name"])):
-                        ${'name_p'.$all_parts_loop} = $value4["name"];
-                    endif;
-                    if(isset($value4["type_line"])):
-                        ${'type_line_p'.$all_parts_loop} = $value4["type_line"];
-                    endif;
-                    if(isset($value4["uri"])):
-                        ${'uri_p'.$all_parts_loop} = $value4["uri"];
-                    endif;
-                    $all_parts_loop = $all_parts_loop + 1;
                 endforeach;
             endif;
             if($key2 == 'multiverse_ids'):
