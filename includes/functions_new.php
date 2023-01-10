@@ -993,7 +993,6 @@ function downloadbulk($url, $dest)
         curl_close($ch);
     else:
         curl_close($ch);
-        exit;
         return true;
     endif;
 
