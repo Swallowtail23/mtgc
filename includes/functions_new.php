@@ -969,6 +969,7 @@ endif;
 
 function downloadbulk($url, $dest)
 {
+    global $db, $logfile;
     $options = array(
       CURLOPT_FILE => is_resource($dest) ? $dest : fopen($dest, 'w'),
       CURLOPT_FOLLOWLOCATION => true,
@@ -978,14 +979,24 @@ function downloadbulk($url, $dest)
 
     $ch = curl_init();
     curl_setopt_array($ch, $options);
+    
+    # DEBUG
+    curl_setopt($ch, CURLOPT_VERBOSE, 1);
+    $fp = fopen($logfile, 'w');
+    curl_setopt($ch, CURLOPT_STDERR, $fp);
+    # END DEBUG
+    
     $return = curl_exec($ch);
-    curl_close($ch);
-
+    
     if ($return === false):
         return curl_error($ch);
+        curl_close($ch);
     else:
+        curl_close($ch);
+        exit;
         return true;
     endif;
+
 }
   
 function validateTrueDecimal($v) 
