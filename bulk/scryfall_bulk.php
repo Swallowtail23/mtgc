@@ -1,11 +1,13 @@
 <?php
-/* Version:     1.0
-    Date:       22/01/22
+/* Version:     2.0
+    Date:       19/11/22
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
         
     1.0         Downloads Scryfall bulk file, checks, adds, updates cards_scry table
+ 
+    2.0         Cope with up to 7 card parts
 */
 
 require ('bulk_ini.php');
@@ -86,6 +88,10 @@ foreach($data AS $key => $value):
     $id_p1 = $component_p1 = $name_p1 = $type_line_p1 = $uri_p1 = null;
     $id_p2 = $component_p2 = $name_p2 = $type_line_p2 = $uri_p2 = null;
     $id_p3 = $component_p3 = $name_p3 = $type_line_p3 = $uri_p3 = null;
+    $id_p4 = $component_p4 = $name_p4 = $type_line_p4 = $uri_p4 = null;
+    $id_p5 = $component_p5 = $name_p5 = $type_line_p5 = $uri_p5 = null;
+    $id_p6 = $component_p6 = $name_p6 = $type_line_p6 = $uri_p6 = null;
+    $id_p7 = $component_p7 = $name_p7 = $type_line_p7 = $uri_p7 = null;
     $colors = $game_types = $color_identity = $keywords = $produced_mana = null;
     $maxpower = $minpower = $maxtoughness = $mintoughness = null;
     $maxloyalty = $minloyalty = null;
@@ -162,22 +168,24 @@ foreach($data AS $key => $value):
             if($key2 == 'all_parts'):
                 $all_parts_loop = 1;
                 foreach($value2 as $key4 => $value4):
-                    if(isset($value4["id"])):
-                        ${'id_p'.$all_parts_loop} = $value4["id"];
+                    if(isset($value4["component"]) AND $value4["component"] != "combo_piece"):
+                        if(isset($value4["id"])):
+                            ${'id_p'.$all_parts_loop} = $value4["id"];
+                        endif;
+                        if(isset($value4["component"])):
+                            ${'component_p'.$all_parts_loop} = $value4["component"];
+                        endif;
+                        if(isset($value4["name"])):
+                            ${'name_p'.$all_parts_loop} = $value4["name"];
+                        endif;
+                        if(isset($value4["type_line"])):
+                            ${'type_line_p'.$all_parts_loop} = $value4["type_line"];
+                        endif;
+                        if(isset($value4["uri"])):
+                            ${'uri_p'.$all_parts_loop} = $value4["uri"];
+                        endif;
+                        $all_parts_loop = $all_parts_loop + 1;
                     endif;
-                    if(isset($value4["component"])):
-                        ${'component_p'.$all_parts_loop} = $value4["component"];
-                    endif;
-                    if(isset($value4["name"])):
-                        ${'name_p'.$all_parts_loop} = $value4["name"];
-                    endif;
-                    if(isset($value4["type_line"])):
-                        ${'type_line_p'.$all_parts_loop} = $value4["type_line"];
-                    endif;
-                    if(isset($value4["uri"])):
-                        ${'uri_p'.$all_parts_loop} = $value4["uri"];
-                    endif;
-                    $all_parts_loop = $all_parts_loop + 1;
                 endforeach;
             endif;
             if($key2 == 'multiverse_ids'):
@@ -314,10 +322,14 @@ foreach($data AS $key => $value):
                                 p1_id, p1_component, p1_name, p1_type_line, p1_uri,
                                 p2_id, p2_component, p2_name, p2_type_line, p2_uri,
                                 p3_id, p3_component, p3_name, p3_type_line, p3_uri,
+                                p4_id, p4_component, p4_name, p4_type_line, p4_uri,
+                                p5_id, p5_component, p5_name, p5_type_line, p5_uri,
+                                p6_id, p6_component, p6_name, p6_type_line, p6_uri,
+                                p7_id, p7_component, p7_name, p7_type_line, p7_uri,
                                 maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
@@ -351,13 +363,21 @@ foreach($data AS $key => $value):
                                 p2_type_line = VALUES(p2_type_line), p2_uri = VALUES(p2_uri),
                                 p3_id = VALUES(p3_id), p3_component = VALUES(p3_component), p3_name = VALUES(p3_name), 
                                 p3_type_line = VALUES(p3_type_line), p3_uri = VALUES(p3_uri),
+                                p4_id = VALUES(p4_id), p4_component = VALUES(p4_component), p4_name = VALUES(p4_name), 
+                                p4_type_line = VALUES(p4_type_line), p4_uri = VALUES(p4_uri),
+                                p5_id = VALUES(p5_id), p5_component = VALUES(p5_component), p5_name = VALUES(p5_name), 
+                                p5_type_line = VALUES(p5_type_line), p5_uri = VALUES(p5_uri),
+                                p6_id = VALUES(p6_id), p6_component = VALUES(p6_component), p6_name = VALUES(p6_name), 
+                                p6_type_line = VALUES(p6_type_line), p6_uri = VALUES(p6_uri),
+                                p7_id = VALUES(p7_id), p7_component = VALUES(p7_component), p7_name = VALUES(p7_name), 
+                                p7_type_line = VALUES(p7_type_line), p7_uri = VALUES(p7_uri),
                                 maxpower = VALUES(maxpower), minpower = VALUES(minpower), maxtoughness = VALUES(maxtoughness), 
                                 mintoughness = VALUES(mintoughness), maxloyalty = VALUES(maxloyalty), minloyalty = VALUES(minloyalty), price_sort = VALUES(price_sort)
                             ");
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
@@ -452,6 +472,26 @@ foreach($data AS $key => $value):
                 $name_p3,
                 $type_line_p3,
                 $uri_p3,
+                $id_p4,
+                $component_p4,
+                $name_p4,
+                $type_line_p4,
+                $uri_p4,
+                $id_p5,
+                $component_p5,
+                $name_p5,
+                $type_line_p5,
+                $uri_p5,
+                $id_p6,
+                $component_p6,
+                $name_p6,
+                $type_line_p6,
+                $uri_p6,
+                $id_p7,
+                $component_p7,
+                $name_p7,
+                $type_line_p7,
+                $uri_p7,
                 $maxpower,
                 $minpower,
                 $maxtoughness,
