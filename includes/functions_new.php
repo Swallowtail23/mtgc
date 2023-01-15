@@ -990,12 +990,9 @@ function downloadbulk($url, $dest)
     
     if ($return === false):
         return curl_error($ch);
-        curl_close($ch);
     else:
-        curl_close($ch);
         return true;
     endif;
-
 }
   
 function validateTrueDecimal($v) 
