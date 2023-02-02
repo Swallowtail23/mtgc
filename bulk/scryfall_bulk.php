@@ -34,7 +34,7 @@ $url = "https://api.scryfall.com/bulk-data/default-cards";
 $file_location = $ImgLocation.'json/bulk.json';
 
 // Set counts
-$count_inc = $count_skip = $total_count = $count_add = $count_update = 0;
+$count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
 
 $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching $url",$logfile);
@@ -526,7 +526,7 @@ foreach($data AS $key => $value):
     endif;
 endforeach;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Bulk update completed: Total $total_count, skipped $count_skip, included $count_inc, added: $count_add, updated: $count_update",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Bulk update completed: Total $total_count, skipped $count_skip, included $count_inc, added: $count_add, updated: $count_update, other: $count_other",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
 $subject = "MTG bulk update completed"; 
 $message = "Total: $total_count; total skipped: $count_skip; total included: $count_inc; total added: $count_add; total updated: $count_update";
