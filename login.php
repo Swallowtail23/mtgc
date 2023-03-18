@@ -1,6 +1,6 @@
 <?php 
-/* Version:     2.0
-    Date:       11/01/20
+/* Version:     3.0
+    Date:       18/03/23
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -11,6 +11,8 @@
  *  2.0 
  *              Moved from writelog to Message class
  *              Reset bad login count to zero after a good login
+ *  3.0
+ *              Moved to password-verify
 */
 
 session_start();
@@ -75,7 +77,7 @@ if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has
         $badlog_result = $badlog->GetBadLogin($email);
         if ($badlog_result['count'] < ($Badloglimit)):
             $pwval = new PasswordCheck;
-            $pwval_result = $pwval->PWValidate($email,$password,$Blowfish_Pre,$Blowfish_End);
+            $pwval_result = $pwval->PWValidate($email,$password);
             if ($pwval_result === 10):
                 // username and password checks out OK - carry on!
                 $userstat = new UserStatus;
