@@ -1,4 +1,4 @@
-# README # (v29/01/2022)
+# README # (v18/03/23)
 
 ## How do I get set up? ## 
 * Summary of set up
@@ -48,8 +48,6 @@ It must include:
     ServerEmail = "emp06MTG@mtgcollection.net"
     AdminEmail = "simon@simonandkate.net"
     AdminIP = ""
-    Blowfish_Pre = "********"
-    Blowfish_End = "********"
     Badloginlimit = x
 
 NOTE: 
