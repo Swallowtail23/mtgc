@@ -101,7 +101,7 @@ foreach($data AS $key => $value):
     foreach($value AS $key2 => $value2):
         if($key2 == 'games'):
             foreach($value2 as $game_type):
-                if($game_type === 'paper'):
+                if(($game_type === 'paper') or ($game_type === 'arena')):
                     $skip = 0;
                 endif;
             endforeach;
