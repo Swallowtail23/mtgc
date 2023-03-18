@@ -17,23 +17,13 @@ endif;
 
 function newuser($username, $postemail, $password) 
 {
-    global $logfile, $Blowfish_Pre, $Blowfish_End, $db;
-    // Blowfish parameters
-    $Allowed_Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
-    $Chars_Len = 63;
-    $Salt_Length = 21;
+    global $logfile, $db;
     $mysql_date = date( 'Y-m-d' );
-    $salt = "";
-    
-    for($i=0; $i<$Salt_Length; $i++):
-        $salt .= $Allowed_Chars[mt_rand(0,$Chars_Len)];
-    endfor;
-    $bcrypt_salt = $Blowfish_Pre.$salt.$Blowfish_End;
-    $hashed_password = crypt($password, $bcrypt_salt);
-    $query = "INSERT INTO users (username, reg_date, email, salt, password, status, groupid, grpinout) ".
-        "VALUES ($username, '$mysql_date', $postemail, '$salt', '$hashed_password', 'chgpwd',1,0) "
-        . "ON DUPLICATE KEY UPDATE password='$hashed_password', salt='$salt', status='chgpwd' ";
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": New user query for $username / $postemail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) ".
+        "VALUES ($username, '$mysql_date', $postemail, '$hashed_password', 'chgpwd',1,0) "
+        . "ON DUPLICATE KEY UPDATE password='$hashed_password', status='chgpwd' ";
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}",$logfile);
     if($db->query($query) === TRUE):
         $affected_rows = $db->affected_rows;
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows",$logfile);
@@ -43,9 +33,9 @@ function newuser($username, $postemail, $password)
 
     // Retrieve the new user to confirm that it has written OK
 
-    if($row = $db->select_one ('salt, password, username, usernumber', 'users', "WHERE email=$postemail")):
-        $hashed_pass = crypt($password, $Blowfish_Pre . $row['salt'] . $Blowfish_End);
-        if ($hashed_pass == $row['password']) :
+    if($row = $db->select_one ('password, username, usernumber', 'users', "WHERE email=$postemail")):
+        $db_password = $row['password'];
+        if (password_verify($password, $db_password)):
             // User has been created OK
             $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": User creation successful, password matched",$logfile);
             $usersuccess = 1;
