@@ -1,5 +1,5 @@
 <?php 
-/* Version:     5.0
+/* Version:     6.0
     Date:       02/02/22
     Name:       profile.php
     Purpose:    User profile page
@@ -19,6 +19,8 @@
  *                  issues)
  *  5.0
  *              Refactoring of import for new database structure, and adding emailed report
+ *  6.0
+ *              Changed to password_verify / password_hash
 */
 
 session_start();
@@ -64,7 +66,7 @@ endif; ?>
         <?php 
         //Page PHP processing
         //1. Get user details for current user
-        if($row = $db->select_one('salt, password, username, usernumber, status, admin','users',"WHERE email='$useremail'")):
+        if($row = $db->select_one('password, username, usernumber, status, admin','users',"WHERE email='$useremail'")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -72,17 +74,17 @@ endif; ?>
         //2. Has a password reset been called? Needs to be in DIV for error display
         if (isSet($_POST['changePass']) AND isSet($_POST['newPass']) AND isSet($_POST['newPass2']) AND isSet($_POST['curPass'])):
             if (!empty($_POST['curPass']) AND !empty($_POST['newPass']) AND !empty($_POST['newPass2'])):
-                $new = $_POST['newPass'];
-                $new2 = $_POST['newPass2'];
-                $old = $_POST['curPass'];
-                if ($new == $new2):
-                    if (valid_pass($new)):
-                        if($new != $old):
-                            $old = crypt($old, $Blowfish_Pre . $row['salt'] . $Blowfish_End);
-                            if ($old == $row['password']):
-                                $new = crypt($new, $Blowfish_Pre . $row['salt'] . $Blowfish_End);
+                $new_password = $_POST['newPass'];
+                $new_password_2 = $_POST['newPass2'];
+                $old_password = $_POST['curPass'];
+                $db_password = $row['password'];
+                if ($new_password == $new_password_2):
+                    if (valid_pass($new_password)):
+                        if($new_password != $old_password):
+                            if (password_verify($old_password, $db_password)):
+                                $new_password = password_hash("$new_password", PASSWORD_DEFAULT);
                                 $data = array(
-                                    'password' => "$new"
+                                    'password' => "$new_password"
                                 );
                                 $pwdchg = $db->update('users',$data,"WHERE email='$useremail'");
                                 $obj = new Message;
@@ -90,11 +92,11 @@ endif; ?>
                                 if ($pwdchg === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 endif;
-                                $pwdvalidate = $db->select_one('salt, password','users',"WHERE email='$useremail'");
+                                $pwdvalidate = $db->select_one('password','users',"WHERE email='$useremail'");
                                 if($pwdvalidate === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 else:
-                                    if ($pwdvalidate['password'] == $new):
+                                    if ($pwdvalidate['password'] == $new_password):
                                         $obj = new Message;
                                         $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                         echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed.</div>";
