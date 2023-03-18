@@ -172,6 +172,8 @@ CREATE TABLE IF NOT EXISTS `cards_scry` (
   `legalitypeasant` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `legalitypauper` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `legalitypioneer` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `legalityalchemy` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `legalityhistoric` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `updatetime` bigint NOT NULL,
   `price` decimal(8,2) DEFAULT NULL,
   `price_foil` decimal(8,2) DEFAULT NULL,
