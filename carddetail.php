@@ -1,6 +1,6 @@
 <?php 
-/* Version:     11.0
-    Date:       19/11/22
+/* Version:     12.0
+    Date:       19/03/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -34,6 +34,8 @@
  *              Refactoring for new database
  * 11.0
  *              Add extra card parts (related cards) handling, up to 7
+ * 12.0
+ *              Add Arena legalities
 */
 
 session_start();
@@ -385,6 +387,8 @@ require('includes/menu.php'); //mobile menu
                     legalitylegacy,
                     legalityvintage,
                     legalitypioneer,
+                    legalityalchemy,
+                    legalityhistoric,
                     updatetime,
                     price,
                     price_foil,
@@ -995,8 +999,22 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalitystandard'] == 'legal'):
                                 $legalitystring = "Standard";
-                            // elseif($row['legalitystandard'] == 'banned'):
-                            //     $legalitystring = "Standard: banned";
+                            endif;
+                            
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalityalchemy'] == 'legal'):
+                                $legalitystring .= "Alchemy";
+                            endif;
+                            
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
+                                $legalitystring .= "; ";
+                            endif;
+                            
+                            if($row['legalityhistoric'] == 'legal'):
+                                $legalitystring .= "Historic";
                             endif;
                             
                             if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
@@ -1005,8 +1023,6 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalitypioneer'] == 'legal'):
                                 $legalitystring .= "Pioneer";
-                            // elseif($row['legalitypioneer'] == 'banned'):
-                            //     $legalitystring .= "Pioneer: banned";
                             endif;
                             
                             if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
@@ -1015,8 +1031,6 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalitymodern'] == 'legal'):
                                 $legalitystring .= "Modern";
-                            // elseif($row['legalitymodern'] == 'banned'):
-                            //     $legalitystring .= "Modern: banned";
                             endif;
                             
                             if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
@@ -1025,8 +1039,6 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalityvintage'] == 'legal'):
                                 $legalitystring .= "Vintage";
-                            // elseif($row['legalityvintage'] == 'banned'):
-                            //     $legalitystring .= "Vintage: banned";
                             elseif($row['legalityvintage'] == 'restricted'):
                                 $legalitystring .= "Vintage: restricted";
                             endif;
@@ -1037,8 +1049,6 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalitylegacy'] == 'legal'):
                                 $legalitystring .= "Legacy";
-                            // elseif($row['legalitylegacy'] == 'banned'):
-                            //     $legalitystring .= "Legacy: banned";
                             elseif($row['legalitylegacy'] == 'restricted'):
                                 $legalitystring .= "Legacy: restricted";
                             endif;
