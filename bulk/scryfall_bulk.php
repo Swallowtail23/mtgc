@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       19/11/22
+/* Version:     3.0
+    Date:       19/03/23
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -8,6 +8,9 @@
     1.0         Downloads Scryfall bulk file, checks, adds, updates cards_scry table
  
     2.0         Cope with up to 7 card parts
+ 
+ *  3.0
+ *              Add Arena legalities
 */
 
 require ('bulk_ini.php');
