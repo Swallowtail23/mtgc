@@ -172,7 +172,7 @@ endif; ?>
         
         //5. No changes called in POST - run user query
         if($userdatarow=$db->select_one(
-                'username, password, email, salt, reg_date, status, admin, groupid, grpinout, groupname',
+                'username, password, email, reg_date, status, admin, groupid, grpinout, groupname',
                 'users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',
                 "WHERE usernumber=$user")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user with group details succeeded",$logfile);

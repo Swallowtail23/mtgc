@@ -350,7 +350,6 @@ CREATE TABLE IF NOT EXISTS `users` (
   `username` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `password` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `email` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `salt` char(21) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `reg_date` date NOT NULL,
   `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `admin` tinyint(1) DEFAULT NULL,

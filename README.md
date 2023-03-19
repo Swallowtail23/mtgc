@@ -80,7 +80,7 @@ Note 2G sizing is based on 4G or more server RAM.
 
 Run command line:
 - php initial.php username password from webserver's console in the setup folder
-- note the supplied username, salt and password, and write into the database for initial user
+- note the supplied username and password and write into the database for initial user
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection
 
 ### Cron jobs ###
