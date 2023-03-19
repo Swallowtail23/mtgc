@@ -1,6 +1,6 @@
 <?php 
-/* Version:     2.0
-    Date:       23/01/17
+/* Version:     3.0
+    Date:       19/03/23
     Name:       search.php
     Purpose:    Layout for search on index.php
     MySQLi:     Yes
@@ -10,6 +10,8 @@
                 Initial version
  *  2.0
  *              Added code to get sets from DB instead of setshtml.php
+ *  3.0
+ *              Add Arena legalities
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
