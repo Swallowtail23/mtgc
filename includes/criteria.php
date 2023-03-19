@@ -431,7 +431,15 @@ elseif ($adv == "yes" ) :
     if ($legal === 'lgc'):
         $criteria .= "AND (cards_scry.legalitylegacy = 'legal' OR cards_scry.legalitylegacy = 'restricted') ";
     endif;
-      
+    
+    if ($legal === 'alc'):
+        $criteria .= "AND (cards_scry.legalityalchemy = 'legal') ";
+    endif;
+    
+    if ($legal === 'his'):
+        $criteria .= "AND (cards_scry.legalityhistory = 'legal') ";
+    endif;
+    
     if ($foilonly === 'foilonly'):
         $criteria .= "AND ($mytable.foil > 0) AND ($mytable.normal = 0) "; 
     endif;
