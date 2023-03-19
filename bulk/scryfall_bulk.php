@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       19/11/22
+/* Version:     3.0
+    Date:       19/03/23
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -8,6 +8,9 @@
     1.0         Downloads Scryfall bulk file, checks, adds, updates cards_scry table
  
     2.0         Cope with up to 7 card parts
+ 
+ *  3.0
+ *              Add Arena legalities
 */
 
 require ('bulk_ini.php');
@@ -309,7 +312,7 @@ foreach($data AS $key => $value):
                                 cmc, type, ability, power, toughness, loyalty, color, color_identity, 
                                 keywords, generatedmana, legalitystandard, legalitypioneer, 
                                 legalitymodern, legalitylegacy, legalitypauper, legalityvintage, 
-                                legalitycommander, reserved, foil, nonfoil, oversized, promo, 
+                                legalitycommander, legalityalchemy, legalityhistoric, reserved, foil, nonfoil, oversized, promo, 
                                 set_id, game_types, setcode, set_name, number,
                                 number_import, rarity, flavor, backid, artist, price, price_foil, 
                                 gatherer_uri, updatetime,
@@ -329,7 +332,7 @@ foreach($data AS $key => $value):
                                 maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
@@ -343,6 +346,7 @@ foreach($data AS $key => $value):
                                 legalitypioneer = VALUES(legalitypioneer), legalitymodern = VALUES(legalitymodern), 
                                 legalitylegacy = VALUES(legalitylegacy), legalitypauper = VALUES(legalitypauper), 
                                 legalityvintage = VALUES(legalityvintage), legalitycommander = VALUES(legalitycommander), 
+                                legalityalchemy = VALUES(legalityalchemy), legalityhistoric = VALUES(legalityhistoric), 
                                 reserved = VALUES(reserved), foil = VALUES(foil), nonfoil = VALUES(nonfoil), 
                                 oversized = VALUES(oversized), promo = VALUES(promo), set_id = VALUES(set_id), 
                                 game_types = VALUES(game_types), setcode = VALUES(setcode), set_name = VALUES(set_name), number = VALUES(number),
@@ -377,7 +381,7 @@ foreach($data AS $key => $value):
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
@@ -410,6 +414,8 @@ foreach($data AS $key => $value):
                 $value["legalities"]["pauper"],
                 $value["legalities"]["vintage"],
                 $value["legalities"]["commander"],
+                $value["legalities"]["alchemy"],
+                $value["legalities"]["historic"],
                 $value["reserved"],
                 $value["foil"],
                 $value["nonfoil"],

@@ -1,6 +1,6 @@
 <?php 
-/* Version:     2.0
-    Date:       23/01/17
+/* Version:     3.0
+    Date:       19/03/23
     Name:       search.php
     Purpose:    Layout for search on index.php
     MySQLi:     Yes
@@ -10,6 +10,8 @@
                 Initial version
  *  2.0
  *              Added code to get sets from DB instead of setshtml.php
+ *  3.0
+ *              Add Arena legalities
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -76,7 +78,9 @@ endif;
             <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="pnr"><span class="outer"><span class="inner"></span></span>Pioneer</label></span><br>
             <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="vin"><span class="outer"><span class="inner"></span></span>Vintage</label></span>
-            <label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label></span><br>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
+            <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
             <h4 class="h4">Colour search criteria</h4>
             <span class="parametersmall">
                 <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>

@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.0
-    Date:       25/01/2022
+/* Version:     6.0
+    Date:       19/03/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -17,6 +17,8 @@
  *  5.0
  *              Re-factoring for cards_scry
  *              Javascript simplification and Ajax changes
+ *  6.0
+ *              Layout changes for Arena cards
 */
 
 //Call script initiation mechs
@@ -145,6 +147,7 @@ $selectAll = "SELECT
                 number_import,
                 cards_scry.name,
                 promo,
+                game_types,
                 cards_scry.foil as cs_foil,
                 cards_scry.nonfoil as cs_normal,
                 cards_scry.release_date,
@@ -460,6 +463,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $cardtypes = 'normalandfoil';
                             endif;
+                            if (strpos($row['game_types'], 'paper') == false):
+                                $not_paper = true;
+                            else:
+                                $not_paper = false;
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -502,6 +510,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($not_paper == true):
+                                                echo "<i>MtG Arena</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
                                                 echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
@@ -662,6 +672,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $cardtypes = 'normalandfoil';
                             endif;
+                            if (strpos($row['game_types'], 'paper') == false):
+                                $not_paper = true;
+                            else:
+                                $not_paper = false;
+                            endif;
                             $uppercasesetcode = strtoupper($setcode);
                             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
                                 $meld = 'meld_result';
@@ -724,6 +739,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
+                                            elseif ($not_paper == true):
+                                                echo "<i>MtG Arena</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
                                                 echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
