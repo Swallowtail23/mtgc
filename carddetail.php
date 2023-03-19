@@ -441,6 +441,12 @@ require('includes/menu.php'); //mobile menu
             if($row['f2_ability'] !== null):
                 $flipability = $row['f2_ability'];
             endif;
+            if (strpos($row['game_types'], 'paper') == false):
+                $arenaonly = true;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Arena only card",$logfile);
+            else:
+                $arenaonly = false;
+            endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
                  OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) 
@@ -823,8 +829,12 @@ require('includes/menu.php'); //mobile menu
                         </table>
                     </div>
                     <div id="carddetailinfo">
-                        <h3 class="shallowh3">Details</h3>
                         <?php 
+                        if ($arenaonly == true):
+                            echo "<h3 class='shallowh3'>Details (MtG Arena)</h3>";
+                        else:
+                            echo "<h3 class='shallowh3'>Details</h3>";
+                        endif;
                         
                         if(isset($admin) AND $admin == 1):
                             echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
@@ -1116,9 +1126,18 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Loyalty: </b>".$row['f2_loyalty']."<br>"; 
                             endif;
                         endif;
+                        if(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== "" AND $arenaonly === true):
+                            echo "<a href='".$row['scryfall_uri']."' target='_blank'>Card on Scryfall</a></br>";
+                            echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>";
+                        elseif($arenaonly === true):
+                            $namehtml = str_replace("//","",$namehtml);
+                            $namehtml = str_replace("  ","%20",$namehtml);
+                            $namehtml = str_replace(" ","%20",$namehtml);
+                            echo "<a href='https://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
+                        endif;
                         ?>                
-                    </div>
-                  <?php if($meld !== 'meld_result'): ?>
+                    </div><?php 
+                    if(($meld !== 'meld_result') AND ($arenaonly !== true )): ?>
                             <div id="carddetailupdate">
                                 <form action="?" method="POST">
                                 <h3 class="shallowh3">My collection</h3>
