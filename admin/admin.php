@@ -72,7 +72,7 @@ if(isset($_GET['loglevel'])):
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change by user $username to $newloglevel",$logfile);
     $ini->write();
     //re-read ini file
-    $ini = new INI("/opt/mtg/mtg.ini");
+    $ini = new INI("/opt/mtg/mtg_new.ini");
     $ini_array = $ini->data;
     $loglevelini = $ini_array['general']['Loglevel'];
     if($loglevelini == $newloglevel):
