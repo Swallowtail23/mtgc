@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.0
-    Date:       02/02/22
+/* Version:     12.0
+    Date:       25/03/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -28,6 +28,8 @@
  *              Moved from writelog to Message class
  *  11.0
  *              Refactoring for cards_scry
+ *  12.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -85,15 +87,15 @@ require('includes/header.php');
 require('includes/menu.php'); //mobile menu
 
 if (isset($_GET["deck"])):
-    $decknumber     = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_STRING);
+    $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
     if (isset($_GET["updatetype"])):
-        $updatetype = $db->escape(filter_input(INPUT_GET, 'updatetype', FILTER_SANITIZE_STRING));
+        $updatetype = $db->escape($_GET["updatetype"]);
     endif;
 elseif (isset($_POST["deck"])):
-    $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_STRING);
-    $updatenotes    = filter_input(INPUT_POST, 'updatenotes', FILTER_SANITIZE_STRING);
-    $newnotes       = $db->escape(filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_STRING));
-    $newsidenotes   = $db->escape(filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_STRING));
+    $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
+    $updatenotes    = isset($_POST['updatenotes']) ? 'yes' : '';
+    $newnotes       = $db->escape(filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
+    $newsidenotes   = $db->escape(filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
 else: ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -104,16 +106,21 @@ else: ?>
     require('includes/footer.php');
     exit();
 endif;
-$cardtoaction   = isset($_GET['card']) ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_STRING):'';
-$deletemain   = isset($_GET['deletemain']) ? filter_input(INPUT_GET, 'deletemain', FILTER_SANITIZE_STRING):'';
-$deleteside   = isset($_GET['deleteside']) ? filter_input(INPUT_GET, 'deleteside', FILTER_SANITIZE_STRING):'';
-$maintoside   = isset($_GET['maintoside']) ? filter_input(INPUT_GET, 'maintoside', FILTER_SANITIZE_STRING):'';
-$sidetomain   = isset($_GET['sidetomain']) ? filter_input(INPUT_GET, 'sidetomain', FILTER_SANITIZE_STRING):'';
-$plusmain   = isset($_GET['plusmain']) ? filter_input(INPUT_GET, 'plusmain', FILTER_SANITIZE_STRING):'';
-$minusmain   = isset($_GET['minusmain']) ? filter_input(INPUT_GET, 'minusmain', FILTER_SANITIZE_STRING):'';
-$plusside   = isset($_GET['plusside']) ? filter_input(INPUT_GET, 'plusside', FILTER_SANITIZE_STRING):'';
-$minusside   = isset($_GET['minusside']) ? filter_input(INPUT_GET, 'minusside', FILTER_SANITIZE_STRING):'';
-$commander   = isset($_GET['commander']) ? filter_input(INPUT_GET, 'commander', FILTER_SANITIZE_STRING):'';
+$cardtoaction   = isset($_GET['card']) ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS):'';
+$deletemain     = isset($_GET['deletemain']) ? 'yes' : '';
+$deleteside     = isset($_GET['deleteside']) ? 'yes' : '';
+$maintoside     = isset($_GET['maintoside']) ? 'yes' : '';
+$sidetomain     = isset($_GET['sidetomain']) ? 'yes' : '';
+$plusmain       = isset($_GET['plusmain']) ? 'yes' : '';
+$minusmain      = isset($_GET['minusmain']) ? 'yes' : '';
+$plusside       = isset($_GET['plusside']) ? 'yes' : '';
+$minusside      = isset($_GET['minusside']) ? 'yes' : '';
+$valid_commander = array("yes","no");
+if(isset($_GET['commander']) AND (in_array($_GET['commander'],$valid_commander))):
+    $commander = $_GET['commander'];
+else:
+    $commander = '';
+endif;
 $token_layouts = ['double_faced_token','token','emblem']; // cannot be included
 
 // Check to see if the called deck belongs to the logged in user.
@@ -166,7 +173,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $quickaddstring = filter_input(INPUT_GET, 'quickadd', FILTER_SANITIZE_STRING);
+    $quickaddstring = filter_input(INPUT_GET, 'quickadd', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     
     //Quantity
     preg_match("~^(\d+)~", $quickaddstring,$qty);
@@ -258,6 +265,7 @@ elseif($plusside == 'yes'):
 elseif($minusside == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,'side','1');
 elseif($commander == 'yes'):
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
     addcommander($decknumber,$cardtoaction);
 elseif($commander == 'no'):
     delcommander($decknumber,$cardtoaction);

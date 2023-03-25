@@ -1,6 +1,6 @@
 <?php 
-/* Version:     3.0
-    Date:       11/01/20
+/* Version:     4.0
+    Date:       25/03/2023
     Name:       admin/admin.php
     Purpose:    Site control panel
     Notes:      
@@ -11,6 +11,8 @@
                 Mysqli_Manager
  *  3.0
  *              Moved from writelog to Message class
+ *  4.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -34,26 +36,20 @@ endif;
 $dateobject = new DateYMD;
 $date = $dateobject->getToday();
 
-if (isset($_GET['togglecss'])):
-    $togglecss = filter_input(INPUT_GET, 'togglecss', FILTER_SANITIZE_STRING);
-endif; 
-if (isset($_GET['clearscryfalljson'])):
-    $clearscryfalljson = filter_input(INPUT_GET, 'clearscryfalljson', FILTER_SANITIZE_STRING);
-endif; 
-if (isset($_GET['publishcss'])):
-    $publishcss = filter_input(INPUT_GET, 'publishcss', FILTER_SANITIZE_STRING);
-endif;
+$togglecss = isset($_GET['togglecss']) ? 'y' : '';
+$clearscryfalljson = isset($_GET['clearscryfalljson']) ? 'y' : '';
+$publishcss = isset($_GET['publishcss']) ? 'y' : '';
 if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
     $update = 1;
     // Retrieve all the posted variables
     if(isset($_POST['date'])):
-        $date = filter_input(INPUT_POST, 'date', FILTER_SANITIZE_STRING);
+        $date = filter_input(INPUT_POST, 'date', FILTER_SANITIZE_NUMBER_INT);
     endif;
     if(isset($_POST['name'])):
-        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     endif;
     if(isset($_POST['updatetext'])):
-        $updatetext = filter_input(INPUT_POST, 'updatetext', FILTER_SANITIZE_STRING);
+        $updatetext = filter_input(INPUT_POST, 'updatetext', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     endif;
     $date = $db->escape($date);
     $name = strtolower ($db->escape($name));
@@ -71,7 +67,7 @@ if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
 endif;
 if(isset($_GET['loglevel'])):
     
-    $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_STRING);
+    $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
     $ini->data['general']['Loglevel'] = "$newloglevel";
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change by user $username to $newloglevel",$logfile);
     $ini->write();

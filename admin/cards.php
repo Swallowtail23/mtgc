@@ -1,6 +1,6 @@
 <?php
-/* Version:     4.0
-    Date:       01/02/22
+/* Version:     5.0
+    Date:       25/03/2023
     Name:       admin/cards.php
     Purpose:    Card administrative tasks
     Notes:      This page uses a combination of Mysqli prepared statements and straight OOP mysqli connectivity
@@ -14,6 +14,8 @@
  *              Move from writelog to Message class
  *  4.0     
  *              Much simpler form, all data from Scryfall, so no editing here - just delete or delete image
+ *  5.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -34,7 +36,7 @@ if ($admin !== 1):
 endif;
 if ((isset($_GET['delete'])) AND ( $_GET['delete'] == 'DELETE')):
     if (isset($_GET['id'])):
-        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_STRING);
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
     $sql = "DELETE FROM cards_scry WHERE id = '$id'";
@@ -55,7 +57,7 @@ if ((isset($_GET['delete'])) AND ( $_GET['delete'] == 'DELETE')):
     endif;
 elseif ((isset($_GET['deleteimg'])) AND ( $_GET['deleteimg'] == 'DELETEIMG')):
     if (isset($_GET['id'])):
-        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_STRING);
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
     refresh_image($id);
 endif;
@@ -80,7 +82,7 @@ require('../includes/menu.php');
         <div class='staticpagecontent'>
             <div> <?php
                 if(isset($_GET['cardtoedit'])):
-                    $id = filter_input(INPUT_GET, 'cardtoedit', FILTER_SANITIZE_STRING); ?>
+                    $id = filter_input(INPUT_GET, 'cardtoedit', FILTER_SANITIZE_SPECIAL_CHARS); ?>
                     <h3>Delete cards / images</h3>
                     <?php echo "Card id loaded: $id"; ?>
                         <form id='carddeleteform' action="?" method="GET">

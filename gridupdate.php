@@ -1,6 +1,6 @@
 <?php 
-/* Version:     3.0
-    Date:       11/01/20
+/* Version:     4.0
+    Date:       25/03/23
     Name:       gridupdate.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
@@ -12,6 +12,8 @@
  *              Migrated to Mysqli_Manager
  *  3.0
  *              Moved from writelog to Message class
+ *  4.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -21,11 +23,11 @@ require ('includes/functions_new.php');      //Includes basic functions for non-
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
 
-$cardid = filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_STRING); 
+$cardid = filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS); 
 
 //Process and log new quantity request
 if (isset($_GET['newqty'])): 
-    $qty = filter_input(INPUT_GET, 'newqty', FILTER_SANITIZE_STRING); 
+    $qty = $_GET['newqty']; 
     if(is_int($qty / 1) AND $qty > -1):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty",$logfile);
     else:
@@ -34,7 +36,7 @@ if (isset($_GET['newqty'])):
         exit;
     endif;
 elseif (isset($_GET['newfoil'])): 
-    $qty = filter_input(INPUT_GET, 'newfoil', FILTER_SANITIZE_STRING); 
+    $qty = $_GET['newfoil']; 
     if(is_int($qty / 1) AND $qty > -1):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty",$logfile);
     else:
@@ -50,7 +52,7 @@ endif;
 //Should only be here if newqty or newfoil are set
 //Set up variables
 $sqlqty = $db->escape($qty);
-$sqlid = $db->escape(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_STRING));
+$sqlid = $db->escape(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS));
 
 //Check existing quantity
 $beforeresult = $db->select_one('normal, foil',"$mytable","WHERE id = '$sqlid'");

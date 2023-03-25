@@ -1,6 +1,6 @@
 <?php 
-/* Version:     12.0
-    Date:       19/03/23
+/* Version:     13.0
+    Date:       25/03/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -36,6 +36,8 @@
  *              Add extra card parts (related cards) handling, up to 7
  * 12.0
  *              Add Arena legalities
+ * 13.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -55,16 +57,14 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456 
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])):
-    $cardid = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_STRING); 
+    $cardid = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS); 
 elseif (isset($_POST["id"])):
-    $cardid = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_STRING);     
+    $cardid = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_SPECIAL_CHARS);     
 endif;
-$decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_STRING);
-$newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_STRING);
-$deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_STRING);
-if (isset($_GET["refreshimage"])):
-    $refreshimage = filter_input(INPUT_GET, 'refreshimage', FILTER_SANITIZE_STRING);
-endif;
+$decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+$newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+$deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT);
+$refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 ?> 
 
 <!DOCTYPE html>
@@ -514,23 +514,27 @@ require('includes/menu.php'); //mobile menu
 
             if (isset($_POST['update'])) :    
                 if (isset($_POST['myqty'])):
-                    $myqty = filter_input(INPUT_POST, 'myqty', FILTER_SANITIZE_STRING);
+                    $myqty = filter_input(INPUT_POST, 'myqty', FILTER_SANITIZE_NUMBER_INT);
                 endif;
                 if (isset($_POST['myfoil'])):
-                    $myfoil = filter_input(INPUT_POST, 'myfoil', FILTER_SANITIZE_STRING);
+                    $myfoil = filter_input(INPUT_POST, 'myfoil', FILTER_SANITIZE_NUMBER_INT);
                 endif;
                 if (isset($_POST['notes'])):
-                    $notes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_STRING);
+                    $notes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
                 endif;
                 $sqlmyqty = $db->escape($myqty,'int');
                 $sqlmyfoil = $db->escape($myfoil,'int');
                 $sqlnotes = $db->escape($notes,'str');
-                if(isset($row['price']) AND !is_null($row['price'])):
+                if(isset($row['price']) AND (is_null($row['price']) OR $row['price'] == '' )):
+                    $price = 0.00;
+                elseif(isset($row['price'])):
                     $price = $row['price'];
                 else:
                     $price = 0.00;
                 endif;
-                if(isset($row['price_foil']) AND !is_null($row['price_foil'])):
+                if(isset($row['price_foil']) AND (is_null($row['price_foil']) OR $row['price_foil'] == '' )):
+                    $foilprice = 0.00;
+                elseif(isset($row['price_foil'])):
                     $foilprice = $row['price_foil'];
                 else:
                     $foilprice = 0.00;
@@ -619,27 +623,20 @@ require('includes/menu.php'); //mobile menu
             $namehtml = $row['name'];
             $row['name'] = htmlentities($row['name'],ENT_QUOTES,"UTF-8");
             $row['number'] = htmlentities($row['number'],ENT_QUOTES,"UTF-8");
-            $colour = htmlentities($colour,ENT_QUOTES,"UTF-8");
-            $row['type'] = htmlentities($row['type'],ENT_QUOTES,"UTF-8");
-            $row['manacost'] = htmlentities($row['manacost'],ENT_QUOTES,"UTF-8");
-            $row['cmc'] = htmlentities($row['cmc'],ENT_QUOTES,"UTF-8");
-            //htmlentities prevents the abilities text from working properly... TBC
-            //$row['ability'] = htmlentities($row['ability'],ENT_QUOTES,"UTF-8");
-            $row['power'] = htmlentities($row['power'],ENT_QUOTES,"UTF-8");
-            $row['toughness'] = htmlentities($row['toughness'],ENT_QUOTES,"UTF-8");
-            $row['loyalty'] = htmlentities($row['loyalty'],ENT_QUOTES,"UTF-8");
-            $row['artist'] = htmlentities($row['artist'],ENT_QUOTES,"UTF-8");
-            $card_normal = $row['cs_normal'];
-            $card_foil = $row['cs_foil'];
-            if(isset($myqty)): 
-                $myqty = htmlentities($myqty,ENT_QUOTES,"UTF-8");
-            endif;
-            if(isset($myfoil)):
-                $myfoil = htmlentities($myfoil,ENT_QUOTES,"UTF-8");
-            endif;
-            if(isset($notes)):
-                $notes = htmlentities($notes,ENT_QUOTES,"UTF-8");
-            endif;
+            $colour = (isset($colour)) ? htmlentities($colour,ENT_QUOTES,"UTF-8") : '';
+            $row['type'] = (isset($row['type'])) ? htmlentities($row['type'],ENT_QUOTES,"UTF-8") : '';
+            $row['manacost'] = (isset($row['manacost'])) ? htmlentities($row['manacost'],ENT_QUOTES,"UTF-8") : '';
+            $row['cmc'] = (isset($row['cmc'])) ? htmlentities($row['cmc'],ENT_QUOTES,"UTF-8") : '';
+            $row['power'] = (isset($row['power'])) ? htmlentities($row['power'],ENT_QUOTES,"UTF-8") : '';
+            $row['toughness'] = (isset($row['toughness'])) ? htmlentities($row['toughness'],ENT_QUOTES,"UTF-8") : '';
+            $row['loyalty'] = (isset($row['loyalty'])) ? htmlentities($row['loyalty'],ENT_QUOTES,"UTF-8") : '';
+            $row['artist'] = (isset($row['artist'])) ? htmlentities($row['artist'],ENT_QUOTES,"UTF-8") : '';
+            $card_normal = (isset($row['cs_normal'])) ? $row['cs_normal'] : '';
+            $card_foil = (isset($row['cs_foil'])) ? $row['cs_foil'] : '';
+            $myqty = (isset($myqty)) ? htmlentities($myqty,ENT_QUOTES,"UTF-8") : '';
+            $myfoil = (isset($myfoil)) ? htmlentities($myfoil,ENT_QUOTES,"UTF-8") : '';
+            $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
+
             $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token'];  // Set flip types which trigger a second (reverse) card section
             $token_layouts = ['double_faced_token','token','emblem'];
             ?>
@@ -1343,12 +1340,12 @@ require('includes/menu.php'); //mobile menu
                                     // $deckqty is the quantity to add
 
                                     if (isset($decktoaddto)):
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
+                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
                                         // If the deck is new, is the new name unique? If yes, create it.
                                         $decksuccess = 0;
                                         if($decktoaddto == "newdeck"):
                                             $newdeckname = $db->escape($newdeckname,'str');
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Asked to create new deck $newdeckname",$logfile);
                                             if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
                                                 ?>

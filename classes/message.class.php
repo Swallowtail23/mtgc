@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       23/10/16
+/* Version:     2.0
+    Date:       25/03/23
     Name:       message.class.php
     Purpose:    Simple message and log writing class, currently still using 
                 writelog function to complete.
@@ -16,6 +16,8 @@
     
  *  1.0
                 Initial version
+ *  2.0
+ *              PHP 8.1 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -28,6 +30,7 @@ class Message {
      * Call with optional last parameter for different logfile - otherwise will 
      * write to globally set $logfile variable
      */
+    public $textstring;
     public function MessageTxt($errorlevel,$source,$text,$logfile = '') {
         if ($logfile === ''):
             global $logfile;

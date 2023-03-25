@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       02/02/22
+/* Version:     5.0
+    Date:       25/03/23
     Name:       decks.php
     Purpose:    Main decks list page
     Notes:       
@@ -16,6 +16,8 @@
  *              Moved from writelog to Message class
  *  4.0 
  *              Refactoring for cards_scry data
+ *  5.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -26,10 +28,10 @@ require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 
 //page specific variables
-$newdeck   = isset($_POST['newdeck']) ? filter_input(INPUT_POST, 'newdeck', FILTER_SANITIZE_STRING):'';
-$deckname   = isset($_POST['deckname']) ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_STRING):'';
-$deletedeck   = isset($_POST['deletedeck']) ? filter_input(INPUT_POST, 'deletedeck', FILTER_SANITIZE_STRING):'';
-$decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'decktodelete', FILTER_SANITIZE_STRING):'';
+$newdeck        = isset($_POST['newdeck']) ? 'yes' : '';
+$deckname       = isset($_POST['deckname']) ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES): '';
+$deletedeck     = isset($_POST['deletedeck']) ? 'yes' : '';
+$decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'decktodelete', FILTER_SANITIZE_NUMBER_INT):'';
 ?> 
 <!DOCTYPE html>
 <html>
