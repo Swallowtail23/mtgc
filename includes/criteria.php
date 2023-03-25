@@ -1,5 +1,5 @@
 <?php
-/* Version:     3.0
+/* Version:     4.0
     Date:       19/03/23
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
@@ -11,6 +11,8 @@
                 Cards_scry refactoring
  *  3.0
  *              Add Arena legalities
+ *  4.0
+ *              PHP 8.1 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -442,7 +444,7 @@ elseif ($adv == "yes" ) :
         $criteria .= "AND (cards_scry.legalityhistory = 'legal') ";
     endif;
     
-    if ($foilonly === 'foilonly'):
+    if ($foilonly === 'yes'):
         $criteria .= "AND ($mytable.foil > 0) AND ($mytable.normal = 0) "; 
     endif;
     

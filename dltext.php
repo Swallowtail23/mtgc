@@ -1,12 +1,14 @@
 <?php
-/* Version:     1.0
-    Date:       19/10/16
+/* Version:     2.0
+    Date:       25/03/23
     Name:       dltext.php
     Purpose:    Text file export page 
     Notes:      Call with Post 'text' and optionally 'filename'.
     
     1.0
                 Initial version
+ *  2.0
+ *              PHP 8.1 compatibility
 */
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
@@ -16,13 +18,13 @@ require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 
 if(isset($_POST['text'])):
-    $textdata = filter_input(INPUT_POST, 'text', FILTER_SANITIZE_STRING);
+    $textdata = filter_input(INPUT_POST, 'text', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     $textdata = htmlspecialchars_decode($textdata,ENT_QUOTES);
 else:
     trigger_error('[ERROR] dltext.php: Error, no POST data');
 endif;
 if(isset($_POST['filename'])):
-    $filename = filter_input(INPUT_POST, 'filename', FILTER_SANITIZE_STRING).'.txt';
+    $filename = mb_ereg_replace("([^\w\s\d\-_~,;\[\]\(\).])", '', $_POST['filename']).'.txt';
 else:
     $filename = 'dltext.txt';
 endif;

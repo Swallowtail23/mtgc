@@ -11,7 +11,7 @@
                 Initial version
 */
 
-$ini_array = parse_ini_file("/opt/mtg/mtg.ini");
+$ini_array = parse_ini_file("/opt/mtg/mtg_new.ini");
 //Copyright string
 $copyright = $ini_array['Copyright'];
 if($ini_array['tier'] === 'dev'):

@@ -52,7 +52,10 @@ final class Mysqli_Manager extends \mysqli
      */
      protected function to_utf8($String) 
      {
-	    return mb_convert_encoding($String, 'UTF-8', mb_detect_encoding($String));     
+	if ($String == null):
+            $String = '';
+        endif;
+        return mb_convert_encoding($String, 'UTF-8', mb_detect_encoding($String));     
      }
     
     /**
@@ -63,11 +66,7 @@ final class Mysqli_Manager extends \mysqli
      */
        public function escape($data, $type = 'str') {
 
-		$data = $this->to_utf8($data);
-
-		//if( get_magic_quotes_gpc() ) {
-		//	$data = stripslashes($data);
-		//}
+                $data = $this->to_utf8($data);
 
 		if( $type === 'int' ) {
 

@@ -1,6 +1,6 @@
 <?php 
-/* Version:     3.0
-    Date:       11/01/20
+/* Version:     4.0
+    Date:       25/03/2023
     Name:       admin/users.php
     Purpose:    User administrative tasks
     Notes:      
@@ -11,6 +11,8 @@
                 Mysqli_Manager
  *  3.0
  *              Migrate from writelog to message class
+ *  4.0
+ *              PHP 8.1 compatibility
 */
 
 session_start();
@@ -29,8 +31,9 @@ if ($admin !== 1):
     require('reject.php');
 endif;
 
+
 if (isset($_POST['newuser'])):
-    $newuser = filter_input(INPUT_POST, 'newuser', FILTER_SANITIZE_STRING);
+    $newuser = ($_POST['newuser'] == 'yes') ? 'yes' : '';
     if (isset($_POST['password'])):
         $password = $_POST['password'];
     endif;    
@@ -42,7 +45,7 @@ if (isset($_POST['newuser'])):
     endif; 
 endif;    
 if (isset($_POST['updateusers'])):
-    $updateusers = filter_input(INPUT_POST, 'updateusers', FILTER_SANITIZE_STRING);
+    $updateusers = ($_POST['updateusers'] == 'yes') ? 'yes' : '';
     $updatearray[] = filter_input_array(INPUT_POST);
 endif; 
 ?>
@@ -256,10 +259,10 @@ require('../includes/menu.php');
                 <br>
                 <input type="submit" value="Update users" />
             </form>
-            <form id='exportcsv' action="/includes/csv.php"  method="GET">
+            <form id='exportcsv' action="/csv.php"  method="GET">
             </form>
             <h4>Export</h4>
-            <form action="/includes/csv.php"  method="GET">
+            <form action="/csv.php"  method="GET">
                 <select name='table'>
                 <?php 
                 $exportlist = $db->select('usernumber,username','users');

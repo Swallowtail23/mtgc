@@ -1,6 +1,6 @@
 <?php
 /* Version:     6.0
-    Date:       19/03/23
+    Date:       25/03/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -36,7 +36,11 @@ $maxresults = 2500;
 
 // Define layout and results per page for each layout type
 if (isset($_GET['layout'])):
-    $layout = filter_input(INPUT_GET, 'layout', FILTER_SANITIZE_STRING);
+    $valid_layout = array("grid","list","bulk");
+    $layout = $_GET['layout'];
+    if (!in_array($layout,$valid_layout)):
+        $layout == 'grid';
+    endif;
     if ($layout == 'grid'):
         $perpage = $gridperpage;
     elseif ($layout == 'list'):
@@ -54,13 +58,13 @@ endif;
 
 // Set up all the stuff we need and filter GET variables
 if (isset($_GET["page"])) :
-    $page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_STRING);
+    $page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_NUMBER_INT);
 else :
     $page = 1;
 endif;
 $start_from = ($page - 1) * $perpage;
 if (isset($_GET['name']) AND $_GET['name'] !== ""):
-    $nameget = filter_input(INPUT_GET, 'name', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+    $nameget = filter_input(INPUT_GET, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in nametrim is $nametrim",$logfile);
@@ -72,53 +76,82 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
 else:
     $name = '';
 endif;
-$searchname = isset($_GET['searchname']) ? filter_input(INPUT_GET, 'searchname', FILTER_SANITIZE_STRING):'';
-$searchtype = isset($_GET['searchtype']) ? filter_input(INPUT_GET, 'searchtype', FILTER_SANITIZE_STRING):'';
-$searchability = isset($_GET['searchability']) ? filter_input(INPUT_GET, 'searchability', FILTER_SANITIZE_STRING):'';
-$searchabilityexact = isset($_GET['searchabilityexact']) ? filter_input(INPUT_GET, 'searchabilityexact', FILTER_SANITIZE_STRING):'';
-$searchnotes = isset($_GET['searchnotes']) ? filter_input(INPUT_GET, 'searchnotes', FILTER_SANITIZE_STRING):'';
-$white = isset($_GET['white']) ? filter_input(INPUT_GET, 'white', FILTER_SANITIZE_STRING):'';
-$blue = isset($_GET['blue']) ? filter_input(INPUT_GET, 'blue', FILTER_SANITIZE_STRING):'';
-$black = isset($_GET['black']) ? filter_input(INPUT_GET, 'black', FILTER_SANITIZE_STRING):'';
-$red = isset($_GET['red']) ? filter_input(INPUT_GET, 'red', FILTER_SANITIZE_STRING):'';
-$green = isset($_GET['green']) ? filter_input(INPUT_GET, 'green', FILTER_SANITIZE_STRING):'';
-$artifact = isset($_GET['artifact']) ? filter_input(INPUT_GET, 'artifact', FILTER_SANITIZE_STRING):'';
-$colourless = isset($_GET['colourless']) ? filter_input(INPUT_GET, 'colourless', FILTER_SANITIZE_STRING):'';
-$land = isset($_GET['land']) ? filter_input(INPUT_GET, 'land', FILTER_SANITIZE_STRING):'';
-$colourOp = isset($_GET['colourOp']) ? filter_input(INPUT_GET, 'colourOp', FILTER_SANITIZE_STRING):'';
-$colourExcl = isset($_GET['colourExcl']) ? filter_input(INPUT_GET, 'colourExcl', FILTER_SANITIZE_STRING):'';
-$common = isset($_GET['common']) ? filter_input(INPUT_GET, 'common', FILTER_SANITIZE_STRING):'';
-$uncommon = isset($_GET['uncommon']) ? filter_input(INPUT_GET, 'uncommon', FILTER_SANITIZE_STRING):'';
-$rare = isset($_GET['rare']) ? filter_input(INPUT_GET, 'rare', FILTER_SANITIZE_STRING):'';
-$mythic = isset($_GET['mythic']) ? filter_input(INPUT_GET, 'mythic', FILTER_SANITIZE_STRING):'';
-$creature = isset($_GET['creature']) ? filter_input(INPUT_GET, 'creature', FILTER_SANITIZE_STRING):'';
-$instant = isset($_GET['instant']) ? filter_input(INPUT_GET, 'instant', FILTER_SANITIZE_STRING):'';
-$sorcery = isset($_GET['sorcery']) ? filter_input(INPUT_GET, 'sorcery', FILTER_SANITIZE_STRING):'';
-$enchantment = isset($_GET['enchantment']) ? filter_input(INPUT_GET, 'enchantment', FILTER_SANITIZE_STRING):'';
-$planeswalker = isset($_GET['planeswalker']) ? filter_input(INPUT_GET, 'planeswalker', FILTER_SANITIZE_STRING):'';
-$tribal = isset($_GET['tribal']) ? filter_input(INPUT_GET, 'tribal', FILTER_SANITIZE_STRING):'';
-$tribe = isset($_GET['tribe']) ? filter_input(INPUT_GET, 'tribe', FILTER_SANITIZE_STRING):'';
-$legendary = isset($_GET['legendary']) ? filter_input(INPUT_GET, 'legendary', FILTER_SANITIZE_STRING):'';
-$token = isset($_GET['token']) ? filter_input(INPUT_GET, 'token', FILTER_SANITIZE_STRING):'';
-$rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
-$exact = isset($_GET['exact']) ? filter_input(INPUT_GET, 'exact', FILTER_SANITIZE_STRING):'';
-if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
-    $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_STRING);
+$searchname = isset($_GET['searchname']) ? 'yes' : '';
+$searchtype = isset($_GET['searchtype']) ? 'yes' : '';
+$searchability = isset($_GET['searchability']) ? 'yes' : '';
+$searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
+$searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
+$white = isset($_GET['white']) ? 'yes' : '';
+$blue = isset($_GET['blue']) ? 'yes' : '';
+$black = isset($_GET['black']) ? 'yes' : '';
+$red = isset($_GET['red']) ? 'yes' : '';
+$green = isset($_GET['green']) ? 'yes' : '';
+$artifact = isset($_GET['artifact']) ? 'yes' : '';
+$colourless = isset($_GET['colourless']) ? 'yes' : '';
+$land = isset($_GET['land']) ? 'yes' : '';
+$valid_colourOp = array("and","or","");
+$colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
+if (!in_array($colourOp,$valid_colourOp)):
+    $colourOp == '';
 endif;
-$sortBy = isset($_GET['sortBy']) ? filter_input(INPUT_GET, 'sortBy', FILTER_SANITIZE_STRING):'';
-$poweroperator = isset($_GET['poweroperator']) ? filter_input(INPUT_GET, 'poweroperator', FILTER_SANITIZE_STRING):'';
-$toughoperator = isset($_GET['toughoperator']) ? filter_input(INPUT_GET, 'toughoperator', FILTER_SANITIZE_STRING):'';
-$loyaltyoperator = isset($_GET['loyaltyoperator']) ? filter_input(INPUT_GET, 'loyaltyoperator', FILTER_SANITIZE_STRING):'';
-$cmcoperator = isset($_GET['cmcoperator']) ? filter_input(INPUT_GET, 'cmcoperator', FILTER_SANITIZE_STRING):'';
-$cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_STRING):'';
-$power = isset($_GET['power']) ? filter_input(INPUT_GET, 'power', FILTER_SANITIZE_STRING):'';
-$tough = isset($_GET['tough']) ? filter_input(INPUT_GET, 'tough', FILTER_SANITIZE_STRING):'';
-$loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_SANITIZE_STRING):'';
+$colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
+$common = isset($_GET['common']) ? 'yes' : '';
+$uncommon = isset($_GET['uncommon']) ? 'yes' : '';
+$rare = isset($_GET['rare']) ? 'yes' : '';
+$mythic = isset($_GET['mythic']) ? 'yes' : '';
+$creature = isset($_GET['creature']) ? 'yes' : '';
+$instant = isset($_GET['instant']) ? 'yes' : '';
+$sorcery = isset($_GET['sorcery']) ? 'yes' : '';
+$enchantment = isset($_GET['enchantment']) ? 'yes' : '';
+$planeswalker = isset($_GET['planeswalker']) ? 'yes' : '';
+$tribal = isset($_GET['tribal']) ? 'yes' : '';
+$valid_tribe = array("merfolk","goblin","treefolk","centaur","sliver","human","zombie","vampire");
+$tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
+if (!in_array($tribe,$valid_tribe)):
+    $tribe == '';
+endif;
+$legendary = isset($_GET['legendary']) ? 'yes' : '';
+$token = isset($_GET['token']) ? 'yes' : '';
+# $rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
+$exact = isset($_GET['exact']) ? 'yes' : '';
+if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
+    $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+endif;
+$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","powerup","powerdown","toughup","toughdown");
+$sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
+if (!in_array($sortBy,$valid_sortBy)):
+    $sortBy == '';
+endif;
+$valid_operator = array("ltn","gtr","eq");
+$poweroperator = isset($_GET['poweroperator']) ? "{$_GET['poweroperator']}" : '';
+if (!in_array($poweroperator,$valid_operator)):
+    $poweroperator == '';
+endif;
+$toughoperator = isset($_GET['toughoperator']) ? "{$_GET['toughoperator']}" : '';
+if (!in_array($toughoperator,$valid_operator)):
+    $toughoperator == '';
+endif;
+$loyaltyoperator = isset($_GET['loyaltyoperator']) ? "{$_GET['loyaltyoperator']}" : '';
+if (!in_array($loyaltyoperator,$valid_operator)):
+    $loyaltyoperator == '';
+endif;
+$cmcoperator = isset($_GET['cmcoperator']) ? "{$_GET['cmcoperator']}" : '';
+if (!in_array($cmcoperator,$valid_operator)):
+    $cmcoperator == '';
+endif;
+$cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT):'';
+$power = isset($_GET['power']) ? filter_input(INPUT_GET, 'power', FILTER_SANITIZE_NUMBER_INT):'';
+$tough = isset($_GET['tough']) ? filter_input(INPUT_GET, 'tough', FILTER_SANITIZE_NUMBER_INT):'';
+$loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_SANITIZE_NUMBER_INT):'';
 $mytable = $user . "collection";
-$adv = isset($_GET['adv']) ? filter_input(INPUT_GET, 'adv', FILTER_SANITIZE_STRING):'';
-$scope = isset($_GET['scope']) ? filter_input(INPUT_GET, 'scope', FILTER_SANITIZE_STRING):'';
-$legal = isset($_GET['legal']) ? filter_input(INPUT_GET, 'legal', FILTER_SANITIZE_STRING):'';
-$foilonly = isset($_GET['foilonly']) ? filter_input(INPUT_GET, 'foilonly', FILTER_SANITIZE_STRING):'';
+$adv = isset($_GET['adv']) ? 'yes' : '';
+$scope = isset($_GET['scope']) ? 'mycollection' : '';
+$valid_legal = array("std","pnr","mdn","vin","lgc","alc","his");
+$legal = isset($_GET['legal']) ? "{$_GET['legal']}" : '';
+if (!in_array($legal,$valid_legal)):
+    $legal == '';
+endif;
+$foilonly = isset($_GET['foilonly']) ? 'yes' : '';
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";

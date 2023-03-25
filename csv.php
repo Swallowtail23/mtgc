@@ -1,13 +1,16 @@
 <?php 
-/* Version:     2.0
-    Date:       17/10/16
+/* Version:     3.0
+    Date:       25/03/23
     Name:       csv.php
     Purpose:    PHP script to export collection
     Notes:      {none}
         
     1.0
                 Initial version
- *  2.0         Migrated to Mysqli_Manager
+ *  2.0         
+ *              Migrated to Mysqli_Manager
+ *  3.0
+ *              PHP 8.1 compatibility
  */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -22,7 +25,7 @@ $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading csv.php..."
                 
 // Page content starts here
 if(isset($_GET['table'])):
-    $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_STRING);
+    $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     exportMysqlToCsv($table);
 else:
     trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);

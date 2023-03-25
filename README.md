@@ -1,4 +1,4 @@
-# README # (v18/03/23)
+# README # (v25/03/23)
 
 ## How do I get set up? ## 
 * Summary of set up
@@ -12,7 +12,8 @@ Install under web server as applicable
 ### Dependencies ###
 #### JsonMachine ####
 Used for bulk script parsing
-- installed by composer to 'vendors' folder, and autoloaded by ini.php
+- needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php
+- run composer install from mtg directory on server
 
 #### JQuery and IAS ####
 Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required

@@ -1,6 +1,6 @@
 <?php
-/* Version:     9.0
-    Date:       28/01/22
+/* Version:     11.0
+    Date:       25/03/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -38,6 +38,8 @@
  *              image function (+ get by set and number)
  * 10.0
  *              Refactoring for cards_scry
+ * 11.0
+ *              PHP 8.1 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -590,7 +592,7 @@ function getStringParameters($input,$ignore1,$ignore2='')
     $output="";
     foreach($input as $key => $value):
         if ((isset($input['set'])) AND (is_array($input['set']))):
-            $sets = filter_var_array($input['set'], FILTER_SANITIZE_STRING);
+            $sets = filter_var_array($input['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
         endif;
         if ($key === "set"):
             foreach($sets AS $keys=>$values):
@@ -884,18 +886,43 @@ function scryfall($cardid)
         $scryfall_result = json_decode($curlresult,true);
         if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
             $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result contain tcg link {$scryfall_result["purchase_uris"]["tcgplayer"]}",$logfile);
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a tcg link",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a tcg link",$logfile);
             $tcg_buy_uri = 0;
             return '';
         endif;
         if(isset($scryfall_result["prices"])):
-            $price = $scryfall_result["prices"]["usd"];
-            $price_foil = $scryfall_result["prices"]["usd_foil"];
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price section included",$logfile);
+            if(isset($scryfall_result["prices"]["usd"])):
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd set: {$scryfall_result["prices"]["usd"]}",$logfile);
+                if($scryfall_result["prices"]["usd"] == ''):
+                    $price = 0.00;
+                elseif($scryfall_result["prices"]["usd"] == 'null'):
+                    $price = 0.00;
+                else:
+                    $price = $scryfall_result["prices"]["usd"];
+                endif;
+            else:
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to 0.00",$logfile);
+                $price = 0.00;
+            endif;
+            if(isset($scryfall_result["prices"]["usd_foil"])):
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}",$logfile);
+                if($scryfall_result["prices"]["usd_foil"] == ''):
+                    $price_foil = 0.00;
+                elseif($scryfall_result["prices"]["usd_foil"] == 'null'):
+                    $price_foil = 0.00;
+                else:
+                    $price_foil = $scryfall_result["prices"]["usd_foil"];
+                endif;
+            else:
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to 0.00",$logfile);
+                $price_foil = 0.00;            
+            endif;
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, prices are: $price and $price_foil",$logfile);
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
             $prices = 0;
         endif;
         $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
@@ -917,16 +944,20 @@ function scryfall($cardid)
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
         endif;
         if(!isset($prices)):
-            $data = array(
-                'price' => $price,
-                'price_foil' => $price_foil,
-                );
-            if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
-            else:
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, writing prices...",$logfile);
+            $query = 'UPDATE cards_scry SET price=?,price_foil=? WHERE id=?';
+            $stmt = $db->prepare($query);
+            $stmt->bind_param('iis', $price, $price_foil,$cardid);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
                 $obj = new Message;
                 $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated: Insert ID: ".$stmt->insert_id,$logfile);
             endif;
         endif;
     endif;
