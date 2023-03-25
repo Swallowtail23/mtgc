@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       05/09/17
+/* Version:     2.1
+    Date:       25/03/23
     Name:       error_handling.php
     Purpose:    PHP script to process page initiation and setup
     Notes:      {none}
@@ -9,13 +9,15 @@
                 Initial version
  *  2.0 
  *              Removed hard-coded email address, now uses ini file variables
+ *  2.1
+ *              Fix empty variable ($context)
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
 //Error handling
-function mtg_error($number,$string,$file,$line,$context)
+function mtg_error($number,$string,$file,$line,$context='')
 {
     global $logfile,$adminemail,$serveremail; //set in ini.php
     if (!(error_reporting() & $number)):

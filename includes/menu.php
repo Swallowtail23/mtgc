@@ -1,12 +1,13 @@
 <?php 
-/* Version:     1.0
-    Date:       17/10/16
+/* Version:     2.025/03/23
     Name:       menu.php
     Purpose:    PHP script to display menu
     Notes:      {none}
  * 
     1.0
                 Initial version
+ *  2.0
+ *              PHP 8.1 compatibility
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -42,7 +43,7 @@ endif;
                     <?php
                 endif;
             else:
-                trigger_error('[ERROR] Menu.php: SQL failure: ' . $db->error, E_USER_ERROR);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No menu updates",$logfile);
             endif;
         endif;
         ?>
