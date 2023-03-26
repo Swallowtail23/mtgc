@@ -1,5 +1,5 @@
 <?php 
-/* Version:     4.0
+/* Version:     4.1
     Date:       25/03/2023
     Name:       admin/admin.php
     Purpose:    Site control panel
@@ -13,6 +13,8 @@
  *              Moved from writelog to Message class
  *  4.0
  *              PHP 8.1 compatibility
+ *  4.1
+ *              Fixed error on unminifying CSS
 */
 
 session_start();
@@ -36,8 +38,8 @@ endif;
 $dateobject = new DateYMD;
 $date = $dateobject->getToday();
 
-$togglecss = isset($_GET['togglecss']) ? 'y' : '';
 $clearscryfalljson = isset($_GET['clearscryfalljson']) ? 'y' : '';
+$togglecss = isset($_GET['togglecss']) ? 'y' : '';
 $publishcss = isset($_GET['publishcss']) ? 'y' : '';
 if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
     $update = 1;
@@ -53,7 +55,7 @@ if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
     endif;
     $date = $db->escape($date);
     $name = strtolower ($db->escape($name));
-    $updatetext = $db->escape($updatetext);
+    // $updatetext = $db->escape($updatetext);
     $data = array(
                 '`date`' => $date,
                 '`author`' => $name,
@@ -66,7 +68,6 @@ if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
     endif;
 endif;
 if(isset($_GET['loglevel'])):
-    
     $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
     $ini->data['general']['Loglevel'] = "$newloglevel";
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change by user $username to $newloglevel",$logfile);
@@ -109,7 +110,6 @@ require('../includes/menu.php');
 ?>
 <div id='page'>
     <div class='staticpagecontent'>
-
     <div>
         <h3>Add Info update</h3>
         <form id='newinfoupdate' action="?" method="POST">
@@ -167,13 +167,19 @@ require('../includes/menu.php');
         If log level set fails, check permissions of web server to the ini file.
         <?php
         if((isset($togglecss)) AND ($togglecss == "y")):
-            $data = array(
-                'usemin' => 0
-            );
-            if ($db->update('admin', $data) === TRUE):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned off minimised CSS",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning off minimised CSS...",$logfile);
+            $cssquery = 0;
+            $query = 'UPDATE admin SET usemin=?';
+            $stmt = $db->prepare($query);
+            $stmt->bind_param('i', $cssquery);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Turning off minified CSS failed",$logfile);
             else:
-                trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Turned off minified CSS",$logfile);
             endif;
             $cssver = cssver(); //run again
         endif;
