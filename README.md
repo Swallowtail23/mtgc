@@ -25,10 +25,11 @@ Copy the ini file (see next section) and bulk scripts to it (samples are in setu
 altering as needed so they point to where the bulk scripts are.
 Make sure the logfile location specified in the ini file exists and is web-server-writable.
 Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache
+Make sure there is a json folder in the Imglocation folder
 
 ### Ini file ###
 The application expects an ini file located at: /opt/mtg/mtg_new.ini. 
-Apache must be able to read this file (no write required).
+Apache must be able to read AND write this file.
 It must include:
 
     [general]
@@ -50,6 +51,8 @@ It must include:
     AdminEmail = "simon@simonandkate.net"
     AdminIP = ""
     Badloginlimit = x
+
+Check all variables and remove all comments. Lines need to be fully left-aligned.
 
 NOTE: 
 If AdminIP is empty, then an admin user can access admin pages from any IP address.
