@@ -68,28 +68,28 @@ else:
                 if(strpos(strtolower($row['name']),strtolower($r)) !== false):
                     $name = $row['name'];
                     $z = 1;
-                elseif(strpos(strtolower($row['printed_name']),strtolower($r)) !== false):
+                elseif($row['printed_name'] !== null AND strpos(strtolower($row['printed_name']),strtolower($r)) !== false):
                     $name = $row['printed_name'];
                     $z = 2;
-                elseif(strpos(strtolower($row['flavor_name']),strtolower($r)) !== false):
+                elseif($row['flavor_name'] !== null AND strpos(strtolower($row['flavor_name']),strtolower($r)) !== false):
                     $name = $row['flavor_name'];
                     $z = 3;
-                elseif(strpos(strtolower($row['f1_name']),strtolower($r)) !== false):
+                elseif($row['f1_name'] !== null AND strpos(strtolower($row['f1_name']),strtolower($r)) !== false):
                     $name = $row['f1_name'];
                     $z = 4;
-                elseif(strpos(strtolower($row['f1_printed_name']),strtolower($r)) !== false):
+                elseif($row['f1_printed_name'] !== null AND strpos(strtolower($row['f1_printed_name']),strtolower($r)) !== false):
                     $name = $row['f1_printed_name'];
                     $z = 5;
-                elseif(strpos(strtolower($row['f1_flavor_name']),strtolower($r)) !== false):
+                elseif($row['f1_flavor_name'] !== null AND strpos(strtolower($row['f1_flavor_name']),strtolower($r)) !== false):
                     $name = $row['f1_flavor_name'];
                     $z = 6;
-                elseif(strpos(strtolower($row['f2_name']),strtolower($r)) !== false):
+                elseif($row['f2_name'] !== null AND strpos(strtolower($row['f2_name']),strtolower($r)) !== false):
                     $name = $row['f2_name'];
                     $z = 7;
-                elseif(strpos(strtolower($row['f2_printed_name']),strtolower($r)) !== false):
+                elseif($row['f2_printed_name'] !== null AND strpos(strtolower($row['f2_printed_name']),strtolower($r)) !== false):
                     $name = $row['f2_printed_name'];
                     $z = 8;
-                elseif(strpos(strtolower($row['f2_flavor_name']),strtolower($r)) !== false):
+                elseif($row['f2_flavor_name'] !== null AND strpos(strtolower($row['f2_flavor_name']),strtolower($r)) !== false):
                     $name = $row['f2_flavor_name'];
                     $z = 9;
                 else:

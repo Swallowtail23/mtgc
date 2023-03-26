@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       11/01/20
+/* Version:     3.0
+    Date:       26/03/23
     Name:       admin/adminfunctions.php
     Purpose:    Functions for admin pages
     Notes:      {none}
@@ -10,12 +10,14 @@
                 Initial version
  *  2.0
  *              Move from writelog to Message class
+ *  3.0
+ *              PHP 8.1 compatibility
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-function newuser($username, $postemail, $password) 
+function newuser($username, $postemail, $password, $dbname = '') 
 {
     global $logfile, $db;
     $mysql_date = date( 'Y-m-d' );
@@ -40,15 +42,37 @@ function newuser($username, $postemail, $password)
             $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": User creation successful, password matched",$logfile);
             $usersuccess = 1;
             // Create the user's database table
-            $mytable = $row['usernumber']."collection"; 
-            $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Copying collection table: $query2",$logfile);
-            if($db->query($query2) === TRUE):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection table copy successful",$logfile);
-                $tablesuccess = 1;
+            $mytable = "{$row['usernumber']}collection";
+            // Does it already exist
+            $queryexists = "SHOW TABLES FROM $dbname LIKE '$mytable'";
+            $stmt = $db->prepare($queryexists);
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if collection table exists: $queryexists",$logfile);
+            $exec = $stmt->execute();
+            if ($exec === false):
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check failed",$logfile);
             else:
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection table copy failed",$logfile);
-                $tablesuccess = 0;
+                $stmt->store_result();
+                $collection_exists = $stmt->num_rows; //$collection_exists now includes the quantity of tables with the collection name
+                $stmt->close();
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check returned $collection_exists rows",$logfile);
+                if($collection_exists === 0): //No existing collection table
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": No Collection table, creating...",$logfile);
+                    $querycreate = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+                    $stmt = $db->prepare($querycreate);
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Copying collection table: $querycreate",$logfile);
+                    $exec = $stmt->execute();
+                    if ($exec === false):
+                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table copy failed",$logfile);
+                        $tablesuccess = 5;
+                    else:
+                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table copy ok",$logfile);
+                        $tablesuccess = 1;
+                    endif;
+                elseif($collection_exists == -1):
+                    $tablesuccess = 5;
+                else: // There is already a table with this name
+                    $tablesuccess = 0;
+                endif;
             endif;
         else:
             $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": User creation unsuccessful, password check failed, aborting",$logfile);
@@ -63,6 +87,8 @@ function newuser($username, $postemail, $password)
         return 2;
     elseif (($usersuccess === 1) AND ($tablesuccess === 0)):
         return 1;
+    elseif (($usersuccess === 1) AND ($tablesuccess === 5)):
+        return 5;
     else:
         return 0;
     endif;
@@ -73,19 +99,21 @@ function setmtcemode($toggle)
     global $db, $logfile;
     if ($toggle == 'off'):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode off",$logfile);
-        $data = array(
-            'mtce' => 0
-        );
+        $mtcequery = 0;
     elseif ($toggle == 'on'):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode on",$logfile);
-        $data = array(
-            'mtce' => 1
-        );
+        $mtcequery = 1;
     endif;
-    if($db->update('admin', $data) === TRUE):
-        $affected_rows = $db->affected_rows;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": query written to '.$affected_rows.' rows",$logfile);
-    else:
-        trigger_error("[ERROR] adminfunctions.php: Function setmtcemode: Error: " . $db->error, E_USER_ERROR);
-    endif;
+        $query = 'UPDATE admin SET mtce=?';
+        $stmt = $db->prepare($query);
+        $stmt->bind_param('i', $mtcequery);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Setting mtce mode to $mtcequery failed",$logfile);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set mtce mode to $mtcequery",$logfile);
+        endif;
 }

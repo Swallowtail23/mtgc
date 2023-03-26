@@ -1,6 +1,6 @@
 <?php
-/* Version:     12.0
-    Date:       25/03/23
+/* Version:     12.1
+    Date:       26/03/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -30,6 +30,8 @@
  *              Refactoring for cards_scry
  *  12.0
  *              PHP 8.1 compatibility
+ *  12.1
+ *              Removed unnecessary db escaping on notes
 */
 
 session_start();
@@ -89,13 +91,13 @@ require('includes/menu.php'); //mobile menu
 if (isset($_GET["deck"])):
     $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
     if (isset($_GET["updatetype"])):
-        $updatetype = $db->escape($_GET["updatetype"]);
+        $updatetype = $_GET["updatetype"];
     endif;
 elseif (isset($_POST["deck"])):
     $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
     $updatenotes    = isset($_POST['updatenotes']) ? 'yes' : '';
-    $newnotes       = $db->escape(filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
-    $newsidenotes   = $db->escape(filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
+    $newnotes       = filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+    $newsidenotes   = filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 else: ?>
     <div id='page'>
     <div class='staticpagecontent'>

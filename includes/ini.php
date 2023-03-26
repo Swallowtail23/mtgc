@@ -60,8 +60,6 @@ endif;
 $loglevelini = $ini_array['general']['Loglevel'];
 
 //Set password parameters
-$Blowfish_Pre = $ini_array['security']['Blowfish_Pre'];
-$Blowfish_End = $ini_array['security']['Blowfish_End'];
 $Badloglimit = $ini_array['security']['Badloginlimit'];
 
 //Card image location
@@ -97,6 +95,8 @@ define('DB_HOST', $ini_array['database']['DBServer']);  //host
 define('DB_USER', $ini_array['database']['DBUser']);    // db username
 define('DB_PASS', $ini_array['database']['DBPass']);    // db password 
 define('DB_NAME', $ini_array['database']['DBName']);    // db name
+
+$dbname = $ini_array['database']['DBName'];
 
 try {
     $db = new Mysqli_Manager();

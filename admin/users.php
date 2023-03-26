@@ -81,13 +81,13 @@ require('../includes/menu.php');
         <?php 
         // Generate new account or do password reset
         if ((isset($newuser)) AND ($newuser === "yes")):
-            $newuserstatus = newuser($username, $postemail, $password);
+            $newuserstatus = newuser($username, $postemail, $password, $dbname);
             if ($newuserstatus === 2):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, password successfully recorded and checked.</div>";    
                 echo "<div class='alert-box success'><span>success: </span>Writing table $mytable successful.</div>";    
             elseif ($newuserstatus === 1):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail password successfully recorded and checked.</div>";    
-                echo "<div class='alert-box error'><span>error: </span>Writing table failed. If it was a password reset all good, otherwise check manually.</div>"; 
+                echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, already exists for this user.</div>"; 
             else:
                 echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";    
             endif;
@@ -134,7 +134,7 @@ require('../includes/menu.php');
                     endif;
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser'):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
                     if ($db->delete('users',"WHERE usernumber = '$sql_id'")):
                         if($nukeuser = $db->select('username','users',"WHERE usernumber = '$sql_id'")):
                             if ($nukeuser->num_rows == 0):
@@ -147,14 +147,27 @@ require('../includes/menu.php');
                         endif;
                     endif;
                     $sqldrop = "DROP TABLE $usertable";
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running $sqldrop",$logfile);
                     $db->query($sqldrop);
-                    if($droptable = $db->select('*',"$usertable")):
-                        if ($droptable->num_rows == 0):
-                            echo "<div class='alert-box success'><span>success: </span>Table dropped for $sql_name</div>";    
-                            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Table drop successful",$logfile);
-                        else:    
-                            echo "<div class='alert-box error'><span>error: </span>Table not dropped for $sql_name</div>";    
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Table drop failed",$logfile);
+                    $queryexists = "SHOW TABLES LIKE '$usertable'";
+                    $stmt = $db->prepare($queryexists);
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if collection table still exists: $queryexists",$logfile);
+                    $exec = $stmt->execute();
+                    if ($exec === false):
+                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check failed",$logfile);
+                    else:
+                        $stmt->store_result();
+                        $collection_exists = $stmt->num_rows; //$collection_exists now includes the quantity of tables with the collection name
+                        $stmt->close();
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check returned $collection_exists rows",$logfile);
+                        if($collection_exists === 0): //No existing collection table
+                            echo "<div class='alert-box success'><span>success: </span>Table dropped for $sql_name</div>";
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check shows 0",$logfile);
+                        elseif($collection_exists == -1):
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Shouldn't be here...",$logfile);
+                        else: // There is still a table with this name
+                            echo "<div class='alert-box error'><span>error: </span>Table not dropped for $sql_name</div>";
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table still exists",$logfile);
                         endif;
                     endif;
                 endif;
