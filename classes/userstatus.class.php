@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       11/01/20
+/* Version:     3.0
+    Date:       28/03/2023
     Name:       userstatus.class.php
     Purpose:    User status class - gets user status, gets and increments 
                 bad login count. Also triggers 'locked' status when ini file 
@@ -16,6 +16,8 @@
  *  2.0
  *              Added ZeroBadLogin public function, reset bad login count to 
  *                  zero after a good login
+ *  3.0
+ *              Corrected empty array key for invalid email address
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -102,6 +104,7 @@ class UserStatus {
                     $msg = new Message;
                     $msg->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__," called with invalid email address $email",$logfile);
                     $this->badlogincount['code'] = 0;
+                    $this->badlogincount['count'] = null;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
                     $this->badlogincount['code'] = 1;    
@@ -136,16 +139,21 @@ class UserStatus {
     }    
     
     public function ZeroBadLogin($email) {
-        $data = array(
-            'badlogins' => 0
-        );
         global $db;
-            $email = "'".($db->escape($email))."'";
-            if($row = $db->update('users', $data,"WHERE email=$email") === TRUE):
-                //updated
-            else:
-                trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
-            endif;
+        global $logfile;
+        $badlogins = 0;
+        $query = "UPDATE users SET badlogins=? WHERE email='$email'";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param('i', $badlogins);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Resetting bad login count failed",$logfile);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset bad login count to 0",$logfile);
+        endif;
     }
     
     public function TriggerLocked($email) {

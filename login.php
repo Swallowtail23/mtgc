@@ -1,5 +1,5 @@
 <?php 
-/* Version:     3.0
+/* Version:     4.0
     Date:       18/03/23
     Name:       login.php
     Purpose:    Check for existing session, process login.
@@ -13,6 +13,8 @@
  *              Reset bad login count to zero after a good login
  *  3.0
  *              Moved to password-verify
+ *  4.0
+ *              Corrected logic around invalid user emails
 */
 
 session_start();
@@ -75,7 +77,7 @@ if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has
         $password = $_POST['password'];
         $badlog = new UserStatus;
         $badlog_result = $badlog->GetBadLogin($email);
-        if ($badlog_result['count'] < ($Badloglimit)):
+        if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
             $pwval = new PasswordCheck;
             $pwval_result = $pwval->PWValidate($email,$password);
             if ($pwval_result === 10):
@@ -123,12 +125,18 @@ if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has
                 endif;            
             elseif ($pwval_result === 2):
                 echo 'Incorrect username/password. Please try again.';
-                $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
                 $obj = new UserStatus;$obj->IncrementBadLogin($email);
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                 exit();
             endif;
+        elseif($badlog_result['count'] === null):
+            echo 'Incorrect username/password. Please try again.';
+            $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+            session_destroy();
+            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+            exit();
         else:
             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
             $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
