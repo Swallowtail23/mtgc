@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       11/01/20
+/* Version:     3.0
+    Date:       28/03/2023
     Name:       userstatus.class.php
     Purpose:    User status class - gets user status, gets and increments 
                 bad login count. Also triggers 'locked' status when ini file 
@@ -16,6 +16,8 @@
  *  2.0
  *              Added ZeroBadLogin public function, reset bad login count to 
  *                  zero after a good login
+ *  3.0
+ *              Corrected empty array key for invalid email address
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -102,6 +104,7 @@ class UserStatus {
                     $msg = new Message;
                     $msg->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__," called with invalid email address $email",$logfile);
                     $this->badlogincount['code'] = 0;
+                    $this->badlogincount['count'] = null;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
                     $this->badlogincount['code'] = 1;    
