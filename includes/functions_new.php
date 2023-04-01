@@ -946,10 +946,10 @@ function scryfall($cardid)
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
         endif;
         if(!isset($prices)):
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, writing prices...",$logfile);
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, writing prices $price, $price_foil",$logfile);
             $query = 'UPDATE cards_scry SET price=?,price_foil=? WHERE id=?';
             $stmt = $db->prepare($query);
-            $stmt->bind_param('iis', $price, $price_foil,$cardid);
+            $stmt->bind_param('sss',$price,$price_foil,$cardid);
             if ($stmt === false):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
             endif;

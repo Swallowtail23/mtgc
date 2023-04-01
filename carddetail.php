@@ -477,6 +477,17 @@ require('includes/menu.php'); //mobile menu
             else:
                 $scryfallimg = null;
             endif;
+            if(isset($row['price'])):
+                $price_log = $row['price'];
+            else:
+                $price_log = 'none';
+            endif;
+            if(isset($row['price_foil'])):
+                $price_foil_log = $row['price_foil'];
+            else:
+                $price_foil_log = 'none';
+            endif;
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Price from database is: $price_log/$price_foil_log",$logfile);
             if($scryfallimg !== null):
                 $scryfallimg = $db->escape($scryfallimg,'str');
             endif;
