@@ -279,13 +279,21 @@ endif;
                     <span class="box"></span>Land
                 </label>
             </span>
-            <span class="checkbox-group">
+            <span class="parametermed checkbox-group">
                 <input id='cb24' type="checkbox" class="checkbox" name="token" value="yes">
                 <label for='cb24'>
                     <span class="check"></span>
                     <span class="box"></span>Token
                 </label>
-            </span></div><br>
+            </span><br>
+            <span class="checkbox-group">
+                <input id='cb25' type="checkbox" class="checkbox" name="battle" value="yes">
+                <label for='cb25'>
+                    <span class="check"></span>
+                    <span class="box"></span>Battle
+                </label>
+            </span>
+            </div><br>
             <h4 class="h4">Tribe</h4>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>

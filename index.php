@@ -91,6 +91,7 @@ $green = isset($_GET['green']) ? 'yes' : '';
 $artifact = isset($_GET['artifact']) ? 'yes' : '';
 $colourless = isset($_GET['colourless']) ? 'yes' : '';
 $land = isset($_GET['land']) ? 'yes' : '';
+$battle = isset($_GET['battle']) ? 'yes' : '';
 $valid_colourOp = array("and","or","");
 $colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
 if (!in_array($colourOp,$valid_colourOp)):

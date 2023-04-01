@@ -224,6 +224,12 @@ elseif ($adv == "yes" ) :
         endif;
         $criteriaType .= "cards_scry.type LIKE '%land%' ";
     endif;
+    if ($battle == "yes"):
+        if (!empty($criteriaType)) :
+            $criteriaType .= "OR ";
+        endif;
+        $criteriaType .= "cards_scry.type LIKE '%battle%' ";
+    endif;
     if ($token == "yes"):
         if (!empty($criteriaType)) :
             $criteriaType .= "OR ";
