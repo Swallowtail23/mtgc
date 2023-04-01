@@ -1,6 +1,6 @@
 <?php
-/* Version:     6.0
-    Date:       25/03/23
+/* Version:     7.0
+    Date:       01/04/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -19,6 +19,8 @@
  *              Javascript simplification and Ajax changes
  *  6.0
  *              Layout changes for Arena cards
+ *  7.0
+ *              Add flip capability for battle cards
 */
 
 //Call script initiation mechs
@@ -749,7 +751,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class='gridbox item'>
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
-                                $reversible_layouts = ['transform','modal_dfc','reversible_card','double_faced_token'];
+                                $reversible_layouts = ['transform','modal_dfc','reversible_card','double_faced_token','battle'];
                                 if(in_array($row['layout'],$reversible_layouts)):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):

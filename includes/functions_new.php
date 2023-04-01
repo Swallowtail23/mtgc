@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.0
-    Date:       25/03/23
+/* Version:     12.0
+    Date:       01/04/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -40,6 +40,8 @@
  *              Refactoring for cards_scry
  * 11.0
  *              PHP 8.1 compatibility
+ * 12.0
+ *              Add flip image capability for battle cards
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -477,7 +479,7 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout)
     global $db, $logfile, $serveremail, $adminemail;
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
-    $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token'];
+    $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token','battle'];
     $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
     if(in_array($layout,$flip_types)):

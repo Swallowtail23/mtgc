@@ -1,6 +1,6 @@
 <?php 
-/* Version:     13.0
-    Date:       25/03/23
+/* Version:     14.0
+    Date:       01/04/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -38,6 +38,8 @@
  *              Add Arena legalities
  * 13.0
  *              PHP 8.1 compatibility
+ * 14.0
+ *              Add flip capability for battle cards
 */
 
 session_start();
@@ -637,7 +639,7 @@ require('includes/menu.php'); //mobile menu
             $myfoil = (isset($myfoil)) ? htmlentities($myfoil,ENT_QUOTES,"UTF-8") : '';
             $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
 
-            $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token'];  // Set flip types which trigger a second (reverse) card section
+            $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token','battle'];  // Set flip types which trigger a second (reverse) card section
             $token_layouts = ['double_faced_token','token','emblem'];
             ?>
                 <div id="carddetailheader">
@@ -720,7 +722,8 @@ require('includes/menu.php'); //mobile menu
                                     $obj = new Message;
                                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
                                     // Set classes for hover image
-                                    if($row['layout'] === 'split' OR $row['layout'] === 'planar'):
+                                    $image90rotate = array('split','planar','battle');
+                                    if(in_array($row['layout'],$image90rotate)):
                                         $hoverclass = 'imgfloat splitfloat';
                                     else:
                                         $hoverclass = 'imgfloat';
