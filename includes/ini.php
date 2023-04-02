@@ -122,3 +122,35 @@ try {
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }
+
+/** Define card types and variables which require special treatment **/
+
+// Card layouts which get a flip button
+$flip_button_cards = array('transform',
+                           'modal_dfc',
+                           'reversible_card',
+                           'double_faced_token',
+                           'battle');
+
+// Card layouts which need two detail sections on card detail page
+$two_card_detail_sections = array('transform',
+                                  'modal_dfc',
+                                  'reversible_card',
+                                  'double_faced_token',
+                                  'battle',
+                                  'art_series');
+
+// Two layouts, array to drive looking for face 1 content for primary card info on card detail page
+$layouts_double = array('transform',
+                        'modal_dfc',
+                        'reversible_card',
+                        'double_faced_token',
+                        'battle',
+                        'adventure',
+                        'split',
+                        'flip');
+
+// Token layouts
+$token_layouts = array('double_faced_token',
+                       'token',
+                       'emblem');

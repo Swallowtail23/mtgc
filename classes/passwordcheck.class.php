@@ -42,18 +42,18 @@ class PasswordCheck {
             if($row = $db->select('password','users',"WHERE email=$email LIMIT 1")):
                 if ($row->num_rows === 0):
                     $msg = new Message;
-                    $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Invalid email address",$logfile);
+                    $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Invalid email address, returning 1",$logfile);
                     $this->passwordvalidate = 1;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
                         $db_password = $row['password'];
                         if (password_verify($password, $db_password)):
                             $msg = new Message;
-                            $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Email and password validated for $email",$logfile);
+                            $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Email and password validated for $email, returning 10",$logfile);
                             $this->passwordvalidate = 10;
                         else:
                             $msg = new Message;
-                            $msg->MessageTxt("[NOTICE]", "Class " .__METHOD__ . " ".__LINE__,"Invalid password",$logfile);
+                            $msg->MessageTxt("[NOTICE]", "Class " .__METHOD__ . " ".__LINE__,"Valid email, invalid password, returning 2",$logfile);
                             $this->passwordvalidate = 2;
                         endif;
                     //endif;    
