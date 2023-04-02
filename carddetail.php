@@ -497,7 +497,7 @@ require('includes/menu.php'); //mobile menu
             $imgname_2 = $cardid."_b.jpg";
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
-            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
+            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImageNew result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
             if($imagefunction['front'] == 'error'):
                 $imageurl = '/cardimg/back.jpg';
@@ -650,8 +650,6 @@ require('includes/menu.php'); //mobile menu
             $myfoil = (isset($myfoil)) ? htmlentities($myfoil,ENT_QUOTES,"UTF-8") : '';
             $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
 
-            $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token','battle'];  // Set flip types which trigger a second (reverse) card section
-            $token_layouts = ['double_faced_token','token','emblem'];
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -713,7 +711,7 @@ require('includes/menu.php'); //mobile menu
                             </div>
                   <?php endif; 
                         $img_id = 'cardimg';
-                        if (in_array($row['layout'],$flip_types)):
+                        if (in_array($row['layout'],$two_card_detail_sections)):
                             echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                         endif; ?>
                         <table>
@@ -879,7 +877,6 @@ require('includes/menu.php'); //mobile menu
                                 echo "<br>";
                             endif;
                         endif;
-                        $layouts_double = array ('transform','modal_dfc','adventure','split','reversible_card','flip','double_faced_token');
                         if(in_array($row["layout"],$layouts_double)):
                             if(isset($row['f1_flavor_name']) AND $row['f1_flavor_name'] !== ''):
                                 echo "<b>Name: </b>{$row['f1_flavor_name']} <i>({$row['f1_name']})</i>";
@@ -1520,7 +1517,7 @@ require('includes/menu.php'); //mobile menu
                     else:     
                         $result = $stmt->get_result();
                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
-                        if (($result->num_rows === 0) AND !in_array($row['layout'],$flip_types)):
+                        if (($result->num_rows === 0) AND !in_array($row['layout'],$two_card_detail_sections)):
                             // no rulings ?>
                             <div>
                             <h3 class='shallowh3'>Rulings</h3>&nbsp;
@@ -1543,7 +1540,7 @@ require('includes/menu.php'); //mobile menu
                                 $ruling = $ruling.$newdate.": ".symbolreplace($rulingrow['comment'])." (".$source.")<br>";
                             endwhile;
                             $ruling = autolink($ruling, array("target"=>"_blank","rel"=>"nofollow"));
-                            if (!in_array($row['layout'],$flip_types)):
+                            if (!in_array($row['layout'],$two_card_detail_sections)):
                                 echo "<h3 class='shallowh3'>Rulings:</h3> ".$ruling."&nbsp;";
                             endif;
                             echo("</div>");
@@ -1552,7 +1549,7 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <!-- Flip card -->
                 <?php 
-                if (in_array($row['layout'],$flip_types)): ?>
+                if (in_array($row['layout'],$two_card_detail_sections)): ?>
                     <div id="carddetailflip">
                         <div id="carddetailflipimg">    
                             <table>

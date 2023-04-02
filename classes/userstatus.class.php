@@ -108,6 +108,9 @@ class UserStatus {
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
                     $this->badlogincount['code'] = 1;    
+                    if(is_null($row['badlogins'])):
+                        $row['badlogins'] = 0;
+                    endif;
                     $this->badlogincount['count'] = $row['badlogins'];
                     $msg = new Message;
                     $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__," called: $email has {$row['badlogins']} bad logins",$logfile);
@@ -124,49 +127,40 @@ class UserStatus {
     }
     
     public function IncrementBadLogin($email) {
-        $oldcount = $this->GetBadLogin($email);
-        $newcount = $oldcount['count'] + 1;
-        $data = array(
-            'badlogins' => $newcount
-        );
-        global $db;
-            $email = "'".($db->escape($email))."'";
-            if($row = $db->update('users', $data,"WHERE email=$email") === TRUE):
-                //updated
-            else:
-                trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
-            endif;
+        global $db,$logfile;
+        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Incrementing bad login count for $email...",$logfile);
+        $query =   "UPDATE users 
+                    SET  badlogins = CASE WHEN badlogins IS NULL
+                                               THEN 1
+                                               ELSE badlogins+1
+                                               END
+                    WHERE email=?";
+        if ($db->execute_query($query, [$email]) !== TRUE):
+            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+        endif;
     }    
     
     public function ZeroBadLogin($email) {
-        global $db;
-        global $logfile;
-        $badlogins = 0;
-        $query = "UPDATE users SET badlogins=? WHERE email='$email'";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param('i', $badlogins);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $exec = $stmt->execute();
-        if ($exec === false):
+        global $db,$logfile;
+        $query = "UPDATE users SET  badlogins = 0 WHERE email=?";
+        if ($db->execute_query($query, [$email]) !== TRUE):
             $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Resetting bad login count failed",$logfile);
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset bad login count to 0",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset bad login count to 0: {$db->info}",$logfile);
         endif;
     }
     
     public function TriggerLocked($email) {
-        $data = array(
-            'status' => 'locked'
-        );
-        global $db;
-            $email = "'".($db->escape($email))."'";
-            if($row = $db->update('users', $data,"WHERE email=$email") === TRUE):
-                //updated
-            else:
-                trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
-            endif;
+        global $db,$logfile;
+        $status = 'locked';
+        $query = "UPDATE users SET status=? WHERE email=?";
+        if ($db->execute_query($query, [$status,$email]) !== TRUE):
+            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Locking account $email failed",$logfile);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Locking account $email: {$db->info}",$logfile);
+        endif;
     }    
     
     public function __toString() {

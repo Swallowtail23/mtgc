@@ -721,7 +721,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $meld = '';
                             endif;
-                            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout']);
+                            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
                             if($imagefunction['front'] == 'error'):
                                 $imageurl = '/cardimg/back.jpg';
                             else:
@@ -752,8 +752,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             <div class='gridbox item'>
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
-                                $reversible_layouts = ['transform','modal_dfc','reversible_card','double_faced_token','battle'];
-                                if(in_array($row['layout'],$reversible_layouts)):
+                                if(in_array($row['layout'],$flip_button_cards)):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";

@@ -22,9 +22,7 @@ use JsonMachine\Items;
 
 // Lists
 $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','ph','zht','ko','pt'];
-// $layouts_to_skip = ['double_faced_token','token','emblem'];
 $layouts_to_skip = [];
-$layouts_flips = ['transform','split','reversible_card','flip','meld','modal_dfc'];
 
 // How old to overwrite
 $max_fileage = 23 * 3600; // 23 hours for file age before downloading new one

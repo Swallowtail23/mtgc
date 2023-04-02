@@ -170,24 +170,18 @@ require('../includes/menu.php');
             $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning off minimised CSS...",$logfile);
             $cssquery = 0;
             $query = 'UPDATE admin SET usemin=?';
-            $stmt = $db->prepare($query);
-            $stmt->bind_param('i', $cssquery);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Turning off minified CSS failed",$logfile);
+            if ($db->execute_query($query, [$cssquery]) === TRUE):
+                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned off minimised CSS",$logfile);
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Turned off minified CSS",$logfile);
+                trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
             endif;
             $cssver = cssver(); //run again
         endif;
         if((isset($publishcss)) AND ($publishcss == "y")):
-            $data = array(
-                'usemin' => 1
-            );
-            if ($db->update('admin', $data) === TRUE):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning on minimised CSS...",$logfile);
+            $cssquery = 1;
+            $query = 'UPDATE admin SET usemin=?';
+            if ($db->execute_query($query, [$cssquery]) === TRUE):
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned on minimised CSS",$logfile);
             else:
                 trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);

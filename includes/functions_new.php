@@ -474,15 +474,13 @@ function getimgname($cardid)
     return $imgname;
 }
 
-function getImageNew($setcode,$cardid,$ImgLocation,$layout)
+function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sections)
 {
     global $db, $logfile, $serveremail, $adminemail;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
-    $flip_types = ['transform','art_series','modal_dfc','reversible_card','double_faced_token','battle'];
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
     $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
-    if(in_array($layout,$flip_types)):
+    if(in_array($layout,$two_card_detail_sections)):
         $localfile_b = $ImgLocation.$setcode.'/'.$cardid.'_b.jpg';
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Back file should be at $localfile_b",$logfile);
     endif;
@@ -847,26 +845,43 @@ function scryfall($cardid)
         $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
         $price = $scryfall_result["prices"]["usd"];
         $price_foil = $scryfall_result["prices"]["usd_foil"];
-        $data = array(
-            'tcg_buy_uri' => $tcg_buy_uri
-            );
-        if ($db->update('scryfalljson', $data, "WHERE id='$cardid'")):
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, tcg uri updated",$logfile);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, tcg uri update failed",$logfile);
+        
+        $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri=? WHERE id=?';
+        $stmt = $db->prepare($update_tcg_uri);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
         endif;
-        $data = array(
-            'price' => $price,
-            'price_foil' => $price_foil,
-            );
-        if ($db->update('cards_scry', $data, "WHERE id='$cardid'")):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_tcg_uri",$logfile);
+        $stmt->bind_param('ss', $tcg_buy_uri,$cardid);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
             $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated",$logfile);
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri failed ".$db->error, E_USER_ERROR,$logfile);
         else:
             $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
+        endif;
+
+        $update_prices = 'UPDATE cards_scry SET price=?,price_foil=? WHERE id=?';
+        $stmt = $db->prepare($update_prices);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_prices",$logfile);
+        $stmt->bind_param('sss', $price,$price_foil,$cardid);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed: ".$db->error, E_USER_ERROR,$logfile);
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
         endif;
 
     // READ
