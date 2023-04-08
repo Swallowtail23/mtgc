@@ -731,8 +731,7 @@ require('includes/menu.php'); //mobile menu
                                     $obj = new Message;
                                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
                                     // Set classes for hover image
-                                    $image90rotate = array('split','planar','battle');
-                                    if(in_array($row['layout'],$image90rotate)):
+                                    if(in_array($row['layout'],$image90rotate) OR in_array($row['f1_type'],$image90rotate)):
                                         $hoverclass = 'imgfloat splitfloat';
                                     else:
                                         $hoverclass = 'imgfloat';

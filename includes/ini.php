@@ -154,3 +154,7 @@ $layouts_double = array('transform',
 $token_layouts = array('double_faced_token',
                        'token',
                        'emblem');
+
+$image90rotate = array('split',
+                       'planar',
+                       'Battle — Siege');
