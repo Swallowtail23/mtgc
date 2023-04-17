@@ -1058,7 +1058,7 @@ function refresh_image($cardid)
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     else:
         $row = $result->fetch_assoc();
-        $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout']); //$ImgLocation is set in ini
+        $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
         if($imagefunction['front'] != 'error'):
             $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
             $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
@@ -1080,5 +1080,5 @@ function refresh_image($cardid)
     endif;
     //Refresh image
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
-    $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout']); //$ImgLocation is set in ini
+    $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
 }
