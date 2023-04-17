@@ -1050,7 +1050,7 @@ function validateTrueDecimal($v)
 
 function refresh_image($cardid)
 {
-    global $db, $logfile, $ImgLocation;
+    global $db, $logfile, $ImgLocation, $two_card_detail_sections;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$logfile);
     $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$cardid' LIMIT 1";
     $result = $db->query($sql);
