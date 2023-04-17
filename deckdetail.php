@@ -175,7 +175,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $quickaddstring = filter_input(INPUT_GET, 'quickadd', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+    $quickaddstring = htmlspecialchars($_GET["quickadd"],ENT_NOQUOTES);
     
     //Quantity
     preg_match("~^(\d+)~", $quickaddstring,$qty);

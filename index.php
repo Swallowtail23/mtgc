@@ -66,7 +66,7 @@ else :
 endif;
 $start_from = ($page - 1) * $perpage;
 if (isset($_GET['name']) AND $_GET['name'] !== ""):
-    $nameget = filter_input(INPUT_GET, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+    $nameget = htmlspecialchars($_GET["name"],ENT_NOQUOTES);
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in nametrim is $nametrim",$logfile);
