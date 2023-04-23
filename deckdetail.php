@@ -1,6 +1,6 @@
 <?php
-/* Version:     12.1
-    Date:       26/03/23
+/* Version:     13.0
+    Date:       23/04/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -32,6 +32,8 @@
  *              PHP 8.1 compatibility
  *  12.1
  *              Removed unnecessary db escaping on notes
+ *  13.0
+ *              Fixed quick add import not reading setcode, tidied up some logging to include line number
 */
 
 session_start();
@@ -189,15 +191,14 @@ if (isset($_GET["quickadd"])):
     //Set
     preg_match('#\((.*?)\)#', $quickaddstring, $settomatch);
     if (isset($settomatch[0])):
-        $quickaddstring = rtrim(rtrim($quickaddstring,$settomatch[0]));
+        $quickaddcard = rtrim(rtrim($quickaddstring,$settomatch[0]));
         $quickaddset = rtrim(ltrim(strtoupper($settomatch[0]),"("),")");
     else:
         $quickaddset = '';
     endif;
     //Card
-    $quickaddcard = htmlspecialchars_decode($quickaddstring,ENT_QUOTES);
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
+    $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
     $quickaddcard = $db->escape($quickaddcard);
     
     if($quickaddset == ''):
@@ -215,7 +216,7 @@ if (isset($_GET["quickadd"])):
         endif;
     else:
         if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
-                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
+                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
             if ($quickaddcardid->num_rows > 0):
                 while ($results = $quickaddcardid->fetch_assoc()):
                     $cardtoadd = $results['id'];
@@ -228,9 +229,9 @@ if (isset($_GET["quickadd"])):
         endif;
     endif;
     if($cardtoadd == 'cardnotfound'):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Quick add - Card not found",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Quick add result: $cardtoadd",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
         adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
     endif;
 endif;
@@ -267,7 +268,7 @@ elseif($plusside == 'yes'):
 elseif($minusside == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,'side','1');
 elseif($commander == 'yes'):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
     addcommander($decknumber,$cardtoaction);
 elseif($commander == 'no'):
     delcommander($decknumber,$cardtoaction);
@@ -455,8 +456,7 @@ endif;
                 <?php 
                 // Only show this row if the decktype is Commander style
                 if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
-                    $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"This is a '$decktype' deck, adding commander row",$logfile);
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, adding commander row",$logfile);
                     ?>
                     <tr>
                         <td colspan='7'>
@@ -587,8 +587,8 @@ endif;
                             <?php
                             if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$cardlegendary",$logfile);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__," - type: $cardlegendary",$logfile);
                                 if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
                                     echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=yes'><img class='delcard' src=images/arrowup.png alt='commander'></a>";
                                 endif;
