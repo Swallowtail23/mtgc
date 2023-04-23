@@ -33,7 +33,7 @@ forcechgpwd();                                  //Check if user is disabled or n
 // Default numbers per page and max
 $listperpage = 30;
 $gridperpage = 30;
-$bulkperpage = 100;
+$bulkperpage = 1000;
 $maxresults = 2500;
 
 // Define layout and results per page for each layout type
