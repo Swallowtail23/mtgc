@@ -186,8 +186,16 @@ endif;
                 else:
                     $currentblock = null;
                     while ($row = $result->fetch_assoc()):
-                        $set_upper = strtoupper($row['setcode']);
-                        $parent_set_upper = strtoupper($row['parent_set_code']);
+                        if(isset($row['setcode']) AND $row['setcode'] !== null):
+                            $set_upper = strtoupper($row['setcode']);
+                        else:
+                            $set_upper = '';
+                        endif;
+                        if(isset($row['parent_set_code']) AND $row['parent_set_code'] !== null):
+                            $parent_set_upper = strtoupper($row['parent_set_code']);
+                        else:
+                            $parent_set_upper = '';
+                        endif;
                         if( $currentblock == null || $parent_set_upper != $currentblock ):
                             if( $currentblock != null ):
                                 echo "</optgroup\n>";
