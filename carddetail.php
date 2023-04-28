@@ -1225,7 +1225,7 @@ require('includes/menu.php'); //mobile menu
                                     $tcgdirectlink = null;
                                 endif;?>
                                 <table id='tcgplayer' width="100%">
-                          <?php if((isset($row["price"]) AND $row["price"] !== "")):?>
+                          <?php if((isset($row["price"]) AND $row["price"] !== "" AND $row["cs_normal"] !== "")):?>
                                     <tr>
                                         <td class="buycellleft">
                                             Normal
@@ -1235,7 +1235,7 @@ require('includes/menu.php'); //mobile menu
                                         </td>
                                     </tr>
                           <?php endif;      
-                                if((isset($row["price_foil"]) AND $row["price_foil"] !== "")):?>
+                                if((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["cs_foil"] !== "")):?>
                                     <tr>
                                         <td class="buycellleft">
                                             Foil
