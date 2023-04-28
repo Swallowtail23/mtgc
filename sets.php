@@ -107,7 +107,27 @@ require('includes/menu.php');
                 </tr> <?php
             else:
                 while ($row = $result->fetch_assoc()): 
-                    $setcodeupper = strtoupper($row['setcode']);?>
+                    if(isset($row['setcode']) AND $row['setcode'] !== null):
+                        $setcodeupper = strtoupper($row['setcode']);
+                    else:
+                        $setcodeupper = '';
+                    endif;
+                    if(isset($row['set_name']) AND $row['set_name'] !== null):
+                        $setname = $row['set_name'];
+                    else:
+                        $setname = '';
+                    endif;
+                    if(isset($row['set_type']) AND $row['set_type'] !== null):
+                        $settype = ucfirst($row['set_type']);
+                    else:
+                        $settype = '';
+                    endif;
+                    if(isset($row['parent_set_code']) AND $row['parent_set_code'] !== null):
+                        $parentsetcode = strtoupper($row['parent_set_code']);
+                    else:
+                        $parentsetcode = '';
+                    endif;
+                    ?>
                     <tr>
                         <td>
                             <?php echo "<img class='seticon' src='cardimg/seticons/{$row['parent_set_code']}.svg' alt='$setcodeupper'>"; ?>
@@ -116,13 +136,13 @@ require('includes/menu.php');
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td>
-                            <?php echo $row['set_name']; ?>
+                            <?php echo $setname; ?>
                         </td>
                         <td>
-                            <?php echo ucfirst($row['set_type']); ?>
+                            <?php echo $settype; ?>
                         </td>
                         <td>
-                            <?php echo strtoupper($row['parent_set_code']); ?>
+                            <?php echo $parentsetcode; ?>
                         </td>
                     </tr>
                     <?php 
