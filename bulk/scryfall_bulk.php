@@ -1,6 +1,6 @@
 <?php
-/* Version:     3.0
-    Date:       19/03/23
+/* Version:     4.0
+    Date:       03/06/23
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -11,6 +11,9 @@
  
  *  3.0
  *              Add Arena legalities
+ *  4.0
+ *              Add parameter for refresh of file
+ *              Add handling for zero-byte download
 */
 
 require ('bulk_ini.php');
@@ -25,7 +28,13 @@ $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','ph',
 $layouts_to_skip = [];
 
 // How old to overwrite
-$max_fileage = 23 * 3600; // 23 hours for file age before downloading new one
+// call script with "scryfall_bulk.php new" to always re-download
+if(isset($argv[1]) AND $argv[1] == "new"):
+    $max_fileage = 0;
+else:
+    $max_fileage = 23 * 3600;
+endif;
+// 23 hours for file age before downloading new one
 // Delete skips, or leave in the database if they are already there?
 
 // Scryfall bulk cards URL
@@ -38,7 +47,7 @@ $file_location = $ImgLocation.'json/bulk.json';
 $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
 
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching $url",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching today's URL from $url",$logfile);
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 $curlresult = curl_exec($ch);
@@ -49,38 +58,60 @@ if(isset($scryfall_bulk["type"]) AND $scryfall_bulk["type"] === "default_cards")
 endif;
 
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
-if (file_exists($file_location)):
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
+if($max_fileage == 0):
+    $download = 3;
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Caled with 'new' - refreshing download",$logfile);    
+elseif (file_exists($file_location) AND filesize($file_location) > 0):
     $fileage = filemtime($file_location);
     $file_date = date('d-m-Y H:i',$fileage);
+    $file_size = filesize($file_location);
     if (time()-$fileage > $max_fileage):
         $download = 2;
         $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File old ($file_date), downloading: $bulk_uri",$logfile);
+        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old ($file_date), downloading: $bulk_uri",$logfile);
     else:
         $download = 0;
         $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh ($file_location, $file_date, $file_size), skipping download",$logfile);    
     endif;
+elseif (file_exists($file_location) AND filesize($file_location) == 0):
+    $download = 1;
+    $obj = new Message;
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: 0-byte file at ($file_location), downloading: $url",$logfile);
 else:
     $download = 1;
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: No file at ($file_location), downloading: $url",$logfile);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: No file at ($file_location), downloading: $url",$logfile);
 endif;
 if($download > 0):
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: downloading: $url",$logfile);
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: downloading: $url",$logfile);
     $bulkreturn = downloadbulk($bulk_uri,$file_location);
+    if ($bulkreturn == true AND file_exists($file_location) AND filesize($file_location) > 0):
+        $file_size = filesize($file_location);
+        $obj = new Message;
+        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Bulk function returned no error, file at ($file_location), size greater than 0 ($file_size), proceeding",$logfile);
+    else:
+        $obj = new Message;
+        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File download error, waiting 5 minutes to try again",$logfile);
+        sleep(300);
+        $bulkreturn = downloadbulk($bulk_uri,$file_location);
+        if (!($bulkreturn == true AND file_exists($file_location) AND filesize($file_location) > 0)):
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File download error on retry, exiting.",$logfile);
+            exit;
+        endif;
+    endif;
 endif;
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Bulk API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($file_location, ['decoder' => new ExtJsonDecoder(true)]);
 foreach($data AS $key => $value):
     $total_count = $total_count + 1;
     $id = $value["id"];
     $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": scryfall bulk API, Record $id: $total_count",$logfile);
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API, Record $id: $total_count",$logfile);
     $multi_1 = $multi_2 = $name_1 = $name_2 = null;
     $printed_name_1 = $printed_name_2 = $manacost_1 = $manacost_2 = null;
     $flavor_name_1 = $flavor_name_2 = $power_1 = $power_2 = null;
@@ -515,22 +546,22 @@ foreach($data AS $key => $value):
             if($status === 1):
                 $count_add = $count_add + 1;
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Added card - no error returned; return code: $status",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Added card - no error returned; return code: $status",$logfile);
             elseif($status === 2):
                 $count_update = $count_update + 1;
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Updated card - no error returned; return code: $status",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updated card - no error returned; return code: $status",$logfile);
             else:
                 $count_other = $count_other + 1;
                 $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Updated card - no error returned; return code: $status",$logfile);
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updated card - no error returned; return code: $status",$logfile);
             endif;
         endif;
         $stmt->close();
     endif;
 endforeach;
 $obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Bulk update completed: Total $total_count, skipped $count_skip, included $count_inc, added: $count_add, updated: $count_update, other: $count_other",$logfile);
+$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Bulk update completed: Total $total_count, skipped $count_skip, included $count_inc, added: $count_add, updated: $count_update, other: $count_other",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
 $subject = "MTG bulk update completed"; 
 $message = "Total: $total_count; total skipped: $count_skip; total included: $count_inc; total added: $count_add; total updated: $count_update";
