@@ -690,6 +690,10 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                 mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if (strpos($row['type'],' //') !== false):
+                            $len = strpos($row['type'], ' //');
+                            $row['type'] = substr($row['type'], 0, $len);
+                        endif;
                         if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] < 1)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
@@ -826,6 +830,10 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if (strpos($row['type'],' //') !== false):
+                            $len = strpos($row['type'], ' //');
+                            $row['type'] = substr($row['type'], 0, $len);
+                        endif;
                         if ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
@@ -937,6 +945,10 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if (strpos($row['type'],' //') !== false):
+                            $len = strpos($row['type'], ' //');
+                            $row['type'] = substr($row['type'], 0, $len);
+                        endif;
                         if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] != 1)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
@@ -1071,6 +1083,10 @@ endif;
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
                         // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
+                        if (strpos($row['type'],' //') !== false):
+                            $len = strpos($row['type'], ' //');
+                            $row['type'] = substr($row['type'], 0, $len);
+                        endif;
                         if ((strpos($row['type'],'Land') !== false) AND (strpos($row['type'],'Land Creature') === false)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
