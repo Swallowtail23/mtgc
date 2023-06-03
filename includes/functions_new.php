@@ -254,6 +254,7 @@ function quickadd($decknumber,$get_string)
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
         adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
     endif;
+    return $cardtoadd;
 }
 
 function adddeckcard($deck,$card,$section,$quantity)
