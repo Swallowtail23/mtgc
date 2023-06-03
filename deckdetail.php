@@ -1,6 +1,6 @@
 <?php
-/* Version:     14.0
-    Date:       24/04/23
+/* Version:     15.0
+    Date:       03/06/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -37,6 +37,10 @@
  *  14.0
  *              Removed ability to add more than 1 for commander decks
  *              Removed qty display for Commander decks
+ *  15.0   
+ *              Improved performance by making "Missing" check manually called, not every page load
+ *              Updated icons
+ *              Added ability to have Partner Commander
 */
 
 session_start();
@@ -1378,6 +1382,10 @@ endif;
                 </form> 
                 <br>
                 TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
+                <?php
+            elseif($missing == 'yes' AND $requiredlist == ''): ?>
+                <h4>All cards in deck are in collection</h4>
+                <br>
                 <?php
             else:?>
                 <h4>Compare to collection for missing cards</h4>
