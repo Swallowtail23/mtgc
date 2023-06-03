@@ -504,16 +504,38 @@ endif;
                                 </script>
                                 <?php
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                ?>
-                                <span 
-                                    onmouseover="" 
-                                    title="Move to Partner"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
-                                    class='material-symbols-outlined'>
-                                    south_east
-                                </span>
-                                <?php
+                                $validpartner = FALSE;
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid partner or background",$logfile);
+                                $i = 0;
+                                while($i < count($second_commander_text)):
+                                    if(str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
+                                        $validpartner = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if($validpartner == TRUE):
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to Partner"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                        class='material-symbols-outlined'>
+                                        south_east
+                                    </span>
+                                    <?php
+                                else:
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to main deck"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
+                                        class='material-symbols-outlined'>
+                                        arrow_downward
+                                    </span>
+                                    <?php
+                                endif;
                                 echo "</td>";
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter noprint'>";
@@ -698,11 +720,18 @@ endif;
                             <?php
                             if(in_array($decktype,$commandertypes)):
                                 $validcommander = FALSE;
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
                                     $validcommander = TRUE;
                                 endif;
+                                $i = 0;
+                                while($i < count($valid_commander_text)):
+                                    if(str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                        $validcommander = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 if($validcommander == TRUE):
                                     ?>
                                     <span 
@@ -938,6 +967,7 @@ endif;
                             echo "</td>";
                             if(in_array($decktype,$commandertypes)):
                                 $validcommander = FALSE;
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 $i = 0;
                                 while($i < count($valid_commander_text)):
                                     if(str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
@@ -946,10 +976,18 @@ endif;
                                     $i++;
                                 endwhile;
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 if($validcommander == TRUE):
-                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=yes'><img class='delcard' src=images/arrowup.png alt='commander'></a>";
-                                endif;
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to Commander"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
+                                        class='material-symbols-outlined'>
+                                        person
+                                    </span>
+                                    <?php
+                                    endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
