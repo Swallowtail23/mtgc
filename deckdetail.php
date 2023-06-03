@@ -188,7 +188,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    quickadd($decknumber,$_GET["quickadd"]);
+    $cardtoadd = quickadd($decknumber,$_GET["quickadd"]);
 endif;
 
 // Get deck details from database
