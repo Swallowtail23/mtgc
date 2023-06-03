@@ -439,6 +439,28 @@ function addcommander($deck,$card)
     endif; 
 }
 
+function addpartner($deck,$card)
+{
+    global $db, $logfile;
+    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND commander = 2");
+    if ($check->num_rows > 0): //Partner already there
+        $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck";
+        if($runquery = $db->query($cardquery)):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Old Partner removed",$logfile);
+        else:
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+        endif; 
+    endif;
+    $status = "+ptnr";
+    $cardquery = "UPDATE deckcards SET commander = '2' WHERE decknumber = $deck AND cardnumber = '$card'";
+    if($runquery = $db->query($cardquery)):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add Partner run: $cardquery, status is $status",$logfile);
+        return $status;
+    else:
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+    endif; 
+}
+
 function delcommander($deck,$card)
 {
     global $db, $logfile;
