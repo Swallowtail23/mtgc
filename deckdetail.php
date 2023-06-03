@@ -1,6 +1,6 @@
 <?php
-/* Version:     13.0
-    Date:       23/04/23
+/* Version:     14.0
+    Date:       24/04/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -34,6 +34,9 @@
  *              Removed unnecessary db escaping on notes
  *  13.0
  *              Fixed quick add import not reading setcode, tidied up some logging to include line number
+ *  14.0
+ *              Removed ability to add more than 1 for commander decks
+ *              Removed qty display for Commander decks
 */
 
 session_start();
@@ -126,6 +129,8 @@ else:
     $commander = '';
 endif;
 $token_layouts = ['double_faced_token','token','emblem']; // cannot be included
+$validtypes = array('Commander','Normal','Tiny Leader');
+$commandertypes = array('Commander','Tiny Leader');
 
 // Check to see if the called deck belongs to the logged in user.
 if(deckownercheck($decknumber,$user) == FALSE): ?>
@@ -152,8 +157,6 @@ endif;
 
 //Update deck type if called before reading info
 if (isset($updatetype)):
-    $validtypes = array('Commander','Normal','Tiny Leader');
-    $commandertypes = array('Commander','Tiny Leader');
     if(in_array($updatetype,$validtypes)):
         $updatetypedata = array(
             'type' => "$updatetype"
@@ -173,67 +176,19 @@ if (isset($updatetype)):
     else:
         trigger_error('[ERROR] deckdetail.php: Error: Invalid deck type', E_USER_ERROR);
     endif;
+    if(in_array($updatetype,$commandertypes)):
+        $query = 'UPDATE deckcards SET cardqty=? WHERE decknumber = ?';
+        if ($db->execute_query($query, [1,$decknumber]) != TRUE):
+            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+        endif;
+    endif;    
 endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $quickaddstring = htmlspecialchars($_GET["quickadd"],ENT_NOQUOTES);
-    
-    //Quantity
-    preg_match("~^(\d+)~", $quickaddstring,$qty);
-    if (isset($qty[0])):
-        $quickaddstring = ltrim(ltrim($quickaddstring,$qty[0]));
-        $quickaddqty = $qty[0];
-    else:
-        $quickaddqty = 1;
-    endif;
-    
-    //Set
-    preg_match('#\((.*?)\)#', $quickaddstring, $settomatch);
-    if (isset($settomatch[0])):
-        $quickaddcard = rtrim(rtrim($quickaddstring,$settomatch[0]));
-        $quickaddset = rtrim(ltrim(strtoupper($settomatch[0]),"("),")");
-    else:
-        $quickaddset = '';
-    endif;
-    //Card
-    $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
-    $quickaddcard = $db->escape($quickaddcard);
-    
-    if($quickaddset == ''):
-        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
-                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
-            if ($quickaddcardid->num_rows > 0):
-                while ($results = $quickaddcardid->fetch_assoc()):
-                    $cardtoadd = $results['id'];
-                endwhile;
-            else:
-                $cardtoadd = 'cardnotfound';
-            endif;
-        else:
-            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
-        endif;
-    else:
-        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
-                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
-            if ($quickaddcardid->num_rows > 0):
-                while ($results = $quickaddcardid->fetch_assoc()):
-                    $cardtoadd = $results['id'];
-                endwhile;
-            else:
-                $cardtoadd = 'cardnotfound';
-            endif;
-        else:
-            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
-        endif;
-    endif;
-    if($cardtoadd == 'cardnotfound'):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
-    else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
-        adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
-    endif;
+    quickadd($decknumber,$_GET["quickadd"]);
 endif;
 
 // Get deck details from database
@@ -243,7 +198,7 @@ if($deckinfo = $db->select_one('deckname,notes,sidenotes,type','decks',"WHERE de
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
 else:
-    trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+    trigger_error('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ".$db->error, E_USER_ERROR);
 endif;
 
 // Add / delete, before calling the deck list
@@ -275,16 +230,31 @@ elseif($commander == 'no'):
 endif;
 
 //Get card list
-$result = $db->query("SELECT *,cards_scry.id AS cardsid 
+$mainquery = ("SELECT *,cards_scry.id AS cardsid 
                         FROM deckcards 
                     LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
                     LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
-                    WHERE decknumber = $decknumber AND cardqty > 0 ORDER BY name");
-$sideresult = $db->query("SELECT *,cards_scry.id AS cardsid 
+                    WHERE decknumber = ? AND cardqty > 0 ORDER BY name");
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $mainquery",$logfile);
+$result = $db->execute_query($mainquery, [$decknumber]);
+if ($result != TRUE):
+    trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
+else:
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+endif;
+
+$sidequery = ("SELECT *,cards_scry.id AS cardsid 
                         FROM deckcards 
                     LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
                     LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
-                    WHERE decknumber = $decknumber AND sideqty > 0 ORDER BY name");
+                    WHERE decknumber = ? AND sideqty > 0 ORDER BY name");
+$sideresult = $db->execute_query($sidequery, [$decknumber]);
+if ($sideresult != TRUE):
+    trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
+else:
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+endif;
+
 //Initialise variables to 0
 $cdr = $creatures = $instantsorcery = $other = $lands = $deckvalue = 0;
 
@@ -302,6 +272,7 @@ while ($row = $sideresult->fetch_assoc()):
     endif;
 endwhile;
 $uniquecardscount = count($resultnames);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards in deck: $uniquecardscount",$logfile);
 $requiredlist = '';
 $requiredbuy = '';
 if($uniquecardscount > 0):
@@ -321,7 +292,7 @@ if($uniquecardscount > 0):
         $resultqty[$key] = $resultqty[$key] + $qty;
     endwhile;
 
-    $shortqty = array_fill(0,$uniquecardscount,'0');
+    $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
     foreach($resultnames as $key=>$value):
         $searchname = $db->escape($value);
         $query = "SELECT SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
@@ -333,12 +304,14 @@ if($uniquecardscount > 0):
                 $shortqty[$key] = 0;
             else:
                 $requiredlist = $requiredlist.$shortqty[$key]." x ".$value."\r\n";
-                $requiredbuy = $requiredbuy.$shortqty[$key]." ".$value." || ";
+                $requiredbuy = $requiredbuy.$shortqty[$key]." ".$value."||";
             endif;
         else:
             //
         endif;
     endforeach;
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required list: $requiredlist",$logfile);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required buy: $requiredbuy",$logfile);
 endif;
 
 //This section builds hidden divs for each card with the image and a link,
@@ -346,12 +319,12 @@ endif;
 // for main and side
 mysqli_data_seek($result, 0);
 while ($row = $result->fetch_assoc()):
-    $cardset = strtolower($row["setcode"]);
+    $cardset = strtolower($row['setcode']);
     if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] == 0)):
         $creatures = $creatures + $row['cardqty'];
     elseif ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):  
         $instantsorcery = $instantsorcery + $row['cardqty'];
-    elseif ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false)):
+    elseif ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] == 0)):
         $other = $other + $row['cardqty'];
     elseif (strpos($row['type'],'Land') !== false):
         $lands = $lands + $row['cardqty'];
@@ -429,7 +402,7 @@ endif;
                         <span class="noprint">Card</span>
                     </td>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
                         <td class="deckcardlisthead3">
                             <span class="noprint">Cdr</span>
@@ -443,23 +416,27 @@ endif;
                     <td class='deckcardlisthead3'>
                         <span class="noprint">Side</span>
                     </td>
-                    <td class='deckcardlisthead3 deckcardlistright'>
-                        <span class="noprint">- &nbsp;</span>
-                    </td>
-                    <td class='deckcardlisthead3'>
-                        <span class="noprint">Qty</span>
-                    </td>
-                    <td class='deckcardlisthead3 deckcardlistleft'>
-                        <span class="noprint">&nbsp;+</span>
-                    </td>
+                    <?php 
+                    if(!in_array($decktype,$commandertypes)): ?>    
+                        <td class='deckcardlisthead3 deckcardlistright'>
+                            <span class="noprint">- &nbsp;</span>
+                        </td>
+                        <td class='deckcardlisthead3'>
+                            <span class="noprint">Qty</span>
+                        </td>
+                        <td class='deckcardlisthead3 deckcardlistleft'>
+                            <span class="noprint">&nbsp;+</span>
+                        </td>
+                        <?php
+                    endif; ?>
                 </tr> 
                 <?php 
                 // Only show this row if the decktype is Commander style
-                if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                if(in_array($decktype,$commandertypes)): 
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, adding commander row",$logfile);
                     ?>
                     <tr>
-                        <td colspan='7'>
+                        <td colspan='4'>
                             <i><b>Commander</b></i>
                         </td>    
                     </tr>
@@ -475,7 +452,8 @@ endif;
                     $cmc[6]   = 0;
                     $cmctotal = 0;
                     if (mysqli_num_rows($result) > 0):
-                    mysqli_data_seek($result, 0);
+                        mysqli_data_seek($result, 0);
+                        $commandercount = 0;
                         while ($row = $result->fetch_assoc()):
                             if ($row['commander'] == 1):
                                 $cardname = $row["name"];
@@ -514,22 +492,80 @@ endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
                                 echo "</td>";
-                                echo "<td class='deckcardlistright noprint'>";
-                                echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
-                                echo $quantity;
-                                echo "</td>";
-                                echo "<td class='deckcardlistleft noprint'>";
-                                echo "</td>";
+                                if(!in_array($decktype,$commandertypes)):
+                                    echo "<td class='deckcardlistcenter'>";
+                                    echo $quantity;
+                                    echo "</td>";
+                                endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
+                                $commandercount = $commandercount +1;
                                 $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
+                    if($commandercount > 0):
                         ?>
+                        <tr>
+                            <td colspan='4'>
+                                <i><b>Partner / Background</b></i>
+                            </td>    
+                        </tr>
+                    <?php
+                        if (mysqli_num_rows($result) > 0):
+                            mysqli_data_seek($result, 0);
+                            while ($row = $result->fetch_assoc()):
+                                if ($row['commander'] == 2):
+                                    $cardname = $row["name"];
+                                    $quantity = $row["cardqty"];
+                                    $cardset = strtolower($row["setcode"]);
+                                    $cardref = str_replace('.','-',$row['cardsid']);
+                                    $cardid = $row['cardsid'];
+                                    $cardnumber = $row["number"];
+                                    $cardcmc = round($row["cmc"]);
+                                    $cmctotal = $cmctotal + ($cardcmc * $quantity);
+                                    if ($cardcmc > 5):
+                                        $cardcmc = 6;
+                                    endif;
+                                    $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
+                                    <tr class='deckrow'>
+                                    <td class="deckcardname">
+                                        <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                    <script type="text/javascript">
+                                        $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
+                                            'use strict'; //satisfy code inspectors
+                                            var link = $(this); //preselect the link
+                                            $('.deckcardimgdiv').hide("slow");
+                                            e.preventDefault();
+                                            $("<?php echo "#card-$cardref";?>").show("slow");
+                                            return false; //extra, and to make sure the function has consistent return points
+                                        });
+                                    </script>
+                                    <?php
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=no'><img class='delcard' src=images/bluearrow.png alt='commander'></a>";
+                                    echo "</td>";
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                                    echo "</td>";
+                                    if(!in_array($decktype,$commandertypes)):
+                                        echo "<td class='deckcardlistcenter'>";
+                                        echo $quantity;
+                                        echo "</td>";
+                                    endif;
+                                    echo "</tr>";
+                                    $total = $total + $quantity;
+                                    $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                                endif;
+                            endwhile; 
+                        endif; 
+                    endif;?>
                     <tr>
-                        <td colspan='7'>
+                        <td colspan='4'>
                             <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
                         </td>    
                     </tr>
@@ -557,7 +593,7 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                 mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
-                        if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] != 1)):
+                        if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] < 1)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
                             $cardset = strtolower($row["setcode"]);
@@ -585,11 +621,14 @@ endif;
                                 });
                             </script>
                             <?php
-                            if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                            if(in_array($decktype,$commandertypes)):
+                                $validcommander = FALSE;
+                                if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
+                                    $validcommander = TRUE;
+                                endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__," - type: $cardlegendary",$logfile);
-                                if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
+                                if($validcommander == TRUE):
                                     echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=yes'><img class='delcard' src=images/arrowup.png alt='commander'></a>";
                                 endif;
                                 echo "</td>";
@@ -601,15 +640,17 @@ endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
                             echo "</td>";
-                            echo "<td class='deckcardlistright noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
-                            echo "</td>";
-                            echo "<td class='deckcardlistcenter'>";
-                            echo $quantity;
-                            echo "</td>";
-                            echo "<td class='deckcardlistleft noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
-                            echo "</td>";
+                            if(!in_array($decktype,$commandertypes)):
+                                echo "<td class='deckcardlistright noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                echo "</td>";
+                                echo "<td class='deckcardlistcenter'>";
+                                echo $quantity;
+                                echo "</td>";
+                                echo "<td class='deckcardlistleft noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                echo "</td>";
+                            endif;
                             echo "</tr>";
                             $total = $total + $quantity;
                             $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
@@ -618,9 +659,9 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan='7'>
+                        <td colspan='4'>
                     <?php
                     else:
                     ?>
@@ -664,7 +705,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                            if(in_array($decktype,$commandertypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -674,15 +715,17 @@ endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
                             echo "</td>";
-                            echo "<td class='deckcardlistright noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
-                            echo "</td>";
-                            echo "<td class='deckcardlistcenter'>";
-                            echo $quantity;
-                            echo "</td>";
-                            echo "<td class='deckcardlistleft noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
-                            echo "</td>";
+                            if(!in_array($decktype,$commandertypes)):
+                                echo "<td class='deckcardlistright noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                echo "</td>";
+                                echo "<td class='deckcardlistcenter'>";
+                                echo $quantity;
+                                echo "</td>";
+                                echo "<td class='deckcardlistleft noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                echo "</td>";
+                            endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
                             $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
@@ -691,9 +734,9 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan='7'>
+                        <td colspan='4'>
                     <?php
                     else:
                     ?>
@@ -709,7 +752,7 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
-                        if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false)):
+                        if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] != 1)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
                             $cardset = strtolower($row["setcode"]);
@@ -737,8 +780,20 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                            if(in_array($decktype,$commandertypes)):
+                                $validcommander = FALSE;
+                                $i = 0;
+                                while($i < count($valid_commander_text)):
+                                    if(str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                        $validcommander = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
                                 echo "<td class='deckcardlistcenter noprint'>";
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
+                                if($validcommander == TRUE):
+                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=yes'><img class='delcard' src=images/arrowup.png alt='commander'></a>";
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
@@ -747,15 +802,17 @@ endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
                             echo "</td>";
+                            if(!in_array($decktype,$commandertypes)):
                             echo "<td class='deckcardlistright noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
-                            echo "</td>";
-                            echo "<td class='deckcardlistcenter'>";
-                            echo $quantity;
-                            echo "</td>";
-                            echo "<td class='deckcardlistleft noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
-                            echo "</td>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                echo "</td>";
+                                echo "<td class='deckcardlistcenter'>";
+                                echo $quantity;
+                                echo "</td>";
+                                echo "<td class='deckcardlistleft noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                echo "</td>";
+                            endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
                             $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
@@ -765,9 +822,9 @@ endif;
                 ?>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan='7'>
+                        <td colspan='4'>
                     <?php
                     else:
                     ?>
@@ -793,7 +850,21 @@ endif;
                             $cardnumber = $row["number"]; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
-                                <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                <?php 
+                                $i = 0;
+                                $cdr_1_plus = FALSE;
+                                while($i < count($commander_multiples)):
+                                    if(str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                else:
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                endif;
+                                ?>
                             <script type="text/javascript">
                                 $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                     'use strict'; //satisfy code inspectors
@@ -806,7 +877,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                            if(in_array($decktype,$commandertypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -816,15 +887,17 @@ endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
                             echo "</td>";
-                            echo "<td class='deckcardlistright noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
-                            echo "</td>";
-                            echo "<td class='deckcardlistcenter'>";
-                            echo $quantity;
-                            echo "</td>";
-                            echo "<td class='deckcardlistleft noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
-                            echo "</td>";
+                            if(!in_array($decktype,$commandertypes)):
+                                echo "<td class='deckcardlistright noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                echo "</td>";
+                                echo "<td class='deckcardlistcenter'>";
+                                echo $quantity;
+                                echo "</td>";
+                                echo "<td class='deckcardlistleft noprint'>";
+                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                echo "</td>";
+                            endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
                             $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
@@ -833,9 +906,9 @@ endif;
                 endif;?>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan="5">&nbsp;
+                        <td colspan="2">&nbsp;
                     <?php
                     else:
                     ?>
@@ -851,9 +924,9 @@ endif;
                 </tr>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan="7">&nbsp;
+                        <td colspan="4">&nbsp;
                     <?php
                     else:
                     ?>
@@ -864,9 +937,9 @@ endif;
                 </tr>            
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan='7'>
+                        <td colspan='4'>
                     <?php
                     else:
                     ?>
@@ -904,25 +977,27 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                        if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
-                                echo "<td class='deckcardlistcenter noprint'>";
-                                echo "</td>";
-                            endif;
+                        if(in_array($decktype,$commandertypes)):
                             echo "<td class='deckcardlistcenter noprint'>";
+                            echo "</td>";
+                        endif;
+                        echo "<td class='deckcardlistcenter noprint'>";
                         echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deleteside=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
                         echo "</td>";
                         echo "<td class='deckcardlistcenter noprint'>";
                         echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;sidetomain=yes'><img class='delcard' src=images/arrowup.png alt='Add to mainboard'></a>";
                         echo "</td>";
-                        echo "<td class='deckcardlistright noprint'>";
-                        echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusside=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
-                        echo "</td>";
-                        echo "<td class='deckcardlistcenter'>";
-                        echo $quantity;
-                        echo "</td>";
-                        echo "<td class='deckcardlistleft noprint'>";
-                        echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusside=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
-                        echo "</td>";
+                        if(!in_array($decktype,$commandertypes)):
+                            echo "<td class='deckcardlistright noprint'>";
+                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusside=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                            echo "</td>";
+                            echo "<td class='deckcardlistcenter'>";
+                            echo $quantity;
+                            echo "</td>";
+                            echo "<td class='deckcardlistleft noprint'>";
+                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusside=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                            echo "</td>";
+                        endif;
                         echo "</tr>";
                         $sidetotal = $sidetotal + $quantity;
                         $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
@@ -930,9 +1005,9 @@ endif;
                 endif;?>
                 <tr>
                     <?php 
-                    if(($decktype == "Tiny Leader") OR ($decktype == "Commander")):
+                    if(in_array($decktype,$commandertypes)):
                         ?>    
-                        <td colspan="5">&nbsp;
+                        <td colspan="2">&nbsp;
                     <?php
                     else:
                     ?>

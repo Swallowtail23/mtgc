@@ -1,11 +1,14 @@
 <?php
 /* Version:     1.0
-    Date:       13/01/2020
+    Date:       24/04/2023
     Name:       ini.php
     Purpose:    PHP script to manage error routines and logging
     Notes:      {none}
  *
     1.0         Initial version
+ * 
+ *  2.0
+ *              Add card variable types for centralisation of card types
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -158,3 +161,14 @@ $token_layouts = array('double_faced_token',
 $image90rotate = array('split',
                        'planar',
                        'Battle — Siege');
+
+$commander_decktypes = array('Commander',
+                             'Tiny Leader');
+
+$commander_multiples = array("Basic Land",
+                             "Basic Snow Land");
+
+$valid_commander_text = array("can be your commander");
+
+$second_commander_text = array("Partner",
+                               "Choose a Background");
