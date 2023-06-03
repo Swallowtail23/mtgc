@@ -54,6 +54,7 @@ forcechgpwd();                              //Check if user is disabled or needs
     <meta name="viewport" content="initial-scale=1">
     <title> MtG collection </title>
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -127,6 +128,11 @@ if(isset($_GET['commander']) AND (in_array($_GET['commander'],$valid_commander))
     $commander = $_GET['commander'];
 else:
     $commander = '';
+endif;
+if(isset($_GET['partner']) AND (in_array($_GET['partner'],$valid_commander))):
+    $partner = $_GET['partner'];
+else:
+    $partner = '';
 endif;
 $token_layouts = ['double_faced_token','token','emblem']; // cannot be included
 $validtypes = array('Commander','Normal','Tiny Leader');
@@ -225,6 +231,9 @@ elseif($minusside == 'yes'):
 elseif($commander == 'yes'):
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
     addcommander($decknumber,$cardtoaction);
+elseif($partner == 'yes'):
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Moving Commander to Partner for deck $decknumber: $cardtoaction",$logfile);
+    addpartner($decknumber,$cardtoaction);
 elseif($commander == 'no'):
     delcommander($decknumber,$cardtoaction);
 endif;
@@ -483,14 +492,41 @@ endif;
                                 </script>
                                 <?php
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=no'><img class='delcard' src=images/bluearrow.png alt='commander'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Move to Partner"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                    class='material-symbols-outlined'>
+                                    south_east
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Delete"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    delete_forever
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                                ?>
+                                <span 
+                                    onmouseover=""  
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    arrow_downward
+                                </span>
+                                <?php
                                 echo "</td>";
                                 if(!in_array($decktype,$commandertypes)):
                                     echo "<td class='deckcardlistcenter'>";
@@ -504,7 +540,7 @@ endif;
                             endif;
                         endwhile; 
                     endif; 
-                    if($commandercount > 0):
+                    if(in_array($decktype,$commandertypes)):
                         ?>
                         <tr>
                             <td colspan='4'>
@@ -543,14 +579,41 @@ endif;
                                     </script>
                                     <?php
                                     echo "<td class='deckcardlistcenter noprint'>";
-                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=no'><img class='delcard' src=images/bluearrow.png alt='commander'></a>";
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to main deck"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
+                                        class='material-symbols-outlined'>
+                                        arrow_downward
+                                    </span>
+                                    <?php
                                     echo "</td>";
                                     echo "</td>";
                                     echo "<td class='deckcardlistcenter noprint'>";
-                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Delete" 
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                        class='material-symbols-outlined'>
+                                        delete_forever
+                                    </span>
+                                    <?php
                                     echo "</td>";
                                     echo "<td class='deckcardlistcenter noprint'>";
-                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                                    ?>
+                                    <span 
+                                        onmouseover=""  
+                                        title="Move to sideboard"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                        class='material-symbols-outlined'>
+                                        arrow_downward
+                                    </span>
+                                    <?php
                                     echo "</td>";
                                     if(!in_array($decktype,$commandertypes)):
                                         echo "<td class='deckcardlistcenter'>";
@@ -629,26 +692,71 @@ endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 if($validcommander == TRUE):
-                                    echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;commander=yes'><img class='delcard' src=images/arrowup.png alt='commander'></a>";
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to Commander"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
+                                        class='material-symbols-outlined'>
+                                        person
+                                    </span>
+                                    <?php
                                 endif;
                                 echo "</td>";
                             endif;
                             echo "</td>";
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Delete"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                class='material-symbols-outlined'>
+                                delete_forever
+                            </span>
+                            <?php
                             echo "</td>";
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Move to sideboard"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                class='material-symbols-outlined'>
+                                arrow_downward
+                            </span>
+                            <?php
                             echo "</td>";
                             if(!in_array($decktype,$commandertypes)):
                                 echo "<td class='deckcardlistright noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Remove one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    remove
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Add one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -710,20 +818,56 @@ endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Delete"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                class='material-symbols-outlined'>
+                                delete_forever
+                            </span>
+                            <?php
                             echo "</td>";
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Move to sideboard"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                class='material-symbols-outlined'>
+                                arrow_downward
+                            </span>
+                            <?php
                             echo "</td>";
                             if(!in_array($decktype,$commandertypes)):
                                 echo "<td class='deckcardlistright noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Remove one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    remove
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Add one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -797,20 +941,56 @@ endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Delete"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                class='material-symbols-outlined'>
+                                delete_forever
+                            </span>
+                            <?php
                             echo "</td>";
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Move to sideboard"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                class='material-symbols-outlined'>
+                                arrow_downward
+                            </span>
+                            <?php
                             echo "</td>";
                             if(!in_array($decktype,$commandertypes)):
-                            echo "<td class='deckcardlistright noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                echo "<td class='deckcardlistright noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Remove one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    remove
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Add one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -882,20 +1062,56 @@ endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deletemain=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Delete"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                class='material-symbols-outlined'>
+                                delete_forever
+                            </span>
+                            <?php
                             echo "</td>";
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;maintoside=yes'><img class='delcard' src=images/bluearrow.png alt='Add to sideboard'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Move to sideboard"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                class='material-symbols-outlined'>
+                                arrow_downward
+                            </span>
+                            <?php
                             echo "</td>";
                             if(!in_array($decktype,$commandertypes)):
                                 echo "<td class='deckcardlistright noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusmain=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Remove one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    remove
+                                </span>
+                                <?php
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
-                                echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusmain=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Add one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -982,20 +1198,56 @@ endif;
                             echo "</td>";
                         endif;
                         echo "<td class='deckcardlistcenter noprint'>";
-                        echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;deleteside=yes'><img class='delcard' src=images/delete.png alt='delete'></a>";
+                        ?>
+                        <span 
+                            onmouseover="" 
+                            title="Delete"
+                            style="cursor: pointer;" 
+                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
+                            class='material-symbols-outlined'>
+                            delete_forever
+                        </span>
+                        <?php
                         echo "</td>";
                         echo "<td class='deckcardlistcenter noprint'>";
-                        echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;sidetomain=yes'><img class='delcard' src=images/arrowup.png alt='Add to mainboard'></a>";
+                        ?>
+                        <span 
+                            onmouseover="" 
+                            title="Move to main deck"
+                            style="cursor: pointer;" 
+                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
+                            class='material-symbols-outlined'>
+                            arrow_upward
+                        </span>
+                        <?php
                         echo "</td>";
                         if(!in_array($decktype,$commandertypes)):
                             echo "<td class='deckcardlistright noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;minusside=yes'><img class='delcard' src=images/minus.png alt='Subtract'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Remove one"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                class='material-symbols-outlined'>
+                                remove
+                            </span>
+                            <?php
                             echo "</td>";
                             echo "<td class='deckcardlistcenter'>";
                             echo $quantity;
                             echo "</td>";
                             echo "<td class='deckcardlistleft noprint'>";
-                            echo "<a href='deckdetail.php?deck=$decknumber&amp;card=$cardid&amp;plusside=yes'><img class='delcard' src=images/plus.png alt='Add'></a>";
+                            ?>
+                            <span 
+                                onmouseover="" 
+                                title="Add one"
+                                style="cursor: pointer;" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
+                                class='material-symbols-outlined'>
+                                add
+                            </span>
+                            <?php
                             echo "</td>";
                         endif;
                         echo "</tr>";
