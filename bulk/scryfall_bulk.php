@@ -12,7 +12,7 @@
  *  3.0
  *              Add Arena legalities
  *  4.0
- *              Add parameter for refresh of file
+ *              Add parameter for refresh of file ("new")
  *              Add handling for zero-byte download
 */
 
