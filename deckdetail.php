@@ -508,7 +508,7 @@ endif;
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid partner or background",$logfile);
                                 $i = 0;
                                 while($i < count($second_commander_text)):
-                                    if(str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
                                         $validpartner = TRUE;
                                     endif;
                                     $i++;
@@ -726,7 +726,7 @@ endif;
                                 endif;
                                 $i = 0;
                                 while($i < count($valid_commander_text)):
-                                    if(str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
                                         $validcommander = TRUE;
                                     endif;
                                     $i++;
@@ -970,7 +970,7 @@ endif;
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 $i = 0;
                                 while($i < count($valid_commander_text)):
-                                    if(str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
                                         $validcommander = TRUE;
                                     endif;
                                     $i++;
@@ -1084,7 +1084,7 @@ endif;
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
                                 while($i < count($commander_multiples)):
-                                    if(str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
                                         $cdr_1_plus = TRUE;
                                     endif;
                                     $i++;
