@@ -1353,35 +1353,44 @@ endif;
             echo "<br>Total deck value (Fair Trade) = $".$deckvalue;?>
             </div>
             <div id='deckfunctions'>
+            <h4>Export decklist</h4>
             <?php
-            echo "<h4>Export decklist</h4>";
             $textfile = $textfile."\r\n\r\nNotes\r\n\r\n$notes\r\n";
             $textfile = $textfile."\r\n\r\nSideboard notes\r\n\r\n$sidenotes";
             $textfile = htmlspecialchars($textfile,ENT_QUOTES);
             $filename = preg_replace('/[^\w]/', '', $deckname);
             ?>
-            <form action="dltext.php"  method="POST">
+            <form action="dltext.php" method="POST">
                 <input class='profilebutton' type="submit" value="EXPORT">
                 <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
                 <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
             </form>
             <?php
-            if ($requiredlist !== ''):
-                echo "<h4>Missing cards</h4>";
+            if($missing == 'yes' AND $requiredlist != ''):
                 $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
                 $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
-                ?>
-                <form action="dltext.php"  method="POST">
-                    <input class='profilebutton' type="submit" value="LIST">
+                $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
+                <h4>Export missing cards list</h4>
+                <form action="dltext.php" method="POST">
+                    <input class='profilebutton' type="submit" value="EXPORT">
                     <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
-                    <?php echo "<input type='hidden' name='filename' value='{$filename}_needed'>"; ?>
-                </form>
+                    <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
+                </form> 
                 <br>
                 TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
+                <?php
+            else:?>
+                <h4>Compare to collection for missing cards</h4>
+                <form action="deckdetail.php" method="GET">
+                <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
+                <input type='hidden' name='missing' value='yes'>
+                <input class='profilebutton' type="submit" value="COMPARE">
+                </form>
+                <br>
             <?php
             endif;
-            echo "<h4>Quick add</h4>";
             ?>
+            <h4>Quick add</h4>
                 Format: {qty[optional]}{cardname}{(set)[optional]}<br>
                 E.g. 1 Murder; Pacifism (m11)
             <form action="deckdetail.php"  method="GET">
