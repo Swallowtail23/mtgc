@@ -1,6 +1,6 @@
 <?php
-/* Version:     12.0
-    Date:       01/04/23
+/* Version:     13.0
+    Date:       24/04/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -42,6 +42,8 @@
  *              PHP 8.1 compatibility
  * 12.0
  *              Add flip image capability for battle cards
+ * 13.0
+ *              Deck card adding rewrite for Commander, etc.
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -188,38 +190,163 @@ function deckownercheck($deck,$user)
     endif;    
 }
 
-function adddeckcard($deck,$card,$section,$quantity)
+function quickadd($decknumber,$get_string)
 {
-    global $db, $logfile;
-    if($section == "side"):
-        $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty IS NOT NULL");
-        if ($check !== null):
-            if($check['sideqty'] > 0):
-                $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                $status = "+1side";
+    global $db, $logfile, $commander_decktypes;
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string'",$logfile);
+    
+    $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
+    
+    //Quantity
+    preg_match("~^(\d+)~", $quickaddstring,$qty);
+    if (isset($qty[0])):
+        $quickaddstring = ltrim(ltrim($quickaddstring,$qty[0]));
+        $quickaddqty = $qty[0];
+    else:
+        $quickaddqty = 1;
+    endif;
+    
+    //Set (qty has been removed if it was set)
+    preg_match('#\((.*?)\)#', $quickaddstring, $settomatch);
+    if (isset($settomatch[0])):
+        $quickaddset = rtrim(ltrim(strtoupper($settomatch[0]),"("),")");
+        $quickaddcard = rtrim(rtrim($quickaddstring,$settomatch[0]));
+    else:
+        $quickaddset = '';
+        $quickaddcard = $quickaddstring;
+    endif;
+    //Card
+    
+    $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
+    $quickaddcard = $db->escape($quickaddcard);
+    
+    if($quickaddset == ''):
+        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
+                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
+            if ($quickaddcardid->num_rows > 0):
+                while ($results = $quickaddcardid->fetch_assoc()):
+                    $cardtoadd = $results['id'];
+                endwhile;
+            else:
+                $cardtoadd = 'cardnotfound';
             endif;
         else:
-            $cardquery = "INSERT into deckcards (decknumber, cardnumber, sideqty) VALUES ($deck, '$card', $quantity)";
-            $status = "+newside";
+            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
         endif;
-    elseif($section == "main"):
-        $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty IS NOT NULL");
-        if ($check !== null):
-            if($check['cardqty'] > 0):
-                $cardquery = "UPDATE deckcards SET cardqty = cardqty + $quantity WHERE decknumber = $deck AND cardnumber = '$card'";
-                $status = "+1main";
+    else:
+        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
+                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
+            if ($quickaddcardid->num_rows > 0):
+                while ($results = $quickaddcardid->fetch_assoc()):
+                    $cardtoadd = $results['id'];
+                endwhile;
+            else:
+                $cardtoadd = 'cardnotfound';
             endif;
         else:
-            $cardquery = "INSERT into deckcards (decknumber, cardnumber, cardqty) VALUES ($deck, '$card', $quantity)";
-            $status = "+newmain";
+            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
         endif;
     endif;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $cardquery, status is $status",$logfile);
-    if($runquery = $db->query($cardquery)):
-        return $status;
+    if($cardtoadd == 'cardnotfound'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
     else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif;    
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
+        adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
+    endif;
+}
+
+function adddeckcard($deck,$card,$section,$quantity)
+{
+    global $db, $logfile, $commander_decktypes, $commander_multiples;
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $quantity x $card to $deck ($section)",$logfile);
+    
+    // Get card name of addition
+    $cardnamequery = "SELECT name,type FROM cards_scry WHERE id = ? LIMIT 1";
+    $result = $db->execute_query($cardnamequery, [$card]);
+    $cardname = $result->fetch_assoc();
+    if($result != TRUE):
+        trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+    else:
+        $cardnametext = $cardname['name'];
+        $i = 0;
+        $cdr_1_plus = FALSE;
+        while($i < count($commander_multiples)):
+            if(str_contains($cardname['type'],$commander_multiples[$i]) == TRUE):
+                $cdr_1_plus = TRUE;
+            endif;
+            $i++;
+        endwhile;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card name for $card is $cardnametext; Commander multiples allowed: $cdr_1_plus",$logfile);
+    endif;
+    
+    // Get deck type and existing cards in it
+    $cardlist = $db->query("SELECT name,decks.type
+                                FROM deckcards 
+                            LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
+                            LEFT JOIN decks on deckcards.decknumber = decks.decknumber
+                            WHERE deckcards.decknumber = $deck AND (cardqty > 0 OR sideqty > 0)");
+    $cardlistnames = array();
+    while ($row = $cardlist->fetch_assoc()):
+        if(!in_array($row['name'], $cardlistnames)):
+            $cardlistnames[] = $row['name'];
+        endif;
+        $decktype = $row['type'];
+    endwhile;
+    if(in_array($cardnametext,$cardlistnames)):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cardname $cardnametext is already in this deck",$logfile);
+        $already_in_deck = TRUE;
+    else:
+        $already_in_deck = FALSE;
+    endif;
+    if(in_array($decktype,$commander_decktypes)):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deck is Commander-type",$logfile);
+        $cdr_type_deck = TRUE;
+    else:
+        $cdr_type_deck = FALSE;
+    endif;
+    if($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's a Commander-style deck, and multiples of this type not allowed, can't add",$logfile);
+        $quantity = FALSE;
+    elseif(($already_in_deck == TRUE AND $cdr_type_deck = TRUE AND $cdr_1_plus == TRUE) OR ($already_in_deck == FALSE AND $cdr_type_deck = TRUE AND $cdr_1_plus == TRUE) OR ($cdr_type_deck = FALSE)):
+        $quantity = $quantity;
+    elseif($already_in_deck == FALSE AND $cdr_type_deck = TRUE):
+        $quantity = 1;
+    endif;
+    
+    // Add card to deck
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
+    if($quantity != FALSE):
+        if($section == "side"):
+            $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty IS NOT NULL");
+            if ($check !== null):
+                if($check['sideqty'] > 0):
+                    $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = $deck AND cardnumber = '$card'";
+                    $status = "+1side";
+                endif;
+            else:
+                $cardquery = "INSERT into deckcards (decknumber, cardnumber, sideqty) VALUES ($deck, '$card', $quantity)";
+                $status = "+newside";
+            endif;
+        elseif($section == "main"):
+            $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty IS NOT NULL");
+            if ($check !== null):
+                if($check['cardqty'] > 0):
+                    $cardquery = "UPDATE deckcards SET cardqty = cardqty + $quantity WHERE decknumber = $deck AND cardnumber = '$card'";
+                    $status = "+1main";
+                endif;
+            else:
+                $cardquery = "INSERT into deckcards (decknumber, cardnumber, cardqty) VALUES ($deck, '$card', $quantity)";
+                $status = "+newmain";
+            endif;
+        endif;
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $cardquery, status is $status",$logfile);
+        if($runquery = $db->query($cardquery)):
+            return $status;
+        else:
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+        endif;
+    endif;
 }
 
 function subtractdeckcard($deck,$card,$section,$quantity)
@@ -278,9 +405,9 @@ function subtractdeckcard($deck,$card,$section,$quantity)
 function addcommander($deck,$card)
 {
     global $db, $logfile;
-    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND commander = '1'");
+    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND commander = 1");
     if ($check->num_rows > 0): //Commander already there
-        $cardquery = "UPDATE deckcards SET commander = '0' WHERE decknumber = $deck";
+        $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck";
         if($runquery = $db->query($cardquery)):
             $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Old Commander removed",$logfile);
         else:
@@ -300,8 +427,8 @@ function addcommander($deck,$card)
 function delcommander($deck,$card)
 {
     global $db, $logfile;
-    $cardquery = "UPDATE deckcards SET commander = '0' WHERE decknumber = $deck AND cardnumber = '$card'";
-    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND commander = '1'");
+    $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck AND cardnumber = '$card'";
+    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND commander > 0");
     if ($check->num_rows > 0): 
         $status = "-cdr";
         if($runquery = $db->query($cardquery)):
@@ -1030,7 +1157,7 @@ function downloadbulk($url, $dest)
     
     # DEBUG
     curl_setopt($ch, CURLOPT_VERBOSE, 1);
-    $fp = fopen($logfile, 'w');
+    $fp = fopen($logfile, 'a');
     curl_setopt($ch, CURLOPT_STDERR, $fp);
     # END DEBUG
     
