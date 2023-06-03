@@ -277,10 +277,25 @@ function adddeckcard($deck,$card,$section,$quantity)
             endif;
             $i++;
         endwhile;
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card name for $card is $cardnametext; Commander multiples allowed: $cdr_1_plus",$logfile);
+        if($cdr_1_plus == FALSE):
+            $multi_allowed = "no";
+        else:
+            $multi_allowed = "yes";
+        endif;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card name for $card is $cardnametext; Commander multiples allowed: $multi_allowed",$logfile);
     endif;
     
     // Get deck type and existing cards in it
+    $decktypesql = $db->query("SELECT type
+                                FROM decks 
+                                WHERE decknumber = $deck");
+    while ($row = $decktypesql->fetch_assoc()):
+        if ($row['type'] == NULL):
+            $decktype = "none";
+        else:
+            $decktype = $row['type'];
+        endif;
+    endwhile;
     $cardlist = $db->query("SELECT name,decks.type
                                 FROM deckcards 
                             LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
@@ -291,7 +306,6 @@ function adddeckcard($deck,$card,$section,$quantity)
         if(!in_array($row['name'], $cardlistnames)):
             $cardlistnames[] = $row['name'];
         endif;
-        $decktype = $row['type'];
     endwhile;
     if(in_array($cardnametext,$cardlistnames)):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cardname $cardnametext is already in this deck",$logfile);
