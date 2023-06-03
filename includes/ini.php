@@ -171,4 +171,5 @@ $commander_multiples = array("Basic Land",
 $valid_commander_text = array("can be your commander");
 
 $second_commander_text = array("Partner",
-                               "Choose a Background");
+                               "Choose a Background",
+                               "Friends forever");
