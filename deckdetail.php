@@ -1379,6 +1379,10 @@ endif;
                 <br>
                 TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
                 <?php
+            elseif($missing == 'yes' AND $requiredlist == ''): ?>
+                <h4>All cards in deck are in collection</h4>
+                <br>
+                <?php
             else:?>
                 <h4>Compare to collection for missing cards</h4>
                 <form action="deckdetail.php" method="GET">
