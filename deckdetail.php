@@ -94,6 +94,12 @@ require('includes/overlays.php');
 require('includes/header.php'); 
 require('includes/menu.php'); //mobile menu
 
+if (isset($_GET["missing"])):
+    $missing = 'yes';
+else:
+    $missing = 'no';
+endif;
+
 if (isset($_GET["deck"])):
     $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
     if (isset($_GET["updatetype"])):
@@ -293,7 +299,7 @@ if($uniquecardscount > 0):
     while ($row = $result->fetch_assoc()):
         $qty = $row['cardqty'] + $row['sideqty'];
         $key = array_search($row['name'], $resultnames);
-        $resultqty[$key] = $resultqty[$key] + $qty; 
+        $resultqty[$key] = $resultqty[$key] + $qty;
     endwhile;
     while ($row = $sideresult->fetch_assoc()):
         $qty = $row['cardqty'] + $row['sideqty'];
@@ -301,26 +307,28 @@ if($uniquecardscount > 0):
         $resultqty[$key] = $resultqty[$key] + $qty;
     endwhile;
 
-    $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
-    foreach($resultnames as $key=>$value):
-        $searchname = $db->escape($value);
-        $query = "SELECT SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
-        if ($totalresult = $db->query($query)):
-            $totalrow = $totalresult->fetch_assoc();
-            $total = $totalrow['allcopies'];
-            $shortqty[$key] = $resultqty[$key] - $total;
-            if($shortqty[$key] < 1):
-                $shortqty[$key] = 0;
+    if($missing == 'yes'):
+        $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
+        foreach($resultnames as $key=>$value):
+            $searchname = $db->escape($value);
+            $query = "SELECT SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
+            if ($totalresult = $db->query($query)):
+                $totalrow = $totalresult->fetch_assoc();
+                $total = $totalrow['allcopies'];
+                $shortqty[$key] = $resultqty[$key] - $total;
+                if($shortqty[$key] < 1):
+                    $shortqty[$key] = 0;
+                else:
+                    $requiredlist = $requiredlist.$shortqty[$key]." x ".$value."\r\n";
+                    $requiredbuy = $requiredbuy.$shortqty[$key]." ".$value."||";
+                endif;
             else:
-                $requiredlist = $requiredlist.$shortqty[$key]." x ".$value."\r\n";
-                $requiredbuy = $requiredbuy.$shortqty[$key]." ".$value."||";
+                //
             endif;
-        else:
-            //
-        endif;
-    endforeach;
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required list: $requiredlist",$logfile);
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required buy: $requiredbuy",$logfile);
+        endforeach;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required list: $requiredlist",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required buy: $requiredbuy",$logfile);
+    endif;
 endif;
 
 //This section builds hidden divs for each card with the image and a link,
