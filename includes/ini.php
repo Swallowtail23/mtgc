@@ -168,12 +168,22 @@ $commander_decktypes = array('Commander',
 $commander_multiples = array("Basic Land",
                              "Basic Snow Land");
 
-$any_quantity = array("A deck can have any number of cards named");
+$any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
 
-$valid_commander_text = array("can be your commander");
+$valid_commander_text = array("can be your commander"); // Check for abilities which allow a card to be used as a commander
 
 $second_commander_text = array("Partner",
                                "Friends forever",
-                               "Doctor's companion");
+                               "Doctor's companion");   // Check for abilities which allow a card to be used as a second commander
 
-$second_commander_only_type = array("Background");
+$second_commander_only_type = array("Background");      // Check for "Type" which are valid ONLY in second commander slot
+
+$validtypes = array('Commander',
+                    'Normal',
+                    'Tiny Leader');                     // Deck types
+
+$hundredcarddecks = array('Commander');
+
+$sixtycarddecks = array('Normal');
+
+$fiftycarddecks = array('Tiny Leader');

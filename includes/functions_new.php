@@ -289,7 +289,7 @@ function adddeckcard($deck,$card,$section,$quantity)
             $while_result = FALSE;
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking ability for: {$any_quantity[$i]}",$logfile);
-            if(str_contains($cardname['ability'],$any_quantity[$i]) == TRUE):
+            if(isset($cardname['ability']) AND (str_contains($cardname['ability'],$any_quantity[$i]) == TRUE)):
                 $while_result = TRUE;
                 $cdr_1_plus = TRUE;
             endif;
