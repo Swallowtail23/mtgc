@@ -144,9 +144,6 @@ if(isset($_GET['partner']) AND (in_array($_GET['partner'],$valid_commander))):
 else:
     $partner = '';
 endif;
-$token_layouts = ['double_faced_token','token','emblem']; // cannot be included
-$validtypes = array('Commander','Normal','Tiny Leader');
-$commandertypes = array('Commander','Tiny Leader');
 
 // Check to see if the called deck belongs to the logged in user.
 if(deckownercheck($decknumber,$user) == FALSE): ?>
@@ -180,7 +177,7 @@ if (isset($updatetype)):
         if ($db->update('decks', $updatetypedata, "WHERE decknumber = $decknumber") === FALSE):
             trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
         else:
-            if(!in_array($updatetype,$commandertypes)):
+            if(!in_array($updatetype,$commander_decktypes)):
                 $removecommander = array(
                     'commander' => '0'
                 );
@@ -192,7 +189,7 @@ if (isset($updatetype)):
     else:
         trigger_error('[ERROR] deckdetail.php: Error: Invalid deck type', E_USER_ERROR);
     endif;
-    if(in_array($updatetype,$commandertypes)):
+    if(in_array($updatetype,$commander_decktypes)):
         $query = 'UPDATE deckcards SET cardqty=? WHERE decknumber = ?';
         if ($db->execute_query($query, [1,$decknumber]) != TRUE):
             trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -423,7 +420,7 @@ endif;
                         <span class="noprint">Card</span>
                     </td>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td class="deckcardlisthead3">
                             <span class="noprint">Cdr</span>
@@ -438,7 +435,7 @@ endif;
                         <span class="noprint">Side</span>
                     </td>
                     <?php 
-                    if(!in_array($decktype,$commandertypes)): ?>    
+                    if(!in_array($decktype,$commander_decktypes)): ?>    
                         <td class='deckcardlisthead3 deckcardlistright'>
                             <span class="noprint">- &nbsp;</span>
                         </td>
@@ -453,7 +450,7 @@ endif;
                 </tr> 
                 <?php 
                 // Only show this row if the decktype is Commander style
-                if(in_array($decktype,$commandertypes)): 
+                if(in_array($decktype,$commander_decktypes)): 
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, adding commander row",$logfile);
                     ?>
                     <tr>
@@ -488,7 +485,9 @@ endif;
                                 if ($cardcmc > 5):
                                     $cardcmc = 6;
                                 endif;
-                                $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
+                                $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; 
+                                $commandername = $cardname;
+                                ?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname">
                                     <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
@@ -562,7 +561,7 @@ endif;
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if(!in_array($decktype,$commandertypes)):
+                                if(!in_array($decktype,$commander_decktypes)):
                                     echo "<td class='deckcardlistcenter'>";
                                     echo $quantity;
                                     echo "</td>";
@@ -574,7 +573,7 @@ endif;
                             endif;
                         endwhile; 
                     endif; 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>
                         <tr>
                             <td colspan='4'>
@@ -597,7 +596,10 @@ endif;
                                     if ($cardcmc > 5):
                                         $cardcmc = 6;
                                     endif;
-                                    $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
+                                    $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; 
+                                    $secondcommandername = $cardname;
+                                    $warnings = TRUE;
+                                    ?>
                                     <tr class='deckrow'>
                                     <td class="deckcardname">
                                         <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
@@ -649,7 +651,7 @@ endif;
                                     </span>
                                     <?php
                                     echo "</td>";
-                                    if(!in_array($decktype,$commandertypes)):
+                                    if(!in_array($decktype,$commander_decktypes)):
                                         echo "<td class='deckcardlistcenter'>";
                                         echo $quantity;
                                         echo "</td>";
@@ -726,7 +728,7 @@ endif;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
@@ -743,7 +745,7 @@ endif;
                                 });
                             </script>
                             <?php
-                            if(in_array($decktype,$commandertypes)):
+                            if(in_array($decktype,$commander_decktypes)):
                                 $validcommander = FALSE;
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
                                 if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
@@ -796,7 +798,7 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            if(!in_array($decktype,$commandertypes)):
+                            if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span 
@@ -833,7 +835,7 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan='4'>
                     <?php
@@ -886,7 +888,7 @@ endif;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
@@ -904,7 +906,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(in_array($decktype,$commandertypes)):
+                            if(in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -932,7 +934,7 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            if(!in_array($decktype,$commandertypes)):
+                            if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span 
@@ -969,7 +971,7 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan='4'>
                     <?php
@@ -1022,7 +1024,7 @@ endif;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
@@ -1040,7 +1042,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(in_array($decktype,$commandertypes)):
+                            if(in_array($decktype,$commander_decktypes)):
                                 $validcommander = FALSE;
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a commander",$logfile);
                                 $i = 0;
@@ -1118,7 +1120,7 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            if(!in_array($decktype,$commandertypes)):
+                            if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span 
@@ -1156,7 +1158,7 @@ endif;
                 ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan='4'>
                     <?php
@@ -1197,7 +1199,7 @@ endif;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
@@ -1215,7 +1217,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                            if(in_array($decktype,$commandertypes)):
+                            if(in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -1243,7 +1245,7 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            if(!in_array($decktype,$commandertypes)):
+                            if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span 
@@ -1280,7 +1282,7 @@ endif;
                 endif;?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan="2">&nbsp;
                     <?php
@@ -1298,7 +1300,7 @@ endif;
                 </tr>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan="4">&nbsp;
                     <?php
@@ -1311,7 +1313,7 @@ endif;
                 </tr>            
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan='4'>
                     <?php
@@ -1354,7 +1356,7 @@ endif;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
                                     echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
@@ -1372,7 +1374,7 @@ endif;
                             </script>
                             <?php
                             echo "</td>";
-                        if(in_array($decktype,$commandertypes)):
+                        if(in_array($decktype,$commander_decktypes)):
                             echo "<td class='deckcardlistcenter noprint'>";
                             echo "</td>";
                         endif;
@@ -1400,7 +1402,7 @@ endif;
                         </span>
                         <?php
                         echo "</td>";
-                        if(!in_array($decktype,$commandertypes)):
+                        if(!in_array($decktype,$commander_decktypes)):
                             echo "<td class='deckcardlistright noprint'>";
                             ?>
                             <span 
@@ -1436,7 +1438,7 @@ endif;
                 endif;?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commandertypes)):
+                    if(in_array($decktype,$commander_decktypes)):
                         ?>    
                         <td colspan="2">&nbsp;
                     <?php
@@ -1456,6 +1458,37 @@ endif;
             </table>
         </div>
         <div id="decknotesdiv">
+            <?php
+            if((in_array($decktype,$hundredcarddecks) AND $total < 100)):
+                $warnings = TRUE;
+                $hundred_not_enough = TRUE;
+            endif;
+            if((in_array($decktype,$sixtycarddecks) AND $total < 60)):
+                $warnings = TRUE;
+                $sixty_not_enough = TRUE;
+            endif;
+            if((in_array($decktype,$fiftycarddecks) AND $total < 50)):
+                $warnings = TRUE;
+                $fifty_not_enough = TRUE;
+            endif;
+            if(isset($warnings)):
+                echo "<h4>&nbsp;Warnings</h4>";
+                echo "<ul style='margin-right: 20px;'>";
+                if(isset($secondcommandername)):
+                    echo "<li>You have a second commander set ('<i>$secondcommandername</i>') - check rules and validity with your primary commander</li>";
+                endif;
+                if(isset($hundred_not_enough)):
+                    echo "<li>Your commander deck doesn't have enough cards for legal play</li>";
+                endif;
+                if(isset($sixty_not_enough)):
+                    echo "<li>Your deck doesn't have enough cards for legal play</li>";
+                endif;
+                if(isset($fifty_not_enough)):
+                    echo "<li>Your deck doesn't have enough cards for legal play</li>";
+                endif;
+                echo "</ul>";
+            endif;
+            ?>
             <form action="?" method="POST">
                 <h4>&nbsp;Notes</h4>
                 <textarea class='decknotes textinput' name='newnotes' rows='2' cols='40'><?php echo $notes; ?></textarea>
