@@ -991,7 +991,7 @@ endif;
                             $len = strpos($row['type'], ' //');
                             $row['type'] = substr($row['type'], 0, $len);
                         endif;
-                        if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] != 1)):
+                        if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] < 1)):
                             $cardname = $row["name"];
                             $quantity = $row["cardqty"];
                             $cardset = strtolower($row["setcode"]);
@@ -1042,11 +1042,29 @@ endif;
                             echo "</td>";
                             if(in_array($decktype,$commandertypes)):
                                 $validcommander = FALSE;
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a commander",$logfile);
                                 $i = 0;
                                 while($i < count($valid_commander_text)):
                                     if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
                                         $validcommander = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $secondcommander = FALSE;
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander",$logfile);
+                                $i = 0;
+                                while($i < count($second_commander_text)):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
+                                        $secondcommander = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $secondcommanderonly = FALSE;
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only",$logfile);
+                                $i = 0;
+                                while($i < count($second_commander_only_type)):
+                                    if(isset($row['type']) AND str_contains($row['type'],$second_commander_only_type[$i]) == TRUE):
+                                        $secondcommanderonly = TRUE;
                                     endif;
                                     $i++;
                                 endwhile;
@@ -1062,7 +1080,18 @@ endif;
                                         person
                                     </span>
                                     <?php
-                                    endif;
+                                elseif($secondcommanderonly == TRUE):
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Move to Background"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                        class='material-symbols-outlined'>
+                                        north_west
+                                    </span>
+                                    <?php
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";

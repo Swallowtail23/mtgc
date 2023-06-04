@@ -173,6 +173,7 @@ $any_quantity = array("A deck can have any number of cards named");
 $valid_commander_text = array("can be your commander");
 
 $second_commander_text = array("Partner",
-                               "Choose a Background",
                                "Friends forever",
                                "Doctor's companion");
+
+$second_commander_only_type = array("Background");
