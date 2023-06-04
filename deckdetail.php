@@ -710,7 +710,28 @@ endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
-                                <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                <?php 
+                                $i = 0;
+                                $cdr_1_plus = FALSE;
+                                while($i < count($commander_multiples)):
+                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $i = 0;
+                                while($i < count($any_quantity)):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                else:
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                endif;
+                                ?>
                             <script type="text/javascript">
                                 $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                     'use strict'; //satisfy code inspectors
@@ -849,7 +870,28 @@ endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
-                                <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                <?php 
+                                $i = 0;
+                                $cdr_1_plus = FALSE;
+                                while($i < count($commander_multiples)):
+                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $i = 0;
+                                while($i < count($any_quantity)):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                else:
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                endif;
+                                ?>
                             <script type="text/javascript">
                                 $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                     'use strict'; //satisfy code inspectors
@@ -964,7 +1006,28 @@ endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
-                                <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                <?php 
+                                $i = 0;
+                                $cdr_1_plus = FALSE;
+                                while($i < count($commander_multiples)):
+                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $i = 0;
+                                while($i < count($any_quantity)):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                else:
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                endif;
+                                ?>
                             <script type="text/javascript">
                                 $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                     'use strict'; //satisfy code inspectors
@@ -1246,7 +1309,28 @@ endif;
                         $cardid = $row['cardsid']; ?>
                         <tr class='deckrow'>
                             <td class="deckcardname">
-                                <?php echo "<a class='taphover' id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                <?php 
+                                $i = 0;
+                                $cdr_1_plus = FALSE;
+                                while($i < count($commander_multiples)):
+                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $i = 0;
+                                while($i < count($any_quantity)):
+                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
+                                        $cdr_1_plus = TRUE;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                if(in_array($decktype,$commandertypes) AND $cdr_1_plus == TRUE):
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                else:
+                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                endif;
+                                ?>
                             <script type="text/javascript">
                                 $('#side-<?php echo $cardref;?>-taphover').on('click',function(e) {
                                     'use strict'; //satisfy code inspectors
