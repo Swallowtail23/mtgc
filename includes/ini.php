@@ -168,6 +168,8 @@ $commander_decktypes = array('Commander',
 $commander_multiples = array("Basic Land",
                              "Basic Snow Land");
 
+$any_quantity = array("A deck can have any number of cards named");
+
 $valid_commander_text = array("can be your commander");
 
 $second_commander_text = array("Partner",

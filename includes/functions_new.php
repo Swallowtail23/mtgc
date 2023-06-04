@@ -259,11 +259,11 @@ function quickadd($decknumber,$get_string)
 
 function adddeckcard($deck,$card,$section,$quantity)
 {
-    global $db, $logfile, $commander_decktypes, $commander_multiples;
+    global $db, $logfile, $commander_decktypes, $commander_multiples, $any_quantity;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $quantity x $card to $deck ($section)",$logfile);
     
     // Get card name of addition
-    $cardnamequery = "SELECT name,type FROM cards_scry WHERE id = ? LIMIT 1";
+    $cardnamequery = "SELECT name,type,ability FROM cards_scry WHERE id = ? LIMIT 1";
     $result = $db->execute_query($cardnamequery, [$card]);
     $cardname = $result->fetch_assoc();
     if($result != TRUE):
@@ -273,9 +273,28 @@ function adddeckcard($deck,$card,$section,$quantity)
         $i = 0;
         $cdr_1_plus = FALSE;
         while($i < count($commander_multiples)):
+            $while_result = FALSE;
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking type for: {$commander_multiples[$i]}",$logfile);
             if(str_contains($cardname['type'],$commander_multiples[$i]) == TRUE):
+                $while_result = TRUE;
                 $cdr_1_plus = TRUE;
             endif;
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...outcome: $while_result",$logfile);
+            $i++;
+        endwhile;
+        $i = 0;
+        while($i < count($any_quantity)):
+            $while_result = FALSE;
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking ability for: {$any_quantity[$i]}",$logfile);
+            if(str_contains($cardname['ability'],$any_quantity[$i]) == TRUE):
+                $while_result = TRUE;
+                $cdr_1_plus = TRUE;
+            endif;
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...outcome: $while_result",$logfile);
             $i++;
         endwhile;
         if($cdr_1_plus == FALSE):
@@ -323,10 +342,18 @@ function adddeckcard($deck,$card,$section,$quantity)
     if($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's a Commander-style deck, and multiples of this type not allowed, can't add",$logfile);
         $quantity = FALSE;
-    elseif(($already_in_deck == TRUE AND $cdr_type_deck = TRUE AND $cdr_1_plus == TRUE) OR ($already_in_deck == FALSE AND $cdr_type_deck = TRUE AND $cdr_1_plus == TRUE) OR ($cdr_type_deck = FALSE)):
-        $quantity = $quantity;
-    elseif($already_in_deck == FALSE AND $cdr_type_deck = TRUE):
+    elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card not already in this deck, it's a Commander-style deck, and multiples of this type not allowed, adding 1",$logfile);
         $quantity = 1;
+    elseif($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty",$logfile);
+        $quantity = $quantity;
+    elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is not already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty",$logfile);
+        $quantity = $quantity;
+    elseif($cdr_type_deck == FALSE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's not a Commander-style deck, adding requested qty",$logfile);
+        $quantity = $quantity;
     endif;
     
     // Add card to deck
