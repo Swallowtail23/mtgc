@@ -471,7 +471,9 @@ require('includes/menu.php'); //mobile menu
                 $meld = '';
             endif;
             //Populate JSON data
-            $tcg_buy_uri = scryfall($id);
+            $scryfallresult = scryfall($id);
+            $tcg_buy_uri = $scryfallresult["tcg_uri"];
+            // $tcg_buy_uri = scryfall($id);
             if(isset($row['layout']) AND $row['layout'] === "normal"):
                 $scryfallimg = $row['image_uri'];
             else:
@@ -487,7 +489,8 @@ require('includes/menu.php'); //mobile menu
             else:
                 $price_foil_log = 'none';
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Price from database is: $price_log/$price_foil_log",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current price from Scryfall is: {$scryfallresult["price"]}/{$scryfallresult["price_foil"]}",$logfile);
             if($scryfallimg !== null):
                 $scryfallimg = $db->escape($scryfallimg,'str');
             endif;
@@ -1225,7 +1228,18 @@ require('includes/menu.php'); //mobile menu
                                     $tcgdirectlink = null;
                                 endif;?>
                                 <table id='tcgplayer' width="100%">
-                          <?php if((isset($row["price"]) AND $row["price"] !== "" AND $row["cs_normal"] !== "")):?>
+                          <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00  AND $row["cs_normal"] !== "")):
+                                    $normalprice = TRUE; ?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Normal
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?php echo $scryfallresult["price"]; ?>
+                                        </td>
+                                    </tr>
+                          <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND $row["cs_normal"] !== "")):
+                                    $normalprice = TRUE; ?>
                                     <tr>
                                         <td class="buycellleft">
                                             Normal
@@ -1234,8 +1248,22 @@ require('includes/menu.php'); //mobile menu
                                             <?php echo $row["price"]; ?>
                                         </td>
                                     </tr>
-                          <?php endif;      
-                                if((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["cs_foil"] !== "")):?>
+                          <?php 
+                                else:
+                                    $normalprice = FALSE;
+                                endif;      
+                                if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00  AND $row["cs_foil"] !== "")):
+                                    $foilprice = TRUE; ?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Foil
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?php echo $scryfallresult["price_foil"]; ?>
+                                        </td>
+                                    </tr>
+                          <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND $row["cs_foil"] !== "")):
+                                    $foilprice = TRUE; ?>
                                     <tr>
                                         <td class="buycellleft">
                                             Foil
@@ -1244,7 +1272,17 @@ require('includes/menu.php'); //mobile menu
                                             <?php echo $row["price_foil"]; ?>
                                         </td>
                                     </tr>
-                          <?php endif; ?>
+                          <?php else:
+                                    $foilprice = FALSE;
+                                endif; 
+                                if ($normalprice == FALSE AND $foilprice == FALSE): ?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            No prices available <br>
+                                        </td>
+                                    </tr>
+                                    <?php 
+                                endif; ?>
                                     <tr>
                                         <td colspan=2 class="buycellleft">
                                             <?php

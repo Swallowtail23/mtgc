@@ -126,6 +126,12 @@ try {
     die();
 }
 
+$seconds_in_hour = 3600;
+
+/** How old must card data be to trigger automatic refresh, in hours **/
+$max_data_age_in_hours = 2;
+$max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;
+
 /** Define card types and variables which require special treatment **/
 
 // Card layouts which get a flip button
