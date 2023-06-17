@@ -1589,6 +1589,16 @@ endif;
                 <?php
             else:?>
                 <h4>Compare to collection for missing cards</h4>
+                This will check against all cards in your collection for a name match, so can take a considerable time for large collections. 
+                When it is complete, you will be returned to this page with two options:
+                <ol>
+                    <li>
+                        "EXPORT" to download a text file with missing cards
+                    </li>
+                    <li>
+                        "TCGPlayer BUY" to link to TCGPlayer for the missing cards
+                    </li>
+                </ol>
                 <form action="deckdetail.php" method="GET">
                 <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
                 <input type='hidden' name='missing' value='yes'>

@@ -44,7 +44,7 @@ require('includes/menu.php');
         <h2 class='h2pad'>Known issues and bugs</h2>
     <ul>
         <li><b>The scrolling results page never goes past the first page.</b> Turn off AdBlock for the site</li>
-        <li><b>No way to add, remove or interact with Groups.</b> A bit of work in this, it's on the list.</li>
+        <li><b>Images are slow to load.</b> Images are fetched the first time they are needed. This means for new cards, or not yet viewed cards, this can take a while - be patient.</li>
         <li><b>The type search does an OR search.</b> Correct, workaround for now is to use fuzzy type search. AND / OR is on the list.</li>
     </ul>
 &nbsp;

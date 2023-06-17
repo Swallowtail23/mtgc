@@ -89,8 +89,11 @@ $name = ucfirst($username);
     <h3 class="shallowh3">Help</h3>
     <b>Known issues, bugs and other crawlies</b><br>    
     For known problems, see this page: <a href="issues.php">Issues</a><br><br>
-    <b>Printing</b><br>
-    Printing seems to work best from Firefox or Internet Explorer - Chrome seems to do strange things with page breaks. 
+    <b>Card data</b><br>
+    Card data is refreshed each night at midnight, with a full synchronisation to Scryfall's card database. Errors, omissions, etc. will remain until resolved at <a href='https://www.scryfall.com'>Scryfall</a>
+    <br><br><b>Prices</b><br>
+    Prices are updated each night from Scryfall for every card in the database. When going to a card detail page, if the price was fetched more than <?php echo $max_data_age_in_hours; ?> hours, it will automatically update. 
+    If no price is available for the card, this will be because Scryfall do not currently have a price.
     <br><br><b>Card updates</b><br>
     Please use the form above if you find an issue with a card, or missing cards. 
     Clicking on Help from a page that has a problem will automatically include that page's address in the contact form that gets sent.
