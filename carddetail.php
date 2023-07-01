@@ -1495,7 +1495,11 @@ require('includes/menu.php'); //mobile menu
                                         if (!empty($indecks)):
                                             echo "<b>Your decks with this card:</b><br>";
                                             foreach ($indecks as $decksrow):
-                                                echo "{$decksrow['deckname']} (x{$decksrow['qty']}) <br>";
+                                                if($decksrow['qty'] != ''):
+                                                    echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>{$decksrow['deckname']}</a> (main x{$decksrow['qty']}) <br>";
+                                                else:
+                                                    echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>{$decksrow['deckname']}</a> (sideboard x{$decksrow['sideqty']}) <br>";
+                                                endif;
                                             endforeach;
                                             echo "<hr class='hr324'>";
                                         endif; 

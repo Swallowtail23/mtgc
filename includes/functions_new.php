@@ -204,9 +204,10 @@ function deckcardcheck($card,$user)
         $i = 0;
         $record = array();
         while($row = $result->fetch_assoc()):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card $card, qty {$row['cardqty']} in owned decknumber {$row['decknumber']}",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in owned decknumber {$row['decknumber']}",$logfile);
             $record[$i]['decknumber'] = $row['decknumber'];
             $record[$i]['qty'] = $row['cardqty'];
+            $record[$i]['sideqty'] = $row['sideqty'];
             $record[$i]['deckname'] = $row['deckname'];
             $i = $i + 1;
         endwhile;
