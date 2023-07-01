@@ -1,6 +1,6 @@
 <?php
-/* Version:     13.0
-    Date:       24/04/23
+/* Version:     14.0
+    Date:       01/07/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -44,6 +44,8 @@
  *              Add flip image capability for battle cards
  * 13.0
  *              Deck card adding rewrite for Commander, etc.
+ * 14.0
+ *              Add function to get decks with a card
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -187,6 +189,28 @@ function deckownercheck($deck,$user)
                 return $deckname;
             endif;
         endwhile;
+    endif;    
+}
+
+function deckcardcheck($card,$user)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what owned decks this card is in...",$logfile);
+    $sql = "SELECT * FROM deckcards LEFT JOIN decks ON deckcards.decknumber = decks.decknumber WHERE cardnumber = '$card' and owner = $user";
+    $result = $db->query($sql);
+    if($result === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+    else:
+        $i = 0;
+        $record = array();
+        while($row = $result->fetch_assoc()):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card $card, qty {$row['cardqty']} in owned decknumber {$row['decknumber']}",$logfile);
+            $record[$i]['decknumber'] = $row['decknumber'];
+            $record[$i]['qty'] = $row['cardqty'];
+            $record[$i]['deckname'] = $row['deckname'];
+            $i = $i + 1;
+        endwhile;
+        return $record;
     endif;    
 }
 
