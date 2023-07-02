@@ -50,6 +50,7 @@ $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching today's URL from $url",$logfile);
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
 $curlresult = curl_exec($ch);
 curl_close($ch);
 $scryfall_bulk = json_decode($curlresult,true);
@@ -62,7 +63,7 @@ $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTI
 if($max_fileage == 0):
     $download = 3;
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Caled with 'new' - refreshing download",$logfile);    
+    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Called with 'new' - refreshing download",$logfile);    
 elseif (file_exists($file_location) AND filesize($file_location) > 0):
     $fileage = filemtime($file_location);
     $file_date = date('d-m-Y H:i',$fileage);

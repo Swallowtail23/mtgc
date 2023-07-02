@@ -663,7 +663,7 @@ function checkRemoteFile($url)
     curl_setopt($ch, CURLOPT_STDERR, fopen('php://stderr', 'w'));
     curl_setopt($ch, CURLOPT_FAILONERROR, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17');
+    curl_setopt($ch,CURLOPT_USERAGENT,'MtGCollection/1.0');
     curl_setopt($ch, CURLOPT_AUTOREFERER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     $curlresult = curl_exec($ch);
@@ -732,7 +732,7 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sect
                 mail($adminemail, $subject, $message, $from); 
                 $frontimg = 'error';
             else:
-                $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
+                $options  = array('http' => array('user_agent' => 'MtGCollection/1.0'));
                 $context  = stream_context_create($options);
                 $image = file_get_contents($imageurl, false, $context);
                 if (!file_exists($ImgLocation.$setcode)):
@@ -779,7 +779,7 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sect
                 elseif(checkRemoteFile($imageurl_2) == false):
                     $backimg = 'error';
                 else:
-                    $options  = array('http' => array('user_agent' => 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.52 Safari/537.17'));
+                    $options  = array('http' => array('user_agent' => 'MtGCollection/1.0'));
                     $context  = stream_context_create($options);
                     $image2 = file_get_contents($imageurl_2, false, $context);
                     if (!file_exists($ImgLocation.$setcode)):
@@ -1262,6 +1262,8 @@ function downloadbulk($url, $dest)
       CURLOPT_FOLLOWLOCATION => true,
       CURLOPT_URL => $url,
       CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
+      CURLOPT_USERAGENT => "MtGCollection/1.0",
+      CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
     );
 
     $ch = curl_init();
