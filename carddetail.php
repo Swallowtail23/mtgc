@@ -1326,19 +1326,25 @@ require('includes/menu.php'); //mobile menu
                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                 endif;
                                 if ($usergrprow['grpinout'] == 1):
-                                    if($sqluserqry = $db->query('SELECT usernumber, username, status FROM users')):
+                                    $usergroup = $usergrprow['groupid'];
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Groups are active, group ID = $usergroup",$logfile);
+                                    if($sqluserqry = $db->query("SELECT usernumber, username, status, groupid, groupname, owner FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE groupid = $usergroup")):
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                                     else:
                                         trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                     endif;
                                     $others = 0;
+                                    $q = 0;
                                     while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
                                         if($userrow['status'] !== 'disabled'):
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
                                             if ($_SESSION["user"] !== $userrow['usernumber']):
+                                                $grpuser[$q]['id'] = $userrow['usernumber'];
+                                                $grpuser[$q]['name'] = $userrow['username'];
+                                                $q = $q + 1;
                                                 $usertable = $userrow['usernumber'].'collection';
                                                 if($sqlqtyqry = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = '$row[0]'")):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
                                                 else:
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
@@ -1491,10 +1497,10 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                         endif; 
                                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking to see if $cardid is in any owned decks",$logfile);
-                                        $indecks = deckcardcheck($cardid,$user);
-                                        if (!empty($indecks)):
+                                        $inmydecks = deckcardcheck($cardid,$user);
+                                        if (!empty($inmydecks)):
                                             echo "<b>Your decks with this card:</b><br>";
-                                            foreach ($indecks as $decksrow):
+                                            foreach ($inmydecks as $decksrow):
                                                 if($decksrow['qty'] != ''):
                                                     echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>{$decksrow['deckname']}</a> (main x{$decksrow['qty']}) <br>";
                                                 else:
@@ -1502,7 +1508,27 @@ require('includes/menu.php'); //mobile menu
                                                 endif;
                                             endforeach;
                                             echo "<hr class='hr324'>";
-                                        endif; 
+                                        endif;
+                                        $t = 0;
+                                        $grpdecks = array();
+                                        foreach ($grpuser as $decksgrprow):
+                                            $grpuserid = $grpuser[$t]['id'];
+                                            $grpusername = ucfirst($grpuser[$t]['name']);
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                            $ingrpdecks = deckcardcheck($cardid,$grpuserid);
+                                            $t = $t + 1;
+                                            if (!empty($ingrpdecks)):
+                                                echo "<b>Group decks with this card:</b><br>";
+                                                foreach ($ingrpdecks as $decksgrprow):
+                                                    if($decksgrprow['qty'] != ''):
+                                                        echo "$grpusername: {$decksgrprow['deckname']} (main x{$decksgrprow['qty']}) <br>";
+                                                    else:
+                                                        echo "$grpusername: {$decksgrprow['deckname']} (sideboard x{$decksgrprow['sideqty']}) <br>";
+                                                    endif;
+                                                endforeach;
+                                                echo "<hr class='hr324'>";
+                                            endif;
+                                        endforeach;
                                         ?>
 
                                         <!-- Display Add to Deck form -->
