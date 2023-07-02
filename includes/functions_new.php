@@ -195,7 +195,7 @@ function deckownercheck($deck,$user)
 function deckcardcheck($card,$user)
 {
     global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what owned decks this card is in...",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what decks this card is in for user $user...",$logfile);
     $sql = "SELECT * FROM deckcards LEFT JOIN decks ON deckcards.decknumber = decks.decknumber WHERE cardnumber = '$card' and owner = $user";
     $result = $db->query($sql);
     if($result === false):

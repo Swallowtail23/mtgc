@@ -145,7 +145,7 @@ endif; ?>
                 $obj = new Message;
                 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt out of groups",$logfile);
                 $updatedata = array (
-                    'grpinout' => 0
+                    'grpinout' => '0'
                 );
                 $optinquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
                 if($optinquery === false):
