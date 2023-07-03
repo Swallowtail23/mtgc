@@ -31,6 +31,7 @@ $obj = new Message;
 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: fetching $url",$logfile);
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
 $curlresult = curl_exec($ch);
 curl_close($ch);
 $scryfall_rulings = json_decode($curlresult,true);

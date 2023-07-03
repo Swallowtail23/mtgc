@@ -1511,24 +1511,26 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                         $t = 0;
                                         $grpdecks = array();
-                                        foreach ($grpuser as $decksgrprow):
-                                            $grpuserid = $grpuser[$t]['id'];
-                                            $grpusername = ucfirst($grpuser[$t]['name']);
-                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
-                                            $ingrpdecks = deckcardcheck($cardid,$grpuserid);
-                                            $t = $t + 1;
-                                            if (!empty($ingrpdecks)):
-                                                echo "<b>Group decks with this card:</b><br>";
-                                                foreach ($ingrpdecks as $decksgrprow):
-                                                    if($decksgrprow['qty'] != ''):
-                                                        echo "$grpusername: {$decksgrprow['deckname']} (main x{$decksgrprow['qty']}) <br>";
-                                                    else:
-                                                        echo "$grpusername: {$decksgrprow['deckname']} (sideboard x{$decksgrprow['sideqty']}) <br>";
-                                                    endif;
-                                                endforeach;
-                                                echo "<hr class='hr324'>";
-                                            endif;
-                                        endforeach;
+                                        if(isset($grpuser)):
+                                            foreach ($grpuser as $decksgrprow):
+                                                $grpuserid = $grpuser[$t]['id'];
+                                                $grpusername = ucfirst($grpuser[$t]['name']);
+                                                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                                $ingrpdecks = deckcardcheck($cardid,$grpuserid);
+                                                $t = $t + 1;
+                                                if (!empty($ingrpdecks)):
+                                                    echo "<b>Group decks with this card:</b><br>";
+                                                    foreach ($ingrpdecks as $decksgrprow):
+                                                        if($decksgrprow['qty'] != ''):
+                                                            echo "$grpusername: {$decksgrprow['deckname']} (main x{$decksgrprow['qty']}) <br>";
+                                                        else:
+                                                            echo "$grpusername: {$decksgrprow['deckname']} (sideboard x{$decksgrprow['sideqty']}) <br>";
+                                                        endif;
+                                                    endforeach;
+                                                    echo "<hr class='hr324'>";
+                                                endif;
+                                            endforeach;
+                                        endif;
                                         ?>
 
                                         <!-- Display Add to Deck form -->
