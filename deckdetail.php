@@ -1,6 +1,6 @@
 <?php
-/* Version:     15.0
-    Date:       03/06/23
+/* Version:     16.0
+    Date:       04/07/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -41,6 +41,8 @@
  *              Improved performance by making "Missing" check manually called, not every page load
  *              Updated icons
  *              Added ability to have Partner Commander
+ *  16.0   
+ *              Added deckname edit, and delete deck from deck detail page
 */
 
 session_start();
