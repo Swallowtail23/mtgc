@@ -1,6 +1,6 @@
 <?php
-/* Version:     14.0
-    Date:       01/07/23
+/* Version:     15.0
+    Date:       04/07/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -46,6 +46,8 @@
  *              Deck card adding rewrite for Commander, etc.
  * 14.0
  *              Add function to get decks with a card
+ * 15.0
+ *              Functions to delete a deck and rename a deck
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -600,55 +602,38 @@ function renamedeck($deck,$newname,$user)
 {
     global $db, $logfile;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Rename deck called: deck $deck to '$newname'",$logfile);
+    
     // CHECK IF NAME IS ALREADY USED
-    $stmt = $db->prepare("SELECT decknumber FROM decks WHERE deckname=? AND owner=? LIMIT 1");
-    if ($stmt === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    $bind = $stmt->bind_param("si", $newname,$user);
-    if ($bind === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    if ($stmt->execute() === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Checking if deckname already exists for this user: ". $db->error, E_USER_ERROR);
+    $query = 'SELECT decknumber FROM decks WHERE deckname=? AND owner=?';
+    $stmt = $db->execute_query($query, [$newname,$user]);
+    if ($stmt != TRUE):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     else:
-        $stmt->store_result();
-        $qtyresult = $stmt->num_rows;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Rename deck called: deck $deck to '$newname'",$logfile);
-        if ($qtyresult > 0):
-            $newnameexists = 2;
+        if ($stmt->num_rows > 0):
+            $newnamereturn = 2;
             $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' already used",$logfile);
-            return($newnameexists);
+            return($newnamereturn);
         else:
+            $newnamereturn = 0; //OK to continue
             $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' not already used",$logfile);
         endif;
     endif;
     $stmt->close();
     
     //RENAME
-    $stmt = $db->prepare("UPDATE decks SET deckname=? WHERE decknumber=?");
-    if ($stmt === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    $bind = $stmt->bind_param("si", $newname, $deck); 
-    if ($bind === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    $exec = $stmt->execute();
-    if ($exec === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Renaming deck: ". $db->error, E_USER_ERROR);
+    $query = 'UPDATE decks SET deckname=? WHERE decknumber=?';
+    $stmt = $db->execute_query($query, [$newname,$deck]);
+    if ($stmt != TRUE):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     else:
-        $checkgone2 = "SELECT deckname FROM decks WHERE decknumber = '$deck' LIMIT 1";
-        $runquery2 = $db->query($checkgone2);
-        $result2=$runquery2->fetch_assoc();
-        if ($result2 === null):
-            $newnameexists = 1;
-        else:
-            $newnameexists = 0;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname'query run",$logfile);
+        if ($db->affected_rows !== 1):
+            $newnamereturn = 1; //Error
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...result: Unknown error: $db->affected_rows row(s) affected",$logfile);
         endif;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...result: $db->affected_rows row affected ",$logfile);
     endif;
-    $stmt->close();
-    return($newnameexists);
+    return($newnamereturn);
 }
 
 function symbolreplace($str)

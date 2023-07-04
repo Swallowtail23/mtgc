@@ -185,16 +185,29 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck to $newname",$logfile);
-    if(renamedeck($decknumber,$newname,$user) == 2):
+    $renameresult = renamedeck($decknumber,$newname,$user);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck result: $renameresult",$logfile);
+    if($renameresult == 2):
         ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
-        <br>
-        <br>
-        Pick a non-used name
-        <br>
-        <br>
-        <span id='dismiss'>CLICK TO DISMISS</span>
-    </div>
+            <br>
+            <br>
+            Pick a non-used name
+            <br>
+            <br>
+            <span id='dismiss'>CLICK TO DISMISS</span>
+        </div>
+        <?php
+     elseif($renameresult > 0):
+         ?>
+        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
+            <br>
+            <br>
+            Unknown error, rename failed
+            <br>
+            <br>
+            <span id='dismiss'>CLICK TO DISMISS</span>
+        </div>
         <?php
     endif;
 endif;
