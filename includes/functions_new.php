@@ -531,6 +531,126 @@ function delcommander($deck,$card)
     endif;
 }
 
+function deldeck($decktodelete)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck called: deck $decktodelete",$logfile);
+    $stmt = $db->prepare("DELETE FROM decks WHERE decknumber=?");
+    if ($stmt === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $bind = $stmt->bind_param("i", $decktodelete); 
+    if ($bind === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $exec = $stmt->execute();
+    if ($exec === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck: ". $db->error, E_USER_ERROR);
+    else:
+        $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = '$decktodelete' LIMIT 1";
+        $runquery1 = $db->query($checkgone1);
+        $result1=$runquery1->fetch_assoc();
+        if ($result1 === null):
+            $deck_deleted = 1;
+        else:
+            $deck_deleted = 0;
+        endif;
+    endif;
+    $stmt->close();
+    $stmt = $db->prepare("DELETE FROM deckcards WHERE decknumber=?");
+    if ($stmt === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $bind = $stmt->bind_param("i", $decktodelete); 
+    if ($bind === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $exec = $stmt->execute();
+    if ($exec === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck cards: ". $db->error, E_USER_ERROR);
+    else:
+        $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decktodelete' LIMIT 1";
+        $runquery2 = $db->query($checkgone2);
+        $result2=$runquery2->fetch_assoc();
+        if ($result2 === null):
+            $deckcards_deleted = 1;
+        else:
+            $deckcards_deleted = 0;
+        endif;
+    endif;
+    $stmt->close();
+    if($deck_deleted === 1 AND $deckcards_deleted === 1):?>
+        <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
+            <br>
+            Deck deleted
+            <br>
+            <span id='dismiss'>CLICK TO DISMISS</span>
+        </div> <?php
+    else:?>
+        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
+            <br>
+            Deck and / or cards not deleted
+            <br>
+            <span id='dismiss'>CLICK TO DISMISS</span>
+        </div> <?php
+    endif;
+}
+
+function renamedeck($deck,$newname,$user)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Rename deck called: deck $deck to '$newname'",$logfile);
+    // CHECK IF NAME IS ALREADY USED
+    $stmt = $db->prepare("SELECT decknumber FROM decks WHERE deckname=? AND owner=? LIMIT 1");
+    if ($stmt === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $bind = $stmt->bind_param("si", $newname,$user);
+    if ($bind === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    if ($stmt->execute() === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Checking if deckname already exists for this user: ". $db->error, E_USER_ERROR);
+    else:
+        $stmt->store_result();
+        $qtyresult = $stmt->num_rows;
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Rename deck called: deck $deck to '$newname'",$logfile);
+        if ($qtyresult > 0):
+            $newnameexists = 2;
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' already used",$logfile);
+            return($newnameexists);
+        else:
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' not already used",$logfile);
+        endif;
+    endif;
+    $stmt->close();
+    
+    //RENAME
+    $stmt = $db->prepare("UPDATE decks SET deckname=? WHERE decknumber=?");
+    if ($stmt === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $bind = $stmt->bind_param("si", $newname, $deck); 
+    if ($bind === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $db->error, E_USER_ERROR);
+    endif;
+    $exec = $stmt->execute();
+    if ($exec === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Renaming deck: ". $db->error, E_USER_ERROR);
+    else:
+        $checkgone2 = "SELECT deckname FROM decks WHERE decknumber = '$deck' LIMIT 1";
+        $runquery2 = $db->query($checkgone2);
+        $result2=$runquery2->fetch_assoc();
+        if ($result2 === null):
+            $newnameexists = 1;
+        else:
+            $newnameexists = 0;
+        endif;
+    endif;
+    $stmt->close();
+    return($newnameexists);
+}
+
 function symbolreplace($str)
 {
     $str = str_replace('{E}','<img src="images/e.png" alt="{E}" class="manaimg">',$str);

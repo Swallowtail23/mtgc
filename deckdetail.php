@@ -84,11 +84,21 @@ forcechgpwd();                              //Check if user is disabled or needs
         });
     </script>  
     <script type="text/javascript"> 
-    function CloseMe( obj )
+        function CloseMe( obj )
         {
             obj.style.display = 'none';
         }
-    </script>  
+    </script>
+    <script>
+        function toggleForm() {
+          var form = document.getElementById("renameForm");
+          if (form.style.display === "none") {
+            form.style.display = "block";
+          } else {
+            form.style.display = "none";
+          }
+        }
+    </script>
 </head>
 
 <body class="body">
@@ -114,6 +124,8 @@ elseif (isset($_POST["deck"])):
     $updatenotes    = isset($_POST['updatenotes']) ? 'yes' : '';
     $newnotes       = filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     $newsidenotes   = filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+    $renamedeck     = isset($_POST['renamedeck']) ? 'yes' : '';
+    $newname        = isset($_POST['newname']) ? filter_input(INPUT_POST, 'newname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES): '';
 else: ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -124,15 +136,15 @@ else: ?>
     require('includes/footer.php');
     exit();
 endif;
-$cardtoaction   = isset($_GET['card']) ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS):'';
-$deletemain     = isset($_GET['deletemain']) ? 'yes' : '';
-$deleteside     = isset($_GET['deleteside']) ? 'yes' : '';
-$maintoside     = isset($_GET['maintoside']) ? 'yes' : '';
-$sidetomain     = isset($_GET['sidetomain']) ? 'yes' : '';
-$plusmain       = isset($_GET['plusmain']) ? 'yes' : '';
-$minusmain      = isset($_GET['minusmain']) ? 'yes' : '';
-$plusside       = isset($_GET['plusside']) ? 'yes' : '';
-$minusside      = isset($_GET['minusside']) ? 'yes' : '';
+$cardtoaction   = isset($_GET['card'])          ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS):'';
+$deletemain     = isset($_GET['deletemain'])    ? 'yes' : '';
+$deleteside     = isset($_GET['deleteside'])    ? 'yes' : '';
+$maintoside     = isset($_GET['maintoside'])    ? 'yes' : '';
+$sidetomain     = isset($_GET['sidetomain'])    ? 'yes' : '';
+$plusmain       = isset($_GET['plusmain'])      ? 'yes' : '';
+$minusmain      = isset($_GET['minusmain'])     ? 'yes' : '';
+$plusside       = isset($_GET['plusside'])      ? 'yes' : '';
+$minusside      = isset($_GET['minusside'])     ? 'yes' : '';
 $valid_commander = array("yes","no");
 if(isset($_GET['commander']) AND (in_array($_GET['commander'],$valid_commander))):
     $commander = $_GET['commander'];
@@ -165,6 +177,23 @@ if ((isset($updatenotes)) AND ($updatenotes == 'yes')):
     );
     if ($db->update('decks', $updateddata, "WHERE decknumber = $decknumber") === FALSE):
         trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+    endif;
+endif;
+
+// Update name if called before reading info (we've already checked ownership)
+if(isset($_POST['newname'])):
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck to $newname",$logfile);
+    if(renamedeck($decknumber,$newname,$user) == 2):
+        ?>
+        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
+        <br>
+        <br>
+        Pick a non-used name
+        <br>
+        <br>
+        <span id='dismiss'>CLICK TO DISMISS</span>
+    </div>
+        <?php
     endif;
 endif;
 
@@ -402,9 +431,35 @@ endif;
             <span id="printtitle" class="headername">
                 <img src="images/white_m.png"> MtG collection
             </span>
-            <?php
-            echo "<h2 class='h2pad'>$deckname</h2>";
-                echo "Deck type:"; ?>
+            <form id="deletedeck" action="decks.php" method="POST">
+                <input type='hidden' name="deletedeck" value="yes">
+                <input type='hidden' name="decktodelete" value="<?php echo $decknumber; ?>">
+            </form>
+            <h2 class='h2pad'><?php echo $deckname; ?> &nbsp; 
+                <span 
+                    onmouseover="" 
+                    style="cursor: pointer;"
+                    onclick="if(confirm('Confirm OK to delete deck?')) document.getElementById('deletedeck').submit();"
+                    class='material-symbols-outlined'>
+                    delete
+                </span>
+                &nbsp;
+                <span
+                    onclick="toggleForm()"
+                    onmouseover=""
+                    style="cursor: pointer;"
+                    class='material-symbols-outlined'>
+                    edit
+                </span>
+            </h2>
+                <form id="renameForm" style="display: none;" action="?" method="POST">
+                    <b>New name</b><br>
+                    <input type='text' id='newname' name='newname'>
+                    <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
+                    <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
+                    <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
+                </form>
+                <b>Deck type</b>
                 <form>
                     <select class='dropdown' size="1" name="updatetype" onchange='this.form.submit()'>
                         <option <?php if($decktype==''):echo "selected='selected'";endif;?>disabled='disabled'>Pick one</option>
@@ -1500,49 +1555,49 @@ endif;
             </form>
             <hr id='deckline' class='hr324'>
             <h4>&nbsp;CMC</h4>
-                <script type="text/javascript">
-                  google.charts.load('current', {'packages':['bar']});
-                  google.charts.setOnLoadCallback(drawChart);
-                  function drawChart() {
-                  var data = google.visualization.arrayToDataTable([
-                      ['', 'Qty'],
-                      ['0', <?php echo $cmc[0]; ?>],
-                      ['1', <?php echo $cmc[1]; ?>],
-                      ['2', <?php echo $cmc[2]; ?>],
-                      ['3', <?php echo $cmc[3]; ?>],
-                      ['4', <?php echo $cmc[4]; ?>],
-                      ['5', <?php echo $cmc[5]; ?>],
-                      ['6+', <?php echo $cmc[6]; ?>],
-                    ]);
-
-                    var options = {
-                      bars: 'vertical',
-                      axisTitlesPosition: 'none',
-                      backgroundColor:{
-                          fill:'#e8eaf6'
-                      },
-                      chartArea:{
-                          left:0,
-                          top:0,
-                          backgroundColor:'#e8eaf6'
-                      },
-                      legend:{
-                          position: 'none'
-                      },
-                      hAxis:{
-                          textPosition: 'none'
-                      },
-                      vAxis:{
-                          minValue: '0'
-                      }
-                    };
-                    var chart = new google.charts.Bar(document.getElementById('barchart_material'));
-                    chart.draw(data, google.charts.Bar.convertOptions(options));
-                  }
-                </script>
                 <?php
                 if($total + $sidetotal > 0):
                     ?>
+                        <script type="text/javascript">
+                          google.charts.load('current', {'packages':['bar']});
+                          google.charts.setOnLoadCallback(drawChart);
+                          function drawChart() {
+                          var data = google.visualization.arrayToDataTable([
+                              ['', 'Qty'],
+                              ['0', <?php echo $cmc[0]; ?>],
+                              ['1', <?php echo $cmc[1]; ?>],
+                              ['2', <?php echo $cmc[2]; ?>],
+                              ['3', <?php echo $cmc[3]; ?>],
+                              ['4', <?php echo $cmc[4]; ?>],
+                              ['5', <?php echo $cmc[5]; ?>],
+                              ['6+', <?php echo $cmc[6]; ?>],
+                            ]);
+
+                            var options = {
+                              bars: 'vertical',
+                              axisTitlesPosition: 'none',
+                              backgroundColor:{
+                                  fill:'#e8eaf6'
+                              },
+                              chartArea:{
+                                  left:0,
+                                  top:0,
+                                  backgroundColor:'#e8eaf6'
+                              },
+                              legend:{
+                                  position: 'none'
+                              },
+                              hAxis:{
+                                  textPosition: 'none'
+                              },
+                              vAxis:{
+                                  minValue: '0'
+                              }
+                            };
+                            var chart = new google.charts.Bar(document.getElementById('barchart_material'));
+                            chart.draw(data, google.charts.Bar.convertOptions(options));
+                          }
+                        </script>
                     <div id="barchart_material" style="width: 85%; height: 150px;"></div>
                 <?php 
                 else:

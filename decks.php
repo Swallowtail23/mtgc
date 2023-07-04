@@ -136,65 +136,7 @@ require('includes/menu.php'); //mobile menu
         
         // Delete a deck
         if($deletedeck == "yes"):
-            $stmt = $db->prepare("DELETE FROM decks WHERE decknumber=?");
-            if ($stmt === false):
-                trigger_error('[ERROR] decks.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-            endif;
-            $bind = $stmt->bind_param("i", $decktodelete); 
-            if ($bind === false):
-                trigger_error('[ERROR] decks.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                trigger_error("[ERROR] decks.php: Deleting deck: " . $db->error, E_USER_ERROR);
-            else:
-                $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = '$decktodelete' LIMIT 1";
-                $runquery1 = $db->query($checkgone1);
-                $result1=$runquery1->fetch_assoc();
-                if ($result1 === null):
-                    $deck_deleted = 1;
-                else:
-                    $deck_deleted = 0;
-                endif;
-            endif;
-            $stmt->close();
-            $stmt = $db->prepare("DELETE FROM deckcards WHERE decknumber=?");
-            if ($stmt === false):
-                trigger_error('[ERROR] decks.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-            endif;
-            $bind = $stmt->bind_param("i", $decktodelete); 
-            if ($bind === false):
-                trigger_error('[ERROR] decks.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                trigger_error("[ERROR] decks.php: Deleting deckcards: " . $db->error, E_USER_ERROR);
-            else:
-                $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decktodelete' LIMIT 1";
-                $runquery2 = $db->query($checkgone2);
-                $result2=$runquery2->fetch_assoc();
-                if ($result2 === null):
-                    $deckcards_deleted = 1;
-                else:
-                    $deckcards_deleted = 0;
-                endif;
-            endif;
-            $stmt->close();
-            if($deck_deleted === 1 AND $deckcards_deleted === 1):?>
-                <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
-                    <br>
-                    Deck deleted
-                    <br>
-                    <span id='dismiss'>CLICK TO DISMISS</span>
-                </div> <?php
-            else:?>
-                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
-                    <br>
-                    Deck and / or cards not deleted
-                    <br>
-                    <span id='dismiss'>CLICK TO DISMISS</span>
-                </div> <?php
-            endif;
+            deldeck($decktodelete);
         endif;
         // List decks
         ?>
