@@ -92,7 +92,8 @@ forcechgpwd();                              //Check if user is disabled or needs
         }
     </script>
     <script>
-        function toggleForm() {
+        function toggleForm() 
+        {
           var form = document.getElementById("renameForm");
           if (form.style.display === "none") {
             form.style.display = "block";
@@ -469,11 +470,23 @@ endif;
             </h2>
                 <form id="renameForm" style="display: none;" action="?" method="POST">
                     <b>New name</b><br>
-                    <input type='text' id='newname' name='newname'>
+                    <input type='text' id='newname' name='newname' value="<?php echo $deckname; ?>">
                     <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
                     <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
                     <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
                 </form>
+                <script type="text/javascript">
+                    document.getElementById('renameForm').addEventListener('submit', function(event) {
+                      event.preventDefault(); // Prevent form submission
+                      var fieldValue = document.getElementById('newname').value;
+                      if (fieldValue.trim() === '') {
+                        alert('Field cannot be empty!');
+                        return;
+                      }
+                      // Proceed with form submission
+                      this.submit();
+                    });
+                </script>
                 <b>Deck type</b>
                 <form>
                     <select class='dropdown' size="1" name="updatetype" onchange='this.form.submit()'>
