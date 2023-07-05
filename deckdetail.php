@@ -97,6 +97,8 @@ forcechgpwd();                              //Check if user is disabled or needs
           var form = document.getElementById("renameForm");
           if (form.style.display === "none") {
             form.style.display = "block";
+            document.getElementById("newname").focus();
+            document.getElementById("newname").select();
           } else {
             form.style.display = "none";
           }
@@ -192,22 +194,14 @@ if(isset($_POST['newname'])):
         ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
             <br>
-            <br>
-            Pick a non-used name
-            <br>
-            <br>
-            <span id='dismiss'>CLICK TO DISMISS</span>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
      elseif($renameresult > 0):
          ?>
-        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
+        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Unknown error</span>
             <br>
-            <br>
-            Unknown error, rename failed
-            <br>
-            <br>
-            <span id='dismiss'>CLICK TO DISMISS</span>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
     endif;
@@ -430,13 +424,9 @@ endwhile;
 // Next the main DIV section ?>
 <?php
 if(isset($cardtoadd) AND $cardtoadd == 'cardnotfound'): ?>
-    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Quick add failed</span>
+    <div class="msg-new error-new" onclick='CloseMe(this)'><span>That didn't work... check card name</span>
         <br>
-        <br>
-        Check card name
-        <br>
-        <br>
-        <span id='dismiss'>CLICK TO DISMISS</span>
+        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
 <?php
 endif;
@@ -453,6 +443,7 @@ endif;
             </form>
             <h2 class='h2pad'><?php echo $deckname; ?> &nbsp; 
                 <span 
+                    title="Delete"
                     onmouseover="" 
                     style="cursor: pointer;"
                     onclick="if(confirm('Confirm OK to delete deck?')) document.getElementById('deletedeck').submit();"
@@ -461,6 +452,7 @@ endif;
                 </span>
                 &nbsp;
                 <span
+                    title="Rename"
                     onclick="toggleForm()"
                     onmouseover=""
                     style="cursor: pointer;"
@@ -469,8 +461,7 @@ endif;
                 </span>
             </h2>
                 <form id="renameForm" style="display: none;" action="?" method="POST">
-                    <b>New name</b><br>
-                    <input type='text' id='newname' name='newname' value="<?php echo $deckname; ?>">
+                    <br><textarea class='textinput' id='newname' name='newname' rows='1' cols='30' placeholder="New deck name" autofocus></textarea>
                     <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
                     <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
                     <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
@@ -480,11 +471,18 @@ endif;
                       event.preventDefault(); // Prevent form submission
                       var fieldValue = document.getElementById('newname').value;
                       if (fieldValue.trim() === '') {
-                        alert('Field cannot be empty!');
+                        alert('Rename field cannot be empty');
                         return;
                       }
-                      // Proceed with form submission
-                      this.submit();
+                      else if (fieldValue.trim() === '<?php echo $deckname; ?>') 
+                      {
+                        alert('To cancel rename click edit button again');
+                        return;
+                      }
+                      else
+                      {
+                        this.submit();
+                      }
                     });
                 </script>
                 <b>Deck type</b>
