@@ -1580,113 +1580,115 @@ endif;
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="UPDATE NOTES">
             </form>
             <hr id='deckline' class='hr324'>
-            <h4>&nbsp;CMC</h4>
-                <?php
-                if($total + $sidetotal > 0):
-                    ?>
-                        <script type="text/javascript">
-                          google.charts.load('current', {'packages':['bar']});
-                          google.charts.setOnLoadCallback(drawChart);
-                          function drawChart() {
-                          var data = google.visualization.arrayToDataTable([
-                              ['', 'Qty'],
-                              ['0', <?php echo $cmc[0]; ?>],
-                              ['1', <?php echo $cmc[1]; ?>],
-                              ['2', <?php echo $cmc[2]; ?>],
-                              ['3', <?php echo $cmc[3]; ?>],
-                              ['4', <?php echo $cmc[4]; ?>],
-                              ['5', <?php echo $cmc[5]; ?>],
-                              ['6+', <?php echo $cmc[6]; ?>],
-                            ]);
+            <?php
+            if($total + $sidetotal > 0):
+                ?>
+                <h4>&nbsp;CMC</h4>
+                <script type="text/javascript">
+                  google.charts.load('current', {'packages':['bar']});
+                  google.charts.setOnLoadCallback(drawChart);
+                  function drawChart() {
+                  var data = google.visualization.arrayToDataTable([
+                      ['', 'Qty'],
+                      ['0', <?php echo $cmc[0]; ?>],
+                      ['1', <?php echo $cmc[1]; ?>],
+                      ['2', <?php echo $cmc[2]; ?>],
+                      ['3', <?php echo $cmc[3]; ?>],
+                      ['4', <?php echo $cmc[4]; ?>],
+                      ['5', <?php echo $cmc[5]; ?>],
+                      ['6+', <?php echo $cmc[6]; ?>],
+                    ]);
 
-                            var options = {
-                              bars: 'vertical',
-                              axisTitlesPosition: 'none',
-                              backgroundColor:{
-                                  fill:'#e8eaf6'
-                              },
-                              chartArea:{
-                                  left:0,
-                                  top:0,
-                                  backgroundColor:'#e8eaf6'
-                              },
-                              legend:{
-                                  position: 'none'
-                              },
-                              hAxis:{
-                                  textPosition: 'none'
-                              },
-                              vAxis:{
-                                  minValue: '0'
-                              }
-                            };
-                            var chart = new google.charts.Bar(document.getElementById('barchart_material'));
-                            chart.draw(data, google.charts.Bar.convertOptions(options));
-                          }
-                        </script>
-                    <div id="barchart_material" style="width: 85%; height: 150px;"></div>
-                <?php 
+                    var options = {
+                      bars: 'vertical',
+                      axisTitlesPosition: 'none',
+                      backgroundColor:{
+                          fill:'#e8eaf6'
+                      },
+                      chartArea:{
+                          left:0,
+                          top:0,
+                          backgroundColor:'#e8eaf6'
+                      },
+                      legend:{
+                          position: 'none'
+                      },
+                      hAxis:{
+                          textPosition: 'none'
+                      },
+                      vAxis:{
+                          minValue: '0'
+                      }
+                    };
+                    var chart = new google.charts.Bar(document.getElementById('barchart_material'));
+                    chart.draw(data, google.charts.Bar.convertOptions(options));
+                  }
+                </script>
+                <div id="barchart_material" style="width: 85%; height: 150px;"></div>
+            <?php 
+                if(($total - $lands) != 0):
+                    $avgcmc = round(($cmctotal / ($total - $lands)),2);
+                    echo "<br>Average CMC = $avgcmc" ;
                 else:
-                    echo 'N/A<br>';
+                    echo "<br>Average CMC = N/A";
                 endif;
-            if(($total - $lands) != 0):
-                $avgcmc = round(($cmctotal / ($total - $lands)),2);
-                echo "<br>Average CMC = $avgcmc" ;
-            else:
-                echo "<br>Average CMC = N/A";
+                echo "<br>Total deck value (Fair Trade) = $".$deckvalue;
             endif;
-            echo "<br>Total deck value (Fair Trade) = $".$deckvalue;?>
-            </div>
-            <div id='deckfunctions'>
-            <h4>Export decklist</h4>
-            <?php
-            $textfile = $textfile."\r\n\r\nNotes\r\n\r\n$notes\r\n";
-            $textfile = $textfile."\r\n\r\nSideboard notes\r\n\r\n$sidenotes";
-            $textfile = htmlspecialchars($textfile,ENT_QUOTES);
-            $filename = preg_replace('/[^\w]/', '', $deckname);
             ?>
-            <form action="dltext.php" method="POST">
-                <input class='profilebutton' type="submit" value="EXPORT">
-                <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
-                <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
-            </form>
+        </div>
+        <div id='deckfunctions'> 
             <?php
-            if($missing == 'yes' AND $requiredlist != ''):
-                $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
-                $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
-                $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
-                <h4>Export missing cards list</h4>
+            if($total + $sidetotal > 0): ?>
+                <h4>Export decklist</h4>
+                <?php
+                $textfile = $textfile."\r\n\r\nNotes\r\n\r\n$notes\r\n";
+                $textfile = $textfile."\r\n\r\nSideboard notes\r\n\r\n$sidenotes";
+                $textfile = htmlspecialchars($textfile,ENT_QUOTES);
+                $filename = preg_replace('/[^\w]/', '', $deckname);
+                ?>
                 <form action="dltext.php" method="POST">
                     <input class='profilebutton' type="submit" value="EXPORT">
-                    <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
-                    <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
-                </form> 
-                <br>
-                TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
-                <?php
-            elseif($missing == 'yes' AND $requiredlist == ''): ?>
-                <h4>All cards in deck are in collection</h4>
-                <br>
-                <?php
-            else:?>
-                <h4>Compare to collection for missing cards</h4>
-                This will check against all cards in your collection for a name match, so can take a considerable time for large collections. 
-                When it is complete, you will be returned to this page with two options:
-                <ol>
-                    <li>
-                        "EXPORT" to download a text file with missing cards
-                    </li>
-                    <li>
-                        "TCGPlayer BUY" to link to TCGPlayer for the missing cards
-                    </li>
-                </ol>
-                <form action="deckdetail.php" method="GET">
-                <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
-                <input type='hidden' name='missing' value='yes'>
-                <input class='profilebutton' type="submit" value="COMPARE">
+                    <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
+                    <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
                 </form>
-                <br>
-            <?php
+                <?php
+                if($missing == 'yes' AND $requiredlist != ''):
+                    $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
+                    $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
+                    $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
+                    <h4>Export missing cards list</h4>
+                    <form action="dltext.php" method="POST">
+                        <input class='profilebutton' type="submit" value="EXPORT">
+                        <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
+                        <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
+                    </form> 
+                    <br>
+                    TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
+                    <?php
+                elseif($missing == 'yes' AND $requiredlist == ''): ?>
+                    <h4>All cards in deck are in collection</h4>
+                    <br>
+                    <?php
+                else:?>
+                    <h4>Compare to collection for missing cards</h4>
+                    This will check against all cards in your collection for a name match, so can take a considerable time for large collections. 
+                    When it is complete, you will be returned to this page with two options:
+                    <ol>
+                        <li>
+                            "EXPORT" to download a text file with missing cards
+                        </li>
+                        <li>
+                            "TCGPlayer BUY" to link to TCGPlayer for the missing cards
+                        </li>
+                    </ol>
+                    <form action="deckdetail.php" method="GET">
+                    <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
+                    <input type='hidden' name='missing' value='yes'>
+                    <input class='profilebutton' type="submit" value="COMPARE">
+                    </form>
+                    <br>
+                <?php
+                endif;
             endif;
             ?>
             <h4>Quick add</h4>
