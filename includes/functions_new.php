@@ -581,19 +581,12 @@ function deldeck($decktodelete)
         endif;
     endif;
     $stmt->close();
-    if($deck_deleted === 1 AND $deckcards_deleted === 1):?>
-        <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
-            <br>
-            Deck deleted
-            <br>
-            <span id='dismiss'>CLICK TO DISMISS</span>
-        </div> <?php
+    if($deck_deleted === 1 AND $deckcards_deleted === 1):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $decktodelete deleted",$logfile);
     else:?>
-        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Error</span>
+        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck and/or cards not deleted</span>
             <br>
-            Deck and / or cards not deleted
-            <br>
-            <span id='dismiss'>CLICK TO DISMISS</span>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div> <?php
     endif;
 }

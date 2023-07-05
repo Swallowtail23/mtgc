@@ -873,39 +873,46 @@ table
     color: black;
     border:0px;
     position: absolute;
-    width: 50%;
-    height: 8%;
-    min-width: 100px;
-    min-height: 85px;
-    max-width: 200px;
-    max-height: 120px;
-    left: 15%;
+    left: 5%;
     top: 15%;
+    min-width: 150px;
     z-index: 10000000;
     font-size:12px;
-    padding:10px 16px 10px 16px;
+    padding:16px 16px 0px 16px;
     margin:10px;
     box-shadow: 3px 3px 5px 3px rgba(0,0,0,0.5);
 }
 .msg-new span 
 {
-    color: black;
-    font-weight: 500;
+    font-weight: 400;
     font-size:16px;
+    margin-right: 4px;
+    margin-left: 4px;
 }
 .msg-new span#dismiss
 {
     color: #3F51B5;
-    font-weight: 300;
+    font-weight: 500;
     font-size:14px;
+    text-align: right;
+}
+.msg-new p#dismiss
+{
+    color: #3F51B5;
+    font-weight: 500;
+    font-size:14px;
+    text-align: right;
+    vertical-align:bottom;
+    margin-right: 5px;
+    margin-left: 88%;
 }
 .error-new
 {
-    color: #f44336;
+    color: red;
 }
 .success-new
 {
-    color: green;
+    color: darkslategray;
 }
 .alert-box 
 {
@@ -2211,7 +2218,7 @@ input[type=checkbox]:checked ~ label .check {
     border-bottom: solid 1px #3f51b5;
     color: #3f51b5;
     font-family: "Roboto", sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     font-size: 14px;
 }
 .textinput:focus 
@@ -2221,23 +2228,21 @@ input[type=checkbox]:checked ~ label .check {
 
 .textinput::-webkit-input-placeholder 
 {
-    font-size: 12px;
-    color: #9FA8DA;
+    font-size: 14px;
+    color: #7987d8;
+    opacity: 0.7;
 }
-.textinput:-moz-placeholder 
-{ /* older Firefox*/
-    font-size:12px;
-    color: #9FA8DA;
+.textinput::placeholder 
+{
+    font-size:14px;
+    color: #7987d8;
+    opacity: 0.7;
 }
-.textinput::-moz-placeholder 
-{ /* Firefox 19+ */ 
-    font-size: 12px;
-    color: #9FA8DA; 
-} 
 .textinput:-ms-input-placeholder 
 { 
-    font-size: 12px; 
-    color: #9FA8DA;
+    font-size: 14px; 
+    color: #7987d8;
+    opacity: 0.7;
 }
 .loginfield
 {
@@ -2503,6 +2508,10 @@ hr.styled
         width: -webkit-calc(100% - 10px); /* google, safari */
         width: -moz-calc(100% - 10px); /* firefox */
     }
+    .msg-new {
+        left: 20%;
+        top: 5%;
+    }
 }
 @media (min-width: 601px) and (max-width: 900px)
 {
@@ -2522,6 +2531,11 @@ hr.styled
         width: -o-calc(100% - 20px); /* opera */
         width: -webkit-calc(100% - 20px); /* google, safari */
         width: -moz-calc(100% - 20px); /* firefox */
+    }
+    .msg-new 
+    {
+        left: 30%;
+        top: 5%;
     }
 }
 @media (max-width: 695px) 

@@ -603,9 +603,15 @@ require('includes/menu.php'); //mobile menu
                 $checkresult['foil'] = $db->escape($checkresult['foil'],'int');
                 $checkresult['notes'] = $db->escape($checkresult['notes'],'str');
                 if (($sqlmyqty === $checkresult['normal']) AND ($sqlmyfoil === $checkresult['foil']) AND ($sqlnotes === $checkresult['notes'])): ?>
-                    <div class="alert-box success" id="cardupdate">Updated</div>
+                    <div class="msg-new success-new" onclick='CloseMe(this)'><span>Quantity/notes updated</span>
+                        <br>
+                        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+                    </div>
                 <?php else: ?>
-                    <div class="alert-box error" id="cardupdate">Failed</div>
+                    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Update failed</span>
+                        <br>
+                        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+                    </div>
                 <?php endif;
             endif; 
             //Process image change if it's been called by an admin.

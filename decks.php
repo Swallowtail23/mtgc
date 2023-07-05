@@ -83,22 +83,19 @@ require('includes/menu.php'); //mobile menu
         if($newdeck == "yes"):
             if($deckname == ''):
                 ?>
-                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
+                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Name can't be empty</span>
                     <br>
-                    Empty deck name!
-                    <br>
-                    <span id='dismiss'>CLICK TO DISMISS</span>
+                    <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                 </div>
                 <?php
             else:
                 if ($checkunique = $db->select('decknumber','decks',"WHERE owner = $user AND deckname = '$deckname' LIMIT 1")):
                     if ($checkunique->num_rows > 0):
                         ?>
-                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
+                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Name already used</span>
+
                             <br>
-                            Pick a non-used name
-                            <br>
-                            <span id='dismiss'>CLICK TO DISMISS</span>
+                            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div>
                         <?php
                     else:
@@ -112,14 +109,7 @@ require('includes/menu.php'); //mobile menu
                                 if ($checkcreated->num_rows !== 1):
                                     trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
                                 else:
-                                    ?>
-                                    <div class="msg-new success-new" onclick='CloseMe(this)'><span>Success</span>
-                                        <br>
-                                        Deck <?php echo $deckname;?> created
-                                        <br>
-                                        <span id='dismiss'>CLICK TO DISMISS</span>
-                                    </div>
-                                    <?php
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
                                 endif;    
                             else:
                                 trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
