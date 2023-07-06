@@ -889,17 +889,41 @@ require('includes/menu.php'); //mobile menu
                     </div>
                     <div id="carddetailinfo">
                         <?php 
-                        if ($not_paper == true):
-                            echo "<h3 class='shallowh3'>Details (MtG Arena)</h3>";
-                        else:
-                            echo "<h3 class='shallowh3'>Details</h3>";
-                        endif;
+                        echo "<h3 class='shallowh3'>Details</h3>";
                         
                         if(isset($admin) AND $admin == 1):
                             echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
                         else:
                             echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
                         endif;
+                        
+                        $gametypestring = '';
+                        if(str_contains($row['game_types'],'paper')):
+                            $gametypestring = "Paper";
+                        endif;
+                        if($gametypestring !== '' AND substr($gametypestring,-2) !== "; "):
+                            $gametypestring .= "; ";
+                        endif;
+                        if(str_contains($row['game_types'],'arena')):
+                            $gametypestring .= "MtG Arena";
+                        endif;
+                        if($gametypestring !== '' AND substr($gametypestring,-2) !== "; "):
+                            $gametypestring .= "; ";
+                        endif;
+                        if(str_contains($row['game_types'],'mtgo')):
+                            $gametypestring .= "MtG Online";
+                        endif;
+                        if($gametypestring !== '' AND substr($gametypestring,-2) !== "; "):
+                            $gametypestring .= "; ";
+                        endif;
+                        if($gametypestring !== '' AND substr($gametypestring,-2) === "; "):
+                            $gametypestring = substr($gametypestring,0,-2);
+                        endif;
+                        if($gametypestring === ''):
+                            $gametypestring = 'None';
+                        endif;
+                        echo "<b>Game types: </b>$gametypestring<br>";
+                                                
                         if($row["layout"] !== 'reversible_card' AND $row["layout"] !== 'double_faced_token'): // no details at card level for reversible cards
                             if(isset($row['type']) AND $row['type'] != ''):
                                 echo "<b>Type: </b>".$row['type'];

@@ -1157,9 +1157,21 @@ function scryfall($cardid)
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with update: $curlresult",$logfile);
         curl_close($ch);
         $scryfall_result = json_decode($curlresult,true);
-        $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
-        $price = $scryfall_result["prices"]["usd"];
-        $price_foil = $scryfall_result["prices"]["usd_foil"];
+        if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
+            $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
+        else:
+            $tcg_buy_uri = null;
+        endif;
+        if(isset($scryfall_result["prices"]["usd"])):
+            $price = $scryfall_result["prices"]["usd"];
+        else:
+            $price = null;
+        endif;
+        if(isset($scryfall_result["prices"]["usd_foil"])):
+            $price_foil = $scryfall_result["prices"]["usd_foil"];
+        else:
+            $price_foil = null;
+        endif;
         if($price_foil === null AND $price === null):
             $price_sort = null;
         elseif($price_foil === null):
