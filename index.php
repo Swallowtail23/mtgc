@@ -102,6 +102,16 @@ $common = isset($_GET['common']) ? 'yes' : '';
 $uncommon = isset($_GET['uncommon']) ? 'yes' : '';
 $rare = isset($_GET['rare']) ? 'yes' : '';
 $mythic = isset($_GET['mythic']) ? 'yes' : '';
+$paper = isset($_GET['paper']) ? 'yes' : '';
+$arena = isset($_GET['arena']) ? 'yes' : '';
+$online = isset($_GET['online']) ? 'yes' : '';
+$valid_gametypeOp = array("and","or","");
+$gametypeOp = isset($_GET['gametypeOp']) ? "{$_GET['gametypeOp']}" : '';
+if (!in_array($gametypeOp,$valid_gametypeOp)):
+    $gametypeOp == '';
+endif;
+$gametypeExcl = isset($_GET['gametypeExcl']) ? 'ONLY' : '';
+$online = isset($_GET['online']) ? 'yes' : '';
 $creature = isset($_GET['creature']) ? 'yes' : '';
 $instant = isset($_GET['instant']) ? 'yes' : '';
 $sorcery = isset($_GET['sorcery']) ? 'yes' : '';
@@ -148,7 +158,11 @@ $tough = isset($_GET['tough']) ? filter_input(INPUT_GET, 'tough', FILTER_SANITIZ
 $loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_SANITIZE_NUMBER_INT):'';
 $mytable = $user . "collection";
 $adv = isset($_GET['adv']) ? 'yes' : '';
-$scope = isset($_GET['scope']) ? 'mycollection' : '';
+$scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
+$valid_scope = array("all","mycollection");
+if (!in_array($scope,$valid_scope)):
+    $scope == '';
+endif;
 $valid_legal = array("std","pnr","mdn","vin","lgc","alc","his");
 $legal = isset($_GET['legal']) ? "{$_GET['legal']}" : '';
 if (!in_array($legal,$valid_legal)):

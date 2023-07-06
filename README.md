@@ -1,4 +1,4 @@
-# README # (v25/03/23)
+# README # (v06/07/23)
 
 ## How do I get set up? ## 
 * Summary of set up
@@ -10,6 +10,12 @@ Install under web server as applicable
 - Sample config restricts bulk and setup folders to localhost access
 
 ### Dependencies ###
+#### PHP ####
+- Requires PHP 8.2
+
+#### MySQL ####
+- Tested with version 8+
+
 #### JsonMachine ####
 Used for bulk script parsing
 - needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php

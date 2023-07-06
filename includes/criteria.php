@@ -144,7 +144,7 @@ elseif ($adv == "yes" ) :
         endif;
     endif;
         
-        // Then rarity
+    // Then rarity
     $criteriaRty = "";
     if ($common === "yes"):
         $criteriaRty = "cards_scry.rarity LIKE 'common' ";
@@ -240,6 +240,39 @@ elseif ($adv == "yes" ) :
         $criteria .= "AND (".$criteriaType.") ";
     endif;  
 
+    // Then game type
+    $criteriaGameType = "";
+    if ($paper === "yes"):
+        $criteriaGameType = "cards_scry.game_types LIKE '%paper%'";
+    endif;
+    if ($arena === "yes"):
+        if (!empty($criteriaGameType)) :
+            $criteriaGameType .= $gametypeOp." ";
+        endif;
+        $criteriaGameType .= "cards_scry.game_types LIKE '%arena%'";
+    endif;
+    if ($online === "yes"):
+        if (!empty($criteriaGameType)) :
+            $criteriaGameType .= $gametypeOp." ";
+        endif;
+        $criteriaGameType .= "cards_scry.game_types LIKE '%mtgo%'";
+    endif;
+    if (!empty($criteriaGameType)) :
+        $criteria .= "AND (".$criteriaGameType.") ";
+    endif;  
+    // Game type exclusivity?
+    if ($gametypeExcl == "ONLY"):
+        if (empty($paper)):
+            $criteria .= "AND cards_scry.game_types NOT LIKE '%paper%' ";
+        endif;
+        if (empty($arena)):
+            $criteria .= "AND cards_scry.game_types NOT LIKE '%arena%' ";
+        endif;
+        if (empty($online)):
+            $criteria .= "AND cards_scry.game_types NOT LIKE '%mtgo%' ";
+        endif;
+    endif;
+    
     // Tribal 
     $criteriaTribe = "";
     if ($tribe === "merfolk"):

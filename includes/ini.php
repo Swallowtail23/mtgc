@@ -126,10 +126,10 @@ try {
     die();
 }
 
-$seconds_in_hour = 3600;
-
 /** How old must card data be to trigger automatic refresh, in hours **/
-$max_data_age_in_hours = 2;
+$max_data_age_in_hours = 2; // Set age in hours here
+
+$seconds_in_hour = 3600;
 $max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;
 
 /** Define card types and variables which require special treatment **/
@@ -164,18 +164,22 @@ $token_layouts = array('double_faced_token',
                        'token',
                        'emblem');
 
+// Layouts needing rotation
 $image90rotate = array('split',
                        'planar',
                        'Battle — Siege');
 
+// Commander deck types
 $commander_decktypes = array('Commander',
                              'Tiny Leader');
 
+// Cards legal for multiples in Commander
 $commander_multiples = array("Basic Land",
                              "Basic Snow Land");
 
 $any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
 
+//Commander variations
 $valid_commander_text = array("can be your commander"); // Check for abilities which allow a card to be used as a commander
 
 $second_commander_text = array("Partner",
@@ -184,10 +188,12 @@ $second_commander_text = array("Partner",
 
 $second_commander_only_type = array("Background");      // Check for "Type" which are valid ONLY in second commander slot
 
+// Selectable deck types on deck detail page
 $validtypes = array('Commander',
                     'Normal',
                     'Tiny Leader');                     // Deck types
 
+// Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');
 
 $sixtycarddecks = array('Normal');

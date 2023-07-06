@@ -29,7 +29,7 @@ endif;
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
             <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT'><br>
-            <span class="parametermed checkbox-group">
+            <span class="parametersmall checkbox-group">
                 <input id='cb1' type="checkbox" class="checkbox notnotes" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
                     <span class="check"></span>
@@ -40,6 +40,13 @@ endif;
                 <input id='cb2' type="checkbox" class="checkbox notnotes" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
+                </label>
+            </span>
+            <span class="parametersmall checkbox-group">
+                <input type="checkbox" class="checkbox" id = "yesnotes" name="searchnotes" value="yes">
+                <label for='yesnotes'>
+                    <span class="check"></span>
+                    <span class="box"></span>Notes
                 </label>
             </span>
             <br>Abilities:<br>
@@ -56,116 +63,16 @@ endif;
                     <span class="check"></span>
                     <span class="box"></span>exact 
                 </label>
-            </span><br>
-            <span class="parameterlarge checkbox-group">
-                <input id='cb3' type="checkbox" class="checkbox notnotes" name="scope" value="mycollection">
-                <label for='cb3'>
-                    <span class="check"></span>
-                    <span class="box"></span>My collection only 
-                </label>
-            </span><br>
-            <span class="parameterlarge checkbox-group">
-                <input type="checkbox" class="checkbox" id = "yesnotes" name="searchnotes" value="yes">
-                <label for='yesnotes'>
-                    <span class="check"></span>
-                    <span class="box"></span>Search notes only
-                </label>
-            </span><br>
-            
-            <h4 class="h4">Legality</h4>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="any" checked><span class="outer"><span class="inner"></span></span>Any</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="std"><span class="outer"><span class="inner"></span></span>Standard</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="pnr"><span class="outer"><span class="inner"></span></span>Pioneer</label></span><br>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="vin"><span class="outer"><span class="inner"></span></span>Vintage</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label></span><br>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
-            <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
-            <h4 class="h4">Colour search criteria</h4>
-            <span class="parametersmall">
-                <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
             </span>
-            <span class="parametersmall">
-                <label class="radio"><input type="radio" name="colourOp" value="OR"><span class="outer"><span class="inner"></span></span>OR</label>
+            <br>
+            <h4 class="h4">Search scope:</h4>
+            <span class="parametermed">
+                <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
             </span>
-            <span class="checkbox-group">
-                <input id='cb4' type="checkbox" class="checkbox" name="colourExcl" value="ONLY">
-                <label for='cb4'>
-                    <span class="check"></span>
-                    <span class="box"></span>ONLY
-                </label>
-            </span><br>
-            <span class="parametersmall checkbox-group">
-                <input id='cb5' type="checkbox" class="checkbox" name="white" value="yes">
-                <label for='cb5'>
-                    <span class="check"></span>
-                    <span class="box"></span>White
-                </label>
+            <span class="parametermed">
+                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>My collection</label>
             </span>
-            <span class="parametersmall checkbox-group">
-                <input id='cb6' type="checkbox" class="checkbox" name="blue" value="yes">
-                <label for='cb6'>
-                    <span class="check"></span>
-                    <span class="box"></span>Blue
-                </label>
-            </span>
-            <span class="parametersmall checkbox-group">
-                <input id='cb7' type="checkbox" class="checkbox" name="black" value="yes">
-                <label for='cb7'>
-                    <span class="check"></span>
-                    <span class="box"></span>Black
-                </label>
-            </span><br>
-            <span class="parametersmall checkbox-group">
-                <input id='cb8' type="checkbox" class="checkbox" name="red" value="yes">
-                <label for='cb8'>
-                    <span class="check"></span>
-                    <span class="box"></span>Red
-                </label>
-            </span>
-            <span class="parametersmall checkbox-group">
-                <input id='cb9' type="checkbox" class="checkbox" name="green" value="yes">
-                <label for='cb9'>
-                    <span class="check"></span>
-                    <span class="box"></span>Green
-                </label>
-            </span>
-            <span class="parametersmall checkbox-group">
-                <input id='cb10' type="checkbox" class="checkbox" name="colourless" value="yes">
-                <label for='cb10'>
-                    <span class="check"></span>
-                    <span class="box"></span>Colourless
-                </label>
-            </span><br>
-            <h4 class="h4">Rarity</h4>
-            <span class="parametermed checkbox-group">
-                <input id='cb11' type="checkbox" class="checkbox" name="common" value="yes">
-                <label for='cb11'>
-                    <span class="check"></span>
-                    <span class="box"></span>Common
-                </label>
-            </span>
-            <span class="checkbox-group">
-                <input id='cb12' type="checkbox" class="checkbox" name="uncommon" value="yes">
-                <label for='cb12'>
-                    <span class="check"></span>
-                    <span class="box"></span>Uncommon
-                </label>
-            </span><br>
-            <span class="parametermed checkbox-group">
-                <input id='cb13' type="checkbox" class="checkbox" name="rare" value="yes">
-                <label for='cb13'>
-                    <span class="check"></span>
-                    <span class="box"></span>Rare
-                </label>
-            </span>
-            <span class="checkbox-group">
-                <input id='cb14' type="checkbox" class="checkbox" name="mythic" value="yes">
-                <label for='cb14'>
-                    <span class="check"></span>
-                    <span class="box"></span>Mythic rare
-                </label>
-            </span><br>
+            <br>
             <h4 class="h4">Set:</h4> Ctrl+click to select multiple sets:<br>
             <select class='setselect' size="15" multiple name="set[]">
                 <?php 
@@ -209,9 +116,9 @@ endif;
                 if( $currentblock != null ) echo "</optgroup>\n";
                 ?>
             </select>
-        </div>
-        <div id="second_div">
-            &nbsp;<h4 class="h4Sortby">Sort by</h4>
+            <br><br>
+            
+            <h4 class="h4Sortby">Sort by</h4>
             <label class="radio"><input type="radio" name="sortBy" value="set"><span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="setdown" checked="checked"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
@@ -222,86 +129,220 @@ endif;
             <label class="radio"><input type="radio" name="sortBy" value="powerdown"><span class="outer"><span class="inner"></span></span>Power &#x25BC;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Tough &#x25B2;</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Tough &#x25BC;</label>
-            <div>
-            <h4 class="h4">Type</h4>
-            <span class="parametermed checkbox-group">
-                <input id='cb15' type="checkbox" class="checkbox" name="instant" value="yes">
-                <label for='cb15'>
-                    <span class="check"></span>
-                    <span class="box"></span>Instant
-                </label>
+            
+            <h4 class="h4">Game type</h4>
+            <span class="parametersmall">
+                <label class="radio"><input type="radio" name="gametypeOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
             </span>
-            <span class="parametermed checkbox-group">
-                <input id='cb16' type="checkbox" class="checkbox" name="enchantment" value="yes">
-                <label for='cb16'>
-                    <span class="check"></span>
-                    <span class="box"></span>Enchantment
-                </label>
-            </span><br>
-            <span class="parametermed checkbox-group">
-                <input id='cb17' type="checkbox" class="checkbox" name="sorcery" value="yes">
-                <label for='cb17'>
-                    <span class="check"></span>
-                    <span class="box"></span>Sorcery
-                </label>
+            <span class="parametersmall">
+                <label class="radio"><input type="radio" name="gametypeOp" value="OR"><span class="outer"><span class="inner"></span></span>OR</label>
             </span>
-            <span class="parametermed checkbox-group">
-                <input id='cb18' type="checkbox" class="checkbox" name="creature" value="yes">
-                <label for='cb18'>
-                    <span class="check"></span>
-                    <span class="box"></span>Creature
-                </label>
-            </span><br>
-            <span class="parametermed checkbox-group">
-                <input id='cb19' type="checkbox" class="checkbox" name="planeswalker" value="yes">
-                <label for='cb19'>
-                    <span class="check"></span>
-                    <span class="box"></span>Planeswalker
-                </label>
-            </span>
-            <span class="parametermed checkbox-group">
-                <input id='cb20' type="checkbox" class="checkbox" name="legendary" value="yes">
-                <label for='cb20'>
-                    <span class="check"></span>
-                    <span class="box"></span>Legendary
-                </label>
-            </span><br>
-            <span class="parametermed checkbox-group">
-                <input id='cb21' type="checkbox" class="checkbox" name="artifact" value="yes">
-                <label for='cb21'>
-                    <span class="check"></span>
-                    <span class="box"></span>Artifact
-                </label>
-            </span>
-            <span class="parametermed checkbox-group">
-                <input id='cb22' type="checkbox" class="checkbox" name="tribal" value="yes">
-                <label for='cb22'>
-                    <span class="check"></span>
-                    <span class="box"></span>Tribal
-                </label>
-            </span><br>
-            <span class="parametermed checkbox-group">
-                <input id='cb23' type="checkbox" class="checkbox" name="land" value="yes">
-                <label for='cb23'>
-                    <span class="check"></span>
-                    <span class="box"></span>Land
-                </label>
-            </span>
-            <span class="parametermed checkbox-group">
-                <input id='cb24' type="checkbox" class="checkbox" name="token" value="yes">
-                <label for='cb24'>
-                    <span class="check"></span>
-                    <span class="box"></span>Token
-                </label>
-            </span><br>
             <span class="checkbox-group">
-                <input id='cb25' type="checkbox" class="checkbox" name="battle" value="yes">
-                <label for='cb25'>
+                <input id='cb26' type="checkbox" class="checkbox" name="gametypeExcl" value="ONLY">
+                <label for='cb26'>
                     <span class="check"></span>
-                    <span class="box"></span>Battle
+                    <span class="box"></span>ONLY
+                </label>
+            </span><br>
+            <span class="parametermed checkbox-group">
+                <input id='cb27' type="checkbox" class="checkbox" name="paper" value="yes" checked>
+                <label for='cb27'>
+                    <span class="check"></span>
+                    <span class="box"></span>Paper
                 </label>
             </span>
-            </div><br>
+            <span class="parametermed checkbox-group">
+                <input id='cb28' type="checkbox" class="checkbox" name="arena" value="yes">
+                <label for='cb28'>
+                    <span class="check"></span>
+                    <span class="box"></span>MtG Arena
+                </label>
+            </span><br>
+            <span class="parametermed checkbox-group">
+                <input id='cb29' type="checkbox" class="checkbox" name="online" value="yes">
+                <label for='cb29'>
+                    <span class="check"></span>
+                    <span class="box"></span>MtG Online
+                </label>
+            </span>
+            <br>
+        </div>
+        <div id="second_div">
+            <div>
+                <h4 class="h4">Legality</h4>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="any" checked><span class="outer"><span class="inner"></span></span>Any</label></span>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="std"><span class="outer"><span class="inner"></span></span>Standard</label></span>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="pnr"><span class="outer"><span class="inner"></span></span>Pioneer</label></span><br>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="vin"><span class="outer"><span class="inner"></span></span>Vintage</label></span>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label></span><br>
+                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
+                <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
+
+                <h4 class="h4">Colour search criteria</h4>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="colourOp" value="OR"><span class="outer"><span class="inner"></span></span>OR</label>
+                </span>
+                <span class="checkbox-group">
+                    <input id='cb4' type="checkbox" class="checkbox" name="colourExcl" value="ONLY">
+                    <label for='cb4'>
+                        <span class="check"></span>
+                        <span class="box"></span>ONLY
+                    </label>
+                </span><br>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb5' type="checkbox" class="checkbox" name="white" value="yes">
+                    <label for='cb5'>
+                        <span class="check"></span>
+                        <span class="box"></span>White
+                    </label>
+                </span>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb6' type="checkbox" class="checkbox" name="blue" value="yes">
+                    <label for='cb6'>
+                        <span class="check"></span>
+                        <span class="box"></span>Blue
+                    </label>
+                </span>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb7' type="checkbox" class="checkbox" name="black" value="yes">
+                    <label for='cb7'>
+                        <span class="check"></span>
+                        <span class="box"></span>Black
+                    </label>
+                </span><br>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb8' type="checkbox" class="checkbox" name="red" value="yes">
+                    <label for='cb8'>
+                        <span class="check"></span>
+                        <span class="box"></span>Red
+                    </label>
+                </span>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb9' type="checkbox" class="checkbox" name="green" value="yes">
+                    <label for='cb9'>
+                        <span class="check"></span>
+                        <span class="box"></span>Green
+                    </label>
+                </span>
+                <span class="parametersmall checkbox-group">
+                    <input id='cb10' type="checkbox" class="checkbox" name="colourless" value="yes">
+                    <label for='cb10'>
+                        <span class="check"></span>
+                        <span class="box"></span>Colourless
+                    </label>
+                </span><br>
+                <h4 class="h4">Rarity</h4>
+                <span class="parametermed checkbox-group">
+                    <input id='cb11' type="checkbox" class="checkbox" name="common" value="yes">
+                    <label for='cb11'>
+                        <span class="check"></span>
+                        <span class="box"></span>Common
+                    </label>
+                </span>
+                <span class="checkbox-group">
+                    <input id='cb12' type="checkbox" class="checkbox" name="uncommon" value="yes">
+                    <label for='cb12'>
+                        <span class="check"></span>
+                        <span class="box"></span>Uncommon
+                    </label>
+                </span><br>
+                <span class="parametermed checkbox-group">
+                    <input id='cb13' type="checkbox" class="checkbox" name="rare" value="yes">
+                    <label for='cb13'>
+                        <span class="check"></span>
+                        <span class="box"></span>Rare
+                    </label>
+                </span>
+                <span class="checkbox-group">
+                    <input id='cb14' type="checkbox" class="checkbox" name="mythic" value="yes">
+                    <label for='cb14'>
+                        <span class="check"></span>
+                        <span class="box"></span>Mythic rare
+                    </label>
+                </span><br>
+                <h4 class="h4">Type</h4>
+                <span class="parametermed checkbox-group">
+                    <input id='cb15' type="checkbox" class="checkbox" name="instant" value="yes">
+                    <label for='cb15'>
+                        <span class="check"></span>
+                        <span class="box"></span>Instant
+                    </label>
+                </span>
+                <span class="parametermed checkbox-group">
+                    <input id='cb16' type="checkbox" class="checkbox" name="enchantment" value="yes">
+                    <label for='cb16'>
+                        <span class="check"></span>
+                        <span class="box"></span>Enchantment
+                    </label>
+                </span><br>
+                <span class="parametermed checkbox-group">
+                    <input id='cb17' type="checkbox" class="checkbox" name="sorcery" value="yes">
+                    <label for='cb17'>
+                        <span class="check"></span>
+                        <span class="box"></span>Sorcery
+                    </label>
+                </span>
+                <span class="parametermed checkbox-group">
+                    <input id='cb18' type="checkbox" class="checkbox" name="creature" value="yes">
+                    <label for='cb18'>
+                        <span class="check"></span>
+                        <span class="box"></span>Creature
+                    </label>
+                </span><br>
+                <span class="parametermed checkbox-group">
+                    <input id='cb19' type="checkbox" class="checkbox" name="planeswalker" value="yes">
+                    <label for='cb19'>
+                        <span class="check"></span>
+                        <span class="box"></span>Planeswalker
+                    </label>
+                </span>
+                <span class="parametermed checkbox-group">
+                    <input id='cb20' type="checkbox" class="checkbox" name="legendary" value="yes">
+                    <label for='cb20'>
+                        <span class="check"></span>
+                        <span class="box"></span>Legendary
+                    </label>
+                </span><br>
+                <span class="parametermed checkbox-group">
+                    <input id='cb21' type="checkbox" class="checkbox" name="artifact" value="yes">
+                    <label for='cb21'>
+                        <span class="check"></span>
+                        <span class="box"></span>Artifact
+                    </label>
+                </span>
+                <span class="parametermed checkbox-group">
+                    <input id='cb22' type="checkbox" class="checkbox" name="tribal" value="yes">
+                    <label for='cb22'>
+                        <span class="check"></span>
+                        <span class="box"></span>Tribal
+                    </label>
+                </span><br>
+                <span class="parametermed checkbox-group">
+                    <input id='cb23' type="checkbox" class="checkbox" name="land" value="yes">
+                    <label for='cb23'>
+                        <span class="check"></span>
+                        <span class="box"></span>Land
+                    </label>
+                </span>
+                <span class="parametermed checkbox-group">
+                    <input id='cb24' type="checkbox" class="checkbox" name="token" value="yes">
+                    <label for='cb24'>
+                        <span class="check"></span>
+                        <span class="box"></span>Token
+                    </label>
+                </span><br>
+                <span class="checkbox-group">
+                    <input id='cb25' type="checkbox" class="checkbox" name="battle" value="yes">
+                    <label for='cb25'>
+                        <span class="check"></span>
+                        <span class="box"></span>Battle
+                    </label>
+                </span>
+            </div>
             <h4 class="h4">Tribe</h4>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>
