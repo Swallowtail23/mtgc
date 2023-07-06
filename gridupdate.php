@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       25/03/23
+/* Version:     5.0
+    Date:       06/07/23
     Name:       gridupdate.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
@@ -14,6 +14,8 @@
  *              Moved from writelog to Message class
  *  4.0
  *              PHP 8.1 compatibility
+ *  5.0
+ *              Added third card finish (etched)
 */
 
 session_start();
@@ -44,18 +46,27 @@ elseif (isset($_GET['newfoil'])):
         echo "<img src='/images/error.png' alt='error'>";
         exit;
     endif;
+elseif (isset($_GET['newetch'])): 
+    $qty = $_GET['newetch']; 
+    if(is_int($qty / 1) AND $qty > -1):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty",$logfile);
+    else:
+        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardid",$logfile);
+        echo "<img src='/images/error.png' alt='error'>";
+        exit;
+    endif;
 else:
     $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) called with no arguments",$logfile);
     exit();
 endif;
 
-//Should only be here if newqty or newfoil are set
+//Should only be here if newqty, newfoil or newetch are set
 //Set up variables
 $sqlqty = $db->escape($qty);
 $sqlid = $db->escape(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS));
 
 //Check existing quantity
-$beforeresult = $db->select_one('normal, foil',"$mytable","WHERE id = '$sqlid'");
+$beforeresult = $db->select_one('normal, foil, etched',"$mytable","WHERE id = '$sqlid'");
 if($beforeresult === false):
     trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
 else:
@@ -69,8 +80,13 @@ else:
     else:
         $myfoil = $db->escape($beforeresult['foil'],'int');
     endif;
+    if (empty($beforeresult['etched'])):
+        $myetch = 0;
+    else:
+        $myetch = $db->escape($beforeresult['etched'],'int');
+    endif;
     $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil",$logfile);
+    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
 endif;
 // Run update
 if (isset($_GET['newqty'])): 
@@ -85,6 +101,12 @@ elseif (isset($_GET['newfoil'])):
         VALUES ($sqlqty,'$sqlid')
         ON DUPLICATE KEY UPDATE 
         foil=$sqlqty";
+elseif (isset($_GET['newetch'])): 
+    $updatequery = "
+        INSERT INTO $mytable (etched,id)
+        VALUES ($sqlqty,'$sqlid')
+        ON DUPLICATE KEY UPDATE 
+        etched=$sqlqty";
 endif;
 $sqlupdate = $db->query($updatequery);
 if($sqlupdate === false):
@@ -100,7 +122,7 @@ else:
 endif;
 
 // Retrieve new record to display
-$checkresult = $db->select_one('normal, foil',"$mytable","WHERE id = '$sqlid'");
+$checkresult = $db->select_one('normal, foil, etched',"$mytable","WHERE id = '$sqlid'");
 if($checkresult === false):
     trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
 else:
@@ -123,6 +145,16 @@ else:
             $obj = new Message;
             $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}",$logfile);
             echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['foil'];
+        endif;
+    elseif (isset($_GET['newetch'])): 
+        if ($sqlqty === $checkresult['etched']): 
+            $obj = new Message;
+            $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}",$logfile);
+            echo "<span class='material-icons md-18 green'>check</span>";
+        else:
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}",$logfile);
+            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['etched'];
         endif;
     endif;
 endif;?> 

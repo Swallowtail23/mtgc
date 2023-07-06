@@ -1,6 +1,6 @@
 <?php
-/* Version:     4.0
-    Date:       03/06/23
+/* Version:     5.0
+    Date:       06/07/23
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -14,6 +14,8 @@
  *  4.0
  *              Add parameter for refresh of file ("new")
  *              Add handling for zero-byte download
+ *  5.0
+ *              Added handling for etched cards
 */
 
 require ('bulk_ini.php');
@@ -276,6 +278,9 @@ foreach($data AS $key => $value):
         endif;
         if(isset($value["games"])):
             $game_types = json_encode($value["games"]);
+        endif;
+        if(isset($value["finishes"])):
+            $finishes = json_encode($value["finishes"]);
         endif; 
         if(isset($value["color_identity"])):
             $color_identity = json_encode($value["color_identity"]);
@@ -296,14 +301,27 @@ foreach($data AS $key => $value):
         else:
             $foil_price = null;
         endif;
-        if($foil_price === null AND $normal_price === null):
-            $price_sort = null;
-        elseif($foil_price === null):
-            $price_sort = $normal_price;
-        elseif($normal_price === null):
-            $price_sort = $foil_price;
+        if(isset($value["prices"]['usd_etched'])):
+            $etched_price = $value["prices"]['usd_etched'];
         else:
+            $etched_price = null;
+        endif;
+        if($foil_price === null AND $normal_price === null AND $etched_price === null):
+            $price_sort = null;
+        elseif($foil_price === null AND $etched_price === null):
+            $price_sort = $normal_price;
+        elseif($normal_price === null AND $etched_price === null):
+            $price_sort = $foil_price;
+        elseif($foil_price === null AND $normal_price === null):
+            $price_sort = $etched_price;
+        elseif($normal_price === null):
+            $price_sort = min($etched_price,$foil_price);
+        elseif($foil_price === null):
+            $price_sort = min($etched_price,$normal_price);
+        elseif($etched_price === null):
             $price_sort = min($normal_price,$foil_price);
+        else:
+            $price_sort = min($normal_price,$foil_price,$etched_price);
         endif;
         if(isset($value["collector_number"])):
             $coll_no = $value["collector_number"];
@@ -343,8 +361,8 @@ foreach($data AS $key => $value):
                                 keywords, generatedmana, legalitystandard, legalitypioneer, 
                                 legalitymodern, legalitylegacy, legalitypauper, legalityvintage, 
                                 legalitycommander, legalityalchemy, legalityhistoric, reserved, foil, nonfoil, oversized, promo, 
-                                set_id, game_types, setcode, set_name, number,
-                                number_import, rarity, flavor, backid, artist, price, price_foil, 
+                                set_id, game_types, finishes, setcode, set_name, number,
+                                number_import, rarity, flavor, backid, artist, price, price_foil, price_etched, 
                                 gatherer_uri, updatetime,
                                 f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability,
                                 f1_colour, f1_artist, f1_flavor, f1_image_uri, f1_cmc,
@@ -362,7 +380,7 @@ foreach($data AS $key => $value):
                                 maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
@@ -379,9 +397,9 @@ foreach($data AS $key => $value):
                                 legalityalchemy = VALUES(legalityalchemy), legalityhistoric = VALUES(legalityhistoric), 
                                 reserved = VALUES(reserved), foil = VALUES(foil), nonfoil = VALUES(nonfoil), 
                                 oversized = VALUES(oversized), promo = VALUES(promo), set_id = VALUES(set_id), 
-                                game_types = VALUES(game_types), setcode = VALUES(setcode), set_name = VALUES(set_name), number = VALUES(number),
+                                game_types = VALUES(game_types), finishes = VALUES(finishes), setcode = VALUES(setcode), set_name = VALUES(set_name), number = VALUES(number),
                                 number_import = VALUES(number_import), rarity = VALUES(rarity), flavor = VALUES(flavor), backid = VALUES(backid), 
-                                artist = VALUES(artist), price = VALUES(price), price_foil = VALUES(price_foil), 
+                                artist = VALUES(artist), price = VALUES(price), price_foil = VALUES(price_foil), price_etched = VALUES(price_etched), 
                                 gatherer_uri = VALUES(gatherer_uri), updatetime = VALUES(updatetime), 
                                 f1_name = VALUES(f1_name), f1_manacost = VALUES(f1_manacost), f1_power = VALUES(f1_power), f1_toughness = VALUES(f1_toughness),
                                 f1_loyalty = VALUES(f1_loyalty), f1_type = VALUES(f1_type), f1_ability = VALUES(f1_ability), 
@@ -411,7 +429,7 @@ foreach($data AS $key => $value):
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
@@ -453,6 +471,7 @@ foreach($data AS $key => $value):
                 $value["promo"],
                 $value["set_id"],
                 $game_types,
+                $finishes,
                 $value["set"],
                 $value["set_name"],
                 $number_int,
@@ -463,6 +482,7 @@ foreach($data AS $key => $value):
                 $value["artist"],
                 $value["prices"]["usd"],
                 $value["prices"]["usd_foil"],
+                $value["prices"]["usd_etched"],
                 $value["related_uris"]["gatherer"],
                 $time,
                 $name_1,

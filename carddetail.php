@@ -174,8 +174,13 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
                 data: poststring,
                 cache: true,
                 success: function (data) {
-                    $(activeFlash).hide(300);
-                    $(activeFlash).show(300);
+                    activeFlash.classList.remove("bulksubmitsuccessfont");
+                    activeFlash.classList.add("bulksubmitnormalfont");
+                    activeFlash.classList.add("bulksubmitsuccessbg");
+                    setTimeout(function() {
+                      activeFlash.classList.remove("bulksubmitsuccessbg");
+                      activeFlash.classList.add("bulksubmitsuccessfont");
+                    }, 2000);
                 }
             });
         }
@@ -326,6 +331,7 @@ require('includes/menu.php'); //mobile menu
                     setcode as cs_setcode,
                     set_id as cs_set_id,
                     game_types,
+                    finishes,
                     type,
                     power,
                     toughness,
@@ -424,8 +430,10 @@ require('includes/menu.php'); //mobile menu
                     updatetime,
                     price,
                     price_foil,
+                    price_etched,
                     normal,
                     $mytable.foil,
+                    $mytable.etched,
                     notes
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
@@ -519,8 +527,13 @@ require('includes/menu.php'); //mobile menu
             else:
                 $price_foil_log = 'none';
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log",$logfile);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current price from Scryfall is: {$scryfallresult["price"]}/{$scryfallresult["price_foil"]}",$logfile);
+            if(isset($row['price_etched'])):
+                $price_etched_log = $row['price_etched'];
+            else:
+                $price_etched_log = 'none';
+            endif;
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current price from Scryfall is: {$scryfallresult["price"]}/{$scryfallresult["price_foil"]}/{$scryfallresult["price_etched"]}",$logfile);
             if($scryfallimg !== null):
                 $scryfallimg = $db->escape($scryfallimg,'str');
             endif;
@@ -556,6 +569,11 @@ require('includes/menu.php'); //mobile menu
             else:
                 $myfoil = $db->escape($row['foil'],'int');
             endif;
+            if (empty($row['etched'])):
+                $myetch = 0;
+            else:
+                $myetch = $db->escape($row['etched'],'int');
+            endif;
             $notes = $db->escape($row['notes'],'str');
 
             if (isset($_POST['update'])) :    
@@ -565,11 +583,15 @@ require('includes/menu.php'); //mobile menu
                 if (isset($_POST['myfoil'])):
                     $myfoil = filter_input(INPUT_POST, 'myfoil', FILTER_SANITIZE_NUMBER_INT);
                 endif;
+                if (isset($_POST['myetch'])):
+                    $myetch = filter_input(INPUT_POST, 'myetch', FILTER_SANITIZE_NUMBER_INT);
+                endif;
                 if (isset($_POST['notes'])):
                     $notes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
                 endif;
                 $sqlmyqty = $db->escape($myqty,'int');
                 $sqlmyfoil = $db->escape($myfoil,'int');
+                $sqlmyetch = $db->escape($myetch,'int');
                 $sqlnotes = $db->escape($notes,'str');
                 if(isset($row['price']) AND (is_null($row['price']) OR $row['price'] == '' )):
                     $price = 0.00;
@@ -585,20 +607,24 @@ require('includes/menu.php'); //mobile menu
                 else:
                     $foilprice = 0.00;
                 endif;
-                if($myfoil == 0):
-                    $topvalue = $price;
+                if(isset($row['price_etched']) AND (is_null($row['price_etched']) OR $row['price_etched'] == '' )):
+                    $etchedprice = 0.00;
+                elseif(isset($row['price_etched'])):
+                    $etchedprice = $row['price_etched'];
                 else:
-                    $topvalue = $foilprice;
+                    $etchedprice = 0.00;
                 endif;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$myqty." ".$price." ".$myfoil." ".$foilprice,$logfile);
+                $topvalue = max($price,$foilprice,$etchedprice);
+                
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"$myqty $price, $myfoil $foilprice, $myetch $etchedprice",$logfile);
                 $updatequery = "
-                        INSERT INTO `$mytable` (normal,foil,notes,id,topvalue)
-                        VALUES ($sqlmyqty,$sqlmyfoil,'$sqlnotes','$id',$topvalue)
-                        ON DUPLICATE KEY UPDATE 
-                        normal=$sqlmyqty, foil=$sqlmyfoil, notes='$sqlnotes', topvalue=$topvalue";
+                        INSERT INTO `$mytable` (normal,foil,etched,notes,id,topvalue)
+                        VALUES ($sqlmyqty,$sqlmyfoil,$sqlmyetch,'$sqlnotes','$id',$topvalue)
+                        ON DUPLICATE KEY UPDATE
+                        normal=$sqlmyqty, foil=$sqlmyfoil, etched=$sqlmyetch, notes='$sqlnotes', topvalue=$topvalue";
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$updatequery,$logfile);
                 // write out collection record prior to update to log
-                if($sqlbefore = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
+                if($sqlbefore = $db->query("SELECT id,normal,foil,etched,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -629,8 +655,9 @@ require('includes/menu.php'); //mobile menu
                 $checkresult = $sqlcheck->fetch_array(MYSQLI_ASSOC);
                 $checkresult['normal'] = $db->escape($checkresult['normal'],'int');
                 $checkresult['foil'] = $db->escape($checkresult['foil'],'int');
+                $checkresult['etched'] = $db->escape($checkresult['etched'],'int');
                 $checkresult['notes'] = $db->escape($checkresult['notes'],'str');
-                if (($sqlmyqty === $checkresult['normal']) AND ($sqlmyfoil === $checkresult['foil']) AND ($sqlnotes === $checkresult['notes'])): ?>
+                if (($sqlmyqty === $checkresult['normal']) AND ($sqlmyfoil === $checkresult['foil']) AND ($sqlmyetch === $checkresult['etched']) AND ($sqlnotes === $checkresult['notes'])): ?>
                     <div class="msg-new success-new" onclick='CloseMe(this)'><span>Quantity/notes updated</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -691,16 +718,47 @@ require('includes/menu.php'); //mobile menu
             $card_foil = (isset($row['cs_foil'])) ? $row['cs_foil'] : '';
             $myqty = (isset($myqty)) ? htmlentities($myqty,ENT_QUOTES,"UTF-8") : '';
             $myfoil = (isset($myfoil)) ? htmlentities($myfoil,ENT_QUOTES,"UTF-8") : '';
+            $myetch = (isset($myetch)) ? htmlentities($myetch,ENT_QUOTES,"UTF-8") : '';
             $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
             
             //Set card types
-            if((int)$card_foil + (int)$card_normal === 2):
-                $cardtypes = 'normalandfoil';
-            elseif((int)$card_normal === 0 AND (int)$card_foil !== 0): // Foil only
+            $cardtypes = null;
+            $card_normal = 0;
+            $card_foil = 0;
+            $card_etched = 0;
+            if(isset($row['finishes'])):
+                $finishes = json_decode($row['finishes'], TRUE);
+                foreach($finishes as $key => $value):
+                    if($value == 'nonfoil'):
+                        $card_normal = 1;
+                    elseif($value == 'foil'):
+                        $card_foil = 1;
+                    elseif($value == 'etched'):
+                        $card_etched = 1;
+                    endif;
+                endforeach;
+            else:
+                $finishes = null;
+                $cardtypes = 'none';
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
+            endif;
+            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
+                $cardtypes = 'normalfoiletched';
+            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
+                $cardtypes = 'normalfoil';
+            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
+                $cardtypes = 'normaletched';
+            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
+                $cardtypes = 'foiletched';
+            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
+                $cardtypes = 'etchedonly';
+            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
                 $cardtypes = 'foilonly';
-            elseif((int)$card_normal !== 0 AND (int)$card_foil === 0): // Normal only
+            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
                 $cardtypes = 'normalonly';
             endif;
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -1226,46 +1284,63 @@ require('includes/menu.php'); //mobile menu
                             <?php
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card types: $cardtypes",$logfile);
                             $cellid = "cell".$id;
-                            $cellidqty = $cellid.'myqty';
-                            $cellidfoil = $cellid.'myfoil';
-                            $cellidflash = $cellid.'flash';
-                            $cellidfoilflash = $cellid.'flashfoil'; ?>
+                            $cellid_one = $cellid.'_one';
+                            $cellid_two = $cellid.'_two';
+                            $cellid_three = $cellid.'_three';
+                            $cellid_one_flash = $cellid_one;
+                            $cellid_two_flash = $cellid_two;
+                            $cellid_three_flash = $cellid_three; ?>
                             <table>
-                                <tr style="height:45px">
-                                    <td class='gridsubmit cardsubmit-l' id="<?php echo $cellid . "td"; ?>">
+                                <tr class='bulksubmitrowsmall'>
+                                    <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
                                         <?php
-                                        if ($cardtypes === 'foilonly'):
+                                        if($meld === 'meld_result'):
+                                            echo "Meld card";
+                                        elseif ($not_paper == true):
+                                            echo "<i>MtG Arena</i>";
+                                        elseif ($cardtypes === 'foilonly'):
                                             $poststring = 'newfoil';
-                                            echo "Foil: <input class='textinput textinputsmall' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
-                                        elseif ($cardtypes === 'normalonly'):
-                                            $poststring = 'newqty';
-                                            echo "Normal: <input class='textinput textinputsmall' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                        elseif ($cardtypes === 'normalandfoil'):
-                                            $poststring = 'newqty';
-                                            echo "Normal: <input class='textinput textinputsmall' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                            echo "Foil: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "<input class='card' type='hidden' name='card' value='$id'>";
+                                        elseif ($cardtypes === 'etchedonly'):
+                                            $poststring = 'newetch';
+                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else:
                                             $poststring = 'newqty';
-                                            echo "Normal: <input class='textinput textinputsmall' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                        endif;
-                                        echo "<input class='card' type='hidden' name='card' value='$id'>"; ?>
+                                            echo "Normal: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "<input class='card' type='hidden' name='card' value='$id'>";
+                                        endif;?>
                                     </td>
-                                    <td style="width:65px"> <?php
-                                        echo "<div class='confirm-l-card' id='{$cellid}flash'><span class='material-icons md-24 green'>check</span></div>"; ?>
-                                    </td>
-                                    <td class='gridsubmit cardsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
+                                    <td class='bulksubmittdsmall' id="<?php echo $cellid."td_two"; ?>">
                                         <?php
-                                        if($cardtypes === 'foilonly'):
+                                        if($meld === 'meld_result'):
+                                            echo "&nbsp;";
+                                        elseif ($cardtypes === 'foilonly'):
                                             echo "&nbsp;";
                                         elseif ($cardtypes === 'normalonly'):
                                             echo "&nbsp;";
-                                        elseif ($cardtypes === 'normalandfoil'):
-                                            $poststring = 'newfoil';
-                                            echo "Foil: <input class='textinput textinputsmall' id='$cellidfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellidfoil\",\"$myfoil\",\"$cellidfoilflash\",\"$poststring\");'>";
+                                        elseif ($cardtypes === 'etchedonly'):
+                                            echo "&nbsp;";
+                                        elseif ($cardtypes === 'normaletched'):
+                                            $poststring = 'newetch';
+                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
-                                        endif; ?>
+                                        else:
+                                            $poststring = 'newfoil';
+                                            echo "Foil: <input class='bulkinputsmall' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                            echo "<input class='card' type='hidden' name='card' value='$id'>";
+                                        endif;?>
                                     </td>
-                                    <td style="width:45px"> <?php
-                                        echo "<div class='confirm-r-card' id='{$cellid}flashfoil'><span class='material-icons md-24 green'>check</span></div>"; ?>
+                                    <td class='bulksubmittdsmall' id="<?php echo $cellid."td_three"; ?>">
+                                        <?php
+                                        if ($cardtypes === 'normalfoiletched'):
+                                            $poststring = 'newetch';
+                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                            echo "<input class='card' type='hidden' name='card' value='$id'>";
+                                        else:
+                                            echo "&nbsp;";
+                                        endif;?>
                                     </td>
                                 </tr>
                             </table>
@@ -1288,7 +1363,7 @@ require('includes/menu.php'); //mobile menu
                                 $tcgdirectlink = null;
                             endif;?>
                             <table id='tcgplayer' width="100%">
-                      <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00  AND $row["cs_normal"] !== "")):
+                      <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
                                 $normalprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1298,7 +1373,7 @@ require('includes/menu.php'); //mobile menu
                                         <?php echo $scryfallresult["price"]; ?>
                                     </td>
                                 </tr>
-                      <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND $row["cs_normal"] !== "")):
+                      <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
                                 $normalprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1312,7 +1387,7 @@ require('includes/menu.php'); //mobile menu
                             else:
                                 $normalprice = FALSE;
                             endif;      
-                            if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00  AND $row["cs_foil"] !== "")):
+                            if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
                                 $foilprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1322,7 +1397,7 @@ require('includes/menu.php'); //mobile menu
                                         <?php echo $scryfallresult["price_foil"]; ?>
                                     </td>
                                 </tr>
-                      <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND $row["cs_foil"] !== "")):
+                      <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
                                 $foilprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1334,8 +1409,31 @@ require('includes/menu.php'); //mobile menu
                                 </tr>
                       <?php else:
                                 $foilprice = FALSE;
+                            endif;
+                            if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
+                                $etchprice = TRUE; ?>
+                                <tr>
+                                    <td class="buycellleft">
+                                        Etched
+                                    </td>
+                                    <td class="buycell mid">
+                                        <?php echo $scryfallresult["price_etched"]; ?>
+                                    </td>
+                                </tr>
+                      <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
+                                $etchprice = TRUE; ?>
+                                <tr>
+                                    <td class="buycellleft">
+                                        Etched
+                                    </td>
+                                    <td class="buycell mid">
+                                        <?php echo $row["price_etched"]; ?>
+                                    </td>
+                                </tr>
+                      <?php else:
+                                $etchprice = FALSE;
                             endif; 
-                            if ($normalprice == FALSE AND $foilprice == FALSE): ?>
+                            if ($normalprice == FALSE AND $foilprice == FALSE AND $etchprice == FALSE): ?>
                                 <tr>
                                     <td class="buycellleft">
                                         No prices available <br>
