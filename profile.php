@@ -1,6 +1,6 @@
 <?php 
-/* Version:     6.0
-    Date:       18/03/23
+/* Version:     7.0
+    Date:       06/07/23
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -21,6 +21,8 @@
  *              Refactoring of import for new database structure, and adding emailed report
  *  6.0
  *              Changed to password_verify / password_hash
+ *  7.0
+ *              Added handling for etched cards
 */
 
 session_start();
@@ -180,60 +182,48 @@ endif; ?>
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
         //6. Update pricing in case any new cards have been added to collection
-        if($findnormal = $db->query("SELECT
+        /// Normal first
+        if($findcards = $db->query("SELECT
                                     `$mytable`.id AS id,
-                                    `$mytable`.normal AS mynormal,
-                                    `$mytable`.foil AS myfoil,
+                                    IFNULL(`$mytable`.normal,0) AS mynormal,
+                                    IFNULL(`$mytable`.foil, 0) AS myfoil,
+                                    IFNULL(`$mytable`.etched, 0) AS myetch,
                                     notes,
                                     topvalue,
-                                    price,
-                                    price_foil AS foilprice
+                                    IFNULL(price, 0) AS normalprice,
+                                    IFNULL(price_foil, 0) AS foilprice,
+                                    IFNULL(price_etched, 0) AS etchedprice
                                     FROM `$mytable` LEFT JOIN `cards_scry` 
-                                    ON `$mytable`.id = `cards_scry`.id 
-                                    WHERE `$mytable`.normal / `$mytable`.normal IS TRUE 
-                                    AND `$mytable`.foil / `$mytable`.foil IS NOT TRUE")):
+                                    ON `$mytable`.id = `cards_scry`.id
+                                    WHERE IFNULL(`$mytable`.normal,0) + IFNULL(`$mytable`.foil,0) + IFNULL(`$mytable`.etched,0) > 0")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-            while($row = $findnormal->fetch_array(MYSQLI_ASSOC)):
-                if($row['price'] == ''):
-                    $normalprice = '0.00';
+            while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
+                $normalqty = $row['mynormal'];
+                $normalprice = $row['normalprice'];
+                $foilqty = $row['myfoil'];
+                $foilprice = $row['foilprice'];
+                $etchedqty = $row['mynormal'];
+                $etchedprice = $row['etchedprice'];
+                if($normalqty * $normalprice > 0):
+                    $normalrate = $normalprice;
                 else:
-                    $normalprice = $row['price'];
+                    $normalrate = 0;
                 endif;
+                if($foilqty * $foilprice > 0):
+                    $foilrate = $foilprice;
+                else:
+                    $foilrate = 0;
+                endif;
+                if($etchedqty * $etchedprice > 0):
+                    $etchedrate = $etchedprice;
+                else:
+                    $etchedrate = 0;
+                endif;
+                $selectedrate = max($normalrate,$foilrate,$etchedrate);
                 $cardid = $db->real_escape_string($row['id']);
                 $updatemaxqry = "INSERT INTO `$mytable` (topvalue,id)
-                    VALUES ($normalprice,'$cardid')
-                    ON DUPLICATE KEY UPDATE topvalue=$normalprice";
-                if($updatemax = $db->query($updatemaxqry)):
-                    //succeeded
-                else:
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                endif;
-            endwhile;
-        else: 
-            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-        endif;
-        if($findfoil = $db->query("SELECT
-                                    `$mytable`.id AS id,
-                                    `$mytable`.normal AS mynormal,
-                                    `$mytable`.foil AS myfoil,
-                                    notes,
-                                    topvalue,
-                                    price,
-                                    price_foil AS foilprice
-                                    FROM `$mytable` LEFT JOIN `cards_scry` 
-                                    ON `$mytable`.id = `cards_scry`.id 
-                                    WHERE `$mytable`.foil / `$mytable`.foil IS TRUE")):            
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-            while($foilrow = $findfoil->fetch_array(MYSQLI_ASSOC)):
-                if($foilrow['foilprice'] == ''):
-                    $foilprice = '0.00';
-                else:
-                    $foilprice = $foilrow['foilprice'];
-                endif;
-                $cardid = $db->real_escape_string($foilrow['id']);
-                $updatemaxqry = "INSERT INTO `$mytable` (topvalue,id)
-                    VALUES ($foilprice,'$cardid')
-                    ON DUPLICATE KEY UPDATE topvalue=$foilprice";
+                    VALUES ($selectedrate,'$cardid')
+                    ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
                 if($updatemax = $db->query($updatemaxqry)):
                     //succeeded
                 else:
@@ -245,7 +235,7 @@ endif; ?>
         endif;
         
         //Get card total and value
-        if($totalcount = $db->query("SELECT sum(normal) + sum(foil) as TOTAL from `$mytable`")):
+        if($totalcount = $db->query("SELECT sum(normal) + sum(foil) + sum(etched) as TOTAL from `$mytable`")):
             $rowcount = $totalcount->fetch_array(MYSQLI_ASSOC);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -255,6 +245,8 @@ endif; ?>
                         COALESCE(SUM(`$mytable`.normal * price),0)
                         + 
                         COALESCE(SUM(`$mytable`.foil * price_foil),0)
+                        +
+                        COALESCE(SUM(`$mytable`.etched * price_etched),0)
                             ) 
                         as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
         if($totalvalue = $db->query($sqlvalue)):

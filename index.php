@@ -189,15 +189,18 @@ $selectAll = "SELECT
                 cards_scry.id as cs_id,
                 price,
                 price_foil,
+                price_etched,
                 price_sort,
                 setcode,
                 `$mytable`.normal,
                 `$mytable`.foil,
+                `$mytable`.etched,
                 number,
                 number_import,
                 cards_scry.name,
                 promo,
                 game_types,
+                finishes,
                 cards_scry.foil as cs_foil,
                 cards_scry.nonfoil as cs_normal,
                 cards_scry.release_date,
@@ -440,8 +443,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             data: poststring,
                             cache: true,
                             success: function (data) {
-                                $(activeFlash).hide(300);
-                                $(activeFlash).show(300);
+                                activeFlash.classList.remove("bulksubmitsuccessfont");
+                                activeFlash.classList.add("bulksubmitnormalfont");
+                                activeFlash.classList.add("bulksubmitsuccessbg");
+                                setTimeout(function() {
+                                  activeFlash.classList.remove("bulksubmitsuccessbg");
+                                  activeFlash.classList.add("bulksubmitsuccessfont");
+                                }, 2000);
                             }
                         });
                     }
@@ -503,16 +511,44 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            $card_normal = $row['cs_normal'];
-                            $card_foil = $row['cs_foil'];
-                            $promo = $row['promo'];
-                            if($card_normal != 1 AND $card_foil == 1):
-                                $cardtypes = 'foilonly';
-                            elseif($card_normal == 1 AND $card_foil != 1):
-                                $cardtypes = 'normalonly';
+                            $cardtypes = null;
+                            $card_normal = 0;
+                            $card_foil = 0;
+                            $card_etched = 0;
+                            if(isset($row['finishes'])):
+                                $finishes = json_decode($row['finishes'], TRUE);
+                                foreach($finishes as $key => $value):
+                                    if($value == 'nonfoil'):
+                                        $card_normal = 1;
+                                    elseif($value == 'foil'):
+                                        $card_foil = 1;
+                                    elseif($value == 'etched'):
+                                        $card_etched = 1;
+                                    endif;
+                                endforeach;
                             else:
-                                $cardtypes = 'normalandfoil';
+                                $finishes = null;
+                                $cardtypes = 'none';
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
                             endif;
+                            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
+                                $cardtypes = 'normalfoiletched';
+                            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
+                                $cardtypes = 'normalfoil';
+                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
+                                $cardtypes = 'normaletched';
+                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
+                                $cardtypes = 'foiletched';
+                            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
+                                $cardtypes = 'etchedonly';
+                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
+                                $cardtypes = 'foilonly';
+                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
+                                $cardtypes = 'normalonly';
+                            endif;
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
+                            $promo = $row['promo'];
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -538,6 +574,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myfoil = $row['foil'];
                             endif;
+                            if (empty($row['etched'])):
+                                $myetch = 0;
+                            else:
+                                $myetch = $row['etched'];
+                            endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
                                 if(stristr($row['name'],' // ') !== false):
@@ -547,16 +588,16 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 endif;
                                 echo "&nbsp;&nbsp;<a class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
                                 $cellid = "cell".$scryid;
-                                $cellidqty = $cellid.'myqty';
-                                $cellidfoil = $cellid.'myfoil';
-                                $cellidflash = $cellid.'flash';
-                                $cellidfoilflash = $cellid.'flashfoil';
-                                echo "<div class='confirm-l-bulk' id='{$cellid}flash'><span class='material-icons md-24 green'>check</span></div>";
-                                echo "<div class='confirm-r-bulk' id='{$cellid}flashfoil'><span class='material-icons md-24 green'>check</span></div>";
+                                $cellid_one = $cellid.'_one';
+                                $cellid_two = $cellid.'_two';
+                                $cellid_three = $cellid.'_three';
+                                $cellid_one_flash = $cellid_one;
+                                $cellid_two_flash = $cellid_two;
+                                $cellid_three_flash = $cellid_three;
                                 ?>
-                                <table class='gridupdatetable'>
-                                    <tr>
-                                        <td class='gridsubmit gridsubmit-l' id="<?php echo $cellid . "td"; ?>">
+                                <table class='bulksubmittable'>
+                                    <tr class='bulksubmitrow'>
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
@@ -564,21 +605,19 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "<i>MtG Arena</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
-                                            elseif ($cardtypes === 'normalonly'):
-                                                $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                            elseif ($cardtypes === 'normalandfoil'):
-                                                $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            elseif ($cardtypes === 'etchedonly'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             else:
                                                 $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                            endif;
-                                            echo "<input class='card' type='hidden' name='card' value='$scryid'>"; ?>
+                                                echo "Normal: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            endif;?>
                                         </td>
-                                        <td class='confirm-r'>&nbsp;</td>
-                                        <td class='gridsubmit gridsubmit-r' id="<?php echo $cellid . "tdfoil"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_two"; ?>">
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "&nbsp;";
@@ -586,11 +625,27 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "&nbsp;";
                                             elseif ($cardtypes === 'normalonly'):
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normalandfoil'):
-                                                $poststring = 'newfoil';
-                                                echo "Foil: <input class='textinput' id='$cellidfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidfoil\",\"$myfoil\",\"$cellidfoilflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'etchedonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normaletched'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            endif; ?>
+                                            else:
+                                                $poststring = 'newfoil';
+                                                echo "Foil: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            endif;?>
+                                        </td>
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_three"; ?>">
+                                            <?php
+                                            if ($cardtypes === 'normalfoiletched'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            else:
+                                                echo "&nbsp;";
+                                            endif;?>
                                         </td>
                                     </tr>
                                 </table>
@@ -646,7 +701,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         <td class="valuemana"> <?php echo $manac; ?> </td>
                                         <td class="valuecollection">
                                             <?php
-                                            echo $row['normal'] + $row['foil'];
+                                            echo $row['normal'] + $row['foil'] + $row['etched'];
                                             ?>
                                         </td>
                                         <td class="valueabilities"> 
@@ -712,16 +767,44 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $img_id = $row['cs_id']."img";
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            $card_normal = $row['cs_normal'];
-                            $card_foil = $row['cs_foil'];
-                            $promo = $row['promo'];
-                            if($card_normal != 1 AND $card_foil == 1):
-                                $cardtypes = 'foilonly';
-                            elseif($card_normal == 1 AND $card_foil != 1):
-                                $cardtypes = 'normalonly';
+                            $cardtypes = null;
+                            $card_normal = 0;
+                            $card_foil = 0;
+                            $card_etched = 0;
+                            if(isset($row['finishes'])):
+                                $finishes = json_decode($row['finishes'], TRUE);
+                                foreach($finishes as $key => $value):
+                                    if($value == 'nonfoil'):
+                                        $card_normal = 1;
+                                    elseif($value == 'foil'):
+                                        $card_foil = 1;
+                                    elseif($value == 'etched'):
+                                        $card_etched = 1;
+                                    endif;
+                                endforeach;
                             else:
-                                $cardtypes = 'normalandfoil';
+                                $finishes = null;
+                                $cardtypes = 'none';
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
                             endif;
+                            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
+                                $cardtypes = 'normalfoiletched';
+                            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
+                                $cardtypes = 'normalfoil';
+                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
+                                $cardtypes = 'normaletched';
+                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
+                                $cardtypes = 'foiletched';
+                            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
+                                $cardtypes = 'etchedonly';
+                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
+                                $cardtypes = 'foilonly';
+                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
+                                $cardtypes = 'normalonly';
+                            endif;
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
+                            $promo = $row['promo'];
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -762,6 +845,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myfoil = $row['foil'];
                             endif;
+                            if (empty($row['etched'])):
+                                $myetch = 0;
+                            else:
+                                $myetch = $row['etched'];
+                            endif;
                             ?>
                             <div class='gridbox item'>
                                 <?php
@@ -775,16 +863,16 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $number_import = $row['number_import'];
                                 echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='cardimg' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
-                                $cellidqty = $cellid.'myqty';
-                                $cellidfoil = $cellid.'myfoil';
-                                $cellidflash = $cellid.'flash';
-                                $cellidfoilflash = $cellid.'flashfoil';
-                                echo "<div class='confirm-l-grid' id='$cellidflash'><span class='material-icons md-24 green'>check</span></div>";
-                                echo "<div class='confirm-r-grid' id='$cellidfoilflash'><span class='material-icons md-24 green'>check</span></div>";
+                                $cellid_one = $cellid.'_one';
+                                $cellid_two = $cellid.'_two';
+                                $cellid_three = $cellid.'_three';
+                                $cellid_one_flash = $cellid_one;
+                                $cellid_two_flash = $cellid_two;
+                                $cellid_three_flash = $cellid_three;
                                 ?>
-                                <table class='gridupdatetable'>
-                                    <tr>
-                                        <td class='gridsubmit gridsubmit-l' id="<?php echo "$cellid.td"; ?>">
+<table class='bulksubmittable'>
+                                    <tr class='bulksubmitrow'>
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
@@ -792,22 +880,19 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "<i>MtG Arena</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myfoil\",\"$cellidflash\",\"$poststring\");'>";
-                                            elseif ($cardtypes === 'normalonly'):
-                                                $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                            elseif ($cardtypes === 'normalandfoil'):
-                                                $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
+                                                echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            elseif ($cardtypes === 'etchedonly'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             else:
                                                 $poststring = 'newqty';
-                                                echo "Normal: <input class='textinput' id='$cellidqty' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellidqty\",\"$myqty\",\"$cellidflash\",\"$poststring\");'>";
-                                            endif;
-                                            echo "<input class='card' type='hidden' name='card' value='$scryid'>"; ?>
+                                                echo "Normal: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            endif;?>
                                         </td>
-                                        <td class='confirm-l'>&nbsp;</td>
-                                        <td class='confirm-r'>&nbsp;</td>
-                                        <td class='gridsubmit gridsubmit-r' id="<?php echo "$cellid.tdfoil"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_two"; ?>">
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "&nbsp;";
@@ -815,11 +900,27 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                                 echo "&nbsp;";
                                             elseif ($cardtypes === 'normalonly'):
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normalandfoil'):
-                                                $poststring = 'newfoil';
-                                                echo "Foil: <input class='textinput' id='$cellidfoil' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellidfoil\",\"$myfoil\",\"$cellidfoilflash\",\"$poststring\");'>";
+                                            elseif ($cardtypes === 'etchedonly'):
+                                                echo "&nbsp;";
+                                            elseif ($cardtypes === 'normaletched'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            endif; ?>
+                                            else:
+                                                $poststring = 'newfoil';
+                                                echo "Foil: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            endif;?>
+                                        </td>
+                                        <td class='bulksubmittd' id="<?php echo $cellid."td_three"; ?>">
+                                            <?php
+                                            if ($cardtypes === 'normalfoiletched'):
+                                                $poststring = 'newetch';
+                                                echo "Etch: <input class='bulkinput' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                                echo "<input class='card' type='hidden' name='card' value='$scryid'>";
+                                            else:
+                                                echo "&nbsp;";
+                                            endif;?>
                                         </td>
                                     </tr>
                                 </table>
