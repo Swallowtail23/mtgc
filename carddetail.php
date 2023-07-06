@@ -807,7 +807,13 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <div id="minicarddetailheader">
                     <?php
-                        echo "<h2 class = 'h2pad'>".$row['name']."</h2>";
+                        echo "<h2 class = 'h2pad'>";
+                        if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
+                            echo "{$row['flavor_name']} <br><i>({$row['name']})</i>";
+                        else:
+                            echo $row['name'];
+                        endif;
+                        echo "</h2>";
                     ?>
                     <?php 
                     echo "<a href='index.php?adv=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>"; ?>
