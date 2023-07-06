@@ -234,13 +234,16 @@ endif; ?>
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
         
-        //Get card total and value
-        if($totalcount = $db->query("SELECT sum(normal) + sum(foil) + sum(etched) as TOTAL from `$mytable`")):
+        //Get card total
+        if($totalcount = $db->query("SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) as TOTAL from `$mytable`")):
             $rowcount = $totalcount->fetch_array(MYSQLI_ASSOC);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
-
+        $totalcardcount = $rowcount['TOTAL'];
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total card count = $totalcardcount",$logfile);
+        
+        // Get total values
         $sqlvalue = "SELECT (
                         COALESCE(SUM(`$mytable`.normal * price),0)
                         + 
@@ -251,6 +254,8 @@ endif; ?>
                         as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
         if($totalvalue = $db->query($sqlvalue)):
             $rowvalue = $totalvalue->fetch_assoc();
+            $unformatted_value = $rowvalue['TOTAL'];
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Unformatted value = $unformatted_value",$logfile);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
@@ -265,9 +270,9 @@ endif; ?>
         <div id="mycollection">
             <h2 class='h2pad'>My Collection</h2>
             <?php
-            
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                $collectionmoney = $a->format($rowvalue['TOTAL']); 
+                $collectionmoney = $a->format($rowvalue['TOTAL']);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
                 $collectionvalue = "Total value approximately USD".$collectionmoney;
                 $rowcounttotal = number_format($rowcount['TOTAL']);
                 echo "$collectionvalue over $rowcounttotal cards.<br>";
