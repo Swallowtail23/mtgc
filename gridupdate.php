@@ -120,6 +120,9 @@ else:
     endif;
     
 endif;
+// Update topvalue
+$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Updating topvalue based on new quantities",$logfile);
+update_topvalue_card($mytable,$sqlid);
 
 // Retrieve new record to display
 $checkresult = $db->select_one('normal, foil, etched',"$mytable","WHERE id = '$sqlid'");

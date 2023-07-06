@@ -1476,3 +1476,116 @@ function refresh_image($cardid)
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
     $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
 }
+
+function update_collection_values($collection)
+{
+    global $db, $logfile;
+    if($findcards = $db->query("SELECT
+                            `$collection`.id AS id,
+                            IFNULL(`$collection`.normal,0) AS mynormal,
+                            IFNULL(`$collection`.foil, 0) AS myfoil,
+                            IFNULL(`$collection`.etched, 0) AS myetch,
+                            notes,
+                            topvalue,
+                            IFNULL(price, 0) AS normalprice,
+                            IFNULL(price_foil, 0) AS foilprice,
+                            IFNULL(price_etched, 0) AS etchedprice
+                            FROM `$collection` LEFT JOIN `cards_scry` 
+                            ON `$collection`.id = `cards_scry`.id
+                            WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
+            $normalqty = $row['mynormal'];
+            $normalprice = $row['normalprice'];
+            $foilqty = $row['myfoil'];
+            $foilprice = $row['foilprice'];
+            $etchedqty = $row['myetch'];
+            $etchedprice = $row['etchedprice'];
+            if($normalqty * $normalprice > 0):
+                $normalrate = $normalprice;
+            else:
+                $normalrate = 0;
+            endif;
+            if($foilqty * $foilprice > 0):
+                $foilrate = $foilprice;
+            else:
+                $foilrate = 0;
+            endif;
+            if($etchedqty * $etchedprice > 0):
+                $etchedrate = $etchedprice;
+            else:
+                $etchedrate = 0;
+            endif;
+            $selectedrate = max($normalrate,$foilrate,$etchedrate);
+            $cardid = $db->real_escape_string($row['id']);
+            $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
+                VALUES ($selectedrate,'$cardid')
+                ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
+            if($updatemax = $db->query($updatemaxqry)):
+                //succeeded
+            else:
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
+            endif;
+        endwhile;
+    else: 
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
+    endif;
+    
+}
+
+function update_topvalue_card($collection,$scryid)
+{
+    global $db, $logfile;
+    if($findcards = $db->query("SELECT
+                            `$collection`.id AS id,
+                            IFNULL(`$collection`.normal,0) AS mynormal,
+                            IFNULL(`$collection`.foil, 0) AS myfoil,
+                            IFNULL(`$collection`.etched, 0) AS myetch,
+                            notes,
+                            topvalue,
+                            IFNULL(price, 0) AS normalprice,
+                            IFNULL(price_foil, 0) AS foilprice,
+                            IFNULL(price_etched, 0) AS etchedprice
+                            FROM `$collection` LEFT JOIN `cards_scry` 
+                            ON `$collection`.id = `cards_scry`.id
+                            WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
+                            AND `$collection`.id = '$scryid'")):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
+            $normalqty = $row['mynormal'];
+            $normalprice = $row['normalprice'];
+            $foilqty = $row['myfoil'];
+            $foilprice = $row['foilprice'];
+            $etchedqty = $row['myetch'];
+            $etchedprice = $row['etchedprice'];
+            if($normalqty * $normalprice > 0):
+                $normalrate = $normalprice;
+            else:
+                $normalrate = 0;
+            endif;
+            if($foilqty * $foilprice > 0):
+                $foilrate = $foilprice;
+            else:
+                $foilrate = 0;
+            endif;
+            if($etchedqty * $etchedprice > 0):
+                $etchedrate = $etchedprice;
+            else:
+                $etchedrate = 0;
+            endif;
+            $selectedrate = max($normalrate,$foilrate,$etchedrate);
+            $cardid = $db->real_escape_string($row['id']);
+            $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
+                VALUES ($selectedrate,'$cardid')
+                ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
+            if($updatemax = $db->query($updatemaxqry)):
+                //succeeded
+            else:
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
+            endif;
+        endwhile;
+    else: 
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
+    endif;
+    
+}

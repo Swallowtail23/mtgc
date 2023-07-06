@@ -577,54 +577,18 @@ require('includes/menu.php'); //mobile menu
             $notes = $db->escape($row['notes'],'str');
 
             if (isset($_POST['update'])) :    
-                if (isset($_POST['myqty'])):
-                    $myqty = filter_input(INPUT_POST, 'myqty', FILTER_SANITIZE_NUMBER_INT);
-                endif;
-                if (isset($_POST['myfoil'])):
-                    $myfoil = filter_input(INPUT_POST, 'myfoil', FILTER_SANITIZE_NUMBER_INT);
-                endif;
-                if (isset($_POST['myetch'])):
-                    $myetch = filter_input(INPUT_POST, 'myetch', FILTER_SANITIZE_NUMBER_INT);
-                endif;
                 if (isset($_POST['notes'])):
                     $notes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
                 endif;
-                $sqlmyqty = $db->escape($myqty,'int');
-                $sqlmyfoil = $db->escape($myfoil,'int');
-                $sqlmyetch = $db->escape($myetch,'int');
                 $sqlnotes = $db->escape($notes,'str');
-                if(isset($row['price']) AND (is_null($row['price']) OR $row['price'] == '' )):
-                    $price = 0.00;
-                elseif(isset($row['price'])):
-                    $price = $row['price'];
-                else:
-                    $price = 0.00;
-                endif;
-                if(isset($row['price_foil']) AND (is_null($row['price_foil']) OR $row['price_foil'] == '' )):
-                    $foilprice = 0.00;
-                elseif(isset($row['price_foil'])):
-                    $foilprice = $row['price_foil'];
-                else:
-                    $foilprice = 0.00;
-                endif;
-                if(isset($row['price_etched']) AND (is_null($row['price_etched']) OR $row['price_etched'] == '' )):
-                    $etchedprice = 0.00;
-                elseif(isset($row['price_etched'])):
-                    $etchedprice = $row['price_etched'];
-                else:
-                    $etchedprice = 0.00;
-                endif;
-                $topvalue = max($price,$foilprice,$etchedprice);
-                
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"$myqty $price, $myfoil $foilprice, $myetch $etchedprice",$logfile);
                 $updatequery = "
-                        INSERT INTO `$mytable` (normal,foil,etched,notes,id,topvalue)
-                        VALUES ($sqlmyqty,$sqlmyfoil,$sqlmyetch,'$sqlnotes','$id',$topvalue)
+                        INSERT INTO `$mytable` (notes,id)
+                        VALUES ('$sqlnotes','$id')
                         ON DUPLICATE KEY UPDATE
-                        normal=$sqlmyqty, foil=$sqlmyfoil, etched=$sqlmyetch, notes='$sqlnotes', topvalue=$topvalue";
+                        notes='$sqlnotes'";
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$updatequery,$logfile);
                 // write out collection record prior to update to log
-                if($sqlbefore = $db->query("SELECT id,normal,foil,etched,notes,topvalue FROM `$mytable` WHERE id = '$id'")):
+                if($sqlbefore = $db->query("SELECT id,notes FROM `$mytable` WHERE id = '$id'")):
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -637,7 +601,6 @@ require('includes/menu.php'); //mobile menu
                     endif;
                 endforeach;
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) initial values: $writerowforlog",$logfile);
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) update call: ".file_get_contents('php://input'),$logfile);
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) running update query: $updatequery",$logfile);
                 // Run update
                 if($sqlupdate = $db->query($updatequery)):
@@ -653,12 +616,9 @@ require('includes/menu.php'); //mobile menu
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL check failure: " . $db->error, E_USER_ERROR);
                 endif;
                 $checkresult = $sqlcheck->fetch_array(MYSQLI_ASSOC);
-                $checkresult['normal'] = $db->escape($checkresult['normal'],'int');
-                $checkresult['foil'] = $db->escape($checkresult['foil'],'int');
-                $checkresult['etched'] = $db->escape($checkresult['etched'],'int');
                 $checkresult['notes'] = $db->escape($checkresult['notes'],'str');
-                if (($sqlmyqty === $checkresult['normal']) AND ($sqlmyfoil === $checkresult['foil']) AND ($sqlmyetch === $checkresult['etched']) AND ($sqlnotes === $checkresult['notes'])): ?>
-                    <div class="msg-new success-new" onclick='CloseMe(this)'><span>Quantity/notes updated</span>
+                if ($sqlnotes === $checkresult['notes']): ?>
+                    <div class="msg-new success-new" onclick='CloseMe(this)'><span>Notes updated</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                     </div>
