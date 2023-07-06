@@ -2577,6 +2577,13 @@ hr.styled
         top: 15%;
     }
 }
+@media (max-width: 682px)
+{
+    select[multiple]
+    {
+         height: 4rem;
+    }
+}
 @media (min-width: 601px) and (max-width: 900px)
 {
     .searchicon
