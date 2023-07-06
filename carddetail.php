@@ -700,6 +700,8 @@ require('includes/menu.php'); //mobile menu
                 $cardtypes = 'foilonly';
             elseif((int)$card_normal !== 0 AND (int)$card_foil === 0): // Normal only
                 $cardtypes = 'normalonly';
+            else:
+                $cardtypes = 'other';
             endif;
             ?>
                 <div id="carddetailheader">
