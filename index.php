@@ -227,55 +227,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') AND ( $scope == 'mycollection')):
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"My Collection / Price query called, updating collection pricing",$logfile);
-    $findnormalqry = "SELECT * FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id WHERE `$mytable`.normal / `$mytable`.normal IS TRUE AND `$mytable`.foil / `$mytable`.foil IS NOT TRUE";
-    if($findnormal = $db->query($findnormalqry)):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-    else:
-        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-    endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Number of normal results = ".$findnormal->num_rows,$logfile);
-    while ($row = $findnormal->fetch_array(MYSQLI_BOTH)):
-        if($row['price'] == ''):
-            $normalprice = '0.00';
-        else:
-            $normalprice = $db->real_escape_string($row['price']);
-        endif;
-        $cardid = $db->real_escape_string($row['id']);
-        $updatemaxqry = "INSERT INTO `$mytable` (topvalue,id)
-                VALUES ('$normalprice','$cardid')
-                ON DUPLICATE KEY UPDATE `topvalue`='$normalprice'";
-        if($updatemax = $db->query($updatemaxqry)):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for normal $cardid",$logfile);
-        else:    
-            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-        endif;
-    endwhile;
-    $findfoilqry   = "SELECT * FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id WHERE `$mytable`.foil / `$mytable`.foil IS TRUE";
-    if($findfoil = $db->query($findfoilqry)):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-    else:
-        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-    endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Number of foil results = ".$findfoil->num_rows,$logfile);
-    while ($rowfoil = $findfoil->fetch_array(MYSQLI_BOTH)):
-        if($rowfoil['price_foil'] == ''):
-            $foilprice = '0.00';
-        else:
-            $foilprice = $db->real_escape_string($rowfoil['price_foil']);
-        endif;
-        $cardid = $db->real_escape_string($rowfoil['id']);
-        $updatemaxqry = "INSERT INTO `$mytable` (topvalue,id)
-                VALUES ('$foilprice','$cardid')
-                ON DUPLICATE KEY UPDATE topvalue='$foilprice'";
-        if($updatemax = $db->query($updatemaxqry)):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for foil $cardid",$logfile);
-        else:    
-            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-        endif;
-    endwhile;
-    if($findnormal->num_rows == 0 AND $findfoil->num_rows == 0):
-        $validsearch = "zero";
-    endif;
+    update_collection_values($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
 if ( $scope == 'mycollection' OR $sortBy == 'price'): // Price search waives the limit

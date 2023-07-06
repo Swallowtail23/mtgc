@@ -182,57 +182,7 @@ endif; ?>
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
         //6. Update pricing in case any new cards have been added to collection
-        /// Normal first
-        if($findcards = $db->query("SELECT
-                                    `$mytable`.id AS id,
-                                    IFNULL(`$mytable`.normal,0) AS mynormal,
-                                    IFNULL(`$mytable`.foil, 0) AS myfoil,
-                                    IFNULL(`$mytable`.etched, 0) AS myetch,
-                                    notes,
-                                    topvalue,
-                                    IFNULL(price, 0) AS normalprice,
-                                    IFNULL(price_foil, 0) AS foilprice,
-                                    IFNULL(price_etched, 0) AS etchedprice
-                                    FROM `$mytable` LEFT JOIN `cards_scry` 
-                                    ON `$mytable`.id = `cards_scry`.id
-                                    WHERE IFNULL(`$mytable`.normal,0) + IFNULL(`$mytable`.foil,0) + IFNULL(`$mytable`.etched,0) > 0")):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-            while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
-                $normalqty = $row['mynormal'];
-                $normalprice = $row['normalprice'];
-                $foilqty = $row['myfoil'];
-                $foilprice = $row['foilprice'];
-                $etchedqty = $row['mynormal'];
-                $etchedprice = $row['etchedprice'];
-                if($normalqty * $normalprice > 0):
-                    $normalrate = $normalprice;
-                else:
-                    $normalrate = 0;
-                endif;
-                if($foilqty * $foilprice > 0):
-                    $foilrate = $foilprice;
-                else:
-                    $foilrate = 0;
-                endif;
-                if($etchedqty * $etchedprice > 0):
-                    $etchedrate = $etchedprice;
-                else:
-                    $etchedrate = 0;
-                endif;
-                $selectedrate = max($normalrate,$foilrate,$etchedrate);
-                $cardid = $db->real_escape_string($row['id']);
-                $updatemaxqry = "INSERT INTO `$mytable` (topvalue,id)
-                    VALUES ($selectedrate,'$cardid')
-                    ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
-                if($updatemax = $db->query($updatemaxqry)):
-                    //succeeded
-                else:
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                endif;
-            endwhile;
-        else: 
-            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-        endif;
+        update_collection_values($mytable);
         
         //Get card total
         if($totalcount = $db->query("SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) as TOTAL from `$mytable`")):
