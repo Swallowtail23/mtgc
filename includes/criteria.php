@@ -452,7 +452,7 @@ elseif ($adv == "yes" ) :
     endif;
     
     if ($scope === "mycollection"):
-        $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0)) ";
+        $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
     endif;
     
     if ($legal === 'std'):

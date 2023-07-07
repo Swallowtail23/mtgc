@@ -414,7 +414,6 @@ require('includes/menu.php'); //mobile menu
                     cards_scry.foil as cs_foil,
                     nonfoil as cs_normal,
                     oversized,
-                    promo,
                     gatherer_uri,
                     image_uri,
                     api_uri,
@@ -483,7 +482,7 @@ require('includes/menu.php'); //mobile menu
             endif;
             if (strpos($row['game_types'], 'paper') == false):
                 $not_paper = true;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Arena only card",$logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Arena/Online only card",$logfile);
             else:
                 $not_paper = false;
             endif;
@@ -682,42 +681,13 @@ require('includes/menu.php'); //mobile menu
             $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
             
             //Set card types
-            $cardtypes = null;
-            $card_normal = 0;
-            $card_foil = 0;
-            $card_etched = 0;
             if(isset($row['finishes'])):
                 $finishes = json_decode($row['finishes'], TRUE);
-                foreach($finishes as $key => $value):
-                    if($value == 'nonfoil'):
-                        $card_normal = 1;
-                    elseif($value == 'foil'):
-                        $card_foil = 1;
-                    elseif($value == 'etched'):
-                        $card_etched = 1;
-                    endif;
-                endforeach;
+                $cardtypes = cardtypes($finishes);
             else:
                 $finishes = null;
                 $cardtypes = 'none';
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
             endif;
-            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
-                $cardtypes = 'normalfoiletched';
-            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
-                $cardtypes = 'normalfoil';
-            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
-                $cardtypes = 'normaletched';
-            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
-                $cardtypes = 'foiletched';
-            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
-                $cardtypes = 'etchedonly';
-            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
-                $cardtypes = 'foilonly';
-            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
-                $cardtypes = 'normalonly';
-            endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
             ?>
                 <div id="carddetailheader">
@@ -1243,7 +1213,7 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         ?>                
                     </div><?php 
-                    if(($meld !== 'meld_result') AND ($not_paper !== true )): ?>
+                    if(($meld !== 'meld_result') AND ($not_paper !== true ) AND ($cardtypes != 'none' )): ?>
                         <div id="carddetailupdate">
                             <form action="?" method="POST">
                             <h3 class="shallowh3">My collection</h3>
@@ -1263,7 +1233,7 @@ require('includes/menu.php'); //mobile menu
                                         if($meld === 'meld_result'):
                                             echo "Meld card";
                                         elseif ($not_paper == true):
-                                            echo "<i>MtG Arena</i>";
+                                            echo "<i>MtG Arena/Online</i>";
                                         elseif ($cardtypes === 'foilonly'):
                                             $poststring = 'newfoil';
                                             echo "Foil: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";

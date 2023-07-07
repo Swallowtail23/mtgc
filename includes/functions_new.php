@@ -958,7 +958,7 @@ function valid_pass($candidate)
     $hole='';
 }
 
-function exportMysqlToCsv($table,$filename = 'export.csv')
+function exportCollectionToCsv($table,$filename = 'export.csv')
 {
         global $db, $logfile;
         $csv_terminated = "\n";
@@ -966,8 +966,8 @@ function exportMysqlToCsv($table,$filename = 'export.csv')
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
 	$table = $db->escape($table);
-        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0))";
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection SQL: $sql",$logfile);
+        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$logfile);
         
 	// Gets the data from the database
 	$result = $db->query($sql);
@@ -1022,7 +1022,6 @@ function exportMysqlToCsv($table,$filename = 'export.csv')
             exit;
         endif;
 }
-
 function importmapcheck($import_id)
 {
     global $db;
@@ -1588,4 +1587,66 @@ function update_topvalue_card($collection,$scryid)
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     endif;
     
+}
+
+function cardtypes($finishes)
+{
+    global $db, $logfile;
+    $cardtypes = 'none';
+    $card_normal = 0;
+    $card_foil = 0;
+    $card_etched = 0;
+    foreach($finishes as $key => $value):
+        if($value == 'nonfoil'):
+            $card_normal = 1;
+        elseif($value == 'foil'):
+            $card_foil = 1;
+        elseif($value == 'etched'):
+            $card_etched = 1;
+        endif;
+    endforeach;
+    if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
+        $cardtypes = 'normalfoiletched';
+    elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
+        $cardtypes = 'normalfoil';
+    elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
+        $cardtypes = 'normaletched';
+    elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
+        $cardtypes = 'foiletched';
+    elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
+        $cardtypes = 'etchedonly';
+    elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
+        $cardtypes = 'foilonly';
+    elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
+        $cardtypes = 'normalonly';
+    endif;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card types for supplied finishes is $cardtypes",$logfile);
+    return $cardtypes;
+}
+
+function cardtype_for_id($id)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up card types for card $id",$logfile);
+    $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", ["$id"]);
+    if($stmt != TRUE):
+        trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+    else:
+        if ($stmt->num_rows > 0):
+            $result = $stmt->fetch_assoc();
+            if(isset($result['finishes'])):
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, looking up finishes",$logfile);
+                $finishes = json_decode($result['finishes'], TRUE);
+                $cardtypes = cardtypes($finishes);
+            else:
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, but no finishes",$logfile);
+                $cardtypes = 'none';
+            endif;
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id has no match",$logfile);
+            $cardtypes = 'nomatch';
+        endif;
+    endif;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card type for $id is $cardtypes",$logfile);
+    return $cardtypes;
 }

@@ -26,7 +26,7 @@ $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading csv.php..."
 // Page content starts here
 if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    exportMysqlToCsv($table);
+    exportCollectionToCsv($table);
 else:
     trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);
 endif;
