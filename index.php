@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.0
-    Date:       01/04/23
+/* Version:     8.0
+    Date:       06/07/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -21,6 +21,8 @@
  *              Layout changes for Arena cards
  *  7.0
  *              Add flip capability for battle cards
+ *  8.0
+ *              Changes to handle etched cards
 */
 
 //Call script initiation mechs
@@ -198,7 +200,6 @@ $selectAll = "SELECT
                 number,
                 number_import,
                 cards_scry.name,
-                promo,
                 game_types,
                 finishes,
                 cards_scry.foil as cs_foil,
@@ -463,44 +464,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            $cardtypes = null;
-                            $card_normal = 0;
-                            $card_foil = 0;
-                            $card_etched = 0;
                             if(isset($row['finishes'])):
                                 $finishes = json_decode($row['finishes'], TRUE);
-                                foreach($finishes as $key => $value):
-                                    if($value == 'nonfoil'):
-                                        $card_normal = 1;
-                                    elseif($value == 'foil'):
-                                        $card_foil = 1;
-                                    elseif($value == 'etched'):
-                                        $card_etched = 1;
-                                    endif;
-                                endforeach;
+                                $cardtypes = cardtypes($finishes);
                             else:
                                 $finishes = null;
                                 $cardtypes = 'none';
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
                             endif;
-                            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
-                                $cardtypes = 'normalfoiletched';
-                            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
-                                $cardtypes = 'normalfoil';
-                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
-                                $cardtypes = 'normaletched';
-                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
-                                $cardtypes = 'foiletched';
-                            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
-                                $cardtypes = 'etchedonly';
-                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
-                                $cardtypes = 'foilonly';
-                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
-                                $cardtypes = 'normalonly';
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
-                            $promo = $row['promo'];
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -554,7 +525,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
                                             elseif ($not_paper == true):
-                                                echo "<i>MtG Arena</i>";
+                                                echo "<i>MtG Arena/Online</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
                                                 echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
@@ -719,44 +690,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             $img_id = $row['cs_id']."img";
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            $cardtypes = null;
-                            $card_normal = 0;
-                            $card_foil = 0;
-                            $card_etched = 0;
                             if(isset($row['finishes'])):
                                 $finishes = json_decode($row['finishes'], TRUE);
-                                foreach($finishes as $key => $value):
-                                    if($value == 'nonfoil'):
-                                        $card_normal = 1;
-                                    elseif($value == 'foil'):
-                                        $card_foil = 1;
-                                    elseif($value == 'etched'):
-                                        $card_etched = 1;
-                                    endif;
-                                endforeach;
+                                $cardtypes = cardtypes($finishes);
                             else:
                                 $finishes = null;
                                 $cardtypes = 'none';
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} has no 'finishes'",$logfile);
                             endif;
-                            if ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 1):
-                                $cardtypes = 'normalfoiletched';
-                            elseif ($card_normal == 1 AND $card_foil == 1 AND $card_etched == 0):
-                                $cardtypes = 'normalfoil';
-                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 1):
-                                $cardtypes = 'normaletched';
-                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 1):
-                                $cardtypes = 'foiletched';
-                            elseif ($card_normal == 0 AND $card_foil == 0 AND $card_etched == 1):
-                                $cardtypes = 'etchedonly';
-                            elseif ($card_normal == 0 AND $card_foil == 1 AND $card_etched == 0):
-                                $cardtypes = 'foilonly';
-                            elseif ($card_normal == 1 AND $card_foil == 0 AND $card_etched == 0):
-                                $cardtypes = 'normalonly';
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $card_normal $card_foil $card_etched",$logfile);
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
-                            $promo = $row['promo'];
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -822,14 +763,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $cellid_two_flash = $cellid_two;
                                 $cellid_three_flash = $cellid_three;
                                 ?>
-<table class='bulksubmittable'>
+                                <table class='bulksubmittable'>
                                     <tr class='bulksubmitrow'>
                                         <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
                                             <?php
                                             if($meld === 'meld_result'):
                                                 echo "Meld card";
                                             elseif ($not_paper == true):
-                                                echo "<i>MtG Arena</i>";
+                                                echo "<i>MtG Arena/Online</i>";
                                             elseif ($cardtypes === 'foilonly'):
                                                 $poststring = 'newfoil';
                                                 echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
