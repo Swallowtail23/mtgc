@@ -363,7 +363,7 @@ endif; ?>
                     $i = 0;
                     $count = 0;
                     $total = 0;
-                    $warningsummary = 'Warning type, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Database Name (if applicable), Database ID (if applicable)'."\n";
+                    $warningsummary = 'Warning type, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)'."\n";
                     while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
                         $idimport = 0;
                         $row_no = $i + 1;
@@ -554,6 +554,7 @@ endif; ?>
                                         $result = $stmt->fetch_assoc();
                                         if(isset($result['name'])):
                                             $db_name = $result['name'];
+                                            $db_id = $result['id'];
                                             $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
                                             if($db_name != $data2):
                                                 $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$logfile);
@@ -562,7 +563,7 @@ endif; ?>
                                                     echo "; db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8]";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     print_r($db_all_names);
-                                                    $newwarning = "Setcode/number/name card match error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6 - ID matches db name $db_name \n";
+                                                    $newwarning = "Name match warning, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
                                                     continue;
@@ -585,9 +586,9 @@ endif; ?>
                                                         elseif($cardtype == 'normalfoil'):
                                                             if($data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -595,9 +596,9 @@ endif; ?>
                                                         elseif($cardtype == 'normaletched'):
                                                             if($data4 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -605,9 +606,9 @@ endif; ?>
                                                         elseif($cardtype == 'foiletched'):
                                                             if($data3 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -615,9 +616,9 @@ endif; ?>
                                                         elseif($cardtype == 'etchedonly'):
                                                             if($data3 > 0 or $data4 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -625,9 +626,9 @@ endif; ?>
                                                         elseif($cardtype == 'foilonly'):
                                                             if($data3 > 0 or $data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -635,9 +636,9 @@ endif; ?>
                                                         elseif($cardtype == 'normalonly'):
                                                             if($data4 > 0 or $data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -651,9 +652,9 @@ endif; ?>
                                         endif;
                                     else: //if ($stmt->num_rows > 0)
                                         $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card setcode and number do not match a card in db",$logfile);
-                                        echo "Row $row_no: ERROR: Setcode and collector number do not match a card in db. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6) ";
+                                        echo "Row $row_no: ERROR: Setcode and collector number do not match a card in db. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                         echo "<img src='/images/error.png' alt='Error'><br>";
-                                        $newwarning = "Setcode/number/name card match error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $db_name, $data6"."\n";
+                                        $newwarning = "Setcode/number/name card match error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
                                         $warningsummary = $warningsummary.$newwarning;
                                         $i = $i + 1;
                                         continue;
