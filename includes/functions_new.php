@@ -1484,7 +1484,6 @@ function update_collection_values($collection)
                             IFNULL(`$collection`.normal,0) AS mynormal,
                             IFNULL(`$collection`.foil, 0) AS myfoil,
                             IFNULL(`$collection`.etched, 0) AS myetch,
-                            notes,
                             topvalue,
                             IFNULL(price, 0) AS normalprice,
                             IFNULL(price_foil, 0) AS foilprice,
@@ -1493,6 +1492,7 @@ function update_collection_values($collection)
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        $i = 0;
         while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
             $normalqty = $row['mynormal'];
             $normalprice = $row['normalprice'];
@@ -1525,11 +1525,13 @@ function update_collection_values($collection)
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
             endif;
+            $i = $i + 1;
         endwhile;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection value update completed",$logfile);
     else: 
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     endif;
-    
+    return $i;
 }
 
 function update_topvalue_card($collection,$scryid)

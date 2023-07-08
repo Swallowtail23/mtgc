@@ -350,7 +350,10 @@ endif; ?>
                     </form> 
                 </div>
                 <?php
-                if (isset($_POST['import'])):
+                if (isset($_POST['import'])): ?>
+                    <script>
+                        document.body.style.cursor='wait';
+                    </script> <?php
                     $obj = new Message;
                     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called",$logfile);
                     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
@@ -358,12 +361,27 @@ endif; ?>
                         $obj = new Message;
                         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
                     endif;
+                    //Get number of lines to import
+                    $records = -2;
+                    $f = fopen($_FILES['filename']['tmp_name'], "r");
+                    while (($row = fgetcsv($f, 2000)) !== false):
+                        $records++;
+                    endwhile;
+                    fclose($f);
+                    if($records < 1):
+                        echo "<h4>Incorrect file format</h4>";
+                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} does not contain enough rows",$logfile);
+                        exit;
+                    endif; ?>
+                    <script>
+                        alert('Importing <?php echo($records);?> rows');
+                    </script> <?php
                     //Import uploaded file to Database
                     $handle = fopen($_FILES['filename']['tmp_name'], "r");
                     $i = 0;
                     $count = 0;
                     $total = 0;
-                    $warningsummary = 'Warning type, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)'."\n";
+                    $warningsummary = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)'."\n";
                     while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
                         $idimport = 0;
                         $row_no = $i + 1;
@@ -381,11 +399,9 @@ endif; ?>
                                 exit;
                             endif;
                         elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
-                            $obj = new Message;
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data[0]}), number({$data[1]}), name ({$data[2]}), normal ({$data[3]}), foil ({$data[4]}), etched ({$data[5]}), id ({$data[6]})",$logfile);
                             $data0 = $data[0];
                             $data1 = $data[1];
-                            $data2 = $data[2];
+                            $data2 = stripslashes($data[2]);
                             if (!empty($data[3])): // normal qty
                                 $data3 = $data[3];
                             else:
@@ -401,90 +417,105 @@ endif; ?>
                             else:
                                 $data5 = 0;
                             endif;
-                            $supplied_id = $data6 = $data[6]; // id
-                            if (!empty($data6)): // ID has been supplied, run an ID check / import first
-                                echo "Row $row_no: Data has an ID ($data6), checking for a match...<br>";
+                            if (!empty($data[6])): // ID
+                                $data6 = $data[6];
+                            else:
+                                $data6 = null;
+                            endif;
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})",$logfile);
+                            $supplied_id = $data6; // id
+                            if (!is_null($data6)): // ID has been supplied, run an ID check / import first
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data has an ID ($data6), checking for a match",$logfile);
                                 $cardtype = cardtype_for_id($data6);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card type is: $cardtype",$logfile);
                                 if($cardtype == 'nomatch'):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is not a valid id, trying setcode/number...",$logfile);
-                                    echo "Row $row_no: ID $data6 is not a valid id, trying setcode/number<br>";
                                     $importable = FALSE;
                                 elseif($cardtype == 'none'):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid but db has no cardtype info",$logfile);
-                                    echo "Row $row_no: ID $data6 is valid but db has no cardtype info<br>";
                                     $importable = FALSE;
                                 else:
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid and we have cardtype info",$logfile);
                                     if($cardtype == 'normalfoiletched'):
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$logfile);
                                         // All options available for import, no checks to be made
+                                        $importable = TRUE;
                                     elseif($cardtype == 'normalfoil'):
                                         if($data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif; 
                                     elseif($cardtype == 'normaletched'):
                                         if($data4 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif; 
                                     elseif($cardtype == 'foiletched'):
                                         if($data3 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif; 
                                     elseif($cardtype == 'etchedonly'):
                                         if($data3 > 0 or $data4 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif;                                                
                                     elseif($cardtype == 'foilonly'):
                                         if($data3 > 0 or $data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif;
                                     elseif($cardtype == 'normalonly'):
                                         if($data4 > 0 or $data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
+                                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                             echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
+                                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
                                             $warningsummary = $warningsummary.$newwarning;
                                             $i = $i + 1;
                                             continue;
+                                        else:
+                                            $importable = TRUE;
                                         endif;
                                     endif;
                                 endif;
                                 if(isset($importable) AND $importable != FALSE):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Match found for ID $data6 with no misallocated card types, will import",$logfile);
-                                    echo "Row $row_no: $data0, $data1, $data2, $data6<br>";
                                     $stmt = $db->prepare("  INSERT INTO
                                                                 `$mytable`
                                                                 (id,normal,foil,etched)
@@ -511,14 +542,11 @@ endif; ?>
                                     else:
                                         $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
                                         if($status === 1):
-                                            echo "Row $row_no: New, added: $data0, $data1, $data2, $data6<br>";
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
                                         elseif($status === 2):
-                                            echo "Row $row_no: Updated: $data0, $data1, $data2, $data6<br>";
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
                                         else:
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
                                         endif;
                                     endif;
                                         $stmt->close();
@@ -527,9 +555,8 @@ endif; ?>
                                         if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                            echo "Row $row_no: Normal: {$sqlcheck['normal']}, Foil: {$sqlcheck['foil']}, Etched: {$sqlcheck['etched']}<br>";
                                             if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                                echo "Row $row_no: Normal: ID import OK: <img src='/images/success.png' alt='Success'><br>";
+                                                echo "Row $row_no: NORMAL: ID matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
                                                 $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
                                                 $count = $count + 1;
                                                 $idimport = 1;
@@ -544,8 +571,7 @@ endif; ?>
                             endif;
                             if (!empty($data0) AND !empty($data1) AND !empty($data2) AND $idimport === 0): // ID import has not been successful, try with setcode, number, name
                                 $obj = new Message;
-                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - getting ID",$logfile);
-                                echo "Row $row_no:  Data in Row $row_no has no matched ID, using setcode, name and number<br>";
+                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - trying setcode/number",$logfile);
                                 $stmt = $db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", ["$data0","$data1"]);
                                 if($stmt != TRUE):
                                     trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -557,13 +583,12 @@ endif; ?>
                                             $db_id = $result['id'];
                                             $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
                                             if($db_name != $data2):
-                                                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$logfile);
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$logfile);
                                                 if(!in_array($data2,$db_all_names)):
-                                                    echo "Row $row_no: ERROR: Supplied card setcode and number do not match any db name for id {$result['id']}. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $data6)";
-                                                    echo "; db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8]";
+                                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])",$logfile);
+                                                    echo "Row $row_no: ERROR: ID and Name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
-                                                    print_r($db_all_names);
-                                                    $newwarning = "Name match warning, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                    $newwarning = "ERROR - name mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                     $warningsummary = $warningsummary.$newwarning;
                                                     $i = $i + 1;
                                                     continue;
@@ -571,7 +596,6 @@ endif; ?>
                                                     $importtype = 'alternate_name';
                                                     $data6 = $result['id'];
                                                     $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied name $data2 matches with a secondary name for id {$result['id']}, will import",$logfile);
-                                                    echo "Row $row_no: $data2 matched with card alternate name for $data6 <br>";
                                                 endif;
                                             else:
                                                 if(isset($result['finishes'])):
@@ -586,9 +610,9 @@ endif; ?>
                                                         elseif($cardtype == 'normalfoil'):
                                                             if($data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -596,9 +620,9 @@ endif; ?>
                                                         elseif($cardtype == 'normaletched'):
                                                             if($data4 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -606,9 +630,9 @@ endif; ?>
                                                         elseif($cardtype == 'foiletched'):
                                                             if($data3 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -616,9 +640,9 @@ endif; ?>
                                                         elseif($cardtype == 'etchedonly'):
                                                             if($data3 > 0 or $data4 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -626,9 +650,9 @@ endif; ?>
                                                         elseif($cardtype == 'foilonly'):
                                                             if($data3 > 0 or $data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -636,9 +660,9 @@ endif; ?>
                                                         elseif($cardtype == 'normalonly'):
                                                             if($data4 > 0 or $data5 > 0):
                                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
+                                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                                 echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
+                                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
                                                                 $warningsummary = $warningsummary.$newwarning;
                                                                 $i = $i + 1;
                                                                 continue;
@@ -648,13 +672,12 @@ endif; ?>
                                                 endif; 
                                             endif;
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Setcode ($data0)/collector number ($data1) with supplied ID ($supplied_id) matched on name and importing as ID $data6",$logfile);
-                                            echo "Row $row_no: $data2 matched with card name/card types for $data6 <br>";
                                         endif;
                                     else: //if ($stmt->num_rows > 0)
                                         $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card setcode and number do not match a card in db",$logfile);
-                                        echo "Row $row_no: ERROR: Setcode and collector number do not match a card in db. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
+                                        echo "Row $row_no: ERROR: ID and name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                         echo "<img src='/images/error.png' alt='Error'><br>";
-                                        $newwarning = "Setcode/number/name card match error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
+                                        $newwarning = "ERROR - failed to find an ID and name match, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
                                         $warningsummary = $warningsummary.$newwarning;
                                         $i = $i + 1;
                                         continue;
@@ -662,7 +685,6 @@ endif; ?>
                                 endif;    
                                 
                                 if (!empty($data6)): //write the import
-                                    echo "Row $row_no: $data0, $data1, $data2, ,$data6<br>";
                                     $stmt = $db->prepare("  INSERT INTO
                                                                 `$mytable`
                                                                 (id,normal,foil,etched)
@@ -689,10 +711,8 @@ endif; ?>
                                     else:
                                         $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
                                         if($status === 1):
-                                            echo "Row $row_no: New, added: $data0, $data1, $data2, $data6<br>";
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
                                         elseif($status === 2):
-                                            echo "Row $row_no: Updated: $data0, $data1, $data2, $data6<br>";
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
                                         else:
                                             $obj = new Message;
@@ -705,12 +725,13 @@ endif; ?>
                                         if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
                                             $obj = new Message;
                                             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                            echo "Row $row_no: Normal: {$sqlcheck['normal']}, Foil: {$sqlcheck['foil']}, Etched: {$sqlcheck['etched']} <br>";
                                             if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
                                                 if(isset($importtype) AND $importtype == 'alternate_name'):
-                                                    echo "Row $row_no: WARNING: Setcode/number import on alternate name match: <img src='/images/warning.png' alt='Warning'><br>";
+                                                    echo "Row $row_no: WARNING: Matched on alternate name, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/warning.png' alt='Warning'><br>";
+                                                    $newwarning = "WARNING - card matched to alternate card name, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $supplied_id, $db_name, $db_id \n";
+                                                    $warningsummary = $warningsummary.$newwarning;
                                                 else:
-                                                    echo "Row $row_no: NORMAL: Setcode/number import OK: <img src='/images/success.png' alt='Success'><br>";
+                                                    echo "Row $row_no: NORMAL: Setcode/number matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
                                                 endif;
                                                     $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
                                                     $count = $count + 1;
@@ -726,7 +747,7 @@ endif; ?>
                                 // do nothing
                             else:
                                 echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
-                                $newwarning = "Failure, $row_no, Check row - not enough data to identify card"."\n";
+                                $newwarning = "ERROR - not enough data to identify card, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
                         else:
@@ -740,7 +761,12 @@ endif; ?>
                     $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
                     $subject = "Import failures / warnings"; 
                     $message = "$warningsummary \n \n $summary";
-                    mail($useremail, $subject, $message, $from); 
+                    mail($useremail, $subject, $message, $from);
+                    $rowspriceupdated = update_collection_values($mytable); ?>
+                    <script type="text/javascript">
+                        alert('Import completed, and values update run on <?php echo($rowspriceupdated);?> rows');
+                        window.onload=function(){document.body.style.cursor='default';}
+                    </script> <?php
                 else: ?>
                     <div id='exportdiv'>
                         <form action="csv.php"  method="GET">
@@ -749,11 +775,10 @@ endif; ?>
                         </form>
                     </div>
                 <?php
-                endif;
-
                 endif; ?>
-                <br>&nbsp;<br>
-            </div>
+            </div> <?php
+        endif; ?>
+        <br>&nbsp;<br>
     </div>
 </div>
 <?php 
