@@ -374,7 +374,7 @@ endif; ?>
                         exit;
                     endif; ?>
                     <script>
-                        alert('Importing <?php echo($records);?> rows');
+                        alert('Importing <?php echo($records);?> rows. This can take several minutes, please be patient...');
                     </script> <?php
                     //Import uploaded file to Database
                     $handle = fopen($_FILES['filename']['tmp_name'], "r");
