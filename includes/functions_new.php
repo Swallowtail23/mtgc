@@ -1527,7 +1527,7 @@ function update_collection_values($collection)
             endif;
             $i = $i + 1;
         endwhile;
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection value update completed",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection value update completed",$logfile);
     else: 
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     endif;
