@@ -294,27 +294,23 @@ endif; ?>
                 <ul>
                     <li>It is <b>strongly recommended</b> that you export (backup) your collection before doing an import; save that file, and if it goes wrong, reset your database and rollback by importing the original collection</li>
                     <li>Ideally only do a full import to an empty collection</li>
-                    <li>If a card is not in your collection Import will <b>add</b> it with imported quantities; if a card is in your collection Import will <b>over-write</b> the existing quantity with imported quantities; 
-                        note if it imports incorrectly over an existing card entry you may lose existing card entries</li>
+                    <li>If a card is not in your collection Import will <b>add</b> it with imported quantities; if a card is in your collection Import will <b>over-write</b> the existing quantity with imported quantities;</li>
                     <li>Import file must be a comma-delimited file; delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):</li>
                 </ul>
                 <pre>
                 setcode,number,name,normal,foil,etched,id
                 LTR,3,Bill the Pony,5,0,0,9ac68519-ed7f-4f38-9549-c02975f88eed
-                </pre>
+                LTR,4,"Boromir, Warden of the Tower",2,0,0,f6bc3720-2892-4dda-8f30-079a1ac8e1e2</pre>
                 <ul>
-                    <li>The only mandatory fields are setcode and collector number.</li>
-                    <li>If id is included and is a valid Scryfall UUID value, the line will be imported as that id without checking anything else, otherwise, name and id are for your reference only</li>
+                    <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
                     <li>If a Scryfall UUID cannot be matched, an attempt will be made to match based on setcode, name and collector number. If this fails the row will generate an error and be skipped</li>
-                    <li>Set codes MUST be as per the list <a href='sets.php'> here (Set codes) </a>for successful import</li>
+                    <li>Set codes and collector numbers MUST be as on this site (see <a href='sets.php'> for Set codes </a>) for successful import</li>
                     <li>For an example of the right format export first and use that file as a template</li>
-                    <li>Unless you are 100% confident that the cards are in the database (ideally include Scryfall ID), only import normal cards, not promos or specials. 
-                        There is no consistent naming convention for non-standard sets</li>
-                    <li>The import routine will attempt to validate if a foil or etched version is actually applicable, but ultimately the results will depend on the quality of the data being imported</li>
-                    <li>Check the last line of exported files before importing to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen in an app like Notepad++ (don't use Excel)</li>
+                    <li>Be cautious importing promos or specials, unless you have validated the Scryfall UUID</li>
+                    <li>The import routine will validate if a foil or etched version is actually available, but the results will depend on the quality of the data being imported</li>
+                    <li>Check the last line of exported files before importing to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen on a sample export in an app like Notepad++ (<b>don't use Excel</b>)</li>
                     <li>The import process imports a line, then does a follow-up check to see if it has been successfully written to the database</li>
-                    <li>A green tick, red cross or warning is shown dependent on each line's result</li>
-                    <li>Make a note of any failures for checking, including 'name warnings' where the card has been imported based on setcode and number but the name does not match</li>
+                    <li>Warnings are shown for lines which you should check and fix - database write failures, name matches, etc.</li>
                     <li>You will be sent a list of the failures and warnings at the end of the import</li>
                 </ul>
                 <span id='importspan'>
@@ -340,407 +336,35 @@ endif; ?>
                             });
                     });
                 </script>
+                <script type="text/javascript"> 
+                    function ImportPrep()
+                        {
+                            alert('Import can take several minutes, please be patient...');
+                            document.body.style.cursor='wait';
+                        }
+                </script> 
                 <div id='importdiv'>
                     <form enctype='multipart/form-data' action='?' method='post'>
                         <label class='importlabel'>
                             <input id='importfile' type='file' name='filename'>
                             <span>UPLOAD</span>
                         </label>
-                        <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT CSV' disabled>
+                        <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT CSV' disabled onclick='ImportPrep()';>
                     </form> 
                 </div>
                 <?php
                 if (isset($_POST['import'])):
-                    $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called",$logfile);
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
                     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                         echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." uploaded successfully. Processing..." . "</h4>";
-                        $obj = new Message;
-                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+                    else:
+                        echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." did not upload successfully. Exiting..." . "</h4>";
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
+                        exit;
                     endif;
-                    //Import uploaded file to Database
-                    $handle = fopen($_FILES['filename']['tmp_name'], "r");
-                    $i = 0;
-                    $count = 0;
-                    $total = 0;
-                    $warningsummary = 'Warning type, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)'."\n";
-                    while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
-                        $idimport = 0;
-                        $row_no = $i + 1;
-                        if ($i === 0):
-                            if (       (strpos($data[0],'setcode') === FALSE)
-                                    OR (strpos($data[1],'number') === FALSE)
-                                    OR (strpos($data[2],'name') === FALSE)
-                                    OR (strpos($data[3],'normal') === FALSE)
-                                    OR (strpos($data[4],'foil') === FALSE)
-                                    OR (strpos($data[5],'etched') === FALSE) 
-                                    OR (strpos($data[6],'id') === FALSE)):
-                                echo "<h4>Incorrect file format</h4>";
-                                $obj = new Message;
-                                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} does not contain header row",$logfile);
-                                exit;
-                            endif;
-                        elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
-                            $obj = new Message;
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data[0]}), number({$data[1]}), name ({$data[2]}), normal ({$data[3]}), foil ({$data[4]}), etched ({$data[5]}), id ({$data[6]})",$logfile);
-                            $data0 = $data[0];
-                            $data1 = $data[1];
-                            $data2 = $data[2];
-                            if (!empty($data[3])): // normal qty
-                                $data3 = $data[3];
-                            else:
-                                $data3 = 0;
-                            endif;
-                            if (!empty($data[4])): // foil qty
-                                $data4 = $data[4];
-                            else:
-                                $data4 = 0;
-                            endif;
-                            if (!empty($data[5])): // etched qty
-                                $data5 = $data[5];
-                            else:
-                                $data5 = 0;
-                            endif;
-                            $supplied_id = $data6 = $data[6]; // id
-                            if (!empty($data6)): // ID has been supplied, run an ID check / import first
-                                echo "Row $row_no: Data has an ID ($data6), checking for a match...<br>";
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data has an ID ($data6), checking for a match",$logfile);
-                                $cardtype = cardtype_for_id($data6);
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card type is: $cardtype",$logfile);
-                                if($cardtype == 'nomatch'):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is not a valid id, trying setcode/number...",$logfile);
-                                    echo "Row $row_no: ID $data6 is not a valid id, trying setcode/number<br>";
-                                    $importable = FALSE;
-                                elseif($cardtype == 'none'):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid but db has no cardtype info",$logfile);
-                                    echo "Row $row_no: ID $data6 is valid but db has no cardtype info<br>";
-                                    $importable = FALSE;
-                                else:
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid and we have cardtype info",$logfile);
-                                    if($cardtype == 'normalfoiletched'):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$logfile);
-                                        // All options available for import, no checks to be made
-                                    elseif($cardtype == 'normalfoil'):
-                                        if($data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif; 
-                                    elseif($cardtype == 'normaletched'):
-                                        if($data4 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif; 
-                                    elseif($cardtype == 'foiletched'):
-                                        if($data3 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif; 
-                                    elseif($cardtype == 'etchedonly'):
-                                        if($data3 > 0 or $data4 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif;                                                
-                                    elseif($cardtype == 'foilonly'):
-                                        if($data3 > 0 or $data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif;
-                                    elseif($cardtype == 'normalonly'):
-                                        if($data4 > 0 or $data5 > 0):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                            echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                            echo "<img src='/images/error.png' alt='Error'><br>";
-                                            $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                                            $warningsummary = $warningsummary.$newwarning;
-                                            $i = $i + 1;
-                                            continue;
-                                        endif;
-                                    endif;
-                                endif;
-                                if(isset($importable) AND $importable != FALSE):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Match found for ID $data6 with no misallocated card types, will import",$logfile);
-                                    echo "Row $row_no: $data0, $data1, $data2, $data6<br>";
-                                    $stmt = $db->prepare("  INSERT INTO
-                                                                `$mytable`
-                                                                (id,normal,foil,etched)
-                                                            VALUES
-                                                                (?,?,?,?)
-                                                            ON DUPLICATE KEY UPDATE
-                                                                id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil),etched=VALUES(etched)
-                                                        ");
-                                    if ($stmt === false):
-                                        trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                                    endif;
-                                    $bind = $stmt->bind_param("ssss",
-                                                    $data6,
-                                                    $data3,
-                                                    $data4,
-                                                    $data5
-                                                );
-                                    if ($bind === false):
-                                        trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-                                    endif;
-                                    $exec = $stmt->execute();
-                                    if ($exec === false):
-                                        trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
-                                    else:
-                                        $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
-                                        if($status === 1):
-                                            echo "Row $row_no: New, added: $data0, $data1, $data2, $data6<br>";
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
-                                        elseif($status === 2):
-                                            echo "Row $row_no: Updated: $data0, $data1, $data2, $data6<br>";
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
-                                        else:
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
-                                        endif;
-                                    endif;
-                                        $stmt->close();
-                                    if($status === 1 OR $status === 2 OR $status === 0):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran - checking",$logfile);
-                                        if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                            echo "Row $row_no: Normal: {$sqlcheck['normal']}, Foil: {$sqlcheck['foil']}, Etched: {$sqlcheck['etched']}<br>";
-                                            if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                                echo "Row $row_no: Normal: ID import OK: <img src='/images/success.png' alt='Success'><br>";
-                                                $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                                $count = $count + 1;
-                                                $idimport = 1;
-                                            else: ?>
-                                                <img src='/images/error.png' alt='Failure'><br> <?php
-                                            endif;
-                                        else:
-                                            trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
-                                        endif;
-                                    endif;
-                                endif;    
-                            endif;
-                            if (!empty($data0) AND !empty($data1) AND !empty($data2) AND $idimport === 0): // ID import has not been successful, try with setcode, number, name
-                                $obj = new Message;
-                                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - getting ID",$logfile);
-                                echo "Row $row_no:  Data in Row $row_no has no matched ID, using setcode, name and number<br>";
-                                $stmt = $db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", ["$data0","$data1"]);
-                                if($stmt != TRUE):
-                                    trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
-                                else:
-                                    if ($stmt->num_rows > 0):
-                                        $result = $stmt->fetch_assoc();
-                                        if(isset($result['name'])):
-                                            $db_name = $result['name'];
-                                            $db_id = $result['id'];
-                                            $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
-                                            if($db_name != $data2):
-                                                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$logfile);
-                                                if(!in_array($data2,$db_all_names)):
-                                                    echo "Row $row_no: ERROR: Supplied card setcode and number do not match any db name for id {$result['id']}. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $data6)";
-                                                    echo "; db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8]";
-                                                    echo "<img src='/images/error.png' alt='Error'><br>";
-                                                    print_r($db_all_names);
-                                                    $newwarning = "Name match warning, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                    $warningsummary = $warningsummary.$newwarning;
-                                                    $i = $i + 1;
-                                                    continue;
-                                                else:
-                                                    $importtype = 'alternate_name';
-                                                    $data6 = $result['id'];
-                                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied name $data2 matches with a secondary name for id {$result['id']}, will import",$logfile);
-                                                    echo "Row $row_no: $data2 matched with card alternate name for $data6 <br>";
-                                                endif;
-                                            else:
-                                                if(isset($result['finishes'])):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes",$logfile);
-                                                    $data6 = $result['id'];
-                                                    $finishes = json_decode($result['finishes'], TRUE);
-                                                    $cardtype = cardtypes($finishes);
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card type is: $cardtype",$logfile);
-                                                    if($cardtype != 'none'):
-                                                        if($cardtype == 'normalfoiletched'):
-                                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$logfile);
-                                                        elseif($cardtype == 'normalfoil'):
-                                                            if($data5 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Foil ID, but import contains Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif; 
-                                                        elseif($cardtype == 'normaletched'):
-                                                            if($data4 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Normal and Etched ID, but import contains Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif; 
-                                                        elseif($cardtype == 'foiletched'):
-                                                            if($data3 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil and Etched ID, but import contains Normal cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif; 
-                                                        elseif($cardtype == 'etchedonly'):
-                                                            if($data3 > 0 or $data4 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Etched-only ID, but import contains Normal and/or Foil cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif;                                                
-                                                        elseif($cardtype == 'foilonly'):
-                                                            if($data3 > 0 or $data5 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Normal and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif;
-                                                        elseif($cardtype == 'normalonly'):
-                                                            if($data4 > 0 or $data5 > 0):
-                                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                                                echo "Row $row_no: ERROR: This matches to a Foil-only ID, but import contains Foil and/or Etched cards ($data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id) ";
-                                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                                $newwarning = "Foil/Normal error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                                $warningsummary = $warningsummary.$newwarning;
-                                                                $i = $i + 1;
-                                                                continue;
-                                                            endif;
-                                                        endif;
-                                                    endif;    
-                                                endif; 
-                                            endif;
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Setcode ($data0)/collector number ($data1) with supplied ID ($supplied_id) matched on name and importing as ID $data6",$logfile);
-                                            echo "Row $row_no: $data2 matched with card name/card types for $data6 <br>";
-                                        endif;
-                                    else: //if ($stmt->num_rows > 0)
-                                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card setcode and number do not match a card in db",$logfile);
-                                        echo "Row $row_no: ERROR: Setcode and collector number do not match a card in db. Data given: ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                        echo "<img src='/images/error.png' alt='Error'><br>";
-                                        $newwarning = "Setcode/number/name card match error, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
-                                        $warningsummary = $warningsummary.$newwarning;
-                                        $i = $i + 1;
-                                        continue;
-                                    endif;
-                                endif;    
-                                
-                                if (!empty($data6)): //write the import
-                                    echo "Row $row_no: $data0, $data1, $data2, ,$data6<br>";
-                                    $stmt = $db->prepare("  INSERT INTO
-                                                                `$mytable`
-                                                                (id,normal,foil,etched)
-                                                            VALUES
-                                                                (?,?,?,?)
-                                                            ON DUPLICATE KEY UPDATE
-                                                                id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil),etched=VALUES(etched)
-                                                        ");
-                                    if ($stmt === false):
-                                        trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                                    endif;
-                                    $bind = $stmt->bind_param("ssss",
-                                                    $data6,
-                                                    $data3,
-                                                    $data4,
-                                                    $data5
-                                                );
-                                    if ($bind === false):
-                                        trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-                                    endif;
-                                    $exec = $stmt->execute();
-                                    if ($exec === false):
-                                        trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
-                                    else:
-                                        $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
-                                        if($status === 1):
-                                            echo "Row $row_no: New, added: $data0, $data1, $data2, $data6<br>";
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
-                                        elseif($status === 2):
-                                            echo "Row $row_no: Updated: $data0, $data1, $data2, $data6<br>";
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
-                                        else:
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
-                                        endif;
-                                    endif;
-                                    $stmt->close();
-                                    if($status === 1 OR $status === 2 OR $status === 0):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran OK - checking...",$logfile);
-                                        if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                            echo "Row $row_no: Normal: {$sqlcheck['normal']}, Foil: {$sqlcheck['foil']}, Etched: {$sqlcheck['etched']} <br>";
-                                            if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                                if(isset($importtype) AND $importtype == 'alternate_name'):
-                                                    echo "Row $row_no: WARNING: Setcode/number import on alternate name match: <img src='/images/warning.png' alt='Warning'><br>";
-                                                else:
-                                                    echo "Row $row_no: NORMAL: Setcode/number import OK: <img src='/images/success.png' alt='Success'><br>";
-                                                endif;
-                                                    $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                                    $count = $count + 1;
-                                            else: ?>
-                                                <img src='/images/error.png' alt='Failure'><br> <?php
-                                            endif;
-                                        else:
-                                            trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
-                                        endif;
-                                    endif;
-                                endif;
-                            elseif($idimport === 1):
-                                // do nothing
-                            else:
-                                echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
-                                $newwarning = "Failure, $row_no, Check row - not enough data to identify card"."\n";
-                                $warningsummary = $warningsummary.$newwarning;
-                            endif;
-                        else:
-                            echo "Row ",$i+1,": Row reached without 3 data items, stopping <img src='/images/warning.png' alt='Warning'><br>";
-                        endif;
-                        $i = $i + 1;
-                    endwhile;
-                    fclose($handle);
-                    $summary = "Import done - $count unique cards, $total in total.";
-                    print $summary;
-                    $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                    $subject = "Import failures / warnings"; 
-                    $message = "$warningsummary \n \n $summary";
-                    mail($useremail, $subject, $message, $from); 
+                    $importfile = $_FILES['filename']['tmp_name'];
+                    $importcards = import($importfile);
                 else: ?>
                     <div id='exportdiv'>
                         <form action="csv.php"  method="GET">
@@ -749,11 +373,10 @@ endif; ?>
                         </form>
                     </div>
                 <?php
-                endif;
-
                 endif; ?>
-                <br>&nbsp;<br>
-            </div>
+            </div> <?php
+        endif; ?>
+        <br>&nbsp;<br>
     </div>
 </div>
 <?php 
