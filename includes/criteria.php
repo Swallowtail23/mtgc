@@ -46,9 +46,9 @@ elseif ($adv == "yes" ) :
     $criteriaNTA = "";
     if ($searchnotes === "yes"):
             $criteriaNTA = "$mytable.notes LIKE '%$name%' ";
-    elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchability) AND empty($searchabilityexact))):
+    elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchability) AND empty($searchabilityexact))):
         $criteriaNTA .= "cards_scry.name LIKE '%%' ";
-    elseif (empty($searchname) AND empty($searchtype) AND empty($searchability) AND empty($searchabilityexact)):
+    elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchability) AND empty($searchabilityexact)):
         $criteriaNTA .= "cards_scry.name LIKE '%$name%' ";
     else:
         if ($searchname === "yes"):
@@ -67,6 +67,12 @@ elseif ($adv == "yes" ) :
                 $criteriaNTA .= "OR ";
             endif;
             $criteriaNTA .= "cards_scry.type LIKE '%$name%' ";
+        endif;
+        if ($searchsetcode === "yes"):
+            if (!empty($criteriaNTA)) :
+                $criteriaNTA .= "OR ";
+            endif;
+            $criteriaNTA .= "cards_scry.setcode LIKE '$name' ";
         endif;
         if ($searchability === "yes"):
             $abilitytext = "";
@@ -503,6 +509,8 @@ elseif ($adv == "yes" ) :
             $order = "ORDER BY sets.release_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "setdown"):
             $order = "ORDER BY sets.release_date DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
+        elseif ($sortBy == "setnumberdown"):
+            $order = "ORDER BY sets.release_date DESC, cards_scry.set_name ASC, cards_scry.number DESC, cards_scry.cmc DESC ";
         elseif ($sortBy == "powerup"):
             $order = "ORDER BY cards_scry.maxpower * 1 ASC, cards_scry.cmc ASC ";
         elseif ($sortBy == "powerdown"):
