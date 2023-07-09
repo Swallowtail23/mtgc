@@ -1,11 +1,11 @@
 <?php
 /* Version:     1.0
     Date:       22/01/22
-    Name:       scryfall_rulings.php
-    Purpose:    Import/update Scryfall rulings data
+    Name:       scryfall_sets.php
+    Purpose:    Import/update Scryfall sets data
     Notes:      {none} 
         
-    1.0         Downloads Scryfall rulings file, wipes and writes rulings_scry table
+    1.0         Release 1
 */
 
 require ('bulk_ini.php');
