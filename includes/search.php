@@ -30,35 +30,41 @@ endif;
             <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT'><br>
             <span class="parametersmall checkbox-group">
-                <input id='cb1' type="checkbox" class="checkbox notnotes" name="searchname" value="yes" checked="checked">
+                <input id='cb1' type="checkbox" class="checkbox notnotes notsetcode" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
                     <span class="check"></span>
                     <span class="box"></span>Name
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id='cb2' type="checkbox" class="checkbox notnotes" name="searchtype" value="yes">
+                <input id='cb2' type="checkbox" class="checkbox notnotes notsetcode" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input type="checkbox" class="checkbox" id = "yesnotes" name="searchnotes" value="yes">
+                <input id = "yesnotes" type="checkbox" class="checkbox notsetcode" name="searchnotes" value="yes">
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
+            </span><br>
+            <span class="parametersmall checkbox-group">
+                <input id='searchsetcode' type="checkbox" class="checkbox notnotes" name="searchsetcode" value="yes">
+                <label for='searchsetcode'><span class="check"></span>
+                    <span class="box"></span>Setcode
+                </label>
             </span>
             <br>Abilities:<br>
             <span class="parametermed checkbox-group">
-                <input id='abilityall' type="checkbox" class="checkbox notnotes" name="searchability" value="yes">
+                <input id='abilityall' type="checkbox" class="checkbox notnotes notsetcode" name="searchability" value="yes">
                 <label for='abilityall'>
                     <span class="check"></span>
                     <span class="box"></span>fuzzy 
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id='abilityexact' type="checkbox" class="checkbox notnotes" name="searchabilityexact" value="yes">
+                <input id='abilityexact' type="checkbox" class="checkbox notnotes notsetcode" name="searchabilityexact" value="yes">
                 <label for='abilityexact'>
                     <span class="check"></span>
                     <span class="box"></span>exact 
@@ -110,7 +116,7 @@ endif;
                             echo "<optgroup class='optgroup' label='$parent_set_upper'>\n";
                             $currentblock = $parent_set_upper;
                         endif;
-                        echo "<option value='{$row['setcode']}'>{$row['set_name']} ($set_upper)</option>\n";
+                        echo "<option title='{$row['set_name']}' value='{$row['setcode']}'>$set_upper: {$row['set_name']}</option>\n";
                     endwhile;
                 endif;    
                 if( $currentblock != null ) echo "</optgroup>\n";
@@ -121,6 +127,7 @@ endif;
             <h4 class="h4Sortby">Sort by</h4>
             <label class="radio"><input type="radio" name="sortBy" value="set"><span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="setdown" checked="checked"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
+            <label class="radio"><input type="radio" name="sortBy" value="setnumberdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="price"><span class="outer"><span class="inner"></span></span>Price &#x25BC;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>CMC &#x25B2;</label>

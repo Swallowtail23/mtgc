@@ -82,6 +82,7 @@ else:
 endif;
 $searchname = isset($_GET['searchname']) ? 'yes' : '';
 $searchtype = isset($_GET['searchtype']) ? 'yes' : '';
+$searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
 $searchability = isset($_GET['searchability']) ? 'yes' : '';
 $searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
 $searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
@@ -132,7 +133,7 @@ $exact = isset($_GET['exact']) ? 'yes' : '';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
     $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 endif;
-$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","powerup","powerdown","toughup","toughdown");
+$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown");
 $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
 if (!in_array($sortBy,$valid_sortBy)):
     $sortBy == '';
@@ -284,6 +285,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <script type="text/javascript">
             // Selecting Notes search deselects other scope options, and vice versa. Need to functionalise this.
             jQuery(function ($) {
+                $('#searchsetcode').click(function (event) {
+                    if (this.checked) { // check select status of "searchsetcode"
+                        $('.notsetcode').each(function () { //deselect "notsetcode"
+                            this.checked = false;
+                        });
+                    }
+                });
                 $('#yesnotes').click(function (event) {
                     if (this.checked) { // check select status of "yesnotes"
                         $('.notnotes').each(function () { //loop through and deselect each "notnotes" checkbox
@@ -294,6 +302,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 $('.notnotes').click(function (event) {
                     if (this.checked) { // check select status when clicking on a "notnotes"
                         $('#yesnotes').each(function () { // deselect "yesnotes"
+                            this.checked = false;
+                        });
+                    }
+                });
+                $('.notsetcode').click(function (event) {
+                    if (this.checked) { // check select status when clicking on a "notnotes"
+                        $('#searchsetcode').each(function () { // deselect "searchsetcode"
                             this.checked = false;
                         });
                     }
@@ -314,7 +329,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 });
             });
         </script>
-        
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
             // Only load IAS if results are more than a page-full per page type

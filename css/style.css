@@ -1429,6 +1429,13 @@ table
     width: 95%;
     max-width: 310px;
 }
+.setselect option
+{
+    overflow-wrap: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .setselect:focus
 {
     outline: 0px;
