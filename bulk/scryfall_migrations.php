@@ -124,7 +124,6 @@ foreach($result_files as $data):
     $rows = getRowCount($data);
     $total_rows = $total_rows + $rows;
 endforeach;
-$obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": $total_rows",$logfile);
 if($total_rows > 0):
     clearDBMigrations();
 endif;
