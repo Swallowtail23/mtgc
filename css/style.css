@@ -1019,17 +1019,17 @@ table
 {
     height: 50px;
 }
-.bulksubmitrow input
+.bulksubmitrow input, .bulksubmitrowsmall input
 {
     height: 35px;
-    transition: background-color 0.5s ease;
+    transition: background-color 1s ease;
 }
 .bulksubmittd, .bulksubmittdsmall
 {
     overflow: hidden;
     white-space: nowrap;
     border: 0px !important;
-    transition: background-color 0.5s ease;
+    transition: background-color 1s ease;
 }
 .bulksubmittd
 {
@@ -1041,7 +1041,7 @@ table
 }
 .bulksubmitsuccessbg
 {
-    background-color: #41c300 !important;
+    background-color: #c6cceb !important;
 }
 .bulksubmitnormalfont
 {
@@ -1051,7 +1051,7 @@ table
 .bulksubmitsuccessfont
 {
     color: #41c300 !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
 }
 .bulkinput, .bulkinputsmall
 {
