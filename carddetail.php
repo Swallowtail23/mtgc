@@ -69,7 +69,12 @@ elseif (isset($_POST["id"])):
 endif;
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 $newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
-$deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT);
+if(filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT) == ''):
+    $deckqty = 1;
+else:
+    $deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT);
+endif;
+
 $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 ?> 
 
@@ -114,7 +119,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 <script type="text/javascript">   
     jQuery( function($) {
         $('#addtodeck').submit(function() {
-            if(($('#deckqty').val() === '') || ($('#deckqty').val() === '0') || (($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ===''))){
+            if(($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ==='')){
                 alert("You need to complete the form...")
                 return false;
             }
