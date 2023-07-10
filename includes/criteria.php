@@ -126,7 +126,7 @@ elseif ($adv == "yes" ) :
         if (!empty($criteriaCol)) :
             $criteriaCol .= $colourOp." ";
         endif;
-        $criteriaCol .= "(cards_scry.color LIKE '%C%' OR cards_scry.f1_colour LIKE '%C%' OR cards_scry.f2_colour LIKE '%C%' )";
+        $criteriaCol .= "(cards_scry.color LIKE '%[]%' OR cards_scry.f1_colour LIKE '%[]%' OR cards_scry.f2_colour LIKE '%[]%' )";
     endif;
     if (!empty($criteriaCol)) :
         $criteria .= "AND (".$criteriaCol.") ";
