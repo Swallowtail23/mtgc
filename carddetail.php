@@ -431,6 +431,7 @@ require('includes/menu.php'); //mobile menu
                     legalitypioneer,
                     legalityalchemy,
                     legalityhistoric,
+                    legalitycommander,
                     updatetime,
                     price,
                     price_foil,
@@ -1122,6 +1123,10 @@ require('includes/menu.php'); //mobile menu
                             
                             if($row['legalitymodern'] == 'legal'):
                                 $legalitystring .= "Modern";
+                            endif;
+                                                        
+                            if($row['legalitycommander'] == 'legal'):
+                                $legalitystring .= "Commander";
                             endif;
                             
                             if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
