@@ -1124,6 +1124,10 @@ require('includes/menu.php'); //mobile menu
                             if($row['legalitymodern'] == 'legal'):
                                 $legalitystring .= "Modern";
                             endif;
+                            
+                            if($legalitystring !== '' AND substr($legalitystring,-2) !== "; "):
+                                $legalitystring .= "; ";
+                            endif;
                                                         
                             if($row['legalitycommander'] == 'legal'):
                                 $legalitystring .= "Commander";
