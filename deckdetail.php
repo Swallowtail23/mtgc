@@ -351,7 +351,7 @@ if($uniquecardscount > 0):
         $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
         foreach($resultnames as $key=>$value):
             $searchname = $db->escape($value);
-            $query = "SELECT SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
+            $query = "SELECT SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
             if ($totalresult = $db->query($query)):
                 $totalrow = $totalresult->fetch_assoc();
                 $total = $totalrow['allcopies'];
