@@ -533,7 +533,7 @@ endif;
                         <?php
                     endif; ?>
                 </tr> 
-                <?php 
+                <?php
                 // Only show this row if the decktype is Commander style
                 if(in_array($decktype,$commander_decktypes)): 
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, adding commander row",$logfile);
@@ -774,6 +774,7 @@ endif;
                     $cmc[6]   = 0;
                     $cmctotal = 0;
                 endif;
+                $deckcard_no = 1; // Initialise card count for random draw
                 if (mysqli_num_rows($result) > 0):
                 mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
@@ -782,8 +783,14 @@ endif;
                             $row['type'] = substr($row['type'], 0, $len);
                         endif;
                         if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] < 1)):
-                            $cardname = $row["name"];
                             $quantity = $row["cardqty"];
+                            $cardname = $row["name"];
+                            $rowqty = 0;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
@@ -943,8 +950,14 @@ endif;
                             $row['type'] = substr($row['type'], 0, $len);
                         endif;
                         if ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):
-                            $cardname = $row["name"];
                             $quantity = $row["cardqty"];
+                            $cardname = $row["name"];
+                            $rowqty = 0;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
@@ -1079,8 +1092,14 @@ endif;
                             $row['type'] = substr($row['type'], 0, $len);
                         endif;
                         if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] < 1)):
-                            $cardname = $row["name"];
                             $quantity = $row["cardqty"];
+                            $cardname = $row["name"];
+                            $rowqty = 0;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
@@ -1267,8 +1286,14 @@ endif;
                             $row['type'] = substr($row['type'], 0, $len);
                         endif;
                         if ((strpos($row['type'],'Land') !== false) AND (strpos($row['type'],'Land Creature') === false)):
-                            $cardname = $row["name"];
                             $quantity = $row["cardqty"];
+                            $cardname = $row["name"];
+                            $rowqty = 0;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
@@ -1637,7 +1662,17 @@ endif;
                     echo "<br>Average CMC = N/A";
                 endif;
                 echo "<br>Total deck value (Fair Trade) = $".$deckvalue;
-            endif;
+            endif; ?>
+            <h4>Random draw</h4>
+            <?php 
+            $a = array_rand($uniquecard_ref,7);
+            echo "1: ".$uniquecard_ref[$a[0]]['name'].'<br>';
+            echo "2: ".$uniquecard_ref[$a[1]]['name'].'<br>';
+            echo "3: ".$uniquecard_ref[$a[2]]['name'].'<br>';
+            echo "4: ".$uniquecard_ref[$a[3]]['name'].'<br>';
+            echo "5: ".$uniquecard_ref[$a[4]]['name'].'<br>';
+            echo "6: ".$uniquecard_ref[$a[5]]['name'].'<br>';
+            echo "7: ".$uniquecard_ref[$a[6]]['name'];
             ?>
         </div>
         <div id='deckfunctions'> 
