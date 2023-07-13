@@ -149,7 +149,14 @@ elseif ($adv == "yes" ) :
             $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%B%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%B%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%B%')) ";
         endif;
     endif;
-        
+    // New
+    $criteriaNew = "";
+    if ($new === "yes"):
+        $criteriaNew = "DATEDIFF(date_added, CURDATE()) < 7 ";
+    endif;
+    if (!empty($criteriaNew)) :
+        $criteria .= "AND (".$criteriaNew.") ";
+    endif;        
     // Then rarity
     $criteriaRty = "";
     if ($common === "yes"):

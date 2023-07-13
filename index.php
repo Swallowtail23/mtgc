@@ -86,6 +86,7 @@ $searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
 $searchability = isset($_GET['searchability']) ? 'yes' : '';
 $searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
 $searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
+$new = isset($_GET['searchnew']) ? 'yes' : '';
 $white = isset($_GET['white']) ? 'yes' : '';
 $blue = isset($_GET['blue']) ? 'yes' : '';
 $black = isset($_GET['black']) ? 'yes' : '';

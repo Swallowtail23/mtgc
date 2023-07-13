@@ -180,6 +180,7 @@ CREATE TABLE `cards_scry` (
   `price_foil` decimal(8,2) DEFAULT NULL,
   `price_etched` decimal(8,2) DEFAULT NULL,
   `price_sort` decimal(8,2) DEFAULT NULL,
+  `date_added` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   KEY `oracle_id` (`oracle_id`)
