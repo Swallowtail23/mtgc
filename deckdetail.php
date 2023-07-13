@@ -1662,17 +1662,18 @@ endif;
                     echo "<br>Average CMC = N/A";
                 endif;
                 echo "<br>Total deck value (Fair Trade) = $".$deckvalue;
-            endif; ?>
-            <h4>Random draw</h4>
-            <?php 
-            $a = array_rand($uniquecard_ref,7);
-            echo "1: ".$uniquecard_ref[$a[0]]['name'].'<br>';
-            echo "2: ".$uniquecard_ref[$a[1]]['name'].'<br>';
-            echo "3: ".$uniquecard_ref[$a[2]]['name'].'<br>';
-            echo "4: ".$uniquecard_ref[$a[3]]['name'].'<br>';
-            echo "5: ".$uniquecard_ref[$a[4]]['name'].'<br>';
-            echo "6: ".$uniquecard_ref[$a[5]]['name'].'<br>';
-            echo "7: ".$uniquecard_ref[$a[6]]['name'];
+            endif; 
+            if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
+                <h4>Random draw</h4><?php 
+                $a = array_rand($uniquecard_ref,7);
+                echo "1: ".$uniquecard_ref[$a[0]]['name'].'<br>';
+                echo "2: ".$uniquecard_ref[$a[1]]['name'].'<br>';
+                echo "3: ".$uniquecard_ref[$a[2]]['name'].'<br>';
+                echo "4: ".$uniquecard_ref[$a[3]]['name'].'<br>';
+                echo "5: ".$uniquecard_ref[$a[4]]['name'].'<br>';
+                echo "6: ".$uniquecard_ref[$a[5]]['name'].'<br>';
+                echo "7: ".$uniquecard_ref[$a[6]]['name'];
+            endif;
             ?>
         </div>
         <div id='deckfunctions'> 
