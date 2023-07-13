@@ -55,6 +55,12 @@ endif;
                     <span class="box"></span>Setcode
                 </label>
             </span>
+            <span class="parametersmall checkbox-group">
+                <input id='searchnew' type="checkbox" class="checkbox notnotes" name="searchnew" value="yes">
+                <label for='searchnew'><span class="check"></span>
+                    <span class="box"></span>New (7d)
+                </label>
+            </span>
             <br>Abilities:<br>
             <span class="parametermed checkbox-group">
                 <input id='abilityall' type="checkbox" class="checkbox notnotes notsetcode" name="searchability" value="yes">
