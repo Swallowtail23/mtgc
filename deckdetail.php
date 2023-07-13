@@ -377,6 +377,10 @@ endif;
 mysqli_data_seek($result, 0);
 while ($row = $result->fetch_assoc()):
     $cardset = strtolower($row['setcode']);
+    if (strpos($row['type'],' //') !== false):
+        $len = strpos($row['type'], ' //');
+        $row['type'] = substr($row['type'], 0, $len);
+    endif;
     if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] == 0)):
         $creatures = $creatures + $row['cardqty'];
     elseif ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):  
