@@ -444,6 +444,7 @@ function subtractdeckcard($deck,$card,$section,$quantity)
                 endif;
             else:
                 $status = "-error";
+                $cardquery = '';
             endif;
         elseif($section == "main"):
             $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty IS NOT NULL");
@@ -457,6 +458,7 @@ function subtractdeckcard($deck,$card,$section,$quantity)
                 endif;
             else:
                 $status = "-error";
+                $cardquery = '';
             endif;
         endif;
     endif;
