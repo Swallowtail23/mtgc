@@ -587,18 +587,19 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         </td>
                                     </tr>
                                 </table>
-                            </div>    
-                  <?php endwhile; ?>
-                        <div class="ias-no-more">NO MORE RESULTS</div>
-                        <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
-                        <!--page navigation-->
-                        <?php
+                            </div> <?php 
+                        endwhile; ?>
+                        <div class="ias-no-more">NO MORE RESULTS
+                        </div>
+                        <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING">
+                        </div>
+                        <!--page navigation--> <?php
                         if (isset($next)):
                             $getString = getStringParameters($_GET, 'page');
                             ?>
                             <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
-                            </div>
-                        <?php endif ?>
+                            </div> <?php 
+                        endif ?>
                         <table class='bottompad'>
                             <tr>
                                 <td>
@@ -606,8 +607,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 </td>
                             </tr>
                         </table>    
-                    </div>
-          <?php elseif ($layout == 'list'):?>
+                    </div> <?php
+                elseif ($layout == 'list'):?>
                     <div id='results' class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) : 
@@ -669,8 +670,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 </td>
                             </tr>
                         </table>    
-                    </div>
-          <?php elseif ($layout == 'grid') :?>
+                    </div> <?php 
+                elseif ($layout == 'grid') :?>
                     <script type="text/javascript">
                         function swapImage(img_id,card_id,imageurl,imagebackurl){
                             var ImageId = document.getElementById(img_id);
