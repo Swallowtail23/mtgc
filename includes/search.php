@@ -17,7 +17,12 @@ if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
 endif;
 ?>
-
+<script type="text/javascript"> 
+    function SubmitPrep()
+        {
+            document.body.style.cursor='wait';
+        }
+</script> 
 <form action="index.php" method="get">
     <div class="staticpagecontent">   
         <div id="grey" class="transparent">
@@ -28,7 +33,7 @@ endif;
             <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
             <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
-            <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT'><br>
+            <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
             <span class="parametersmall checkbox-group">
                 <input id='cb1' type="checkbox" class="checkbox notnotes notsetcode" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
@@ -454,7 +459,6 @@ endif;
             </select>             
             <br>&nbsp;<br>
         </div>
-        
     </div>
 </form>
 <?php ?>

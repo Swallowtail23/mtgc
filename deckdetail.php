@@ -85,12 +85,6 @@ forcechgpwd();                              //Check if user is disabled or needs
             $('.deckcardimgdiv').hide("slow");
         });
     </script>  
-    <script type="text/javascript"> 
-        function CloseMe( obj )
-        {
-            obj.style.display = 'none';
-        }
-    </script>
     <script>
         function toggleForm() 
         {
@@ -104,6 +98,12 @@ forcechgpwd();                              //Check if user is disabled or needs
           }
         }
     </script>
+    <script type="text/javascript"> 
+        function ComparePrep()
+            {
+                document.body.style.cursor='wait';
+            }
+    </script> 
 </head>
 
 <body class="body">
@@ -113,6 +113,7 @@ require('includes/overlays.php');
 require('includes/header.php'); 
 require('includes/menu.php'); //mobile menu
 
+$redirect = false;
 if (isset($_GET["missing"])):
     $missing = 'yes';
 else:
@@ -140,7 +141,14 @@ else: ?>
     </div> <?php
     require('includes/footer.php');
     exit();
-endif;
+endif;?>
+<script type="text/javascript"> 
+    function CloseMe( obj )
+    {
+        obj.style.display = 'none';
+        window.location.href="deckdetail.php?deck=<?php echo $decknumber;?>";
+    }
+</script> <?php
 $cardtoaction   = isset($_GET['card'])          ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS):'';
 $deletemain     = isset($_GET['deletemain'])    ? 'yes' : '';
 $deleteside     = isset($_GET['deleteside'])    ? 'yes' : '';
@@ -182,6 +190,8 @@ if ((isset($updatenotes)) AND ($updatenotes == 'yes')):
     );
     if ($db->update('decks', $updateddata, "WHERE decknumber = $decknumber") === FALSE):
         trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+    else:
+        $redirect = true;
     endif;
 endif;
 
@@ -197,13 +207,15 @@ if(isset($_POST['newname'])):
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
-     elseif($renameresult > 0):
+    elseif($renameresult > 0):
          ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Unknown error</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
+    else:
+        $redirect = true;
     endif;
 endif;
 
@@ -256,32 +268,48 @@ endif;
 // Add / delete, before calling the deck list
 if($deletemain == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,"main","all");
+    $redirect = true;
 elseif($deleteside == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,"side","all");
+    $redirect = true;
 elseif($maintoside == 'yes'):
     if (subtractdeckcard($decknumber,$cardtoaction,'main','1') != "-error"):
         adddeckcard($decknumber,$cardtoaction,"side","1");
     endif;
+    $redirect = true;
 elseif($sidetomain == 'yes'):
     if (subtractdeckcard($decknumber,$cardtoaction,'side','1') != "-error"):
         adddeckcard($decknumber,$cardtoaction,"main","1");
     endif;
+    $redirect = true;
 elseif($plusmain == 'yes'):
     adddeckcard($decknumber,$cardtoaction,"main","1");
+    $redirect = true;
 elseif($minusmain == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,'main','1');
+    $redirect = true;
 elseif($plusside == 'yes'):
     adddeckcard($decknumber,$cardtoaction,"side","1");
+    $redirect = true;
 elseif($minusside == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,'side','1');
+    $redirect = true;
 elseif($commander == 'yes'):
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
     addcommander($decknumber,$cardtoaction);
+    $redirect = true;
 elseif($partner == 'yes'):
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Moving Commander to Partner for deck $decknumber: $cardtoaction",$logfile);
     addpartner($decknumber,$cardtoaction);
+    $redirect = true;
 elseif($commander == 'no'):
     delcommander($decknumber,$cardtoaction);
+    $redirect = true;
+endif;
+
+if($redirect == true): ?>
+    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
+    exit();
 endif;
 
 //Get card list
@@ -433,6 +461,9 @@ if(isset($cardtoadd) AND $cardtoadd == 'cardnotfound'): ?>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
 <?php
+elseif(isset($cardtoadd)): ?>
+    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
+    exit();
 endif;
 ?>
 <div id="page">
@@ -1696,6 +1727,9 @@ endif;
                     $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
                     $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
                     $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
+                    <script type="text/javascript">
+                        document.body.style.cursor='default';
+                    </script>
                     <h4>Export missing cards list</h4>
                     <form action="dltext.php" method="POST">
                         <input class='profilebutton' type="submit" value="EXPORT">
@@ -1724,7 +1758,7 @@ endif;
                     <form action="deckdetail.php" method="GET">
                     <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
                     <input type='hidden' name='missing' value='yes'>
-                    <input class='profilebutton' type="submit" value="COMPARE">
+                    <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
                     </form>
                     <br>
                 <?php
