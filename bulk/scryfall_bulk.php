@@ -569,6 +569,8 @@ foreach($data AS $key => $value):
                 $count_add = $count_add + 1;
                 $obj = new Message;
                 $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Added card - no error returned; return code: $status",$logfile);
+                //Fetching image
+                getImageNew($value["set"], $id, $ImgLocation, $value["layout"], $two_card_detail_sections);
             elseif($status === 2):
                 $count_update = $count_update + 1;
                 $obj = new Message;

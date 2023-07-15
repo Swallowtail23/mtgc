@@ -97,3 +97,11 @@ try {
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }
+
+//Primary definition is in ini.php - used here for image retrieval for new cards
+$two_card_detail_sections = array('transform',
+                                  'modal_dfc',
+                                  'reversible_card',
+                                  'double_faced_token',
+                                  'battle',
+                                  'art_series');

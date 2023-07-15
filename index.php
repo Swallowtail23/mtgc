@@ -381,6 +381,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             endif; ?>
             <script type="text/javascript">
                 $(document).ready(function () {
+                    document.body.style.cursor='default';
                     $(".top").hide();
                     var UrlVars = getUrlVars();
                     if (UrlVars["page"] > 1) {
