@@ -228,9 +228,8 @@ endif; ?>
                 $rowcounttotal = number_format($totalcardcount);
                 echo "$collectionvalue over $rowcounttotal cards.<br>";
                 echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com, in USD.<br>";
-            
                 $rowcounttotal = number_format($totalcardcount);
-                echo "Total $rowcounttotal cards.<br>";  
+                echo "<br>";  
             ?>
         </div>
         <div id="changepassword">

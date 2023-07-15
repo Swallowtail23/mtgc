@@ -45,7 +45,16 @@ require('includes/menu.php');
         </div>
         <h2 class='h2pad'>Copyright</h2>
         The information presented on this site about Magic: The Gathering is copyrighted by Wizards of the Coast.<br>
-        This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.<br><br>
+        This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.
+        <h2 id='h2'>Privacy and security</h2>
+        This app stores the following information:
+        <ul>
+            <li>Your email address, used to log on</li>
+            <li>Your password, securely encrypted (salted and hashed)</li>
+            <li>Information about any cards you may add to "My Collection"</li>
+            <li>Your IP address used to access this site</li>
+        </ul>
+        If you want to completely delete your account <a href='help.php'>send me a request</a> and I will delete all stored information.<br><br>
         Website design &copy; <?php echo $copyright;?>
     <hr class="styled">
     <h3 class="shallowh3">Updates</h3>

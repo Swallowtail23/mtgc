@@ -765,7 +765,27 @@ require('includes/menu.php'); //mobile menu
                         $img_id = 'cardimg';
                         if (in_array($row['layout'],$two_card_detail_sections)):
                             echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
-                        endif; ?>
+                        endif; 
+                        $prevcard = $cardnumber - 1;
+                        $nextcard = $cardnumber + 1; 
+                        // Find the prev number card's ID
+                        if($prevcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number = $prevcard ORDER BY manacost DESC")):
+                            $obj = new Message;
+                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                            $prevcardid = $prevcardresult['id'];
+                        else:
+                            $prevcardid = "";
+                            //trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                        endif; 
+                        // Find the next number card's ID
+                        if($nextcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number = $nextcard ORDER BY manacost DESC")):
+                            $obj = new Message;
+                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                            $nextcardid = $nextcardresult['id'];
+                        else:
+                            $nextcardid = "";
+                            //trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                        endif;?>
                         <table>
                             <tr> 
                                 <td colspan="6">
@@ -804,56 +824,54 @@ require('includes/menu.php'); //mobile menu
                                         
                                     ?>
                                 </td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" class="previousbutton">
-                                    <?php if ($row['number'] > 1):
-                                        // Find the next number card's ID
-                                        $prevcard = $cardnumber - 1;
-                                        if($prevcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number = $prevcard ORDER BY manacost DESC")):
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                                            $prevcardid = $prevcardresult['id'];
-                                        else:
-                                            $prevcardid = "";
-                                            //trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                        endif;
-                                        if(!empty($prevcardid)): ?>
-                                            <form action="?" method="get">
-                                                <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                echo "<input type='hidden' name='id' value=".$prevcardid.">";
-                                                echo "<input type='hidden' name='number' value=".$prevcard.">"; ?>
-                                                <input type="submit" style="cursor: pointer;" class="inline_button previousbutton" name="prevcard" value="PREVIOUS">
-                                            </form>
-                                            <?php
-                                        endif;
-                                    endif; ?>
-                                </td>
-                                <td colspan="3" class="nextbutton">
-                                    <?php if (($row['number'] < $settotal) OR (empty($settotal))): 
-                                        // Find the next number card's ID
-                                        $nextcard = $cardnumber + 1;
-                                        if($nextcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number = $nextcard ORDER BY manacost DESC")):
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                                            $nextcardid = $nextcardresult['id'];
-                                        else:
-                                            $nextcardid = "";
-                                            //trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                        endif;
-                                        if(!empty($nextcardid)): ?>
-                                            <form action="?" method="get">
-                                                <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                echo "<input type='hidden' name='id' value=".$nextcardid.">";
-                                                echo "<input type='hidden' name='number' value=".$nextcard.">"; ?>
-                                                <input type="submit" style="cursor: pointer;" class="inline_button nextbutton" name="nextcard" value="NEXT">
-                                            </form>
-                                        <?php endif;
-                                    endif; ?>
-                                </td>
-                            </tr>
-                            <?php 
-
+                            </tr> <?php
+                            if (!empty($prevcardid) AND !empty($nextcardid)):?>
+                                <tr>
+                                    <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
+                                        if ($row['number'] > 1):
+                                            if(!empty($prevcardid)): ?>
+                                                <form action="?" method="get" id="prev_card">
+                                                    <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
+                                                    echo "<input type='hidden' name='id' value=".$prevcardid.">";
+                                                    echo "<input type='hidden' name='number' value=".$prevcard.">"; ?>
+                                                    <label style="cursor: pointer;">
+                                                        <span
+                                                            onclick="document.getElementById('prev_card').submit();"
+                                                            title="Previous card in set"
+                                                            onmouseover=""
+                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                            class='material-symbols-outlined'>
+                                                            navigate_before
+                                                        </span>
+                                                    </label>
+                                                </form>
+                                                <?php
+                                            endif;
+                                        endif; ?>
+                                    </td>
+                                    <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
+                                        if (($row['number'] < $settotal) OR (empty($settotal))): 
+                                            if(!empty($nextcardid)): ?>
+                                                <form action="?" method="get" id="next_card"> <?php 
+                                                    echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
+                                                    echo "<input type='hidden' name='id' value=".$nextcardid.">";
+                                                    echo "<input type='hidden' name='number' value=".$nextcard.">"; ?>
+                                                    <label style="cursor: pointer;">
+                                                        <span
+                                                            onclick="document.getElementById('next_card').submit();"
+                                                            title="Next card in set"
+                                                            onmouseover=""
+                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                            class='material-symbols-outlined'>
+                                                            navigate_next
+                                                        </span>
+                                                    </label>
+                                                </form>
+                                            <?php endif;
+                                        endif; ?>
+                                    </td>
+                                </tr> <?php
+                            endif;
                             //If if's an admin, show controls to change/refresh the image(s) for the card.
                             if ($admin == 1):
                                 // Form to change the image
@@ -869,21 +887,43 @@ require('includes/menu.php'); //mobile menu
                                                     <td class='imgreplace'>
                                                         <label class='importlabel' style="cursor: pointer;" id='imgpick'>
                                                             <input class='importlabel' id='importfile' type='file' name='filename'>
-                                                            <span>IMAGE</span>
+                                                            <span
+                                                                title="New image"
+                                                                onmouseover=""
+                                                                style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                                class='material-symbols-outlined'>
+                                                                image
+                                                            </span>
                                                         </label>
                                                     </td>
                                                     <td class="imgreplace">
-                                                        <button class='importlabel' style="cursor: pointer;" id='importsubmit' type='submit' name='import' value='REPLACE' disabled>REPLACE</button>
+                                                        <button class='importlabel' style="cursor: pointer;" id='importsubmit' type='submit' name='import' value='REPLACE' disabled>
+                                                            <span
+                                                                title="Replace image"
+                                                                onmouseover=""
+                                                                style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                                class='material-symbols-outlined'>
+                                                                done
+                                                            </span>
+                                                        </button>
                                                     </td>
                                                     <td class="imgreplace">
-                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>REFRESH</button>
+                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>
+                                                            <span
+                                                                title="Refresh image"
+                                                                onmouseover=""
+                                                                style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                                class='material-symbols-outlined'>
+                                                                refresh
+                                                            </span>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             </table>
                                         </form>
                                     </td>
-                                </tr>    
-                                <?php
+                                </tr> <?php
+                            //else just show control to refresh the image(s) for the card
                             else: ?>
                                 <tr>
                                     <td colspan='4'>
@@ -898,7 +938,7 @@ require('includes/menu.php'); //mobile menu
                                                             <span
                                                                 title="Refresh image"
                                                                 onmouseover=""
-                                                                style="cursor: pointer;"
+                                                                style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
                                                                 class='material-symbols-outlined'>
                                                                 refresh
                                                             </span>
