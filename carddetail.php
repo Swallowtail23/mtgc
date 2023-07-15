@@ -129,10 +129,11 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 </script>
 <script type="text/javascript"> 
     function CloseMe( obj )
-        {
-            obj.style.display = 'none';
-        }
-</script>  
+    {
+        obj.style.display = 'none';
+        window.location.href="carddetail.php?id=<?php echo $cardid;?>";
+    }
+</script> 
 <!-- Following script is to ensure that card numbers entered are valid-->
 <script type="text/javascript">
     function isInteger(x) {
@@ -666,6 +667,8 @@ require('includes/menu.php'); //mobile menu
             if (isset($refreshimage) AND $refreshimage === 'REFRESH'):
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image refresh called for $cardid by $useremail",$logfile);
                 refresh_image($cardid);
+                echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
+                exit;
             endif;
             $setcode = htmlentities($setcode,ENT_QUOTES,"UTF-8");
             $setname = htmlentities($setname,ENT_QUOTES,"UTF-8");
