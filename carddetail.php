@@ -85,6 +85,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <meta name="viewport" content="initial-scale=1">
     <title>MtG collection card details</title>
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,300,0,0" />
 <?php include('includes/googlefonts.php');?>
 <script src="/js/jquery.js"></script>
 <script type="text/javascript">
@@ -662,7 +663,7 @@ require('includes/menu.php'); //mobile menu
                     endif;
                 endif;
             endif;
-            if (isset($refreshimage) AND $refreshimage === 'REFRESH' AND $admin == 1):
+            if (isset($refreshimage) AND $refreshimage === 'REFRESH'):
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image refresh called for $cardid by $useremail",$logfile);
                 refresh_image($cardid);
             endif;
@@ -876,6 +877,32 @@ require('includes/menu.php'); //mobile menu
                                                     </td>
                                                     <td class="imgreplace">
                                                         <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>REFRESH</button>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </form>
+                                    </td>
+                                </tr>    
+                                <?php
+                            else: ?>
+                                <tr>
+                                    <td colspan='4'>
+                                        <form id="imgreplace" action = "?" method = "GET" enctype = "multipart/form-data">
+                                            <input type='hidden' name='setabbrv' value="<?php echo $row['cs_setcode']; ?>">
+                                            <input type='hidden' name='id' value="<?php echo $row[0]; ?>">
+                                            <input type='hidden' name='number' value="<?php echo $row['number']; ?>">
+                                            <table>
+                                                <tr>
+                                                    <td class="imgreplace">
+                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>
+                                                            <span
+                                                                title="Refresh image"
+                                                                onmouseover=""
+                                                                style="cursor: pointer;"
+                                                                class='material-symbols-outlined'>
+                                                                refresh
+                                                            </span>
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             </table>
