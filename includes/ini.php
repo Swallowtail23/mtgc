@@ -142,6 +142,7 @@ $flip_button_cards = array('transform',
                            'battle');
 
 // Card layouts which need two detail sections on card detail page
+// Also needs to be defined in bulk_ini.php
 $two_card_detail_sections = array('transform',
                                   'modal_dfc',
                                   'reversible_card',
