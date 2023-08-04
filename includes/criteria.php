@@ -152,7 +152,7 @@ elseif ($adv == "yes" ) :
     // New
     $criteriaNew = "";
     if ($new === "yes"):
-        $criteriaNew = "DATEDIFF(date_added, CURDATE()) < 7 ";
+        $criteriaNew = "DATEDIFF(CURDATE(),date_added) < 7 ";
     endif;
     if (!empty($criteriaNew)) :
         $criteria .= "AND (".$criteriaNew.") ";
