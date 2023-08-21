@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       18/03/23
+/* Version:     5.0
+    Date:       21/08/23
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -15,6 +15,9 @@
  *              Moved to password-verify
  *  4.0
  *              Corrected logic around invalid user emails
+ * 
+ *  5.0
+ *              Added Cloudflare Turnstile protection
 */
 
 session_start();
@@ -64,12 +67,41 @@ $cssver = cssver();
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
 <?php include('includes/googlefonts.php'); ?>
 <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
 <div id="loginheader">    
     <h2 id='h2'> MtG collection</h2>
 <?php
+// Cloudflare Turnstile
+use andkab\Turnstile\Turnstile;
+if ($turnstile === 1 AND isset($_POST['cf-turnstile-response'])):
+    $turnstile = new Turnstile("$turnstile_secret_key");
+    $verifyResponse = $turnstile->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
+    if ($verifyResponse->isSuccess()):
+        // successfully verified captcha resolving
+        $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}",$logfile);
+    elseif ($verifyResponse->hasErrors()):
+        foreach ($verifyResponse->errorCodes as $errorCode):
+            $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}",$logfile);
+        endforeach;
+        session_destroy();
+        echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
+        exit();
+    else:
+        $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}",$logfile);
+        session_destroy();
+        echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
+        exit();
+    endif;
+endif;
+if ((isset($_GET['turnstilefail'])) AND ($_GET['turnstilefail']=="yes")): //Turnstile fail
+    echo '"Captcha" fail... Returning to login...';
+    session_destroy();
+    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
+    exit();
+endif;
 if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has been submitted  
     if (isset($_POST['password']) AND isset($_POST['email'])):  //Login form contains data
         $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon called for {$_POST['email']} from {$_SERVER['REMOTE_ADDR']}",$logfile);
@@ -177,9 +209,13 @@ else:
     echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 
     echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>"; 
     echo "<br><br>";
-    echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>"; 
+    echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
+    if ($turnstile === 1):
+        echo "<br>";
+        echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>";
+    endif;
     echo '<input type="submit" id="loginsubmit" value="LOGIN" />'; 
-    echo '</form><br>'; 
+    echo '</form><br>';
 ?>
 <div class='loginpagebutton'>
     <a href='reset.php'>RESET</a>

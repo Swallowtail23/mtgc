@@ -44,12 +44,28 @@ $ini_array = $ini->data;
 if($ini_array['general']['tier'] === 'dev'):
     $tier = 'dev';
     error_reporting(E_ALL);
+    // Dummy test keys:
+    $turnstile_site_key = '1x00000000000000000000AA';
+    // $turnstile_site_key = '2x00000000000000000000AB'; // Use to simulate failure
+    // $turnstile_site_key = '3x00000000000000000000FF'; // Use to simulate interactive request
+    $turnstile_secret_key='1x0000000000000000000000000000000AA';
 elseif($ini_array['general']['tier'] === 'prod'):
     $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE);
+    error_reporting(E_ALL & ~E_NOTICE);    
+    $turnstile_site_key = $ini_array['security']['Turnstile_site_key'];
+    $turnstile_secret_key = $ini_array['security']['Turnstile_secret_key'];
 else:
     $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE);
+    error_reporting(E_ALL & ~E_NOTICE); 
+    $turnstile_site_key = $ini_array['security']['Turnstile_site_key'];
+    $turnstile_secret_key = $ini_array['security']['Turnstile_secret_key'];
+endif;
+
+// Enable Turnstile
+if($ini_array['security']['Turnstile'] !== 'enabled'):
+    $turnstile = 0;
+else:
+    $turnstile = 1;
 endif;
 
 //Admin IP
