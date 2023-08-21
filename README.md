@@ -19,7 +19,20 @@ Install under web server as applicable
 #### JsonMachine ####
 Used for bulk script parsing
 - needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php
-- run composer install from mtg directory on server
+- run composer require from mtg directory on server
+
+#### Cloudflare Turnstile ####
+Used on login page to provide "captcha" style validation before login
+Needs to be setup on Cloudflare account to obtain valid keys
+Uses https://packagist.org/packages/andkab/php-turnstile
+If tier is "dev", dummy keys are used
+
+To setup Turnstile
+- in Ini file (see section below on Ini file):
+    - enable/disable (anything other than Turnstile = "enabled" will disable)
+    - if enabled, you must set keys
+- "php-turnstile" needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php
+- run "composer require andkab/php-turnstile" from mtg directory on server
 
 #### JQuery and IAS ####
 Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
@@ -57,8 +70,12 @@ It must include:
     AdminEmail = "simon@simonandkate.net"
     AdminIP = ""
     Badloginlimit = x
+    Turnstile = "enabled"
+    Turnstile_site_key = "xxxxxx"
+    Turnstile_secret_key = "xxxxxx"
 
 Check all variables and remove all comments. Lines need to be fully left-aligned.
+If Turnstile is enabled, valid keys must be included
 
 NOTE: 
 If AdminIP is empty, then an admin user can access admin pages from any IP address.
