@@ -44,11 +44,21 @@ $ini_array = $ini->data;
 if($ini_array['general']['tier'] === 'dev'):
     $tier = 'dev';
     error_reporting(E_ALL);
-    // Dummy test keys:
-    $turnstile_site_key = '1x00000000000000000000AA';
-    // $turnstile_site_key = '2x00000000000000000000AB'; // Use to simulate failure
-    // $turnstile_site_key = '3x00000000000000000000FF'; // Use to simulate interactive request
-    $turnstile_secret_key='1x0000000000000000000000000000000AA';
+    // Dummy Turnstile test keys:
+    
+    // Client side:
+
+    // $turnstile_site_key = '1x00000000000000000000AA';  // Always pass visible
+       $turnstile_site_key = '1x00000000000000000000BB';  // Always pass invisible
+    // $turnstile_site_key = '2x00000000000000000000AB';  // Always block visible
+    // $turnstile_site_key = '2x00000000000000000000BB';  // Always block invisible
+    // $turnstile_site_key = '3x00000000000000000000FF';  // Use to simulate interactive request
+
+    // Server side:
+       
+       $turnstile_secret_key='1x0000000000000000000000000000000AA'; // Always pass
+    // $turnstile_secret_key='2x0000000000000000000000000000000AA'; // Always fail
+    // $turnstile_secret_key='3x0000000000000000000000000000000AA'; // Generates token spent error
 elseif($ini_array['general']['tier'] === 'prod'):
     $tier = 'prod';
     error_reporting(E_ALL & ~E_NOTICE);    
