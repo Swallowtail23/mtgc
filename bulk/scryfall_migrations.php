@@ -23,6 +23,8 @@ $file_folder = $ImgLocation.'json/';
 
 // Row counts
 $total_count = 0;
+$need_action = 0;
+$action_text = '';
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
@@ -130,7 +132,6 @@ endif;
 
 foreach($result_files as $data):
     $decodedjson = Items::fromFile($data, ['decoder' => new ExtJsonDecoder(true)]);
-    $need_action = 0;
     foreach($decodedjson AS $key => $value):
         if($key == 'data'):
             foreach($value as $key2 => $value2):
@@ -191,6 +192,8 @@ foreach($result_files as $data):
                 if ($stmt->num_rows > 0):
                     $db_match = 1;
                     $need_action = $need_action + 1;
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, $need_action to be actioned",$logfile);
+                    $action_text = $action_text."$old_scryfall_id\n";
                 else:
                     $db_match = 0;
                 endif;
@@ -233,9 +236,8 @@ foreach($result_files as $data):
     endforeach;
 endforeach;
 
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk migrations completed",$logfile);
+$obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk migrations completed, $need_action actions needed",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
 $subject = "MTG migrations update completed"; 
-$message = "Total: $total_count \nNeed action: $need_action";
+$message = "Total: $total_count \nNeed action: $need_action \n$action_text";
 mail($adminemail, $subject, $message, $from); 
