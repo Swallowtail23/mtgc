@@ -1014,6 +1014,7 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             if(validateTrueDecimal($row['cmc']) === false):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round cmc {$row['cmc']}",$logfile);
                                 $row['cmc'] = round($row['cmc']);
                             endif;
                             if(!in_array($row['layout'],$token_layouts)):
@@ -1030,6 +1031,7 @@ require('includes/menu.php'); //mobile menu
                             echo "<br>";
                             if($row['layout'] === 'reversible_card'):
                                 if(validateTrueDecimal($row['f1_cmc']) === false):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f1_cmc {$row['f1_cmc']}",$logfile);
                                     $row['f1_cmc'] = round($row['f1_cmc']);
                                 endif;
                                 echo "<b>CMC: </b>".$row['f1_cmc'];
@@ -1848,11 +1850,12 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             if(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === false):
-                                $row['cmc'] = round($row['cmc']);
-                                echo "<b>CMC: </b>".$row['cmc'];
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f2_cmc {$row['f2_cmc']}",$logfile);
+                                $row['f2_cmc'] = round($row['f2_cmc']);
+                                echo "<b>CMC: </b>".$row['f2_cmc'];
                                 echo "<br>";
                             elseif(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === true):
-                                echo "<b>CMC: </b>".$row['cmc'];
+                                echo "<b>CMC: </b>".$row['f2_cmc'];
                                 echo "<br>";
                             endif;
                             $flipmanacost = symbolreplace($row['f2_manacost']);
