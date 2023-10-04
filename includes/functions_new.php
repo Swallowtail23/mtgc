@@ -1440,7 +1440,11 @@ function downloadbulk($url, $dest)
   
 function validateTrueDecimal($v) 
 {	
+    global $logfile;
+    $result = floor($v);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking $v for true decimal, result is $result",$logfile);
     return(floor($v) != $v);
+    
 }
 
 function refresh_image($cardid)
