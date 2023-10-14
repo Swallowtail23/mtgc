@@ -1103,7 +1103,7 @@ function scryfall($cardid,$action = '')
     $cardid = $db->escape($cardid);
     $time = time();
     //Set the URL
-    $url = $baseurl."cards/".$cardid;
+    $url = $baseurl."cards/".$cardid."?".$time;
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $cardid is $url",$logfile);
         
