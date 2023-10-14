@@ -632,7 +632,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     <tr class='resultsrow'>
                                         <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
                                             <?php
-                                            $manac = symbolreplace($row['manacost']);
+                                            if(isset($row['manacost']) AND !empty($row['manacost'])):
+                                                $manac = symbolreplace($row['manacost']);
+                                            else:
+                                                $manac = NULL;
+                                            endif;
                                             ?>
                                         <td class="valuerarity"> <?php echo ucfirst($row['rarity']); ?> </td>
                                         <td class="valueset"> <?php echo $row['set_name']; ?> </td>
@@ -646,8 +650,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                         </td>
                                         <td class="valueabilities"> 
                                             <?php
-                                            $ability = symbolreplace($row['ability']);
-                                            echo $ability;
+                                            if(isset($row['ability']) AND !empty($row['ability'])):
+                                                $ability = symbolreplace($row['ability']);
+                                                echo $ability;
+                                            endif;
                                             ?> 
                                         </td>
                                     </tr>
