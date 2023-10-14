@@ -3,7 +3,7 @@
     Date:       08/07/23
     Name:       valueupdate.php
     Purpose:    PHP script to update topvalue across collection
-    Notes:      {none}
+    Notes:      Currently called after import function is run
         
     1.0
                 Initial version

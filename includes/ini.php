@@ -153,7 +153,7 @@ try {
 }
 
 /** How old must card data be to trigger automatic refresh, in hours **/
-$max_data_age_in_hours = 2; // Set age in hours here
+$max_data_age_in_hours = 0.25; // Set age in hours here
 
 $seconds_in_hour = 3600;
 $max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;

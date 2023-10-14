@@ -515,8 +515,25 @@ require('includes/menu.php'); //mobile menu
             else:
                 $meld = '';
             endif;
+            if(isset($row['price'])):
+                $price_log = $row['price'];
+            else:
+                $price_log = NULL;
+            endif;
+            if(isset($row['price_foil'])):
+                $price_foil_log = $row['price_foil'];
+            else:
+                $price_foil_log = NULL;
+            endif;
+            if(isset($row['price_etched'])):
+                $price_etched_log = $row['price_etched'];
+            else:
+                $price_etched_log = NULL;
+            endif;
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
             //Populate JSON data
             $scryfallresult = scryfall($id);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall run and returned action {$scryfallresult["action"]}",$logfile);
             $tcg_buy_uri = $scryfallresult["tcg_uri"];
             // $tcg_buy_uri = scryfall($id);
             if(isset($row['layout']) AND $row['layout'] === "normal"):
@@ -524,23 +541,7 @@ require('includes/menu.php'); //mobile menu
             else:
                 $scryfallimg = null;
             endif;
-            if(isset($row['price'])):
-                $price_log = $row['price'];
-            else:
-                $price_log = 'none';
-            endif;
-            if(isset($row['price_foil'])):
-                $price_foil_log = $row['price_foil'];
-            else:
-                $price_foil_log = 'none';
-            endif;
-            if(isset($row['price_etched'])):
-                $price_etched_log = $row['price_etched'];
-            else:
-                $price_etched_log = 'none';
-            endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current price from Scryfall is: {$scryfallresult["price"]}/{$scryfallresult["price_foil"]}/{$scryfallresult["price_etched"]}",$logfile);
+
             if($scryfallimg !== null):
                 $scryfallimg = $db->escape($scryfallimg,'str');
             endif;
@@ -1697,7 +1698,7 @@ require('includes/menu.php'); //mobile menu
                                         foreach ($grpuser as $decksgrprow):
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
-                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
                                             $ingrpdecks = deckcardcheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):
