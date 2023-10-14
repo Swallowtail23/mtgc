@@ -1087,7 +1087,7 @@ function get_full_url()
     return $myUrl;
 }
 
-function scryfall($cardid)
+function scryfall($cardid,$action = '')
 // Fetch TCG buy URI and price from scryfall.com JSON data
 {
     //Set up the function
@@ -1134,6 +1134,11 @@ function scryfall($cardid)
             $scryaction = 'update';
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale (older than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
+        elseif ($action == "update"):
+            //Update forced
+            $scryaction = 'update';
+            $obj = new Message;
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data update requested for $cardid, running '$scryaction'",$logfile);
         else:
             //data is there and is current:
             $scryaction = 'read';
@@ -1165,88 +1170,122 @@ function scryfall($cardid)
         else:
             $tcg_buy_uri = null;
         endif;
-        if(isset($scryfall_result["prices"]["usd"])):
-            $price = $scryfall_result["prices"]["usd"];
-        else:
-            $price = null;
-        endif;
-        if(isset($scryfall_result["prices"]["usd_foil"])):
-            $price_foil = $scryfall_result["prices"]["usd_foil"];
-        else:
-            $price_foil = null;
-        endif;
-        if(isset($scryfall_result["prices"]["usd_etched"])):
-            $price_etched = $scryfall_result["prices"]["usd_etched"];
-        else:
-            $price_etched = null;
-        endif;
-        if($price_foil === null AND $price === null AND $price_etched === null):
-            $price_sort = null;
-        elseif($price_foil === null AND $price_etched === null):
-            $price_sort = $price;
-        elseif($price === null AND $price_etched === null):
-            $price_sort = $price_foil;
-        elseif($price_foil === null AND $price === null):
-            $price_sort = $price_etched;
-        elseif($price === null):
-            $price_sort = min($price_etched,$price_foil);
-        elseif($price_foil === null):
-            $price_sort = min($price_etched,$price);
-        elseif($price_etched === null):
-            $price_sort = min($price,$price_foil);
-        else:
-            $price_sort = min($price,$price_foil,$price_etched);
-        endif;
-        
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Scryfall data: price: $price, price foil: $price_foil, price etched: $price_etched, therefore $price_sort is used for sorting price",$logfile);
-        $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri=? WHERE id=?';
-        $stmt = $db->prepare($update_tcg_uri);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_tcg_uri",$logfile);
-        $stmt->bind_param('ss', $tcg_buy_uri,$cardid);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $exec = $stmt->execute();
-        if ($exec === false):
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri failed ".$db->error, E_USER_ERROR,$logfile);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
-        endif;
+        if(isset($scryfall_result["prices"])):
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price section included",$logfile);
+            if(isset($scryfall_result["prices"]["usd"])):
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd set: {$scryfall_result["prices"]["usd"]}",$logfile);
+                if($scryfall_result["prices"]["usd"] == ''):
+                    $price = 0.00;
+                elseif($scryfall_result["prices"]["usd"] == 'null'):
+                    $price = NULL;
+                else:
+                    $price = $scryfall_result["prices"]["usd"];
+                endif;
+            else:
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to null",$logfile);
+                $price = NULL;
+            endif;
+            if(isset($scryfall_result["prices"]["usd_foil"])):
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}",$logfile);
+                if($scryfall_result["prices"]["usd_foil"] == ''):
+                    $price_foil = 0.00;
+                elseif($scryfall_result["prices"]["usd_foil"] == 'null'):
+                    $price_foil = NULL;
+                else:
+                    $price_foil = $scryfall_result["prices"]["usd_foil"];
+                endif;
+            else:
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to null",$logfile);
+                $price_foil = NULL;
+            endif;
+            if(isset($scryfall_result["prices"]["usd_etched"])):
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched set: {$scryfall_result["prices"]["usd_etched"]}",$logfile);
+                if($scryfall_result["prices"]["usd_etched"] == ''):
+                    $price_etched = 0.00;
+                elseif($scryfall_result["prices"]["usd_etched"] == 'null'):
+                    $price_etched = NULL;
+                else:
+                    $price_etched = $scryfall_result["prices"]["usd_etched"];
+                endif;
+            else:
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched not set, setting to null",$logfile);
+                $price_etched = NULL;
+            endif;
 
-        $update_prices = 'UPDATE cards_scry SET price=?,price_foil=?,price_etched=?,price_sort=? WHERE id=?';
-        $stmt = $db->prepare($update_prices);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_prices",$logfile);
-        $stmt->bind_param('sssss', $price,$price_foil,$price_etched,$cardid,$price_sort);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $exec = $stmt->execute();
-        if ($exec === false):
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed: ".$db->error, E_USER_ERROR,$logfile);
+            if(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
+                $price_sort = 0.00;
+            elseif(($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
+                $price_sort = $price;
+            elseif(($price == 0.00 OR $price === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
+                $price_sort = $price_foil;
+            elseif(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL)):
+                $price_sort = $price_etched;
+            elseif($price == 0.00 OR $price === NULL):
+                $price_sort = min($price_etched,$price_foil);
+            elseif($price_foil == 0.00 OR $price_foil === NULL):
+                $price_sort = min($price_etched,$price);
+            elseif($price_etched == 0.00 OR $price_etched === NULL):
+                $price_sort = min($price,$price_foil);
+            else:
+                $price_sort = min($price,$price_foil,$price_etched);
+            endif;
+
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Scryfall data: price: $price, price foil: $price_foil, price etched: $price_etched, therefore $price_sort is used for sorting price",$logfile);
+            $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri=?,jsonupdatetime=? WHERE id=?';
+            $stmt = $db->prepare($update_tcg_uri);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_tcg_uri",$logfile);
+            $stmt->bind_param('sss', $tcg_buy_uri,$time,$cardid);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                $obj = new Message;
+                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri failed ".$db->error, E_USER_ERROR,$logfile);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
+            endif;
+
+            $update_prices = 'UPDATE cards_scry SET price=?,price_foil=?,price_etched=?,price_sort=? WHERE id=?';
+            $stmt = $db->prepare($update_prices);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_prices",$logfile);
+            $stmt->bind_param('sssss', $price,$price_foil,$price_etched,$cardid,$price_sort);
+            if ($stmt === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+            endif;
+            $exec = $stmt->execute();
+            if ($exec === false):
+                $obj = new Message;
+                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed: ".$db->error, E_USER_ERROR,$logfile);
+            else:
+                $obj = new Message;
+                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
+            endif;
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
+            $prices = 0;
+            $price = 0;
+            $price_foil = 0;
+            $price_etched = 0;
         endif;
-        $returnarray = array("tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
+        $returnarray = array("action" => "update", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
 
     // READ
     elseif($scryaction === 'read'):
         $tcg_buy_uri = $row['tcg_buy_uri'];
         $obj = new Message;
-        $price = null;
-        $price_foil = null;
-        $price_etched = null;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning {$row['tcg_buy_uri']}",$logfile);
-        $returnarray = array("tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
+        $price = NULL;
+        $price_foil = NULL;
+        $price_etched = NULL;
+        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning $tcg_buy_uri",$logfile);
+        $returnarray = array("action" => "read", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
     
     // GET
     elseif($scryaction === 'get'):
@@ -1273,59 +1312,59 @@ function scryfall($cardid)
                 if($scryfall_result["prices"]["usd"] == ''):
                     $price = 0.00;
                 elseif($scryfall_result["prices"]["usd"] == 'null'):
-                    $price = 0.00;
+                    $price = NULL;
                 else:
                     $price = $scryfall_result["prices"]["usd"];
                 endif;
             else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to 0.00",$logfile);
-                $price = 0.00;
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to null",$logfile);
+                $price = NULL;
             endif;
             if(isset($scryfall_result["prices"]["usd_foil"])):
                 $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}",$logfile);
                 if($scryfall_result["prices"]["usd_foil"] == ''):
                     $price_foil = 0.00;
                 elseif($scryfall_result["prices"]["usd_foil"] == 'null'):
-                    $price_foil = 0.00;
+                    $price_foil = NULL;
                 else:
                     $price_foil = $scryfall_result["prices"]["usd_foil"];
                 endif;
             else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to 0.00",$logfile);
-                $price_foil = 0.00;            
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to null",$logfile);
+                $price_foil = NULL;            
             endif;
             if(isset($scryfall_result["prices"]["usd_etched"])):
                 $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched set: {$scryfall_result["prices"]["usd_etched"]}",$logfile);
                 if($scryfall_result["prices"]["usd_etched"] == ''):
                     $price_etched = 0.00;
                 elseif($scryfall_result["prices"]["usd_etched"] == 'null'):
-                    $price_etched = 0.00;
+                    $price_etched = NULL;
                 else:
                     $price_etched = $scryfall_result["prices"]["usd_etched"];
                 endif;
             else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched not set, setting to 0.00",$logfile);
-                $price_etched = 0.00;            
+                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched not set, setting to null",$logfile);
+                $price_etched = NULL;            
             endif;
             
-            if($price_foil == 0.00 AND $price == 0.00 AND $price_etched == 0.00):
+            if(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
                 $price_sort = 0.00;
-            elseif($price_foil == 0.00 AND $price_etched == 0.00):
+            elseif(($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
                 $price_sort = $price;
-            elseif($price == 0.00 AND $price_etched == 0.00):
+            elseif(($price == 0.00 OR $price === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
                 $price_sort = $price_foil;
-            elseif($price_foil == 0.00 AND $price == 0.00):
+            elseif(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL)):
                 $price_sort = $price_etched;
-            elseif($price == 0.00):
+            elseif($price == 0.00 OR $price === NULL):
                 $price_sort = min($price_etched,$price_foil);
-            elseif($price_foil == 0.00):
+            elseif($price_foil == 0.00 OR $price_foil === NULL):
                 $price_sort = min($price_etched,$price);
-            elseif($price_etched == 0.00):
+            elseif($price_etched == 0.00 OR $price_etched === NULL):
                 $price_sort = min($price,$price_foil);
             else:
                 $price_sort = min($price,$price_foil,$price_etched);
             endif;
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, prices are: $price, $price_foil and $price_etched",$logfile);
+            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, prices are: $price, $price_foil and $price_etched; Sort price = $price_sort",$logfile);
         else:
             $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
             $prices = 0;
@@ -1369,7 +1408,7 @@ function scryfall($cardid)
                 $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated: Insert ID: ".$stmt->insert_id,$logfile);
             endif;
         endif;
-        $returnarray = array("tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
+        $returnarray = array("action" => "get", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
     endif;
     return $returnarray;
 }
