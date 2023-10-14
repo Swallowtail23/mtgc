@@ -1697,7 +1697,7 @@ require('includes/menu.php'); //mobile menu
                                         foreach ($grpuser as $decksgrprow):
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
-                                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
                                             $ingrpdecks = deckcardcheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):
