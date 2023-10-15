@@ -17,12 +17,19 @@ use JsonMachine\Items;
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
+$time = time();
 
 // Scryfall rulings cards URL
 $url = "https://api.scryfall.com/sets";
 
 // Bulk file store point
 $file_location = $ImgLocation.'json/sets.json';
+
+//Check image location
+if (!file_exists($ImgLocation."seticons")):
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory {$ImgLocation}/seticons",$logfile);
+    mkdir($ImgLocation."seticons");
+endif;
 
 // Set counts
 $total_count = 0;
@@ -47,8 +54,7 @@ else:
     $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: No file at ($file_location), downloading: $url",$logfile);
 endif;
 if($download > 0):
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: ($file_location), downloading: $url",$logfile);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: ($file_location), downloading: $url",$logfile);
     $setsreturn = downloadbulk($url,$file_location);
 endif;
 $obj = new Message;
@@ -113,16 +119,14 @@ foreach($data AS $key => $value):
                 $total_count = $total_count + 1;
             endif;
             $stmt->close();
-            if (!file_exists($ImgLocation."seticons")):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory {$ImgLocation}/seticons",$logfile);
-                mkdir($ImgLocation."seticons");
-            endif;
-            $seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set icon to be at $seticon",$logfile);
+            //$seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
+            $seticon = $ImgLocation."seticons/".$code.".svg";
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set icon for '$code' to be $seticon from $icon_svg_uri?$time",$logfile);
             if(!file_exists($seticon)):
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Icon not at $seticon",$logfile);
-                downloadbulk($icon_svg_uri,$seticon);
+                downloadbulk($icon_svg_uri."?".$time,$seticon);
             endif;
+            $seticon = $icon_svg_uri = '';
         endforeach;
     endif;
 endforeach;
