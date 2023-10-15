@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.0
-    Date:       06/07/23
+/* Version:     6.0
+    Date:       15/10/23
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -16,6 +16,8 @@
  *              Add handling for zero-byte download
  *  5.0
  *              Added handling for etched cards
+ *  6.0
+ *              Retrieve and store promo type info
 */
 
 require ('bulk_ini.php');
@@ -127,7 +129,7 @@ foreach($data AS $key => $value):
     $id_p5 = $component_p5 = $name_p5 = $type_line_p5 = $uri_p5 = null;
     $id_p6 = $component_p6 = $name_p6 = $type_line_p6 = $uri_p6 = null;
     $id_p7 = $component_p7 = $name_p7 = $type_line_p7 = $uri_p7 = null;
-    $colors = $game_types = $color_identity = $keywords = $produced_mana = null;
+    $colors = $game_types = $promo_types = $color_identity = $keywords = $produced_mana = null;
     $maxpower = $minpower = $maxtoughness = $mintoughness = null;
     $maxloyalty = $minloyalty = null;
     $skip = 1; //skip by default
@@ -279,6 +281,9 @@ foreach($data AS $key => $value):
         if(isset($value["games"])):
             $game_types = json_encode($value["games"]);
         endif;
+        if(isset($value["promo_types"])):
+            $promo_types = json_encode($value["promo_types"]);
+        endif;
         if(isset($value["finishes"])):
             $finishes = json_encode($value["finishes"]);
         endif; 
@@ -361,7 +366,7 @@ foreach($data AS $key => $value):
                                 keywords, generatedmana, legalitystandard, legalitypioneer, 
                                 legalitymodern, legalitylegacy, legalitypauper, legalityvintage, 
                                 legalitycommander, legalityalchemy, legalityhistoric, reserved, foil, nonfoil, oversized, promo, 
-                                set_id, game_types, finishes, setcode, set_name, number,
+                                set_id, game_types, finishes, promo_types, setcode, set_name, number,
                                 number_import, rarity, flavor, backid, artist, price, price_foil, price_etched, 
                                 gatherer_uri, updatetime,
                                 f1_name, f1_manacost, f1_power, f1_toughness, f1_loyalty, f1_type, f1_ability,
@@ -380,7 +385,7 @@ foreach($data AS $key => $value):
                                 maxpower, minpower, maxtoughness, mintoughness, maxloyalty, minloyalty, price_sort, date_added
                                 )
                             VALUES 
-                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                                (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                             ON DUPLICATE KEY UPDATE
                                 id = VALUES(id), oracle_id = VALUES(oracle_id), tcgplayer_id = VALUES(tcgplayer_id), 
                                 multiverse = VALUES(multiverse), multiverse2 = VALUES(multiverse2), name = VALUES(name), 
@@ -397,7 +402,8 @@ foreach($data AS $key => $value):
                                 legalityalchemy = VALUES(legalityalchemy), legalityhistoric = VALUES(legalityhistoric), 
                                 reserved = VALUES(reserved), foil = VALUES(foil), nonfoil = VALUES(nonfoil), 
                                 oversized = VALUES(oversized), promo = VALUES(promo), set_id = VALUES(set_id), 
-                                game_types = VALUES(game_types), finishes = VALUES(finishes), setcode = VALUES(setcode), set_name = VALUES(set_name), number = VALUES(number),
+                                game_types = VALUES(game_types), finishes = VALUES(finishes), promo_types = VALUES(promo_types), setcode = VALUES(setcode), 
+                                set_name = VALUES(set_name), number = VALUES(number),
                                 number_import = VALUES(number_import), rarity = VALUES(rarity), flavor = VALUES(flavor), backid = VALUES(backid), 
                                 artist = VALUES(artist), price = VALUES(price), price_foil = VALUES(price_foil), price_etched = VALUES(price_etched), 
                                 gatherer_uri = VALUES(gatherer_uri), updatetime = VALUES(updatetime), 
@@ -429,7 +435,7 @@ foreach($data AS $key => $value):
         if ($stmt === false):
             trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
         endif;
-        $bind = $stmt->bind_param("ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
+        $bind = $stmt->bind_param("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss", 
                 $id, 
                 $value["oracle_id"],
                 $value["tcgplayer_id"],
@@ -472,6 +478,7 @@ foreach($data AS $key => $value):
                 $value["set_id"],
                 $game_types,
                 $finishes,
+                $promo_types,
                 $value["set"],
                 $value["set_name"],
                 $number_int,

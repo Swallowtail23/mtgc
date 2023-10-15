@@ -140,7 +140,38 @@ endif; ?>
             $obj = new Message;
             $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
         endif;
-    //4. Groups in / out change
+    //4. Collection view
+        if (isset($_POST['collection_view'])):
+            $coll_view = $db->escape($_POST['collection_view']);
+            if ($coll_view == 'TURN OFF'):
+                $obj = new Message;
+                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view",$logfile);
+                $updatedata = array (
+                    'collection_view' => '0'
+                );
+                $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
+                if($cviewquery === false):
+                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+                else:    
+                    $obj = new Message;
+                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
+                endif;
+            elseif ($coll_view == 'TURN ON'):
+                $obj = new Message;
+                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn on collection view",$logfile);
+                $updatedata = array (
+                    'collection_view' => 1
+                );
+                $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
+                if($cviewquery === false):
+                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+                else:    
+                    $obj = new Message;
+                    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Call to turn off collection view run for $useremail",$logfile);
+                endif;
+            endif;
+        endif;
+    //5. Groups in / out change
         if (isset($_POST['group'])):
             $group = $db->escape($_POST['group']);
             if ($group == 'OPT OUT'):
@@ -172,8 +203,8 @@ endif; ?>
             endif;
         endif;
         
-        //5. No changes called in POST - run user query
-        if($userdatarow=$db->select_one('username, password, email, reg_date, status, admin, groupid, grpinout, groupname','users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',"WHERE usernumber=$user")):
+        //6. No changes called in POST - run user query
+        if($userdatarow=$db->select_one('username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view','users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',"WHERE usernumber=$user")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user with group details succeeded",$logfile);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -267,6 +298,21 @@ endif; ?>
         <?php 
         if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
             <div id='importexport'>
+                <h2 id='h2'>Collection View</h2>
+                With Collection View on, cards you do not own will show as black and white in the grid view.<br> 
+                <b>Collection View active? </b> <?php 
+                if ($userdatarow['collection_view'] == 1):
+                    echo "Yes<br>"; ?>
+                    <form action='/profile.php' method='POST'>
+                        <input class='inline_button stdwidthbutton' id='cvoff' type='submit' value='TURN OFF' name='collection_view' />
+                    </form> <?php
+                else:
+                    echo "No"; ?>
+                    <form action='/profile.php' method='POST'>
+                        <input class='inline_button stdwidthbutton' id='cvoff' type='submit' value='TURN ON' name='collection_view' />
+                    </form> <?php
+                endif;
+                ?> 
                 <h2 id='h2'>Groups</h2>
                 Groups functionality allows you to see cards owned by others in your 'group' and for them to see your cards.<br> 
                 If you Opt Out of Groups then your collection is private. <br>
