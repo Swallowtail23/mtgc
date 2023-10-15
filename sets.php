@@ -130,7 +130,9 @@ require('includes/menu.php');
                     ?>
                     <tr>
                         <td>
-                            <?php echo "<img class='seticon' src='cardimg/seticons/{$row['parent_set_code']}.svg' alt='$setcodeupper'>"; ?>
+                            <?php 
+                            $time = time();
+                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; ?>
                         </td>
                         <td>
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
