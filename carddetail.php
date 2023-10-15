@@ -1,6 +1,6 @@
 <?php 
-/* Version:     15.0
-    Date:       05/07/23
+/* Version:     16.0
+    Date:       15/10/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -44,6 +44,9 @@
  *              Add check for decks with card
  *              Move to auto-update for card quantity changes
  *              Error messaging update to modern design
+ * 16.0
+ *              Show thick card promo type for Commander proxy cards
+ *              Review and improve price handling routine to ensure latest price more reliably shown
 */
 
 session_start();
@@ -339,6 +342,7 @@ require('includes/menu.php'); //mobile menu
                     set_id as cs_set_id,
                     game_types,
                     finishes,
+                    promo_types,
                     type,
                     power,
                     toughness,
@@ -494,6 +498,12 @@ require('includes/menu.php'); //mobile menu
             else:
                 $not_paper = false;
             endif;
+            if (strpos($row['promo_types'], 'thick') == true):
+                $thick = true;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Thick card (e.g. commander proxy)",$logfile);
+            else:
+                $thick = false;
+            endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
                  OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) 
@@ -533,7 +543,7 @@ require('includes/menu.php'); //mobile menu
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
             //Populate JSON data
             $scryfallresult = scryfall($id);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall run and returned action {$scryfallresult["action"]}",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall run, returned action '{$scryfallresult["action"]}'",$logfile);
             $tcg_buy_uri = $scryfallresult["tcg_uri"];
             // $tcg_buy_uri = scryfall($id);
             if(isset($row['layout']) AND $row['layout'] === "normal"):
@@ -994,7 +1004,9 @@ require('includes/menu.php'); //mobile menu
                             $gametypestring = 'None';
                         endif;
                         echo "<b>Game types: </b>$gametypestring<br>";
-                                                
+                        if($thick == true):
+                            echo "<b>Promo type: </b>Commander thick proxy card<br>";
+                        endif;
                         if($row["layout"] !== 'reversible_card' AND $row["layout"] !== 'double_faced_token'): // no details at card level for reversible cards
                             if(isset($row['type']) AND $row['type'] != ''):
                                 echo "<b>Type: </b>".$row['type'];
@@ -1386,7 +1398,8 @@ require('includes/menu.php'); //mobile menu
                                 $tcgdirectlink = null;
                             endif;?>
                             <table id='tcgplayer' width="100%">
-                      <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
+                      <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
                                 $normalprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1397,6 +1410,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database normal price",$logfile);
                                 $normalprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1408,9 +1422,11 @@ require('includes/menu.php'); //mobile menu
                                 </tr>
                       <?php 
                             else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No normal price",$logfile);
                                 $normalprice = FALSE;
                             endif;      
-                            if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
+                            if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00 AND $scryfallresult["price_foil"] !== NULL AND str_contains($cardtypes,'foil'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall foil price",$logfile);
                                 $foilprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1421,6 +1437,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database foil price",$logfile);
                                 $foilprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1431,9 +1448,11 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No foil price",$logfile);
                                 $foilprice = FALSE;
                             endif;
-                            if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
+                            if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00 AND $scryfallresult["price_etched"] !== NULL AND str_contains($cardtypes,'etch'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall etched price",$logfile);
                                 $etchprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1444,6 +1463,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database etched price",$logfile);
                                 $etchprice = TRUE; ?>
                                 <tr>
                                     <td class="buycellleft">
@@ -1454,6 +1474,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No etched price",$logfile);
                                 $etchprice = FALSE;
                             endif; 
                             if ($normalprice == FALSE AND $foilprice == FALSE AND $etchprice == FALSE): ?>
@@ -1698,7 +1719,7 @@ require('includes/menu.php'); //mobile menu
                                         foreach ($grpuser as $decksgrprow):
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
-                                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
                                             $ingrpdecks = deckcardcheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):

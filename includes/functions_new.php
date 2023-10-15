@@ -1,6 +1,6 @@
 <?php
-/* Version:     16.0
-    Date:       06/07/23
+/* Version:     17.0
+    Date:       15/10/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -50,6 +50,8 @@
  *              Functions to delete a deck and rename a deck
  * 16.0
  *              Added handling for etched cards
+ * 17.0
+ *              Review and improve Scryfall price routine
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -163,6 +165,15 @@ function mtcemode($user)
     else:
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif; 
+}
+
+function collection_view($user)
+{
+    global $db;
+    if($row = $db->select_one('collection_view', 'users',"WHERE usernumber='$user'")):
+        $collection_view = $row['collection_view'];
+    endif;
+    return $collection_view;
 }
 
 function username($user)

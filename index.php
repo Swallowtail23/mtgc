@@ -518,6 +518,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myetch = $row['etched'];
                             endif;
+                            if(($myqty + $myfoil + $myetch) > 0):
+                                $in_collection = ' in_collection';
+                            else:
+                                $in_collection = '';
+                            endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
                                 if(stristr($row['name'],' // ') !== false):
@@ -766,6 +771,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myetch = $row['etched'];
                             endif;
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is $collection_view",$logfile);
+                            if(($myqty + $myfoil + $myetch) == 0 AND $collection_view == 1):
+                                $in_collection = ' no_collection';
+                            else:
+                                $in_collection = '';
+                            endif;
                             ?>
                             <div class='gridbox item'>
                                 <?php
@@ -777,7 +788,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
-                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='cardimg' alt='$scryid' src='$imageurl'></a>";
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
                                 $cellid_one = $cellid.'_one';
                                 $cellid_two = $cellid.'_two';
