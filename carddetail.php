@@ -498,7 +498,7 @@ require('includes/menu.php'); //mobile menu
             else:
                 $not_paper = false;
             endif;
-            if (strpos($row['promo_types'], 'thick') == true):
+            if (isset($row['promo_types']) AND strpos($row['promo_types'], 'thick') == true):
                 $thick = true;
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Thick card (e.g. commander proxy)",$logfile);
             else:
