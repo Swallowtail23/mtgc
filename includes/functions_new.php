@@ -1267,7 +1267,7 @@ function scryfall($cardid,$action = '')
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
             endif;
             $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_prices",$logfile);
-            $stmt->bind_param('sssss', $price,$price_foil,$price_etched,$cardid,$price_sort);
+            $stmt->bind_param('sssss', $price,$price_foil,$price_etched,$price_sort,$cardid);
             if ($stmt === false):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
             endif;
