@@ -1,6 +1,6 @@
 <?php 
-/* Version:     7.0
-    Date:       06/07/23
+/* Version:     8.0
+    Date:       20/10/23
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -23,6 +23,8 @@
  *              Changed to password_verify / password_hash
  *  7.0
  *              Added handling for etched cards
+ *  8.0
+ *              Toggles for options (calling ajax updates)
 */
 
 session_start();
@@ -51,28 +53,30 @@ require('includes/menu.php');
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
 if($db->query($tablecheck) === FALSE):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
     $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"...copying collection template...: $query2",$logfile);
     if($db->query($query2) === TRUE):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
     endif;
-endif; ?>
+endif;
 
+//1. Get user details for current user
+if($row = $db->select_one('username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view','users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',"WHERE usernumber=$user")):
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
+else:
+    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+endif;  ?>
+    
 <div id='page'>
     <div class='staticpagecontent'>
         <?php 
         //Page PHP processing
-        //1. Get user details for current user
-        if($row = $db->select_one('password, username, usernumber, status, admin, collection_view','users',"WHERE email='$useremail'")):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
-        else:
-            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-        endif;
+
         //2. Has a password reset been called? Needs to be in DIV for error display
         if (isSet($_POST['changePass']) AND isSet($_POST['newPass']) AND isSet($_POST['newPass2']) AND isSet($_POST['curPass'])):
             if (!empty($_POST['curPass']) AND !empty($_POST['newPass']) AND !empty($_POST['newPass2'])):
@@ -140,45 +144,12 @@ endif; ?>
         $current_coll_view = $row['collection_view'];
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is '$current_coll_view'",$logfile);
 
-    //5. Groups in / out change
-        if (isset($_POST['group'])):
-            $group = $db->escape($_POST['group']);
-            if ($group == 'OPT OUT'):
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt out of groups",$logfile);
-                $updatedata = array (
-                    'grpinout' => '0'
-                );
-                $optinquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-                if($optinquery === false):
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                else:    
-                    $obj = new Message;
-                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Group opt-out run for $useremail",$logfile);
-                endif;
-            elseif ($group == 'OPT IN'):
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt in to groups",$logfile);
-                $updatedata = array (
-                    'grpinout' => 1
-                );
-                $optoutquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-                if($optoutquery === false):
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                else:    
-                    $obj = new Message;
-                    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Group opt-in run for $useremail",$logfile);
-                endif;
-            endif;
-        endif;
-        
-        //6. No changes called in POST - run user query
-        if($userdatarow=$db->select_one('username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view','users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',"WHERE usernumber=$user")):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user with group details succeeded",$logfile);
-        else:
-            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-        endif;
-        //6. Update pricing in case any new cards have been added to collection
+    //5. Groups
+        $current_group_status = $row['grpinout'];
+        $current_group = $row['groupid'];
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Groups are '$current_group_status', group id '$current_group'",$logfile);
+                
+    //6. Update pricing in case any new cards have been added to collection
         update_collection_values($mytable);
         
         //Get card total
@@ -214,9 +185,9 @@ endif; ?>
         //Page display content ?>
         <div id="userdetails">
             <h2 class='h2pad'>User details</h2>
-            <b>Email: </b><?php echo $userdatarow['email']; ?> <br>
-            <b>Account status: </b> <?php echo $userdatarow['status']; ?> <br>
-            <b>Registered date: </b> <?php echo $userdatarow['reg_date']; ?> <br>
+            <b>Email: </b><?php echo $row['email']; ?> <br>
+            <b>Account status: </b> <?php echo $row['status']; ?> <br>
+            <b>Registered date: </b> <?php echo $row['reg_date']; ?> <br>
         </div>
         <div id="mycollection">
             <h2 class='h2pad'>My Collection</h2>
@@ -277,7 +248,7 @@ endif; ?>
                             var cview = "TURN OFF";
                         }
                         $.ajax({  
-                            url:"cview_update.php",  
+                            url:"ajaxcview.php",  
                             method:"POST",  
                             data:{"collection_view":cview},
                             success:function(data){  
@@ -287,21 +258,45 @@ endif; ?>
                     });
                 });
                 </script>
+                <script>
+                $(document).ready(function(){
+                        $('#group_toggle').on('change',function(){
+                        var checkBox = document.getElementById("group_toggle");
+                        if (checkBox.checked == true){
+                            var group = "OPT IN";
+                            var display = "";
+                        } else {
+                            var group = "OPT OUT";
+                            var display = "none";
+                        }
+                        $.ajax({  
+                            url:"ajaxgroup.php",  
+                            method:"POST",  
+                            data:{"group":group},
+                            success:function(data){  
+                            //   $('#result').html(data);
+                            document.getElementById("grpname").style.display = display;
+                            }
+                        });    
+                    });
+                });
+                </script>
                 <h2 id='h2'>Options</h2>
                 <table>
                     <tr>
                         <td>
-                            <h4>Details</h4>
+                            <b>Option description</b>
                         </td>
-                        <td>
-                            <h4>On/off</h4>
+                        <td style="padding-left: 20px;">
+                            <b>On/off</b>
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            Display cards you do not own as black and white in the grid view
+                            Display cards you do not own as black and <br>
+                            white in the grid view
                         </td>
-                        <td> <?php 
+                        <td style="padding: 20px;"> <?php 
                             if($current_coll_view == 1): ?>
                                 <label class="switch"> 
                                     <input type="checkbox" id="cview_toggle" class="option_toggle" checked="true" value="on"/>
@@ -318,50 +313,33 @@ endif; ?>
                     </tr>
                     <tr>
                         <td>
-                            Groups functionality allows you to see cards owned by others in your 'group' and for<br>
-                            them to see your cards. If you Opt Out of Groups then your collection is private
+                            Groups functionality allows you to see cards<br> 
+                            owned by others in your 'group' and for<br>
+                            them to see your cards. If you Opt Out of<br>
+                            Groups then your collection is private
+                            <?php 
+                            if($current_group_status == 1):
+                                echo "<span id='grpname'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                            else:
+                                echo "<span id='grpname' style='display:none'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                            endif; ?>
                         </td>
-                        <td>
-                            <label class="switch">
-                                <input id="on" type="checkbox" <?php 
-                                                                if($userdatarow['grpinout'] == 1): 
-                                                                    echo "checked = 'true'";
-                                                                endif; ?>
-                                >
+                        <td style="padding: 20px;"> <?php 
+                            if($current_group_status == 1): ?>
+                                <label class="switch"> 
+                                    <input type="checkbox" id="group_toggle" class="option_toggle" checked="true" value="on"/>
                                 <div class="slider round"></div>
-                            </label>
-                            <p id="info"></p>
+                                </label> <?php
+                            else: ?>
+                                <label class="switch"> 
+                                    <input type="checkbox" id="group_toggle" class="option_toggle" value="off"/>
+                                <div class="slider round"></div>
+                                </label> <?php
+                            endif; ?>
+                            <!-- <div id="result"></div> -->
                         </td>
                     </tr>
-                    <?php
-                    if ($userdatarow['grpinout'] == 1): ?>
-                        <tr>
-                            <td>
-                                <?php echo "<b>Group:</b> ".$userdatarow['groupname']." (<a href='help.php'>Send me a request</a> to create a new group)"; ?>
-                            </td>
-                        </tr>
-                    <?php
-                    endif;
-                    ?>
                 </table>
-                <br>
-                <h2 id='h2'>Groups</h2>
-                Groups functionality allows you to see cards owned by others in your 'group' and for them to see your cards.<br> 
-                If you Opt Out of Groups then your collection is private. <br>
-                <b>Groups active? </b> <?php 
-                if ($userdatarow['grpinout'] == 1):
-                    echo "Yes<br>"; 
-                    echo "<b>Group:</b> ".$userdatarow['groupname']; ?>
-                    <form action='/profile.php' method='POST'>
-                        <input class='inline_button stdwidthbutton' id='optout' type='submit' value='OPT OUT' name='group' />
-                    </form> <?php
-                else:
-                    echo "No"; ?>
-                    <form action='/profile.php' method='POST'>
-                        <input class='inline_button stdwidthbutton' id='optout' type='submit' value='OPT IN' name='group' />
-                    </form> <?php
-                endif;
-                ?> 
             </div>
             <div id='importexport'>
                 <h2 id='h2'>Import / Export</h2>

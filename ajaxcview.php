@@ -1,8 +1,8 @@
 <?php 
 /* Version:     1.0
     Date:       19/10/23
-    Name:       cview_update.php
-    Purpose:    PHP script to run ajax collection view update
+    Name:       ajaxcview.php
+    Purpose:    PHP script to turn ajax collection view on/off
     Notes:      The page does not run standard secpagesetup as it breaks 
                 the ajax login catch.
     To do:      -
