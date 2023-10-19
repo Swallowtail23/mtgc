@@ -319,7 +319,7 @@ endif;  ?>
                             Groups functionality allows you to see cards<br> 
                             owned by others in your 'group' and for<br>
                             them to see your cards. If you Opt Out of<br>
-                            Groups then your collection is private
+                            Groups then your collection is private<br>
                             <?php 
                             if($current_group_status == 1):
                                 echo "<span id='grpname'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
