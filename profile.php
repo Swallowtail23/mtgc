@@ -103,7 +103,7 @@ endif;  ?>
                                 else:
                                     if ($pwdvalidate['password'] == $new_password):
                                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                                        echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed.</div>";
+                                        echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed, please log in again</div>";
                                         // Clear the force password flag and session variable
                                         $statusdata = array(
                                             'status' => 'active'
@@ -114,8 +114,11 @@ endif;  ?>
                                         else:
                                             $_SESSION['chgpwd'] = '';
                                         endif;
+                                        session_destroy();
+                                        echo "<meta http-equiv='refresh' content='4;url=login.php'>";
+                                        exit();
                                     else:
-                                        echo "<div class='alert-box error' id='pwdchange'><span>error: </span>Password change failed... not sure why!</div>";
+                                        echo "<div class='alert-box error' id='pwdchange'><span>error: </span>Password change failed... contact support</div>";
                                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                     endif;
                                 endif;
