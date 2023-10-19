@@ -68,7 +68,7 @@ endif; ?>
         <?php 
         //Page PHP processing
         //1. Get user details for current user
-        if($row = $db->select_one('password, username, usernumber, status, admin','users',"WHERE email='$useremail'")):
+        if($row = $db->select_one('password, username, usernumber, status, admin, collection_view','users',"WHERE email='$useremail'")):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -89,8 +89,7 @@ endif; ?>
                                     'password' => "$new_password"
                                 );
                                 $pwdchg = $db->update('users',$data,"WHERE email='$useremail'");
-                                $obj = new Message;
-                                $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                 if ($pwdchg === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 endif;
@@ -99,8 +98,7 @@ endif; ?>
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 else:
                                     if ($pwdvalidate['password'] == $new_password):
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                         echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed.</div>";
                                         // Clear the force password flag and session variable
                                         $statusdata = array(
@@ -114,8 +112,7 @@ endif; ?>
                                         endif;
                                     else:
                                         echo "<div class='alert-box error' id='pwdchange'><span>error: </span>Password change failed... not sure why!</div>";
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                     endif;
                                 endif;
                             else:
@@ -137,40 +134,12 @@ endif; ?>
     //3. User needs to change password (status = chgpwd). Needs to be in DIV for error display
         if ((isset($_SESSION["chgpwd"])) AND ($_SESSION["chgpwd"] == TRUE)):
             echo "<div class='alert-box notice' id='pwdchange'><span>notice: </span>You must set a new password.</div>";
-            $obj = new Message;
-            $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
         endif;
     //4. Collection view
-        if (isset($_POST['collection_view'])):
-            $coll_view = $db->escape($_POST['collection_view']);
-            if ($coll_view == 'TURN OFF'):
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view",$logfile);
-                $updatedata = array (
-                    'collection_view' => '0'
-                );
-                $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-                if($cviewquery === false):
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                else:    
-                    $obj = new Message;
-                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
-                endif;
-            elseif ($coll_view == 'TURN ON'):
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn on collection view",$logfile);
-                $updatedata = array (
-                    'collection_view' => 1
-                );
-                $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-                if($cviewquery === false):
-                    trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-                else:    
-                    $obj = new Message;
-                    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Call to turn off collection view run for $useremail",$logfile);
-                endif;
-            endif;
-        endif;
+        $current_coll_view = $row['collection_view'];
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is '$current_coll_view'",$logfile);
+
     //5. Groups in / out change
         if (isset($_POST['group'])):
             $group = $db->escape($_POST['group']);
@@ -297,22 +266,85 @@ endif; ?>
         </div>
         <?php 
         if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
-            <div id='importexport'>
-                <h2 id='h2'>Collection View</h2>
-                With Collection View on, cards you do not own will show as black and white in the grid view.<br> 
-                <b>Collection View active? </b> <?php 
-                if ($userdatarow['collection_view'] == 1):
-                    echo "Yes<br>"; ?>
-                    <form action='/profile.php' method='POST'>
-                        <input class='inline_button stdwidthbutton' id='cvoff' type='submit' value='TURN OFF' name='collection_view' />
-                    </form> <?php
-                else:
-                    echo "No"; ?>
-                    <form action='/profile.php' method='POST'>
-                        <input class='inline_button stdwidthbutton' id='cvoff' type='submit' value='TURN ON' name='collection_view' />
-                    </form> <?php
-                endif;
-                ?> 
+            <div id='profilebuttons'>
+                <script>
+                $(document).ready(function(){
+                        $('#cview_toggle').on('change',function(){
+                        var checkBox = document.getElementById("cview_toggle");
+                        if (checkBox.checked == true){
+                            var cview = "TURN ON";
+                        } else {
+                            var cview = "TURN OFF";
+                        }
+                        $.ajax({  
+                            url:"cview_update.php",  
+                            method:"POST",  
+                            data:{"collection_view":cview},
+                            // success:function(data){  
+                            //      $('#result').html(data);  
+                            // }
+                        });    
+                    });
+                });
+                </script>
+                <h2 id='h2'>Options</h2>
+                <table>
+                    <tr>
+                        <td>
+                            <h4>Details</h4>
+                        </td>
+                        <td>
+                            <h4>On/off</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Display cards you do not own as black and white in the grid view
+                        </td>
+                        <td> <?php 
+                            if($current_coll_view == 1): ?>
+                                <label class="switch"> 
+                                    <input type="checkbox" id="cview_toggle" class="option_toggle" checked="true" value="on"/>
+                                <div class="slider round"></div>
+                                </label> <?php
+                            else: ?>
+                                <label class="switch"> 
+                                    <input type="checkbox" id="cview_toggle" class="option_toggle" value="off"/>
+                                <div class="slider round"></div>
+                                </label> <?php
+                            endif; ?>
+                            <!-- <div id="result"></div> -->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Groups functionality allows you to see cards owned by others in your 'group' and for<br>
+                            them to see your cards. If you Opt Out of Groups then your collection is private
+                        </td>
+                        <td>
+                            <label class="switch">
+                                <input id="on" type="checkbox" <?php 
+                                                                if($userdatarow['grpinout'] == 1): 
+                                                                    echo "checked = 'true'";
+                                                                endif; ?>
+                                >
+                                <div class="slider round"></div>
+                            </label>
+                            <p id="info"></p>
+                        </td>
+                    </tr>
+                    <?php
+                    if ($userdatarow['grpinout'] == 1): ?>
+                        <tr>
+                            <td>
+                                <?php echo "<b>Group:</b> ".$userdatarow['groupname']." (<a href='help.php'>Send me a request</a> to create a new group)"; ?>
+                            </td>
+                        </tr>
+                    <?php
+                    endif;
+                    ?>
+                </table>
+                <br>
                 <h2 id='h2'>Groups</h2>
                 Groups functionality allows you to see cards owned by others in your 'group' and for them to see your cards.<br> 
                 If you Opt Out of Groups then your collection is private. <br>
@@ -330,6 +362,8 @@ endif; ?>
                     </form> <?php
                 endif;
                 ?> 
+            </div>
+            <div id='importexport'>
                 <h2 id='h2'>Import / Export</h2>
                 <b>Deleting your collection</b><br>
                 <ul>

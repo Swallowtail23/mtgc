@@ -307,6 +307,7 @@ elseif($commander == 'no'):
     $redirect = true;
 endif;
 
+// PRG
 if($redirect == true): ?>
     <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
     exit();
