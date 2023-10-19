@@ -280,9 +280,9 @@ endif; ?>
                             url:"cview_update.php",  
                             method:"POST",  
                             data:{"collection_view":cview},
-                            // success:function(data){  
-                            //      $('#result').html(data);  
-                            // }
+                            success:function(data){  
+                            //   $('#result').html(data);  
+                            }
                         });    
                     });
                 });
