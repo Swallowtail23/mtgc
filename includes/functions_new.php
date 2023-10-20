@@ -2116,25 +2116,6 @@ function card_legal_db_field($decktype)
     return $db_field;
 }
 
-function card_legal_deck($cardname,$db_field)
-{
-    global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up deck legality for card '$cardname' in db_field '$db_field'",$logfile);
-
-    $cardname = $db->escape($cardname);
-    $sql = "SELECT $db_field FROM cards_scry WHERE name = '$cardname' LIMIT 1";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
-    $sqlresult = $db->query($sql);
-    if($sqlresult === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    else:
-        $row = $sqlresult->fetch_array(MYSQLI_ASSOC);
-        $legal = $row["$db_field"];
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL result: $legal",$logfile);
-        return $legal;
-    endif;
-}
-
 function deck_legal_list($decknumber,$deck_type,$db_field)
 {
     global $db, $logfile;
