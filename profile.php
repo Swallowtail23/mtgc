@@ -310,9 +310,9 @@ endif;  ?>
                             <b>Group cards:</b> Shows you cards owned by others in your 'group', and them yours. If you Opt Out of Groups then your collection is private<br>
                             <?php 
                             if($current_group_status == 1):
-                                echo "<span id='grpname'><b>&nbsp;&nbsp;&nbsp;&nbsp;Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                                echo "<span id='grpname'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
                             else:
-                                echo "<span id='grpname' style='display:none'><b>&nbsp;&nbsp;&nbsp;&nbsp;Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                                echo "<span id='grpname' style='display:none'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
                             endif; ?>
                         </td>
                         <td class="options_right"> <?php 
