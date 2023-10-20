@@ -171,6 +171,7 @@ else:
 endif;
 
 // Check to see if the called deck belongs to the logged in user.
+$obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking deck $decknumber",$logfile);
 if(deckownercheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -1890,6 +1891,8 @@ endif;
     </div>
 </div>
 
-<?php require('includes/footer.php'); ?>        
+<?php 
+$obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Page complete",$logfile);
+require('includes/footer.php'); ?>        
 </body>
 </html>
