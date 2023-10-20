@@ -341,6 +341,10 @@ endif;
 
 //Initialise variables to 0
 $cdr = $creatures = $instantsorcery = $other = $lands = $deckvalue = 0;
+$illegal_cards = '';
+
+//Illegal card style tag
+$red_font_tag = "style='color: red;'";
 
 //This section works out which cards the user DOES NOT have, for later linking
 // in a text file to download
@@ -597,6 +601,14 @@ endif;
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number"];
+                                $cdr_legal = $row["legalitycommander"];
+                                if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                    $illegal_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                    $illegal_tag = $red_font_tag;
+                                    $illegal_cards = TRUE;
+                                endif;
                                 $cardcmc = round($row["cmc"]);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                 if ($cardcmc > 5):
@@ -607,7 +619,7 @@ endif;
                                 ?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname">
-                                    <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                    <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
                                 <script type="text/javascript">
                                     $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                         'use strict'; //satisfy code inspectors
@@ -708,6 +720,14 @@ endif;
                                     $cardref = str_replace('.','-',$row['cardsid']);
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number"];
+                                    $cdr_legal = $row["legalitycommander"];
+                                    if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                        $illegal_tag = '';
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $illegal_tag = $red_font_tag;
+                                        $illegal_cards = TRUE;
+                                    endif;
                                     $cardcmc = round($row["cmc"]);
                                     $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                     if ($cardcmc > 5):
@@ -719,7 +739,7 @@ endif;
                                     ?>
                                     <tr class='deckrow'>
                                     <td class="deckcardname">
-                                        <?php echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
+                                        <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; ?>
                                     <script type="text/javascript">
                                         $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                             'use strict'; //satisfy code inspectors
@@ -827,6 +847,14 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
+                            $cdr_legal = $row["legalitycommander"];
+                            if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                $illegal_tag = '';
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                $illegal_tag = $red_font_tag;
+                                $illegal_cards = TRUE;
+                            endif;
                             $cardcmc = round($row["cmc"]);
                             $cardlegendary = $row["type"];
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -853,9 +881,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -994,6 +1022,14 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
+                            $cdr_legal = $row["legalitycommander"];
+                            if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                $illegal_tag = '';
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                $illegal_tag = $red_font_tag;
+                                $illegal_cards = TRUE;
+                            endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
@@ -1019,9 +1055,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1136,6 +1172,14 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
+                            $cdr_legal = $row["legalitycommander"];
+                            if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                $illegal_tag = '';
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                $illegal_tag = $red_font_tag;
+                                $illegal_cards = TRUE;
+                            endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
@@ -1161,9 +1205,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1329,7 +1373,15 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"]; ?>
+                            $cardnumber = $row["number"]; 
+                            $cdr_legal = $row["legalitycommander"];
+                            if($cdr_legal == "legal" OR $decktype != "Commander"):
+                                $illegal_tag = '';
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                $illegal_tag = $red_font_tag;
+                                $illegal_cards = TRUE;
+                            endif; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
                                 <?php 
@@ -1342,9 +1394,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1478,6 +1530,14 @@ endif;
                         $quantity = $row["sideqty"];
                         $cardset = strtolower($row["setcode"]);
                         $cardnumber = $row["number"];
+                        $cdr_legal = $row["legalitycommander"];
+                        if($cdr_legal == "legal" OR $decktype != "Commander"):
+                            $illegal_tag = '';
+                        else:
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                            $illegal_tag = $red_font_tag;
+                            $illegal_cards = TRUE;
+                        endif;
                         $cardref = str_replace('.','-',$row['cardsid']);
                         $cardid = $row['cardsid']; ?>
                         <tr class='deckrow'>
@@ -1499,9 +1559,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
                                 else:
-                                    echo "<a class='taphover' id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1613,11 +1673,15 @@ endif;
                 $warnings = TRUE;
                 $fifty_not_enough = TRUE;
             endif;
+            if($illegal_cards == TRUE):
+                $warnings = TRUE;
+            endif;
+            
             if(isset($warnings)):
                 echo "<h4>&nbsp;Warnings</h4>";
                 echo "<ul style='margin-right: 20px;'>";
                 if(isset($secondcommandername)):
-                    echo "<li>You have a second commander set ('<i>$secondcommandername</i>') - check rules and validity with your primary commander</li>";
+                    echo "<li>You have a second commander ('<i>$secondcommandername</i>') - check rules and validity with your primary commander</li>";
                 endif;
                 if(isset($hundred_not_enough)):
                     echo "<li>Your commander deck doesn't have enough cards for legal play</li>";
@@ -1627,6 +1691,9 @@ endif;
                 endif;
                 if(isset($fifty_not_enough)):
                     echo "<li>Your deck doesn't have enough cards for legal play</li>";
+                endif;
+                if(isset($illegal_cards) AND $illegal_cards == TRUE):
+                    echo "<li>Your deck contains cards not legal in this format</li>";
                 endif;
                 echo "</ul>";
             endif;
