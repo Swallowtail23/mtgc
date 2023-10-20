@@ -2534,6 +2534,13 @@ input:checked + .slider:before {
    padding: 20px;
 }
 
+#grpname
+{
+    padding-left: 20px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break:clone;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
