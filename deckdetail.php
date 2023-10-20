@@ -267,9 +267,11 @@ else:
 endif;
 
 // Get relevant db_field with legality
-$db_field = card_legal_db_field($decktype);
-
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"DB field for legality is in '$db_field'",$logfile);
+if($decktype != ''):
+    $db_field = card_legal_db_field($decktype);
+else:
+    $db_field = '';
+endif;
 
 // Get deck legalities
 if($db_field != ''):
@@ -1928,7 +1930,7 @@ endif;
 </div>
 
 <?php 
-$obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Page complete",$logfile);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Page complete",$logfile);
 require('includes/footer.php'); ?>        
 </body>
 </html>
