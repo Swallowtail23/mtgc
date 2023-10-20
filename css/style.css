@@ -2524,6 +2524,16 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+.options_left
+{
+    max-width: 800px;
+}
+
+.options_right
+{
+   padding: 20px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {

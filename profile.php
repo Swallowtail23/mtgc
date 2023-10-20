@@ -287,19 +287,10 @@ endif;  ?>
                 <h2 id='h2'>Options</h2>
                 <table>
                     <tr>
-                        <td>
-                            <b>Option description</b>
+                        <td class="options_left">
+                            <b>Collection view:</b> Show black and white images in the grid view for cards you do not own
                         </td>
-                        <td style="padding-left: 20px;">
-                            <b>On/off</b>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Display cards you do not own as black and <br>
-                            white in the grid view
-                        </td>
-                        <td style="padding: 20px;"> <?php 
+                        <td class="options_right"> <?php 
                             if($current_coll_view == 1): ?>
                                 <label class="switch"> 
                                     <input type="checkbox" id="cview_toggle" class="option_toggle" checked="true" value="on"/>
@@ -315,19 +306,16 @@ endif;  ?>
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            Groups functionality allows you to see cards<br> 
-                            owned by others in your 'group' and for<br>
-                            them to see your cards. If you Opt Out of<br>
-                            Groups then your collection is private<br>
+                        <td class="options_left">
+                            <b>Group cards:</b> Shows you cards owned by others in your 'group', and them yours. If you Opt Out of Groups then your collection is private<br>
                             <?php 
                             if($current_group_status == 1):
-                                echo "<span id='grpname'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                                echo "<span id='grpname'><b>&nbsp;&nbsp;&nbsp;&nbsp;Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
                             else:
-                                echo "<span id='grpname' style='display:none'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                                echo "<span id='grpname' style='display:none'><b>&nbsp;&nbsp;&nbsp;&nbsp;Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
                             endif; ?>
                         </td>
-                        <td style="padding: 20px;"> <?php 
+                        <td class="options_right"> <?php 
                             if($current_group_status == 1): ?>
                                 <label class="switch"> 
                                     <input type="checkbox" id="group_toggle" class="option_toggle" checked="true" value="on"/>
