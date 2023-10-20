@@ -265,11 +265,17 @@ if($deckinfo = $db->select_one('deckname,notes,sidenotes,type','decks',"WHERE de
 else:
     trigger_error('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ".$db->error, E_USER_ERROR);
 endif;
+
+// Get relevant db_field with legality
 $db_field = card_legal_db_field($decktype);
 if($db_field == ''):
     $db_field = 'none';
 endif;
 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"DB field for legality is in '$db_field'",$logfile);
+
+// Get deck legalities
+$deck_legality_list = deck_legal_list($decknumber,$decktype,$db_field);
+//var_dump($deck_legality_list); exit;
 // Add / delete, before calling the deck list
 if($deletemain == 'yes'):
     subtractdeckcard($decknumber,$cardtoaction,"main","all");
@@ -611,18 +617,18 @@ endif;
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number"];
-                                if($db_field == 'none'):
-                                    $card_legal = 'legal';
+                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                if ($index !== false):
+                                    $card_legal = $deck_legality_list[$index]['legality'];
+                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                        $illegal_tag = '';
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $illegal_tag = $red_font_tag;
+                                        $illegal_cards = TRUE;
+                                    endif;
                                 else:
-                                    $card_legal = card_legal_deck($cardname,$db_field);
-                                endif;
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                                if($card_legal === 'legal' OR $card_legal === NULL):
                                     $illegal_tag = '';
-                                else:
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                    $illegal_tag = $red_font_tag;
-                                    $illegal_cards = TRUE;
                                 endif;
                                 $cardcmc = round($row["cmc"]);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -735,18 +741,18 @@ endif;
                                     $cardref = str_replace('.','-',$row['cardsid']);
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number"];
-                                    if($db_field == 'none'):
-                                        $card_legal = 'legal';
+                                    $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                    if ($index !== false):
+                                        $card_legal = $deck_legality_list[$index]['legality'];
+                                        if($card_legal === 'legal' OR $card_legal === NULL):
+                                            $illegal_tag = '';
+                                        else:
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                            $illegal_tag = $red_font_tag;
+                                            $illegal_cards = TRUE;
+                                        endif;
                                     else:
-                                        $card_legal = card_legal_deck($cardname,$db_field);
-                                    endif;
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
                                         $illegal_tag = '';
-                                    else:
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
-                                        $illegal_cards = TRUE;
                                     endif;
                                     $cardcmc = round($row["cmc"]);
                                     $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -867,18 +873,18 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            if($db_field == 'none'):
-                                $card_legal = 'legal';
+                            $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                            if ($index !== false):
+                                $card_legal = $deck_legality_list[$index]['legality'];
+                                if($card_legal === 'legal' OR $card_legal === NULL):
+                                    $illegal_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                    $illegal_tag = $red_font_tag;
+                                    $illegal_cards = TRUE;
+                                endif;
                             else:
-                                $card_legal = card_legal_deck($cardname,$db_field);
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                            if($card_legal === 'legal' OR $card_legal === NULL):
                                 $illegal_tag = '';
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                $illegal_tag = $red_font_tag;
-                                $illegal_cards = TRUE;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cardlegendary = $row["type"];
@@ -1047,18 +1053,18 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            if($db_field == 'none'):
-                                $card_legal = 'legal';
+                            $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                            if ($index !== false):
+                                $card_legal = $deck_legality_list[$index]['legality'];
+                                if($card_legal === 'legal' OR $card_legal === NULL):
+                                    $illegal_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                    $illegal_tag = $red_font_tag;
+                                    $illegal_cards = TRUE;
+                                endif;
                             else:
-                                $card_legal = card_legal_deck($cardname,$db_field);
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                            if($card_legal === 'legal' OR $card_legal === NULL):
                                 $illegal_tag = '';
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                $illegal_tag = $red_font_tag;
-                                $illegal_cards = TRUE;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -1202,18 +1208,18 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
-                            if($db_field == 'none'):
-                                $card_legal = 'legal';
+                            $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                            if ($index !== false):
+                                $card_legal = $deck_legality_list[$index]['legality'];
+                                if($card_legal === 'legal' OR $card_legal === NULL):
+                                    $illegal_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                    $illegal_tag = $red_font_tag;
+                                    $illegal_cards = TRUE;
+                                endif;
                             else:
-                                $card_legal = card_legal_deck($cardname,$db_field);
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                            if($card_legal === 'legal' OR $card_legal === NULL):
                                 $illegal_tag = '';
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                $illegal_tag = $red_font_tag;
-                                $illegal_cards = TRUE;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -1409,18 +1415,18 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"]; 
-                            if($db_field == 'none'):
-                                $card_legal = 'legal';
+                            $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                            if ($index !== false):
+                                $card_legal = $deck_legality_list[$index]['legality'];
+                                if($card_legal === 'legal' OR $card_legal === NULL):
+                                    $illegal_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                    $illegal_tag = $red_font_tag;
+                                    $illegal_cards = TRUE;
+                                endif;
                             else:
-                                $card_legal = card_legal_deck($cardname,$db_field);
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                            if($card_legal === 'legal' OR $card_legal === NULL):
                                 $illegal_tag = '';
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                $illegal_tag = $red_font_tag;
-                                $illegal_cards = TRUE;
                             endif; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
@@ -1570,18 +1576,18 @@ endif;
                         $quantity = $row["sideqty"];
                         $cardset = strtolower($row["setcode"]);
                         $cardnumber = $row["number"];
-                        if($db_field == 'none'):
-                            $card_legal = 'legal';
+                        $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                        if ($index !== false):
+                            $card_legal = $deck_legality_list[$index]['legality'];
+                            if($card_legal === 'legal' OR $card_legal === NULL):
+                                $illegal_tag = '';
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                $illegal_tag = $red_font_tag;
+                                $illegal_cards = TRUE;
+                            endif;
                         else:
-                            $card_legal = card_legal_deck($cardname,$db_field);
-                        endif;
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legal result: $card_legal",$logfile);
-                        if($card_legal === 'legal' OR $card_legal === NULL):
                             $illegal_tag = '';
-                        else:
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                            $illegal_tag = $red_font_tag;
-                            $illegal_cards = TRUE;
                         endif;
                         $cardref = str_replace('.','-',$row['cardsid']);
                         $cardid = $row['cardsid']; ?>

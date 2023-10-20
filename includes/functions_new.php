@@ -2133,5 +2133,39 @@ function card_legal_deck($cardname,$db_field)
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL result: $legal",$logfile);
         return $legal;
     endif;
-    
+}
+
+function deck_legal_list($decknumber,$deck_type,$db_field)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')",$logfile);
+    $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decknumber'";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
+    $sqlresult = $db->query($sql);
+    if($sqlresult === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+    else:
+        $i = 0;
+        $record = array();
+        while($row = $sqlresult->fetch_assoc()):
+            $record[$i] = $row['cardnumber'];
+            $i = $i + 1;
+        endwhile;
+    endif;
+    $list = array();
+    $p = 0;
+    foreach($record as $value):
+        $sql2 = "SELECT $db_field FROM cards_scry WHERE id = '$value' LIMIT 1";
+        $sqlresult2 = $db->query($sql2);
+        if($sqlresult2 === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+        else:
+            $row2 = $sqlresult2->fetch_array(MYSQLI_ASSOC);
+            $legal = $row2["$db_field"];
+        endif;
+        $list[$p]['id'] = $value;
+        $list[$p]['legality'] = $legal;
+        $p = $p + 1;
+    endforeach;
+    return $list;
 }
