@@ -217,12 +217,40 @@ $second_commander_only_type = array("Background");      // Check for "Type" whic
 
 // Selectable deck types on deck detail page
 $validtypes = array('Commander',
-                    'Normal',
-                    'Tiny Leader');                     // Deck types
+                    'Casual',
+                    'Tiny Leader',
+                    'Standard',
+                    'Modern');                     // Deck types
 
 // Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');
 
-$sixtycarddecks = array('Normal');
+$sixtycarddecks = array('Casual',
+                        'Standard',
+                        'Modern');
 
 $fiftycarddecks = array('Tiny Leader');
+
+// Which database field holds information about card legality in the deck types
+$deck_legality_map = array(
+                        array(
+                            'decktype' => 'Commander',
+                            'db_field' => 'legalitycommander'
+                            ),
+                        array(
+                            'decktype' => 'Standard',
+                            'db_field' => 'legalitystandard'
+                            ),
+                        array(
+                            'decktype' => 'Tiny Leader',
+                            'db_field' => 'legalitytinyleaderscommander'
+                            ),
+                        array(
+                            'decktype' => 'Modern',
+                            'db_field' => 'legalitymodern'
+                            ),
+                        array(
+                            'decktype' => 'Casual',
+                            'db_field' => ''
+                            )
+);

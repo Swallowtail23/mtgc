@@ -2105,3 +2105,33 @@ function import($filename)
     </script> <?php
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Import finished",$logfile);
 }
+
+function card_legal_db_field($decktype)
+{
+    global $db, $deck_legality_map, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up db_field for legality for deck type '$decktype'",$logfile);
+    $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
+    if ($index !== false) $db_field = $deck_legality_map[$index]['db_field'];
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Deck type '$decktype' has legality in '$db_field'",$logfile);
+    return $db_field;
+}
+
+function card_legal_deck($cardname,$db_field)
+{
+    global $db, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up deck legality for card '$cardname' in db_field '$db_field'",$logfile);
+
+    $cardname = $db->escape($cardname);
+    $sql = "SELECT $db_field FROM cards_scry WHERE name = '$cardname' LIMIT 1";
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
+    $sqlresult = $db->query($sql);
+    if($sqlresult === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+    else:
+        $row = $sqlresult->fetch_array(MYSQLI_ASSOC);
+        $legal = $row["$db_field"];
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL result: $legal",$logfile);
+        return $legal;
+    endif;
+    
+}

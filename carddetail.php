@@ -1,6 +1,6 @@
 <?php 
-/* Version:     16.0
-    Date:       15/10/23
+/* Version:     16.1
+    Date:       20/10/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -47,6 +47,8 @@
  * 16.0
  *              Show thick card promo type for Commander proxy cards
  *              Review and improve price handling routine to ensure latest price more reliably shown
+ * 16.1
+ *              Show serialised promo type
 */
 
 session_start();
@@ -498,11 +500,12 @@ require('includes/menu.php'); //mobile menu
             else:
                 $not_paper = false;
             endif;
+            $thick = $serialised = false;
             if (isset($row['promo_types']) AND strpos($row['promo_types'], 'thick') == true):
                 $thick = true;
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Thick card (e.g. commander proxy)",$logfile);
-            else:
-                $thick = false;
+            elseif (isset($row['promo_types']) AND strpos($row['promo_types'], 'serialized') == true):
+                $serialised = true;
             endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
@@ -1006,6 +1009,8 @@ require('includes/menu.php'); //mobile menu
                         echo "<b>Game types: </b>$gametypestring<br>";
                         if($thick == true):
                             echo "<b>Promo type: </b>Commander thick proxy card<br>";
+                        elseif($serialised == true):
+                            echo "<b>Promo type: </b>Serialised card<br>";
                         endif;
                         if($row["layout"] !== 'reversible_card' AND $row["layout"] !== 'double_faced_token'): // no details at card level for reversible cards
                             if(isset($row['type']) AND $row['type'] != ''):
