@@ -258,6 +258,8 @@ if (isset($updatetype)):
     else:
         trigger_error('[ERROR] deckdetail.php: Error: Invalid deck type', E_USER_ERROR);
     endif;
+    
+    // Set quantities to 1 for commander decks
     if(in_array($updatetype,$commander_decktypes)):
         $query = 'UPDATE deckcards SET cardqty=? WHERE (decknumber = ? AND (sideqty IS NULL or sideqty = 0) )';
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Commander type, setting quantities to 1",$logfile);
@@ -272,9 +274,15 @@ if (isset($updatetype)):
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
         endif;
+        $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
+        if ($db->execute_query($query, [$decknumber]) != TRUE):
+            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+        endif;
     endif;
     if($updatetype == 'Wishlist'):
-        $query = 'DELETE FROM deckcards WHERE (decknumber = ? AND sideqty > 0 )';
+        $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Wishlist, deleting sideboard cards",$logfile);
         if ($db->execute_query($query, [$decknumber]) != TRUE):
             trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -392,8 +400,9 @@ endif;
 $cdr = $creatures = $instantsorcery = $other = $lands = $deckvalue = 0;
 $illegal_cards = '';
 
-//Illegal card style tag
-$red_font_tag = "style='color: Red;'";
+//Illegal card style tags
+$red_font_tag = "style='color: OrangeRed; font-weight: bold'";
+$firebrick_font_tag = "style='color: FireBrick; font-weight: bold'";
 
 //This section works out which cards the user DOES NOT have, for later linking
 // in a text file to download
@@ -456,11 +465,13 @@ endif;
 //This section builds hidden divs for each card with the image and a link,
 // and increments type and value counters
 // for main and side
+// It also builds the legal Colour identity for Commander decks
 mysqli_data_seek($result, 0);
 $cdr_colours = array();
 $i = 0;
 while ($row = $result->fetch_assoc()):
     if($row['commander'] != 0 AND $row['commander'] != NULL):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking card, colour identity {$row['color_identity']}",$logfile);
         //card is a commander, get its colour identity
         $cdr_colours[$i] = $row['color_identity'];
         $i = $i + 1;
@@ -496,8 +507,15 @@ while ($row = $result->fetch_assoc()):
     <?php
 endwhile;
 
-$cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
+// Finalise allowable colour identity for Commander decks
+$cdr_colours_raw = $cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Commander value (variable i) is $i, Colour identity to check is $cdr_colours",$logfile);
+
+if($i > 0 AND $cdr_colours == '[""]'):
+    $cdr_colours = '["C"]';
+endif;
 $cdr_colours = colourfunction($cdr_colours);
+
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
     $cardset = strtolower($row["setcode"]);
@@ -601,7 +619,7 @@ endif;
                 </form>
                 
             <?php 
-            if(in_array($decktype,$commander_decktypes)):
+            if(in_array($decktype,$commander_decktypes) and $i > 0):
                 if($cdr_colours == 'five'):
                     $identity_title = 'All';
                 else:
@@ -684,7 +702,6 @@ endif;
                                             $illegal_tag = '';
                                         else:
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                            $illegal_tag = $red_font_tag;
                                             $illegal_cards = TRUE;
                                         endif;
                                     else:
@@ -693,6 +710,7 @@ endif;
                                 else:
                                     $illegal_tag = '';
                                 endif;
+                                
                                 $cardcmc = round($row["cmc"]);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                 if ($cardcmc > 5):
@@ -813,7 +831,6 @@ endif;
                                                 $illegal_tag = '';
                                             else:
                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                                $illegal_tag = $red_font_tag;
                                                 $illegal_cards = TRUE;
                                             endif;
                                         else:
@@ -931,6 +948,8 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                 mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        $illegal_tag = $red_font_tag;
+                        $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
                             $len = strpos($row['type'], ' //');
                             $row['type'] = substr($row['type'], 0, $len);
@@ -957,7 +976,6 @@ endif;
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -965,6 +983,18 @@ endif;
                                 endif;
                             else:
                                 $illegal_tag = '';
+                            endif;
+                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
+                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $wrong_colour_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $illegal_tag = $wrong_colour_tag;
+                                    $colour_mismatch = TRUE;
+                                endif;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cardlegendary = $row["type"];
@@ -1115,6 +1145,8 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        $illegal_tag = $red_font_tag;
+                        $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
                             $len = strpos($row['type'], ' //');
                             $row['type'] = substr($row['type'], 0, $len);
@@ -1141,7 +1173,6 @@ endif;
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1149,6 +1180,18 @@ endif;
                                 endif;
                             else:
                                 $illegal_tag = '';
+                            endif;
+                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
+                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $wrong_colour_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $illegal_tag = $wrong_colour_tag;
+                                    $colour_mismatch = TRUE;
+                                endif;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -1274,6 +1317,8 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        $illegal_tag = $red_font_tag;
+                        $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
                             $len = strpos($row['type'], ' //');
                             $row['type'] = substr($row['type'], 0, $len);
@@ -1300,7 +1345,6 @@ endif;
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1308,6 +1352,18 @@ endif;
                                 endif;
                             else:
                                 $illegal_tag = '';
+                            endif;
+                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
+                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $wrong_colour_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $illegal_tag = $wrong_colour_tag;
+                                    $colour_mismatch = TRUE;
+                                endif;
                             endif;
                             $cardcmc = round($row["cmc"]);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
@@ -1484,6 +1540,8 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        $illegal_tag = $red_font_tag;
+                        $wrong_colour_tag = $firebrick_font_tag;
                         // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
                         if (strpos($row['type'],' //') !== false):
                             $len = strpos($row['type'], ' //');
@@ -1511,7 +1569,6 @@ endif;
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1519,6 +1576,18 @@ endif;
                                 endif;
                             else:
                                 $illegal_tag = '';
+                            endif;
+                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
+                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $wrong_colour_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $illegal_tag = $wrong_colour_tag;
+                                    $colour_mismatch = TRUE;
+                                endif;
                             endif; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname">
@@ -1668,6 +1737,8 @@ endif;
                     if (mysqli_num_rows($sideresult) > 0):
                         mysqli_data_seek($sideresult, 0);
                         while ($row = $sideresult->fetch_assoc()):
+                            $illegal_tag = $red_font_tag;
+                            $wrong_colour_tag = $firebrick_font_tag;
                             $cardname = $row["name"];
                             $quantity = $row["sideqty"];
                             $cardset = strtolower($row["setcode"]);
@@ -1683,7 +1754,6 @@ endif;
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                        $illegal_tag = $red_font_tag;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1693,6 +1763,18 @@ endif;
                             else:
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is not needed",$logfile);
                                 $illegal_tag = '';
+                            endif;
+                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
+                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $wrong_colour_tag = '';
+                                else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $illegal_tag = $wrong_colour_tag;
+                                    $colour_mismatch = TRUE;
+                                endif;
                             endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid']; ?>
@@ -1852,7 +1934,10 @@ endif;
                     echo "<li>Your deck doesn't have enough cards for legal play</li>";
                 endif;
                 if(isset($illegal_cards) AND $illegal_cards == TRUE):
-                    echo "<li>Your deck contains cards not legal in this format</li>";
+                    echo "<li>Your deck contains <span $red_font_tag>cards </span> not legal in this format</li>";
+                endif;
+                if(isset($colour_mismatch) AND $colour_mismatch == TRUE):
+                    echo "<li>Your deck contains <span $firebrick_font_tag>cards </span> not in your Commander(s) colour identity</li>";
                 endif;
                 echo "</ul>";
             endif;
