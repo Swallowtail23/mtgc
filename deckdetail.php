@@ -570,8 +570,13 @@ endif;
                     <input type="hidden"name="deck" value="<?php echo $decknumber;?>" />
                 </form>
             <?php 
-            if(in_array($decktype,$commander_decktypes)): 
-                echo "Commander colour identity: <img alt='image' src=images/".$cdr_colours."_s.png><br>"; 
+            if(in_array($decktype,$commander_decktypes)):
+                if($cdr_colours == 'five'):
+                    $identity_title = 'All';
+                else:
+                    $identity_title = ucfirst($cdr_colours);
+                endif;
+                echo "Colour identity: <img alt='image' src=images/".$cdr_colours."_s.png> ($identity_title)<br>"; 
             endif;?>   
             
             <table class='deckcardlist'>
