@@ -987,7 +987,17 @@ endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
-                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                $colour_id_array = str_split($colour_id);
+                                $colour_mismatch = '';
+                                foreach($colour_id_array as $value):
+                                    if(strpos($cdr_colours_raw,$value) == FALSE):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $colour_mismatch = TRUE;
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                    endif;
+                                endforeach;
+                                if($colour_mismatch == '' OR $colour_id == ''):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
                                     $wrong_colour_tag = '';
                                 else:
@@ -1184,7 +1194,17 @@ endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
-                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                $colour_id_array = str_split($colour_id);
+                                $colour_mismatch = '';
+                                foreach($colour_id_array as $value):
+                                    if(strpos($cdr_colours_raw,$value) == FALSE):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $colour_mismatch = TRUE;
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                    endif;
+                                endforeach;
+                                if($colour_mismatch == '' OR $colour_id == ''):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
                                     $wrong_colour_tag = '';
                                 else:
@@ -1356,7 +1376,17 @@ endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
-                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                $colour_id_array = str_split($colour_id);
+                                $colour_mismatch = '';
+                                foreach($colour_id_array as $value):
+                                    if(strpos($cdr_colours_raw,$value) == FALSE):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $colour_mismatch = TRUE;
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                    endif;
+                                endforeach;
+                                if($colour_mismatch == '' OR $colour_id == ''):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
                                     $wrong_colour_tag = '';
                                 else:
@@ -1580,7 +1610,17 @@ endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
-                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                $colour_id_array = str_split($colour_id);
+                                $colour_mismatch = '';
+                                foreach($colour_id_array as $value):
+                                    if(strpos($cdr_colours_raw,$value) == FALSE):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $colour_mismatch = TRUE;
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                    endif;
+                                endforeach;
+                                if($colour_mismatch == '' OR $colour_id == ''):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
                                     $wrong_colour_tag = '';
                                 else:
@@ -1767,7 +1807,17 @@ endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
-                                if(strpos($cdr_colours_raw,$colour_id) == TRUE OR $colour_id == ''):
+                                $colour_id_array = str_split($colour_id);
+                                $colour_mismatch = '';
+                                foreach($colour_id_array as $value):
+                                    if(strpos($cdr_colours_raw,$value) == FALSE):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $colour_mismatch = TRUE;
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                    endif;
+                                endforeach;
+                                if($colour_mismatch == '' OR $colour_id == ''):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
                                     $wrong_colour_tag = '';
                                 else:
