@@ -220,7 +220,8 @@ $validtypes = array('Commander',
                     'Casual',
                     'Tiny Leader',
                     'Standard',
-                    'Modern');                     // Deck types
+                    'Modern',
+                    'Wishlist');                     // Deck types
 
 // Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');
@@ -251,6 +252,10 @@ $deck_legality_map = array(
                             ),
                         array(
                             'decktype' => 'Casual',
+                            'db_field' => ''
+                            ),
+                        array(
+                            'decktype' => 'Wishlist',
                             'db_field' => ''
                             )
 );
