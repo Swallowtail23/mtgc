@@ -1,6 +1,6 @@
 <?php
-/* Version:     16.0
-    Date:       04/07/23
+/* Version:     17.0
+    Date:       21/10/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -43,6 +43,8 @@
  *              Added ability to have Partner Commander
  *  16.0   
  *              Added deckname edit, and delete deck from deck detail page
+ *  17.0
+ *              Add functional wishlist in decks
 */
 
 session_start();
@@ -561,21 +563,21 @@ endif;
                         <span class="noprint">Card</span>
                     </td>
                     <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
+                    if(in_array($decktype,$commander_decktypes)): ?>    
                         <td class="deckcardlisthead3">
                             <span class="noprint">Cdr</span>
-                        </td>
-                        <?php
+                        </td> <?php
                     endif;
                     ?>
                     <td class="deckcardlisthead3">
                         <span class="noprint">Del</span>
                     </td>
-                    <td class='deckcardlisthead3'>
-                        <span class="noprint">Side</span>
-                    </td>
-                    <?php 
+                    <?php
+                    if($decktype != 'Wishlist'): ?>
+                        <td class='deckcardlisthead3'>
+                            <span class="noprint">Side</span>
+                        </td> <?php 
+                    endif;
                     if(!in_array($decktype,$commander_decktypes)): ?>    
                         <td class='deckcardlisthead3 deckcardlistright'>
                             <span class="noprint">- &nbsp;</span>
@@ -585,8 +587,7 @@ endif;
                         </td>
                         <td class='deckcardlisthead3 deckcardlistleft'>
                             <span class="noprint">&nbsp;+</span>
-                        </td>
-                        <?php
+                        </td> <?php
                     endif; ?>
                 </tr> 
                 <?php
@@ -848,7 +849,14 @@ endif;
                 else:
                     ?>
                     <tr>
-                        <td colspan='6'>
+                        <?php 
+                        if(in_array($decktype,$commander_decktypes)): ?>    
+                            <td colspan='4'> <?php
+                        elseif($decktype == 'Wishlist'): ?>
+                            <td colspan='5'> <?php
+                        else: ?>
+                            <td colspan='6'> <?php
+                        endif; ?>
                             <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
                         </td>    
                     </tr>
@@ -985,18 +993,20 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Move to sideboard"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
-                                class='material-symbols-outlined'>
-                                arrow_downward
-                            </span>
-                            <?php
-                            echo "</td>";
+                            if($decktype != 'Wishlist'):
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    arrow_downward
+                                </span>
+                                <?php
+                                echo "</td>";
+                            endif;
                             if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
@@ -1034,16 +1044,13 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan='4'>
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='6'>
-                    <?php
-                    endif;
-                    ?>
+                    if(in_array($decktype,$commander_decktypes)): ?>    
+                        <td colspan='4'> <?php
+                    elseif($decktype == 'Wishlist'): ?>
+                        <td colspan='5'> <?php
+                    else: ?>
+                        <td colspan='6'> <?php
+                    endif; ?>
                     <i><b>Instants and Sorceries (<?php echo $instantsorcery; ?>)</b></i>
                     </td>    
                 </tr>
@@ -1144,18 +1151,20 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Move to sideboard"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
-                                class='material-symbols-outlined'>
-                                arrow_downward
-                            </span>
-                            <?php
-                            echo "</td>";
+                            if($decktype != 'Wishlist'):
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    arrow_downward
+                                </span>
+                                <?php
+                                echo "</td>";
+                            endif;
                             if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
@@ -1193,16 +1202,13 @@ endif;
                 endif; ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan='4'>
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='6'>
-                    <?php
-                    endif;
-                    ?>
+                    if(in_array($decktype,$commander_decktypes)): ?>    
+                        <td colspan='4'> <?php
+                    elseif($decktype == 'Wishlist'): ?>
+                        <td colspan='5'> <?php
+                    else: ?>
+                        <td colspan='6'> <?php
+                    endif; ?>
                     <i><b>Other (<?php echo $other; ?>)</b></i>
                     </td>    
                 </tr>
@@ -1353,18 +1359,20 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Move to sideboard"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
-                                class='material-symbols-outlined'>
-                                arrow_downward
-                            </span>
-                            <?php
-                            echo "</td>";
+                            if($decktype != 'Wishlist'):
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    arrow_downward
+                                </span>
+                                <?php
+                                echo "</td>";
+                            endif;
                             if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
@@ -1403,16 +1411,13 @@ endif;
                 ?>
                 <tr>
                     <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan='4'>
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='6'>
-                    <?php
-                    endif;
-                    ?>
+                    if(in_array($decktype,$commander_decktypes)): ?>    
+                        <td colspan='4'> <?php
+                    elseif($decktype == 'Wishlist'): ?>
+                        <td colspan='5'> <?php
+                    else: ?>
+                        <td colspan='6'> <?php
+                    endif; ?>
                     <i><b>Lands (<?php echo $lands; ?>)</b></i>
                     </td>    
                 </tr>
@@ -1501,18 +1506,20 @@ endif;
                             </span>
                             <?php
                             echo "</td>";
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Move to sideboard"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
-                                class='material-symbols-outlined'>
-                                arrow_downward
-                            </span>
-                            <?php
-                            echo "</td>";
+                            if($decktype != 'Wishlist'):
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    arrow_downward
+                                </span>
+                                <?php
+                                echo "</td>";
+                            endif;
                             if(!in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
@@ -1547,199 +1554,203 @@ endif;
                             $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
-                endif;?>
-                <tr>
+                endif;
+                if($decktype != 'Wishlist'):?>
+                    <tr>
+                        <?php 
+                        if(in_array($decktype,$commander_decktypes)):
+                            ?>    
+                            <td colspan="2">&nbsp;
+                        <?php
+                        else:
+                        ?>
+                            <td colspan='4'>&nbsp;
+                        <?php
+                        endif;?>
+                        <i><b>Total</b></i>
+                        </td>
+                        <td colspan="1" class='deckcardlistcenter'>
+                            <i><b><?php echo $total; ?></b></i>
+                        </td>
+                        <td colspan="1">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <?php 
+                        if(in_array($decktype,$commander_decktypes)):
+                            ?>    
+                            <td colspan="4">&nbsp;
+                        <?php
+                        else:
+                        ?>
+                            <td colspan='6'>&nbsp;
+                        <?php
+                        endif;?>
+                        </td>
+                    </tr>            
+                    <tr>
+                        <?php 
+                        if(in_array($decktype,$commander_decktypes)):
+                            ?>    
+                            <td colspan='4'>
+                        <?php
+                        else:
+                        ?>
+                            <td colspan='6'>
+                        <?php
+                        endif;
+                        ?>
+                        <i><b>Sideboard</b></i>
+                        </td>    
+                    </tr>
                     <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan="2">&nbsp;
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='4'>&nbsp;
-                    <?php
-                    endif;?>
-                    <i><b>Total</b></i>
-                    </td>
-                    <td colspan="1" class='deckcardlistcenter'>
-                        <i><b><?php echo $total; ?></b></i>
-                    </td>
-                    <td colspan="1">&nbsp;</td>
-                </tr>
-                <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan="4">&nbsp;
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='6'>&nbsp;
-                    <?php
-                    endif;?>
-                    </td>
-                </tr>            
-                <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan='4'>
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='6'>
-                    <?php
-                    endif;
-                    ?>
-                    <i><b>Sideboard</b></i>
-                    </td>    
-                </tr>
-                <?php 
-                $textfile = $textfile."\r\n\r\nSideboard\r\n\r\n";
-                $sidetotal = 0;
-                if (mysqli_num_rows($sideresult) > 0):
-                    mysqli_data_seek($sideresult, 0);
-                    while ($row = $sideresult->fetch_assoc()):
-                        $cardname = $row["name"];
-                        $quantity = $row["sideqty"];
-                        $cardset = strtolower($row["setcode"]);
-                        $cardnumber = $row["number"];
-                        if($deck_legality_list != ''):
-                            $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                            if ($index !== false):
-                                $card_legal = $deck_legality_list[$index]['legality'];
-                                if($card_legal === 'legal' OR $card_legal === NULL):
-                                    $illegal_tag = '';
+                    $textfile = $textfile."\r\n\r\nSideboard\r\n\r\n";
+                    $sidetotal = 0;
+                    if (mysqli_num_rows($sideresult) > 0):
+                        mysqli_data_seek($sideresult, 0);
+                        while ($row = $sideresult->fetch_assoc()):
+                            $cardname = $row["name"];
+                            $quantity = $row["sideqty"];
+                            $cardset = strtolower($row["setcode"]);
+                            $cardnumber = $row["number"];
+                            if($deck_legality_list != ''):
+                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                if ($index !== false):
+                                    $card_legal = $deck_legality_list[$index]['legality'];
+                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                        $illegal_tag = '';
+                                    else:
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $illegal_tag = $red_font_tag;
+                                        $illegal_cards = TRUE;
+                                    endif;
                                 else:
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
-                                    $illegal_tag = $red_font_tag;
-                                    $illegal_cards = TRUE;
+                                    $illegal_tag = '';
                                 endif;
                             else:
                                 $illegal_tag = '';
                             endif;
-                        else:
-                            $illegal_tag = '';
-                        endif;
-                        $cardref = str_replace('.','-',$row['cardsid']);
-                        $cardid = $row['cardsid']; ?>
-                        <tr class='deckrow'>
-                            <td class="deckcardname">
-                                <?php 
-                                $i = 0;
-                                $cdr_1_plus = FALSE;
-                                while($i < count($commander_multiples)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardid = $row['cardsid']; ?>
+                            <tr class='deckrow'>
+                                <td class="deckcardname">
+                                    <?php 
+                                    $i = 0;
+                                    $cdr_1_plus = FALSE;
+                                    while($i < count($commander_multiples)):
+                                        if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                            $cdr_1_plus = TRUE;
+                                        endif;
+                                        $i++;
+                                    endwhile;
+                                    $i = 0;
+                                    while($i < count($any_quantity)):
+                                        if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
+                                            $cdr_1_plus = TRUE;
+                                        endif;
+                                        $i++;
+                                    endwhile;
+                                    if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
+                                        echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
+                                    else:
+                                        echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
                                     endif;
-                                    $i++;
-                                endwhile;
-                                $i = 0;
-                                while($i < count($any_quantity)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
-                                    endif;
-                                    $i++;
-                                endwhile;
-                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset)</a>"; 
-                                else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset)</a>"; 
-                                endif;
-                                ?>
-                            <script type="text/javascript">
-                                $('#side-<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                    'use strict'; //satisfy code inspectors
-                                    var link = $(this); //preselect the link
-                                    $('.deckcardimgdiv').hide("slow");
-                                    e.preventDefault();
-                                    $("<?php echo "#side-$cardref";?>").show("slow");
-                                    return false; //extra, and to make sure the function has consistent return points
-                                });
-                            </script>
-                            <?php
-                            echo "</td>";
-                        if(in_array($decktype,$commander_decktypes)):
+                                    ?>
+                                <script type="text/javascript">
+                                    $('#side-<?php echo $cardref;?>-taphover').on('click',function(e) {
+                                        'use strict'; //satisfy code inspectors
+                                        var link = $(this); //preselect the link
+                                        $('.deckcardimgdiv').hide("slow");
+                                        e.preventDefault();
+                                        $("<?php echo "#side-$cardref";?>").show("slow");
+                                        return false; //extra, and to make sure the function has consistent return points
+                                    });
+                                </script>
+                                <?php
+                                echo "</td>";
+                            if(in_array($decktype,$commander_decktypes)):
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                echo "</td>";
+                            endif;
                             echo "<td class='deckcardlistcenter noprint'>";
-                            echo "</td>";
-                        endif;
-                        echo "<td class='deckcardlistcenter noprint'>";
-                        ?>
-                        <span 
-                            onmouseover="" 
-                            title="Delete"
-                            style="cursor: pointer;" 
-                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
-                            class='material-symbols-outlined'>
-                            delete_forever
-                        </span>
-                        <?php
-                        echo "</td>";
-                        echo "<td class='deckcardlistcenter noprint'>";
-                        ?>
-                        <span 
-                            onmouseover="" 
-                            title="Move to main deck"
-                            style="cursor: pointer;" 
-                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
-                            class='material-symbols-outlined'>
-                            arrow_upward
-                        </span>
-                        <?php
-                        echo "</td>";
-                        if(!in_array($decktype,$commander_decktypes)):
-                            echo "<td class='deckcardlistright noprint'>";
                             ?>
                             <span 
                                 onmouseover="" 
-                                title="Remove one"
+                                title="Delete"
                                 style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
                                 class='material-symbols-outlined'>
-                                remove
+                                delete_forever
                             </span>
                             <?php
                             echo "</td>";
-                            echo "<td class='deckcardlistcenter'>";
-                            echo $quantity;
-                            echo "</td>";
-                            echo "<td class='deckcardlistleft noprint'>";
+                            echo "<td class='deckcardlistcenter noprint'>";
                             ?>
                             <span 
                                 onmouseover="" 
-                                title="Add one"
+                                title="Move to main deck"
                                 style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
+                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
                                 class='material-symbols-outlined'>
-                                add
+                                arrow_upward
                             </span>
                             <?php
                             echo "</td>";
-                        endif;
-                        echo "</tr>";
-                        $sidetotal = $sidetotal + $quantity;
-                        $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
-                        endwhile; 
-                endif;?>
-                <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)):
-                        ?>    
-                        <td colspan="2">&nbsp;
-                    <?php
-                    else:
-                    ?>
-                        <td colspan='4'>&nbsp;
-                    <?php
+                            if(!in_array($decktype,$commander_decktypes)):
+                                echo "<td class='deckcardlistright noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Remove one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    remove
+                                </span>
+                                <?php
+                                echo "</td>";
+                                echo "<td class='deckcardlistcenter'>";
+                                echo $quantity;
+                                echo "</td>";
+                                echo "<td class='deckcardlistleft noprint'>";
+                                ?>
+                                <span 
+                                    onmouseover="" 
+                                    title="Add one"
+                                    style="cursor: pointer;" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
+                                <?php
+                                echo "</td>";
+                            endif;
+                            echo "</tr>";
+                            $sidetotal = $sidetotal + $quantity;
+                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            endwhile; 
                     endif;?>
-                        <i><b>Total sideboard</b></i>
-                    </td>    
+                    <tr>
+                        <?php 
+                        if(in_array($decktype,$commander_decktypes)):
+                            ?>    
+                            <td colspan="2">&nbsp;
+                        <?php
+                        else:
+                        ?>
+                            <td colspan='4'>&nbsp;
+                        <?php
+                        endif;?>
+                            <i><b>Total sideboard</b></i>
+                        </td>    
 
-                    <td colspan="1" class='deckcardlistcenter'>
-                        <i><b><?php echo $sidetotal; ?></b></i>
-                    </td>
-                    <td colspan="1">&nbsp;</td>
-                </tr>
+                        <td colspan="1" class='deckcardlistcenter'>
+                            <i><b><?php echo $sidetotal; ?></b></i>
+                        </td>
+                        <td colspan="1">&nbsp;</td>
+                    </tr> <?php
+                else:
+                    $sidetotal = 0;
+                endif; ?>
             </table>
         </div>
         <div id="decknotesdiv">
@@ -1784,8 +1795,10 @@ endif;
             <form action="?" method="POST">
                 <h4>&nbsp;Notes</h4>
                 <textarea class='decknotes textinput' name='newnotes' rows='2' cols='40'><?php echo $notes; ?></textarea>
-                <h4>&nbsp;Sideboard notes</h4>
-                <textarea class='decknotes textinput' name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
+                <?php if ($decktype != 'Wishlist'):  ?>
+                    <h4>&nbsp;Sideboard notes</h4>
+                    <textarea class='decknotes textinput' name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
+                <?php endif;  ?>
                 <input type='hidden' name='updatenotes' value='yes'>
                 <input type='hidden' name='deck' value='<?php echo $decknumber?>'>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="UPDATE NOTES">
