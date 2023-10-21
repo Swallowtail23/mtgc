@@ -1,6 +1,6 @@
 <?php
-/* Version:     16.0
-    Date:       04/07/23
+/* Version:     17.0
+    Date:       21/10/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -43,6 +43,8 @@
  *              Added ability to have Partner Commander
  *  16.0   
  *              Added deckname edit, and delete deck from deck detail page
+ *  17.0
+ *              Add functional wishlist in decks
 */
 
 session_start();
