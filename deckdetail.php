@@ -290,6 +290,7 @@ if (isset($updatetype)):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
         endif;
     endif;
+    $redirect = true;
 endif;
 
 //Carry out quick add requests
