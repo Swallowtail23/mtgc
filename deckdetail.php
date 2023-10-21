@@ -1967,6 +1967,9 @@ endif;
             if($illegal_cards == TRUE):
                 $warnings = TRUE;
             endif;
+            if($colour_mismatch == TRUE):
+                $warnings = TRUE;
+            endif;
             
             if(isset($warnings)):
                 echo "<h4>&nbsp;Warnings</h4>";
