@@ -45,6 +45,7 @@
  *              Added deckname edit, and delete deck from deck detail page
  *  17.0
  *              Add functional wishlist in decks
+ *              Add commander colour identity
 */
 
 session_start();
