@@ -45,6 +45,7 @@
  *              Added deckname edit, and delete deck from deck detail page
  *  17.0
  *              Add functional wishlist in decks
+ *              Add commander colour identity
 */
 
 session_start();
@@ -52,6 +53,7 @@ require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
+require ('includes/colour.php');
 forcechgpwd();                              //Check if user is disabled or needs to change password
 ?> 
 
@@ -425,7 +427,14 @@ endif;
 // and increments type and value counters
 // for main and side
 mysqli_data_seek($result, 0);
+$cdr_colours = array();
+$i = 0;
 while ($row = $result->fetch_assoc()):
+    if($row['commander'] != 0 AND $row['commander'] != NULL):
+        //card is a commander, get its colour identity
+        $cdr_colours[$i] = $row['color_identity'];
+        $i = $i + 1;
+    endif;
     $cardset = strtolower($row['setcode']);
     if (strpos($row['type'],' //') !== false):
         $len = strpos($row['type'], ' //');
@@ -455,7 +464,10 @@ while ($row = $result->fetch_assoc()):
             <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
     </div> 
     <?php
-endwhile; 
+endwhile;
+
+$cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
+$cdr_colours = colourfunction($cdr_colours);
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
     $cardset = strtolower($row["setcode"]);
@@ -557,6 +569,11 @@ endif;
                     </select>    
                     <input type="hidden"name="deck" value="<?php echo $decknumber;?>" />
                 </form>
+            <?php 
+            if(in_array($decktype,$commander_decktypes)): 
+                echo "Commander colour identity: <img alt='image' src=images/".$cdr_colours."_s.png><br>"; 
+            endif;?>   
+            
             <table class='deckcardlist'>
                 <tr class='deckcardlisthead'> 
                     <td class='deckcardlisthead1'>
