@@ -100,6 +100,18 @@ forcechgpwd();                              //Check if user is disabled or needs
           } else {
             form.style.display = "none";
           }
+          var form = document.getElementById("changeType");
+          if (form.style.display === "none") {
+            form.style.display = "block";
+          } else {
+            form.style.display = "none";
+          }
+          var form = document.getElementById("currentType");
+          if (form.style.display === "none") {
+            form.style.display = "block";
+          } else {
+            form.style.display = "none";
+          }
         }
     </script>
     <script type="text/javascript"> 
@@ -227,6 +239,7 @@ endif;
 //Update deck type if called before reading info
 if (isset($updatetype)):
     if(in_array($updatetype,$validtypes)):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to '$updatetype'",$logfile);
         $updatetypedata = array(
             'type' => "$updatetype"
         );
@@ -246,13 +259,29 @@ if (isset($updatetype)):
         trigger_error('[ERROR] deckdetail.php: Error: Invalid deck type', E_USER_ERROR);
     endif;
     if(in_array($updatetype,$commander_decktypes)):
-        $query = 'UPDATE deckcards SET cardqty=? WHERE decknumber = ?';
+        $query = 'UPDATE deckcards SET cardqty=? WHERE (decknumber = ? AND (sideqty IS NULL or sideqty = 0) )';
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Commander type, setting quantities to 1",$logfile);
         if ($db->execute_query($query, [1,$decknumber]) != TRUE):
             trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
         endif;
-    endif;    
+        $query = 'UPDATE deckcards SET sideqty=? WHERE (decknumber = ? AND (cardqty IS NULL or cardqty = 0) )';
+        if ($db->execute_query($query, [1,$decknumber]) != TRUE):
+            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+        endif;
+    endif;
+    if($updatetype == 'Wishlist'):
+        $query = 'DELETE FROM deckcards WHERE (decknumber = ? AND sideqty > 0 )';
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Wishlist, deleting sideboard cards",$logfile);
+        if ($db->execute_query($query, [$decknumber]) != TRUE):
+            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+        endif;
+    endif;
 endif;
 
 //Carry out quick add requests
@@ -276,6 +305,7 @@ if($decktype != ''):
 else:
     $db_field = '';
 endif;
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Legality db-field for this deck is '$db_field'",$logfile);
 
 // Get deck legalities
 if($db_field != ''):
@@ -363,7 +393,7 @@ $cdr = $creatures = $instantsorcery = $other = $lands = $deckvalue = 0;
 $illegal_cards = '';
 
 //Illegal card style tag
-$red_font_tag = "style='color: red;'";
+$red_font_tag = "style='color: Red;'";
 
 //This section works out which cards the user DOES NOT have, for later linking
 // in a text file to download
@@ -521,7 +551,7 @@ endif;
                 </span>
                 &nbsp;
                 <span
-                    title="Rename"
+                    title="Edit"
                     onclick="toggleForm()"
                     onmouseover=""
                     style="cursor: pointer;"
@@ -554,8 +584,8 @@ endif;
                       }
                     });
                 </script>
-                <b>Deck type</b>
-                <form>
+                <b>Deck type:<br><span id="currentType"><?php echo "$decktype<br></span>"; ?></b>
+                <form id="changeType" style="display: none;">
                     <select class='dropdown' size="1" name="updatetype" onchange='this.form.submit()'>
                         <option <?php if($decktype==''):echo "selected='selected'";endif;?>disabled='disabled'>Pick one</option>
                         <?php 
@@ -569,6 +599,7 @@ endif;
                     </select>    
                     <input type="hidden"name="deck" value="<?php echo $decknumber;?>" />
                 </form>
+                
             <?php 
             if(in_array($decktype,$commander_decktypes)):
                 if($cdr_colours == 'five'):
@@ -645,6 +676,7 @@ endif;
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number"];
                                 if($deck_legality_list != ''):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                     $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                     if ($index !== false):
                                         $card_legal = $deck_legality_list[$index]['legality'];
@@ -773,6 +805,7 @@ endif;
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number"];
                                     if($deck_legality_list != ''):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                         $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                         if ($index !== false):
                                             $card_legal = $deck_legality_list[$index]['legality'];
@@ -916,6 +949,7 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
@@ -1099,6 +1133,7 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
@@ -1257,6 +1292,7 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
@@ -1467,6 +1503,7 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"]; 
                             if($deck_legality_list != ''):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
@@ -1620,6 +1657,7 @@ endif;
                             <td colspan='6'>
                         <?php
                         endif;
+// SIDEBOARD
                         ?>
                         <i><b>Sideboard</b></i>
                         </td>    
@@ -1633,12 +1671,15 @@ endif;
                             $cardname = $row["name"];
                             $quantity = $row["sideqty"];
                             $cardset = strtolower($row["setcode"]);
+                            $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for sideboard card '$cardname'",$logfile);
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
+                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is 'legal' or null",$logfile);
                                         $illegal_tag = '';
                                     else:
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
@@ -1646,9 +1687,11 @@ endif;
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is unknown",$logfile);
                                     $illegal_tag = '';
                                 endif;
                             else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is not needed",$logfile);
                                 $illegal_tag = '';
                             endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
