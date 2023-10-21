@@ -400,10 +400,13 @@ function adddeckcard($deck,$card,$section,$quantity)
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
     if($quantity != FALSE):
         if($section == "side"):
-            $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty IS NOT NULL");
+            $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
             if ($check !== null):
-                if($check['sideqty'] > 0):
+                if($check['sideqty'] != NULL):
                     $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = $deck AND cardnumber = '$card'";
+                    $status = "+1side";
+                else:
+                    $cardquery = "UPDATE deckcards SET sideqty = 1 WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "+1side";
                 endif;
             else:
@@ -411,10 +414,13 @@ function adddeckcard($deck,$card,$section,$quantity)
                 $status = "+newside";
             endif;
         elseif($section == "main"):
-            $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty IS NOT NULL");
+            $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
             if ($check !== null):
-                if($check['cardqty'] > 0):
+                if($check['cardqty'] != NULL):
                     $cardquery = "UPDATE deckcards SET cardqty = cardqty + $quantity WHERE decknumber = $deck AND cardnumber = '$card'";
+                    $status = "+1main";
+                else:
+                    $cardquery = "UPDATE deckcards SET cardqty = 1 WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "+1main";
                 endif;
             else:
@@ -436,12 +442,13 @@ function subtractdeckcard($deck,$card,$section,$quantity)
     global $db, $logfile;
     if($quantity == "all"):
         if($section == "side"):
-            $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND sideqty IS NOT NULL AND cardnumber = '$card'";
+            $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
             $status = "allside";
         elseif($section == "main"):
-            $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND cardqty IS NOT NULL AND cardnumber = '$card'";
+            $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
             $status = "allmain";
         endif;
+        
     else:
         if($section == "side"):
             $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty IS NOT NULL");
@@ -450,7 +457,7 @@ function subtractdeckcard($deck,$card,$section,$quantity)
                     $cardquery = "UPDATE deckcards SET sideqty = sideqty - 1 WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "-1side";
                 elseif($check['sideqty'] == 1):
-                    $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty = 1";
+                    $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "lastside";
                 endif;
             else:
@@ -464,7 +471,7 @@ function subtractdeckcard($deck,$card,$section,$quantity)
                     $cardquery = "UPDATE deckcards SET cardqty = cardqty - 1 WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "-1main";
                 elseif($check['cardqty'] == 1):
-                    $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty = 1";
+                    $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
                     $status = "lastmain";
                 endif;
             else:
@@ -483,6 +490,18 @@ function subtractdeckcard($deck,$card,$section,$quantity)
     else:
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif;
+    
+    // Clean-up empties
+    if ($status == 'lastmain' OR $status == 'lastside' OR $status == 'allmain' OR $status == 'allside'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: $cardquery, status is $status",$logfile);
+        $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
+        if ($runquery = $db->query($cardquery)):
+            //ran ok
+        else:
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+        endif;
+    endif;
+    
     return $status;
 }
 

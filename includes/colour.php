@@ -31,7 +31,7 @@ function colourfunction($colourcode)
             $colourcode = $colourcode.$value;
         endforeach;
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.$colourcode,$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Checking card, colour identity $colourcode",$logfile);
     if (strlen($colourcode) === 1):
         if ($colourcode === "B") :
             $colour = "black";
