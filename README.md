@@ -58,6 +58,8 @@ It must include:
     Loglevel = 3                            //see admin pages
     Timezone = "Australia/Brisbane"
     Locale = "en_US" 
+    Copyright = "Name - 2023"
+    URL = "https://www.mtgcollection.info"
 
     [database]
     DBServer = "********"
