@@ -15,8 +15,9 @@ require ('../includes/functions_new.php');
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 
-// Scryfall migrations cards URL
+// URLs
 $starturl = "https://api.scryfall.com/migrations";
+$myURL = $ini_array['general']['URL'];
 
 // Bulk file store point
 $file_folder = $ImgLocation.'json/';
@@ -193,7 +194,7 @@ foreach($result_files as $data):
                     $db_match = 1;
                     $need_action = $need_action + 1;
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, $need_action to be actioned",$logfile);
-                    $action_text = $action_text."$old_scryfall_id\n";
+                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note\n\n";
                 else:
                     $db_match = 0;
                 endif;
