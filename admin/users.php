@@ -84,7 +84,7 @@ require('../includes/menu.php');
             $newuserstatus = newuser($username, $postemail, $password, $dbname);
             if ($newuserstatus === 2):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, password successfully recorded and checked.</div>";    
-                echo "<div class='alert-box success'><span>success: </span>Writing table $mytable successful.</div>";    
+                echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";    
             elseif ($newuserstatus === 1):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail password successfully recorded and checked.</div>";    
                 echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, already exists for this user.</div>"; 

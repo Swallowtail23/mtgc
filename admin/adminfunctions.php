@@ -65,7 +65,7 @@ function newuser($username, $postemail, $password, $dbname = '')
                         $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table copy failed",$logfile);
                         $tablesuccess = 5;
                     else:
-                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table copy ok",$logfile);
+                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table copy ok",$logfile);
                         $tablesuccess = 1;
                     endif;
                 elseif($collection_exists == -1):
