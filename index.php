@@ -37,6 +37,11 @@ $listperpage = 30;
 $gridperpage = 30;
 $bulkperpage = 1000;
 $maxresults = 2500;
+$time = time();
+
+// If it's admin running the page, set variable
+$admin = check_admin_control($adminip);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
 
 // Define layout and results per page for each layout type
 if (isset($_GET['layout'])):
@@ -745,12 +750,16 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            
+                            //If page is being loaded by admin, don't cache the image
+                            if(($admin == 1) AND ($imageurl !== '/cardimg/back.jpg')):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
+                                $imageurl = $imageurl.'?='.$time;
+                            endif;
                             if(!is_null($imagefunction['back'])):
                                 if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
                                     $imagebackurl = '/cardimg/back.jpg';
                                 else:
-                                    $imagebackurl = $imagefunction['back'];
+                                    $imagebackurl = $imagefunction['back']."?$time";
                                 endif;
                             endif;
                             // If the current record has null fields set the variables to 0 so updates
