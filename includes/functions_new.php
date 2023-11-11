@@ -77,10 +77,12 @@ function check_logged(){
         if (!$_SESSION["logged"] == TRUE):
             header("Location: /login.php");
             exit();
-        elseif (($row['status'] === 'disabled') OR ($row['status'] === 'locked')):
+        elseif (isset($row['status']) AND (($row['status'] === 'disabled') OR ($row['status'] === 'locked'))):
             session_destroy();
             header("Location: /login.php");
             exit();
+        else:
+            // Need a catch here?
         endif;
     endif;
     return $user;
@@ -1090,7 +1092,7 @@ function check_admin_control($adminip)
     // Check for Session variable for admin access (set on login)
     if ((isset($_SESSION['admin'])) AND ($_SESSION['admin'] === TRUE)):
         if (($adminip === 1) OR ($adminip === $_SERVER['REMOTE_ADDR'])):
-            //Admin and secure location or Admin IP set to ''
+            //Admin and secure location, or Admin and admin IP set to ''
             $admin = 1;
         else:
             //Admin but not a secure location
