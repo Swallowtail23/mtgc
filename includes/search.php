@@ -83,11 +83,14 @@ endif;
             </span>
             <br>
             <h4 class="h4">Search scope:</h4>
-            <span class="parametermed">
+            <span class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
             </span>
-            <span class="parametermed">
-                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>My collection</label>
+            <span class="parametersmall">
+                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>Collection</label>
+            </span>
+            <span class="parametersmall">
+                <label class="radio"><input type="radio" name="scope" value="notcollection"><span class="outer"><span class="inner"></span></span>Missing</label>
             </span>
             <br>
             <h4 class="h4">Set:</h4> Ctrl+click to select multiple sets:<br>

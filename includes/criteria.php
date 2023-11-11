@@ -466,6 +466,8 @@ elseif ($adv == "yes" ) :
     
     if ($scope === "mycollection"):
         $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
+    elseif ($scope === "notcollection"):
+        $criteria .= "AND (($mytable.normal = 0 OR $mytable.normal IS NULL) AND ($mytable.foil = 0 OR $mytable.foil IS NULL) AND ($mytable.etched = 0 OR $mytable.etched IS NULL)) ";
     endif;
     
     if ($legal === 'std'):
