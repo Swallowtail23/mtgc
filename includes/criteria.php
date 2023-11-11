@@ -33,7 +33,7 @@ elseif (!$adv == "yes" ) :
                         OR cards_scry.printed_name LIKE '%$name%' OR cards_scry.f1_printed_name LIKE '%$name%' OR cards_scry.f2_printed_name LIKE '%$name%'
                         OR cards_scry.flavor_name LIKE '%$name%' OR cards_scry.f1_flavor_name LIKE '%$name%' OR cards_scry.f2_flavor_name LIKE '%$name%' ";
         endif;
-        $order = "ORDER BY cards_scry.name ASC ";
+        $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         $query = $selectAll.$criteria.$order.$sorting;
         $validsearch = "true";
     else: 
@@ -505,31 +505,31 @@ elseif ($adv == "yes" ) :
     // Sort order
     if (!empty($sortBy)):
         if ($sortBy == "name"):
-            $order = "ORDER BY cards_scry.name ASC ";
+            $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "price" AND $scope === "mycollection"):
-            $order = "ORDER BY $mytable.topvalue DESC ";
+            $order = "ORDER BY $mytable.topvalue DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "price"):
-            $order = "ORDER BY cards_scry.price_sort DESC ";
+            $order = "ORDER BY cards_scry.price_sort DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "cmc"):
-            $order = "ORDER BY cards_scry.cmc ASC ";
+            $order = "ORDER BY cards_scry.cmc ASC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "cmcdown"):
-            $order = "ORDER BY cards_scry.cmc DESC ";
+            $order = "ORDER BY cards_scry.cmc DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "set"):
-            $order = "ORDER BY sets.release_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
+            $order = "ORDER BY set_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
         elseif ($sortBy == "setdown"):
-            $order = "ORDER BY sets.release_date DESC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
+            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number ASC, cs_id ASC ";
         elseif ($sortBy == "setnumberdown"):
-            $order = "ORDER BY sets.release_date DESC, cards_scry.set_name ASC, cards_scry.number DESC, cards_scry.cmc DESC ";
+            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number DESC, cs_id ASC ";
         elseif ($sortBy == "powerup"):
-            $order = "ORDER BY cards_scry.maxpower * 1 ASC, cards_scry.cmc ASC ";
+            $order = "ORDER BY cards_scry.maxpower * 1 ASC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "powerdown"):
-            $order = "ORDER BY cards_scry.minpower * 1 DESC, cards_scry.cmc DESC ";
+            $order = "ORDER BY cards_scry.minpower * 1 DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "toughup"):
-            $order = "ORDER BY cards_scry.maxtoughness * 1 ASC, cards_scry.cmc ASC ";
+            $order = "ORDER BY cards_scry.maxtoughness * 1 ASC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "toughdown"):
-            $order = "ORDER BY cards_scry.mintoughness * 1 DESC, cards_scry.cmc DESC ";        
+            $order = "ORDER BY cards_scry.mintoughness * 1 DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         else:
-            $order = "ORDER BY cards_scry.name ASC ";
+            $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         endif;
     endif;
         
