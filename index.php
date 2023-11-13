@@ -168,7 +168,7 @@ $loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_S
 $mytable = $user . "collection";
 $adv = isset($_GET['adv']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
-$valid_scope = array("all","mycollection");
+$valid_scope = array("all","mycollection","notcollection");
 if (!in_array($scope,$valid_scope)):
     $scope == '';
 endif;
