@@ -133,12 +133,20 @@ require('includes/menu.php'); //mobile menu
         <div id='decklistdiv'>
         <h2 class='h2pad'>My Decks</h2>
         <?php
-        if($sqlquery = $db->select('*','decks',"WHERE owner = $user ORDER BY deckname ASC")):?>
+        if($sqlquery = $db->select('*','decks',"WHERE owner = $user ORDER BY type ASC, deckname ASC")):?>
             <table class="decklist">
-                <?php 
-                while ($row = $sqlquery->fetch_assoc()): ?>
+                <?php
+                $typeheader = '';
+                while ($row = $sqlquery->fetch_assoc()):
+                    if($row['type'] == NULL):
+                        $row['type'] = 'Not set';
+                    endif;
+                    if($typeheader == '' OR $row['type'] != $typeheader):
+                        echo "<tr><td><b>{$row['type']}</b></td></tr>";
+                        $typeheader = $row['type']; 
+                    endif;?>
                     <tr class='resultsrow' style='cursor: pointer;' <?php echo "data-href='deckdetail.php?deck={$row['decknumber']}'"; ?>>
-                    <?php echo "<td>".$row['deckname']."</td>"; ?>
+                    <?php echo "<td class='decklist_name'>".$row['deckname']."</td>"; ?>
                     </tr>
                 <?php 
                 endwhile;?>
