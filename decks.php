@@ -63,7 +63,41 @@ $decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'deck
             {
                 obj.style.display = 'none';
             }
-    </script>  
+    </script>
+    <script type="text/javascript">
+        function createready() {
+            var newdeckname = document.getElementById("newdeckname");
+            var createsubmit = document.getElementById("createsubmit");
+            if(newdeckname.value==="") { 
+                createsubmit.disabled = true; 
+                createsubmit.style.cursor = 'not-allowed';
+                createsubmit.classList.remove('inline_button');
+                createsubmit.classList.add('inline_button_disabled');
+            } else { 
+                createsubmit.disabled = false;
+                createsubmit.style.cursor = 'pointer';
+                createsubmit.classList.add('inline_button');
+                createsubmit.classList.remove('inline_button_disabled');
+            }
+        }
+    </script>
+    <script type="text/javascript">
+        function deleteready() {
+            var deckselect = document.getElementById("deckselect");
+            var deletebutton = document.getElementById("deletebutton");
+            if(deckselect.value==="Pick one") { 
+                deletebutton.disabled = true; 
+                deletebutton.style.cursor = 'not-allowed';
+                deletebutton.classList.remove('inline_button');
+                deletebutton.classList.add('inline_button_disabled');
+            } else { 
+                deletebutton.disabled = false;
+                deletebutton.style.cursor = 'pointer';
+                deletebutton.classList.add('inline_button');
+                deletebutton.classList.remove('inline_button_disabled');
+            }
+        }
+    </script>
 </head>
 
 <body class="body">
@@ -156,13 +190,14 @@ require('includes/menu.php'); //mobile menu
             <h3>Add a new deck</h3>
             <form name="newdeck" action="decks.php" method="post">
                 <input type='hidden' name="newdeck" value="yes">
-                <input class='textinput' title="Please enter deck title" placeholder="DECK TITLE" id="deckname" name="deckname" type="text" size="24" maxlength="150" /><br><br>
-                <input class='inline_button stdwidthbutton' style='cursor: pointer;' type="submit" value="CREATE DECK" />
+                <input class='textinput' onkeyup='createready()' title="Please enter deck title" placeholder="DECK TITLE" id="newdeckname" name="deckname" type="text" size="24" maxlength="150" /><br><br>
+                <input class='inline_button_disabled stdwidthbutton' id="createsubmit" style='cursor: not-allowed;' type="submit" value="CREATE DECK" disabled/>
             </form>
             <h3>Delete a deck</h3>
             <form id="deletedeck" action="decks.php" method="POST">
                 <input type='hidden' name="deletedeck" value="yes">
-                <select id='deckselect' name='decktodelete'>
+                <select id='deckselect' name='decktodelete' onchange='deleteready()'>
+                    <option selected='selected' disabled='disabled'>Pick one</option>
                     <?php 
                     mysqli_data_seek($sqlquery, 0);
                     while ($row = $sqlquery->fetch_assoc()):
@@ -170,7 +205,7 @@ require('includes/menu.php'); //mobile menu
                     endwhile;
                     ?>
                 </select><br><br>
-                <input class='inline_button stdwidthbutton' style='cursor: pointer;' id="deletebutton" type="submit" value="DELETE DECK">
+                <input class='inline_button_disabled stdwidthbutton' style='cursor: not-allowed;' id="deletebutton" type="submit" value="DELETE DECK" disabled>
             </form>
             <br> &nbsp;
         <?php

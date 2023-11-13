@@ -799,6 +799,17 @@ table
 {
     color: #8c9eff;
 }
+.inline_button_disabled
+{
+    text-align: center;
+    vertical-align: top;
+    background: rgba(0,0,0,0);
+    border: 0px;
+    color: grey;
+    font-weight: 400;
+    font-family: "Roboto", sans-serif;
+}
+
 .previousbutton, .nextbutton
 {
     width: 160px;

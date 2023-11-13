@@ -602,11 +602,14 @@ endif;
                         this.submit();
                       }
                     });
-                </script>
-                <b>Deck type:<br><span id="currentType"><?php echo "$decktype<br></span>"; ?></b>
+                </script> <?php
+                if ($decktype == ''):
+                    $decktype = "<i>Not set, click edit above</i>";
+                endif;        ?>
+                <h3>Deck type:<br><span id="currentType"><?php echo "<span style='font-weight:500' >$decktype</span><br></span>"; ?></h3>
                 <form id="changeType" style="display: none;">
                     <select class='dropdown' size="1" name="updatetype" onchange='this.form.submit()'>
-                        <option <?php if($decktype==''):echo "selected='selected'";endif;?>disabled='disabled'>Pick one</option>
+                        <option <?php if($decktype=='' OR $decktype == "<i>Not set, click edit above</i>"):echo "selected='selected'";endif;?>disabled='disabled'>Pick one</option>
                         <?php 
                         foreach($validtypes as $deck):
                             if ($decktype == $deck):
