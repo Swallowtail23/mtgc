@@ -32,7 +32,8 @@ if (!$_SESSION["logged"] == TRUE): ?>
     <?php 
 else: 
     //Need to run these as secpagesetup not run (see page notes)
-    $user = check_logged();
+    $sessionManager = new SessionManager($db);
+    $user = $sessionManager->checkLogged();
     $mytable = $user."collection"; 
     $useremail = str_replace("'","",$_SESSION['useremail']);
     //

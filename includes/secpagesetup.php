@@ -15,7 +15,8 @@ die('Direct access prohibited');
 endif;
 
 $cssver = cssver();                                         // find CSS Version
-$user = check_logged();                                     // check if user is logged in, if not redirect to login.php
+$sessionManager = new SessionManager($db);
+$user = $sessionManager->checkLogged();                     // check if user is logged in, if not redirect to login.php
 $username = username($user);                                // get user name
 $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes
 $mytable = $user."collection";                              // user's collection table

@@ -17,6 +17,7 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');
 include 'includes/colour.php';
 
+
 if (!$_SESSION["logged"] == TRUE): ?>
     <table class='ajaxshow'>
         <tr>
@@ -32,7 +33,8 @@ if (!$_SESSION["logged"] == TRUE): ?>
     <?php 
 else: 
     //Need to run these as secpagesetup not run (see page notes)
-    $user = check_logged();
+    $sessionManager = new SessionManager($db);
+    $user = $sessionManager->checkLogged();
     $mytable = $user."collection"; 
     $useremail = str_replace("'","",$_SESSION['useremail']);
     //

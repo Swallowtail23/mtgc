@@ -58,7 +58,11 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-function check_logged(){ 
+function check_logged()
+{ 
+/*
+//  Replaced with sessionmanager.class
+
     global $_SESSION, $db, $logfile;
     
     if (isset($_SESSION['user'])):
@@ -86,6 +90,8 @@ function check_logged(){
         endif;
     endif;
     return $user;
+ 
+ */
 }
 
 function forcechgpwd()
