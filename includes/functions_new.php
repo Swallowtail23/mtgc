@@ -825,8 +825,11 @@ function getimgname($cardid)
 }
 
 function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sections)
+
+// Replaced by class ImageManager
+
 {
-    global $db, $logfile, $serveremail, $adminemail;
+    /* global $db, $logfile, $serveremail, $adminemail;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
     $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
@@ -934,7 +937,10 @@ function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sect
                           'back' => $backimg);
     endif;
     return $imageurl;
+*/
 }
+     
+
 
 function getStringParameters($input,$ignore1,$ignore2='')
 // This function takes a parsed GET string and passes it back with SET sub-arrays included, and a specified KEY excluded
@@ -1520,7 +1526,7 @@ function validateTrueDecimal($v)
 
 function refresh_image($cardid)
 {
-    global $db, $logfile, $ImgLocation, $two_card_detail_sections;
+    global $db, $logfile, $ImgLocation, $two_card_detail_sections, $serveremail, $adminemail;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$logfile);
     $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$cardid' LIMIT 1";
     $result = $db->query($sql);
@@ -1528,7 +1534,8 @@ function refresh_image($cardid)
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     else:
         $row = $result->fetch_assoc();
-        $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
+        $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+        $imagefunction = $imageManager->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
         if($imagefunction['front'] != 'error'):
             $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
             $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
@@ -1550,7 +1557,8 @@ function refresh_image($cardid)
     endif;
     //Refresh image
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
-    $imagefunction = getImageNew($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
+    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $imagefunction = $imageManager->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
 }
 
 function update_collection_values($collection)
