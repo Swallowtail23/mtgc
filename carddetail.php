@@ -562,10 +562,10 @@ require('includes/menu.php'); //mobile menu
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getimgname by $useremail with $setcode, $cardnumber, $cardname, $cardid",$logfile);
             $imgname = $cardid.".jpg";
             $imgname_2 = $cardid."_b.jpg";
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImageNew by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
-            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImageNew result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImage by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
+            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+            $imagefunction = $imageManager->getImage($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
+            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImage result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
             if($imagefunction['front'] == 'error'):
                 $imageurl = '/cardimg/back.jpg';
             else:

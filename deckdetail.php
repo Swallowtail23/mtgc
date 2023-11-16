@@ -491,7 +491,8 @@ while ($row = $result->fetch_assoc()):
     elseif (strpos($row['type'],'Land') !== false):
         $lands = $lands + $row['cardqty'];
     endif;
-    $imagefunction = getImageNew($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
+    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $imagefunction = $imageManager->getImage($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
     if($imagefunction['front'] == 'error'):
         $imageurl = '/cardimg/back.jpg';
     else:
@@ -520,7 +521,8 @@ $cdr_colours = colourfunction($cdr_colours);
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
     $cardset = strtolower($row["setcode"]);
-    $imagefunction = getImageNew($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
+    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $imagefunction = $imageManager->getImage($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
     if($imagefunction['front'] == 'error'):
         $imageurl = '/cardimg/back.jpg';
     else:

@@ -744,7 +744,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $meld = '';
                             endif;
-                            $imagefunction = getImageNew($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
                             if($imagefunction['front'] == 'error'):
                                 $imageurl = '/cardimg/back.jpg';
                             else:
