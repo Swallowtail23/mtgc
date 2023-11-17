@@ -31,7 +31,7 @@ else:
     $grpinout = $userArray['grpinout'];
     $groupid = $userArray['groupid'];
 
-    $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes
+    $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes, available in SESSION
 
     $mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
     if($mtcestatus == 1):                                       // check if site is in maintenance mode

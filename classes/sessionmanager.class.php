@@ -56,18 +56,17 @@ class SessionManager {
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("s", $userNumber);
         $stmt->execute();
+        $stmt->store_result();
         $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view);
-        $stmt->fetch();
-        $stmt->close();
-
-        if (empty($status)):
-            header("Location: /login.php");
-            exit();
-        elseif ($status === 'disabled' OR $status === 'locked'):
+            
+        if ($stmt->error OR $stmt->num_rows === 0 OR $status === '' OR $status === 'disabled' OR $status === 'locked'):
+            $stmt->close();
             session_destroy();
             header("Location: /login.php");
             exit();
         else:
+            $stmt->fetch();
+            $stmt->close();
             if($adminDb):                                       //Boolean true in db
                 $adminArray = $this->checkAdmin($adminDb); 
             else:                                               //Boolean false in dB
