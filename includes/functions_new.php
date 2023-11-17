@@ -58,36 +58,6 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-function check_logged(){ 
-    global $_SESSION, $db, $logfile;
-    
-    if (isset($_SESSION['user'])):
-        $user = $_SESSION['user'];
-    else:
-        $user = '';
-        header("Location: /login.php");
-        exit();
-    endif;
-    
-    // Check user status
-    $row = $db->select_one('status', 'users',"WHERE usernumber='$user'");
-    if($row === false):
-        header("Location: /login.php");
-    else:
-        if (!$_SESSION["logged"] == TRUE):
-            header("Location: /login.php");
-            exit();
-        elseif (isset($row['status']) AND (($row['status'] === 'disabled') OR ($row['status'] === 'locked'))):
-            session_destroy();
-            header("Location: /login.php");
-            exit();
-        else:
-            // Need a catch here?
-        endif;
-    endif;
-    return $user;
-}
-
 function forcechgpwd()
 { 
     global $_SESSION; 
@@ -824,124 +794,6 @@ function getimgname($cardid)
     return $imgname;
 }
 
-function getImageNew($setcode,$cardid,$ImgLocation,$layout,$two_card_detail_sections)
-
-// Replaced by class ImageManager
-
-{
-    /* global $db, $logfile, $serveremail, $adminemail;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": called for $setcode, $cardid, $ImgLocation, $layout",$logfile);
-    $localfile = $ImgLocation.$setcode.'/'.$cardid.'.jpg';
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File should be at $localfile",$logfile);
-    if(in_array($layout,$two_card_detail_sections)):
-        $localfile_b = $ImgLocation.$setcode.'/'.$cardid.'_b.jpg';
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Back file should be at $localfile_b",$logfile);
-    endif;
-    // Front face
-    if (!file_exists($localfile)):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $localfile missing, running get image function",$logfile);
-        $sql = "SELECT image_uri,layout,f1_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
-        $result = $db->query($sql);
-        if($result === false):
-             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL error: ".$db->error, E_USER_ERROR);
-        else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Query $sql successful",$logfile);
-            $coderow = $result->fetch_array(MYSQLI_ASSOC);
-            $imageurl = '';
-            if(isset($coderow['image_uri']) AND !is_null($coderow['image_uri'])):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Standard card, {$coderow['image_uri']}",$logfile);
-                $imageurl = strtolower($coderow['image_uri']);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile",$logfile);
-            elseif(isset($coderow['f1_image_uri']) AND !is_null($coderow['f1_image_uri'])):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card, {$coderow['f1_image_uri']}",$logfile);
-                $imageurl = strtolower($coderow['f1_image_uri']);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile",$logfile);
-            endif;
-            if (strpos($imageurl,'.jpg?') !== false):
-                $imageurl = substr($imageurl, 0, (strpos($imageurl, ".jpg?") + 5))."1";
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Imageurl is $imageurl",$logfile);
-            endif;
-            if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
-                $imageurl = '';
-                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                $subject = "Invalid image from Scryfall API"; 
-                $message = "$imageurl for card $cardid does not exist - check database entry against API, has it been deleted?";
-                mail($adminemail, $subject, $message, $from); 
-                $frontimg = 'error';
-            else:
-                $options  = array('http' => array('user_agent' => 'MtGCollection/1.0'));
-                $context  = stream_context_create($options);
-                $image = file_get_contents($imageurl, false, $context);
-                if (!file_exists($ImgLocation.$setcode)):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
-                    mkdir($ImgLocation.$setcode);
-                endif;
-                file_put_contents($localfile, $image);
-                $relativepath = strpos($localfile,'cardimg');
-                $frontimg = substr($localfile,$relativepath);
-            endif;
-        endif;
-    else:
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File exists already at $localfile",$logfile);
-        $relativepath = strpos($localfile,'cardimg');
-        $frontimg = substr($localfile,$relativepath);
-    endif;
-    $imageurl = array('front' => $frontimg,
-                      'back' => '');
-    //Back face
-    if (isset($localfile_b)):
-        if(!file_exists($localfile_b)):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $localfile_b missing, running get image function",$logfile);
-            $sql = "SELECT layout,f2_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
-            $result2 = $db->query($sql);
-            if($result2 === false):
-                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL error: ".$db->error, E_USER_ERROR);
-            else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Query $sql successful",$logfile);
-                $coderow2 = $result2->fetch_array(MYSQLI_ASSOC);
-                $imageurl_2 = '';
-                if(isset($coderow2['f2_image_uri']) AND !is_null($coderow2['f2_image_uri'])):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back, {$coderow2['f2_image_uri']}",$logfile);
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for images to use as $localfile_b",$logfile);
-                    $imageurl_2 = strtolower($coderow2['f2_image_uri']);
-                endif;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Flip card back image, {$coderow2['f2_image_uri']}",$logfile);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Looking on scryfall.com ($cardid) for image to use as $localfile_b",$logfile);
-                if (strpos($imageurl_2,'.jpg?') !== false):
-                    $imageurl_2 = substr($imageurl_2, 0, (strpos($imageurl_2, ".jpg?") + 5))."1";
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Imageurl_2 is $imageurl_2",$logfile);
-                endif;
-                if ($imageurl_2 === ''):
-                    $backimg = 'empty';
-                elseif(checkRemoteFile($imageurl_2) == false):
-                    $backimg = 'error';
-                else:
-                    $options  = array('http' => array('user_agent' => 'MtGCollection/1.0'));
-                    $context  = stream_context_create($options);
-                    $image2 = file_get_contents($imageurl_2, false, $context);
-                    if (!file_exists($ImgLocation.$setcode)):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory $setcode",$logfile);
-                        mkdir($ImgLocation.$setcode);
-                    endif;
-                    file_put_contents($localfile_b, $image2);
-                    $relativepath_2 = strpos($localfile_b,'cardimg');
-                    $backimg = substr($localfile_b,$relativepath_2);
-                endif;
-            endif;
-        elseif (file_exists($localfile_b)):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": File exists already at $localfile_b",$logfile);
-            $relativepath_2 = strpos($localfile_b,'cardimg');
-            $backimg = substr($localfile_b,$relativepath_2);
-        endif;
-        $imageurl = array('front' => $frontimg,
-                          'back' => $backimg);
-    endif;
-    return $imageurl;
-*/
-}
-     
-
-
 function getStringParameters($input,$ignore1,$ignore2='')
 // This function takes a parsed GET string and passes it back with SET sub-arrays included, and a specified KEY excluded
 {
@@ -1091,24 +943,6 @@ function autolink($str, $attributes=array()) {
     );
     $str = substr($str, 1);
     return $str;
-}
-
-function check_admin_control($adminip)
-{ 
-    // Check for Session variable for admin access (set on login)
-    if ((isset($_SESSION['admin'])) AND ($_SESSION['admin'] === TRUE)):
-        if (($adminip === 1) OR ($adminip === $_SERVER['REMOTE_ADDR'])):
-            //Admin and secure location, or Admin and admin IP set to ''
-            $admin = 1;
-        else:
-            //Admin but not a secure location
-            $admin = 2;
-        endif;
-    else:
-        //Not an admin
-        $admin = 3;
-    endif;
-    return $admin;
 }
 
 function get_full_url()

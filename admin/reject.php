@@ -35,7 +35,7 @@ endif;?>
     <div id='page'>
         <div class='staticpagecontent'>
             <?php 
-            $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin page called by user number ".$_SESSION['user'],$logfile);
+            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Admin page called by user number {$_SESSION['user']}, admin status is $admin",$logfile);
             if ($admin == 3): 
                 echo "<meta http-equiv='refresh' content='2;url=../index.php'>";
                 echo "<div class='alert-box error' id='adminerror'><span>error: </span>"

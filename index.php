@@ -31,7 +31,7 @@ require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
-forcechgpwd();                                  //Check if user is disabled or needs to change password
+forcechgpwd();                               //Check if user is disabled or needs to change password
 // Default numbers per page and max
 $listperpage = 30;
 $gridperpage = 30;
@@ -39,8 +39,7 @@ $bulkperpage = 1000;
 $maxresults = 2500;
 $time = time();
 
-// If it's admin running the page, set variable
-$admin = check_admin_control($adminip);
+// Is admin running the page
 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
 
 // Define layout and results per page for each layout type
