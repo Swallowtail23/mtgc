@@ -14,16 +14,29 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-$cssver = cssver();                                         // find CSS Version
-$sessionManager = new SessionManager($db);
-$user = $sessionManager->checkLogged();                     // check if user is logged in, if not redirect to login.php
-$username = username($user);                                // get user name
-$useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes
-$mytable = $user."collection";                              // user's collection table
-$mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
-$collection_view = collection_view($user);                  // has this user selected Collection View
-if($mtcestatus == 1):                                       // check if site is in maintenance mode
-    include ('includes/mtcestub.php');
-    session_destroy();
-    exit();
+$cssver = cssver();                                             // find CSS Version
+
+if (!isset($_SESSION['user']) OR !$_SESSION["logged"]):
+    header("Location: /login.php");                             // check if user is logged in; else redirect to login.php
+    exit();    
+else:    
+    // Session information \\
+    $sessionManager = new SessionManager($db,$adminip,$_SESSION);
+    $userArray = $sessionManager->checkLogged();
+    $user = $userArray['usernumber'];
+    $username = $userArray['username'];                         // get user name
+    $mytable = $userArray['table'];                             // user's collection table
+    $collection_view = $userArray['collection_view'];           // has this user selected Collection View
+    $admin = $userArray['admin'];
+    $grpinout = $userArray['grpinout'];
+    $groupid = $userArray['groupid'];
+
+    $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes
+
+    $mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
+    if($mtcestatus == 1):                                       // check if site is in maintenance mode
+        include ('includes/mtcestub.php');
+        session_destroy();
+        exit();
+    endif;
 endif;

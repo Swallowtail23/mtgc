@@ -17,26 +17,23 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');
 include 'includes/colour.php';
 
-if (!$_SESSION["logged"] == TRUE): ?>
+if (!isset($_SESSION["logged"]) OR $_SESSION["logged"] != TRUE OR !isset($_SESSION['user']) OR !$_SESSION["logged"]): ?>
     <table class='ajaxshow'>
         <tr>
-            <td class="name">Your session is expired, or</td>
-        </tr>
-        <tr>
-            <td class="name">you have been logged out.</td>
-        </tr>
-        <tr>
-            <td class="name"><a href=login.php>Click here to log in again.</a></td>
+            <td class="name">You have been logged out.</td>
         </tr>
     </table>
     <?php 
+    echo "<meta http-equiv='refresh' content='2;url=login.php'>";               // check if user is logged in; else redirect to login.php
+    exit(); 
 else: 
     //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db);
-    $user = $sessionManager->checkLogged();
-    $mytable = $user."collection"; 
+    $sessionManager = new SessionManager($db,$adminip,$_SESSION);
+    $userArray = $sessionManager->checkLogged();
+    $user = $userArray['usernumber'];
+    $mytable = $userArray['table'];
     $useremail = str_replace("'","",$_SESSION['useremail']);
-    //
+
     if (isset($_POST['group'])):
         $group = $db->escape($_POST['group']);
         if ($group == 'OPT OUT'):

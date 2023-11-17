@@ -26,10 +26,7 @@ require ('../includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 
 //Check if user is logged in, if not redirect to login.php
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin page called by user $username ($useremail)",$logfile);
-//Admin user?
-$admin = check_admin_control($adminip);
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin check result: ".$admin,$logfile);
+$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin page called by user $username ($useremail) Admin result: ".$admin,$logfile);
 if ($admin !== 1):
     require('reject.php');
 endif;

@@ -2,7 +2,8 @@
 /* Version:     1.0
     Date:       16/11/23
     Name:       sessionManager.class.php
-    Purpose:    Simple check login class
+    Purpose:    Simple check login class, gets user details 
+                or forces session destroy and return to login.php
     Notes:      - 
     To do:      -
     
@@ -19,43 +20,88 @@ endif;
 
 class SessionManager {
     private $db;
+    private $adminip;
+    private $session;
+    private $sessionArray = [];
     
-    public function __construct($db) {
+    const ADMIN_OK = 1;
+    const ADMIN_WRONG_LOCATION = 2;
+    const ADMIN_NONE = 3;
+    
+    public function __construct($db,$adminip,$session) {
         $this->db = $db;
+        $this->adminip = $adminip;
+        $this->session = $session;
+        $this->sessionArray = [
+            'usernumber' => '',
+            'username' => '',
+            'admin' => self::ADMIN_NONE,
+            'grpinout' => '',
+            'groupid' => '',
+            'collection_view' => '',
+            'table' => ''
+        ];
     }
 
-    public function checkLogged() {
-        if (session_status() == PHP_SESSION_NONE):
-            session_start();
-        endif;
-        
-        if (isset($_SESSION['user'])):
-            $user = $_SESSION['user'];
-        else:
-            $user = '';
+    private function addToSessionArray($data) {
+        $this->sessionArray = array_merge($this->sessionArray, $data);
+    }
+    
+    public function checkLogged()
+    {
+        // Get user status and info
+        $userNumber = $this->session['user'];
+        $query = "SELECT status, username, admin, grpinout, groupid, collection_view FROM users WHERE usernumber = ?";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param("s", $userNumber);
+        $stmt->execute();
+        $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view);
+        $stmt->fetch();
+        $stmt->close();
+
+        if (empty($status)):
             header("Location: /login.php");
             exit();
+        elseif ($status === 'disabled' OR $status === 'locked'):
+            session_destroy();
+            header("Location: /login.php");
+            exit();
+        else:
+            if($adminDb):                                       //Boolean true in db
+                $adminArray = $this->checkAdmin($adminDb); 
+            else:                                               //Boolean false in dB
+                $adminArray = self::ADMIN_NONE;
+            endif;
+            $mytable = $userNumber . "collection";
+
+            $this->addToSessionArray([
+                'usernumber' => $userNumber,
+                'username' => $username,
+                'admin' => $adminArray,
+                'grpinout' => $grpinout,
+                'groupid' => $groupid,
+                'collection_view' => $collection_view,
+                'table' => $mytable
+            ]);
         endif;
 
-        // Check user status
-        $row = $this->db->select_one('status', 'users', "WHERE usernumber='$user'");
-        
-        if ($row === false):
-            header("Location: /login.php");
-        else:
-            if (!$_SESSION["logged"] == true):
-                header("Location: /login.php");
-                exit();
-            elseif (isset($row['status']) AND (($row['status'] === 'disabled') OR ($row['status'] === 'locked'))):
-                session_destroy();
-                header("Location: /login.php");
-                exit();
+        return $this->sessionArray;
+    }
+    
+    private function checkAdmin($adminDb) 
+    { 
+        // Check for Session variable for admin access. Every page load rechecks this
+        if ($adminDb):
+            if (($this->adminip === 1) OR ($this->adminip === $_SERVER['REMOTE_ADDR'])):
+                //Admin and secure location, or Admin and admin IP set to ''
+                return self::ADMIN_OK;
             else:
-                // Need a catch here?
+                //Admin but not a secure location
+                return self::ADMIN_WRONG_LOCATION;
             endif;
         endif;
-
-        return $user;
+        return self::ADMIN_NONE;
     }
 }
 
