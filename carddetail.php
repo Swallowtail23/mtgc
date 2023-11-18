@@ -501,11 +501,20 @@ require('includes/menu.php'); //mobile menu
                 $not_paper = false;
             endif;
             $thick = $serialised = false;
-            if (isset($row['promo_types']) AND strpos($row['promo_types'], 'thick') == true):
-                $thick = true;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Thick card (e.g. commander proxy)",$logfile);
-            elseif (isset($row['promo_types']) AND strpos($row['promo_types'], 'serialized') == true):
-                $serialised = true;
+            if (isset($row['promo_types']) AND $row['promo_types'] !== null):
+                $promo = json_decode($row['promo_types']);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card has a promo_type set: {$row['promo_types']}",$logfile);
+                $full_promo_text = '';
+                foreach($promo as $value):
+                    $promo_description = promo_lookup($value);
+                    if($promo_description !== 'skip'):
+                        if($full_promo_text === ''):
+                            $full_promo_text = $full_promo_text . "$promo_description";
+                        else:
+                            $full_promo_text = $full_promo_text . ", $promo_description";
+                        endif;
+                    endif;
+                endforeach;
             endif;
             $cardnumber = $db->escape($row['number'],'int');
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
@@ -1007,10 +1016,8 @@ require('includes/menu.php'); //mobile menu
                             $gametypestring = 'None';
                         endif;
                         echo "<b>Game types: </b>$gametypestring<br>";
-                        if($thick == true):
-                            echo "<b>Promo type: </b>Commander thick proxy card<br>";
-                        elseif($serialised == true):
-                            echo "<b>Promo type: </b>Serialised card<br>";
+                        if(isset($full_promo_text) AND $full_promo_text !== ''):
+                            echo "<b>Promo type: </b>$full_promo_text<br>";
                         endif;
                         if($row["layout"] !== 'reversible_card' AND $row["layout"] !== 'double_faced_token'): // no details at card level for reversible cards
                             if(isset($row['type']) AND $row['type'] != ''):
