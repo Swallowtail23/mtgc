@@ -45,11 +45,15 @@ elseif ($adv == "yes" ) :
     // An advanced search called
     $criteriaNTA = "";
     if ($searchnotes === "yes"):
-            $criteriaNTA = "$mytable.notes LIKE '%$name%' ";
-    elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchability) AND empty($searchabilityexact))):
+        $criteriaNTA = "$mytable.notes LIKE '%$name%' ";
+    elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact))):
         $criteriaNTA .= "cards_scry.name LIKE '%%' ";
-    elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchability) AND empty($searchabilityexact)):
+    elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact)):
         $criteriaNTA .= "cards_scry.name LIKE '%$name%' ";
+    elseif (!empty($searchpromo) AND empty($name)):
+        $criteriaNTA .= "cards_scry.promo_types IS NOT NULL ";
+    elseif (!empty($searchpromo) AND !empty($name)):
+        $criteriaNTA .= "cards_scry.promo_types LIKE '%$name%' ";
     else:
         if ($searchname === "yes"):
             if ($exact === "yes"):
@@ -156,7 +160,7 @@ elseif ($adv == "yes" ) :
     endif;
     if (!empty($criteriaNew)) :
         $criteria .= "AND (".$criteriaNew.") ";
-    endif;        
+    endif;
     // Then rarity
     $criteriaRty = "";
     if ($common === "yes"):
@@ -324,6 +328,12 @@ elseif ($adv == "yes" ) :
         endif;
         $criteriaTribe .= "cards_scry.type LIKE '%human%' ";
     endif;    
+    if ($tribe === "spider"):
+        if (!empty($criteriaTribe)) :
+            $criteriaTribe .= "OR ";
+        endif;
+        $criteriaTribe .= "cards_scry.type LIKE '%spider%' ";
+    endif;  
     if ($tribe === "zombie"):
         if (!empty($criteriaTribe)) :
             $criteriaTribe .= "OR ";

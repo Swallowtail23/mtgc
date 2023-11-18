@@ -259,3 +259,163 @@ $deck_legality_map = array(
                             'db_field' => ''
                             )
 );
+
+//Promo types to show on Card Detail page
+$promos_to_show = array(
+                        array(
+                            'promotype' => 'thick',
+                            'display' => 'Thick card (commander proxy)'
+                            ),
+                        array(
+                            'promotype' => 'serialized',
+                            'display' => 'Serialised card'
+                            ),
+                        array(
+                            'promotype' => 'godzillaseries',
+                            'display' => 'Godzilla card'
+                            ),
+                        array(
+                            'promotype' => 'buyabox',
+                            'display' => 'Buy-a-box card'
+                            ),
+                        array(
+                            'promotype' => 'oilslick',
+                            'display' => 'Oil slick foil'
+                            ),
+                        array(
+                            'promotype' => 'surgefoil',
+                            'display' => 'Surge foil'
+                            ),
+                        array(
+                            'promotype' => 'doublerainbow',
+                            'display' => 'Double rainbow foil'
+                            ),
+                        array(
+                            'promotype' => 'boosterfun',
+                            'display' => 'Booster fun'
+                            ),
+                        array(
+                            'promotype' => 'stepandcompleat',
+                            'display' => 'Step-and-Compleat Phyrexian foil'
+                            ),
+                        array(
+                            'promotype' => 'datestamped',
+                            'display' => 'Date stamped'
+                            ),
+                        array(
+                            'promotype' => 'fnm',
+                            'display' => 'Friday Night Magic'
+                            ),
+                        array(
+                            'promotype' => 'arenaleague',
+                            'display' => 'Arena League'
+                            ),
+                        array(
+                            'promotype' => 'storechampionship',
+                            'display' => 'Store Championship'
+                            ),
+                        array(
+                            'promotype' => 'prerelease',
+                            'display' => 'Prelease'
+                            ),
+                        array(
+                            'promotype' => 'mediainsert',
+                            'display' => 'Media Insert'
+                            ),
+                        array(
+                            'promotype' => 'starterdeck',
+                            'display' => 'Starter Deck'
+                            ),
+                        array(
+                            'promotype' => 'promopack',
+                            'display' => 'Promo pack'
+                            ),
+                        array(
+                            'promotype' => 'stamped',
+                            'display' => 'Stamped'
+                            ),
+                        array(
+                            'promotype' => 'setpromo',
+                            'display' => 'Set promo'
+                            ),
+                        array(
+                            'promotype' => 'silverfoil',
+                            'display' => 'Silver foil'
+                            ),
+                        array(
+                            'promotype' => 'galaxyfoil',
+                            'display' => 'Galaxy foil'
+                            ),
+                        array(
+                            'promotype' => 'tourney',
+                            'display' => 'Tournament promo'
+                            ),
+                        array(
+                            'promotype' => 'planeswalkerdeck',
+                            'display' => 'Planeswalker deck card'
+                            ),
+                        array(
+                            'promotype' => 'instore',
+                            'display' => 'In-store promo card'
+                            ),
+                        array(
+                            'promotype' => 'judgegift',
+                            'display' => 'Judge gift program card'
+                            ),
+                        array(
+                            'promotype' => 'halofoil',
+                            'display' => 'Halo foil'
+                            ),
+                        array(
+                            'promotype' => 'boxtopper',
+                            'display' => 'Box topper card'
+                            ),
+                        array(
+                            'promotype' => 'embossed',
+                            'display' => 'Embossed card'
+                            ),
+                        array(
+                            'promotype' => 'textured',
+                            'display' => 'Textured card'
+                            ),
+                        array(
+                            'promotype' => 'neonink',
+                            'display' => 'Neon ink'
+                            ),
+                        array(
+                            'promotype' => 'confettifoil',
+                            'display' => 'Confetti foil'
+                            ),
+                        array(
+                            'promotype' => 'wizardsplaynetwork',
+                            'display' => 'WPN'
+                            ),
+                        array(
+                            'promotype' => 'draftweekend',
+                            'display' => 'Draft weekend'
+                            ),
+                        array(
+                            'promotype' => 'concept',
+                            'display' => 'Concept card'
+                            ),
+                        array(
+                            'promotype' => 'gameday',
+                            'display' => 'Game Day card'
+                            ),
+                        array(
+                            'promotype' => 'release',
+                            'display' => 'Release card'
+                            ),
+                        array(
+                            'promotype' => 'convention',
+                            'display' => 'Convention promo card'
+                            ),
+                        array(
+                            'promotype' => 'event',
+                            'display' => 'Event promo card'
+                            ),
+                        array(
+                            'promotype' => 'datestamped',
+                            'display' => 'Date stamped'
+                            )
+);

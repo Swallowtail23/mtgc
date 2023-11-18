@@ -90,6 +90,7 @@ $searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
 $searchability = isset($_GET['searchability']) ? 'yes' : '';
 $searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
 $searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
+$searchpromo = isset($_GET['searchpromo']) ? 'yes' : '';
 $new = isset($_GET['searchnew']) ? 'yes' : '';
 $white = isset($_GET['white']) ? 'yes' : '';
 $blue = isset($_GET['blue']) ? 'yes' : '';
@@ -304,6 +305,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         });
                     }
                 });
+                $('#searchpromo').click(function (event) {
+                    if (this.checked) { // check select status of "searchpromo"
+                        $('.notpromo').each(function () { //loop through and deselect each "notpromo" checkbox
+                            this.checked = false;
+                        });
+                    }
+                });
                 $('.notnotes').click(function (event) {
                     if (this.checked) { // check select status when clicking on a "notnotes"
                         $('#yesnotes').each(function () { // deselect "yesnotes"
@@ -318,6 +326,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         });
                     }
                 });
+                $('.notpromo').click(function (event) {
+                    if (this.checked) { // check select status when clicking on a "notpromo"
+                        $('#searchpromo').each(function () { // deselect "searchpromo"
+                            this.checked = false;
+                        });
+                    }
+                });
                 $('#abilityall').click(function (event) {
                     if (this.checked) { // check select status of "abilityall"
                         $('#abilityexact').each(function () { //deselect "abilityexact"
@@ -326,11 +341,19 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     }
                 });
                 $('#abilityexact').click(function (event) {
-                    if (this.checked) {  // check select status of "abilityexact"
-                        $('#abilityall').each(function () { //deselect "abilityall"
+                    if (this.checked) 
+                    {  // check select status of "abilityexact"
+                        $('#abilityall').each(function () 
+                        { //deselect "abilityall"
                             this.checked = false;
                         });
                     }
+                });
+                $('.scopecheckbox').click(function (event) {
+                    if ($('.scopecheckbox:checked').length === 0) 
+                    {
+                        $('#cb1').prop("checked", true);
+                    };
                 });
             });
         </script>

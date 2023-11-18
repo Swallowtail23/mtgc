@@ -35,47 +35,53 @@ endif;
             <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
             <span class="parametersmall checkbox-group">
-                <input id='cb1' type="checkbox" class="checkbox notnotes notsetcode" name="searchname" value="yes" checked="checked">
+                <input id='cb1' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
                     <span class="check"></span>
                     <span class="box"></span>Name
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id='cb2' type="checkbox" class="checkbox notnotes notsetcode" name="searchtype" value="yes">
+                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id = "yesnotes" type="checkbox" class="checkbox notsetcode" name="searchnotes" value="yes">
+                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notsetcode notpromo" name="searchnotes" value="yes">
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
             </span><br>
             <span class="parametersmall checkbox-group">
-                <input id='searchsetcode' type="checkbox" class="checkbox notnotes" name="searchsetcode" value="yes">
+                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notnotes notpromo" name="searchsetcode" value="yes">
                 <label for='searchsetcode'><span class="check"></span>
                     <span class="box"></span>Setcode
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id='searchnew' type="checkbox" class="checkbox notnotes" name="searchnew" value="yes">
+                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchpromo" value="yes">
+                <label for='searchpromo'><span class="check"></span>
+                    <span class="box"></span>Promo
+                </label>
+            </span>
+            <span class="parametersmall checkbox-group">
+                <input id='searchnew' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchnew" value="yes">
                 <label for='searchnew'><span class="check"></span>
                     <span class="box"></span>New (7d)
                 </label>
             </span>
             <br>Abilities:<br>
             <span class="parametermed checkbox-group">
-                <input id='abilityall' type="checkbox" class="checkbox notnotes notsetcode" name="searchability" value="yes">
+                <input id='abilityall' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchability" value="yes">
                 <label for='abilityall'>
                     <span class="check"></span>
                     <span class="box"></span>fuzzy 
                 </label>
             </span>
             <span class="parametersmall checkbox-group">
-                <input id='abilityexact' type="checkbox" class="checkbox notnotes notsetcode" name="searchabilityexact" value="yes">
+                <input id='abilityexact' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchabilityexact" value="yes">
                 <label for='abilityexact'>
                     <span class="check"></span>
                     <span class="box"></span>exact 
@@ -370,9 +376,10 @@ endif;
             <label class="radio"><input type="radio" name="tribe" value="treefolk"><span class="outer"><span class="inner"></span></span>Treefolk</label><br>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="centaur"><span class="outer"><span class="inner"></span></span>Centaur</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="vampire"><span class="outer"><span class="inner"></span></span>Vampire</label></span>
-            <label class="radio"><input type="radio" name="tribe" value="sliver"><span class="outer"><span class="inner"></span></span>Sliver</label><br>                         
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>        
-            <label class="radio"><input type="radio" name="tribe" value="zombie"><span class="outer"><span class="inner"></span></span>Zombie</label>  
+            <label class="radio"><input type="radio" name="tribe" value="sliver"><span class="outer"><span class="inner"></span></span>Sliver</label><br>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="spider"><span class="outer"><span class="inner"></span></span>Spider</label></span>
+            <label class="radio"><input type="radio" name="tribe" value="zombie"><span class="outer"><span class="inner"></span></span>Zombie</label>
             <h4 class="h4">Power / Toughness / Loyalty / CMC</h4>
             Power<br>
             <select class="dropdown" name="poweroperator">

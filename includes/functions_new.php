@@ -1974,9 +1974,25 @@ function card_legal_db_field($decktype)
     global $db, $deck_legality_map, $logfile;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up db_field for legality for deck type '$decktype'",$logfile);
     $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
-    if ($index !== false) $db_field = $deck_legality_map[$index]['db_field'];
+    if ($index !== false):
+        $db_field = $deck_legality_map[$index]['db_field'];
+    endif;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Deck type '$decktype' has legality in '$db_field'",$logfile);
     return $db_field;
+}
+
+function promo_lookup($promo_type)
+{
+    global $promos_to_show, $logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up promo description for '$promo_type'",$logfile);
+    $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));
+    if ($index !== false):
+        $promo_description = $promos_to_show[$index]['display'];
+    else:
+        $promo_description = 'skip';
+    endif;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Promo description for '$promo_type' is '$promo_description'",$logfile);
+    return $promo_description;
 }
 
 function deck_legal_list($decknumber,$deck_type,$db_field)
