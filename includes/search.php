@@ -32,41 +32,41 @@ endif;
             <input type="hidden" name="adv" value="yes">
             <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
-            <input id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
+            <input title="Leave empty for broad search" id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
-            <span class="parametersmall checkbox-group">
+            <span title="Search card names" class="parametersmall checkbox-group">
                 <input id='cb1' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
                     <span class="check"></span>
                     <span class="box"></span>Name
                 </label>
             </span>
-            <span class="parametersmall checkbox-group">
+            <span title="Search card types" class="parametersmall checkbox-group">
                 <input id='cb2' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
-            <span class="parametersmall checkbox-group">
+            <span title="Search my notes" class="parametersmall checkbox-group">
                 <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notsetcode notpromo" name="searchnotes" value="yes">
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
             </span><br>
-            <span class="parametersmall checkbox-group">
+            <span title="Search setcodes (e.g. 'SOI'")" class="parametersmall checkbox-group">
                 <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notnotes notpromo" name="searchsetcode" value="yes">
                 <label for='searchsetcode'><span class="check"></span>
                     <span class="box"></span>Setcode
                 </label>
             </span>
-            <span class="parametersmall checkbox-group">
+            <span title="Search promo types, e.g. 'surgefoil'" class="parametersmall checkbox-group">
                 <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchpromo" value="yes">
                 <label for='searchpromo'><span class="check"></span>
                     <span class="box"></span>Promo
                 </label>
             </span>
-            <span class="parametersmall checkbox-group">
+            <span title="Search recent releases" class="parametersmall checkbox-group">
                 <input id='searchnew' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchnew" value="yes">
                 <label for='searchnew'><span class="check"></span>
                     <span class="box"></span>New (7d)
@@ -92,10 +92,10 @@ endif;
             <span class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
             </span>
-            <span class="parametersmall">
+            <span title="Only show my cards" class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>Collection</label>
             </span>
-            <span class="parametersmall">
+            <span title="Only show cards I don't have" class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="notcollection"><span class="outer"><span class="inner"></span></span>Missing</label>
             </span>
             <br>
