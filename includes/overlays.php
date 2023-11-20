@@ -19,16 +19,18 @@ endif;
 
 <div id="float_cview_div">
 <?php
-    if(isset($floating_button) AND $floating_button === true AND $collection_view === 1): ?>
+    if(isset($floating_button) AND $floating_button === true AND $collection_view === 1 AND isset($scope) AND $scope !== 'mycollection'): ?>
         <label id="floating_button_label" class="floating-button" title="Toggle collection view off"> 
             <input type="checkbox" id="float_cview" class="option_toggle" checked="true" value="on" />
             <div class="slider round"></div>
         </label>  <?php
-    elseif(isset($floating_button) AND $floating_button === true AND $collection_view === 0): ?>
+    elseif(isset($floating_button) AND $floating_button === true AND $collection_view === 0 AND isset($scope) AND $scope !== 'mycollection'): ?>
         <label id="floating_button_label" class="floating-button" title="Toggle collection view on"> 
             <input type="checkbox" id="float_cview" class="option_toggle" value="on" />
             <div class="slider round"></div>
         </label>  <?php
+    else:
+        
     endif; 
 ?>
 </div>
