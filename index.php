@@ -469,8 +469,57 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         }
                         return vars;
                     }
-            </script>
-  <?php endif;?>
+            </script> <?php 
+            if($layout == 'grid' AND isset($validsearch) AND ($validsearch !== "toomany")):  
+                $floating_button = true; ?>
+                <script>
+                    $(document).ready(function(){
+                            // Function to remove "no_collection" class from images
+                            function removeNoCollectionClass() {
+                                // Get all elements with the classes "cardimg none no_collection"
+                                var elements = document.querySelectorAll('.cardimg.none.no_collection');
+
+                                // Loop through each element and remove the "no_collection" class
+                                elements.forEach(function (element) {
+                                    element.classList.remove('no_collection');
+                                });
+                            }
+                            // Function to add "no_collection" class to images
+                            function addNoCollectionClass() {
+                                // Get all elements with the classes "cardimg none"
+                                var elements = document.querySelectorAll('.cardimg.none');
+
+                                // Loop through each element and add the "no_collection" class
+                                elements.forEach(function (element) {
+                                    element.classList.add('no_collection');
+                                });
+                            }
+                            $('#float_cview').on('change',function(){
+                            var checkBox = document.getElementById("float_cview");
+                            if (checkBox.checked == true){
+                                var cview = "TURN ON";
+                                // Call the function to add "no_collection" class
+                                addNoCollectionClass();
+                                document.getElementById("floating_button_label").title = "Toggle collection view off";
+                            } else {
+                                var cview = "TURN OFF";
+                                // Call the function to remove "no_collection" class
+                                removeNoCollectionClass();
+                                document.getElementById("floating_button_label").title = "Toggle collection view on";
+                            }
+                            $.ajax({  
+                                url:"ajaxcview.php",  
+                                method:"POST",  
+                                data:{"collection_view":cview},
+                                success:function(data){  
+                                //   $('#result').html(data);  
+                                }
+                            });    
+                        });
+                    });
+                </script> <?php
+            endif; 
+        endif;?>
     </head>
     <body>
 <?php include_once("includes/analyticstracking.php") ?>
@@ -494,7 +543,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         ?>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
         rel="stylesheet">  
-        <div id='page'>
+        <div id='page'> 
             <span id="printtitle" class="headername">
                 <img src="images/white_m.png">MtG collection
             </span>
@@ -805,7 +854,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is $collection_view",$logfile);
                             if(($myqty + $myfoil + $myetch) == 0 AND $collection_view == 1):
-                                $in_collection = ' no_collection';
+                                $in_collection = ' none no_collection';
+                            elseif(($myqty + $myfoil + $myetch) == 0):
+                                $in_collection = ' none';
+                            elseif(($myqty + $myfoil + $myetch) > 0 AND $collection_view == 1):
+                                $in_collection = '';
                             else:
                                 $in_collection = '';
                             endif;
