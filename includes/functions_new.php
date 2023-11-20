@@ -139,15 +139,6 @@ function mtcemode($user)
     endif; 
 }
 
-function collection_view($user)
-{
-    global $db;
-    if($row = $db->select_one('collection_view', 'users',"WHERE usernumber='$user'")):
-        $collection_view = $row['collection_view'];
-    endif;
-    return $collection_view;
-}
-
 function username($user)
 {
     global $db;
