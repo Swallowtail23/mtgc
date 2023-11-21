@@ -91,6 +91,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <title>MtG collection card details</title>
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,300,0,0" />
+<link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
 <?php include('includes/googlefonts.php');?>
 <script src="/js/jquery.js"></script>
 <script type="text/javascript">
@@ -985,7 +986,7 @@ require('includes/menu.php'); //mobile menu
                         echo "<h3 class='shallowh3'>Details</h3>";
                         
                         if(isset($admin) AND $admin == 1):
-                            echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i>$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
+                            echo "<a href='admin/cards.php?cardtoedit=$lookupid' target='blank'><i><i class='ss ss-$setcode ss-{$row['rarity']} ss-grad ss-2x'></i>&nbsp;$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
                         else:
                             echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
                         endif;
