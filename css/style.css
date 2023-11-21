@@ -2483,7 +2483,9 @@ hr.styled
 { 
 
 }
-/* Style for the floating button */
+/***** Sliders *****/
+
+/* Style for the floating button on Index grid search results */
 .floating-button {
     position: fixed; 
     z-index: 99998;
@@ -2494,15 +2496,16 @@ hr.styled
 }
 .floating-button input {display:none;}
 
+/* Style for the switches on profile page */
 .switch {
   position: relative;
   display: inline-block;
   width: 60px;
   height: 34px;
 }
-
 .switch input {display:none;}
 
+/* Style for the slider, used in all the switches */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -2517,8 +2520,12 @@ hr.styled
 
 .slider:before {
   position: absolute;
-  content: "book_5";
-  color: #3F51B5;
+  content: "";
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 300,
+    'GRAD' -50,
+    'opsz' 20;
   height: 26px;
   width: 26px;
   left: 4px;
@@ -2527,8 +2534,13 @@ hr.styled
   -webkit-transition: .4s;
   transition: .4s;
 }
+/* Slider customisation (add ID, Google icon text, and google font stylesheet on page)  */
+#slider_cview:before {
+  content: "book_5";
+  color: #3F51B5;
+}
 
-.slider.book_2:before {
+#slider_cview.book_2:before {
   content: "book_2";
   color: #ccc;
 }
