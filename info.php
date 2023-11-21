@@ -45,7 +45,8 @@ require('includes/menu.php');
         </div>
         <h2 class='h2pad'>Copyright</h2>
         The information presented on this site about Magic: The Gathering is copyrighted by Wizards of the Coast.<br>
-        This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.
+        This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.<br>
+        Thanks to Andrew Gioia for his Keyrune project (<a target='_blank' href='https://keyrune.andrewgioia.com/'>https://keyrune.andrewgioia.com/</a>)<br><br>
         <h2 id='h2'>Privacy and security</h2>
         This app stores the following information:
         <ul>
