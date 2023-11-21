@@ -286,6 +286,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <meta name="viewport" content="initial-scale=1">
         <title> MtG collection </title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,300,1,-25" />
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
@@ -474,6 +475,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 $floating_button = true; ?>
                 <script>
                     $(document).ready(function(){
+                            var sliderElement = document.querySelector('.slider.round.material-symbols-outlined');
                             // Function to remove "no_collection" class from images
                             function removeNoCollectionClass() {
                                 // Get all elements with the classes "cardimg none no_collection"
@@ -501,11 +503,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 // Call the function to add "no_collection" class
                                 addNoCollectionClass();
                                 document.getElementById("floating_button_label").title = "Toggle collection view off";
+                                sliderElement.classList.remove('book_2');
                             } else {
                                 var cview = "TURN OFF";
                                 // Call the function to remove "no_collection" class
                                 removeNoCollectionClass();
                                 document.getElementById("floating_button_label").title = "Toggle collection view on";
+                                sliderElement.classList.add('book_2');
                             }
                             $.ajax({  
                                 url:"ajaxcview.php",  
