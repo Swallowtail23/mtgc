@@ -286,7 +286,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <meta name="viewport" content="initial-scale=1">
         <title> MtG collection </title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,300,1,-25" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
