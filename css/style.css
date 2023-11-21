@@ -2517,7 +2517,8 @@ hr.styled
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: "book_5";
+  color: #3F51B5;
   height: 26px;
   width: 26px;
   left: 4px;
@@ -2525,6 +2526,11 @@ hr.styled
   background-color: white;
   -webkit-transition: .4s;
   transition: .4s;
+}
+
+.slider.book_2:before {
+  content: "book_2";
+  color: #ccc;
 }
 
 input:checked + .slider {
