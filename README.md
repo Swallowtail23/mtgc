@@ -39,17 +39,16 @@ Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 ### File locations ###
-Create a new folder at /opt/mtg
-Copy the ini file (see next section) and bulk scripts to it (samples are in setup folder),
-altering as needed so they point to where the bulk scripts are.
-Make sure the logfile location specified in the ini file exists and is web-server-writable.
-Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache
-Make sure there is a json folder in the Imglocation folder
+- Create a new folder at /opt/mtg
+- Copy the ini file (see next section) and the shell scripts to call bulk scripts to /opt/mtg (samples are in setup folder), altering as needed so they point to where the bulk scripts are
+- Make sure the logfile location specified in the ini file exists and is web-server-writable
+- Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache
+- Make sure there is a json folder in the Imglocation folder
 
 ### Ini file ###
-The application expects an ini file located at: /opt/mtg/mtg_new.ini. 
-Apache must be able to read AND write this file.
-It must include:
+- The application expects an ini file located at: /opt/mtg/mtg_new.ini
+- Apache must be able to read AND write this file
+- It must include:
 
     [general]
     tier = "dev"                            //either 'dev' or 'prod'
@@ -76,8 +75,9 @@ It must include:
     Turnstile_site_key = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
 
-Check all variables and remove all comments. Lines need to be fully left-aligned.
-If Turnstile is enabled, valid keys must be included
+- Check all variables, remove all comments
+- Lines need to be fully left-aligned
+- If Turnstile is enabled, valid keys must be included
 
 NOTE: 
 If AdminIP is empty, then an admin user can access admin pages from any IP address.
@@ -88,29 +88,33 @@ that IP address only.
 
 - Database structure is noted in setup/mtg_new.sql
 - You will also need:
-in `admin`:
+in `admin` (administration) table:
 
     INSERT INTO `admin` (`key`, `usemin`, `tier`, `mtce`) VALUES
     (1, 0, 'dev', 0);
 
 Note: Set dev or prod as appropriate (sets header colour for identification)
 
+For groups to work:
+
     INSERT INTO `groups` (`groupnumber`, `groupname`, `owner`) VALUES
     (1, 'Masters', 1);
 
 Edit my.cnf and set as follows:
 (first line is to remove GROUP BY, check existing server config and remove that, don't copy the line):
+
     [mysqld]
     sql_mode = STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
     innodb_buffer_pool_size = 2G 
+
 Note 2G sizing is based on 4G or more server RAM.
 
 ### Initial user ###
 
 Run command line:
 - php initial.php username password from webserver's console in the setup folder
-- note the supplied username and password and write into the database for initial user
-- copy collectionTemplate database table to {usernumber}collection, e.g. 1collection
+- note the username and hashed password which are echoed back to the console, and write into the database for initial user
+- copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
 
