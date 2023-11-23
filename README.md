@@ -50,6 +50,8 @@ IAS (ued in index.php) installed locally in /js folder, pulled down from CDN htt
 - Apache must be able to read AND write this file
 - It must include:
 
+Ini file content:
+
     [general]
     tier = "dev"                            //either 'dev' or 'prod'
     ImgLocation = "/mnt/data/cardimg/"      //ensure web server can write here
@@ -88,7 +90,8 @@ that IP address only.
 
 - Database structure is noted in setup/mtg_new.sql
 - You will also need:
-in `admin` (administration) table:
+
+In `admin` (administration) table:
 
     INSERT INTO `admin` (`key`, `usemin`, `tier`, `mtce`) VALUES
     (1, 0, 'dev', 0);
