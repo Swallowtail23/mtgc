@@ -195,7 +195,7 @@ function colourfunction($colourcode)
             $colour = "grixis";
         elseif ($colourcode === "GR // GW") :
             $colour = "naya";
-        elseif (in_array($colourcode,array("GB // GR","GB // GR","RB // GR"))) :
+        elseif (in_array($colourcode,array("GB // GR","GR // GB","RB // GR"))) :
             $colour = "jund";
         elseif (in_array($colourcode,array("WB // GB","GW // WB"))) :
             $colour = "junk";

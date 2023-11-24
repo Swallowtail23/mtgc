@@ -2147,8 +2147,8 @@ endif;
             endif;
             ?>
             <h4>Quick add</h4>
-                Format: {qty[optional]}{cardname}{(set)[optional]}<br>
-                E.g. 1 Murder; Pacifism (m11)
+            Format: <i>"qty [optional] name [optional if set and number included] (set [optional unless number included] number [optional])" </i><br>E.g.: 
+                "Madame Vastra", "Madame Vastra (WHO)", "Madame Vastra (WHO 425)", "4 Madame Vastra (WHO)", "2 (WHO 425)"
             <form action="deckdetail.php"  method="GET">
                 <input class='decknotes textinput' type='text' name='quickadd' size='30'>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
