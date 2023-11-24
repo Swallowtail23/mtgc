@@ -200,64 +200,94 @@ function quickadd($decknumber,$get_string)
     
     $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
     
-    //Quantity
-    preg_match("~^(\d+)~", $quickaddstring,$qty);
-    if (isset($qty[0])):
-        $quickaddstring = ltrim(ltrim($quickaddstring,$qty[0]));
-        $quickaddqty = $qty[0];
+    preg_match("~^(\d*)\s*(?:([^()]+)\s*)?(?:\(([^)\s]+)(?:\s+([^)]+))?\))?~", $quickaddstring, $matches);
+    if (isset($matches[1]) AND $matches[1] !== ''):
+        $quickaddqty = $matches[1];
     else:
         $quickaddqty = 1;
     endif;
-    
-    //Set (qty has been removed if it was set)
-    preg_match('#\((.*?)\)#', $quickaddstring, $settomatch);
-    if (isset($settomatch[0])):
-        $quickaddset = rtrim(ltrim(strtoupper($settomatch[0]),"("),")");
-        $quickaddcard = rtrim(rtrim($quickaddstring,$settomatch[0]));
+
+    if (isset($matches[2])):
+        $quickaddcard = trim($matches[2]);
+    else:
+        $quickaddcard = '';
+    endif;
+
+    if (isset($matches[3])):
+        $quickaddset = strtoupper($matches[3]);
     else:
         $quickaddset = '';
-        $quickaddcard = $quickaddstring;
     endif;
+
+    if (isset($matches[4])):
+        $quickaddNumber = $matches[4];
+    else:
+        $quickaddNumber = '';
+    endif;
+        
+    // Example of output for input "1 The Tenth Doctor (WHO 0551)"
+    // 
+    // $quickaddqty: 1
+    // $quickaddcard: The Tenth Doctor
+    // $quickaddset: WHO
+    // $cardNumber: 0551
+    
     //Card
-    
     $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: [$quickaddqty] x [$quickaddcard] [$quickaddset]",$logfile);
-    $quickaddcard = $db->escape($quickaddcard);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$logfile);
+    if($quickaddcard !== ''):
+        $quickaddcard = $db->escape($quickaddcard);
+    endif;
     
-    if($quickaddset == ''):
-        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
-                                     WHERE name = '$quickaddcard' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
-            if ($quickaddcardid->num_rows > 0):
-                while ($results = $quickaddcardid->fetch_assoc()):
-                    $cardtoadd = $results['id'];
-                endwhile;
-            else:
-                $cardtoadd = 'cardnotfound';
-            endif;
+    $stmt = null;
+    if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+        // Card name, setcode, and collector number provided
+        $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param("sss", $quickaddcard, $quickaddset, $quickaddNumber);
+    elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
+        // Card name and setcode provided
+        $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param("ss", $quickaddcard, $quickaddset);
+    elseif ($quickaddcard !== '' AND $quickaddset === ''):
+        // Card name only provided, or with a number (but useless without setcode) - just grab a name match
+        $query = "SELECT id FROM cards_scry WHERE name = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param("s", $quickaddcard);
+    elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+        // Card name not provided, setcode, and collector number provided
+        $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param("ss", $quickaddset, $quickaddNumber);
+    else:
+        // Not enough info, cannot add
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Not enough info to identify a card to add",$logfile);
+        $cardtoadd = 'cardnotfound';
+        return $cardtoadd;
+    endif;
+    
+    if ($stmt !== null AND $stmt->execute()):
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0):
+            $row = $result->fetch_assoc();
+            $stmt->close();
+            $cardtoadd = $row['id'];
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
+            adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
+            return $cardtoadd;
         else:
-            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
+            $stmt->close();
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
+            $cardtoadd = 'cardnotfound';
+            return $cardtoadd;
         endif;
     else:
-        if ($quickaddcardid = $db->query("SELECT id,setcode,layout from cards_scry
-                                     WHERE name = '$quickaddcard' AND setcode = '$quickaddset' AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1")):
-            if ($quickaddcardid->num_rows > 0):
-                while ($results = $quickaddcardid->fetch_assoc()):
-                    $cardtoadd = $results['id'];
-                endwhile;
-            else:
-                $cardtoadd = 'cardnotfound';
-            endif;
-        else:
-            trigger_error('[ERROR] deckdetail.php: Error: Quickadd SQL error', E_USER_ERROR);
-        endif;
+        $stmt->close();
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - SQL error: " . $stmt->error, $logfile);
+        $cardtoadd = 'cardnotfound';
+        return $cardtoadd;
     endif;
-    if($cardtoadd == 'cardnotfound'):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
-    else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
-        adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
-    endif;
-    return $cardtoadd;
 }
 
 function adddeckcard($deck,$card,$section,$quantity)
