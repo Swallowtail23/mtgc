@@ -2,14 +2,14 @@
 /* Version:     1.0
     Date:       25/11/23
     Name:       deckManager.class.php
-    Purpose:    Initially, class for quickAdd
+    Purpose:    Class for quickAdd and deck import
     Notes:      - 
     To do:      -
     
     @author     Simon Wilson <simon@simonandkate.net>
     @copyright  2023 Simon Wilson
     
- *  1.0
+ *  1.0         25/11/23
                 Initial version
 */
 
@@ -27,10 +27,10 @@ class DeckManager {
         $this->logfile = $logfile;
     }
     
-    // processInput can handle either single-line or multi-line inputs, using quickadd to process. Multi-line inputs are batched for combined data write
+    // processInput can handle either single-line or multi-line inputs, using quickadd to process. Multi-line inputs are batched for combined data write by addDeckCardsBatch
     public function processInput($decknumber, $input) {
-        // Check if input is multiline
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ProcessInput called for deck $decknumber with '$input'",$this->logfile);
+        // Check if input is multiline
         $lines = explode("\n", $input);
         if (count($lines) > 1):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Multi-line input, calling quickadd in batch mode",$this->logfile);
@@ -42,10 +42,10 @@ class DeckManager {
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Single-line input, calling quickadd in single-line mode",$this->logfile);
             return $this->quickadd($decknumber, $input);
         endif;
-        // If batched card IDs are not empty, perform batch insert
+        // If batched card array is not empty, perform batch insert
         if (!empty($this->batchedCardIds)):
             $this->addDeckCardsBatch($decknumber, $this->batchedCardIds);
-            // Clear the array after batch insert
+            // Clear array after batch insert
             $this->batchedCardIds = [];
         endif;
     }
@@ -55,33 +55,32 @@ class DeckManager {
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)",$this->logfile);
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         preg_match("~^(\d*)\s*(?:([^()]+)\s*)?(?:\(([^)\s]+)(?:\s+([^)]+))?\))?~", $quickaddstring, $matches);
+        // Quantity
         if (isset($matches[1]) AND $matches[1] !== ''):
             $quickaddqty = $matches[1];
         else:
             $quickaddqty = 1;
         endif;
-
+        // Name
         if (isset($matches[2])):
             $quickaddcard = trim($matches[2]);
         else:
             $quickaddcard = '';
         endif;
-
+        // Set
         if (isset($matches[3])):
             $quickaddset = strtoupper($matches[3]);
         else:
             $quickaddset = '';
         endif;
-
+        // Collector number
         if (isset($matches[4])):
             $quickaddNumber = $matches[4];
         else:
             $quickaddNumber = '';
         endif;
-
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
-        
         $stmt = null;
         if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name, setcode, and collector number provided
@@ -96,7 +95,10 @@ class DeckManager {
                                                        f2_flavor_name = ?) AND 
                                                        setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("sssssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddset, $quickaddNumber);
+            $params = array_fill(0, 9, $quickaddcard);
+            $params[] = $quickaddset;
+            $params[] = $quickaddNumber;
+            $stmt->bind_param("sssssssssss", ...$params);
         elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
             // Card name and setcode provided
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
@@ -110,7 +112,9 @@ class DeckManager {
                                                        f2_flavor_name = ?) AND 
                                                        setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("ssssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddset);
+            $params = array_fill(0, 9, $quickaddcard);
+            $params[] = $quickaddset;
+            $stmt->bind_param("ssssssssss", ...$params);
         elseif ($quickaddcard !== '' AND $quickaddset === ''):
             // Card name only provided, or with a number (but useless without setcode) - just grab a name match
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
@@ -124,7 +128,8 @@ class DeckManager {
                                                        f2_flavor_name = ?) AND 
                                                        `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("sssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard);
+            $params = array_fill(0, 9, $quickaddcard);
+            $stmt->bind_param("sssssssss", ...$params);
         elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name not provided, setcode, and collector number provided
             $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
