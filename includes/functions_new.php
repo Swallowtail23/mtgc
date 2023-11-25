@@ -877,21 +877,6 @@ function exportCollectionToCsv($table,$filename = 'export.csv')
             exit;
         endif;
 }
-function importmapcheck($import_id)
-{
-    global $db;
-    $sql = "SELECT mapped_id FROM importlookup WHERE original_id = '$import_id' LIMIT 1";
-    $result = $db->query($sql);
-    if($result === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    else:
-        $row = $result->fetch_assoc();
-        if (!empty($row[0])):
-            $import_id = $row[0];
-        endif;
-        return $import_id;
-    endif;
-}
 
 function autolink($str, $attributes=array()) {
     $attrs = '';
@@ -1264,23 +1249,6 @@ function loginstamp($useremail)
         return 0;
     endif;
 }
-
-if(!function_exists('hash_equals')):
-    function hash_equals($str1, $str2)
-    {
-        if(strlen($str1) != strlen($str2)):
-            return false;
-        else:
-            $res = $str1 ^ $str2;
-            $ret = 0;
-            for($i = strlen($res) - 1; $i >= 0; $i--)
-            {
-                $ret |= ord($res[$i]);
-            }
-            return !$ret;
-        endif;
-    }
-endif;
 
 function downloadbulk($url, $dest)
 {

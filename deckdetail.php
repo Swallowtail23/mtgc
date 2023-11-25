@@ -301,7 +301,6 @@ endif;
 if (isset($_GET["quickadd"])):
     $deckManager = new DeckManager($db, $logfile);
     $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
-    // $cardtoadd = $deckManager->quickAdd($decknumber,$_GET["quickadd"]);
 endif;
 
 //Deck import
@@ -430,11 +429,17 @@ $firebrick_font_tag = "style='color: FireBrick; font-weight: bold'";
 // in a text file to download
 $resultnames = array();
 while ($row = $result->fetch_assoc()):
+    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+        $row['name'] = $row['flavor_name'];
+    endif;
     if(!in_array($row['name'], $resultnames)):
         $resultnames[] = $row['name'];
     endif;
 endwhile;
 while ($row = $sideresult->fetch_assoc()):
+    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+        $row['name'] = $row['flavor_name'];
+    endif;
     if(!in_array($row['name'], $resultnames)):
         $resultnames[] = $row['name'];
     endif;
@@ -451,10 +456,16 @@ if($uniquecardscount > 0):
     //write total of each unique name to the results array
     while ($row = $result->fetch_assoc()):
         $qty = $row['cardqty'] + $row['sideqty'];
+        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+            $row['name'] = $row['flavor_name'];
+        endif;
         $key = array_search($row['name'], $resultnames);
         $resultqty[$key] = $resultqty[$key] + $qty;
     endwhile;
     while ($row = $sideresult->fetch_assoc()):
+        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+            $row['name'] = $row['flavor_name'];
+        endif;
         $qty = $row['cardqty'] + $row['sideqty'];
         $key = array_search($row['name'], $resultnames);
         $resultqty[$key] = $resultqty[$key] + $qty;
@@ -493,6 +504,9 @@ $cdrSet = FALSE;
 $cdr_colours = array();
 $i = 0;
 while ($row = $result->fetch_assoc()):
+    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+        $row['name'] = $row['flavor_name'];
+    endif;
     if($row['commander'] != 0 AND $row['commander'] != NULL):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking card, colour identity {$row['color_identity']}",$logfile);
         //card is a commander, get its colour identity
@@ -547,6 +561,9 @@ endif;
 
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
+    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+        $row['name'] = $row['flavor_name'];
+    endif;
     $cardset = strtolower($row["setcode"]);
     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
     $imagefunction = $imageManager->getImage($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
@@ -719,6 +736,9 @@ endif;
                         mysqli_data_seek($result, 0);
                         $commandercount = 0;
                         while ($row = $result->fetch_assoc()):
+                            if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                                $row['name'] = $row['flavor_name'];
+                            endif;
                             if ($row['commander'] == 1):
                                 $cardname = $row["name"];
                                 $rarity = $row["rarity"];
@@ -849,6 +869,9 @@ endif;
                         if (mysqli_num_rows($result) > 0):
                             mysqli_data_seek($result, 0);
                             while ($row = $result->fetch_assoc()):
+                                if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                                    $row['name'] = $row['flavor_name'];
+                                endif;
                                 if ($row['commander'] == 2):
                                     $cardname = $row["name"];
                                     $rarity = $row["rarity"];
@@ -983,6 +1006,9 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                 mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                            $row['name'] = $row['flavor_name'];
+                        endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
@@ -1191,6 +1217,9 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                            $row['name'] = $row['flavor_name'];
+                        endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
@@ -1374,6 +1403,9 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                            $row['name'] = $row['flavor_name'];
+                        endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
                         if (strpos($row['type'],' //') !== false):
@@ -1608,6 +1640,9 @@ endif;
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
+                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                            $row['name'] = $row['flavor_name'];
+                        endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
                         // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
@@ -1816,6 +1851,9 @@ endif;
                     if (mysqli_num_rows($sideresult) > 0):
                         mysqli_data_seek($sideresult, 0);
                         while ($row = $sideresult->fetch_assoc()):
+                            if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                                $row['name'] = $row['flavor_name'];
+                            endif;
                             $illegal_tag = $red_font_tag;
                             $wrong_colour_tag = $firebrick_font_tag;
                             $cardname = $row["name"];
@@ -2173,14 +2211,16 @@ endif;
             ?>
             <h4>Quick add</h4>
             Format: <i>"qty [optional] name [optional if set and number included] (set [optional unless number included] number [optional])" </i><br>E.g.: 
-                "Madame Vastra", "Madame Vastra (WHO)", "Madame Vastra (WHO 425)", "4 Madame Vastra (WHO)", "2 (WHO 425)"
+            "Madame Vastra", "Madame Vastra (WHO)", "Madame Vastra (WHO 425)", "4 Madame Vastra (WHO)", "2 (WHO 425)"
+            <br><br>
             <form action="deckdetail.php"  method="GET">
                 <input class='decknotes textinput' type='text' name='quickadd' size='30'>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
             <h4>Import</h4>
-            Takes a text file as input, with each line formatted as per Quick add above
+            Import text file, formatted per Quick add above. Note, large decks may take several minutes to import and fetch data and images.
+            <br>Cards already in the deck will have quantity updated.
             <script type="text/javascript">
                 $(document).ready(
                 function(){
@@ -2196,13 +2236,19 @@ endif;
                         });
                 });
             </script>
+            <script type="text/javascript"> 
+                function ImportPrep()
+                    {
+                        document.body.style.cursor='wait';
+                    }
+            </script> 
             <br><br>
             <form enctype='multipart/form-data' action='?' method='post'>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
                     <span>UPLOAD</span>
                 </label>
-                <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled;>
+                <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled onclick='ImportPrep()';>
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
             </form> 
             <br>

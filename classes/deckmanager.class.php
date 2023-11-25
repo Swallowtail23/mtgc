@@ -27,6 +27,7 @@ class DeckManager {
         $this->logfile = $logfile;
     }
     
+    // processInput can handle either single-line or multi-line inputs, using quickadd to process. Multi-line inputs are batched for combined data write
     public function processInput($decknumber, $input) {
         // Check if input is multiline
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ProcessInput called for deck $decknumber with '$input'",$this->logfile);
@@ -39,7 +40,7 @@ class DeckManager {
             endforeach;
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Single-line input, calling quickadd in single-line mode",$this->logfile);
-            $this->quickadd($decknumber, $input);
+            return $this->quickadd($decknumber, $input);
         endif;
         // If batched card IDs are not empty, perform batch insert
         if (!empty($this->batchedCardIds)):
@@ -84,22 +85,49 @@ class DeckManager {
         $stmt = null;
         if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name, setcode, and collector number provided
-            $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
+            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                       f1_name = ? OR 
+                                                       f2_name = ? OR 
+                                                       printed_name = ? OR 
+                                                       f1_printed_name = ? OR 
+                                                       f2_printed_name = ? OR 
+                                                       flavor_name = ? OR
+                                                       f1_flavor_name = ? OR 
+                                                       f2_flavor_name = ?) AND 
+                                                       setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("sss", $quickaddcard, $quickaddset, $quickaddNumber);
+            $stmt->bind_param("sssssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddset, $quickaddNumber);
         elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
             // Card name and setcode provided
-            $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
+            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                       f1_name = ? OR 
+                                                       f2_name = ? OR 
+                                                       printed_name = ? OR 
+                                                       f1_printed_name = ? OR 
+                                                       f2_printed_name = ? OR 
+                                                       flavor_name = ? OR
+                                                       f1_flavor_name = ? OR 
+                                                       f2_flavor_name = ?) AND 
+                                                       setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("ss", $quickaddcard, $quickaddset);
+            $stmt->bind_param("ssssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddset);
         elseif ($quickaddcard !== '' AND $quickaddset === ''):
             // Card name only provided, or with a number (but useless without setcode) - just grab a name match
-            $query = "SELECT id FROM cards_scry WHERE name = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
+            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                       f1_name = ? OR 
+                                                       f2_name = ? OR 
+                                                       printed_name = ? OR 
+                                                       f1_printed_name = ? OR 
+                                                       f2_printed_name = ? OR 
+                                                       flavor_name = ? OR
+                                                       f1_flavor_name = ? OR 
+                                                       f2_flavor_name = ?) AND 
+                                                       `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("s", $quickaddcard);
+            $stmt->bind_param("sssssssss", $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard, $quickaddcard);
         elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name not provided, setcode, and collector number provided
-            $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
+            $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $stmt->bind_param("ss", $quickaddset, $quickaddNumber);
         else:
