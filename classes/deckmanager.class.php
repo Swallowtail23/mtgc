@@ -20,14 +20,38 @@ endif;
 class DeckManager {
     private $db;
     private $logfile;
+    private $batchedCardIds = []; // Array to store batched cards to add
     
     public function __construct($db, $logfile) {
         $this->db = $db;
         $this->logfile = $logfile;
     }
-
-    public function quickadd($decknumber,$get_string) {
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string'",$this->logfile);
+    
+    public function processInput($decknumber, $input) {
+        // Check if input is multiline
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ProcessInput called for deck $decknumber with '$input'",$this->logfile);
+        $lines = explode("\n", $input);
+        if (count($lines) > 1):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Multi-line input, calling quickadd in batch mode",$this->logfile);
+            foreach ($lines as $line):
+                $line = trim($line);
+                $this->quickadd($decknumber, $line, true); // Set third parameter to true for batching
+            endforeach;
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Single-line input, calling quickadd in single-line mode",$this->logfile);
+            $this->quickadd($decknumber, $input);
+        endif;
+        // If batched card IDs are not empty, perform batch insert
+        if (!empty($this->batchedCardIds)):
+            $this->addDeckCardsBatch($decknumber, $this->batchedCardIds);
+            // Clear the array after batch insert
+            $this->batchedCardIds = [];
+        endif;
+    }
+    
+    public function quickadd($decknumber,$get_string,$batch = false)
+    {
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)",$this->logfile);
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         preg_match("~^(\d*)\s*(?:([^()]+)\s*)?(?:\(([^)\s]+)(?:\s+([^)]+))?\))?~", $quickaddstring, $matches);
         if (isset($matches[1]) AND $matches[1] !== ''):
@@ -54,9 +78,8 @@ class DeckManager {
             $quickaddNumber = '';
         endif;
 
-        //Card
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
         
         $stmt = null;
         if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
@@ -92,8 +115,14 @@ class DeckManager {
                 $row = $result->fetch_assoc();
                 $stmt->close();
                 $cardtoadd = $row['id'];
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$this->logfile);
-                adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$this->logfile);
+                if (!$batch):
+                    // Call adddeckcard only if not in batch mode
+                    adddeckcard($decknumber, $cardtoadd, "main", "$quickaddqty");
+                else:
+                    // In batch mode, store the card ID and quantity in the batchedCardIds array
+                    $this->batchedCardIds[] = ['id' => $cardtoadd, 'qty' => $quickaddqty];
+                endif;
                 return $cardtoadd;
             else:
                 $stmt->close();
@@ -109,4 +138,51 @@ class DeckManager {
         endif;
     }
 
+    public function addDeckCardsBatch($decknumber, $batchedCardIds) {
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": deckManager batch process called",$this->logfile);
+        $values = [];
+        $placeholders = [];
+
+        foreach ($batchedCardIds as $batchedCard):
+            $id = $batchedCard['id'];
+            $qty = $batchedCard['qty'];
+            // Add each card to the batch
+            $values[] = "($decknumber, $id, $qty)";
+            $placeholders[] = '(?, ?, ?)';
+        endforeach;
+
+        if (!empty($values)):
+            $valuesString = implode(', ', $values);
+            $placeholdersString = implode(', ', $placeholders);
+
+            // Assuming you have a method for executing SQL queries, prepare the INSERT query
+            $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty) VALUES $placeholdersString 
+                        ON DUPLICATE KEY UPDATE cardqty = VALUES(cardqty)";
+
+            // Bind parameters and execute the query
+            $stmt = $this->db->prepare($query);
+
+            // Generate the type definition string dynamically based on the number of batched cards
+            $typeDefinition = str_repeat('isi', count($batchedCardIds));
+
+            // Prepare an array with the values to be bound
+            $bindValues = [];
+            foreach ($batchedCardIds as $batchedCard):
+                $bindValues[] = $decknumber;
+                $bindValues[] = $batchedCard['id'];
+                $bindValues[] = $batchedCard['qty'];
+            endforeach;
+
+            // Bind the parameters dynamically
+            $stmt->bind_param($typeDefinition, ...$bindValues);
+
+            if ($stmt->execute()) :
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": deckManager batch process completed",$this->logfile);
+            else :
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Error executing batch insert query: ".$stmt->error, $this->logfile);
+            endif;
+
+            $stmt->close();
+        endif;
+    }
 }
