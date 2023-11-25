@@ -313,8 +313,9 @@ function adddeckcard($deck,$card,$section,$quantity)
     endif;
     
     // Add card to deck
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
+    
     if($quantity != FALSE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
         if($section == "side"):
             $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
             if ($check !== null):
@@ -350,6 +351,8 @@ function adddeckcard($deck,$card,$section,$quantity)
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
+    else:
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...skipping $cardnametext to deck #$deck",$logfile);
     endif;
 }
 
