@@ -220,7 +220,8 @@ CREATE TABLE IF NOT EXISTS `deckcards` (
   `cardqty` tinyint DEFAULT NULL,
   `sideqty` tinyint DEFAULT NULL,
   `commander` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `DeckCardCombo` (`decknumber`,`cardnumber`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

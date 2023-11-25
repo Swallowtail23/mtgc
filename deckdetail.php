@@ -300,7 +300,8 @@ endif;
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
     $deckManager = new DeckManager($db, $logfile);
-    $cardtoadd = $deckManager->quickAdd($decknumber,$_GET["quickadd"]);
+    $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
+    // $cardtoadd = $deckManager->quickAdd($decknumber,$_GET["quickadd"]);
 endif;
 
 //Deck import
@@ -310,10 +311,12 @@ if (isset($_POST['import'])):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
         $deckManager = new DeckManager($db, $logfile);
-        while (($line = fgets($file)) !== false) :
-            $deckManager->quickAdd($decknumber, $line);
-        endwhile;
+        // Read the entire file content into a variable
+        $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
+        
+        // Call the processInput method with the decknumber and file content
+        $deckManager->processInput($decknumber, $fileContent);
         $redirect = true;
     else:
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
@@ -403,8 +406,6 @@ $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"F
 $result = $db->execute_query($mainquery, [$decknumber]);
 if ($result != TRUE):
     trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
-else:
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
 endif;
 
 $sidequery = ("SELECT *,cards_scry.id AS cardsid 
@@ -415,8 +416,6 @@ $sidequery = ("SELECT *,cards_scry.id AS cardsid
 $sideresult = $db->execute_query($sidequery, [$decknumber]);
 if ($sideresult != TRUE):
     trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
-else:
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
 endif;
 
 //Initialise variables to 0
@@ -490,12 +489,14 @@ endif;
 // for main and side
 // It also builds the legal Colour identity for Commander decks
 mysqli_data_seek($result, 0);
+$cdrSet = FALSE;
 $cdr_colours = array();
 $i = 0;
 while ($row = $result->fetch_assoc()):
     if($row['commander'] != 0 AND $row['commander'] != NULL):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking card, colour identity {$row['color_identity']}",$logfile);
         //card is a commander, get its colour identity
+        $cdrSet = TRUE;
         $cdr_colours[$i] = $row['color_identity'];
         $i = $i + 1;
     endif;
@@ -531,14 +532,18 @@ while ($row = $result->fetch_assoc()):
     <?php
 endwhile;
 
-// Finalise allowable colour identity for Commander decks
-$cdr_colours_raw = $cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Commander value (variable i) is $i, Colour identity to check is $cdr_colours",$logfile);
+if(isset($cdrSet) AND $cdrSet === TRUE):
+    // Finalise allowable colour identity for Commander decks
+    $cdr_colours_raw = $cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Commander value (variable i) is $i, Colour identity to check is $cdr_colours",$logfile);
 
-if($i > 0 AND $cdr_colours == '[""]'):
-    $cdr_colours = '["C"]';
+    if($i > 0 AND $cdr_colours == '[""]'):
+        $cdr_colours = '["C"]';
+    endif;
+    $cdr_colours = colourfunction($cdr_colours);
+else:
+    $cdr_colours_raw = $cdr_colours = "";
 endif;
-$cdr_colours = colourfunction($cdr_colours);
 
 mysqli_data_seek($sideresult, 0);
 while ($row = $sideresult->fetch_assoc()):
@@ -2200,6 +2205,7 @@ endif;
                 <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled;>
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
             </form> 
+            <br>
         </div>
     </div>
 </div>
