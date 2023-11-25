@@ -57,10 +57,7 @@ class DeckManager {
         //Card
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
-        if($quickaddcard !== ''):
-            $quickaddcard = $this->db->escape($quickaddcard);
-        endif;
-
+        
         $stmt = null;
         if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name, setcode, and collector number provided

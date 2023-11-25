@@ -829,7 +829,7 @@ endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
                                 $commandercount = $commandercount +1;
-                                $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                                $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
@@ -936,7 +936,7 @@ endif;
                                     endif;
                                     echo "</tr>";
                                     $total = $total + $quantity;
-                                    $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                                    $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                                 endif;
                             endwhile; 
                         endif; 
@@ -1063,7 +1063,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1165,7 +1165,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity;
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1270,7 +1270,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1348,7 +1348,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1453,7 +1453,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1581,7 +1581,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1675,7 +1675,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1753,7 +1753,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1882,7 +1882,7 @@ endif;
                                         $i++;
                                     endwhile;
                                     if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     else:
                                         echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     endif;
@@ -1958,7 +1958,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                             endwhile; 
                     endif;?>
                     <tr>
