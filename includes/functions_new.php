@@ -52,6 +52,9 @@
  *              Added handling for etched cards
  * 17.0
  *              Review and improve Scryfall price routine
+ *
+ * 18.0         25/11/23
+ *              Migrate more to prepared statements, and add collector number to Quick Add
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -79,109 +82,126 @@ function check_input($value)
 function cssver()
 {
     global $db;
-    if($row = $db->select_one('usemin', 'admin')):
-        if($row['usemin'] == 1):
-            $cssver = "-min";
-        else:
-            $cssver = "";
-        endif;
-        return $cssver;
+    $sql = "SELECT usemin FROM admin LIMIT 1";
+    $result = $db->execute_query($sql);
+    if ($result === false):
+        trigger_error('[ERROR]',basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ".$db->error,E_USER_ERROR);
     else:
-        trigger_error('[ERROR]',basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif; 
+        $row = $result->fetch_assoc();
+        if (!empty($row) AND $row['usemin'] == 1):
+            return "-min";
+        else:
+            return "";
+        endif;
+    endif;
 }
 
-function spamcheck($field) 
+function spamcheck($field)
 {
     global $db, $logfile;
     // Sanitize e-mail address
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking email address <$field>",$logfile);
-    $field=filter_var($field, FILTER_SANITIZE_EMAIL);
-    if(!filter_var($field, FILTER_VALIDATE_EMAIL)):
-        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid email address <$field> passed",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Checking email address <$field>", $logfile);
+    $field = filter_var($field, FILTER_SANITIZE_EMAIL);
+    if (!filter_var($field, FILTER_VALIDATE_EMAIL)):
+        $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Invalid email address <$field> passed", $logfile);
         return FALSE;
     else:
-        if($row = $db->select_one('usernumber,username', 'users',"WHERE email = '$field'")):
-            if(empty($row)):
+        $sql = "SELECT usernumber, username FROM users WHERE email = ? LIMIT 1";
+        $result = $db->execute_query($sql, [$field]);
+        if ($result === false):
+            trigger_error('[ERROR]', basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $db->error, E_USER_ERROR);
+        else:
+            $row = $result->fetch_assoc();
+            if (empty($row)):
                 return FALSE;
-            elseif(filter_var($field, FILTER_VALIDATE_EMAIL)):
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Email address validated for reset request",$logfile);
+            elseif (filter_var($field, FILTER_VALIDATE_EMAIL)):
+                $obj = new Message;$obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Email address validated for reset request", $logfile);
                 return $field;
             else:
                 return FALSE;
             endif;
-        else:
-            trigger_error('[ERROR]',basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
     endif;
 }
 
 function mtcemode($user)
 {
-    global $db;
-    if($row = $db->select_one('mtce', 'admin')):
-        if ($row['mtce'] == 1):
-            if($row2 = $db->select_one('admin', 'users',"WHERE usernumber='$user'")):
-                if ($row2['admin'] == 1):   //admin user logged on
-                    return 2;
-                else:
-                    return 1;               //non-admin user logged on
-                endif;
+    global $db,$logfile;
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking maintenance mode, user $user", $logfile);
+    $sql1 = "SELECT mtce FROM admin LIMIT 1";
+    $result1 = $db->execute_query($sql1);
+    if ($result1 === false):
+        trigger_error('[ERROR]', basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $db->error, E_USER_ERROR);
+    else:
+        $row1 = $result1->fetch_assoc();
+        if (!empty($row1) AND $row1['mtce'] == 1):
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, running admin check", $logfile);
+            $sql2 = "SELECT admin FROM users WHERE usernumber = ?";
+            $result2 = $db->execute_query($sql2, [$user]);
+            if ($result2 === false):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ".$db->error, E_USER_ERROR);
             else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+                $row2 = $result2->fetch_assoc();
+                if (!empty($row2)):
+                    if ($row2['admin'] == 1):
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is admin, ignoring (return 2)", $logfile);
+                        return 2;
+                    else:
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is not admin (return 1, destroy session)", $logfile);
+                        return 1;
+                    endif;
+                else:
+                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+                endif;
             endif;
         else:
-            return 0;                           // maintenance mode not set
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode not set", $logfile);
+            return 0; // maintenance mode not set
         endif;
-    else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif; 
-}
-
-function username($user)
-{
-    global $db;
-    if($row = $db->select_one('username','users',"WHERE usernumber='$user'")):
-        $username = $row['username'];
-        return $username;
-    else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif;
 }
 
 function deckownercheck($deck,$user)
 {
     global $db, $logfile;
-    $sql = "SELECT * FROM decks WHERE decknumber = $deck LIMIT 1";
-    $result = $db->query($sql);
-    if($result === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking deck ownership: $deck, $user", $logfile);
+    $sql = "SELECT deckname, owner FROM decks WHERE decknumber = ? LIMIT 1";
+    $result = $db->execute_query($sql, [$deck]);
+    if ($result === false):
+        trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $db->error, E_USER_ERROR);
     else:
-        while($row = $result->fetch_assoc()):
+        while ($row = $result->fetch_assoc()):
             $deckname = $row['deckname'];
-            if ($row['owner'] !== $user):
-                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck {$row['deckname']} does not belong to user $user, returning to deck page",$logfile);
+            $owner = $row['owner'];
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Deck $deck ($deckname) belongs to owner $owner (called by $user)", $logfile);
+            if ($owner != $user):
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Deck {$row['deckname']} does not belong to user $user, returning to deck page", $logfile);
                 return false;
             else:
                 return $deckname;
             endif;
         endwhile;
-    endif;    
+    endif;
 }
 
-function deckcardcheck($card,$user)
+function deckcardcheck($card, $user)
 {
     global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what decks this card is in for user $user...",$logfile);
-    $sql = "SELECT * FROM deckcards LEFT JOIN decks ON deckcards.decknumber = decks.decknumber WHERE cardnumber = '$card' and owner = $user";
-    $result = $db->query($sql);
-    if($result === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+
+    $obj = new Message;
+    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what decks this card is in for user $user...",$logfile);
+
+    $sql = "SELECT deckcards.decknumber, deckcards.cardqty, deckcards.sideqty, decks.deckname 
+            FROM deckcards 
+            LEFT JOIN decks ON deckcards.decknumber = decks.decknumber 
+            WHERE cardnumber = ? AND owner = ?";
+    $result = $db->execute_query($sql, [$card, $user]);
+    if ($result === false):
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ".$db->error, E_USER_ERROR);
     else:
         $i = 0;
         $record = array();
-        while($row = $result->fetch_assoc()):
+        while ($row = $result->fetch_assoc()):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in decknumber {$row['decknumber']} owned by user $user",$logfile);
             $record[$i]['decknumber'] = $row['decknumber'];
             $record[$i]['qty'] = $row['cardqty'];
@@ -190,103 +210,6 @@ function deckcardcheck($card,$user)
             $i = $i + 1;
         endwhile;
         return $record;
-    endif;    
-}
-
-function quickadd($decknumber,$get_string)
-{
-    global $db, $logfile, $commander_decktypes;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string'",$logfile);
-    
-    $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
-    
-    preg_match("~^(\d*)\s*(?:([^()]+)\s*)?(?:\(([^)\s]+)(?:\s+([^)]+))?\))?~", $quickaddstring, $matches);
-    if (isset($matches[1]) AND $matches[1] !== ''):
-        $quickaddqty = $matches[1];
-    else:
-        $quickaddqty = 1;
-    endif;
-
-    if (isset($matches[2])):
-        $quickaddcard = trim($matches[2]);
-    else:
-        $quickaddcard = '';
-    endif;
-
-    if (isset($matches[3])):
-        $quickaddset = strtoupper($matches[3]);
-    else:
-        $quickaddset = '';
-    endif;
-
-    if (isset($matches[4])):
-        $quickaddNumber = $matches[4];
-    else:
-        $quickaddNumber = '';
-    endif;
-        
-    // Example of output for input "1 The Tenth Doctor (WHO 0551)"
-    // 
-    // $quickaddqty: 1
-    // $quickaddcard: The Tenth Doctor
-    // $quickaddset: WHO
-    // $cardNumber: 0551
-    
-    //Card
-    $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$logfile);
-    if($quickaddcard !== ''):
-        $quickaddcard = $db->escape($quickaddcard);
-    endif;
-    
-    $stmt = null;
-    if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
-        // Card name, setcode, and collector number provided
-        $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("sss", $quickaddcard, $quickaddset, $quickaddNumber);
-    elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
-        // Card name and setcode provided
-        $query = "SELECT id FROM cards_scry WHERE name = ? AND setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("ss", $quickaddcard, $quickaddset);
-    elseif ($quickaddcard !== '' AND $quickaddset === ''):
-        // Card name only provided, or with a number (but useless without setcode) - just grab a name match
-        $query = "SELECT id FROM cards_scry WHERE name = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC, number ASC LIMIT 1";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("s", $quickaddcard);
-    elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
-        // Card name not provided, setcode, and collector number provided
-        $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem') ORDER BY release_date DESC LIMIT 1";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param("ss", $quickaddset, $quickaddNumber);
-    else:
-        // Not enough info, cannot add
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Not enough info to identify a card to add",$logfile);
-        $cardtoadd = 'cardnotfound';
-        return $cardtoadd;
-    endif;
-    
-    if ($stmt !== null AND $stmt->execute()):
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0):
-            $row = $result->fetch_assoc();
-            $stmt->close();
-            $cardtoadd = $row['id'];
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$logfile);
-            adddeckcard($decknumber,$cardtoadd,"main","$quickaddqty");
-            return $cardtoadd;
-        else:
-            $stmt->close();
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$logfile);
-            $cardtoadd = 'cardnotfound';
-            return $cardtoadd;
-        endif;
-    else:
-        $stmt->close();
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - SQL error: " . $stmt->error, $logfile);
-        $cardtoadd = 'cardnotfound';
-        return $cardtoadd;
     endif;
 }
 
@@ -390,8 +313,9 @@ function adddeckcard($deck,$card,$section,$quantity)
     endif;
     
     // Add card to deck
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
+    
     if($quantity != FALSE):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
         if($section == "side"):
             $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
             if ($check !== null):
@@ -427,6 +351,8 @@ function adddeckcard($deck,$card,$section,$quantity)
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
+    else:
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...skipping $cardnametext to deck #$deck",$logfile);
     endif;
 }
 
@@ -498,27 +424,43 @@ function subtractdeckcard($deck,$card,$section,$quantity)
     return $status;
 }
 
-function addcommander($deck,$card)
+function addcommander($deck, $card)
 {
     global $db, $logfile;
-    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND commander = 1");
-    if ($check->num_rows > 0): //Commander already there
-        $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck";
-        if($runquery = $db->query($cardquery)):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Old Commander removed",$logfile);
+
+    // Check if commander already exists in the deck
+    $check = $db->prepare('SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 1');
+    $check->bind_param('i', $deck);
+    $check->execute();
+    $check_result = $check->get_result();
+    if ($check_result->num_rows > 0):
+        // Commander already exists, remove old commander
+        $removeCommanderQuery = 'UPDATE deckcards SET commander = 0 WHERE decknumber = ?';
+        $removeCommanderStmt = $db->prepare($removeCommanderQuery);
+        $removeCommanderStmt->bind_param('i', $deck);
+        if ($removeCommanderStmt->execute()):
+            $obj = new Message;
+            $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Old Commander removed", $logfile);
         else:
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-        endif; 
+            trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $db->error, E_USER_ERROR);
+        endif;
+        $removeCommanderStmt->close();
     endif;
     $status = "+cdr";
-    $cardquery = "UPDATE deckcards SET commander = '1' WHERE decknumber = $deck AND cardnumber = '$card'";
-    if($runquery = $db->query($cardquery)):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add Commander run: $cardquery, status is $status",$logfile);
+
+    // Add new commander
+    $addCommanderQuery = 'UPDATE deckcards SET commander = 1 WHERE decknumber = ? AND cardnumber = ?';
+    $addCommanderStmt = $db->prepare($addCommanderQuery);
+    $addCommanderStmt->bind_param('is', $deck, $card);
+    if ($addCommanderStmt->execute()):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Add Commander run: $addCommanderQuery, status is $status", $logfile);
         return $status;
     else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif; 
+        trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $db->error, E_USER_ERROR);
+    endif;
+    $addCommanderStmt->close();
 }
+
 
 function addpartner($deck,$card)
 {

@@ -1,6 +1,6 @@
 <?php
-/* Version:     17.0
-    Date:       21/10/23
+/* Version:     18.0
+    Date:       25/11/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -46,6 +46,9 @@
  *  17.0
  *              Add functional wishlist in decks
  *              Add commander colour identity
+ *  18.0
+ *              25/11/23
+ *              Add import, and significantly more robust Quick Add
 */
 
 session_start();
@@ -296,7 +299,25 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $cardtoadd = quickadd($decknumber,$_GET["quickadd"]);
+    $deckManager = new DeckManager($db, $logfile);
+    $cardtoadd = $deckManager->quickAdd($decknumber,$_GET["quickadd"]);
+endif;
+
+//Deck import
+if (isset($_POST['import'])):
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
+    if (is_uploaded_file($_FILES['filename']['tmp_name'])):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+        $file = fopen($_FILES['filename']['tmp_name'], 'r');
+        $deckManager = new DeckManager($db, $logfile);
+        while (($line = fgets($file)) !== false) :
+            $deckManager->quickAdd($decknumber, $line);
+        endwhile;
+        fclose($file);
+        $redirect = true;
+    else:
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
+    endif; 
 endif;
 
 // Get deck details from database
@@ -808,7 +829,7 @@ endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
                                 $commandercount = $commandercount +1;
-                                $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                                $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
@@ -915,7 +936,7 @@ endif;
                                     endif;
                                     echo "</tr>";
                                     $total = $total + $quantity;
-                                    $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                                    $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                                 endif;
                             endwhile; 
                         endif; 
@@ -1042,7 +1063,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1144,7 +1165,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity;
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1249,7 +1270,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1327,7 +1348,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1432,7 +1453,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1560,7 +1581,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1654,7 +1675,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
                                     echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
@@ -1732,7 +1753,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1861,7 +1882,7 @@ endif;
                                         $i++;
                                     endwhile;
                                     if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity x $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     else:
                                         echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     endif;
@@ -1937,7 +1958,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
-                            $textfile = $textfile."$quantity x $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
                             endwhile; 
                     endif;?>
                     <tr>
@@ -2141,7 +2162,6 @@ endif;
                     <input type='hidden' name='missing' value='yes'>
                     <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
                     </form>
-                    <br>
                 <?php
                 endif;
             endif;
@@ -2154,7 +2174,32 @@ endif;
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
-            <br>
+            <h4>Import</h4>
+            Takes a text file as input, with each line formatted as per Quick add above
+            <script type="text/javascript">
+                $(document).ready(
+                function(){
+                    $("#importsubmit").attr('disabled',true);
+                    $("#importfile").change(
+                        function(){
+                            if ($(this).val()){
+                                $("#importsubmit").removeAttr('disabled'); 
+                            }
+                            else {
+                                $("#importsubmit").attr('disabled',true);
+                            }
+                        });
+                });
+            </script>
+            <br><br>
+            <form enctype='multipart/form-data' action='?' method='post'>
+                <label class='importlabel'>
+                    <input id='importfile' type='file' name='filename'>
+                    <span>UPLOAD</span>
+                </label>
+                <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled;>
+                <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
+            </form> 
         </div>
     </div>
 </div>
