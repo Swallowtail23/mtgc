@@ -36,7 +36,7 @@ if (!isset($_SESSION["logged"]) OR $_SESSION["logged"] != TRUE OR !isset($_SESSI
     exit(); 
 else: 
     //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db,$adminip,$_SESSION);
+    $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $logfile);
     $userArray = $sessionManager->checkLogged();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

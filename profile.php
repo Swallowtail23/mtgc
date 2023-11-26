@@ -201,8 +201,16 @@ endif;  ?>
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
                 $collectionvalue = "Total value approximately USD".$collectionmoney;
                 $rowcounttotal = number_format($totalcardcount);
-                echo "$collectionvalue over $rowcounttotal cards.<br>";
-                echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com, in USD.<br>";
+                if(isset($rate) AND $rate > 0):
+                    $b = new \NumberFormatter("en-AU", \NumberFormatter::CURRENCY);
+                    $localvalue = $b->format($unformatted_value * $rate);
+                    echo "$collectionvalue ($targetCurrency$localvalue) over $rowcounttotal cards.<br>";
+                else:
+                    echo "$collectionvalue over $rowcounttotal cards.<br>";
+                endif;
+                
+                
+                echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com.<br>";
                 $rowcounttotal = number_format($totalcardcount);
                 echo "<br>";  
             ?>
