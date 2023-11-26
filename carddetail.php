@@ -1410,7 +1410,7 @@ require('includes/menu.php'); //mobile menu
                                         <b>Price</b>
                                     </td>
                                     <td>
-                                        <b>USD (<?php echo $targetCurrency; ?>)</b>
+                                        <b>USD <?php if($fx === TRUE):echo "($targetCurrency)";endif; ?></b>
                                     </td>
                                 </tr>
                       <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
@@ -1422,7 +1422,7 @@ require('includes/menu.php'); //mobile menu
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$scryfallresult["price"]} ($localnormal)"; ?>
+                                        <?= ($fx === TRUE) ? "{$scryfallresult['price']} ($localnormal)" : "{$scryfallresult['price']}"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
@@ -1434,7 +1434,7 @@ require('includes/menu.php'); //mobile menu
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$row["price"]} ($localnormal)"; ?>
+                                        <?= ($fx === TRUE) ? "{$row["price"]} ($localnormal)" : "{$row['price']}"; ?>
                                     </td>
                                 </tr>
                       <?php 
@@ -1451,7 +1451,7 @@ require('includes/menu.php'); //mobile menu
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$scryfallresult["price_foil"]} ($localfoil)"; ?>
+                                        <?= ($fx === TRUE) ? "{$scryfallresult['price_foil']} ($localfoil)" : "{$scryfallresult['price_foil']}"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
@@ -1463,7 +1463,7 @@ require('includes/menu.php'); //mobile menu
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$row["price_foil"]} ($localfoil)"; ?>
+                                        <?= ($fx === TRUE) ? "{$row["price_foil"]} ($localfoil)" : "{$row["price_foil"]}"; ?>
                                     </td>
                                 </tr>
                       <?php else:
@@ -1479,7 +1479,7 @@ require('includes/menu.php'); //mobile menu
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$scryfallresult["price_etched"]} ($localetched)"; ?>
+                                        <?= ($fx === TRUE) ? "{$scryfallresult['price_etched']} ($localetched)" : "{$scryfallresult['price_etched']}"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
@@ -1491,7 +1491,7 @@ require('includes/menu.php'); //mobile menu
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo "{$row["price_etched"]} ($localetched)"; ?>
+                                        <?= ($fx === TRUE) ? "{$row['price_etched']} ($localetched)" : "{$row['price_etched']}"; ?>
                                     </td>
                                 </tr>
                       <?php else:

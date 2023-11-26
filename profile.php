@@ -199,12 +199,14 @@ endif;  ?>
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $collectionmoney = $a->format($unformatted_value);
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
-                $collectionvalue = "Total value approximately USD".$collectionmoney;
+                $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
                 $rowcounttotal = number_format($totalcardcount);
                 if(isset($rate) AND $rate > 0):
-                    $b = new \NumberFormatter("en-AU", \NumberFormatter::CURRENCY);
+                    $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                    $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
+                    $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
                     $localvalue = $b->format($unformatted_value * $rate);
-                    echo "$collectionvalue ($targetCurrency$localvalue) over $rowcounttotal cards.<br>";
+                    echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards.<br>";
                 else:
                     echo "$collectionvalue over $rowcounttotal cards.<br>";
                 endif;

@@ -26,7 +26,12 @@ else:
     
     if(isset($fx) AND $fx === TRUE):
         $rate = $sessionManager->getRateForCurrencyPair($currencies);
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$logfile);
+        if($rate === NULL):
+            $fx = FALSE;
+        else:
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$logfile);
+        endif;
+        
     else:
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled",$logfile);
         $rate = FALSE;
