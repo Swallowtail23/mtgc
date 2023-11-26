@@ -2214,7 +2214,8 @@ endif;
             "Madame Vastra", "Madame Vastra (WHO)", "Madame Vastra (WHO 425)", "4 Madame Vastra (WHO)", "2 (WHO 425)"
             <br><br>
             <form action="deckdetail.php"  method="GET">
-                <input class='decknotes textinput' type='text' name='quickadd' size='30'>
+                <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
+                <br>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
