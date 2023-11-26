@@ -140,7 +140,12 @@ class SessionManager {
             endif;
         elseif ($stmt->num_rows === 0) :
             $rate = $this->updateFxRate($currencies);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": New currency pair... rate is $rate", $this->logfile);
+            if($rate === NULL):
+                $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
+                return $rate;
+            else:
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": New currency pair... rate is $rate", $this->logfile);
+            endif;
         endif;
 
         $stmt->close();
