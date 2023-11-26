@@ -22,16 +22,20 @@ class SessionManager {
     private $db;
     private $adminip;
     private $session;
+    private $fxAPI;
     private $sessionArray = [];
+    private $logfile;
     
     const ADMIN_OK = 1;
     const ADMIN_WRONG_LOCATION = 2;
     const ADMIN_NONE = 3;
     
-    public function __construct($db,$adminip,$session) {
+    public function __construct($db,$adminip,$session, $fxAPI, $logfile) {
         $this->db = $db;
         $this->adminip = $adminip;
         $this->session = $session;
+        $this->fxAPI = $fxAPI;
+        $this->logfile = $logfile;
         $this->sessionArray = [
             'usernumber' => '',
             'username' => '',
@@ -101,6 +105,116 @@ class SessionManager {
             endif;
         endif;
         return self::ADMIN_NONE;
+    }
+
+    public function getRateForCurrencyPair($currencies)
+    {
+        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called for $currencies", $this->logfile);
+        // Ensure $currencies is safe to use in the query (sanitize if necessary)
+        $query = "SELECT rate, updatetime FROM fx WHERE currencies = ?";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param("s", $currencies);
+        $stmt->execute();
+        $stmt->store_result();
+
+        $rate = null; // Default rate value
+
+        if ($stmt->num_rows > 0) :
+            $stmt->bind_result($existingRate, $lastUpdateTime);
+            $stmt->fetch();
+            // If the timestamp is more than an hour old, proceed with the update
+            $age = time() - $lastUpdateTime;
+            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Existing rate age is $age", $this->logfile);
+            if ($lastUpdateTime === null OR $age > 3600) :
+                $rate = $this->updateFxRate($currencies);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Updating... new rate is $rate", $this->logfile);
+            else :
+                $rate = $existingRate; // Keep the existing rate from the database
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Not updating... rate is $rate", $this->logfile);
+            endif;
+        elseif ($stmt->num_rows === 0) :
+            $rate = $this->updateFxRate($currencies);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": New currency pair... rate is $rate", $this->logfile);
+        endif;
+
+        $stmt->close();
+
+        return $rate;
+    }
+
+    private function updateFxRate($currencies)
+    {
+        $freecurrencyapi = new \FreeCurrencyApi\FreeCurrencyApi\FreeCurrencyApiClient($this->fxAPI);
+        
+        list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
+                
+        $freecurrencyData = $freecurrencyapi->latest(['base_currency' => "$baseCurrency",'currencies' => "$targetCurrency",]);
+
+        $fxResult = $freecurrencyData["data"]["$targetCurrency"];
+
+        $obj = new Message;
+        $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, $baseCurrency to $targetCurrency is $fxResult", $this->logfile);
+
+        $time = time();
+
+        $stmt = $this->db->prepare("
+            INSERT INTO fx (updatetime, rate, currencies)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            updatetime = ?,
+            rate = ?
+        ");
+
+        // Binding parameters
+        $stmt->bind_param("sssss", $time, $fxResult, $currencies, $time, $fxResult);
+
+        if ($stmt->execute()) :
+            $obj = new Message;
+            $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database updated", $this->logfile);
+        else :
+            $obj = new Message;
+            $obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database update failed: " . $stmt->error, $this->logfile);
+        endif;
+
+        // Closing the statement
+        $stmt->close();
+
+        return $fxResult;
+    }
+
+    private function updateFxRateIfNeeded($currencies)
+    {
+        // Check the timestamp in the 'fx' table
+        $lastUpdateTime = $this->getLastUpdateTime($currencies);
+
+        // If the timestamp is more than an hour old, proceed with the update
+        if ($lastUpdateTime === null || (time() - $lastUpdateTime) > 3600) {
+            return $this->updateFxRate($currencies);
+        }
+
+        return null; // Return null if no update needed
+    }
+
+    private function getLastUpdateTime($currencies)
+    {
+        $query = "SELECT updatetime FROM fx WHERE currencies = ? ORDER BY updatetime DESC LIMIT 1";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param("s", $currencies);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows === 0) {
+            $stmt->close();
+            return null; // Return null if no records found
+        }
+
+        $stmt->bind_result($lastUpdateTime);
+        $stmt->fetch();
+        $stmt->close();
+
+        return strtotime($lastUpdateTime);
     }
 }
 

@@ -38,6 +38,13 @@ To setup Turnstile
 Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
+#### FreecurrencyAPI ####
+composer require everapi/freecurrencyapi-php:dev-master from mtg directory on server
+Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
+Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
+
+The rate is updated at most every 60 minutes on demand, with the target currency set in ini file.
+
 ### File locations ###
 - Create a new folder at /opt/mtg
 - Copy the ini file (see next section) and the shell scripts to call bulk scripts to /opt/mtg (samples are in setup folder), altering as needed so they point to where the bulk scripts are
@@ -76,6 +83,11 @@ Ini file content:
     Turnstile = "enabled"
     Turnstile_site_key = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
+
+    [fx]
+    FreecurrencyAPI = "API_KEY"             // If empty, FX is disabled
+    FreecurrencyURL = "https://api.freecurrencyapi.com/v1/latest?apikey="
+    TargetCurrency = "aud"
 
 - Check all variables, remove all comments
 - Lines need to be fully left-aligned
@@ -121,7 +133,7 @@ Run command line:
 
 ### Cron jobs ###
 
-Setup cron job to run bulk files from /opt/mtg (run as root)
+Setup cron job to run bulk files from /opt/mtg (run as root) and FX update script
 
 ### PAGE LOAD SEQUENCE ###
 

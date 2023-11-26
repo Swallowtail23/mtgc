@@ -19,10 +19,18 @@ $cssver = cssver();                                             // find CSS Vers
 if (!isset($_SESSION['user']) OR !$_SESSION["logged"]):
     header("Location: /login.php");                             // check if user is logged in; else redirect to login.php
     exit();    
-else:    
+else:
     // Session information \\
-    $sessionManager = new SessionManager($db,$adminip,$_SESSION);
+    $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $logfile);
     $userArray = $sessionManager->checkLogged();
+    
+    if(isset($fx) AND $fx === TRUE):
+        $rate = $sessionManager->getRateForCurrencyPair($currencies);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$logfile);
+    else:
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled",$logfile);
+        $rate = FALSE;
+    endif;
     $user = $userArray['usernumber'];
     $username = $userArray['username'];                         // get user name
     $mytable = $userArray['table'];                             // user's collection table

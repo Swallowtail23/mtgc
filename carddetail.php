@@ -1404,7 +1404,7 @@ require('includes/menu.php'); //mobile menu
                             <?php 
 
                             // Price section
-                            echo "<b>Price and links</b>";
+                            echo "<b>Price - USD ($targetCurrency)</b>";
                             if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
                                 $tcgdirectlink = $tcg_buy_uri;
                             else:
@@ -1413,24 +1413,26 @@ require('includes/menu.php'); //mobile menu
                             <table id='tcgplayer' width="100%">
                       <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
-                                $normalprice = TRUE; ?>
+                                $normalprice = TRUE; 
+                                $localnormal = number_format(($scryfallresult["price"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $scryfallresult["price"]; ?>
+                                        <?php echo "{$scryfallresult["price"]} ($localnormal)"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database normal price",$logfile);
-                                $normalprice = TRUE; ?>
+                                $normalprice = TRUE; 
+                                $localnormal = number_format(($row["price"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $row["price"]; ?>
+                                        <?php echo "{$row["price"]} ($localnormal)"; ?>
                                     </td>
                                 </tr>
                       <?php 
@@ -1440,24 +1442,26 @@ require('includes/menu.php'); //mobile menu
                             endif;      
                             if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00 AND $scryfallresult["price_foil"] !== NULL AND str_contains($cardtypes,'foil'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall foil price",$logfile);
-                                $foilprice = TRUE; ?>
+                                $foilprice = TRUE;
+                                $localfoil = number_format(($scryfallresult["price_foil"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $scryfallresult["price_foil"]; ?>
+                                        <?php echo "{$scryfallresult["price_foil"]} ($localfoil)"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database foil price",$logfile);
-                                $foilprice = TRUE; ?>
+                                $foilprice = TRUE;
+                                $localfoil = number_format(($row["price_foil"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $row["price_foil"]; ?>
+                                        <?php echo "{$row["price_foil"]} ($localfoil)"; ?>
                                     </td>
                                 </tr>
                       <?php else:
@@ -1466,24 +1470,26 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00 AND $scryfallresult["price_etched"] !== NULL AND str_contains($cardtypes,'etch'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall etched price",$logfile);
-                                $etchprice = TRUE; ?>
+                                $etchprice = TRUE;
+                                $localetched = number_format(($scryfallresult["price_etched"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $scryfallresult["price_etched"]; ?>
+                                        <?php echo "{$scryfallresult["price_etched"]} ($localetched)"; ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database etched price",$logfile);
-                                $etchprice = TRUE; ?>
+                                $etchprice = TRUE;
+                                $localetched = number_format(($row["price_etched"] * $rate), 2, '.', ',');?>
                                 <tr>
                                     <td class="buycellleft">
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?php echo $row["price_etched"]; ?>
+                                        <?php echo "{$row["price_etched"]} ($localetched)"; ?>
                                     </td>
                                 </tr>
                       <?php else:
@@ -1498,6 +1504,11 @@ require('includes/menu.php'); //mobile menu
                                 </tr>
                                 <?php 
                             endif; ?>
+                            </table>
+                            <hr class='hr324'>
+
+                            <b>Links</b>
+                            <table width="100%">
                                 <tr>
                                     <td colspan=2 class="buycellleft">
                                         <?php

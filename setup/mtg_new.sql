@@ -43,6 +43,18 @@ CREATE TABLE IF NOT EXISTS `admin` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `fx`
+--
+
+DROP TABLE IF EXISTS `fx`;
+CREATE TABLE `fx` (
+  `currencies` varchar(12) COLLATE utf8mb4_general_ci NOT NULL,
+  `updatetime` int NOT NULL,
+  `rate` decimal(6,2) NOT NULL,
+  UNIQUE KEY `currencies` (`currencies`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- Table structure for table `cards_scry`
 --
 
