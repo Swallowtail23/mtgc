@@ -18,8 +18,7 @@ Install under web server as applicable
 
 #### JsonMachine ####
 Used for bulk script parsing
-- needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php
-- run composer require from mtg directory on server
+Composer install
 
 #### Cloudflare Turnstile ####
 Used on login page to provide "captcha" style validation before login
@@ -28,22 +27,28 @@ Uses https://packagist.org/packages/andkab/php-turnstile
 If tier is "dev", dummy keys are used
 
 To setup Turnstile
+- Composer install
 - in Ini file (see section below on Ini file):
     - enable/disable (anything other than Turnstile = "enabled" will disable)
     - if enabled, you must set keys
-- "php-turnstile" needs to be installed by composer to 'vendors' folder, to be autoloaded by ini.php
-- run "composer require andkab/php-turnstile" from mtg directory on server
 
 #### JQuery and IAS ####
 Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
-composer require everapi/freecurrencyapi-php:dev-master from mtg directory on server
+Composer install
 Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
 Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
 
 The rate is updated at most every 60 minutes on demand, with the target currency set in ini file.
+
+#### Composer apps ####
+- run composer from mtg directory on server
+-- composer require andkab/php-turnstile
+-- composer require everapi/freecurrencyapi-php:dev-master
+-- composer require halaxa/json-machine
+To install as apache: sudo -Hu apache composer require halaxa/json-machine
 
 ### File locations ###
 - Create a new folder at /opt/mtg

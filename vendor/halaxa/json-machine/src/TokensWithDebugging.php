@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace JsonMachine;
 
-class DebugLexer implements \IteratorAggregate, PositionAware
+class TokensWithDebugging implements \IteratorAggregate, PositionAware
 {
     /** @var iterable */
     private $jsonChunks;
@@ -10,7 +12,6 @@ class DebugLexer implements \IteratorAggregate, PositionAware
     private $position = 0;
     private $line = 1;
     private $column = 0;
-
 
     /**
      * @param iterable<string> $jsonChunks
@@ -45,7 +46,7 @@ class DebugLexer implements \IteratorAggregate, PositionAware
         $escaping = false;
         $tokenWidth = 0;
         $ignoreLF = false;
-        $position = 1;
+        $position = 0;
         $line = 1;
         $column = 0;
 
@@ -54,10 +55,10 @@ class DebugLexer implements \IteratorAggregate, PositionAware
             for ($i = 0; $i < $bytesLength; ++$i) {
                 $byte = $bytes[$i];
                 if ($inString) {
-                    if ($byte == '"' && !$escaping) {
+                    if ($byte == '"' && ! $escaping) {
                         $inString = false;
                     }
-                    $escaping = ($byte == '\\' && !$escaping);
+                    $escaping = ($byte == '\\' && ! $escaping);
                     $tokenBuffer .= $byte;
                     ++$tokenWidth;
                     continue;
@@ -75,11 +76,11 @@ class DebugLexer implements \IteratorAggregate, PositionAware
                         $tokenWidth = 0;
                     }
                     if ($$byte) { // is not whitespace
-                        $this->position = $position + $i;
+                        $this->position = $position + $i + 1;
                         $this->column = $column;
                         $this->line = $line;
                         yield $byte;
-                        // track line number and reset column for each newline
+                    // track line number and reset column for each newline
                     } elseif ($byte == "\n") {
                         // handle CRLF newlines
                         if ($ignoreLF) {
@@ -104,8 +105,9 @@ class DebugLexer implements \IteratorAggregate, PositionAware
             }
             $position += $i;
         }
+        $this->position = $position;
+
         if ($tokenBuffer != '') {
-            $this->position = $position;
             $this->column = $column;
             yield $tokenBuffer;
         }
@@ -120,7 +122,9 @@ class DebugLexer implements \IteratorAggregate, PositionAware
     }
 
     /**
-     * @return integer The line number of the lexeme currently being processed (index starts at one).
+     * Returns the line number of the lexeme currently being processed (index starts at one).
+     *
+     * @return int
      */
     public function getLine()
     {
@@ -128,7 +132,9 @@ class DebugLexer implements \IteratorAggregate, PositionAware
     }
 
     /**
-     * @return integer The, currently being processed, lexeme's position within the line (index starts at one).
+     * The position of currently being processed lexeme within the line (index starts at one).
+     *
+     * @return int
      */
     public function getColumn()
     {

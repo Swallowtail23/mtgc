@@ -8,3 +8,4 @@ cardimg/
 .idea/
 ./well-known
 /.well-known/
+/vendor
