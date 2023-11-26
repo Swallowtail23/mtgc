@@ -67,9 +67,9 @@
             'dev_requirement' => false,
         ),
         'halaxa/json-machine' => array(
-            'pretty_version' => '0.8.0',
-            'version' => '0.8.0.0',
-            'reference' => 'a7f1918ac10760ea10c7b276e8ddbf0841bd976a',
+            'pretty_version' => '1.1.3',
+            'version' => '1.1.3.0',
+            'reference' => '514025c5ebbdb8a058745b573b4a1e81d685802c',
             'type' => 'library',
             'install_path' => __DIR__ . '/../halaxa/json-machine',
             'aliases' => array(),

@@ -5,12 +5,10 @@
 Very easy to use and memory efficient drop-in replacement for inefficient iteration of big JSON files or streams
 for PHP >=7.0. See [TL;DR](#tl-dr). No dependencies in production except optional `ext-json`.
 
-[![Build Status](https://travis-ci.com/halaxa/json-machine.svg?branch=master)](https://app.travis-ci.com/github/halaxa/json-machine/branches)
-[![Latest Stable Version](https://img.shields.io/badge/stable-0.8.0-blueviolet)](https://packagist.org/packages/halaxa/json-machine)
-[![Monthly Downloads](https://poser.pugx.org/halaxa/json-machine/d/monthly)](https://packagist.org/packages/halaxa/json-machine)
-
----
-**0.8.0-BETA** is out. Please try it and let me know in the [discussion](https://github.com/halaxa/json-machine/discussions/68).
+[![Build Status](https://github.com/halaxa/json-machine/actions/workflows/makefile.yml/badge.svg)](https://github.com/halaxa/json-machine/actions)
+[![codecov](https://img.shields.io/codecov/c/gh/halaxa/json-machine?label=phpunit%20%40covers)](https://codecov.io/gh/halaxa/json-machine)
+[![Latest Stable Version](https://img.shields.io/github/v/release/halaxa/json-machine?color=blueviolet&include_prereleases&logoColor=white)](https://packagist.org/packages/halaxa/json-machine)
+[![Monthly Downloads](https://img.shields.io/packagist/dt/halaxa/json-machine?color=%23f28d1a)](https://packagist.org/packages/halaxa/json-machine)
 
 ---
 
@@ -21,6 +19,7 @@ for PHP >=7.0. See [TL;DR](#tl-dr). No dependencies in production except optiona
   + [Parsing a subtree](#parsing-a-subtree)
   + [Parsing nested values in arrays](#parsing-nested-values)
   + [Parsing a single scalar value](#getting-scalar-values)
+  + [Parsing multiple subtrees](#parsing-multiple-subtrees)
   + [What is JSON Pointer anyway?](#json-pointer)
 * [Options](#options)
 * [Parsing streaming responses from a JSON API](#parsing-json-stream-api-responses)
@@ -66,8 +65,11 @@ foreach ($users as $id => $user) {
 }
 ```
 
-Random access like `$users[42]` or counting results like `count($users)` **is not possible** by design.
-Use above-mentioned `foreach` and find the item or count the collection there.
+Random access like `$users[42]` is not yet possible.
+Use above-mentioned `foreach` and find the item or use [JSON Pointer](#parsing-a-subtree).
+
+Count the items via [`iterator_count($users)`](https://www.php.net/manual/en/function.iterator-count.php).
+Remember it will still have to internally iterate the whole thing to get the count and thus will take about the same time.
 
 Requires `ext-json` if used out of the box. See [Decoders](#decoders).
 
@@ -84,7 +86,7 @@ based on generators developed for unpredictably long JSON streams or documents. 
 - Speed. Performance critical code contains no unnecessary function calls, no regular expressions
 and uses native `json_decode` to decode JSON document items by default. See [Decoders](#decoders).
 - Parses not only streams but any iterable that produces JSON chunks.
-- Thoroughly tested. More than 100 tests and 700 assertions.
+- Thoroughly tested. More than 200 tests and 1000 assertions.
 
 <a name="parsing-json-documents"></a>
 ## Parsing JSON documents
@@ -192,6 +194,28 @@ Example:
 
 To iterate over all colors of the fruits, use the JSON Pointer `"/results/-/color"`.
 
+```php
+<?php
+
+use \JsonMachine\Items;
+
+$fruits = Items::fromFile('fruitsArray.json', ['pointer' => '/results/-/color']);
+
+foreach ($fruits as $key => $value) {
+    // 1st iteration:
+    $key == 'color';
+    $value == 'red';
+    $fruits->getMatchedJsonPointer() == '/results/-/color';
+    $fruits->getCurrentJsonPointer() == '/results/0/color';
+
+    // 2nd iteration:
+    $key == 'color';
+    $value == 'yellow';
+    $fruits->getMatchedJsonPointer() == '/results/-/color';
+    $fruits->getCurrentJsonPointer() == '/results/1/color';
+}
+```
+
 <a name="getting-scalar-values"></a>
 ### Parsing a single scalar value
 You can parse a single scalar value anywhere in the document the same way as a collection. Consider this example:
@@ -236,24 +260,86 @@ $lastModified = iterator_to_array($fruits)['lastModified'];
 ```
 Single scalar value access supports array indices in JSON Pointer as well.
 
+<a name="parsing-multiple-subtrees"></a>
+### Parsing multiple subtrees
+
+It is also possible to parse multiple subtrees using multiple JSON Pointers. Consider this example:
+```json
+// fruits.json
+{
+    "lastModified": "2012-12-12",
+    "berries": [
+        {
+          "name": "strawberry", // not a berry, but whatever ...
+          "color": "red"
+        },
+        {
+          "name": "raspberry", // the same ...
+          "color": "red"
+        }
+    ],
+    "citruses": [
+      {
+          "name": "orange",
+          "color": "orange"
+      },
+      {
+          "name": "lime",
+          "color": "green"
+      }
+    ]
+}
+``` 
+To iterate over all berries and citrus fruits, use the JSON pointers `["/berries", "/citrus"]`. The order of pointers
+does not matter. The items will be iterated in the order of appearance in the document.
+```php
+<?php
+
+use \JsonMachine\Items;
+
+$fruits = Items::fromFile('fruits.json', [
+    'pointer' => ['/berries', '/citruses']
+]);
+
+foreach ($fruits as $key => $value) {
+    // 1st iteration:
+    $value == ["name" => "strawberry", "color" => "red"];
+    $fruits->getCurrentJsonPointer() == '/berries';
+
+    // 2nd iteration:
+    $value == ["name" => "raspberry", "color" => "red"];
+    $fruits->getCurrentJsonPointer() == '/berries';
+
+    // 3rd iteration:
+    $value == ["name" => "orange", "color" => "orange"];
+    $fruits->getCurrentJsonPointer() == '/citruses';
+
+    // 4th iteration:
+    $value == ["name" => "lime", "color" => "green"];
+    $fruits->getCurrentJsonPointer() == '/citruses';
+}
+```
+
 <a name="json-pointer"></a>
 ### What is JSON Pointer anyway?
 It's a way of addressing one item in JSON document. See the [JSON Pointer RFC 6901](https://tools.ietf.org/html/rfc6901).
 It's very handy, because sometimes the JSON structure goes deeper, and you want to iterate a subtree,
-not the main level. So you just specify the pointer to the JSON array or object you want to iterate and off you go.
+not the main level. So you just specify the pointer to the JSON array or object (or even to a scalar value) you want to iterate and off you go.
 When the parser hits the collection you specified, iteration begins. You can pass it as `pointer` option in all
 `Items::from*` functions. If you specify a pointer to a non-existent position in the document, an exception is thrown.
-It can be used to access scalar values as well.
+It can be used to access scalar values as well. **JSON Pointer itself must be a valid JSON string**. Literal comparison
+of reference tokens (the parts between slashes) is performed against the JSON document keys/member names.
 
 Some examples:
 
-| JSON Pointer value    | Will iterate through                                                                                        |
-|-----------------------|-------------------------------------------------------------------------------------------------------------|
-| `""` (empty string - default) | `["this", "array"]` or `{"a": "this", "b": "object"}` will be iterated (main level)              |
-| `"/result/items"`     | `{"result":{"items":["this","array","will","be","iterated"]}}`                                           |
-| `"/0/items"`          | `[{"items":["this","array","will","be","iterated"]}]` (supports array indices)                           |
-| `"/results/-/status"` | `{"results":[{"status": "iterated"}, {"status": "also iterated"}]}` (a hyphen instead of an array index) |
-| `"/"` (gotcha! - a slash followed by an empty string, see the [spec](https://tools.ietf.org/html/rfc6901#section-5)) | `{"":["this","array","will","be","iterated"]}` |
+| JSON Pointer value       | Will iterate through                                                                                      |
+|--------------------------|-----------------------------------------------------------------------------------------------------------|
+| (empty string - default) | `["this", "array"]` or `{"a": "this", "b": "object"}` will be iterated (main level)                       |
+| `/result/items`          | `{"result": {"items": ["this", "array", "will", "be", "iterated"]}}`                                      |
+| `/0/items`               | `[{"items": ["this", "array", "will", "be", "iterated"]}]` (supports array indices)                       |
+| `/results/-/status`      | `{"results": [{"status": "iterated"}, {"status": "also iterated"}]}` (a hyphen as an array index wildcard)|
+| `/` (gotcha! - a slash followed by an empty string, see the [spec](https://tools.ietf.org/html/rfc6901#section-5)) | `{"":["this","array","will","be","iterated"]}` |
+| `/quotes\"`              | `{"quotes\"": ["this", "array", "will", "be", "iterated"]}`                                               |
 
 
 <a name="options"></a>
@@ -278,13 +364,13 @@ popular http clients which support streaming responses:
 Guzzle uses its own streams, but they can be converted back to PHP streams by calling
 `\GuzzleHttp\Psr7\StreamWrapper::getResource()`. Pass the result of this function to
 `Items::fromStream` function, and you're set up. See working
-[GuzzleHttp example](src/examples/guzzleHttp.php).
+[GuzzleHttp example](examples/guzzleHttp.php).
 
 <a name="symfony-httpclient"></a>
 ### Symfony HttpClient
 A stream response of Symfony HttpClient works as iterator. And because JSON Machine is
 based on iterators, the integration with Symfony HttpClient is very simple. See
-[HttpClient example](src/examples/symfonyHttpClient.php).
+[HttpClient example](examples/symfonyHttpClient.php).
 
 
 <a name="tracking-parsing-progress"></a>
@@ -325,10 +411,10 @@ and make your own.
 - **`ExtJsonDecoder`** - **Default.** Uses `json_decode` to decode keys and values.
 Constructor has the same parameters as `json_decode`.
 
-- **`PassThruDecoder`** - uses `json_decode` to decode keys but returns values as pure JSON strings.
+- **`PassThruDecoder`** - Does no decoding. Both keys and values are produced as pure JSON strings.
 Useful when you want to parse a JSON item with something else directly in the foreach
-and don't want to implement `JsonMachine\JsonDecoder\ItemDecoder`.
-Constructor has the same parameters as `json_decode`.
+and don't want to implement `JsonMachine\JsonDecoder\ItemDecoder`. Since `1.0.0` does not use `json_decode`.
+
 Example:
 ```php
 <?php
@@ -378,9 +464,12 @@ items will still throw `SyntaxError` exception though.
 
 <a name="on-parser-efficiency"></a>
 ## Parser efficiency
+The time complexity is always `O(n)`
 
 <a name="streams-files"></a>
 ### Streams / files
+TL;DR: The memory complexity is `O(2)`
+
 JSON Machine reads a stream (or a file) 1 JSON item at a time and generates corresponding 1 PHP item at a time.
 This is the most efficient way, because if you had say 10,000 users in JSON file and wanted to parse it using
 `json_decode(file_get_contents('big.json'))`, you'd have the whole string in memory as well as all the 10,000
@@ -395,6 +484,8 @@ This means, that JSON Machine is constantly efficient for any size of processed 
 
 <a name="in-memory-json-strings"></a>
 ### In-memory JSON strings
+TL;DR: The memory complexity is `O(n+1)`
+
 There is also a method `Items::fromString()`. If you are
 forced to parse a big string, and the stream is not available, JSON Machine may be better than `json_decode`.
 The reason is that unlike `json_decode`, JSON Machine still traverses the JSON string one item at a time and doesn't
@@ -452,14 +543,19 @@ json string at a time and then parse that using `Items::fromString()`... If even
 there's probably no solution yet via JSON Machine. A feature is planned which will enable you to iterate
 any structure fully recursively and strings will be served as streams.
 
-
 <a name="installation"></a>
 ## Installation
+
+### Using Composer
 ```bash
 composer require halaxa/json-machine
 ```
-or clone or download this repository (not recommended because of no autoloading).
 
+### Without Composer
+Clone or download this repository and add the following to your bootstrap file:
+```php
+spl_autoload_register(require '/path/to/json-machine/src/autoloader.php');
+```
 
 <a name="development"></a>
 ## Development
@@ -477,6 +573,8 @@ of the build process such as tests.
 [Install Docker](https://docs.docker.com/install/) and run `make` in the project dir on your host machine
 to see available dev tools/commands. You can run all the steps of the build process separately as well
 as the whole build process at once. Make basically runs composer dev scripts inside containers in the background.
+
+`make build`: Runs complete build. The same command is run via GitHub Actions CI.
 
 
 
