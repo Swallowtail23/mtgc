@@ -98,15 +98,15 @@ function colourfunction($colourcode)
         elseif (in_array($colourcode,array("BGR","BRG","RGB","RBG","GBR","GRB"))) :
             $colour = "jund";
         elseif (in_array($colourcode,array("BGW","BWG","WGB","WBG","GBW","GWB"))) :
-            $colour = "junk";
+            $colour = "abzan";
         elseif (in_array($colourcode,array("UGR","URG","RGU","RUG","GUR","GRU"))) :
-            $colour = "rug";
+            $colour = "temur";
         elseif (in_array($colourcode,array("RWU","RUW","WUR","WRU","URW","UWR"))) :
-            $colour = "usa";
+            $colour = "jeskai";
         elseif (in_array($colourcode,array("WRB","WBR","BRW","BWR","RBW","RWB"))) :
-            $colour = "oros";
+            $colour = "mardu";
         elseif (in_array($colourcode,array("BGU","BUG","UGB","UBG","GBU","GUB"))) :
-            $colour = "bug";
+            $colour = "sultai";
         elseif (in_array($colourcode,array("AUR","ARU","RAU","RUA","UAR","URA"))) :
             $colour = "blueredartifact";
         elseif (in_array($colourcode,array("AWU","AUW","WUA","WAU","UAW","UWA"))) :
