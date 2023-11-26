@@ -128,7 +128,12 @@ class SessionManager {
             $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Existing rate age is $age", $this->logfile);
             if ($lastUpdateTime === null OR $age > 3600) :
                 $rate = $this->updateFxRate($currencies);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Updating... new rate is $rate", $this->logfile);
+                if($rate === NULL):
+                    $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
+                    return $rate;
+                else:
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Updating... new rate is $rate", $this->logfile);
+                endif;
             else :
                 $rate = $existingRate; // Keep the existing rate from the database
                 $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Not updating... rate is $rate", $this->logfile);
@@ -146,41 +151,36 @@ class SessionManager {
     private function updateFxRate($currencies)
     {
         $freecurrencyapi = new \FreeCurrencyApi\FreeCurrencyApi\FreeCurrencyApiClient($this->fxAPI);
-        
         list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
-                
         $freecurrencyData = $freecurrencyapi->latest(['base_currency' => "$baseCurrency",'currencies' => "$targetCurrency",]);
-
-        $fxResult = $freecurrencyData["data"]["$targetCurrency"];
-
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, $baseCurrency to $targetCurrency is $fxResult", $this->logfile);
-
-        $time = time();
-
-        $stmt = $this->db->prepare("
-            INSERT INTO fx (updatetime, rate, currencies)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            updatetime = ?,
-            rate = ?
-        ");
-
-        // Binding parameters
-        $stmt->bind_param("sssss", $time, $fxResult, $currencies, $time, $fxResult);
-
-        if ($stmt->execute()) :
+        if (isset($freecurrencyData["data"][$targetCurrency])):
+            $fxResult = $freecurrencyData["data"]["$targetCurrency"];
             $obj = new Message;
-            $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database updated", $this->logfile);
-        else :
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database update failed: " . $stmt->error, $this->logfile);
+            $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, $baseCurrency to $targetCurrency is $fxResult", $this->logfile);
+            $time = time();
+            $stmt = $this->db->prepare("
+                INSERT INTO fx (updatetime, rate, currencies)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                updatetime = ?,
+                rate = ?
+            ");
+            // Binding parameters
+            $stmt->bind_param("sssss", $time, $fxResult, $currencies, $time, $fxResult);
+            if ($stmt->execute()) :
+                $obj = new Message;
+                $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database updated", $this->logfile);
+            else :
+                $obj = new Message;
+                $obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, database update failed: " . $stmt->error, $this->logfile);
+            endif;
+            // Closing the statement
+            $stmt->close();
+            return $fxResult;
+        else:
+            $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call failed for $targetCurrency", $this->logfile);
+            return null;
         endif;
-
-        // Closing the statement
-        $stmt->close();
-
-        return $fxResult;
     }
 
     private function updateFxRateIfNeeded($currencies)
