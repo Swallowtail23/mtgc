@@ -9,4 +9,3 @@ cardimg/
 ./well-known
 /.well-known/
 /vendor
-!/vendor/
