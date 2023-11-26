@@ -1403,14 +1403,16 @@ require('includes/menu.php'); //mobile menu
                             <hr class='hr324'>
                             <?php 
 
-                            // Price section
-                            echo "<b>Price - USD ($targetCurrency)</b>";
-                            if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
-                                $tcgdirectlink = $tcg_buy_uri;
-                            else:
-                                $tcgdirectlink = null;
-                            endif;?>
+                            // Price section ?>
                             <table id='tcgplayer' width="100%">
+                                <tr>
+                                    <td>
+                                        <b>Price</b>
+                                    </td>
+                                    <td>
+                                        <b>USD (<?php echo $targetCurrency; ?>)</b>
+                                    </td>
+                                </tr>
                       <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
                                 $normalprice = TRUE; 
@@ -1507,7 +1509,12 @@ require('includes/menu.php'); //mobile menu
                             </table>
                             <hr class='hr324'>
 
-                            <b>Links</b>
+                            <b>Links</b> <?php
+                            if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
+                                $tcgdirectlink = $tcg_buy_uri;
+                            else:
+                                $tcgdirectlink = null;
+                            endif; ?>
                             <table width="100%">
                                 <tr>
                                     <td colspan=2 class="buycellleft">
