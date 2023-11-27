@@ -781,36 +781,51 @@ require('includes/menu.php'); //mobile menu
                             echo $row['name'];
                         endif;
                         echo "</h2>";
-                    ?>
-                    <?php 
                     echo "<a href='index.php?adv=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>"; ?>
                 </div> 
                 <div id="carddetailmain">
-                    <div id="carddetailimage">
-                  <?php if($row['layout'] === 'flip'): ?>
+                    <div id="carddetailimage"><?php 
+                        if($row['layout'] === 'flip'): ?>
                             <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
                                 <span class='material-icons md-24'>refresh</span>
-                            </div>
-                  <?php endif; 
+                            </div> <?php 
+                        endif; 
                         $img_id = 'cardimg';
                         if (in_array($row['layout'],$two_card_detail_sections)):
                             echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                         endif; 
                         // Find the prev number card's ID
-                        if($prevcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number < $cardnumber ORDER BY number DESC")):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                            $prevcardid = $prevcardresult['id'];
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card is $prevcardid",$logfile);
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
+                        $query = "SELECT id FROM cards_scry WHERE setcode = ? ORDER BY number ASC, release_date ASC, name ASC, id ASC";
+                        $stmt = $db->prepare($query);
+                        $stmt->bind_param('s', $row['cs_setcode']);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $results = $result->fetch_all(MYSQLI_ASSOC);
+                        $currentCardIndex = array_search($row['cs_id'], array_column($results, 'id'));
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card is index number $currentCardIndex in setcode {$row['cs_setcode']}",$logfile);
+                        if ($currentCardIndex !== false) :
+                            $prevCardIndex = $currentCardIndex - 1;
+                            if (isset($results[$prevCardIndex])) :
+                                // Retrieve the next card details
+                                $prevCard = $results[$prevCardIndex];
+                                $prevcardid = $prevCard['id'];
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card is $prevcardid",$logfile);
+                            else :
+                                $prevcardid = '';
+                            endif;
+                            $nextCardIndex = $currentCardIndex + 1;
+                            if (isset($results[$nextCardIndex])) :
+                                // Retrieve the next card details
+                                $nextCard = $results[$nextCardIndex];
+                                $nextcardid = $nextCard['id'];
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card is $nextcardid",$logfile);
+                            else :
+                                $nextcardid = '';
+                            endif; 
                         else:
-                            $prevcardid = "";
-                        endif; 
-                        // Find the next number card's ID
-                        if($nextcardresult = $db->select_one('id','cards_scry',"WHERE setcode = '$setcode' AND number > $cardnumber ORDER BY number ASC")):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-                            $nextcardid = $nextcardresult['id'];
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card is $nextcardid",$logfile);
-                        else:
-                            $nextcardid = "";
+                            $prevcardid = '';
+                            $nextcardid = '';
                         endif;?>
                         <table>
                             <tr> 
@@ -833,12 +848,10 @@ require('includes/menu.php'); //mobile menu
                                         $hoverclass = 'imgfloat splitfloat';
                                     else:
                                         $hoverclass = 'imgfloat';
-                                    endif;
-                                    ?>
+                                    endif; ?>
                                         <div class='<?php echo $hoverclass; ?>' id='image-<?php echo $row['cs_id'];?>'>
                                             <img alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
-                                        </div>
-                                    <?php
+                                        </div> <?php
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
                                         echo "<a href='https://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=".$multiverse_id."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
@@ -846,102 +859,94 @@ require('includes/menu.php'); //mobile menu
                                         echo "<a href='".$row['scryfall_uri']."' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
                                     else:
                                         echo "<a href='https://gatherer.wizards.com/' target='_blank'><img alt='$lookupid' id='cardimg' class='mainimg' src=$imagelocation></a>"; 
-                                    endif;
-                                        
+                                    endif; ?>
+                                </td>
+                            </tr> <?php
+                        if (!empty($prevcardid) AND !empty($nextcardid)):
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
+                            <tr>
+                                <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"> <?php 
+                                    if(!empty($prevcardid)): ?>
+                                        <form action="?" method="get" id="prev_card">
+                                            <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
+                                            <label style="cursor: pointer;">
+                                                <span
+                                                    onclick="document.getElementById('prev_card').submit();"
+                                                    title="Previous card in set"
+                                                    onmouseover=""
+                                                    style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                    class='material-symbols-outlined'>
+                                                    navigate_before
+                                                </span>
+                                            </label>
+                                        </form>
+                                        <?php
+                                    endif; ?>
+                                </td>
+                                <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
+                                    if(!empty($nextcardid)): ?>
+                                        <form action="?" method="get" id="next_card"> <?php 
+                                            echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
+                                            <label style="cursor: pointer;">
+                                                <span
+                                                    onclick="document.getElementById('next_card').submit();"
+                                                    title="Next card in set"
+                                                    onmouseover=""
+                                                    style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                    class='material-symbols-outlined'>
+                                                    navigate_next
+                                                </span>
+                                            </label>
+                                        </form>
+                                    <?php endif;
                                     ?>
                                 </td>
                             </tr> <?php
-                            if (!empty($prevcardid) AND !empty($nextcardid)):?>
-                                <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
-                                        if ($row['number'] > 1):
-                                            if(!empty($prevcardid)): ?>
-                                                <form action="?" method="get" id="prev_card">
-                                                    <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                    echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
-                                                    <label style="cursor: pointer;">
-                                                        <span
-                                                            onclick="document.getElementById('prev_card').submit();"
-                                                            title="Previous card in set"
-                                                            onmouseover=""
-                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                            class='material-symbols-outlined'>
-                                                            navigate_before
-                                                        </span>
-                                                    </label>
-                                                </form>
-                                                <?php
-                                            endif;
-                                        endif; ?>
-                                    </td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
-                                        if (($row['number'] < $settotal) OR (empty($settotal))): 
-                                            if(!empty($nextcardid)): ?>
-                                                <form action="?" method="get" id="next_card"> <?php 
-                                                    echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                    echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
-                                                    <label style="cursor: pointer;">
-                                                        <span
-                                                            onclick="document.getElementById('next_card').submit();"
-                                                            title="Next card in set"
-                                                            onmouseover=""
-                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                            class='material-symbols-outlined'>
-                                                            navigate_next
-                                                        </span>
-                                                    </label>
-                                                </form>
-                                            <?php endif;
-                                        endif; ?>
-                                    </td>
-                                </tr> <?php
-                            elseif (!empty($nextcardid)):?>
+                            elseif (!empty($nextcardid)):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card ($nextcardid)",$logfile); ?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;
                                     </td>
                                     <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
-                                        if (($row['number'] < $settotal) OR (empty($settotal))): 
-                                            if(!empty($nextcardid)): ?>
-                                                <form action="?" method="get" id="next_card"> <?php 
-                                                    echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                    echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
-                                                    <label style="cursor: pointer;">
-                                                        <span
-                                                            onclick="document.getElementById('next_card').submit();"
-                                                            title="Next card in set"
-                                                            onmouseover=""
-                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                            class='material-symbols-outlined'>
-                                                            navigate_next
-                                                        </span>
-                                                    </label>
-                                                </form>
-                                            <?php endif;
-                                        endif; ?>
+                                        if(!empty($nextcardid)): ?>
+                                            <form action="?" method="get" id="next_card"> <?php 
+                                                echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
+                                                <label style="cursor: pointer;">
+                                                    <span
+                                                        onclick="document.getElementById('next_card').submit();"
+                                                        title="Next card in set"
+                                                        onmouseover=""
+                                                        style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                        class='material-symbols-outlined'>
+                                                        navigate_next
+                                                    </span>
+                                                </label>
+                                            </form>
+                                        <?php endif;
+                                        ?>
                                     </td>
                                 </tr> <?php
-                            elseif (!empty($prevcardid)):?>
+                            elseif (!empty($prevcardid)):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
-                                        if ($row['number'] > 1):
-                                            if(!empty($prevcardid)): ?>
-                                                <form action="?" method="get" id="prev_card">
-                                                    <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
-                                                    echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
-                                                    <label style="cursor: pointer;">
-                                                        <span
-                                                            onclick="document.getElementById('prev_card').submit();"
-                                                            title="Previous card in set"
-                                                            onmouseover=""
-                                                            style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                            class='material-symbols-outlined'>
-                                                            navigate_before
-                                                        </span>
-                                                    </label>
-                                                </form>
-                                                <?php
-                                            endif;
-                                        endif; ?>
+                                        if(!empty($prevcardid)): ?>
+                                            <form action="?" method="get" id="prev_card">
+                                                <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
+                                                <label style="cursor: pointer;">
+                                                    <span
+                                                        onclick="document.getElementById('prev_card').submit();"
+                                                        title="Previous card in set"
+                                                        onmouseover=""
+                                                        style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                        class='material-symbols-outlined'>
+                                                        navigate_before
+                                                    </span>
+                                                </label>
+                                            </form>
+                                            <?php
+                                        endif;
+                                        ?>
                                     </td>
                                     <td colspan="3" class="nextbutton" style="cursor: pointer;">&nbsp;
                                     </td>
@@ -1553,7 +1558,7 @@ require('includes/menu.php'); //mobile menu
                             endif; 
                             if ($normalprice == FALSE AND $foilprice == FALSE AND $etchprice == FALSE): ?>
                                 <tr>
-                                    <td class="buycellleft">
+                                    <td colspan="2" class="buycellleft">
                                         No prices available <br>
                                     </td>
                                 </tr>
