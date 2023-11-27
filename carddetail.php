@@ -1416,6 +1416,11 @@ require('includes/menu.php'); //mobile menu
                                         <b>USD <?php if($fx === TRUE):echo "($targetCurrency)";endif; ?></b>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <i>TCGPlayer market price</i>
+                                    </td>
+                                </tr>
                       <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
                                 $normalprice = TRUE; 
