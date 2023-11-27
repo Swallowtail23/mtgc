@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       24/04/2023
+/* Version:     2.1
+    Date:       27/11/2023
     Name:       ini.php
     Purpose:    PHP script to manage error routines and logging
     Notes:      {none}
@@ -8,7 +8,10 @@
     1.0         Initial version
  * 
  *  2.0
- *              Add card variable types for centralisation of card types
+ *              Add card variable types for centralisation of card types.
+ *  2.1
+ *              27/11/23
+ *              Added fx variables from ini file
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -43,13 +46,7 @@ $ini = new INI("/opt/mtg/mtg_new.ini");
 $ini_array = $ini->data;
 $myURL = $ini_array['general']['URL'];
 $fxAPI = $ini_array['fx']['FreecurrencyAPI'];
-if(isset($fxAPI) AND $fxAPI !== NULL AND $fxAPI !== ""):
-    $fx = TRUE;
-    $currencies = "usd_".$ini_array['fx']['TargetCurrency'];
-    list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
-else:
-    $fx = FALSE;
-endif;
+$fxLocal = $ini_array['fx']['TargetCurrency'];
 if($ini_array['general']['tier'] === 'dev'):
     $tier = 'dev';
     error_reporting(E_ALL);

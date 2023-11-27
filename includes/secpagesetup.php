@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       15/10/23
+/* Version:     2.1
+    Date:       27/11/23
     Name:       secpagesetup.php
     Purpose:    Establish variables on secure pages
     Notes:      {none}
@@ -9,6 +9,9 @@
                 Initial version
  *  2.0
  *              Add collection view check
+ *  2.1
+ *              27/11/23
+ *              Moved fx logic into session manager class's user info method
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -21,21 +24,8 @@ if (!isset($_SESSION['user']) OR !$_SESSION["logged"]):
     exit();    
 else:
     // Session information \\
-    $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $logfile);
-    $userArray = $sessionManager->checkLogged();
-    
-    if(isset($fx) AND $fx === TRUE):
-        $rate = $sessionManager->getRateForCurrencyPair($currencies);
-        if($rate === NULL):
-            $fx = FALSE;
-        else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$logfile);
-        endif;
-        
-    else:
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled",$logfile);
-        $rate = FALSE;
-    endif;
+    $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $fxLocal, $logfile);
+    $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $username = $userArray['username'];                         // get user name
     $mytable = $userArray['table'];                             // user's collection table
@@ -43,6 +33,9 @@ else:
     $admin = $userArray['admin'];
     $grpinout = $userArray['grpinout'];
     $groupid = $userArray['groupid'];
+    $fx = $userArray['fx'];
+    $targetCurrency = $userArray['currency'];
+    $rate = $userArray['rate'];
 
     $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes, available in SESSION
 
