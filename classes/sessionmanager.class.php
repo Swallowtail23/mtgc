@@ -1,9 +1,9 @@
 <?php
-/* Version:     1.0
-    Date:       16/11/23
+/* Version:     1.1
+    Date:       27/11/23
     Name:       sessionManager.class.php
-    Purpose:    Simple check login class, gets user details 
-                or forces session destroy and return to login.php
+    Purpose:    Check login class, get user details 
+                or force session destroy and return to login.php
     Notes:      - 
     To do:      -
     
@@ -12,6 +12,9 @@
     
  *  1.0
                 Initial version
+ *  1.1
+ *              27/11/23
+ *              Brought in fx logic to userinfo method, and renamed from checkLogged to getUserInfo
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -23,6 +26,7 @@ class SessionManager {
     private $adminip;
     private $session;
     private $fxAPI;
+    private $fxLocal;
     private $sessionArray = [];
     private $logfile;
     
@@ -30,11 +34,12 @@ class SessionManager {
     const ADMIN_WRONG_LOCATION = 2;
     const ADMIN_NONE = 3;
     
-    public function __construct($db,$adminip,$session, $fxAPI, $logfile) {
+    public function __construct($db,$adminip,$session, $fxAPI, $fxLocal, $logfile) {
         $this->db = $db;
         $this->adminip = $adminip;
         $this->session = $session;
         $this->fxAPI = $fxAPI;
+        $this->fxLocal = $fxLocal;
         $this->logfile = $logfile;
         $this->sessionArray = [
             'usernumber' => '',
@@ -51,17 +56,17 @@ class SessionManager {
         $this->sessionArray = array_merge($this->sessionArray, $data);
     }
     
-    public function checkLogged()
+    public function getUserInfo()
     {
-        // Get user status and info
+        // Get user status and info for logged-in user, and currency fx rate if set
         $userNumber = $this->session['user'];
-        $query = "SELECT status, username, admin, grpinout, groupid, collection_view FROM users WHERE usernumber = ?";
+        $query = "SELECT status, username, admin, grpinout, groupid, collection_view, currency FROM users WHERE usernumber = ?";
 
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("s", $userNumber);
         $stmt->execute();
         $stmt->store_result();
-        $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view);
+        $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view, $currency);
             
         if ($stmt->error OR $stmt->num_rows === 0 OR $status === '' OR $status === 'disabled' OR $status === 'locked'):
             $stmt->close();
@@ -78,6 +83,42 @@ class SessionManager {
             endif;
             $mytable = $userNumber . "collection";
 
+            if(isset($this->fxAPI) AND $this->fxAPI !== NULL AND $this->fxAPI !== ""): // fx API key is globally present
+                $fx = TRUE;
+                $defaultLocalCurrency = $this->fxLocal;
+                $userLocalCurrency = $currency;
+                if(isset($userLocalCurrency) AND $userLocalCurrency !== NULL AND $userLocalCurrency !== ""): //Does user have a currency set?
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User has currency set: $userLocalCurrency",$this->logfile);
+                    $currencies = "usd_".$userLocalCurrency;
+                elseif(isset($defaultLocalCurrency) AND $defaultLocalCurrency !== NULL AND $defaultLocalCurrency !== ""): //...else use default
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No user currency set, using default: $defaultLocalCurrency",$this->logfile);
+                    $currencies = "usd_".$defaultLocalCurrency;
+                else:                                                                                       ///... else disable fx 
+                    $fx = FALSE;
+                endif;
+                list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
+                if($baseCurrency === $targetCurrency):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Base currency same as target, disabling conversion",$this->logfile);
+                    $fx = FALSE;
+                else:
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Currency conversion from $baseCurrency to $targetCurrency",$this->logfile);
+                endif;
+            else:
+                $fx = FALSE;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (1)",$this->logfile);
+            endif;
+            if(isset($fx) AND $fx === TRUE):
+                $rate = $this->getRateForCurrencyPair($currencies);
+                if($rate === NULL):
+                    $fx = FALSE;
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (2)",$this->logfile);
+                else:
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$this->logfile);
+                endif;
+            else:
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (3)",$this->logfile);
+                $rate = FALSE;
+            endif;
             $this->addToSessionArray([
                 'usernumber' => $userNumber,
                 'username' => $username,
@@ -85,10 +126,12 @@ class SessionManager {
                 'grpinout' => $grpinout,
                 'groupid' => $groupid,
                 'collection_view' => $collection_view,
-                'table' => $mytable
+                'table' => $mytable,
+                'fx' => $fx,
+                'currency' => $targetCurrency,
+                'rate' => $rate
             ]);
         endif;
-
         return $this->sessionArray;
     }
     

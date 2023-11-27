@@ -1,6 +1,6 @@
 <?php 
-/* Version:     16.1
-    Date:       20/10/23
+/* Version:     17.0
+    Date:       26/11/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -49,6 +49,9 @@
  *              Review and improve price handling routine to ensure latest price more reliably shown
  * 16.1
  *              Show serialised promo type
+ * 17.0
+ *              27/11/23
+ *              Added display of secondary currency to prices
 */
 
 session_start();

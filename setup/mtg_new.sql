@@ -403,6 +403,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `grpinout` tinyint(1) NOT NULL,
   `lastlogin_date` date DEFAULT NULL,
   `collection_view` tinyint NOT NULL DEFAULT '0',
+  `currency` varchar(3) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`usernumber`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
