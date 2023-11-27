@@ -927,7 +927,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr> <?php
                             elseif (!empty($prevcardid)):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>?>
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
                                         if(!empty($prevcardid)): ?>
