@@ -138,7 +138,8 @@ Run command line:
 
 ### Cron jobs ###
 
-Setup cron job to run bulk files from /opt/mtg (run as root) and FX update script
+Setup cron job to run bulk files from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder. 
+Adjust folder and user to suit.
 
 ### PAGE LOAD SEQUENCE ###
 

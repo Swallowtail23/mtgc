@@ -525,11 +525,11 @@ elseif ($adv == "yes" ) :
         elseif ($sortBy == "cmcdown"):
             $order = "ORDER BY cards_scry.cmc DESC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "set"):
-            $order = "ORDER BY set_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.cmc DESC ";
+            $order = "ORDER BY set_date ASC, cards_scry.set_name ASC, cards_scry.number ASC, cards_scry.name ASC ";
         elseif ($sortBy == "setdown"):
-            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number ASC, cs_id ASC ";
+            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number ASC, cards_scry.name ASC, cs_id ASC ";
         elseif ($sortBy == "setnumberdown"):
-            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number DESC, cs_id ASC ";
+            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, number DESC, cards_scry.name ASC, cs_id ASC ";
         elseif ($sortBy == "powerup"):
             $order = "ORDER BY cards_scry.maxpower * 1 ASC, cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
         elseif ($sortBy == "powerdown"):
