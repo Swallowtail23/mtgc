@@ -796,7 +796,7 @@ require('includes/menu.php'); //mobile menu
                         endif; 
                         // Find the prev number card's ID
                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
-                        $query = "SELECT id FROM cards_scry WHERE setcode = ? ORDER BY number ASC, release_date ASC, name ASC, id ASC";
+                        $query = "SELECT id FROM cards_scry WHERE setcode = ? ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
                         $stmt = $db->prepare($query);
                         $stmt->bind_param('s', $row['cs_setcode']);
                         $stmt->execute();
