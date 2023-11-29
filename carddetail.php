@@ -862,47 +862,75 @@ require('includes/menu.php'); //mobile menu
                                     endif; ?>
                                 </td>
                             </tr> <?php
-                        if (!empty($prevcardid) AND !empty($nextcardid)):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
-                            <tr>
-                                <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"> <?php 
-                                    if(!empty($prevcardid)): ?>
-                                        <form action="?" method="get" id="prev_card">
-                                            <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
-                                            <label style="cursor: pointer;">
-                                                <span
-                                                    onclick="document.getElementById('prev_card').submit();"
-                                                    title="Previous card in set"
-                                                    onmouseover=""
-                                                    style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                    class='material-symbols-outlined'>
-                                                    navigate_before
-                                                </span>
-                                            </label>
-                                        </form>
-                                        <?php
-                                    endif; ?>
-                                </td>
-                                <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
-                                    if(!empty($nextcardid)): ?>
-                                        <form action="?" method="get" id="next_card"> <?php 
-                                            echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
-                                            <label style="cursor: pointer;">
-                                                <span
-                                                    onclick="document.getElementById('next_card').submit();"
-                                                    title="Next card in set"
-                                                    onmouseover=""
-                                                    style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                    class='material-symbols-outlined'>
-                                                    navigate_next
-                                                </span>
-                                            </label>
-                                        </form>
-                                    <?php endif;
-                                    ?>
-                                </td>
-                            </tr> <?php
-                            elseif (!empty($nextcardid)):
+                            if (!empty($prevcardid) AND !empty($nextcardid)): ?>
+                                <script>
+                                    document.addEventListener('keydown', function(event) {
+                                        if (event.key === 'ArrowLeft') {
+                                            moveLeft();
+                                        } else if (event.key === 'ArrowRight') {
+                                            moveRight();
+                                        }
+                                    });
+
+                                    function moveLeft() {
+                                        document.getElementById('prev_card').submit();
+                                    }
+
+                                    function moveRight() {
+                                        document.getElementById('next_card').submit();
+                                    }
+                                </script> <?php
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
+                                <tr>
+                                    <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"> <?php 
+                                        if(!empty($prevcardid)): ?>
+                                            <form action="?" method="get" id="prev_card">
+                                                <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
+                                                <label style="cursor: pointer;">
+                                                    <span
+                                                        onclick="document.getElementById('prev_card').submit();"
+                                                        title="Previous card in set"
+                                                        onmouseover=""
+                                                        style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                        class='material-symbols-outlined'>
+                                                        navigate_before
+                                                    </span>
+                                                </label>
+                                            </form>
+                                            <?php
+                                        endif; ?>
+                                    </td>
+                                    <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
+                                        if(!empty($nextcardid)): ?>
+                                            <form action="?" method="get" id="next_card"> <?php 
+                                                echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
+                                                <label style="cursor: pointer;">
+                                                    <span
+                                                        onclick="document.getElementById('next_card').submit();"
+                                                        title="Next card in set"
+                                                        onmouseover=""
+                                                        style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
+                                                        class='material-symbols-outlined'>
+                                                        navigate_next
+                                                    </span>
+                                                </label>
+                                            </form>
+                                        <?php endif;
+                                        ?>
+                                    </td>
+                                </tr> <?php
+                            elseif (!empty($nextcardid)):?>
+                                <script>
+                                    document.addEventListener('keydown', function(event) {
+                                        if (event.key === 'ArrowRight') {
+                                            moveRight();
+                                        }
+                                    });
+
+                                    function moveRight() {
+                                        document.getElementById('next_card').submit();
+                                    }
+                                </script> <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card ($nextcardid)",$logfile); ?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;
@@ -926,7 +954,18 @@ require('includes/menu.php'); //mobile menu
                                         ?>
                                     </td>
                                 </tr> <?php
-                            elseif (!empty($prevcardid)):
+                            elseif (!empty($prevcardid)):?>
+                                <script>
+                                    document.addEventListener('keydown', function(event) {
+                                        if (event.key === 'ArrowLeft') {
+                                            moveLeft();
+                                    });
+
+                                    function moveLeft() {
+                                        document.getElementById('prev_card').submit();
+                                    }
+
+                                </script> <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
@@ -1401,15 +1440,15 @@ require('includes/menu.php'); //mobile menu
                                             echo "<i>MtG Arena/Online</i>";
                                         elseif ($cardtypes === 'foilonly'):
                                             $poststring = 'newfoil';
-                                            echo "Foil: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Foil: <input class='bulkinputsmall foil' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         elseif ($cardtypes === 'etchedonly'):
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_one' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else:
                                             $poststring = 'newqty';
-                                            echo "Normal: <input class='bulkinputsmall' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Normal: <input class='bulkinputsmall normal' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$id\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1425,11 +1464,11 @@ require('includes/menu.php'); //mobile menu
                                             echo "&nbsp;";
                                         elseif ($cardtypes === 'normaletched'):
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else:
                                             $poststring = 'newfoil';
-                                            echo "Foil: <input class='bulkinputsmall' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                            echo "Foil: <input class='bulkinputsmall foil' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$id\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1437,7 +1476,7 @@ require('includes/menu.php'); //mobile menu
                                         <?php
                                         if ($cardtypes === 'normalfoiletched'):
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$id\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else:
                                             echo "&nbsp;";
@@ -1453,6 +1492,104 @@ require('includes/menu.php'); //mobile menu
                             echo "<input type='hidden' name='update' value='yes'>";?>
                             <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="submit" value="UPDATE NOTES">
                             </form>
+                            <script>
+                                $(document).ready(function() {
+                                    let id = '<?php echo $id; ?>';
+                                    let cardtypes = '<?php echo $cardtypes; ?>';
+                                    let poststring = '<?php echo $poststring; ?>';
+                                    let validkeysArray = [];
+
+                                    if (cardtypes === 'normalonly') {
+                                            validkeysArray.push("n");
+                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newqty = <?php echo $myqty; ?>;
+                                    } else if (cardtypes === 'foilonly') {
+                                            validkeysArray.push("f");
+                                            cellidfoil = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newfoil = <?php echo $myfoil; ?>;
+                                    } else if (cardtypes === 'etchedonly') {
+                                            validkeysArray.push("e");
+                                            cellidetch = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newetch = <?php echo $myetch; ?>;
+                                    } else if (cardtypes === 'normaletched') {
+                                            validkeysArray.push("n","e");
+                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newqty = <?php echo $myqty; ?>;
+                                            cellidetch = document.getElementById("<?php echo $cellid_two; ?>");
+                                            newetch = <?php echo $myetch; ?>;
+                                    } else if (cardtypes === 'normalfoiletched') {
+                                            validkeysArray.push("n","f","e");
+                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newqty = <?php echo $myqty; ?>;
+                                            cellidfoil = document.getElementById("<?php echo $cellid_two; ?>");
+                                            newfoil = <?php echo $myfoil; ?>;
+                                            cellidetch = document.getElementById("<?php echo $cellid_three; ?>");
+                                            newetch = <?php echo $myetch; ?>;
+                                    } else  {
+                                            validkeysArray.push("n","f");
+                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
+                                            newqty = <?php echo $myqty; ?>;
+                                            cellidfoil = document.getElementById("<?php echo $cellid_two; ?>");
+                                            newfoil = <?php echo $myfoil; ?>;
+                                    }
+
+                                    let operation = '';
+                                    let ajaxTrigger = false;
+                                    $(document).on('keydown', function(f) {
+                                        const pressedKey = f.key;
+                                        if (pressedKey === '+') {
+                                            operation = 'add';
+                                        } else if (pressedKey === '-') {
+                                            operation = 'subtract';
+                                        } else if (pressedKey === 'Escape' && (operation === 'add' || operation === 'subtract')) {
+                                            operation = 'None';
+                                        } else if (validkeysArray.includes(pressedKey)) {
+                                            if (operation === 'add' && pressedKey === 'n') {
+                                                newqty = parseInt(newqty, 10) + 1;
+                                                ajaxTrigger = true;
+                                            } else if (operation === 'add' && pressedKey === 'f') {
+                                                newfoil = parseInt(newfoil, 10) + 1;
+                                                ajaxTrigger = true;
+                                            } else if (operation === 'add' && pressedKey === 'e') {
+                                                newetch = parseInt(newetch, 10) + 1;
+                                                ajaxTrigger = true;
+                                            } else if (operation === 'subtract' && pressedKey === 'n') {
+                                                newqty = Math.max(0, parseInt(newqty, 10) - 1);
+                                                ajaxTrigger = true;
+                                            } else if (operation === 'subtract' && pressedKey === 'f') {
+                                                newfoil = Math.max(0, parseInt(newfoil, 10) - 1);
+                                                ajaxTrigger = true;
+                                            } else if (operation === 'subtract' && pressedKey === 'e') {
+                                                newetch = Math.max(0, parseInt(newetch, 10) - 1);
+                                                ajaxTrigger = true;
+                                            }
+                                        }    
+                                    });
+                                    $(document).on('keyup', function(e) {
+                                        const pressedKey = e.key;
+                                        if (validkeysArray.includes(pressedKey)) {
+                                            e.preventDefault();
+                                            if (ajaxTrigger === true) {
+                                                if (pressedKey === 'n') {
+                                                    console.log('Normal', newqty);
+                                                    cellidnormal.value = newqty;
+                                                } else if (pressedKey === 'f') {
+                                                    console.log('Foil', newfoil);
+                                                    cellidfoil.value = newfoil;
+                                                } else if (pressedKey === 'e') {
+                                                    console.log('Etch', newetch);
+                                                    cellidetch.value = newetch;
+                                                }
+                                                ajaxTrigger = false;
+                                                var event = new Event('change');
+                                                if (pressedKey === 'n') cellidnormal.dispatchEvent(event);
+                                                else if (pressedKey === 'f') cellidfoil.dispatchEvent(event);
+                                                else if (pressedKey === 'e') cellidetch.dispatchEvent(event);
+                                            }
+                                        }    
+                                    });
+                                });
+                            </script>
                             <hr class='hr324'>
                             <?php 
 
