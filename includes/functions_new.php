@@ -353,6 +353,7 @@ function adddeckcard($deck,$card,$section,$quantity)
         endif;
     else:
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...skipping $cardnametext to deck #$deck",$logfile);
+        return 'cardnotadded';
     endif;
 }
 

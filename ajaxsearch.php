@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       17/11/23
+/* Version:     5.0
+    Date:       01/12/23
     Name:       ajaxsearch.php
     Purpose:    PHP script to run ajax search from header
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -17,6 +17,8 @@
  *              Refactor for cards_scry
  *  4.0
  *              Move to prepared statements
+ *  5.0
+ *              Add [set] search interpretation
 */
 
 session_start();
@@ -43,11 +45,39 @@ else:
     //
     if($_POST):
         $r = $_POST['search'];
-        $q = '%' . $db->escape($r) . '%';
+        // Test for the existence of a string enclosed in parentheses
+        if (strpos($r, '[') !== false):
+            $insideBrackets = $closingBracket = false;
+            $u = $q = $s = $t = '';
+
+            foreach (str_split($r) as $char):
+                if ($char === '['):
+                    $insideBrackets = true;
+                elseif ($insideBrackets && $char !== ']'):
+                    $s .= $char;
+                elseif ($char === ']' && $insideBrackets):
+                    $closingBracket = TRUE;
+                    break;
+                elseif (!$insideBrackets):
+                    $q .= $char;
+                endif;
+            endforeach;
+            if($closingBracket === TRUE):
+                $u = $db->escape($s);
+            endif;
+            $t = trim($q);
+            $q = '%'.trim($db->escape($q)).'%';
+        else:
+            $t = trim($r);
+            $q = '%'.trim($db->escape($r)).'%';
+            $u = ''; // No brackets in this case
+        endif;
+        
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Seaarch string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
         $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                       FROM cards_scry
                       WHERE
-                      printed_name LIKE ? 
+                      (printed_name LIKE ? 
                       OR flavor_name LIKE ? 
                       OR name LIKE ? 
                       OR f1_printed_name LIKE ? 
@@ -55,9 +85,11 @@ else:
                       OR f1_name LIKE ?
                       OR f2_printed_name LIKE ? 
                       OR f2_flavor_name LIKE ? 
-                      OR f2_name LIKE ?
+                      OR f2_name LIKE ?)
+                      AND
+                      (setcode LIKE ? OR ? = '')
                       ORDER BY release_date DESC, name ASC LIMIT 20");
-        $stmt->bind_param("sssssssss", $q, $q, $q, $q, $q, $q, $q, $q, $q);
+        $stmt->bind_param("sssssssssss", $q, $q, $q, $q, $q, $q, $q, $q, $q, $u, $u);
         $stmt->execute();
         $stmt->store_result();
         $stmt->bind_result($id, $setcode, $name, $printed_name, $flavor_name, $f1_name, $f1_printed_name, $f1_flavor_name, $f2_name, $f2_printed_name, $f2_flavor_name, $release_date);
@@ -68,21 +100,21 @@ else:
             <table class='ajaxshow'>
             <?php 
             while($row = $stmt->fetch()):
-                if($printed_name !== null AND strpos(strtolower($printed_name),strtolower($r)) !== false):
+                if($printed_name !== null AND strpos(strtolower($printed_name),strtolower($t)) !== false):
                     $name = $printed_name;
-                elseif($flavor_name !== null AND strpos(strtolower($flavor_name),strtolower($r)) !== false):
+                elseif($flavor_name !== null AND strpos(strtolower($flavor_name),strtolower($t)) !== false):
                     $name = $flavor_name;
-                elseif($f1_name !== null AND strpos(strtolower($f1_name),strtolower($r)) !== false):
+                elseif($f1_name !== null AND strpos(strtolower($f1_name),strtolower($t)) !== false):
                     $name = $f1_name;
-                elseif($f1_printed_name !== null AND strpos(strtolower($f1_printed_name),strtolower($r)) !== false):
+                elseif($f1_printed_name !== null AND strpos(strtolower($f1_printed_name),strtolower($t)) !== false):
                     $name = $f1_printed_name;
-                elseif($f1_flavor_name !== null AND strpos(strtolower($f1_flavor_name),strtolower($r)) !== false):
+                elseif($f1_flavor_name !== null AND strpos(strtolower($f1_flavor_name),strtolower($t)) !== false):
                     $name = $f1_flavor_name;
-                elseif($f2_name !== null AND strpos(strtolower($f2_name),strtolower($r)) !== false):
+                elseif($f2_name !== null AND strpos(strtolower($f2_name),strtolower($t)) !== false):
                     $name = $f2_name;
-                elseif($f2_printed_name !== null AND strpos(strtolower($f2_printed_name),strtolower($r)) !== false):
+                elseif($f2_printed_name !== null AND strpos(strtolower($f2_printed_name),strtolower($t)) !== false):
                     $name = $f2_printed_name;
-                elseif($f2_flavor_name !== null AND strpos(strtolower($f2_flavor_name),strtolower($r)) !== false):
+                elseif($f2_flavor_name !== null AND strpos(strtolower($f2_flavor_name),strtolower($t)) !== false):
                     $name = $f2_flavor_name;
                 endif;
                 $ajaxname = $db->escape($name);
@@ -94,8 +126,8 @@ else:
                 else:
                     $ajaxid = $getajax['id'];
                     $ajaxnumber = $getajax['number_import'];
-                    $b_name = '<strong>'.$r.'</strong>';
-                    $final_name = str_ireplace($r, $b_name, $name);
+                    $b_name = '<strong>'.$t.'</strong>';
+                    $final_name = str_ireplace($t, $b_name, $name);
                 endif;
                 ?>
                 <tr>
