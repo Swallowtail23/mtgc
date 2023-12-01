@@ -584,7 +584,7 @@ endwhile;
 
 // Next the main DIV section ?>
 <?php
-if(isset($cardtoadd) AND $cardtoadd == 'cardnotfound'): ?>
+if(isset($cardtoadd) AND ($cardtoadd == 'cardnotfound' OR $cardtoadd == 'cardnotadded')): ?>
     <div class="msg-new error-new" onclick='CloseMe(this)'><span>That didn't work... check card name</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -854,7 +854,7 @@ endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
                                 $commandercount = $commandercount +1;
-                                $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                                $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
@@ -964,7 +964,7 @@ endif;
                                     endif;
                                     echo "</tr>";
                                     $total = $total + $quantity;
-                                    $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                                    $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                                 endif;
                             endwhile; 
                         endif; 
@@ -1196,7 +1196,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity;
-                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1382,7 +1382,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1618,7 +1618,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1793,7 +1793,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -2001,7 +2001,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
-                            $textfile = $textfile."$quantity $cardname ($cardset)"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
                             endwhile; 
                     endif;?>
                     <tr>
@@ -2210,8 +2210,8 @@ endif;
             endif;
             ?>
             <h4>Quick add</h4>
-            Format: <i>"qty [optional] name [optional if set and number included] (set [optional unless number included] number [optional])" </i><br>E.g.: 
-            "Madame Vastra", "Madame Vastra (WHO)", "Madame Vastra (WHO 425)", "4 Madame Vastra (WHO)", "2 (WHO 425)"
+            Format: <i>"qty {optional} name {optional if set and number included} [set {optional unless number included} number {optional}]" </i><br>E.g.: 
+            "Madame Vastra", "Madame Vastra [WHO]", "Madame Vastra [WHO 425]", "4 Madame Vastra [WHO]", "2 [WHO 425]"
             <br><br>
             <form action="deckdetail.php"  method="GET">
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>

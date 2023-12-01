@@ -3,9 +3,13 @@
     Date:       25/11/23
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
-    Notes:      - 
+    Notes:      ProcessInput() called with deck number and input string
+ *              - Interprets whether it is single or multiple line
+ *              - If single line, calls quickadd() in single line mode
+ *              Quickadd() then called
+ *              - Interprets the string and gets the card ID
+ *              - returns a card ID, or cardnotfound, or cardnotadded
     To do:      -
-    
     @author     Simon Wilson <simon@simonandkate.net>
     @copyright  2023 Simon Wilson
     
@@ -40,7 +44,9 @@ class DeckManager {
             endforeach;
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Single-line input, calling quickadd in single-line mode",$this->logfile);
-            return $this->quickadd($decknumber, $input);
+            $quickaddresult = $this->quickadd($decknumber, $input);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Result: $quickaddresult",$this->logfile);
+            return $quickaddresult;
         endif;
         // If batched card array is not empty, perform batch insert
         if (!empty($this->batchedCardIds)):
@@ -54,7 +60,7 @@ class DeckManager {
     {
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)",$this->logfile);
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
-        preg_match("~^(\d*)\s*(?:([^()]+)\s*)?(?:\(([^)\s]+)(?:\s+([^)]+))?\))?~", $quickaddstring, $matches);
+        preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $quickaddstring, $matches);
         // Quantity
         if (isset($matches[1]) AND $matches[1] !== ''):
             $quickaddqty = $matches[1];
@@ -151,12 +157,12 @@ class DeckManager {
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$this->logfile);
                 if (!$batch):
                     // Call adddeckcard only if not in batch mode
-                    adddeckcard($decknumber, $cardtoadd, "main", "$quickaddqty");
+                    $addresult = adddeckcard($decknumber, $cardtoadd, "main", "$quickaddqty");
+                    return $addresult;
                 else:
                     // In batch mode, store the card ID and quantity in the batchedCardIds array
                     $this->batchedCardIds[] = ['id' => $cardtoadd, 'qty' => $quickaddqty];
                 endif;
-                return $cardtoadd;
             else:
                 $stmt->close();
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$this->logfile);
