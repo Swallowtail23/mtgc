@@ -427,7 +427,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 };
             </script>
             <script type="text/javascript">
-                function removeNoCollectionClassIndividual(cardid) {
+                function toggleNoCollectionClass(cardid) {
                     const cellone = document.getElementById('cell' + cardid + '_one');
                     const celltwo = document.getElementById('cell' + cardid + '_two');
                     const cellthree = document.getElementById('cell' + cardid + '_three');
@@ -437,38 +437,24 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     var totalCards = parseInt(celloneValue) + parseInt(celltwoValue) + parseInt(cellthreeValue);
                     const imageID = (cardid + 'img');
                     const image = document.getElementById(cardid + 'img');
-                    
+                    var checkBox = document.getElementById("float_cview");
+
                     // Check if the image element exists
-                    if (image && totalCards > 0) {
-                        // Remove the 'none' and 'no_collection' classes
-                        image.classList.remove('none', 'no_collection');
-                    } else if (!image){
+                    if (image) {
+                        if (totalCards > 0 && checkBox.checked === true) {
+                            // Remove the 'none' and 'no_collection' classes
+                            image.classList.remove('none', 'no_collection');
+                        } else if (totalCards === 0 && checkBox.checked === true) {
+                            // Add the 'none' and 'no_collection' classes
+                            image.classList.add('none', 'no_collection');
+                        } else if (totalCards > 0 && checkBox.checked === false) {
+                            image.classList.remove('none');
+                        } else if (totalCards === 0 && checkBox.checked === false) {
+                            image.classList.add('none');
+                        }
+                    } else {
                         // Log an error if the image element is not found
                         console.error(`Image element with ID '${cardid}' not found.`);
-                    } else {
-                        // Do nothing
-                    }
-                }
-                function addNoCollectionClassIndividual(cardid) {
-                    const cellone = document.getElementById('cell' + cardid + '_one');
-                    const celltwo = document.getElementById('cell' + cardid + '_two');
-                    const cellthree = document.getElementById('cell' + cardid + '_three');
-                    var celloneValue = cellone ? cellone.value : 0;
-                    var celltwoValue = celltwo ? celltwo.value : 0;
-                    var cellthreeValue = cellthree ? cellthree.value : 0;
-                    var totalCards = parseInt(celloneValue) + parseInt(celltwoValue) + parseInt(cellthreeValue);
-                    const imageID = (cardid + 'img');
-                    const image = document.getElementById(cardid + 'img');
-                    
-                    // Check if the image element exists
-                    if (image && totalCards === 0) {
-                        // Remove the 'none' and 'no_collection' classes
-                        image.classList.add('none', 'no_collection');
-                    } else if (!image){
-                        // Log an error if the image element is not found
-                        console.error(`Image element with ID '${cardid}' not found.`);
-                    } else {
-                        // Do nothing
                     }
                 }
                 function ajaxUpdate(cardid,cellid,qty,flash,type) {
@@ -498,8 +484,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             }
                         });
                         console.log("Ajaxupddate: " + cardid);
-                        removeNoCollectionClassIndividual(cardid);
-                        addNoCollectionClassIndividual(cardid);
+                        toggleNoCollectionClass(cardid);
                     }
                     return false;
                 };
