@@ -1,6 +1,6 @@
 <?php
-/* Version:     8.0
-    Date:       06/07/23
+/* Version:     9.0
+    Date:       02/12/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -23,6 +23,10 @@
  *              Add flip capability for battle cards
  *  8.0
  *              Changes to handle etched cards
+ *
+ *  9.0         02/12/23
+ *              Add javascript to add/remove b/w based on cview mode
+ *              
 */
 
 //Call script initiation mechs
