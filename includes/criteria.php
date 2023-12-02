@@ -99,7 +99,7 @@ else:
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
-                $criteriaNTA .= "cards_scry.ability LIKE '%$name%' ";
+                $criteriaNTA .= "(cards_scry.ability LIKE '%$name%' OR cards_scry.f1_ability LIKE '%$name%' OR cards_scry.f1_ability LIKE '%$name%') ";
             endif;
         endif;
         $criteria = "(".$criteriaNTA.") ";
