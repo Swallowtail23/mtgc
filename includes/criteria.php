@@ -24,10 +24,6 @@ endif;
 if (empty($_GET)):
     $validsearch = "";
 else:
-    // Remove any embedded setcodes in [] into a variable
-    preg_match('/\[(.*?)\]/', $name, $matches);
-    $setcodesearch = isset($matches[1]) ? $matches[1] : '';
-    $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
     if (!$adv == "yes" ) :
         // Not an advanced search called
         if (strlen($name) > 2): // Needs to have more than 2 characters to search
@@ -110,31 +106,31 @@ else:
         // Colours first
         $criteriaCol = "";
         if ($white === "yes"):
-            $criteriaCol = "(cards_scry.color LIKE '%W%' OR cards_scry.f1_colour LIKE '%W%' OR cards_scry.f2_colour LIKE '%W%' )";
+            $criteriaCol = "(cards_scry.color LIKE '%W%' OR cards_scry.color_identity LIKE '%W%' OR cards_scry.f1_colour LIKE '%W%' OR cards_scry.f2_colour LIKE '%W%' )";
         endif;
         if ($blue === "yes"):
             if (!empty($criteriaCol)) :
                 $criteriaCol .= $colourOp." ";
             endif;
-            $criteriaCol .= "(cards_scry.color LIKE '%U%' OR cards_scry.f1_colour LIKE '%U%' OR cards_scry.f2_colour LIKE '%U%' )";
+            $criteriaCol .= "(cards_scry.color LIKE '%U%' OR cards_scry.color_identity LIKE '%U%' OR cards_scry.f1_colour LIKE '%U%' OR cards_scry.f2_colour LIKE '%U%' )";
         endif;
         if ($black === "yes"):
             if (!empty($criteriaCol)) :
                 $criteriaCol .= $colourOp." ";
             endif;
-            $criteriaCol .= "(cards_scry.color LIKE '%B%' OR cards_scry.f1_colour LIKE '%B%' OR cards_scry.f2_colour LIKE '%B%' )";
+            $criteriaCol .= "(cards_scry.color LIKE '%B%' OR cards_scry.color_identity LIKE '%B%' OR cards_scry.f1_colour LIKE '%B%' OR cards_scry.f2_colour LIKE '%B%' )";
         endif;
         if ($red === "yes"):
             if (!empty($criteriaCol)) :
                 $criteriaCol .= $colourOp." ";
             endif;
-            $criteriaCol .= "(cards_scry.color LIKE '%R%' OR cards_scry.f1_colour LIKE '%R%' OR cards_scry.f2_colour LIKE '%R%' )";
+            $criteriaCol .= "(cards_scry.color LIKE '%R%' OR cards_scry.color_identity LIKE '%R%' OR cards_scry.f1_colour LIKE '%R%' OR cards_scry.f2_colour LIKE '%R%' )";
         endif;
         if ($green === "yes"):
             if (!empty($criteriaCol)) :
                 $criteriaCol .= $colourOp." ";
             endif;
-            $criteriaCol .= "(cards_scry.color LIKE '%G%' OR cards_scry.f1_colour LIKE '%G%' OR cards_scry.f2_colour LIKE '%G%' )";
+            $criteriaCol .= "(cards_scry.color LIKE '%G%' OR cards_scry.color_identity LIKE '%G%' OR cards_scry.f1_colour LIKE '%G%' OR cards_scry.f2_colour LIKE '%G%' )";
         endif;
         if ($colourless === "yes"):
             if (!empty($criteriaCol)) :
@@ -148,19 +144,19 @@ else:
         // Colour exclusivity?
         if ($colourExcl == "ONLY"):
             if (empty($white)):
-                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%W%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%W%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%W%')) ";
+                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%W%') and (cards_scry.color_identity IS NULL OR cards_scry.color_identity NOT LIKE '%W%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%W%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%W%')) ";
             endif;
             if (empty($blue)):
-                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%U%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%U%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%U%')) ";
+                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%U%') and (cards_scry.color_identity IS NULL OR cards_scry.color_identity NOT LIKE '%U%')and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%U%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%U%')) ";
             endif;
             if (empty($red)):
-                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%R%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%R%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%R%')) ";
+                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%R%') and (cards_scry.color_identity IS NULL OR cards_scry.color_identity NOT LIKE '%R%')and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%R%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%R%')) ";
             endif;
             if (empty($green)):
-                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%G%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%G%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%G%')) ";
+                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%G%') and (cards_scry.color_identity IS NULL OR cards_scry.color_identity NOT LIKE '%G%')and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%G%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%G%')) ";
             endif;
             if (empty($black)):
-                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%B%') and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%B%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%B%')) ";
+                $criteria .= "AND ((cards_scry.color IS NULL OR cards_scry.color NOT LIKE '%B%') and (cards_scry.color_identity IS NULL OR cards_scry.color_identity NOT LIKE '%B%')and (cards_scry.f1_colour IS NULL OR cards_scry.f1_colour NOT LIKE '%B%') and (cards_scry.f2_colour IS NULL OR cards_scry.f2_colour NOT LIKE '%B%')) ";
             endif;
         endif;
         // New
@@ -231,7 +227,7 @@ else:
             if (!empty($criteriaType)) :
                 $criteriaType .= "OR ";
             endif;
-            $criteriaType .= "cards_scry.type LIKE '%tribal%' ";
+            $criteriaType .= "(cards_scry.type LIKE '%tribal%' OR cards_scry.type LIKE '%kindred%') ";
         endif;    
         if ($legendary === "yes"):
             if (!empty($criteriaType)) :

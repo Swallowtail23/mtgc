@@ -1136,7 +1136,7 @@ require('includes/menu.php'); //mobile menu
                                 $row['cmc'] = round($row['cmc']);
                             endif;
                             if(!in_array($row['layout'],$token_layouts)):
-                                echo "<b>CMC: </b>".$row['cmc'];
+                                echo "<b>Mana value: </b>".$row['cmc'];
                                 echo "<br>";
                             endif;
                         endif;
@@ -1152,7 +1152,7 @@ require('includes/menu.php'); //mobile menu
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f1_cmc {$row['f1_cmc']}",$logfile);
                                     $row['f1_cmc'] = round($row['f1_cmc']);
                                 endif;
-                                echo "<b>CMC: </b>".$row['f1_cmc'];
+                                echo "<b>Mana value: </b>".$row['f1_cmc'];
                                 echo "<br>";
                             endif;
                             $manacost = symbolreplace($row['f1_manacost']);
@@ -2100,10 +2100,10 @@ require('includes/menu.php'); //mobile menu
                             if(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === false):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f2_cmc {$row['f2_cmc']}",$logfile);
                                 $row['f2_cmc'] = round($row['f2_cmc']);
-                                echo "<b>CMC: </b>".$row['f2_cmc'];
+                                echo "<b>Mana value: </b>".$row['f2_cmc'];
                                 echo "<br>";
                             elseif(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === true):
-                                echo "<b>CMC: </b>".$row['f2_cmc'];
+                                echo "<b>Mana value: </b>".$row['f2_cmc'];
                                 echo "<br>";
                             endif;
                             $flipmanacost = symbolreplace($row['f2_manacost']);

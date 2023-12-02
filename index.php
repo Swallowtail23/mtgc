@@ -81,6 +81,10 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name sent to sql escape is $name",$logfile);
     $name = $db->escape($name);
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in name is $name",$logfile);
+    // Remove any embedded setcodes in [] into a variable
+    preg_match('/\[(.*?)\]/', $name, $matches);
+    $setcodesearch = isset($matches[1]) ? $matches[1] : '';
+    $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
 else:
     $name = '';
 endif;
@@ -423,6 +427,50 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 };
             </script>
             <script type="text/javascript">
+                function removeNoCollectionClassIndividual(cardid) {
+                    const cellone = document.getElementById('cell' + cardid + '_one');
+                    const celltwo = document.getElementById('cell' + cardid + '_two');
+                    const cellthree = document.getElementById('cell' + cardid + '_three');
+                    var celloneValue = cellone ? cellone.value : 0;
+                    var celltwoValue = celltwo ? celltwo.value : 0;
+                    var cellthreeValue = cellthree ? cellthree.value : 0;
+                    var totalCards = parseInt(celloneValue) + parseInt(celltwoValue) + parseInt(cellthreeValue);
+                    const imageID = (cardid + 'img');
+                    const image = document.getElementById(cardid + 'img');
+                    
+                    // Check if the image element exists
+                    if (image && totalCards > 0) {
+                        // Remove the 'none' and 'no_collection' classes
+                        image.classList.remove('none', 'no_collection');
+                    } else if (!image){
+                        // Log an error if the image element is not found
+                        console.error(`Image element with ID '${cardid}' not found.`);
+                    } else {
+                        // Do nothing
+                    }
+                }
+                function addNoCollectionClassIndividual(cardid) {
+                    const cellone = document.getElementById('cell' + cardid + '_one');
+                    const celltwo = document.getElementById('cell' + cardid + '_two');
+                    const cellthree = document.getElementById('cell' + cardid + '_three');
+                    var celloneValue = cellone ? cellone.value : 0;
+                    var celltwoValue = celltwo ? celltwo.value : 0;
+                    var cellthreeValue = cellthree ? cellthree.value : 0;
+                    var totalCards = parseInt(celloneValue) + parseInt(celltwoValue) + parseInt(cellthreeValue);
+                    const imageID = (cardid + 'img');
+                    const image = document.getElementById(cardid + 'img');
+                    
+                    // Check if the image element exists
+                    if (image && totalCards === 0) {
+                        // Remove the 'none' and 'no_collection' classes
+                        image.classList.add('none', 'no_collection');
+                    } else if (!image){
+                        // Log an error if the image element is not found
+                        console.error(`Image element with ID '${cardid}' not found.`);
+                    } else {
+                        // Do nothing
+                    }
+                }
                 function ajaxUpdate(cardid,cellid,qty,flash,type) {
                     var activeCell = document.getElementById(cellid);
                     var activeFlash = document.getElementById(flash);
@@ -449,6 +497,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 }, 2000);
                             }
                         });
+                        console.log("Ajaxupddate: " + cardid);
+                        removeNoCollectionClassIndividual(cardid);
+                        addNoCollectionClassIndividual(cardid);
                     }
                     return false;
                 };
