@@ -1617,7 +1617,7 @@ require('includes/menu.php'); //mobile menu
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$scryfallresult['price']} ($localnormal)" : "{$scryfallresult['price']}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price'],2) . " ($localnormal)" : number_format($scryfallresult['price'],2); ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
@@ -1629,7 +1629,7 @@ require('includes/menu.php'); //mobile menu
                                         Normal
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$row["price"]} ($localnormal)" : "{$row['price']}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($row["price"],2) . " ($localnormal)" : number_format($row['price'],2); ?>
                                     </td>
                                 </tr>
                       <?php 
@@ -1646,7 +1646,7 @@ require('includes/menu.php'); //mobile menu
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$scryfallresult['price_foil']} ($localfoil)" : "{$scryfallresult['price_foil']}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price_foil'],2) . " ($localfoil)" : number_format($scryfallresult['price_foil'],2); ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
@@ -1658,7 +1658,7 @@ require('includes/menu.php'); //mobile menu
                                         Foil
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$row["price_foil"]} ($localfoil)" : "{$row["price_foil"]}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($row["price_foil"],2) . " ($localfoil)" : number_format($row["price_foil"],2); ?>
                                     </td>
                                 </tr>
                       <?php else:
@@ -1674,7 +1674,7 @@ require('includes/menu.php'); //mobile menu
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$scryfallresult['price_etched']} ($localetched)" : "{$scryfallresult['price_etched']}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price_etched'],2) . " ($localetched)" : number_format($scryfallresult['price_etched'],2); ?>
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
@@ -1686,7 +1686,7 @@ require('includes/menu.php'); //mobile menu
                                         Etched
                                     </td>
                                     <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? "{$row['price_etched']} ($localetched)" : "{$row['price_etched']}"; ?>
+                                        <?= ($fx === TRUE) ? number_format($row['price_etched'],2) . " ($localetched)" : number_format($row['price_etched'],2); ?>
                                     </td>
                                 </tr>
                       <?php else:

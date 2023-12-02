@@ -1,6 +1,6 @@
 <?php 
-/* Version:     3.0
-    Date:       28/01/2022
+/* Version:     4.0
+    Date:       02/12/2023
     Name:       sets.php
     Purpose:    Lists all setcodes and sets in the database
     Notes:      This page is the only one NOT mobile responsive design. 
@@ -14,6 +14,9 @@
                 Moved to use Mysqli_Manager library
  *  3.0
  *              Refactoring for cards_scry
+ *
+ *  4.0         02/12/2023
+ *              Add pagination and set image reload for admins
 */
 
 session_start();
@@ -30,8 +33,27 @@ forcechgpwd();                              //Check if user is disabled or needs
     <meta name="viewport" content="initial-scale=1">
     <title>MtG collection sets</title>
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
+    <script>
+        function reloadImages(setcode) {
+            $.ajax({
+                type: 'POST',
+                url: 'admin/ajaxsetimg.php',
+                data: { setcode: setcode },
+                success: function(response) {
+                    // Handle the response if needed
+                    console.log(response);
+                },
+                error: function(error) {
+                    // Handle errors if needed
+                    console.error(error);
+                }
+            });
+        }
+    </script>
 </head>
 
 <body class="body">
@@ -45,6 +67,9 @@ require('includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <?php 
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $setsPerPage = 50; // Adjust this value based on your preference
+        $offset = ($page - 1) * $setsPerPage;
         $stmt = $db->prepare("SELECT 
                                 set_name,
                                 setcode,
@@ -59,7 +84,9 @@ require('includes/menu.php');
                             GROUP BY 
                                 set_name
                             ORDER BY 
-                                date DESC");
+                                date DESC 
+                            LIMIT ? OFFSET ?");
+        $stmt->bind_param("ii", $setsPerPage, $offset);
         if ($stmt === false):
             trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Preparing SQL: " . $db->error, E_USER_ERROR);
         endif;
@@ -72,9 +99,6 @@ require('includes/menu.php');
             $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$result->num_rows." results",$logfile);
             if ($result->num_rows === 0):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": No results ". $db->error, E_USER_ERROR);
-            elseif($result->num_rows > 0):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$stmt->num_rows." results",$logfile);
             endif;
         endif;
         ?>
@@ -132,13 +156,14 @@ require('includes/menu.php');
                         <td>
                             <?php 
                             $time = time();
-                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; ?>
+                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; 
+                            //echo "<i><i class='ss ss-{$row['parent_set_code']} ss-grad ss-2x'></i>"; ?>
                         </td>
                         <td>
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td>
-                            <?php echo $setname; ?>
+                            <?php echo $setname.($admin == 1 ? ' <a href="javascript:void(0);" onclick="reloadImages(\''.$row['setcode'].'\')"><span class="material-symbols-outlined">frame_reload</span></a>' : ''); ?>
                         </td>
                         <td>
                             <?php echo $settype; ?>
@@ -153,6 +178,21 @@ require('includes/menu.php');
             ?>
         </table>
         <br>&nbsp; <?php
+        $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT set_name) as totalSets FROM cards_scry");
+        $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
+        $totalPages = ceil($totalSets / $setsPerPage);
+
+        echo '<div class="pagination">';
+            for ($i = 1; $i <= $totalPages; $i++):
+                if ($i == $page):
+                    // Current page, display without hyperlink
+                    echo '<span>' . $i . '&nbsp;&nbsp;</span>';
+                else:
+                    // Other pages, display with hyperlink
+                    echo '<a href="?page=' . $i . '">' . $i . '&nbsp;&nbsp;</a>';
+                endif;
+            endfor;
+        echo '</div>';
         ?>
     </div>
 </div>
