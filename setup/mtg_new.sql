@@ -196,7 +196,8 @@ CREATE TABLE `cards_scry` (
   `date_added` date DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
-  KEY `oracle_id` (`oracle_id`)
+  KEY `oracle_id` (`oracle_id`),
+  KEY `release_date` (`release_date`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

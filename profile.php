@@ -168,6 +168,19 @@ endif;  ?>
             $totalcardcount = $rowcount['TOTAL'];
         endif;
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total card count = $totalcardcount",$logfile);
+        if($totalmrcount = $db->query("SELECT (SUM(IFNULL(`$mytable`.normal, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.etched, 0))) 
+                                        as TOTALMR FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id
+                                        WHERE rarity IN ('mythic', 'rare');")):
+            $rowmrcount = $totalmrcount->fetch_array(MYSQLI_ASSOC);
+        else:
+            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+        endif;
+        if(is_null($rowmrcount['TOTALMR'])):
+            $totalmrcardcount = 0;
+        else:
+            $totalmrcardcount = $rowmrcount['TOTALMR'];
+        endif;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total mythics and rares count = $totalmrcardcount",$logfile);
         
         // Get total values
         $sqlvalue = "SELECT (
@@ -201,12 +214,13 @@ endif;  ?>
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
                 $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
                 $rowcounttotal = number_format($totalcardcount);
+                $totalmrcardcount = number_format($totalmrcardcount);
                 if(isset($rate) AND $rate > 0):
                     $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                     $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
                     $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
                     $localvalue = $b->format($unformatted_value * $rate);
-                    echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards.<br>";
+                    echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards ($totalmrcardcount M/R).<br>";
                 else:
                     echo "$collectionvalue over $rowcounttotal cards.<br>";
                 endif;
