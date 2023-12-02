@@ -1720,26 +1720,27 @@ table
 {
     float: left;
     min-width: 260px;
-    min-height: 175px;
+    padding-bottom: 15px;
 }
 #mycollection
 {
     float: left;
     width: 280px;
-    min-height: 175px;
     padding-right: 20px;
+    padding-bottom: 15px;
 }
 
 #changepassword
 {
     float: left;
-    min-height: 175px;
     max-width: 350px;
+    padding-bottom: 15px;
 }
 
 #importexport, #profilebuttons
 {
-    padding-top: 1px;
+    padding-bottom: 15px;
+    padding-top: 5px;
     clear: both;
 }
 .shallowh3
@@ -2575,7 +2576,8 @@ input:checked + .slider:before {
 
 .options_right
 {
-   padding: 20px;
+   padding: 10px;
+   padding-right: 20px;
 }
 
 #grpname
