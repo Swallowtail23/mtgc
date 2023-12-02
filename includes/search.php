@@ -150,8 +150,8 @@ endif;
             <label class="radio"><input type="radio" name="sortBy" value="setnumberdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="price"><span class="outer"><span class="inner"></span></span>Price &#x25BC;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>CMC &#x25B2;</label>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="cmcdown"><span class="outer"><span class="inner"></span></span>CMC &#x25BC; </label></span><br>
+            <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>Mana value &#x25B2;</label>
+            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="cmcdown"><span class="outer"><span class="inner"></span></span>Mana value &#x25BC; </label></span><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="powerup"><span class="outer"><span class="inner"></span></span>Power &#x25B2;</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="powerdown"><span class="outer"><span class="inner"></span></span>Power &#x25BC;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Tough &#x25B2;</label></span>
@@ -345,7 +345,7 @@ endif;
                     <input id='cb22' type="checkbox" class="checkbox" name="tribal" value="yes">
                     <label for='cb22'>
                         <span class="check"></span>
-                        <span class="box"></span>Tribal
+                        <span class="box"></span>Kindred
                     </label>
                 </span><br>
                 <span class="parametermed checkbox-group">
@@ -370,7 +370,7 @@ endif;
                     </label>
                 </span>
             </div>
-            <h4 class="h4">Tribe</h4>
+            <h4 class="h4">Kindred</h4>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>
             <label class="radio"><input type="radio" name="tribe" value="treefolk"><span class="outer"><span class="inner"></span></span>Treefolk</label><br>
@@ -380,7 +380,7 @@ endif;
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="spider"><span class="outer"><span class="inner"></span></span>Spider</label></span>
             <label class="radio"><input type="radio" name="tribe" value="zombie"><span class="outer"><span class="inner"></span></span>Zombie</label>
-            <h4 class="h4">Power / Toughness / Loyalty / CMC</h4>
+            <h4 class="h4">Power / Toughness / Loyalty / Mana value</h4>
             Power<br>
             <select class="dropdown" name="poweroperator">
                 <option disabled selected style='display:none;'>&nbsp;</option>
@@ -445,7 +445,7 @@ endif;
                 <option value="9">9</option>
                 <option value="10">10</option>
             </select>  
-            <br>CMC<br>
+            <br>Mana value<br>
             <select class="dropdown" name="cmcoperator">
                 <option disabled selected style='display:none;'>&nbsp;</option>
                 <option value="ltn">Less than</option>
