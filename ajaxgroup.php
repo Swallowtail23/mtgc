@@ -17,14 +17,9 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');
 include 'includes/colour.php';
 
-if (!isset($_SESSION["logged"]) OR $_SESSION["logged"] != TRUE OR !isset($_SESSION['user']) OR !$_SESSION["logged"]): ?>
-    <table class='ajaxshow'>
-        <tr>
-            <td class="name">You have been logged out.</td>
-        </tr>
-    </table>
-    <?php 
-    echo "<meta http-equiv='refresh' content='2;url=login.php'>";               // check if user is logged in; else redirect to login.php
+if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
+    echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
+    header("Refresh: 2; url=login.php");             // check if user is logged in; else redirect to login.php
     exit(); 
 else: 
     //Need to run these as secpagesetup not run (see page notes)
