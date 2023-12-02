@@ -191,7 +191,7 @@ endif;  ?>
             <h2 class='h2pad'>User details</h2>
             <b>Email: </b><?php echo $row['email']; ?> <br>
             <b>Account status: </b> <?php echo $row['status']; ?> <br>
-            <b>Registered date: </b> <?php echo $row['reg_date']; ?> <br>
+            <b>Registered date: </b> <?php echo $row['reg_date']; ?>
         </div>
         <div id="mycollection">
             <h2 class='h2pad'>My Collection</h2>
@@ -214,7 +214,6 @@ endif;  ?>
                 
                 echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com.<br>";
                 $rowcounttotal = number_format($totalcardcount);
-                echo "<br>";  
             ?>
         </div>
         <div id="changepassword">
@@ -295,7 +294,7 @@ endif;  ?>
                     });
                 });
                 </script>
-                <h2 id='h2'>Options</h2>
+                <h2 class='h2pad'>Options</h2>
                 <table>
                     <tr>
                         <td class="options_left">
