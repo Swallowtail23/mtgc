@@ -9,7 +9,7 @@ if(searchid!='')
 {
     $.ajax({
     type: "POST",
-    url: "/ajaxsearch.php",
+    url: "/ajax/ajaxsearch.php",
     data: dataString,
     cache: false,
     success: function(html)
