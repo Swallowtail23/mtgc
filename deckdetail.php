@@ -2275,6 +2275,7 @@ endif;
                                     var imageUrl = 'cardimg/deck_photos/<?php echo $decknumber; ?>.jpg';
                                     var timestamp = new Date().getTime();
                                     $('#deckPhoto').attr('src', imageUrl + '?' + timestamp);
+                                    $('#photo_div').show();
                                     setTimeout(function() {
                                         $('#result').html('');
                                     }, 5000);
@@ -2327,13 +2328,14 @@ endif;
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Imagefilepath $imageFilePath, existingImage $existingImage",$logfile);
                 if (file_exists($imageFilePath)):?>
-                    <div>
+                    <div id='photo_div'>
                         <br>
                         <img id="deckPhoto" src="<?php $time = time(); echo $existingImage.'?'.$time; ?>" style="max-width: 300px;" alt="Existing Photo">
                     </div><?php
                 else: ?>
-                    <div>
-                        <br>Load photo above (must be .jpg)
+                    <div id='photo_div' style="display: none;">
+                        <br>
+                        <img id="deckPhoto" src="" style="max-width: 300px;" alt="Existing Photo">
                     </div> <?php
                 endif; ?>
                 <div id="result"></div>
