@@ -2325,6 +2325,7 @@ endif;
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Imagefilepath $imageFilePath, existingImage $existingImage",$logfile);
                 if (file_exists($imageFilePath)):?>
                     <div>
                         <br>

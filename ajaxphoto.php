@@ -39,7 +39,7 @@ else:
             isset($_FILES['photo']) &&
             $_FILES['photo']['error'] === UPLOAD_ERR_OK &&
             $_FILES['photo']['type'] === 'image/jpeg'
-        ):
+            ):
             $deckPhotosDir = $ImgLocation . 'deck_photos/';
 
             // Create 'deck_photos' folder if it doesn't exist
@@ -50,6 +50,8 @@ else:
                     $response['message'] = '<br>Failed to create directory for deck photos';
                     returnResponse();
                 endif;
+            else:
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "'deck_photos' folder already in $ImgLocation", $logfile);
             endif;
 
             $uploadFile = $deckPhotosDir . $decknumber . '.jpg';
