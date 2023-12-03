@@ -18,7 +18,7 @@
  *  4.0         02/12/2023
  *              Add pagination and set image reload for admins
 */
-
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');

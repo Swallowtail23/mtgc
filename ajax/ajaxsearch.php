@@ -20,7 +20,7 @@
  *  5.0
  *              Add [set] search interpretation
 */
-
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');

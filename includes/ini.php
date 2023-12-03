@@ -21,6 +21,7 @@ endif;
 $status = session_status();
 if($status == PHP_SESSION_NONE):
     //There is no active session
+    ini_set('session.name', '5VDSjp7k-n-_yS-_');
     session_start();
 endif;
 
