@@ -1,7 +1,7 @@
 <?php
 /* Version:     1.1
    Date:        03/12/23
-   Name:        ajaxphoto.php
+   Name:        ajax/ajaxphoto.php
    Purpose:     PHP script to import deck photo
    Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
    To do:       -
@@ -11,16 +11,16 @@
 */
 
 session_start();
-require('includes/ini.php');
-require('includes/error_handling.php');
-require('includes/functions_new.php');
-include 'includes/colour.php';
+require('../includes/ini.php');
+require('../includes/error_handling.php');
+require('../includes/functions_new.php');
+include '../includes/colour.php';
 
-if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE):
+if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
     echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
-    header("Refresh: 2; url=login.php"); // check if the user is logged in; else redirect to login.php
-    exit();
-else:
+    echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
+    exit(); 
+else: 
     // Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
@@ -30,7 +30,8 @@ else:
 
     $response = ['success' => false, 'message' => ''];
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST'):
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with 'update'", $logfile);
         // Get the deck number from the form data
         $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
@@ -57,27 +58,55 @@ else:
             $uploadFile = $deckPhotosDir . $decknumber . '.jpg';
 
             // Check if the file size is greater than 1MB
-            if ($_FILES['photo']['size'] > 1024 * 1024):
+            list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
+            if ($width > 800 OR $height > 800):
                 $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Resizing $uploadFile using php-gd", $logfile);
 
-                // Use GD to resize the image
-                $uploadedImage = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
+                // Get EXIF data for orientation, and rotate if required
+                $exif = @exif_read_data($_FILES['photo']['tmp_name']);
+                $orientation = isset($exif['Orientation']) ? $exif['Orientation'] : 0;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "EXIF orientation: $orientation", $logfile);
+                if($orientation === 6):
+                    $sourceCopy = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
+                    $rotatedImg = imagerotate($sourceCopy, -90, 0);
+                    imagejpeg($rotatedImg, $_FILES['photo']['tmp_name']);
+                elseif($orientation === 3):
+                    $sourceCopy = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
+                    $rotatedImg = imagerotate($sourceCopy, 180, 0);
+                    imagejpeg($rotatedImg, $_FILES['photo']['tmp_name']);
+                elseif($orientation === 8):
+                    $sourceCopy = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
+                    $rotatedImg = imagerotate($sourceCopy, 90, 0);
+                    imagejpeg($rotatedImg, $_FILES['photo']['tmp_name']);
+                else:
+                    // No orientation changes needed
+                endif;
+                
+                // Assess new dimensions based on a maximum single length of 800px
                 list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
-                $newWidth = 800;
-                $newHeight = ($newWidth / $width) * $height;
-                $resizedImage = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
-
-                if (!$resizedImage):
-                    $response['message'] = 'Failed to resize the image using GD<br>';
+                if($width > $height):
+                    $newWidth = 800;
+                    $newHeight = ($height / $width) * $newWidth;
+                elseif($height > $width):
+                    $newHeight = 800;
+                    $newWidth = ($width / $height) * $newHeight;
+                elseif($height == $width):
+                    $newWidth = $newHeight = 800;
+                else:
+                    $response['message'] = 'Failed to get image size<br>';
                     returnResponse();
                 endif;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Width: $width --> $newWidth, Height: $height --> $newHeight", $logfile);
 
+                // Get the submitted file input, already rotated if needed
+                $uploadedImage = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
+                // Resize it and write it
+                $resizedImage = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
                 if (!imagecopyresampled($resizedImage, $uploadedImage, 0, 0, 0, 0, (int)$newWidth, (int)$newHeight, (int)$width, (int)$height) || !imagejpeg($resizedImage, $uploadFile, 80)):
-                    // Handle the error, e.g., return an error response
                     $response['message'] = '<br>Failed to resize and save the image using GD';
                     returnResponse();
                 endif;
-
+                // Destroy temp files
                 imagedestroy($uploadedImage);
                 imagedestroy($resizedImage);
             else:
@@ -95,6 +124,26 @@ else:
         else:
             $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload failed", $logfile);
             $response['message'] = 'Invalid file or file upload error<br>';
+        endif;
+    elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])):
+        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with 'delete'", $logfile);
+        $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
+
+        // Path to the file to be deleted
+        $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';  //File path
+        $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';       //Web path
+
+        // Check if the file exists before attempting to delete
+        if (file_exists($imageFilePath)):
+            // Attempt to delete the file
+            if (unlink($imageFilePath)):
+                $response['success'] = true;
+                $response['message'] = 'Image deleted successfully';
+            else:
+                $response['message'] = 'Failed to delete the image';
+            endif;
+        else:
+            $response['message'] = 'Image not found';
         endif;
     endif;
 

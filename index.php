@@ -552,7 +552,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 sliderElement.classList.add('book_2');
                             }
                             $.ajax({  
-                                url:"ajaxcview.php",  
+                                url:"/ajax/ajaxcview.php",  
                                 method:"POST",  
                                 data:{"collection_view":cview},
                                 success:function(data){  

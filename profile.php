@@ -275,7 +275,7 @@ endif;  ?>
                             var cview = "TURN OFF";
                         }
                         $.ajax({  
-                            url:"ajaxcview.php",  
+                            url:"/ajax/ajaxcview.php",  
                             method:"POST",  
                             data:{"collection_view":cview},
                             success:function(data){  
@@ -297,7 +297,7 @@ endif;  ?>
                             var display = "none";
                         }
                         $.ajax({  
-                            url:"ajaxgroup.php",  
+                            url:"/ajax/ajaxgroup.php",  
                             method:"POST",  
                             data:{"group":group},
                             success:function(data){  

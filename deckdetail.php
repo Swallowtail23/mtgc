@@ -2250,6 +2250,47 @@ endif;
                             }
                         });
                 });
+                function deletePhoto() {
+                    // Get the deck number
+                    var deckNumber = $('input[name="decknumber"]').val();
+
+                    // Create form data
+                    var formData = new FormData();
+                    formData.append('decknumber', deckNumber);
+                    formData.append('delete', '');
+
+                    // Perform AJAX request
+                    $.ajax({
+                        url: '/ajax/ajaxphoto.php',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        dataType: 'json',
+                        timeout: 5000,
+                        success: function(response) {
+                            if (response.success) {
+                                $('#result').html(response.message);
+                                $('#photo_div').hide();
+                                $('#deletePhotoBtn').hide();
+                                setTimeout(function() {
+                                    $('#result').html('');
+                                }, 5000);
+                            } else {
+                                $('#result').html('Error: ' + response.message);
+                                setTimeout(function() {
+                                    $('#result').html('');
+                                }, 20000);
+                            }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
+                            setTimeout(function() {
+                                $('#result').html('');
+                            }, 20000);
+                        }
+                    });
+                };
                 $(document).ready(function() {
                     $('#uploadForm').submit(function(e) {
                         e.preventDefault(); // Prevent the default form submission
@@ -2260,9 +2301,10 @@ endif;
                         // Append the deck number to the form data
                         var formData = new FormData(this);
                         formData.append('decknumber', deckNumber);
+                        formData.append('update', '');
 
                         $.ajax({
-                            url: 'ajaxphoto.php',
+                            url: '/ajax/ajaxphoto.php',
                             type: 'POST',
                             data: formData,
                             processData: false,
@@ -2276,6 +2318,8 @@ endif;
                                     var timestamp = new Date().getTime();
                                     $('#deckPhoto').attr('src', imageUrl + '?' + timestamp);
                                     $('#photo_div').show();
+                                    $('#deletePhotoBtn').show();
+                                    $("#photosubmit").attr('disabled',true);
                                     setTimeout(function() {
                                         $('#result').html('');
                                     }, 5000);
@@ -2286,8 +2330,8 @@ endif;
                                     }, 20000);
                                 }
                             },
-                            error: function() {
-                                $('#result').html('Error occurred during the upload.');
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
                                 setTimeout(function() {
                                     $('#result').html('');
                                 }, 20000);
@@ -2311,10 +2355,13 @@ endif;
                 <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled onclick='ImportPrep()';>
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
             </form> 
-            <br>
-            <div id='photo_upload'>
+            <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
                 You can upload a photo here to store with the deck. Large photos will be resized.<br><br>
+                <?php
+                $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
+                $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Imagefilepath $imageFilePath, existingImage $existingImage",$logfile); ?>
                 <form id="uploadForm">
                     <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
                     <label class='importlabel'>
@@ -2322,11 +2369,9 @@ endif;
                         <span>SELECT</span>
                     </label>
                     <input class='profilebutton' id='photosubmit' type='submit' value="UPLOAD">
+                    <button class="profilebutton" id="deletePhotoBtn" type="button" onclick="deletePhoto()" <?php echo !file_exists($imageFilePath) ? 'style="display:none;"' : ''; ?> >DELETE</button>
                 </form>
                 <?php
-                $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
-                $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Imagefilepath $imageFilePath, existingImage $existingImage",$logfile);
                 if (file_exists($imageFilePath)):?>
                     <div id='photo_div'>
                         <br>
