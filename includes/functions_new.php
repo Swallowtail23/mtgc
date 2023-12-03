@@ -1294,9 +1294,16 @@ function refresh_image($cardid)
 {
     global $db, $logfile, $ImgLocation, $two_card_detail_sections, $serveremail, $adminemail;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$logfile);
+    
+    set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    });
+    
     $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$cardid' LIMIT 1";
     $result = $db->query($sql);
     if ($result === false):
+        restore_error_handler();
+        return 'failure'; 
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     else:
         $row = $result->fetch_assoc();
@@ -1305,26 +1312,49 @@ function refresh_image($cardid)
         if($imagefunction['front'] != 'error'):
             $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
             $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
-            if (!unlink($imageurl)): 
-                $imagedelete = 'failure'; 
-            else:
-                $imagedelete = 'success'; 
-            endif;
+            try {
+                if (!unlink($imageurl)):
+                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
+                    throw new Exception('Failed to unlink image');
+                endif;
+                $imagedelete = 'success';
+            } catch (Exception $e) {
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
+                $imagedelete = 'failure';
+                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+                $subject = "Image unlink failure";
+                $message = "Failed image unlink: $imageurl";
+                mail($adminemail, $subject, $message, $from);
+                restore_error_handler();
+                return $imagedelete; // Return failure if unlink fails
+            }
         endif;
         if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
             $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
             $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
-            if (!unlink($imagebackurl)): 
-                $imagebackdelete = 'failure'; 
-            else:
-                $imagebackdelete = 'success'; 
-            endif;
+            try {
+                if (!unlink($imagebackurl)):
+                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
+                    throw new Exception('Failed to unlink back image');
+                endif;
+                $imagebackdelete = 'success';
+            } catch (Exception $e) {
+                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$logfile);
+                $imagebackdelete = 'failure';
+                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+                $subject = "Image unlink failure";
+                $message = "Failed image unlink: $imagebackurl";
+                mail($adminemail, $subject, $message, $from);
+                restore_error_handler();
+                return $imagebackdelete; // Return failure if unlink fails
+            }
         endif;
     endif;
     //Refresh image
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
     $imagefunction = $imageManager->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
+    return 'success';
 }
 
 function update_collection_values($collection)
