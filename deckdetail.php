@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.0
-    Date:       03/12/23
+/* Version:     19.1
+    Date:       04/12/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -52,6 +52,9 @@
  *  19.0
  *              03/12/23
  *              Add photo capability
+ *  19.1
+ *              04/12/2023
+ *              Refine photo security by serving images through a php script
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -2314,9 +2317,10 @@ endif;
                                 if (response.success) {
                                     $('#result').html(response.message);
                                     // Reload the image
-                                    var imageUrl = 'cardimg/deck_photos/<?php echo $decknumber; ?>.jpg';
+                                    // var imageUrl = 'cardimg/deck_photos/<?php echo $decknumber; ?>.jpg';
+                                    var imageUrl = 'deckimage.php?deck=<?php echo $decknumber; ?>';
                                     var timestamp = new Date().getTime();
-                                    $('#deckPhoto').attr('src', imageUrl + '?' + timestamp);
+                                    $('#deckPhoto').attr('src', imageUrl + '&' + timestamp);
                                     $('#photo_div').show();
                                     $('#deletePhotoBtn').show();
                                     $("#photosubmit").attr('disabled',true);
@@ -2375,7 +2379,8 @@ endif;
                 if (file_exists($imageFilePath)):?>
                     <div id='photo_div'>
                         <br>
-                        <img id="deckPhoto" src="<?php $time = time(); echo $existingImage.'?'.$time; ?>" style="max-width: 300px;" alt="Existing Photo">
+                        <!-- <img id="deckPhoto" src="<?php // $time = time(); echo $existingImage.'?'.$time; ?>" style="max-width: 300px;" alt="Existing Photo"> -->
+                        <img id="deckPhoto" src="deckimage.php?deck=<?php echo $decknumber; ?>" style="max-width: 300px;" alt="Existing Photo">
                     </div><?php
                 else: ?>
                     <div id='photo_div' style="display: none;">

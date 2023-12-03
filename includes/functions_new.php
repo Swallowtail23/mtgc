@@ -1,6 +1,6 @@
 <?php
-/* Version:     17.0
-    Date:       15/10/23
+/* Version:     18.0
+    Date:       25/11/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
