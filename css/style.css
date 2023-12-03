@@ -2587,6 +2587,11 @@ input:checked + .slider:before {
     -webkit-box-decoration-break:clone;
 }
 
+.setcell
+{
+    padding-right: 10px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {

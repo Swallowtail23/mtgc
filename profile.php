@@ -226,7 +226,7 @@ endif;  ?>
                 endif;
                 
                 
-                echo "This is based on normal and foil pricing where applicable from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com.<br>";
+                echo "This is based on pricing from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com 'market price'.<br>";
                 $rowcounttotal = number_format($totalcardcount);
             ?>
         </div>

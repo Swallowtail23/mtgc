@@ -44,14 +44,29 @@ forcechgpwd();                              //Check if user is disabled or needs
                 url: 'admin/ajaxsetimg.php',
                 data: { setcode: setcode },
                 success: function(response) {
-                    // Handle the response if needed
-                    console.log(response);
+                    // Parse the JSON response
+                    var result = JSON.parse(response);
+
+                    // Display the message using an alert box
+                    showMessage(result.status, result.message);
+
+                    if (result.status === 'success') {
+                        console.log(result.message);
+                    } else {
+                        console.error(result.message);
+                    }
                 },
                 error: function(error) {
-                    // Handle errors if needed
+                    // Display an error message using an alert box
+                    showMessage('error', 'An error occurred.');
                     console.error(error);
                 }
             });
+        }
+
+        function showMessage(status, message) {
+            // Display the message using an alert box
+            alert(message);
         }
     </script>
 </head>
@@ -78,13 +93,14 @@ require('includes/menu.php');
                                 card_count,
                                 nonfoil_only,
                                 foil_only,
-                                min(cards_scry.release_date) as date
+                                min(cards_scry.release_date) as date,
+                                sets.release_date as setdate
                             FROM cards_scry 
                             LEFT JOIN sets ON cards_scry.set_id = sets.id
                             GROUP BY 
                                 set_name
                             ORDER BY 
-                                date DESC 
+                                setdate DESC, parent_set_code DESC 
                             LIMIT ? OFFSET ?");
         $stmt->bind_param("ii", $setsPerPage, $offset);
         if ($stmt === false):
@@ -105,23 +121,35 @@ require('includes/menu.php');
         <h2 class='h2pad'>Sets Information</h2>
         <table id='setlist'>
             <tr>
-                <td>
-                    <b>Set icon</b>
+                <td class='setcell'>
+                    <b>Icon</b>
                 </td>
-                <td>
-                    <b>Set code</b>
+                <td class='setcell'>
+                    <b>Code</b>
                 </td>
-                <td>
-                    <b>Set name</b>
+                <td class='setcell'>
+                    <b>Name</b>
                 </td>
-                <td>
-                    <b>Set type</b>
+                <td class='setcell'>
+                    <b>Type</b>
                 </td>
-                <td>
+                <td class='setcell'>
                     <b>Parent set</b>
                 </td>
+                <td class='setcell'>
+                    <b>Release date</b>
+                </td>
+                <td class='setcell'>
+                    <b>Card count</b>
+                </td>
+                <?php if ($admin == 1): ?>
+                    <td class='setcell'>
+                        <b>Reload images</b>
+                    </td>
+                <?php endif; ?>
             </tr>
             <?php
+            $currentYear = null;
             if($result === false):
                 // Should never get here with catches above
                 $obj = new Message;
@@ -131,6 +159,7 @@ require('includes/menu.php');
                 </tr> <?php
             else:
                 while ($row = $result->fetch_assoc()): 
+                    $setYear = date('Y', strtotime($row['setdate']));
                     if(isset($row['setcode']) AND $row['setcode'] !== null):
                         $setcodeupper = strtoupper($row['setcode']);
                     else:
@@ -151,25 +180,55 @@ require('includes/menu.php');
                     else:
                         $parentsetcode = '';
                     endif;
+                    if(isset($row['setdate']) AND $row['setdate'] !== null):
+                        $setdate = strtoupper($row['setdate']);
+                    else:
+                        $setdate = '';
+                    endif;
+                    if(isset($row['card_count']) AND $row['card_count'] !== null):
+                        $cardcount = strtoupper($row['card_count']);
+                    else:
+                        $cardcount = '';
+                    endif;
+                    if ($setYear != $currentYear):
+                        echo '<tr>';
+                        if ($admin == 1):
+                            echo '<td colspan="8" class="year-header"><h3>' . $setYear . '</h3></td>';
+                        else:
+                            echo '<td colspan="7" class="year-header"><h3>' . $setYear . '</h3></td>';
+                        endif;
+                        echo '</tr>';
+                        $currentYear = $setYear;
+                    endif;
+
                     ?>
                     <tr>
-                        <td>
+                        <td class='setcell'>
                             <?php 
                             $time = time();
                             echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; 
                             //echo "<i><i class='ss ss-{$row['parent_set_code']} ss-grad ss-2x'></i>"; ?>
                         </td>
-                        <td>
+                        <td class='setcell'>
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
-                        <td>
-                            <?php echo $setname.($admin == 1 ? ' <a href="javascript:void(0);" onclick="reloadImages(\''.$row['setcode'].'\')"><span class="material-symbols-outlined">frame_reload</span></a>' : ''); ?>
+                        <td class='setcell'>
+                            <?php echo $setname; ?>
                         </td>
-                        <td>
+                        <td class='setcell'>
                             <?php echo $settype; ?>
                         </td>
-                        <td>
+                        <td class='setcell'>
                             <?php echo $parentsetcode; ?>
+                        </td>
+                        <td class='setcell'>
+                            <?php echo date('F j', strtotime($setdate)); ?>
+                        </td>
+                        <td class='setcell' style='text-align: center;'>
+                            <?php echo number_format($cardcount); ?>
+                        </td>
+                        <td class='setcell' style='text-align: center;'>
+                            <?php echo ($admin == 1 ? '<a href="javascript:void(0);" onclick="reloadImages(\''.$row['setcode'].'\')"><span class="material-symbols-outlined">frame_reload</span></a>' : ''); ?>
                         </td>
                     </tr>
                     <?php 
