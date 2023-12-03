@@ -130,16 +130,16 @@ require('includes/menu.php');
                 <td class='setcell'>
                     <b>Name</b>
                 </td>
-                <td class='setcell'>
+                <td class='setcell columnhide'>
                     <b>Type</b>
                 </td>
-                <td class='setcell'>
+                <td class='setcell columnhide'>
                     <b>Parent set</b>
                 </td>
                 <td class='setcell'>
                     <b>Release date</b>
                 </td>
-                <td class='setcell'>
+                <td class='setcell columnhide'>
                     <b>Card count</b>
                 </td>
                 <?php if ($admin == 1): ?>
@@ -215,16 +215,16 @@ require('includes/menu.php');
                         <td class='setcell'>
                             <?php echo $setname; ?>
                         </td>
-                        <td class='setcell'>
+                        <td class='setcell columnhide'>
                             <?php echo $settype; ?>
                         </td>
-                        <td class='setcell'>
+                        <td class='setcell columnhide'>
                             <?php echo $parentsetcode; ?>
                         </td>
                         <td class='setcell'>
-                            <?php echo date('F j', strtotime($setdate)); ?>
+                            <?php echo date('M j', strtotime($setdate)); ?>
                         </td>
-                        <td class='setcell' style='text-align: center;'>
+                        <td class='setcell columnhide' style='text-align: center;'>
                             <?php echo number_format($cardcount); ?>
                         </td>
                         <td class='setcell' style='text-align: center;'>
