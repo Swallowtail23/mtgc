@@ -44,8 +44,7 @@ else:
 
             // Create 'deck_photos' folder if it doesn't exist
             if (!file_exists($deckPhotosDir)):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Creating 'deck_photos' folder in $ImgLocation", $logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Creating 'deck_photos' folder in $ImgLocation", $logfile);
 
                 if (!@mkdir($deckPhotosDir, 0755, true)):
                     $response['message'] = '<br>Failed to create directory for deck photos';
@@ -57,8 +56,7 @@ else:
 
             // Check if the file size is greater than 1MB
             if ($_FILES['photo']['size'] > 1024 * 1024):
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Resizing $uploadFile using php-gd", $logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Resizing $uploadFile using php-gd", $logfile);
 
                 // Use GD to resize the image
                 $uploadedImage = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
@@ -81,8 +79,7 @@ else:
                 imagedestroy($uploadedImage);
                 imagedestroy($resizedImage);
             else:
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image $uploadFile does not need resizing", $logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image $uploadFile does not need resizing", $logfile);
 
                 // Move the uploaded file to the specified directory with the specific name
                 if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)):
@@ -90,11 +87,11 @@ else:
                     returnResponse();
                 endif;
             endif;
-            $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload success", $logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload success", $logfile);
             $response['success'] = true;
             $response['message'] = 'File is valid and was successfully uploaded<br>';
         else:
-            $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload failed", $logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload failed", $logfile);
             $response['message'] = 'Invalid file or file upload error<br>';
         endif;
     endif;
