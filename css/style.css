@@ -17,7 +17,7 @@ body
     padding: 0;
     position: relative;
     font-family: "Roboto", sans-serif;
-    background: white; 
+    background: #e8eaf6; 
     border: 0;
 }
 
@@ -2592,6 +2592,18 @@ input:checked + .slider:before {
     padding-right: 10px;
 }
 
+#setlist
+{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+td.columnhide
+{
+    display: table-cell;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
@@ -2722,6 +2734,13 @@ input:checked + .slider:before {
     .msg-new {
         left: 20%;
         top: 15%;
+    }
+    td.columnhide {
+        display: none;
+    }
+    #setlist
+    {
+        max-width: 100%;
     }
 }
 @media (max-width: 682px)
