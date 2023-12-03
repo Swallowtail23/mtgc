@@ -13,6 +13,7 @@ Install under web server as applicable
 #### PHP ####
 - Requires PHP 8.2
 - requires php-gd for deck photo manipulation
+- set upload_max_size and post_max to 25M
 
 #### MySQL ####
 - Tested with version 8+
