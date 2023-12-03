@@ -2914,6 +2914,13 @@ td.columnhide
     }
 }
 
+@media (min-width:1600px) {
+    #setlist
+    {
+        max-width: 1400px;
+    }
+}
+
 @media print
 
 {
