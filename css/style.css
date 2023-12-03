@@ -1780,7 +1780,7 @@ table
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-.stdsubmit:hover, #importsubmit:hover, #exportsubmit:hover
+.stdsubmit:hover, #importsubmit:hover, #exportsubmit:hover, #photosubmit:hover
 {
     color: #c5cae9;
 }
@@ -1796,7 +1796,7 @@ table
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-#importsubmit:disabled
+#importsubmit:disabled, #photosubmit:disabled
 {
     background: #555;
     color: darkgrey;

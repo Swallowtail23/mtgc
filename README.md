@@ -12,6 +12,7 @@ Install under web server as applicable
 ### Dependencies ###
 #### PHP ####
 - Requires PHP 8.2
+- requires php-gd for deck photo manipulation
 
 #### MySQL ####
 - Tested with version 8+

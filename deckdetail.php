@@ -1,6 +1,6 @@
 <?php
-/* Version:     18.0
-    Date:       25/11/23
+/* Version:     19.0
+    Date:       03/12/23
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -49,6 +49,9 @@
  *  18.0
  *              25/11/23
  *              Add import, and significantly more robust Quick Add
+ *  19.0
+ *              03/12/23
+ *              Add photo capability
 */
 
 session_start();
@@ -2223,8 +2226,7 @@ endif;
             Import text file, formatted per Quick add above. Note, large decks may take several minutes to import and fetch data and images.
             <br>Cards already in the deck will have quantity updated.
             <script type="text/javascript">
-                $(document).ready(
-                function(){
+                $(document).ready(function(){
                     $("#importsubmit").attr('disabled',true);
                     $("#importfile").change(
                         function(){
@@ -2235,6 +2237,62 @@ endif;
                                 $("#importsubmit").attr('disabled',true);
                             }
                         });
+                });
+                $(document).ready(function(){
+                    $("#photosubmit").attr('disabled',true);
+                    $("#importphoto").change(
+                        function(){
+                            if ($(this).val()){
+                                $("#photosubmit").removeAttr('disabled'); 
+                            }
+                            else {
+                                $("#photosubmit").attr('disabled',true);
+                            }
+                        });
+                });
+                $(document).ready(function() {
+                    $('#uploadForm').submit(function(e) {
+                        e.preventDefault(); // Prevent the default form submission
+
+                        // Get the deck number from the hidden input
+                        var deckNumber = $('input[name="decknumber"]').val();
+
+                        // Append the deck number to the form data
+                        var formData = new FormData(this);
+                        formData.append('decknumber', deckNumber);
+
+                        $.ajax({
+                            url: 'ajaxphoto.php',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'json', // Expect JSON response
+                            success: function(response) {
+                                if (response.success) {
+                                    $('#result').html(response.message);
+                                    // Reload the image
+                                    var imageUrl = 'cardimg/deck_photos/<?php echo $decknumber; ?>.jpg';
+                                    var timestamp = new Date().getTime();
+                                    $('#deckPhoto').attr('src', imageUrl + '?' + timestamp);
+                                    setTimeout(function() {
+                                        $('#result').html('');
+                                    }, 5000);
+                                } else {
+                                    $('#result').html('Error: ' + response.message);
+                                    setTimeout(function() {
+                                        $('#result').html('');
+                                    }, 20000);
+                                }
+                            },
+                            error: function() {
+                                $('#result').html('Error occurred during the upload.');
+                                setTimeout(function() {
+                                    $('#result').html('');
+                                }, 20000);
+                            }
+                        });
+                    });
                 });
             </script>
             <script type="text/javascript"> 
@@ -2247,12 +2305,38 @@ endif;
             <form enctype='multipart/form-data' action='?' method='post'>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
-                    <span>UPLOAD</span>
+                    <span>SELECT</span>
                 </label>
                 <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled onclick='ImportPrep()';>
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
             </form> 
             <br>
+            <div id='photo_upload'>
+                <h4>Photo</h4>
+                You can upload a photo here to store with the deck. Large photos will be resized.<br><br>
+                <form id="uploadForm">
+                    <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
+                    <label class='importlabel'>
+                        <input id='importphoto' type='file' name='photo' accept='image/jpeg'>
+                        <span>SELECT</span>
+                    </label>
+                    <input class='profilebutton' id='photosubmit' type='submit' value="UPLOAD">
+                </form>
+                <?php
+                $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
+                $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
+                if (file_exists($imageFilePath)):?>
+                    <div>
+                        <br>
+                        <img id="deckPhoto" src="<?php $time = time(); echo $existingImage.'?'.$time; ?>" style="max-width: 300px;" alt="Existing Photo">
+                    </div><?php
+                else: ?>
+                    <div>
+                        <br>Load photo above (must be .jpg)
+                    </div> <?php
+                endif; ?>
+                <div id="result"></div>
+            </div>
         </div>
     </div>
 </div>
