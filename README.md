@@ -7,7 +7,18 @@
 ### Web server ###
 Install under web server as applicable
 - See setup/mtgc.conf for sample Apache configuration file
+- check and set all paths
 - Sample config restricts bulk and setup folders to localhost access
+- php-fpm config in /etc/php-fpm.d/www.conf
+
+
+ php_admin_value[session.auto_start] = 0
+ php_admin_value[session.use_cookies] = 1
+ php_admin_value[session.use_only_cookies] = 1
+ php_admin_value[session.cookie_httponly] = 1
+ php_admin_value[session.cookie_secure] = 1
+ php_admin_value[session.cookie_samesite] = Strict
+
 
 ### Dependencies ###
 #### PHP ####
@@ -130,6 +141,9 @@ Edit my.cnf and set as follows:
     innodb_buffer_pool_size = 2G 
 
 Note 2G sizing is based on 4G or more server RAM.
+
+### PHP session.name ###
+set the same unique session.name on all pages which call session.start
 
 ### Initial user ###
 

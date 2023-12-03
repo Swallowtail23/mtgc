@@ -19,7 +19,7 @@
  *  5.0
  *              Added Cloudflare Turnstile protection
 */
-
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 /*
  *  check if user is already logged in. If yes, display error and redirect to

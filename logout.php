@@ -9,6 +9,7 @@
     1.0
                 Initial version
 */
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 session_destroy();
 date_default_timezone_set('Australia/Brisbane');

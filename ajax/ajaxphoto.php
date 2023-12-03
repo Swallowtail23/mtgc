@@ -9,7 +9,7 @@
    1.1
                 Refactored error handling using a variable and return
 */
-
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require('../includes/ini.php');
 require('../includes/error_handling.php');

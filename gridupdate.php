@@ -17,7 +17,7 @@
  *  5.0
  *              Added third card finish (etched)
 */
-
+ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
