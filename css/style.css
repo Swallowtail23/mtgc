@@ -839,6 +839,14 @@ table
     font-weight: 300;
     font-size: 26px;
 }
+.h2-no-top-margin
+{
+    margin-top: -10px;
+    margin-bottom: 0px;
+    color: rgba(0,0,0,0.77);
+    font-weight: 300;
+    font-size: 26px;
+}
 .h2pad
 {
     margin-top: 15px;
@@ -2631,21 +2639,25 @@ td.columnhide
     max-height: 600px;
     background-color: #f0f2f9;
     border: 1px solid #ccc;
-    padding: 20px 30px 30px 30px;
+    padding: 0px 10px 30px 25px;
     z-index: 10000;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
     border-radius: 2px;
     color: rgba(0,0,0,0.77);
     overflow: auto;
 }
-
 .close-button {
     cursor: pointer;
-    position: absolute;
-    top: 5px;
-    right: 8px;
+    position: sticky;
+    top: 10px;
+    left: 100%;
 }
 
+.info-box-inner
+{
+    padding-right: 20px;
+/*    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);*/
+}
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
