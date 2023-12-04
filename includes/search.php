@@ -22,9 +22,9 @@ endif;
         {
             document.body.style.cursor='wait';
         }
-</script> 
+</script>
 <form action="index.php" method="get">
-    <div class="staticpagecontent">   
+    <div class="staticpagecontent">
         <div id="grey" class="transparent">
         </div>
         <div id='first_div'>
