@@ -601,23 +601,25 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
             <!-- Info box -->
             <div class="info-box" id="infoBox" style="display:none">
                 <span class="close-button material-symbols-outlined" onclick="toggleInfoBox()">close</span>
-                <h2 id="h2">MtG collection search help</h2>
-                <br><b>Header search</b><br>
-                The quick search in the header will respond with live results to text input<br>
-                Add a setcode in square brackets to restrict the search to a specific set, e.g.:<br>
-                <br>
-                <i>Goblin[m13]</i>
-                <br><br>
-                ...will return Goblins from M13.<br><br>
-                <br><b>Advanced search</b><br>
-                The same [setcode] pattern will work in the main search to search with a name, or ability, etc., e.g. 
-                selecting Ability search and:<br>
-                <br>
-                <i>Haste[m13]</i>
-                <br><br>
-                ...will return cards with the haste keyword from M13.<br><br>
-                "New (7d)" will return cards added in the last 7 days.<br><br>
-                "Promo" will search card promo types, e.g. rainbow foil, etc.
+                <div class="info-box-inner">
+                    <h2 class="h2-no-top-margin">MtG collection search help</h2>
+                    <br><b>Header search</b><br>
+                    The quick search in the header will respond with live results to text input<br>
+                    Add a setcode in square brackets to restrict the search to a specific set, e.g.:<br>
+                    <br>
+                    <i>Goblin[m13]</i>
+                    <br><br>
+                    ...will return Goblins from M13.<br><br>
+                    <br><b>Advanced search</b><br>
+                    The same [setcode] pattern will work in the main search to search with a name, or ability, etc., e.g. 
+                    selecting Ability search and:<br>
+                    <br>
+                    <i>Haste[m13]</i>
+                    <br><br>
+                    ...will return cards with the haste keyword from M13.<br><br>
+                    "New (7d)" will return cards added in the last 7 days.<br><br>
+                    "Promo" will search card promo types, e.g. rainbow foil, etc.
+                </div>
             </div> <?php
         endif;
         ?>
