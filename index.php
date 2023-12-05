@@ -839,20 +839,31 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         </table>    
                     </div> <?php 
                 elseif ($layout == 'grid') :?>
-                    <script type="text/javascript">
-                        function swapImage(img_id,card_id,imageurl,imagebackurl){
-                            var ImageId = document.getElementById(img_id);
-                            var FrontImg = card_id + ".jpg";
-                            var BackImg = card_id + "_b.jpg";
-                            if (ImageId.src.match(FrontImg))
-                            { 
-                                document.getElementById(img_id).src = imagebackurl; 
-                            } else if (ImageId.src.match(BackImg))
-                            {
-                                document.getElementById(img_id).src = imageurl; 
-                            }
-                        };
-                    </script>
+                <script type="text/javascript">
+                    function swapImage(img_id, card_id, imageurl, imagebackurl) {
+                        var ImageId = document.getElementById(img_id);
+                        var FrontImg = card_id + ".jpg";
+                        var BackImg = card_id + "_b.jpg";
+
+                        if (!ImageId.classList.contains('flipped')) {
+                            // If not flipped, apply flip effect
+                            ImageId.classList.add('flipped');
+
+                            // Set a timeout for half of the transition duration
+                            setTimeout(function () {
+                                ImageId.src = imagebackurl;
+                            }, 80);
+                        } else {
+                            // If already flipped, remove flip effect
+                            ImageId.classList.remove('flipped');
+
+                            // Set a timeout for half of the transition duration
+                            setTimeout(function () {
+                                ImageId.src = imageurl;
+                            }, 80);
+                        }
+                    }
+                </script>
                     <script type="text/javascript">
                         function rotateImg(img_id) {
                             if ( document.getElementById(img_id).style.transform == 'none' ){
@@ -952,7 +963,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
-                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='card-image cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
                                 $cellid_one = $cellid.'_one';
                                 $cellid_two = $cellid.'_two';
