@@ -2679,6 +2679,14 @@ td.columnhide
         'GRAD' -50;
 }
 
+.card-image {
+    transition: transform 0.5s ease;
+}
+
+.flipped {
+    transform: rotateY(180deg) scaleX(-1);
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
