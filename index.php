@@ -295,7 +295,6 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <meta name="viewport" content="initial-scale=1">
         <title> MtG collection </title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
@@ -947,9 +946,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
                                 if(in_array($row['layout'],$flip_button_cards)):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined'>refresh</span></div>";
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-symbols-outlined'>refresh</span></div>";
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
