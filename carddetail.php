@@ -93,7 +93,6 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <meta name="viewport" content="initial-scale=1">
     <title>MtG collection card details</title>
 <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,300,0,0" />
 <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
 <?php include('includes/googlefonts.php');?>
 <script src="/js/jquery.js"></script>
@@ -1010,7 +1009,7 @@ require('includes/menu.php'); //mobile menu
                                                                 title="New image"
                                                                 onmouseover=""
                                                                 style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                                class='material-symbols-outlined'>
+                                                                class='material-symbols-outlined card_detail'>
                                                                 image
                                                             </span>
                                                         </label>
@@ -1021,7 +1020,7 @@ require('includes/menu.php'); //mobile menu
                                                                 title="Replace image"
                                                                 onmouseover=""
                                                                 style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                                class='material-symbols-outlined'>
+                                                                class='material-symbols-outlined card_detail'>
                                                                 done
                                                             </span>
                                                         </button>
@@ -1032,7 +1031,7 @@ require('includes/menu.php'); //mobile menu
                                                                 title="Refresh image"
                                                                 onmouseover=""
                                                                 style="cursor: pointer; display:block; text-align:center; margin:0 auto;"
-                                                                class='material-symbols-outlined'>
+                                                                class='material-symbols-outlined card_detail'>
                                                                 refresh
                                                             </span>
                                                         </button>

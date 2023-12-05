@@ -2626,6 +2626,11 @@ td.columnhide
 #help-button
 {
     color: #3F51B5;
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 300,
+        'GRAD' -50;
+    font-size: 28px;
 }
 
 .info-box {
@@ -2658,6 +2663,22 @@ td.columnhide
     padding-right: 20px;
 /*    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);*/
 }
+
+.material-symbols-outlined.refresh
+{
+    font-variation-settings:
+        'wght' 500,
+        'GRAD' 200;
+    font-size: 32px;
+}
+
+.material-symbols-outlined.card_detail
+{
+    font-variation-settings:
+        'wght' 300,
+        'GRAD' -50;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
