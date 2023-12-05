@@ -947,9 +947,9 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 <?php
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
                                 if(in_array($row['layout'],$flip_button_cards)):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-icons md-24'>refresh</span></div>";
+                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-symbols-outlined'>refresh</span></div>";
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
