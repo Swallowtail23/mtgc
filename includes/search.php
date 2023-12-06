@@ -1,9 +1,8 @@
 <?php 
-/* Version:     3.0
-    Date:       19/03/23
+/* Version:     4.0
+    Date:       6/12/2026
     Name:       search.php
     Purpose:    Layout for search on index.php
-    MySQLi:     Yes
     Notes:      
  * 
     1.0
@@ -12,6 +11,10 @@
  *              Added code to get sets from DB instead of setshtml.php
  *  3.0
  *              Add Arena legalities
+ * 
+ *  4.0         6/12/2026
+ *              Add year to optgroup
+ *              
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -117,7 +120,7 @@ endif;
                 if ($result === false):
                     trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
                 else:
-                    $currentblock = null;
+                    $currentblock = $currentyear = null;
                     while ($row = $result->fetch_assoc()):
                         if(isset($row['setcode']) AND $row['setcode'] !== null):
                             $set_upper = strtoupper($row['setcode']);
@@ -129,14 +132,26 @@ endif;
                         else:
                             $parent_set_upper = '';
                         endif;
+                        if(isset($row['date']) AND $row['date'] !== null):
+                            $rowyear = date('Y', strtotime($row['date']));
+                        else:
+                            $rowyear = '';
+                        endif;
+                        if( $currentyear == null || $currentyear != $rowyear):
+                            if($currentyear != null):
+                                echo "</optgroup\n>";
+                            endif;
+                            echo "<optgroup class='optgroup' label='$rowyear' style='color: #3F51B5; font-weight: bold; font-style: italic;'>\n";
+                            $currentyear = $rowyear;
+                        endif;
                         if( $currentblock == null || $parent_set_upper != $currentblock ):
                             if( $currentblock != null ):
                                 echo "</optgroup\n>";
                             endif;
-                            echo "<optgroup class='optgroup' label='$parent_set_upper'>\n";
+                            echo "<optgroup class='optgroup' label='&nbsp;&nbsp;&nbsp;&nbsp;$parent_set_upper' style='color: #3F51B5; font-style: italic;'>\n";
                             $currentblock = $parent_set_upper;
                         endif;
-                        echo "<option title='{$row['set_name']}' value='{$row['setcode']}'>$set_upper: {$row['set_name']}</option>\n";
+                        echo "<option title='{$row['set_name']}' value='{$row['setcode']}' style='color: rgba(0,0,0,0.77); font-style: normal;'>&nbsp;&nbsp;&nbsp;&nbsp;$set_upper: {$row['set_name']}</option>\n";
                     endwhile;
                 endif;    
                 if( $currentblock != null ) echo "</optgroup>\n";
