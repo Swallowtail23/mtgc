@@ -139,7 +139,7 @@ endif;
                         endif;
                         if( $currentyear == null || $currentyear != $rowyear):
                             if($currentyear != null):
-                                echo "</optgroup\n>";
+                                echo "</optgroup>\n";
                             endif;
                             echo "<optgroup class='optgroup' label='$rowyear' style='color: #3F51B5; font-weight: bold; font-style: italic;'>\n";
                             $currentyear = $rowyear;
