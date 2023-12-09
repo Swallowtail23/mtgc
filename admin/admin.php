@@ -321,13 +321,13 @@ require('../includes/menu.php');
 
                     <!-- Conditional display of buttons based on the $countSql variable -->
                     <?php 
-                    if (isset($countSql) && $countSql > 0): ?>
+                    if (isset($totalMatchesInCardsScry) && $totalMatchesInCardsScry > 0): ?>
                         <!-- Display the quantity of rows found in the test -->
-                        <p>Rows found in test: <?php echo $countSql; ?></p>
+                        <p>Rows found in test: <?php echo $totalMatchesInCardsScry; ?></p>
 
                         <!-- Display the DELETE button -->
                         <form id="deleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-                            <button type="submit" name="delete_migrations" value="DELETE" onclick="confirmDelete()">Delete ALL migrations</button>
+                            <button type="submit" name="delete_migrations" value="DELETE" onclick="confirmDelete()">Delete ALL migrations (<?php echo $totalMatchesInCardsScry; ?>)</button>
                         </form>
                     <?php else: ?>
                         <!-- Display the TEST DELETE button with the $countSql variable -->
