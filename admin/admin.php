@@ -101,7 +101,7 @@ if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DEL
 
             if ($deleteResult !== false):
                 // Log the total number of rows deleted in migrations
-                $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $deleteResult->affected_rows . " rows in migrations", $logfile);
+                $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $db->affected_rows . " rows in migrations", $logfile);
             endif;
         endif;
     endif;
