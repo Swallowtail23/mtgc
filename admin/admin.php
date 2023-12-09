@@ -333,8 +333,7 @@ require('../includes/menu.php');
                         <!-- Display the TEST DELETE button with the $countSql variable -->
                         <form id="testDeleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                             <input type="hidden" name="delete_migrations" value="TEST">
-                            <input type="hidden" name="count_sql" value="<?php echo htmlspecialchars($countSql); ?>">
-                            <button type="button" onclick="confirmTestDelete()">TEST DELETE</button>
+                            <button type="button" onclick="confirmTestDelete()">Test migrations deletion</button>
                         </form>
                     <?php endif; ?>
 
