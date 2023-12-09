@@ -319,13 +319,9 @@ require('../includes/menu.php');
                         }
                     </script>
 
-                    <?php
-                    // Define the $countSql variable for testing (replace with your actual SQL query)
-                    $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = 'your_oldScryfallId'";
-                    ?>
-
                     <!-- Conditional display of buttons based on the $countSql variable -->
-                    <?php if (isset($countSql) && $countSql > 0): ?>
+                    <?php 
+                    if (isset($countSql) && $countSql > 0): ?>
                         <!-- Display the quantity of rows found in the test -->
                         <p>Rows found in test: <?php echo $countSql; ?></p>
 
@@ -337,8 +333,7 @@ require('../includes/menu.php');
                         <!-- Display the TEST DELETE button with the $countSql variable -->
                         <form id="testDeleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                             <input type="hidden" name="delete_migrations" value="TEST">
-                            <input type="hidden" name="count_sql" value="<?php echo htmlspecialchars($countSql); ?>">
-                            <button type="button" onclick="confirmTestDelete()">TEST DELETE</button>
+                            <button type="button" onclick="confirmTestDelete()">Test migrations deletion</button>
                         </form>
                     <?php endif; ?>
 
