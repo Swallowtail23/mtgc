@@ -534,7 +534,8 @@ else:
             $criteria .= "AND ($mytable.foil > 0) AND ($mytable.normal = 0) "; 
         endif;
         if (!empty($setcodesearch)):
-            $criteria .= "AND setcode LIKE '$setcodesearch' ";
+            $criteria .= "AND setcode LIKE ? ";
+            $params[] = $setcodesearch;
         endif;
         // Sort order
         if (!empty($sortBy)):

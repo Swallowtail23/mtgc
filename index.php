@@ -84,12 +84,10 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $nameget = htmlspecialchars($_GET["name"],ENT_NOQUOTES);
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in nametrim is $nametrim",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after trimming is $nametrim",$logfile);
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name sent to sql escape is $name",$logfile);
-    $name = $db->escape($name);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in name is $name",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after URL removal is $name",$logfile);
     // Remove any embedded setcodes in [] into a variable
     preg_match('/\[(.*?)\]/', $name, $matches);
     $setcodesearch = isset($matches[1]) ? $matches[1] : '';
