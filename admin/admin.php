@@ -64,6 +64,7 @@ if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
         trigger_error("[ERROR] admin.php: Adding update notice: failed " . $db->error, E_USER_ERROR);
     endif;
 endif;
+
 if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DELETE')):
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Delete all migrations called", $logfile);
@@ -72,35 +73,66 @@ if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DEL
     $result = $db->query($sql);
 
     if ($result !== false):
-        $totalDeletedFromCardsScry = 0; // Initialize a counter
+        $totalMatchesInCardsScry = 0; // Initialize a counter
 
         while ($row = $result->fetch_assoc()):
             $oldScryfallId = $row['old_scryfall_id'];
 
-            // Delete corresponding records from cards_scry table
-            $deleteSql = "DELETE FROM cards_scry WHERE id = '$oldScryfallId'";
-            $deleteResult = $db->query($deleteSql);
+            // Count the matching records in cards_scry table (for testing)
+            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = '$oldScryfallId'";
+            $countResult = $db->query($countSql);
 
-            if ($deleteResult === false):
-                // Handle deletion error if needed
-                trigger_error("[ERROR] cards.php: Deleting card from cards_scry: Wrong SQL: ($deleteSql) Error: " . $db->error, E_USER_ERROR);
+            if ($countResult !== false):
+                $rowCount = $countResult->fetch_row();
+                $totalMatchesInCardsScry += $rowCount[0];
             else:
-                // Increment the counter
-                $totalDeletedFromCardsScry++;
+                // Handle count error if needed
+                trigger_error("[ERROR] cards.php: Counting matches in cards_scry: Wrong SQL: ($countSql) Error: " . $db->error, E_USER_ERROR);
             endif;
         endwhile;
 
-        // Log the total number of rows deleted from cards_scry
-        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $totalDeletedFromCardsScry rows from cards_scry", $logfile);
+        // Log the total number of matches found in cards_scry (for testing)
+        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Total matches found in cards_scry: $totalMatchesInCardsScry", $logfile);
 
-        // Delete records from migrations table
-        $sql2 = "DELETE FROM migrations WHERE db_match = 1";
-        $result2 = $db->query($sql2);
+        if ($_POST['delete_migrations'] == 'DELETE'):
+            // Delete records from migrations table
+            $deleteSql = "DELETE FROM migrations WHERE db_match = 1";
+            $deleteResult = $db->query($deleteSql);
 
-        if ($result2 !== false):
-            // Log the total number of rows deleted from migrations
-            $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $result2->affected_rows . " rows from migrations", $logfile);
+            if ($deleteResult !== false):
+                // Log the total number of rows deleted in migrations
+                $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $deleteResult->affected_rows . " rows in migrations", $logfile);
+            endif;
         endif;
+    endif;
+elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'TEST')):
+    $obj = new Message;
+    $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Test delete migrations called", $logfile);
+
+    $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
+    $result = $db->query($sql);
+
+    if ($result !== false):
+        $totalMatchesInCardsScry = 0; // Initialize a counter
+
+        while ($row = $result->fetch_assoc()):
+            $oldScryfallId = $row['old_scryfall_id'];
+
+            // Count the matching records in cards_scry table (for testing)
+            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = '$oldScryfallId'";
+            $countResult = $db->query($countSql);
+
+            if ($countResult !== false):
+                $rowCount = $countResult->fetch_row();
+                $totalMatchesInCardsScry += $rowCount[0];
+            else:
+                // Handle count error if needed
+                trigger_error("[ERROR] cards.php: Counting matches in cards_scry: Wrong SQL: ($countSql) Error: " . $db->error, E_USER_ERROR);
+            endif;
+        endwhile;
+
+        // Log the total number of matches found in cards_scry (for testing)
+        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Total matches found in cards_scry (TEST): $totalMatchesInCardsScry", $logfile);
     endif;
 endif;
 
@@ -277,19 +309,39 @@ require('../includes/menu.php');
                 trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
             else:
                 if ($stmt->num_rows > 0): ?>
-                <script>
-                    function confirmDelete() {
-                        // Display a confirmation dialog
-                        if (confirm("Are you sure you want to delete all migrations?")) {
-                            // If the user confirms, submit the form
-                            document.getElementById("deleteForm").submit();
+                    <script>
+                        function confirmTestDelete() {
+                            // Display a confirmation dialog
+                            if (confirm("Are you sure you want to test delete all migrations?")) {
+                                // If the user confirms, submit the form
+                                document.getElementById("testDeleteForm").submit();
+                            }
                         }
-                    }
-                </script>
-                <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-                    <!-- The button to trigger the deletion -->
-                    <button type="submit" name="delete_migrations" value="DELETE" onclick="confirmDelete()">Delete ALL migrations</button>
-                </form>
+                    </script>
+
+                    <?php
+                    // Define the $countSql variable for testing (replace with your actual SQL query)
+                    $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = 'your_oldScryfallId'";
+                    ?>
+
+                    <!-- Conditional display of buttons based on the $countSql variable -->
+                    <?php if (isset($countSql) && $countSql > 0): ?>
+                        <!-- Display the quantity of rows found in the test -->
+                        <p>Rows found in test: <?php echo $countSql; ?></p>
+
+                        <!-- Display the DELETE button -->
+                        <form id="deleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                            <button type="submit" name="delete_migrations" value="DELETE" onclick="confirmDelete()">Delete ALL migrations</button>
+                        </form>
+                    <?php else: ?>
+                        <!-- Display the TEST DELETE button with the $countSql variable -->
+                        <form id="testDeleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                            <input type="hidden" name="delete_migrations" value="TEST">
+                            <input type="hidden" name="count_sql" value="<?php echo htmlspecialchars($countSql); ?>">
+                            <button type="button" onclick="confirmTestDelete()">TEST DELETE</button>
+                        </form>
+                    <?php endif; ?>
+
                 <table border="1">
                     <tr style="font-weight: bold;">
                         <th>Row</th>
