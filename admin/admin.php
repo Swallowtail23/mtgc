@@ -319,13 +319,9 @@ require('../includes/menu.php');
                         }
                     </script>
 
-                    <?php
-                    // Define the $countSql variable for testing (replace with your actual SQL query)
-                    $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = 'your_oldScryfallId'";
-                    ?>
-
                     <!-- Conditional display of buttons based on the $countSql variable -->
-                    <?php if (isset($countSql) && $countSql > 0): ?>
+                    <?php 
+                    if (isset($countSql) && $countSql > 0): ?>
                         <!-- Display the quantity of rows found in the test -->
                         <p>Rows found in test: <?php echo $countSql; ?></p>
 
