@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.0
-    Date:       01/12/23
+/* Version:     6.0
+    Date:       09/12/23
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -15,6 +15,9 @@
  *              PHP 8.1 compatibility
  *  5.0
  *              Add [set] search interpretation
+ *
+ *  6.0         09/12/23
+ *              Move main card search to parameterised queries
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -24,20 +27,24 @@ endif;
 if (empty($_GET)):
     $validsearch = "";
 else:
-    if (!$adv == "yes" ) :
+    $params = [];
+    if ($adv != "yes") :
         // Not an advanced search called
         if (strlen($name) > 2): // Needs to have more than 2 characters to search
-            if ($exact === "yes"):
-                $criteria = "(cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' 
-                            OR cards_scry.printed_name LIKE '$name' OR cards_scry.f1_printed_name LIKE '$name' OR cards_scry.f2_printed_name LIKE '$name'
-                            OR cards_scry.flavor_name LIKE '$name' OR cards_scry.f1_flavor_name LIKE '$name' OR cards_scry.f2_flavor_name LIKE '$name') ";
+            if ($exact === "yes"):  // Not used for anything but leaving in code for possible later use
+                $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
+                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
+                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
+                $params = array_fill(0, 9, $name);
             else:
-                $criteria = "(cards_scry.name LIKE '%$name%' OR cards_scry.f1_name LIKE '%$name%' OR cards_scry.f2_name LIKE '%$name%'
-                            OR cards_scry.printed_name LIKE '%$name%' OR cards_scry.f1_printed_name LIKE '%$name%' OR cards_scry.f2_printed_name LIKE '%$name%'
-                            OR cards_scry.flavor_name LIKE '%$name%' OR cards_scry.f1_flavor_name LIKE '%$name%' OR cards_scry.f2_flavor_name LIKE '%$name%') ";
+                $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
+                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
+                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
+                $params = array_fill(0, 9, "%{$name}%");
             endif;
             if (!empty($setcodesearch)):
-                $criteria .= "AND setcode LIKE '$setcodesearch' ";
+                $criteria .= "AND setcode LIKE ? ";
+                $params[] = $setcodesearch;
             endif;
             $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
             $query = $selectAll.$criteria.$order.$sorting;
@@ -51,38 +58,45 @@ else:
         // An advanced search called
         $criteriaNTA = "";
         if ($searchnotes === "yes"):
-            $criteriaNTA = "$mytable.notes LIKE '%$name%' ";
+            $criteriaNTA = "$mytable.notes LIKE ? ";
+            $params[] = "%$name%";
         elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact))):
             $criteriaNTA .= "cards_scry.name LIKE '%%' ";
         elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact)):
-            $criteriaNTA .= "cards_scry.name LIKE '%$name%' ";
+            $criteriaNTA .= "cards_scry.name LIKE ? ";
+            $params[] = "%$name%";
         elseif (!empty($searchpromo) AND empty($name)):
             $criteriaNTA .= "cards_scry.promo_types IS NOT NULL ";
         elseif (!empty($searchpromo) AND !empty($name)):
-            $criteriaNTA .= "cards_scry.promo_types LIKE '%$name%' ";
+            $criteriaNTA .= "cards_scry.promo_types LIKE ? ";
+            $params[] = "%$name%";
         else:
             if ($searchname === "yes"):
                 if ($exact === "yes"):
-                    $criteriaNTA = "(cards_scry.name LIKE '$name' OR cards_scry.f1_name LIKE '$name' OR cards_scry.f2_name LIKE '$name' 
-                            OR cards_scry.printed_name LIKE '$name' OR cards_scry.f1_printed_name LIKE '$name' OR cards_scry.f2_printed_name LIKE '$name'
-                            OR cards_scry.flavor_name LIKE '$name' OR cards_scry.f1_flavor_name LIKE '$name' OR cards_scry.f2_flavor_name LIKE '$name') ";
+                    $criteriaNTA = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
+                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
+                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
+                    $params = array_fill(0, 9, $name);
                 else:
-                    $criteriaNTA = "(cards_scry.name LIKE '%$name%' OR cards_scry.f1_name LIKE '%$name%' OR cards_scry.f2_name LIKE '%$name%'
-                            OR cards_scry.printed_name LIKE '%$name%' OR cards_scry.f1_printed_name LIKE '%$name%' OR cards_scry.f2_printed_name LIKE '%$name%'
-                            OR cards_scry.flavor_name LIKE '%$name%' OR cards_scry.f1_flavor_name LIKE '%$name%' OR cards_scry.f2_flavor_name LIKE '%$name%') ";
+                    $criteriaNTA = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
+                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
+                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
+                    $params = array_fill(0, 9, "%{$name}%");
                 endif;
             endif;
             if ($searchtype === "yes"):
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
-                $criteriaNTA .= "cards_scry.type LIKE '%$name%' ";
+                $criteriaNTA .= "cards_scry.type LIKE ? ";
+                $params[] = "%$name%";
             endif;
             if ($searchsetcode === "yes"):
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
-                $criteriaNTA .= "cards_scry.setcode LIKE '$name' ";
+                $criteriaNTA .= "cards_scry.setcode LIKE ? ";
+                $params[] = $name;
             endif;
             if ($searchability === "yes"):
                 $abilitytext = "";
@@ -94,12 +108,14 @@ else:
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
-                $criteriaNTA .= "MATCH (cards_scry.ability,cards_scry.f1_ability,cards_scry.f2_ability) AGAINST ('$abilitytext' IN BOOLEAN MODE) ";
+                $criteriaNTA .= "MATCH (cards_scry.ability,cards_scry.f1_ability,cards_scry.f2_ability) AGAINST (? IN BOOLEAN MODE) ";
+                $params[] = $abilitytext;
             elseif ($searchabilityexact === "yes"):
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
-                $criteriaNTA .= "(cards_scry.ability LIKE '%$name%' OR cards_scry.f1_ability LIKE '%$name%' OR cards_scry.f1_ability LIKE '%$name%') ";
+                $criteriaNTA .= "(cards_scry.ability LIKE ? OR cards_scry.f1_ability LIKE ? OR cards_scry.f1_ability LIKE ?) ";
+                $params = array_fill(0, 3, "%{$name}%");
             endif;
         endif;
         $criteria = "(".$criteriaNTA.") ";

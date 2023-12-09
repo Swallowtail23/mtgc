@@ -1,6 +1,6 @@
 <?php
-/* Version:     9.0
-    Date:       02/12/23
+/* Version:     10.0
+    Date:       09/12/23
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -26,7 +26,9 @@
  *
  *  9.0         02/12/23
  *              Add javascript to add/remove b/w based on cview mode
- *              
+ *
+ * 10.0         09/12/23
+ *              Move main search to parameterised queries  
 */
 
 //Call script initiation mechs
@@ -75,7 +77,9 @@ if (isset($_GET["page"])) :
 else :
     $page = 1;
 endif;
+$perpage = (int)$perpage;
 $start_from = ($page - 1) * $perpage;
+$start_from = (int)$start_from;
 if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $nameget = htmlspecialchars($_GET["name"],ENT_NOQUOTES);
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
@@ -255,18 +259,23 @@ endif;
 // Run the query
 if ($validsearch === "true"):
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    ?>
-    <?php
-    if($result = $db->query($query)):
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"with parameters: ".var_export($params, true),$logfile);
+    // parameterised query has been built in criteria.php, proceed with it
+    if($result = $db->execute_query($query, $params)):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-        $queryQty = $db->query($selectAll . $criteria);
-        $qtyresults = $queryQty->num_rows;
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Query has $qtyresults results",$logfile);
-        if ($qtyresults > $maxresults AND $collectionsearch == false):
-            $validsearch = "toomany"; //variable set for header.php to display warning
+        $queryQty = "SELECT COUNT(*) FROM cards_scry LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id LEFT JOIN `sets` ON cards_scry.setcode = sets.code WHERE ".$criteria;
+        // Execute the count query
+        if ($countResult = $db->execute_query($queryQty, $params)):
+            $row = $countResult->fetch_row();
+            $qtyresults = $row[0];
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Query has $qtyresults results",$logfile);
+
+            if ($qtyresults > $maxresults AND $collectionsearch == false):
+                $validsearch = "toomany"; //variable set for header.php to display warning
+            endif;
+        else:
+            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
         endif;
-    else:
-        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
     endif;
 endif;
 # query for page navigation
