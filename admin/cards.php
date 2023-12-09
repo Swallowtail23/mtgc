@@ -134,6 +134,9 @@ if ((isset($_GET['delete'])) AND ( $_GET['delete'] == 'DELETE')):
             <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
         endif;
     endif;
+    // If the card is in the migrations table, remove the row
+    $sql = "DELETE FROM migrations WHERE old_scryfall_id = '$id'";
+    $result = $db->query($sql);
 elseif ((isset($_GET['deleteimg'])) AND ( $_GET['deleteimg'] == 'DELETEIMG')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);

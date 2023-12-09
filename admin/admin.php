@@ -64,6 +64,46 @@ if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
         trigger_error("[ERROR] admin.php: Adding update notice: failed " . $db->error, E_USER_ERROR);
     endif;
 endif;
+if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DELETE')):
+    $obj = new Message;
+    $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Delete all migrations called", $logfile);
+
+    $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
+    $result = $db->query($sql);
+
+    if ($result !== false):
+        $totalDeletedFromCardsScry = 0; // Initialize a counter
+
+        while ($row = $result->fetch_assoc()):
+            $oldScryfallId = $row['old_scryfall_id'];
+
+            // Delete corresponding records from cards_scry table
+            $deleteSql = "DELETE FROM cards_scry WHERE id = '$oldScryfallId'";
+            $deleteResult = $db->query($deleteSql);
+
+            if ($deleteResult === false):
+                // Handle deletion error if needed
+                trigger_error("[ERROR] cards.php: Deleting card from cards_scry: Wrong SQL: ($deleteSql) Error: " . $db->error, E_USER_ERROR);
+            else:
+                // Increment the counter
+                $totalDeletedFromCardsScry++;
+            endif;
+        endwhile;
+
+        // Log the total number of rows deleted from cards_scry
+        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $totalDeletedFromCardsScry rows from cards_scry", $logfile);
+
+        // Delete records from migrations table
+        $sql2 = "DELETE FROM migrations WHERE db_match = 1";
+        $result2 = $db->query($sql2);
+
+        if ($result2 !== false):
+            // Log the total number of rows deleted from migrations
+            $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $result2->affected_rows . " rows from migrations", $logfile);
+        endif;
+    endif;
+endif;
+
 if(isset($_GET['loglevel'])):
     $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
     $ini->data['general']['Loglevel'] = "$newloglevel";
@@ -237,33 +277,139 @@ require('../includes/menu.php');
                 trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
             else:
                 if ($stmt->num_rows > 0): ?>
-                <table>
-                    <tr>
-                        <td>Row</td>
-                        <td>Old Scryfall ID</td>
-                        <td>Object</td>
-                        <td>Migration Strategy</td>
-                        <td>Name</td>
-                        <td>Set code</td>
-                        <td>Card number</td>
-                        <td>Note</td>
-                        <td>Merge new Scryfall ID</td>
+                <script>
+                    function confirmDelete() {
+                        // Display a confirmation dialog
+                        if (confirm("Are you sure you want to delete all migrations?")) {
+                            // If the user confirms, submit the form
+                            document.getElementById("deleteForm").submit();
+                        }
+                    }
+                </script>
+                <form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                    <!-- The button to trigger the deletion -->
+                    <button type="submit" name="delete_migrations" value="DELETE" onclick="confirmDelete()">Delete ALL migrations</button>
+                </form>
+                <table border="1">
+                    <tr style="font-weight: bold;">
+                        <th>Row</th>
+                        <th>Old Scryfall ID</th>
+                        <th>Object</th>
+                        <th>Migration Strategy</th>
+                        <th>Name</th>
+                        <th>Set code</th>
+                        <th>Card number</th>
+                        <th>Note</th>
+                        <th>Merge new Scryfall ID</th>
+                        <th>Decks</th>
+                        <th>Owned</th>
                     </tr>
                     <tr>
                     <?php
                     $row_no = 1;
                     while($row = $stmt->fetch_assoc()): 
-                        $row_no = $row_no + 1; ?>
+                        $row_no = $row_no + 1; 
+                    
+                        // Find decks and owners of cards needing migration
+                        $userResultArray = $collectionResultArray = $resultArray = array();
+                        $sql2 = "SELECT deckname, username FROM decks
+                            LEFT JOIN users ON decks.owner = users.usernumber
+                            LEFT JOIN deckcards ON decks.decknumber = deckcards.decknumber
+                            WHERE deckcards.cardnumber = ?";
+
+                        $stmt2 = $db->prepare($sql2);
+                        if ($stmt2):
+                            $stmt2->bind_param("s", $row['old_scryfall_id']);
+                            $stmt2->execute();
+                            $stmt2->bind_result($deckname, $deckowner);
+                        else:
+                            trigger_error("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
+                        endif;
+                        while ($stmt2->fetch()):
+                            $resultArray[] = array('deckname' => $deckname, 'deckowner' => $deckowner);
+                        endwhile;
+                        $stmt2->close();
+
+                        $sql3 = "SELECT usernumber,username FROM users";
+                        $stmt3 = $db->prepare($sql3);
+                        if ($stmt3):
+                            $stmt3->execute();
+                            $stmt3->bind_result($usernumber, $username);
+                        else:
+                            trigger_error("[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error, E_USER_ERROR);
+                        endif;
+                        while ($stmt3->fetch()):
+                            $userResultArray[] = array('usernumber' => $usernumber, 'username' => $username);
+                        endwhile;
+                        $stmt3->close();
+
+                        foreach($userResultArray as $userArray):
+                            $table = $userArray['usernumber']."collection";
+                            $sql4 = "SELECT SUM(COALESCE(`$table`.`normal`, 0) + COALESCE(`$table`.`foil`, 0) + COALESCE(`$table`.`etched`, 0)) AS total FROM `$table` WHERE id = ?";
+                            $stmt4 = $db->prepare($sql4);
+
+                            // Check if the statement was prepared successfully
+                            if ($stmt4):
+                                $stmt4->bind_param("s", $row['old_scryfall_id']);
+                                if ($stmt4->error) {
+                                    trigger_error("[ERROR] Bind error: " . $stmt4->error, E_USER_ERROR);
+                                }
+                                $stmt4->execute();
+                                $stmt4->bind_result($total);
+                            else:
+                                trigger_error("[ERROR] cards.php: Wrong SQL: ($sql4) Error: " . $db->error, E_USER_ERROR);
+                            endif;
+                            while ($stmt4->fetch()):
+                                if($total !== NULL AND $total != 0):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Found one!: User: {$userArray['username']}, ID: {$row['old_scryfall_id']}: Total: $total",$logfile);
+                                    $collectionResultArray[] = array('owner' => $userArray['username'], 'total' => $total);
+                                endif;
+                            endwhile;
+                            $stmt4->close();
+                        endforeach;
+                        ?>
                         <tr>
                             <td><?php echo($row_no);?></td>
-                            <td><?php echo($row['old_scryfall_id']);?></td>
+                            <td><?php echo("<a href=$myURL/carddetail.php?id={$row['old_scryfall_id']}>{$row['old_scryfall_id']}</a>");?></td>
                             <td><?php echo($row['object']);?></td>
-                            <td><?php echo($row['migration_strategy']);?></td>
+                            <td><?php echo("<a href=$myURL/admin/cards.php?cardtoedit={$row['old_scryfall_id']}>{$row['migration_strategy']}</a>");?></td>
                             <td><?php echo($row['metadata_name']);?></td>
                             <td><?php echo($row['metadata_set_code']);?></td>
                             <td><?php echo($row['metadata_collector_number']);?></td>
                             <td><?php echo($row['note']);?></td>
-                            <td><?php echo($row['new_scryfall_id']);?></td>
+                            <td><?php echo("<a href=$myURL/carddetail.php?id={$row['new_scryfall_id']}>{$row['new_scryfall_id']}</a>");?></td>
+                            <td><?php 
+                                if (!empty($resultArray)):
+                                    echo '<table border="1">';
+                                    echo '<tr><th>Deck Name</th><th>Owner</th></tr>';
+                                    foreach ($resultArray as $deckresult):
+                                        echo '<tr>';
+                                        echo '<td>' . $deckresult['deckname'] . '</td>';
+                                        echo '<td>' . $deckresult['deckowner'] . '</td>';
+                                        echo '</tr>';
+                                    endforeach;
+                                    echo '</table>';
+                                else:
+                                    echo 'None';
+                                endif;?>
+                            </td>
+                            <td><?php 
+                                if (!empty($collectionResultArray)):
+                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Should be here if there is one",$logfile);
+                                    echo '<table border="1">';
+                                    echo '<tr><th>Owner</th><th>Total</th></tr>';
+                                    foreach ($collectionResultArray as $userresult):
+                                        echo '<tr>';
+                                        echo '<td>' . $userresult['owner'] . '</td>';
+                                        echo '<td>' . $userresult['total'] . '</td>';
+                                        echo '</tr>';
+                                    endforeach;
+                                    echo '</table>';
+                                else:
+                                    echo 'None';
+                                endif;
+                                ?>
+                            </td>
                         </tr>
                         <?php
                     endwhile; ?>
