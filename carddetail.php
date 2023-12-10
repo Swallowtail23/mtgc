@@ -1,6 +1,6 @@
 <?php 
-/* Version:     17.0
-    Date:       26/11/23
+/* Version:     18.0
+    Date:       10/12/23
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -49,10 +49,14 @@
  *              Review and improve price handling routine to ensure latest price more reliably shown
  * 16.1
  *              Show serialised promo type
- * 17.0
- *              27/11/23
+ *
+ * 17.0         27/11/23
  *              Added display of secondary currency to prices
+ * 
+ * 18.0         10/12/23
+ *              SQL parameterised query fixes
 */
+
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
