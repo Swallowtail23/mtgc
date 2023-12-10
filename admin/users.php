@@ -109,7 +109,7 @@ require('../includes/menu.php');
                 $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
                 ${'sqladm'.$id} = $sql_adm;
                 //Simple update of fields
-                $query = "UPDATE users SET username=?, email=?, status=?, admin=? WHERE usernumber=?";
+                $query = "UPDATE users SET username = ?, email = ?, status = ?, admin = ? WHERE usernumber = ?";
                 $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_id];
                 if ($result = $db->execute_query($query, $params)):
                     $affected_rows = $db->affected_rows;

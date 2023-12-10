@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       06/07/23
+/* Version:     5.1
+    Date:       10/12/23
     Name:       gridupdate.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
@@ -16,6 +16,10 @@
  *              PHP 8.1 compatibility
  *  5.0
  *              Added third card finish (etched)
+ *
+ *  5.1         10/12/23
+ *              Add cardid regex filter
+ *              Improve error handling back to Ajax
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -25,7 +29,17 @@ require ('includes/functions_new.php');      //Includes basic functions for non-
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
 
-$cardid = filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS); 
+$cardid = $_GET['cardid'] ?? '';
+$cardid = valid_uuid($cardid);
+if ($cardid === false):
+    $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID", $logfile);
+    $response['status'] = 'error';
+    $response['message'] = "Called with invalid card UUID";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+endif;
 
 //Process and log new quantity request
 if (isset($_GET['newqty'])): 
@@ -34,7 +48,11 @@ if (isset($_GET['newqty'])):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty",$logfile);
     else:
         $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardid",$logfile);
-        echo "<img src='/images/error.png' alt='error'>";
+        $response['status'] = 'error';
+        $response['message'] = "Invalid normal qty";
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode($response);
         exit;
     endif;
 elseif (isset($_GET['newfoil'])): 
@@ -43,7 +61,11 @@ elseif (isset($_GET['newfoil'])):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty",$logfile);
     else:
         $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardid",$logfile);
-        echo "<img src='/images/error.png' alt='error'>";
+        $response['status'] = 'error';
+        $response['message'] = "Invalid foil qty";
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode($response);
         exit;
     endif;
 elseif (isset($_GET['newetch'])): 
@@ -52,39 +74,64 @@ elseif (isset($_GET['newetch'])):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty",$logfile);
     else:
         $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardid",$logfile);
-        echo "<img src='/images/error.png' alt='error'>";
+        $response['status'] = 'error';
+        $response['message'] = "Invalid etch qty";
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode($response);
         exit;
     endif;
 else:
     $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) called with no arguments",$logfile);
-    exit();
+    $response['status'] = 'error';
+    $response['message'] = "Invalid call";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 endif;
 
 //Should only be here if newqty, newfoil or newetch are set
 //Set up variables
-$sqlqty = $db->real_escape_string($qty);
-$sqlid = $db->real_escape_string(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS));
+if (is_numeric($qty) && (int)$qty == $qty) :
+    $sqlqty = (int)$qty;
+else:
+    $response['status'] = 'error';
+    $response['message'] = "Invalid qty";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+endif;
+
+$sqlid = $cardid;
 
 //Check existing quantity
 $beforeresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
 if($beforeresultqry === false):
-    trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
+    $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values",$logfile);
+    $response['status'] = 'error';
+    $response['message'] = "SQL update error: $db->error";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 else:
     $beforeresult = $beforeresultqry->fetch_assoc();
     if (empty($beforeresult['normal'])):
         $myqty = 0;
     else:
-        $myqty = $db->real_escape_string($beforeresult['normal'],'int');
+        $myqty = $beforeresult['normal'];
     endif;
     if (empty($beforeresult['foil'])):
         $myfoil = 0;
     else:
-        $myfoil = $db->real_escape_string($beforeresult['foil'],'int');
+        $myfoil = $beforeresult['foil'];
     endif;
     if (empty($beforeresult['etched'])):
         $myetch = 0;
     else:
-        $myetch = $db->real_escape_string($beforeresult['etched'],'int');
+        $myetch = $beforeresult['etched'];
     endif;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
 endif;
@@ -111,7 +158,13 @@ endif;
 $params = [$sqlqty,$sqlid,$sqlqty];
 $sqlupdate = $db->execute_query($updatequery,$params);
 if($sqlupdate === false):
-    trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
+    $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error",$logfile);
+    $response['status'] = 'error';
+    $response['message'] = "SQL update error: $db->error";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 else:
     $affected_rows = $db->affected_rows;
     if ($affected_rows === 2):
@@ -130,9 +183,13 @@ $response = [];
 
 $checkresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
 if ($checkresultqry === false):
-    trigger_error('[ERROR] gridupdate.php: Error: ' . $db->error, E_USER_ERROR);
+    $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error",$logfile);
     $response['status'] = 'error';
-    $response['message'] = 'Database error: ' . $db->error;
+    $response['message'] = "SQL update error: $db->error";
+    http_response_code(400);
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
 else:
     $checkresult = $checkresultqry->fetch_assoc();
     if (isset($_GET['newqty'])):

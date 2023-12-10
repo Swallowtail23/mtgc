@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.0
-    Date:       25/03/2023
+/* Version:     5.1
+    Date:       10/12/2023
     Name:       admin/cards.php
     Purpose:    Card administrative tasks
     Notes:      
@@ -15,6 +15,9 @@
  *              Much simpler form, all data from Scryfall, so no editing here - just delete or delete image
  *  5.0
  *              PHP 8.1 compatibility
+ * 
+ *  5.1         10/12/2023
+ *              Sanitise UUID
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -37,7 +40,12 @@ endif;
 
 // Find if this card is in any decks
 if(isset($_GET['cardtoedit'])): 
-    $id = filter_input(INPUT_GET, 'cardtoedit', FILTER_SANITIZE_SPECIAL_CHARS);
+    $id = valid_uuid($_GET['cardtoedit']);
+    if($id === false):
+        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin card page called without valid UUID",$logfile);
+        trigger_error("[ERROR] cards.php: Invalid UUID", E_USER_ERROR);
+        exit;
+    endif;
 
     $sql = "SELECT deckname, username FROM decks
             LEFT JOIN users ON decks.owner = users.usernumber

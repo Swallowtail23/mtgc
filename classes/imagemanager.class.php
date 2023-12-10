@@ -57,8 +57,8 @@ class ImageManager
             $obj = new Message;
             $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localfile missing, running get image function", $this->logfile);
 
-            $sql = "SELECT image_uri, layout, f1_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
-            $result = $this->db->query($sql);
+            $sql = "SELECT image_uri, layout, f1_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
+            $result = $this->db->execute_query($sql,[$cardid]);
 
             if ($result === false):
                 trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL error: " . $this->db->error, E_USER_ERROR);
@@ -129,8 +129,8 @@ class ImageManager
                 $obj = new Message;
                 $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localfile_b missing, running get image function", $this->logfile);
 
-                $sql = "SELECT layout, f2_image_uri FROM cards_scry WHERE id like '$cardid' LIMIT 1";
-                $result2 = $this->db->query($sql);
+                $sql = "SELECT layout, f2_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
+                $result2 = $this->db->execute_query($sql,[$cardid]);
 
                 if ($result2 === false):
                     trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL error: " . $this->db->error, E_USER_ERROR);

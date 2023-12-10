@@ -73,7 +73,7 @@ function check_input($value)
 {
     global $db;
     if (!is_numeric($value)):
-        $value = "'" . mysqli_real_escape_string($db,$value) . "'";
+        $value = "'" . $db->real_escape_string($value) . "'";
     endif;
 
     return $value;
@@ -262,9 +262,9 @@ function adddeckcard($deck,$card,$section,$quantity)
     endif;
     
     // Get deck type and existing cards in it
-    $decktypesql = $db->query("SELECT type
+    $decktypesql = $db->execute_query("SELECT type
                                 FROM decks 
-                                WHERE decknumber = $deck");
+                                WHERE decknumber = ?",[$deck]);
     while ($row = $decktypesql->fetch_assoc()):
         if ($row['type'] == NULL):
             $decktype = "none";
@@ -272,11 +272,11 @@ function adddeckcard($deck,$card,$section,$quantity)
             $decktype = $row['type'];
         endif;
     endwhile;
-    $cardlist = $db->query("SELECT name,decks.type
+    $cardlist = $db->execute_query("SELECT name,decks.type
                                 FROM deckcards 
                             LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
                             LEFT JOIN decks on deckcards.decknumber = decks.decknumber
-                            WHERE deckcards.decknumber = $deck AND (cardqty > 0 OR sideqty > 0)");
+                            WHERE deckcards.decknumber = ? AND (cardqty > 0 OR sideqty > 0)",[$deck]);
     $cardlistnames = array();
     while ($row = $cardlist->fetch_assoc()):
         if(!in_array($row['name'], $cardlistnames)):
@@ -547,7 +547,7 @@ function deldeck($decktodelete)
 {
     global $db, $logfile;
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck called: deck $decktodelete",$logfile);
-    $stmt = $db->prepare("DELETE FROM decks WHERE decknumber=?");
+    $stmt = $db->prepare("DELETE FROM decks WHERE decknumber = ?");
     if ($stmt === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
     endif;
@@ -559,8 +559,8 @@ function deldeck($decktodelete)
     if ($exec === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck: ". $db->error, E_USER_ERROR);
     else:
-        $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = '$decktodelete' LIMIT 1";
-        $runquery1 = $db->query($checkgone1);
+        $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = ? LIMIT 1";
+        $runquery1 = $db->execute_query($checkgone1,[$decktodelete]);
         $result1=$runquery1->fetch_assoc();
         if ($result1 === null):
             $deck_deleted = 1;
@@ -569,7 +569,7 @@ function deldeck($decktodelete)
         endif;
     endif;
     $stmt->close();
-    $stmt = $db->prepare("DELETE FROM deckcards WHERE decknumber=?");
+    $stmt = $db->prepare("DELETE FROM deckcards WHERE decknumber = ?");
     if ($stmt === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $db->error, E_USER_ERROR);
     endif;
@@ -581,8 +581,8 @@ function deldeck($decktodelete)
     if ($exec === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck cards: ". $db->error, E_USER_ERROR);
     else:
-        $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decktodelete' LIMIT 1";
-        $runquery2 = $db->query($checkgone2);
+        $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = ? LIMIT 1";
+        $runquery2 = $db->execute_query($checkgone2,[$decktodelete]);
         $result2=$runquery2->fetch_assoc();
         if ($result2 === null):
             $deckcards_deleted = 1;
@@ -1083,7 +1083,7 @@ function scryfall($cardid,$action = '')
             endif;
 
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Scryfall data: price: $price, price foil: $price_foil, price etched: $price_etched, therefore $price_sort is used for sorting price",$logfile);
-            $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri=?,jsonupdatetime=? WHERE id=?';
+            $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri = ?,jsonupdatetime = ? WHERE id = ?';
             $stmt = $db->prepare($update_tcg_uri);
             if ($stmt === false):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
@@ -1102,7 +1102,7 @@ function scryfall($cardid,$action = '')
                 $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
             endif;
 
-            $update_prices = 'UPDATE cards_scry SET price=?,price_foil=?,price_etched=?,price_sort=? WHERE id=?';
+            $update_prices = 'UPDATE cards_scry SET price = ?,price_foil = ?,price_etched = ?,price_sort = ? WHERE id = ?';
             $stmt = $db->prepare($update_prices);
             if ($stmt === false):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
@@ -1245,7 +1245,7 @@ function scryfall($cardid,$action = '')
         endif;
         if(!isset($prices)):
             $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, writing prices $price, $price_foil, $price_sort",$logfile);
-            $query = 'UPDATE cards_scry SET price=?,price_foil=?,price_sort=? WHERE id=?';
+            $query = 'UPDATE cards_scry SET price = ?,price_foil = ?,price_sort = ? WHERE id = ?';
             $stmt = $db->prepare($query);
             $stmt->bind_param('ssss',$price,$price_foil,$price_sort,$cardid);
             if ($stmt === false):
@@ -1270,8 +1270,8 @@ function loginstamp($useremail)
     global $db, $logfile;
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login",$logfile);
         $logindate = date("Y-m-d");
-        $query = "UPDATE users SET lastlogin_date = '$logindate' WHERE email = '$useremail'";
-    if($db->query($query) === TRUE):
+        $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
+    if($db->execute_query($query,[$logindate,$useremail]) === TRUE):
         $obj = new Message;
         $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login successful",$logfile);
         return 1;
@@ -1330,8 +1330,8 @@ function refresh_image($cardid)
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
     });
     
-    $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = '$cardid' LIMIT 1";
-    $result = $db->query($sql);
+    $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = ? LIMIT 1";
+    $result = $db->execute_query($sql,[$cardid]);
     if ($result === false):
         restore_error_handler();
         return 'failure'; 
@@ -1403,7 +1403,7 @@ function update_collection_values($collection)
                             FROM `$collection` LEFT JOIN `cards_scry` 
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SQL query succeeded",$logfile);
         $i = 0;
         while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
             $normalqty = $row['mynormal'];
@@ -1430,16 +1430,17 @@ function update_collection_values($collection)
             $selectedrate = max($normalrate,$foilrate,$etchedrate);
             $cardid = $db->real_escape_string($row['id']);
             $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
-                VALUES ($selectedrate,'$cardid')
-                ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
-            if($updatemax = $db->query($updatemaxqry)):
+                VALUES (?,?)
+                ON DUPLICATE KEY UPDATE topvalue = ?";
+            $params = [$selectedrate,$cardid,$selectedrate];
+            if($updatemax = $db->execute_query($updatemaxqry,$params)):
                 //succeeded
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
             endif;
             $i = $i + 1;
         endwhile;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection value update completed",$logfile);
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection value update completed",$logfile);
     else: 
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
     endif;
@@ -1449,7 +1450,7 @@ function update_collection_values($collection)
 function update_topvalue_card($collection,$scryid)
 {
     global $db, $logfile;
-    if($findcards = $db->query("SELECT
+    if($findcards = $db->execute_query("SELECT
                             `$collection`.id AS id,
                             IFNULL(`$collection`.normal,0) AS mynormal,
                             IFNULL(`$collection`.foil, 0) AS myfoil,
@@ -1462,7 +1463,7 @@ function update_topvalue_card($collection,$scryid)
                             FROM `$collection` LEFT JOIN `cards_scry` 
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
-                            AND `$collection`.id = '$scryid'")):
+                            AND `$collection`.id = ?",[$scryid])):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
         while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
             $normalqty = $row['mynormal'];
@@ -1489,9 +1490,10 @@ function update_topvalue_card($collection,$scryid)
             $selectedrate = max($normalrate,$foilrate,$etchedrate);
             $cardid = $db->real_escape_string($row['id']);
             $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
-                VALUES ($selectedrate,'$cardid')
-                ON DUPLICATE KEY UPDATE topvalue=$selectedrate";
-            if($updatemax = $db->query($updatemaxqry)):
+                VALUES (?,?)
+                ON DUPLICATE KEY UPDATE topvalue = ?";
+            $params = [$selectedrate,$cardid,$selectedrate];
+            if($updatemax = $db->execute_query($updatemaxqry,$params)):
                 //succeeded
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
@@ -1541,7 +1543,7 @@ function cardtype_for_id($id)
 {
     global $db, $logfile;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up card types for card $id",$logfile);
-    $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", ["$id"]);
+    $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", [$id]);
     if($stmt != TRUE):
         trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
     else:
@@ -1732,7 +1734,7 @@ function import($filename)
                     if ($exec === false):
                         trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
                     else:
-                        $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
+                        $status = $db->affected_rows; // 1 = add, 2 = change, 0 = no change
                         if($status === 1):
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
                         elseif($status === 2):
@@ -1767,7 +1769,7 @@ function import($filename)
             if (!empty($data0) AND !empty($data1) AND !empty($data2) AND $idimport === 0): // ID import has not been successful, try with setcode, number, name
                 $obj = new Message;
                 $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - trying setcode/number",$logfile);
-                $stmt = $db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", ["$data0","$data1"]);
+                $stmt = $db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", [$data0,$data1]);
                 if($stmt != TRUE):
                     trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
                 else:
@@ -1904,7 +1906,7 @@ function import($filename)
                     if ($exec === false):
                         trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
                     else:
-                        $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
+                        $status = $db->affected_rows; // 1 = add, 2 = change, 0 = no change
                         if($status === 1):
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
                         elseif($status === 2):
@@ -2003,9 +2005,9 @@ function deck_legal_list($decknumber,$deck_type,$db_field)
 {
     global $db, $logfile;
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')",$logfile);
-    $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = '$decknumber'";
+    $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
-    $sqlresult = $db->query($sql);
+    $sqlresult = $db->execute_query($sql,[$decknumber]);
     if($sqlresult === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     else:
@@ -2019,8 +2021,8 @@ function deck_legal_list($decknumber,$deck_type,$db_field)
     $list = array();
     $p = 0;
     foreach($record as $value):
-        $sql2 = "SELECT $db_field FROM cards_scry WHERE id = '$value' LIMIT 1";
-        $sqlresult2 = $db->query($sql2);
+        $sql2 = "SELECT $db_field FROM cards_scry WHERE id = ? LIMIT 1";
+        $sqlresult2 = $db->execute_query($sql2,[$value]);
         if($sqlresult2 === false):
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         else:
@@ -2032,4 +2034,18 @@ function deck_legal_list($decknumber,$deck_type,$db_field)
         $p = $p + 1;
     endforeach;
     return $list;
+}
+
+function valid_uuid($uuid)
+{
+    global $db, $logfile;
+    $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid UUID ($uuid)",$logfile);
+    if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $uuid)):
+        $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid UUID ($uuid)",$logfile);
+        $uuid = $db->real_escape_string($uuid);
+        return $uuid;
+    else:
+        $obj = new Message; $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid UUID ($uuid), returning 'false'",$logfile);
+        return false;
+    endif;
 }

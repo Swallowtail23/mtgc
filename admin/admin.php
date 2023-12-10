@@ -99,8 +99,8 @@ elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 
             $oldScryfallId = $row['old_scryfall_id'];
 
             // Count the matching records in cards_scry table (for testing)
-            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = '$oldScryfallId'";
-            $countResult = $db->query($countSql);
+            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = ?";
+            $countResult = $db->execute_query($countSql,[$oldScryfallId]);
 
             if ($countResult !== false):
                 $rowCount = $countResult->fetch_row();

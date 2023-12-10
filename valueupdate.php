@@ -1,12 +1,14 @@
 <?php 
-/* Version:     1.0
-    Date:       08/07/23
+/* Version:     1.1
+    Date:       10/12/23
     Name:       valueupdate.php
     Purpose:    PHP script to update topvalue across collection
     Notes:      Currently called after import function is run
         
     1.0
                 Initial version
+ *  1.1
+ *              Filter table name with regex
  */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -22,7 +24,13 @@ $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading valueupdate
 // Page content starts here
 if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    update_collection_values($table);
+    //Make sure only number+collection is passed as table name
+    $pattern = '/^\d+collection$/';
+    if (preg_match($pattern, $table)):
+        update_collection_values($table);
+    else:
+        trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);
+    endif;
 else:
     trigger_error("[ERROR] valueupdate.php: Called with no parameters", E_USER_ERROR);
 endif;

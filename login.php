@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       21/08/23
+/* Version:     6.0
+    Date:       09/12/23
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -18,6 +18,9 @@
  * 
  *  5.0
  *              Added Cloudflare Turnstile protection
+ * 
+ *  6.0         09/12/23
+ *              Add redirect capture
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();

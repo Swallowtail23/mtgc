@@ -75,10 +75,11 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456 
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])):
-    $cardid = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS); 
+    $cardid = valid_uuid($_GET["id"]);
 elseif (isset($_POST["id"])):
-    $cardid = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_SPECIAL_CHARS);     
+    $cardid = valid_uuid($_POST["id"]); 
 endif;
+
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 $newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 if(filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT) == ''):
@@ -312,7 +313,11 @@ require('includes/menu.php'); //mobile menu
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">    
 <div id="page">
-    <div id="carddetail">
+    <div id="carddetail"> <?php
+        if($cardid === false):
+            echo "<h2 class='h2pad'>Invalid card UUID</h2>";
+            exit;
+        endif; ?>
         <div id="printtitle" class="headername">
             <img src="images/white_m.png">MtG collection
         </div>
