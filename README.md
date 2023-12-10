@@ -164,7 +164,7 @@ Adjust folder and user to suit.
     - class autoload
     - reads in the ini file
     - checks the logfile is accessible and writable
-    - establishes a MySQLi_Manager database connection ($db)
+    - establishes a mysqli database connection ($db)
     - sets the function for handling errors (mtg_error)
     - ... and exceptions (mtg_exception)
     - sets the writelog function (to be rewritten)

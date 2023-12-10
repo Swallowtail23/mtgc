@@ -317,36 +317,57 @@ function adddeckcard($deck,$card,$section,$quantity)
     if($quantity != FALSE):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck",$logfile);
         if($section == "side"):
-            $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
-            if ($check !== null):
-                if($check['sideqty'] != NULL):
-                    $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "+1side";
+            $checkqry = $db->execute_query("SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",[$deck,$card]);
+            if ($checkqry !== false):
+                $rowcount = $checkqry->num_rows;
+                if ($rowcount > 0): // The card is in the deck, no detail yet on qty or side/main
+                    $check = $checkqry->fetch_assoc();
+                    if($check['sideqty'] != NULL):
+                        $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "+1side";
+                    else:
+                        $cardquery = "UPDATE deckcards SET sideqty = 1 WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "+1side";
+                    endif;
                 else:
-                    $cardquery = "UPDATE deckcards SET sideqty = 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "+1side";
+                    // The card is not in the deck at all
+                    $cardquery = "INSERT into deckcards (decknumber, cardnumber, sideqty) VALUES (?, ?, ?)";
+                    $params = [$deck,$card,$quantity];
+                    $status = "+newside";
                 endif;
             else:
-                $cardquery = "INSERT into deckcards (decknumber, cardnumber, sideqty) VALUES ($deck, '$card', $quantity)";
-                $status = "+newside";
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
             endif;
         elseif($section == "main"):
-            $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card'");
-            if ($check !== null):
-                if($check['cardqty'] != NULL):
-                    $cardquery = "UPDATE deckcards SET cardqty = cardqty + $quantity WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "+1main";
+            $checkqry = $db->execute_query("SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",[$deck,$card]);
+            if ($checkqry !== false):
+                $rowcount = $checkqry->num_rows;
+                if ($rowcount > 0): // The card is in the deck, no detail yet on qty or side/main
+                    $check = $checkqry->fetch_assoc();
+                    if($check['cardqty'] != NULL):
+                        $cardquery = "UPDATE deckcards SET cardqty = cardqty + ? WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$quantity,$deck,$card];
+                        $status = "+1main";
+                    else:
+                        $cardquery = "UPDATE deckcards SET cardqty = 1 WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "+1main";
+                    endif;
                 else:
-                    $cardquery = "UPDATE deckcards SET cardqty = 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "+1main";
+                    // The card is not in the deck at all
+                    $cardquery = "INSERT into deckcards (decknumber, cardnumber, cardqty) VALUES (?, ?, ?)";
+                    $params = [$deck,$card,$quantity];
+                    $status = "+newmain";
                 endif;
             else:
-                $cardquery = "INSERT into deckcards (decknumber, cardnumber, cardqty) VALUES ($deck, '$card', $quantity)";
-                $status = "+newmain";
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
             endif;
         endif;
+        
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $cardquery, status is $status",$logfile);
-        if($runquery = $db->query($cardquery)):
+        if($runquery = $db->execute_query($cardquery,$params)):
             return $status;
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -362,60 +383,82 @@ function subtractdeckcard($deck,$card,$section,$quantity)
     global $db, $logfile;
     if($quantity == "all"):
         if($section == "side"):
-            $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
+            $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
+            $params = [$deck,$card];
             $status = "allside";
         elseif($section == "main"):
-            $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
+            $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = ? AND cardnumber = ?";
+            $params = [$deck,$card];
             $status = "allmain";
         endif;
-        
     else:
         if($section == "side"):
-            $check = $db->select_one('sideqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND sideqty IS NOT NULL");
-            if ($check !== null):
-                if($check['sideqty'] > 1):
-                    $cardquery = "UPDATE deckcards SET sideqty = sideqty - 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "-1side";
-                elseif($check['sideqty'] == 1):
-                    $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "lastside";
+            $checkqry = $db->execute_query("SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND sideqty IS NOT NULL LIMIT 1",[$deck,$card]);
+            if ($checkqry !== false):
+                $rowcount = $checkqry->num_rows;
+                if ($rowcount > 0): // The card is in the deck side
+                    $check = $checkqry->fetch_assoc();
+                    if($check['sideqty'] > 1):
+                        $cardquery = "UPDATE deckcards SET sideqty = sideqty - 1 WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "-1side";
+                    elseif($check['sideqty'] == 1):
+                        $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "lastside";
+                    endif;
+                else:
+                    $status = "-error";
+                    $cardquery = '';
+                    $params = [];
                 endif;
             else:
-                $status = "-error";
-                $cardquery = '';
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
             endif;
         elseif($section == "main"):
-            $check = $db->select_one('cardqty','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND cardqty IS NOT NULL");
-            if ($check !== null):
-                if($check['cardqty'] > 1):
-                    $cardquery = "UPDATE deckcards SET cardqty = cardqty - 1 WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "-1main";
-                elseif($check['cardqty'] == 1):
-                    $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = $deck AND cardnumber = '$card'";
-                    $status = "lastmain";
+            $checkqry = $db->execute_query("SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ?  AND cardqty IS NOT NULL LIMIT 1",[$deck,$card]);
+            if ($checkqry !== false):
+                $rowcount = $checkqry->num_rows;
+                if ($rowcount > 0): // The card is in the deck main
+                    $check = $checkqry->fetch_assoc();
+                    if($check['cardqty'] > 1):
+                        $cardquery = "UPDATE deckcards SET cardqty = cardqty - 1 WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "-1main";
+                    elseif($check['cardqty'] == 1):
+                        $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = ? AND cardnumber = ?";
+                        $params = [$deck,$card];
+                        $status = "lastmain";
+                    endif;
+                else:
+                    $status = "-error";
+                    $cardquery = '';
+                    $params = [];
                 endif;
             else:
-                $status = "-error";
-                $cardquery = '';
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
             endif;
         endif;
     endif;
+    
     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: $cardquery, status is $status",$logfile);
+    
     if($status != '-error'):
-        if ($runquery = $db->query($cardquery)):
+        if ($runquery = $db->execute_query($cardquery,$params)):
             //ran ok
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif;
     else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
+        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: ERROR status is $status",$logfile);
     endif;
     
     // Clean-up empties
     if ($status == 'lastmain' OR $status == 'lastside' OR $status == 'allmain' OR $status == 'allside'):
         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: $cardquery, status is $status",$logfile);
-        $cardquery = "DELETE FROM deckcards WHERE decknumber = $deck AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
-        if ($runquery = $db->query($cardquery)):
+        $cardquery = "DELETE FROM deckcards WHERE decknumber = ? AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
+        $params = [$deck];
+        if ($runquery = $db->execute_query($cardquery,$params)):
             //ran ok
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -466,19 +509,17 @@ function addcommander($deck, $card)
 function addpartner($deck,$card)
 {
     global $db, $logfile;
-    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND commander = 2");
+    $check = $db->execute_query('SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 2',[$deck]);
     if ($check->num_rows > 0): //Partner already there
-        $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck";
-        if($runquery = $db->query($cardquery)):
+        if($runquery = $db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$deck])):
             $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Old Partner removed",$logfile);
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
         endif; 
     endif;
     $status = "+ptnr";
-    $cardquery = "UPDATE deckcards SET commander = '2' WHERE decknumber = $deck AND cardnumber = '$card'";
-    if($runquery = $db->query($cardquery)):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add Partner run: $cardquery, status is $status",$logfile);
+    if($runquery = $db->execute_query("UPDATE deckcards SET commander = '2' WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add Partner run, status is $status",$logfile);
         return $status;
     else:
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -488,12 +529,11 @@ function addpartner($deck,$card)
 function delcommander($deck,$card)
 {
     global $db, $logfile;
-    $cardquery = "UPDATE deckcards SET commander = 0 WHERE decknumber = $deck AND cardnumber = '$card'";
-    $check = $db->select('commander','deckcards',"WHERE decknumber = $deck AND cardnumber = '$card' AND commander > 0");
-    if ($check->num_rows > 0): 
+    $check = $db->execute_query("SELECT commander FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND commander > 0",[$deck,$card]);
+    if ($check->num_rows > 0):
         $status = "-cdr";
-        if($runquery = $db->query($cardquery)):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Remove Commander called: $cardquery, status is $status",$logfile);
+        if($runquery = $db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Remove Commander called, status is $status",$logfile);
             return $status;
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -821,7 +861,7 @@ function exportCollectionToCsv($table,$filename = 'export.csv')
 	$csv_separator = ",";
 	$csv_enclosed = '"';
 	$csv_escaped = "\\";
-	$table = $db->escape($table);
+	$table = $db->real_escape_string($table);
         $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$logfile);
         
@@ -913,77 +953,68 @@ function scryfall($cardid,$action = '')
 {
     //Set up the function
     global $db,$logfile,$useremail,$max_card_data_age;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail for $cardid",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail for $cardid",$logfile);
     if(!isset($cardid)):
-        $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail without required card id",$logfile);
+        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail without required card id",$logfile);
         exit;
     endif;
     $baseurl = "https://api.scryfall.com/";
-    $cardid = $db->escape($cardid);
+    $cardid = $db->real_escape_string($cardid);
     $time = time();
     //Set the URL
     $url = $baseurl."cards/".$cardid."?".$time;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $cardid is $url",$logfile);
+    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $cardid is $url",$logfile);
         
-    if($row = $db->select('id','cards_scry',"WHERE id='$cardid'")):
+    if($row = $db->execute_query("Select id FROM cards_scry WHERE id = ?",[$cardid])):
         if ($row->num_rows === 0):
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, no card with this id - exiting (2)",$logfile);
+            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, no card with this id - exiting (2)",$logfile);
             exit;
         elseif ($row->num_rows === 1):
             $scrymethod = 'id';
         endif;
     else:
-        $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API error",$logfile);
+        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API error",$logfile);
         $this->status = 0;
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif;
     
     // Check for existing data, not too old, and set required action
-    $row = $db->select_one('jsonupdatetime, tcg_buy_uri','scryfalljson',"WHERE id='$cardid'");
-    if ($row !== null):
+    $rowqry = $db->execute_query("SELECT jsonupdatetime, tcg_buy_uri FROM scryfalljson WHERE id = ? LIMIT 1",[$cardid]);
+    if ($rowqry !== false AND $rowqry->num_rows < 1):
+        //No data, fetch and insert:
+        $scryaction = 'get';
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: No data exists for $cardid, running '$scryaction'",$logfile);
+    elseif ($rowqry !== false):
+        $row = $rowqry->fetch_assoc();
         $lastjsontime = $row['jsonupdatetime'];
         $record_age = (time() - $lastjsontime);
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data exists for $cardid, $record_age seconds old",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data exists for $cardid, $record_age seconds old",$logfile);
         if ($record_age > $max_card_data_age):
             //Old data, fetch and update:
             $scryaction = 'update';
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale (older than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale (older than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
         elseif ($action == "update"):
             //Update forced
             $scryaction = 'update';
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data update requested for $cardid, running '$scryaction'",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data update requested for $cardid, running '$scryaction'",$logfile);
         else:
             //data is there and is current:
             $scryaction = 'read';
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data not stale (younger than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data not stale (younger than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
         endif;
     else:
-        //No data, fetch and insert:
-        $scryaction = 'get';
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: No data exists for $cardid, running '$scryaction'",$logfile);
+        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
     endif;
             
     // Actions:
 
     // UPDATE
     if($scryaction === 'update'):
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with 'update' result: fetching $url",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with 'update' result: fetching $url",$logfile);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $curlresult = curl_exec($ch);
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with update: $curlresult",$logfile);
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with update: $curlresult",$logfile);
         curl_close($ch);
         $scryfall_result = json_decode($curlresult,true);
         if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
@@ -1713,14 +1744,19 @@ function import($filename)
                         $stmt->close();
                     if($status === 1 OR $status === 2 OR $status === 0):
                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran - checking",$logfile);
-                        if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
-                            $obj = new Message;
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                            if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                // echo "Row $row_no: NORMAL: ID matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
-                                $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                $count = $count + 1;
-                                $idimport = 1;
+                        if($sqlcheckqry = $db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
+                            $rowcount = $sqlcheckqry->num_rows;
+                            if($rowcount > 0):
+                                $sqlcheck = $sqlcheckqry->fetch_assoc();
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
+                                if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
+                                    $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
+                                    $count = $count + 1;
+                                    $idimport = 1;
+                                endif;
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = No match",$logfile);
+                                $idimport = 0;
                             endif;
                         else:
                             trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
@@ -1881,21 +1917,27 @@ function import($filename)
                     $stmt->close();
                     if($status === 1 OR $status === 2 OR $status === 0):
                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran OK - checking...",$logfile);
-                        if($sqlcheck = $db->select_one('normal,foil,etched',$mytable,"WHERE id = '$data6'")):
-                            $obj = new Message;
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                            if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                if(isset($importtype) AND $importtype == 'alternate_name'):
-                                    echo "Row $row_no: WARNING: Matched on alternate name, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/warning.png' alt='Warning'><br>";
-                                    $newwarning = "WARNING - card matched to alternate card name, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $supplied_id, $db_name, $db_id \n";
-                                    $warningsummary = $warningsummary.$newwarning;
-                                else:
-                                    // echo "Row $row_no: NORMAL: Setcode/number matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
+                        if($sqlcheckqry = $db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
+                            $rowcount = $sqlcheckqry->num_rows;
+                            if($rowcount > 0):
+                                $sqlcheck = $sqlcheckqry->fetch_assoc();
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
+                                if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
+                                    if(isset($importtype) AND $importtype == 'alternate_name'):
+                                        echo "Row $row_no: WARNING: Matched on alternate name, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/warning.png' alt='Warning'><br>";
+                                        $newwarning = "WARNING - card matched to alternate card name, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $supplied_id, $db_name, $db_id \n";
+                                        $warningsummary = $warningsummary.$newwarning;
+                                    else:
+                                        // echo "Row $row_no: NORMAL: Setcode/number matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
+                                    endif;
+                                        $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
+                                        $count = $count + 1;
+                                else: ?>
+                                    <img src='/images/error.png' alt='Failure'><br> <?php
                                 endif;
-                                    $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                    $count = $count + 1;
-                            else: ?>
-                                <img src='/images/error.png' alt='Failure'><br> <?php
+                            else:
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = No match",$logfile);
+                                $idimport = 0;                                
                             endif;
                         else:
                             trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);

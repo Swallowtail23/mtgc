@@ -62,7 +62,7 @@ require('includes/menu.php');
     
     <?php
     $date = null;
-    $result = $db->select('`date`, `update`, `author`','updatenotices','ORDER by date DESC');
+    $result = $db->execute_query('SELECT `date`,`update`,`author` FROM updatenotices ORDER by date DESC');
     if(($result === false) OR ($result === null)):
         trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
     else:

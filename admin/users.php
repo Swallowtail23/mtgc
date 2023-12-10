@@ -98,33 +98,34 @@ require('../includes/menu.php');
         // Multiple user form update
         if ((isset($updateusers)) AND ($updateusers === "yes")):
             foreach ($updatearray[0]['id'] as $i => $id) :
-                $sql_id = $db->escape($updatearray[0]['id'][$i]);
+                $sql_id = $db->real_escape_string($updatearray[0]['id'][$i]);
                 ${'sqlid'.$id} = $sql_id;
-                $sql_eml = $db->escape($updatearray[0]['eml'][$i]);
+                $sql_eml = $db->real_escape_string($updatearray[0]['eml'][$i]);
                 ${'sqleml'.$id} = $sql_eml;
-                $sql_name = $db->escape($updatearray[0]['name'][$i]);
+                $sql_name = $db->real_escape_string($updatearray[0]['name'][$i]);
                 ${'sqlname'.$id} = $sql_name;
-                $sql_status = $db->escape($updatearray[0]['status'][$i]);
+                $sql_status = $db->real_escape_string($updatearray[0]['status'][$i]);
                 ${'sqlstatus'.$id} = $sql_status;
-                $sql_adm = $db->escape($updatearray[0]['adm'][$i]);
+                $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
                 ${'sqladm'.$id} = $sql_adm;
                 //Simple update of fields
-                if ($simpleupdate = $db->query("UPDATE users SET username='$sql_name',
-                                email='$sql_eml', status='$sql_status',
-                                admin=$sql_adm WHERE usernumber='$sql_id'") === TRUE):
+                $query = "UPDATE users SET username=?, email=?, status=?, admin=? WHERE usernumber=?";
+                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_id];
+                if ($result = $db->execute_query($query, $params)):
                     $affected_rows = $db->affected_rows;
                     $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows",$logfile);
+                    $obj->MessageTxt('[DEBUG]', $_SERVER['PHP_SELF'], "Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows", $logfile);
                 else:
-                    $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Update user query unsuccessful",$logfile);
+                    $obj = new Message;
+                    $obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Update user query unsuccessful", $logfile);
                 endif;
                 $usertable = $sql_id."collection";
                 // More complex updates
                 // - delete card collection for a user
                 if (($updatearray[0]['actions'][$i]) == 'deletecards'):
                     $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    if ($db->delete("$usertable")):
-                        if($deletecards = $db->select('*',"$usertable")):
+                    if ($db->execute_query("DELETE FROM $usertable")):
+                        if($deletecards = $db->execute_query("SELECT * FROM $usertable")):
                             if ($deletecards->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>Cards cleared for $sql_name</div>";    
                                 $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Table empty successful",$logfile);
@@ -137,8 +138,8 @@ require('../includes/menu.php');
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser'):
                     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    if ($db->delete('users',"WHERE usernumber = '$sql_id'")):
-                        if($nukeuser = $db->select('username','users',"WHERE usernumber = '$sql_id'")):
+                    if ($db->execute_query("DELETE FROM users WHERE usernumber = ?",[$sql_id])):
+                        if($nukeuser = $db->execute_query("SELECT username FROM users WHERE usernumber = ?",[$sql_id])):
                             if ($nukeuser->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>User $sql_name removed</div>";    
                                 $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User deletion successful",$logfile);
@@ -188,10 +189,8 @@ require('../includes/menu.php');
         </form>
 
         <div>
-            <h3>User table</h3>
-            <?php 
-            $allusertable = $db->select('username, usernumber, email, reg_date, lastlogin_date, status, admin','users');
-            ?>
+            <h3>User table</h3> <?php 
+            $allusertable = $db->execute_query("SELECT username, usernumber, email, reg_date, lastlogin_date, status, admin FROM users");?>
             <form name="updateusers" action="users.php" method="post">
                 <table>
                     <tr>
@@ -248,11 +247,13 @@ require('../includes/menu.php');
                             <?php if($updateusers === 'yes'): ?>
                             <td>
                                 <?php 
-                                $updateoutcome = $db->select_one('username, email, status, admin','users',"WHERE usernumber={$alluserresults['usernumber']}");
-                                if(($updateoutcome['username'] === ${'sqlname'.$alluserresults['usernumber']}) 
-                                    AND ($updateoutcome['email'] === ${'sqleml'.$alluserresults['usernumber']})
-                                    AND ($updateoutcome['status'] === ${'sqlstatus'.$alluserresults['usernumber']})
-                                    AND ($updateoutcome['admin'] === ${'sqladm'.$alluserresults['usernumber']})): ?>
+                                $aur_usernumber = $alluserresults['usernumber'];
+                                $updatesql = $db->execute_query("SELECT username, email, status, admin FROM users WHERE usernumber = ? LIMIT 1",[$aur_usernumber]);
+                                $updateoutcome = $updatesql->fetch_assoc();
+                                if(((string)$updateoutcome['username'] === (string)${'sqlname'.$alluserresults['usernumber']}) 
+                                    AND ((string)$updateoutcome['email'] === (string)${'sqleml'.$alluserresults['usernumber']})
+                                    AND ((string)$updateoutcome['status'] === (string)${'sqlstatus'.$alluserresults['usernumber']})
+                                    AND ((string)$updateoutcome['admin'] === (string)${'sqladm'.$alluserresults['usernumber']})): ?>
                                     <img src='/images/success.png' alt='Success'>
                                 <?php else: ?>
                                     <img src='/images/error.png' alt='Failure'>
@@ -280,7 +281,7 @@ require('../includes/menu.php');
             <form action="/csv.php"  method="GET">
                 <select name='table'>
                 <?php 
-                $exportlist = $db->select('usernumber,username','users');
+                $exportlist = $db->execute_query("SELECT usernumber,username FROM users");
                 while ($listuser = $exportlist->fetch_assoc()):
                     $userno = $listuser['usernumber'];
                     $userid = $listuser['username'];

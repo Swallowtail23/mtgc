@@ -128,7 +128,7 @@ table
   color: white;
   text-decoration: none;
 }
-#logout a:hover 
+.material-symbols-outlined.logouta:hover 
 { 
     color: lightgrey;
 }
@@ -1074,6 +1074,10 @@ table
 {
     background-color: #c6cceb !important;
 }
+.bulksubmiterrorbg
+{
+    background-color: pink !important;
+}
 .bulksubmitnormalfont
 {
     color: #3f51b5 !important;
@@ -1082,6 +1086,11 @@ table
 .bulksubmitsuccessfont
 {
     color: #41c300 !important;
+    font-weight: 500 !important;
+}
+.bulksubmiterrorfont
+{
+    color: red !important;
     font-weight: 500 !important;
 }
 .bulkinput, .bulkinputsmall

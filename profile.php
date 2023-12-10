@@ -66,8 +66,9 @@ if($db->query($tablecheck) === FALSE):
 endif;
 
 //1. Get user details for current user
-if($row = $db->select_one('username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view','users LEFT JOIN `groups` ON users.groupid = groups.groupnumber',"WHERE usernumber=$user")):
+if($rowqry = $db->execute_query("SELECT username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE usernumber = ? LIMIT 1",[$user])):
     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
+    $row = $rowqry->fetch_assoc();
 else:
     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
 endif;  ?>
@@ -85,30 +86,32 @@ endif;  ?>
                 $old_password = $_POST['curPass'];
                 $db_password = $row['password'];
                 if ($new_password == $new_password_2):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New passwords double type = match",$logfile);
                     if (valid_pass($new_password)):
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is a valid password",$logfile);
                         if($new_password != $old_password):
+                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is different to old password",$logfile);
                             if (password_verify($old_password, $db_password)):
+                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Old password is correct",$logfile);
                                 $new_password = password_hash("$new_password", PASSWORD_DEFAULT);
                                 $data = array(
                                     'password' => "$new_password"
                                 );
-                                $pwdchg = $db->update('users',$data,"WHERE email='$useremail'");
+                                $pwdchg = $db->execute_query("UPDATE users SET password = ? WHERE email = ?",[$new_password,$useremail]);
                                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                 if ($pwdchg === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 endif;
-                                $pwdvalidate = $db->select_one('password','users',"WHERE email='$useremail'");
-                                if($pwdvalidate === false):
+                                $pwdvalidateqry = $db->execute_query("SELECT password FROM users WHERE email = ?",[$useremail]);
+                                if($pwdvalidateqry === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 else:
+                                    $pwdvalidate = $pwdvalidateqry->fetch_assoc();
                                     if ($pwdvalidate['password'] == $new_password):
                                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                         echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed, please log in again</div>";
                                         // Clear the force password flag and session variable
-                                        $statusdata = array(
-                                            'status' => 'active'
-                                        );
-                                        $chgflagclear = $db->update('users',$statusdata,"WHERE email='$useremail'");
+                                        $chgflagclear = $db->execute_query("UPDATE users SET status = 'active' WHERE email = ?",[$useremail]);
                                         if ($chgflagclear === false):
                                             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                         else:

@@ -485,13 +485,24 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             data: poststring,
                             cache: true,
                             success: function (data) {
+                                console.log("Success response:", data);
                                 activeFlash.classList.remove("bulksubmitsuccessfont");
+                                activeFlash.classList.remove("bulksubmiterrorfont");
                                 activeFlash.classList.add("bulksubmitnormalfont");
                                 activeFlash.classList.add("bulksubmitsuccessbg");
                                 setTimeout(function() {
                                   activeFlash.classList.remove("bulksubmitsuccessbg");
                                   activeFlash.classList.add("bulksubmitsuccessfont");
                                 }, 2000);
+                            },
+                            error: function (xhr, status, error) {
+                                // Error handling logic here
+                                console.error("Error response:", xhr.responseText);
+                                var response = JSON.parse(xhr.responseText);
+                                activeFlash.classList.remove("bulksubmitsuccessfont");
+                                activeFlash.classList.remove("bulksubmitsuccessbg");
+                                activeFlash.classList.remove("bulksubmitnormalfont");
+                                activeFlash.classList.add("bulksubmiterrorfont");
                             }
                         });
                         console.log("Ajaxupddate: " + cardid);

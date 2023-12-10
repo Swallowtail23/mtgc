@@ -210,11 +210,7 @@ endif;
 
 // Update notes if called before reading info
 if ((isset($updatenotes)) AND ($updatenotes == 'yes')):
-    $updateddata = array(
-        'notes' => "$newnotes",
-        'sidenotes' => "$newsidenotes"
-    );
-    if ($db->update('decks', $updateddata, "WHERE decknumber = $decknumber") === FALSE):
+    if ($db->execute_query("UPDATE decks SET notes = ?, sidenotes = ? WHERE decknumber = ?",[$newnotes,$newsidenotes,$decknumber]) === FALSE):
         trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
     else:
         $redirect = true;
@@ -249,17 +245,11 @@ endif;
 if (isset($updatetype)):
     if(in_array($updatetype,$validtypes)):
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to '$updatetype'",$logfile);
-        $updatetypedata = array(
-            'type' => "$updatetype"
-        );
-        if ($db->update('decks', $updatetypedata, "WHERE decknumber = $decknumber") === FALSE):
+        if ($db->execute_query("UPDATE decks set type = ? WHERE decknumber = ?",[$updatetype,$decknumber]) === FALSE):
             trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
         else:
             if(!in_array($updatetype,$commander_decktypes)):
-                $removecommander = array(
-                    'commander' => '0'
-                );
-                if ($db->update('deckcards', $removecommander, "WHERE decknumber = $decknumber") === FALSE):
+                if ($db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$decknumber]) === FALSE):    
                     trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
                 endif;
             endif;
@@ -328,7 +318,8 @@ if (isset($_POST['import'])):
 endif;
 
 // Get deck details from database
-if($deckinfo = $db->select_one('deckname,notes,sidenotes,type','decks',"WHERE decknumber = $decknumber")):
+if($deckinfoqry = $db->execute_query("SELECT deckname,notes,sidenotes,type FROM decks WHERE decknumber = ? LIMIT 1",[$decknumber])):
+    $deckinfo = $deckinfoqry->fetch_assoc();
     $deckname   = $deckinfo['deckname'];
     $notes      = $deckinfo['notes'];
     $sidenotes  = $deckinfo['sidenotes'];
@@ -479,7 +470,7 @@ if($uniquecardscount > 0):
     if($missing == 'yes'):
         $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
         foreach($resultnames as $key=>$value):
-            $searchname = $db->escape($value);
+            $searchname = $db->real_escape_string($value);
             $query = "SELECT SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = '$searchname'";
             if ($totalresult = $db->query($query)):
                 $totalrow = $totalresult->fetch_assoc();

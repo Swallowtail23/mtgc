@@ -38,8 +38,7 @@ class PasswordCheck {
             return $this->passwordvalidate = 0;
         else:
             global $db;
-            $email = "'".($db->escape($email))."'";
-            if($row = $db->select('password','users',"WHERE email=$email LIMIT 1")):
+            if($row = $db->execute_query("SELECT password FROM users WHERE email = ? LIMIT 1",[$email])):
                 if ($row->num_rows === 0):
                     $msg = new Message;
                     $msg->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Invalid email address, returning 1",$logfile);

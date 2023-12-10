@@ -62,53 +62,54 @@ endif;
 
 //Should only be here if newqty, newfoil or newetch are set
 //Set up variables
-$sqlqty = $db->escape($qty);
-$sqlid = $db->escape(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS));
+$sqlqty = $db->real_escape_string($qty);
+$sqlid = $db->real_escape_string(filter_input(INPUT_GET, 'cardid', FILTER_SANITIZE_SPECIAL_CHARS));
 
 //Check existing quantity
-$beforeresult = $db->select_one('normal, foil, etched',"$mytable","WHERE id = '$sqlid'");
-if($beforeresult === false):
+$beforeresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
+if($beforeresultqry === false):
     trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
 else:
+    $beforeresult = $beforeresultqry->fetch_assoc();
     if (empty($beforeresult['normal'])):
         $myqty = 0;
     else:
-        $myqty = $db->escape($beforeresult['normal'],'int');
+        $myqty = $db->real_escape_string($beforeresult['normal'],'int');
     endif;
     if (empty($beforeresult['foil'])):
         $myfoil = 0;
     else:
-        $myfoil = $db->escape($beforeresult['foil'],'int');
+        $myfoil = $db->real_escape_string($beforeresult['foil'],'int');
     endif;
     if (empty($beforeresult['etched'])):
         $myetch = 0;
     else:
-        $myetch = $db->escape($beforeresult['etched'],'int');
+        $myetch = $db->real_escape_string($beforeresult['etched'],'int');
     endif;
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
+    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
 endif;
 // Run update
 if (isset($_GET['newqty'])): 
     $updatequery = "
         INSERT INTO $mytable (normal,id)
-        VALUES ($sqlqty,'$sqlid')
+        VALUES (?,?)
         ON DUPLICATE KEY UPDATE 
-        normal=$sqlqty";
+        normal = ?";
 elseif (isset($_GET['newfoil'])): 
     $updatequery = "
         INSERT INTO $mytable (foil,id)
-        VALUES ($sqlqty,'$sqlid')
+        VALUES (?,?)
         ON DUPLICATE KEY UPDATE 
-        foil=$sqlqty";
+        foil = ?";
 elseif (isset($_GET['newetch'])): 
     $updatequery = "
         INSERT INTO $mytable (etched,id)
-        VALUES ($sqlqty,'$sqlid')
+        VALUES (?,?)
         ON DUPLICATE KEY UPDATE 
-        etched=$sqlqty";
+        etched = ?";
 endif;
-$sqlupdate = $db->query($updatequery);
+$params = [$sqlqty,$sqlid,$sqlqty];
+$sqlupdate = $db->execute_query($updatequery,$params);
 if($sqlupdate === false):
     trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
 else:
@@ -125,43 +126,52 @@ $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Updating top
 update_topvalue_card($mytable,$sqlid);
 
 // Retrieve new record to display
-$checkresult = $db->select_one('normal, foil, etched',"$mytable","WHERE id = '$sqlid'");
-if($checkresult === false):
-    trigger_error('[ERROR] gridupdate.php: Error: '.$db->error, E_USER_ERROR);
+$response = [];
+
+$checkresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
+if ($checkresultqry === false):
+    trigger_error('[ERROR] gridupdate.php: Error: ' . $db->error, E_USER_ERROR);
+    $response['status'] = 'error';
+    $response['message'] = 'Database error: ' . $db->error;
 else:
-    if (isset($_GET['newqty'])): 
-        if ($sqlqty === $checkresult['normal']): 
-            $obj = new Message;
-            $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}",$logfile);
-            echo "<span class='material-icons md-18 green'>check</span>";
+    $checkresult = $checkresultqry->fetch_assoc();
+    if (isset($_GET['newqty'])):
+        if ((int)$sqlqty === (int)$checkresult['normal']):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}", $logfile);
+            $response['status'] = 'success';
+            $response['message'] = "Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}";
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}",$logfile);
-            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['normal'];
+            $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}", $logfile);
+            $response['status'] = 'error';
+            $response['message'] = "Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}";
+            http_response_code(400);
         endif;
-    elseif (isset($_GET['newfoil'])): 
-        if ($sqlqty === $checkresult['foil']): 
-            $obj = new Message;
-            $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}",$logfile);
-            echo "<span class='material-icons md-18 green'>check</span>";
+    elseif (isset($_GET['newfoil'])):
+        if ((int)$sqlqty === (int)$checkresult['foil']):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}", $logfile);
+            $response['status'] = 'success';
+            $response['message'] = "Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}";
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}",$logfile);
-            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['foil'];
+            $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}", $logfile);
+            $response['status'] = 'error';
+            $response['message'] = "Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}";
+            http_response_code(400);
         endif;
-    elseif (isset($_GET['newetch'])): 
-        if ($sqlqty === $checkresult['etched']): 
-            $obj = new Message;
-            $obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}",$logfile);
-            echo "<span class='material-icons md-18 green'>check</span>";
+    elseif (isset($_GET['newetch'])):
+        if ((int)$sqlqty === (int)$checkresult['etched']):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}", $logfile);
+            $response['status'] = 'success';
+            $response['message'] = "Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}";
         else:
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}",$logfile);
-            echo "<span class='material-icons md-18 red'>clear</span>"." ".$checkresult['etched'];
+            $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}", $logfile);
+            $response['status'] = 'error';
+            $response['message'] = "Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}";
+            http_response_code(400);
         endif;
     endif;
-endif;?> 
+endif;
 
-
-
-
+// Send JSON response
+header('Content-Type: application/json');
+echo json_encode($response);
+?>
