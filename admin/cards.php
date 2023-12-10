@@ -3,8 +3,7 @@
     Date:       25/03/2023
     Name:       admin/cards.php
     Purpose:    Card administrative tasks
-    Notes:      This page uses a combination of Mysqli prepared statements and straight OOP mysqli connectivity
-                using $db (Mysqli_Manager).
+    Notes:      
         
     1.0
                 Initial version - no function yet
@@ -113,36 +112,48 @@ if(isset($_GET['cardtoedit'])):
     endwhile;
     $stmt->close();
 endif;
-if ((isset($_GET['delete'])) AND ( $_GET['delete'] == 'DELETE')):
+if ((isset($_GET['delete'])) AND ($_GET['delete'] == 'DELETE')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    $sql = "DELETE FROM cards_scry WHERE id = '$id'";
-    $result = $db->query($sql);
-    if ($result === false):
-        trigger_error("[ERROR] cards.php: Deleting card: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
-    else:
-        $sql = "SELECT id FROM cards_scry WHERE id = '$id'";
-        $result = $db->query($sql);
-        $rowcount = $result->num_rows;
+    $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}", $logfile);
+
+    // Delete from cards_scry
+    $sql = "DELETE FROM cards_scry WHERE id = ?";
+    if ($stmt = $db->prepare($sql)):
+        $stmt->bind_param("s", $id);
+        $result = $stmt->execute();
         if ($result === false):
-            trigger_error("[ERROR] cards.php: Deleting card: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
-        elseif ($rowcount === 0):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Delete card $id successful",$logfile);
-            ?>
-            <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
+            trigger_error("[ERROR] cards.php: Deleting card: " . $db->error, E_USER_ERROR);
+        else:
+            // Check if delete was successful
+            $stmt = $db->prepare("SELECT id FROM cards_scry WHERE id = ?");
+            $stmt->bind_param("s", $id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $rowcount = $result->num_rows;
+            if ($rowcount === 0):
+                $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id successful", $logfile);
+                ?> <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
+            endif;
         endif;
+    else:
+        trigger_error("[ERROR] cards.php: Preparing SQL: " . $db->error, E_USER_ERROR);
     endif;
-    // If the card is in the migrations table, remove the row
-    $sql = "DELETE FROM migrations WHERE old_scryfall_id = '$id'";
-    $result = $db->query($sql);
-elseif ((isset($_GET['deleteimg'])) AND ( $_GET['deleteimg'] == 'DELETEIMG')):
+
+    // Delete from migrations
+    $sql = "DELETE FROM migrations WHERE old_scryfall_id = ?";
+    if ($stmt = $db->prepare($sql)):
+        $stmt->bind_param("s", $id);
+        $stmt->execute();
+    endif;
+elseif ((isset($_GET['deleteimg'])) AND ($_GET['deleteimg'] == 'DELETEIMG')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
     refresh_image($id);
 endif;
+
 ?>
 
 <!DOCTYPE html>
