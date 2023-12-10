@@ -25,6 +25,7 @@ $file_folder = $ImgLocation.'json/';
 // Row counts
 $total_count = 0;
 $need_action = 0;
+$deleted = 0;
 $action_text = '';
 
 // How old to overwrite
@@ -251,12 +252,19 @@ foreach($result_files as $data):
                 if ($stmt->num_rows > 0 && $deleteCheck > 0):
                     $db_match = 1;
                     $need_action = $need_action + 1;
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, $need_action to be actioned",$logfile);
-                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note\n\n";
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data but not safe to delete, $need_action to be actioned",$logfile);
+                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Not safe to delete)\n\n";
                 elseif ($stmt->num_rows > 0 && $deleteCheck === 0):
                     //In db, but ok to remove
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
+                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
+                    $deleted = $deleted + 1;
                     //Delete query here
+                    $sql = "DELETE FROM cards_scry WHERE id = ?";
+                    $params = [$old_scryfall_id];
+                    $deleteResult = $db->execute_query($sql,$params);
+                    if ($deleteResult !== false):
+                        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $old_scryfall_id from cards_scry", $logfile);
+                    endif;
                 elseif ($stmt->num_rows > 0 && $deleteCheck > 10000):
                     //In db, but safety check failed
                     $db_match = 1;
