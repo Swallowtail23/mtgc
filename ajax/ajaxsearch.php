@@ -58,13 +58,13 @@ else:
                 endif;
             endforeach;
             if($closingBracket === TRUE):
-                $u = $db->escape($s);
+                $u = $s;
             endif;
             $t = trim($q);
-            $q = '%'.trim($db->escape($q)).'%';
+            $q = '%'.trim($q).'%';
         else:
             $t = trim($r);
-            $q = '%'.trim($db->escape($r)).'%';
+            $q = '%'.trim($r).'%';
             $u = ''; // No brackets in this case
         endif;
         
@@ -92,44 +92,46 @@ else:
         if ($stmt->error):
             trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $stmt->error, E_USER_ERROR);
         else: ?>
-            <table class='ajaxshow'>
-            <?php 
-            while($row = $stmt->fetch()):
-                if($printed_name !== null AND strpos(strtolower($printed_name),strtolower($t)) !== false):
-                    $name = $printed_name;
-                elseif($flavor_name !== null AND strpos(strtolower($flavor_name),strtolower($t)) !== false):
-                    $name = $flavor_name;
-                elseif($f1_name !== null AND strpos(strtolower($f1_name),strtolower($t)) !== false):
-                    $name = $f1_name;
-                elseif($f1_printed_name !== null AND strpos(strtolower($f1_printed_name),strtolower($t)) !== false):
-                    $name = $f1_printed_name;
-                elseif($f1_flavor_name !== null AND strpos(strtolower($f1_flavor_name),strtolower($t)) !== false):
-                    $name = $f1_flavor_name;
-                elseif($f2_name !== null AND strpos(strtolower($f2_name),strtolower($t)) !== false):
-                    $name = $f2_name;
-                elseif($f2_printed_name !== null AND strpos(strtolower($f2_printed_name),strtolower($t)) !== false):
-                    $name = $f2_printed_name;
-                elseif($f2_flavor_name !== null AND strpos(strtolower($f2_flavor_name),strtolower($t)) !== false):
-                    $name = $f2_flavor_name;
-                endif;
-                $ajaxname = $db->escape($name);
-                $sqlsetcode = $db->escape($setcode);
-                $displaysetcode = strtoupper($setcode);
-                $getajax = $db->select_one('id,number_import','cards_scry',"WHERE id LIKE '$id'");
-                if ($getajax === false):
-                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                else:
-                    $ajaxid = $getajax['id'];
-                    $ajaxnumber = $getajax['number_import'];
-                    $b_name = '<strong>'.$t.'</strong>';
-                    $final_name = str_ireplace($t, $b_name, $name);
-                endif;
-                ?>
-                <tr>
-                    <td class="name"><?php echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - $final_name</a></td>"; ?>
-                </tr>
-                <?php
-            endwhile; ?>
+            <table class='ajaxshow'> <?php 
+                while($row = $stmt->fetch()):
+                    if($printed_name !== null AND strpos(strtolower($printed_name),strtolower($t)) !== false):
+                        $name = $printed_name;
+                    elseif($flavor_name !== null AND strpos(strtolower($flavor_name),strtolower($t)) !== false):
+                        $name = $flavor_name;
+                    elseif($f1_name !== null AND strpos(strtolower($f1_name),strtolower($t)) !== false):
+                        $name = $f1_name;
+                    elseif($f1_printed_name !== null AND strpos(strtolower($f1_printed_name),strtolower($t)) !== false):
+                        $name = $f1_printed_name;
+                    elseif($f1_flavor_name !== null AND strpos(strtolower($f1_flavor_name),strtolower($t)) !== false):
+                        $name = $f1_flavor_name;
+                    elseif($f2_name !== null AND strpos(strtolower($f2_name),strtolower($t)) !== false):
+                        $name = $f2_name;
+                    elseif($f2_printed_name !== null AND strpos(strtolower($f2_printed_name),strtolower($t)) !== false):
+                        $name = $f2_printed_name;
+                    elseif($f2_flavor_name !== null AND strpos(strtolower($f2_flavor_name),strtolower($t)) !== false):
+                        $name = $f2_flavor_name;
+                    endif;
+                    $displaysetcode = strtoupper($setcode);
+                    $query = "SELECT id, number_import FROM cards_scry WHERE id LIKE ? LIMIT 1";
+                    $params = [$id];
+                    $result = $db->execute_query($query, $params);
+                    if($result === false):
+                        trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                    else:
+                        $row = $result->fetch_assoc();
+                        if ($row):
+                            $ajaxid = $row['id'];
+                            $ajaxnumber = $row['number_import'];
+                            $b_name = '<strong>'.$t.'</strong>';
+                            $final_name = str_ireplace($t, $b_name, $name);
+                            ?>
+                            <tr>
+                                <td class="name"><?php echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - $final_name</a></td>"; ?>
+                            </tr>
+                            <?php
+                        endif;
+                    endif;
+                endwhile; ?>
             </table> <?php
         endif;
     endif;

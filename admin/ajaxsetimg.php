@@ -31,7 +31,7 @@ else:
     $useremail = str_replace("'", "", $_SESSION['useremail']);
     
     if (isset($_POST['setcode'])):
-        $setcode = $db->escape($_POST['setcode']);
+        $setcode = $_POST['setcode'];
         $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with set $setcode", $logfile);
         
         $query = "SELECT id FROM cards_scry WHERE setcode = ?";

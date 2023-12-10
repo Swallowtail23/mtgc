@@ -38,9 +38,11 @@ if (isset($_POST['newuser'])):
         $password = $_POST['password'];
     endif;    
     if (isset($_POST['email'])):
+        $postemail_raw = $_POST['email'];
         $postemail = check_input($_POST['email']);
     endif; 
     if (isset($_POST['username'])):
+        $username_raw = $_POST['username'];
         $username = check_input($_POST['username']);
     endif; 
 endif;    
@@ -81,7 +83,7 @@ require('../includes/menu.php');
         <?php 
         // Generate new account or do password reset
         if ((isset($newuser)) AND ($newuser === "yes")):
-            $newuserstatus = newuser($username, $postemail, $password, $dbname);
+            $newuserstatus = newuser($username_raw, $postemail_raw, $password, $dbname); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
             if ($newuserstatus === 2):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, password successfully recorded and checked.</div>";    
                 echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";    

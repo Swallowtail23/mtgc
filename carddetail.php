@@ -329,7 +329,6 @@ require('includes/menu.php'); //mobile menu
     
     // Check that we have an id before calling SQL query
     if(isset($_GET["id"]) OR isset($_POST["id"])) :
-        $cardid = $db->escape($cardid,'str');
         $searchqry = 
                "SELECT 
                     cards_scry.id as cs_id,
@@ -453,10 +452,12 @@ require('includes/menu.php'); //mobile menu
                     notes
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
-                WHERE cards_scry.id = '$cardid'
+                WHERE cards_scry.id = ?
                 LIMIT 1";
+        $params = [$cardid];
+        
         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query is: $searchqry",$logfile);
-        if($result = $db->query($searchqry)):
+        if($result = $db->execute_query($searchqry, $params)):
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
         else:
             trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -465,11 +466,11 @@ require('includes/menu.php'); //mobile menu
         // If the result has a card:
         if (!$qtyresults == 0) :
             $row = $result->fetch_array(MYSQLI_BOTH);
-            $setcode = $db->escape(strtolower($row['cs_setcode']),'str');
+            $setcode = strtolower($row['cs_setcode']);
             $setcodeupper = strtoupper($setcode);
-            $setname = stripslashes($db->escape($row['cs_setname'],'str'));
-            $cardname = stripslashes($db->escape($row['name'],'str'));
-            $id = $db->escape($row['cs_id'],'str');
+            $setname = stripslashes($row['cs_setname']);
+            $cardname = stripslashes($row['name']);
+            $id = $row['cs_id'];
             if($row['color'] !== null):
                 $card_colour = colourfunction($row['color']);
             else:
@@ -519,7 +520,7 @@ require('includes/menu.php'); //mobile menu
                     endif;
                 endforeach;
             endif;
-            $cardnumber = $db->escape($row['number'],'int');
+            $cardnumber = $row['number'];
             if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) 
                  OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) 
                  OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])
@@ -567,9 +568,6 @@ require('includes/menu.php'); //mobile menu
                 $scryfallimg = null;
             endif;
 
-            if($scryfallimg !== null):
-                $scryfallimg = $db->escape($scryfallimg,'str');
-            endif;
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall image location called by $useremail: $scryfallimg",$logfile);
             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getimgname by $useremail with $setcode, $cardnumber, $cardname, $cardid",$logfile);
             $imgname = $cardid.".jpg";
@@ -595,34 +593,37 @@ require('includes/menu.php'); //mobile menu
             if (empty($row['normal'])):
                 $myqty = 0;
             else:
-                $myqty = $db->escape($row['normal'],'int');
+                $myqty = $row['normal'];
             endif;
             if (empty($row['foil'])):
                 $myfoil = 0;
             else:
-                $myfoil = $db->escape($row['foil'],'int');
+                $myfoil = $row['foil'];
             endif;
             if (empty($row['etched'])):
                 $myetch = 0;
             else:
-                $myetch = $db->escape($row['etched'],'int');
+                $myetch = $row['etched'];
             endif;
-            $notes = $db->escape($row['notes'],'str');
+            if (empty($row['notes'])):
+                $oldnotes = '';
+            else:
+                $oldnotes = $row['notes'];
+            endif;
 
-            if (isset($_POST['update'])) :    
-                if (isset($_POST['notes'])):
-                    $notes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+            if (isset($_POST['update']) && isset($_POST['notes'])) :  
+                
+                //New notes are to be:
+                $newnotes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+                if ($newnotes === ''):
+                    $newnotes = null;
                 endif;
-                $sqlnotes = $db->escape($notes,'str');
-                $updatequery = "
-                        INSERT INTO `$mytable` (notes,id)
-                        VALUES ('$sqlnotes','$id')
-                        ON DUPLICATE KEY UPDATE
-                        notes='$sqlnotes'";
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$updatequery,$logfile);
-                // write out collection record prior to update to log
-                if($sqlbefore = $db->query("SELECT id,notes FROM `$mytable` WHERE id = '$id'")):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded ",$logfile);
+                
+                //Get 'Before' notes for comparison
+                $sqlbeforeqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
+                $beforeparams = [$id];
+                if($sqlbefore = $db->execute_query($sqlbeforeqry,$beforeparams)):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Before SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                 endif;
@@ -630,38 +631,61 @@ require('includes/menu.php'); //mobile menu
                 $writerowforlog = "";
                 foreach((array)$beforeresult as $key => $value): 
                     if (!is_int($key)):
-                        $writerowforlog .= "index ".$key.", value ".$value. ": "; 
+                        $writerowforlog .= "index: '$key', value: '$value' "; 
                     endif;
                 endforeach;
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) initial values: $writerowforlog",$logfile);
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) Before values: $writerowforlog",$logfile);
+                
+                //Write new notes
+                $updatequery = "
+                        INSERT INTO `$mytable` (notes,id)
+                        VALUES (?,?)
+                        ON DUPLICATE KEY UPDATE notes = ? ";
+                $updateparams = [$newnotes,$id,$newnotes];
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) running update query: $updatequery",$logfile);
-                // Run update
-                if($sqlupdate = $db->query($updatequery)):
-                    $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL update query succeeded",$logfile);
+                if($sqlupdate = $db->execute_query($updatequery,$updateparams)):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL update query succeeded",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL update failure: " . $db->error, E_USER_ERROR);
                 endif;
+                
                 // Retrieve new record to display
-                if($sqlcheck = $db->select('*',"`$mytable`","WHERE id = '$id'")):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL check query succeeded",$logfile);
+                $sqlafterqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
+                $afterparams = [$id];
+                if($sqlafter = $db->execute_query($sqlafterqry,$afterparams)):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"After SQL query succeeded ",$logfile);
                 else:
-                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL check failure: " . $db->error, E_USER_ERROR);
+                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                 endif;
-                $checkresult = $sqlcheck->fetch_array(MYSQLI_ASSOC);
-                $checkresult['notes'] = $db->escape($checkresult['notes'],'str');
-                if ($sqlnotes === $checkresult['notes']): ?>
+                $afterresult = $sqlafter->fetch_array(MYSQLI_ASSOC);
+                $writerowforlog = "";
+                foreach((array)$afterresult as $key => $value): 
+                    if (!is_int($key)):
+                        $writerowforlog .= "index: '$key', value: '$value' "; 
+                    endif;
+                endforeach;
+                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) After values: $writerowforlog",$logfile);
+                
+                //Compare 
+                $afternotes = $afterresult['notes'];
+                if ($newnotes === $afternotes):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record matches input",$logfile); ?>
                     <div class="msg-new success-new" onclick='CloseMe(this)'><span>Notes updated</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                     </div>
-                <?php else: ?>
+                <?php else: 
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record does not match input",$logfile); ?>?>
                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Update failed</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                     </div>
                 <?php endif;
+            else:
+                $afternotes = '';
+                $newnotes = '';
             endif; 
+            
             //Process image change if it's been called by an admin.
             if (isset($_POST['import']) AND $admin == 1):
                 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload called by $useremail",$logfile);
@@ -714,7 +738,6 @@ require('includes/menu.php'); //mobile menu
             $myqty = (isset($myqty)) ? htmlentities($myqty,ENT_QUOTES,"UTF-8") : '';
             $myfoil = (isset($myfoil)) ? htmlentities($myfoil,ENT_QUOTES,"UTF-8") : '';
             $myetch = (isset($myetch)) ? htmlentities($myetch,ENT_QUOTES,"UTF-8") : '';
-            $notes = (isset($notes)) ? htmlentities($notes,ENT_QUOTES,"UTF-8") : '';
             
             //Set card types
             if(isset($row['finishes'])):
@@ -1418,7 +1441,7 @@ require('includes/menu.php'); //mobile menu
                     </div><?php 
                     if(($meld !== 'meld_result') AND ($not_paper !== true ) AND ($cardtypes != 'none' )): ?>
                         <div id="carddetailupdate">
-                            <form action="?" method="POST">
+                            <form id="updatenotesform" action="?" method="POST">
                             <h3 class="shallowh3">My collection</h3>
                             <?php
                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card types: $cardtypes",$logfile);
@@ -1485,12 +1508,24 @@ require('includes/menu.php'); //mobile menu
                             </table>
                             <table style="margin-top:10px">
                                 <tr><td>My notes</td></tr> <?php
-                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$notes</textarea></td></tr>"; ?>
+                                if ($afternotes === ''):
+                                    $displaynotes = $oldnotes;
+                                else:
+                                    $displaynotes = $afternotes;
+                                endif;
+                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$displaynotes</textarea></td></tr>"; ?>
                             </table> <?php
                             echo "<input type='hidden' name='id' value=".$lookupid.">";
                             echo "<input type='hidden' name='update' value='yes'>";?>
-                            <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="submit" value="UPDATE NOTES">
+                            <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
+                            <button class='inline_button' style="cursor: pointer;" type="button" onclick="submitForm()" title="Save"><span class="material-symbols-outlined">save</span></button>
                             </form>
+                            <script>
+                                function submitForm() {
+                                    document.getElementById('hiddenSubmitValue').value = 'UPDATE NOTES';
+                                    document.getElementById('updatenotesform').submit();
+                                }
+                            </script>
                             <script>
                                 $(document).ready(function() {
                                     let id = '<?php echo $id; ?>';
@@ -1745,15 +1780,20 @@ require('includes/menu.php'); //mobile menu
 
                             // Others with this card section 
                             echo "<b>Others with this card</b><br>";
-                            if($usergrprow = $db->select_one('grpinout,groupid','users',"WHERE usernumber = $user")):
+                            $usergrprowqry = "SELECT grpinout,groupid FROM users WHERE usernumber = ? LIMIT 1";
+                            $usergrprowparams = [$user];
+                            if($sqlusergrp = $db->execute_query($usergrprowqry,$usergrprowparams)):
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                             else:
                                 trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                             endif;
+                            $usergrprow = $sqlusergrp->fetch_array(MYSQLI_ASSOC);
                             if ($usergrprow['grpinout'] == 1):
                                 $usergroup = $usergrprow['groupid'];
                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Groups are active, group ID = $usergroup",$logfile);
-                                if($sqluserqry = $db->query("SELECT usernumber, username, status, groupid, groupname, owner FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE groupid = $usergroup")):
+                                $grpquery = "SELECT usernumber, username, status, groupid, groupname, owner FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE groupid = ? AND usernumber <> ?";
+                                $grpparams = [$usergroup,$_SESSION["user"]];
+                                if($sqluserqry = $db->execute_query($grpquery,$grpparams)):
                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                                 else:
                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -1763,31 +1803,31 @@ require('includes/menu.php'); //mobile menu
                                 while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
                                     if($userrow['status'] !== 'disabled'):
                                         $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
-                                        if ($_SESSION["user"] !== $userrow['usernumber']):
-                                            $grpuser[$q]['id'] = $userrow['usernumber'];
-                                            $grpuser[$q]['name'] = $userrow['username'];
-                                            $q = $q + 1;
-                                            $usertable = $userrow['usernumber'].'collection';
-                                            if($sqlqtyqry = $db->query("SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = '$row[0]'")):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
-                                            else:
-                                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                            endif;
-                                            if($sqlqtyqry->num_rows !== 0):
-                                                $userqtyresult = $sqlqtyqry->fetch_array(MYSQLI_ASSOC);
-                                                if (($userqtyresult['normal'] > 0) OR ($userqtyresult['foil'] > 0)):
-                                                    if (empty($userqtyresult['normal'])):
-                                                        $userqtyresult['normal'] = 0;
-                                                    endif;
-                                                    if (empty($userqtyresult['foil'])):
-                                                        $userqtyresult['foil'] = 0;
-                                                    endif;
-                                                    $others = 1;
-                                                    $userrow['username'] = htmlentities($userrow['username'],ENT_QUOTES,"UTF-8");
-                                                    $userqtyresult['normal'] = htmlentities($userqtyresult['normal'],ENT_QUOTES,"UTF-8");
-                                                    $userqtyresult['foil'] = htmlentities($userqtyresult['foil'],ENT_QUOTES,"UTF-8");
-                                                    echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> ",$userqtyresult['normal']," &nbsp;&nbsp;<i>Foil:</i> ",$userqtyresult['foil'],"<br>";
+                                        $grpuser[$q]['id'] = $userrow['usernumber'];
+                                        $grpuser[$q]['name'] = $userrow['username'];
+                                        $q = $q + 1;
+                                        $usertable = $userrow['usernumber'].'collection';
+                                        $sqlqry = "SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = ?";
+                                        $sqlparams = [$id];
+                                        if($sqlqtyqry = $db->execute_query($sqlqry,$sqlparams)):
+                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
+                                        else:
+                                            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                        endif;
+                                        if($sqlqtyqry->num_rows !== 0):
+                                            $userqtyresult = $sqlqtyqry->fetch_array(MYSQLI_ASSOC);
+                                            if (($userqtyresult['normal'] > 0) OR ($userqtyresult['foil'] > 0)):
+                                                if (empty($userqtyresult['normal'])):
+                                                    $userqtyresult['normal'] = 0;
                                                 endif;
+                                                if (empty($userqtyresult['foil'])):
+                                                    $userqtyresult['foil'] = 0;
+                                                endif;
+                                                $others = 1;
+                                                $userrow['username'] = htmlentities($userrow['username'],ENT_QUOTES,"UTF-8");
+                                                $userqtyresult['normal'] = htmlentities($userqtyresult['normal'],ENT_QUOTES,"UTF-8");
+                                                $userqtyresult['foil'] = htmlentities($userqtyresult['foil'],ENT_QUOTES,"UTF-8");
+                                                echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> ",$userqtyresult['normal']," &nbsp;&nbsp;<i>Foil:</i> ",$userqtyresult['foil'],"<br>";
                                             endif;
                                         endif;
                                     endif;
@@ -1813,36 +1853,33 @@ require('includes/menu.php'); //mobile menu
                                         // If the deck is new, is the new name unique? If yes, create it.
                                         $decksuccess = 0;
                                         if($decktoaddto == "newdeck"):
-                                            $newdeckname = $db->escape($newdeckname,'str');
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Asked to create new deck $newdeckname",$logfile);
-                                            if($result = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile);
-                                                ?>
-                                                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
-                                                    <br>
-                                                    <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                                                </div>
-                                                <?php
-                                                $decksuccess = 10; //set flag so we know to break.
-                                            else:
+                                            $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
+                                            $decknameparams = [$user,$newdeckname];
+                                            $result = $db->execute_query($decknamechecksql,$decknameparams);
+                                            if($result !== false && $result->num_rows === 0):
+                                                
                                                 //Create new deck
-                                                $data = array(
-                                                    'owner' => $user,
-                                                    'deckname' => "$newdeckname"
-                                                );
-                                                if($runsql = $db->insert('decks',$data) === TRUE):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                                $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
+                                                $params = [$user,$newdeckname];
+                                                if($deckinsert = $db->execute_query($sql,$params) && $db->affected_rows === 1):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$logfile);
                                                 else:
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
+                                                
+                                                //Checking if it created OK
                                                 $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
                                                 $checksql = "SELECT decknumber FROM decks
-                                                                WHERE owner = $user AND deckname = '$newdeckname' LIMIT 1";
-                                                if($runquery = $db->select_one('decknumber','decks',"WHERE owner = $user AND deckname = '$newdeckname'")):
+                                                                WHERE owner = ? AND deckname = ? LIMIT 1";
+                                                $checkparams = [$user,$newdeckname];
+                                                $runquery = $db->execute_query($checksql,$checkparams);
+                                                if($runquery !== false && $runquery->num_rows === 1):
                                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
+                                                    $deckcheckrow = $runquery->fetch_assoc();
                                                     $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
-                                                    $decktoaddto = $runquery['decknumber'];
-                                                else:    
+                                                    $decktoaddto = $deckcheckrow['decknumber'];
+                                                elseif($runquery !== false && $runquery->num_rows === 0):  
                                                     $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
                                                     ?>
                                                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
@@ -1851,10 +1888,20 @@ require('includes/menu.php'); //mobile menu
                                                     </div>
                                                     <?php
                                                     $decksuccess = 10; //set flag so we know to break.
+                                                else:
+                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
+                                            elseif($result !== false && $result->num_rows === 1):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile); ?>
+                                                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
+                                                    <br>
+                                                    <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+                                                </div> <?php
+                                                $decksuccess = 10; //set flag so we know to break.
+                                            else:
+                                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                             endif;
                                         else:
-                                            $decktoaddto = $db->escape($decktoaddto,'str');
                                             // Check that the proposed deck exists and belongs to owner.
                                             if (deckownercheck($decktoaddto,$user) == FALSE): ?>
                                                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>You don't have that deck</span>
@@ -1873,10 +1920,13 @@ require('includes/menu.php'); //mobile menu
                                             if ($decksuccess === 2): //Not a new deck, run card check
                                                 $obj = new Message;
                                                 $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
-                                                if($resultchk = $db->select_one('cardnumber','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid'
-                                                                        AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))")):
-                                                    $obj = new Message;
-                                                    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$resultchk['cardnumber']} is already in that deck",$logfile);
+                                                
+                                                $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))";
+                                                $params = [$decktoaddto,$cardid];
+                                                $resultchk = $db->execute_query($sql,$params);
+                                                if($resultchk !== false && $resultchk->num_rows === 1):
+                                                    $cardcheckrow = $resultchk->fetch_assoc();
+                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$cardcheckrow['cardnumber']} is already in that deck",$logfile);
                                                     ?>
                                                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Card already in deck</span>
                                                         <br>
@@ -1884,19 +1934,29 @@ require('includes/menu.php'); //mobile menu
                                                     </div>
                                                     <?php
                                                     $cardchecksuccess = 0;
-                                                else:    
+                                                elseif($resultchk !== false && $resultchk->num_rows === 0):   
                                                     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
                                                     $cardchecksuccess = 1;
+                                                else:
+                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
-                                            elseif ($decksuccess = 1):
+                                            elseif ($decksuccess === 1):
                                                 $cardchecksuccess = 2;
                                             endif;
                                             //Insert card to deck
-                                            if (($cardchecksuccess === 1) OR ($cardchecksuccess === 2)):
-                                                $deckqty = $db->escape($deckqty,'int');
+                                            if (in_array($cardchecksuccess, [1, 2])):
+                                                $deckqty = (int)$deckqty;
+                                            
+                                                //Call add card function
                                                 adddeckcard($decktoaddto,$cardid,'main',$deckqty);
-                                                if($resultchkins = $db->select_one('cardnumber, cardqty','deckcards',"WHERE decknumber = $decktoaddto AND cardnumber = '$cardid' AND cardqty = '$deckqty'")):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded: ".$db->insert_id,$logfile);
+                                                
+                                                //Check it's added
+                                                $sql = "SELECT cardnumber,cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND cardqty = ? LIMIT 1";
+                                                $params = [$decktoaddto,$cardid,$deckqty];
+                                                $resultchksql = $db->execute_query($sql,$params);
+                                                if($resultchksql !== false && $resultchksql->num_rows === 1):
+                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
+                                                    $resultchkins = $resultchksql->fetch_assoc();
                                                     if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
                                                         ?>
                                                         <div class="msg-new success-new" onclick='CloseMe(this)'><span>Card added</span>
@@ -1906,12 +1966,12 @@ require('includes/menu.php'); //mobile menu
                                                         <?php
                                                         $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
                                                     else:?>
-                                                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Card not added</span>
+                                                        <div class="msg-new warning-new" onclick='CloseMe(this)'><span>Card in deck, but quantity mismatch</span>
                                                             <br>
                                                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                                                         </div>
                                                         <?php 
-                                                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid in deck $decktoaddto, but quantity mismatch",$logfile);
                                                     endif;
                                                 else:
                                                     ?>
@@ -1974,12 +2034,19 @@ require('includes/menu.php'); //mobile menu
                                             <option value='none'>Select</option>
                                             <option value='newdeck'>Add to new deck...</option>
                                             <?php 
-                                            $decklist = $db->select('decknumber, deckname','decks',"WHERE owner = $user ORDER BY deckname ASC");
-                                            while ($dlrow = $decklist->fetch_array(MYSQLI_NUM)):
-                                                $dlrow[0] = htmlentities($dlrow[0],ENT_QUOTES,"UTF-8");
-                                                $dlrow[1] = htmlentities($dlrow[1],ENT_QUOTES,"UTF-8");
-                                                echo "<option value='{$dlrow[0]}'>$dlrow[1]</option>";
-                                            endwhile;
+                                            
+                                            $sql = "SELECT decknumber,deckname FROM decks WHERE owner = ? ORDER BY deckname ASC";
+                                            $params = [$user];
+                                            $decklistsql = $db->execute_query($sql,$params);
+                                            
+                                            if($decklistsql !== false):
+                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
+                                                while ($dlrow = $decklistsql->fetch_assoc()):
+                                                    $dlrow['decknumber'] = htmlentities($dlrow['decknumber'],ENT_QUOTES,"UTF-8");
+                                                    $dlrow['deckname'] = htmlentities($dlrow['deckname'],ENT_QUOTES,"UTF-8");
+                                                    echo "<option value='{$dlrow['decknumber']}'>{$dlrow['deckname']}</option>";
+                                                endwhile;
+                                            endif;
                                             ?>
                                         </select>
                                         Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">

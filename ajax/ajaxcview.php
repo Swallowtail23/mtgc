@@ -28,33 +28,25 @@ else:
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
     $useremail = str_replace("'","",$_SESSION['useremail']);
-
-    if(isset($_POST['collection_view'])):
-        $coll_view = $db->escape($_POST['collection_view']);
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called with collection view query $coll_view",$logfile);
-        if ($coll_view == 'TURN OFF'):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view",$logfile);
-            $updatedata = array (
-                'collection_view' => '0'
-            );
-            $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-            if($cviewquery === false):
-                trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-            else:    
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
-            endif;
-        elseif ($coll_view == 'TURN ON'):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn on collection view",$logfile);
-            $updatedata = array (
-                'collection_view' => 1
-            );
-            $cviewquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-            if($cviewquery === false):
-                trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-            else:    
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
-            endif;
+    if(isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view",$logfile);
+        $query = "UPDATE users SET collection_view = ? WHERE usernumber = ?";
+        $params = ['0', $user];
+        $result = $db->execute_query($query, $params);
+        if($result === false):
+            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+        else:    
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
+        endif;
+    elseif(isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN ON'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to turn on collection view",$logfile);
+        $query = "UPDATE users SET collection_view = ? WHERE usernumber = ?";
+        $params = ['1', $user];
+        $result = $db->execute_query($query, $params);
+        if($result === false):
+            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+        else:    
+            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call to turn off collection view run for $useremail",$logfile);
         endif;
     endif;
 endif;
