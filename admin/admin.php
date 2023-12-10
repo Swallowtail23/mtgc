@@ -38,73 +38,53 @@ $date = $dateobject->getToday();
 $clearscryfalljson = isset($_GET['clearscryfalljson']) ? 'y' : '';
 $togglecss = isset($_GET['togglecss']) ? 'y' : '';
 $publishcss = isset($_GET['publishcss']) ? 'y' : '';
-if((isset($_POST['update'])) AND ($_POST['update'] == 'ADD')):
+
+if (isset($_POST['update']) && $_POST['update'] === 'ADD'):
     $update = 1;
-    // Retrieve all the posted variables
-    if(isset($_POST['date'])):
+    if (isset($_POST['date'])):
         $date = filter_input(INPUT_POST, 'date', FILTER_SANITIZE_NUMBER_INT);
     endif;
-    if(isset($_POST['name'])):
-        $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+    if (isset($_POST['name'])):
+        $name = strtolower(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES));
     endif;
-    if(isset($_POST['updatetext'])):
+    if (isset($_POST['updatetext'])):
         $updatetext = filter_input(INPUT_POST, 'updatetext', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     endif;
-    $date = $db->escape($date);
-    $name = strtolower ($db->escape($name));
-    // $updatetext = $db->escape($updatetext);
-    $data = array(
-                '`date`' => $date,
-                '`author`' => $name,
-                '`update`' => $updatetext
-        );
-    if ($db->insert('updatenotices', $data) === TRUE):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Adding update notice: Insert ID: ".$db->insert_id,$logfile);
+    
+    $stmt = $db->prepare("INSERT INTO updatenotices (`date`, `author`, `update`) VALUES (?, ?, ?)");
+    
+    if ($stmt):
+        $stmt->bind_param("sss", $date, $name, $updatetext);
+        if ($stmt->execute()):
+            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Adding update notice: Insert ID: " . $stmt->insert_id, $logfile);
+        else:
+            trigger_error("[ERROR] admin.php: Adding update notice: failed " . $stmt->error, E_USER_ERROR);
+        endif;
+        $stmt->close();
     else:
-        trigger_error("[ERROR] admin.php: Adding update notice: failed " . $db->error, E_USER_ERROR);
+        trigger_error("[ERROR] admin.php: Adding update notice: failed to prepare statement " . $db->error, E_USER_ERROR);
     endif;
 endif;
 
 if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DELETE')):
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Delete all migrations called", $logfile);
-
-    $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
-    $result = $db->query($sql);
-
-    if ($result !== false):
-        $totalMatchesInCardsScry = 0; // Initialize a counter
-
-        while ($row = $result->fetch_assoc()):
-            $oldScryfallId = $row['old_scryfall_id'];
-
-            // Count the matching records in cards_scry table (for testing)
-            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = '$oldScryfallId'";
-            $countResult = $db->query($countSql);
-
-            if ($countResult !== false):
-                $rowCount = $countResult->fetch_row();
-                $totalMatchesInCardsScry += $rowCount[0];
-            else:
-                // Handle count error if needed
-                trigger_error("[ERROR] cards.php: Counting matches in cards_scry: Wrong SQL: ($countSql) Error: " . $db->error, E_USER_ERROR);
-            endif;
-        endwhile;
-
-        // Log the total number of matches found in cards_scry (for testing)
-        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Total matches found in cards_scry: $totalMatchesInCardsScry", $logfile);
-
-        if ($_POST['delete_migrations'] == 'DELETE'):
-            // Delete records from migrations table
-            $deleteSql = "DELETE FROM migrations WHERE db_match = 1";
-            $deleteResult = $db->query($deleteSql);
-
-            if ($deleteResult !== false):
-                // Log the total number of rows deleted in migrations
-                $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $db->affected_rows . " rows in migrations", $logfile);
-            endif;
-        endif;
+    
+    // Delete records from cards_scry table
+    $deleteSql = "DELETE cards_scry FROM cards_scry INNER JOIN migrations ON cards_scry.id = migrations.old_scryfall_id WHERE migrations.db_match = 1";
+    $deleteResult = $db->query($deleteSql);
+    if ($deleteResult !== false):
+        // Log the total number of rows deleted in migrations
+        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $db->affected_rows . " rows in cards_scry", $logfile);
     endif;
+    // Update records in migrations table
+    $updateSql = "UPDATE migrations set db_match = 0 WHERE db_match = 1";
+    $updateResult = $db->query($updateSql);
+    if ($updateResult !== false):
+        // Log the total number of rows deleted in migrations
+        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Updated " . $db->affected_rows . " rows in migrations", $logfile);
+    endif;
+    
 elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'TEST')):
     $obj = new Message;
     $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Test delete migrations called", $logfile);

@@ -20,6 +20,7 @@ endif;
 $cssver = cssver();                                             // find CSS Version
 
 if (!isset($_SESSION['user']) OR !$_SESSION["logged"]):
+    $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];        // capture entered URL
     header("Location: /login.php");                             // check if user is logged in; else redirect to login.php
     exit();    
 else:

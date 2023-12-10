@@ -109,6 +109,63 @@ function getRowCount($file)
     return $count;
 }
 
+function safeDeleteCheck ($id)
+{
+    global $db, $logfile;
+    $safeScore = null;
+
+    //Find if it's in any decks
+    $userResultArray = $collectionResultArray = $resultArray = array();
+    $sql = "SELECT deckname, username FROM decks
+        LEFT JOIN users ON decks.owner = users.usernumber
+        LEFT JOIN deckcards ON decks.decknumber = deckcards.decknumber
+        WHERE deckcards.cardnumber = ?";
+    $params = [$id];
+    $result = $db->execute_query($sql,$params);
+    if ($result === false):
+        $safeScore = 10000;
+    else:
+        $deckMatches = $result->num_rows;
+        $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Matches in decks for '$id': $deckMatches",$logfile);
+        if($deckMatches > 0):
+            $safeScore = 1;
+        else:
+            $safeScore = 0;
+        endif;
+    endif;
+
+    //Get user list
+    $sql = "SELECT usernumber,username FROM users";
+    $result = $db->execute_query($sql);
+    if ($result === false):
+        $safeScore = 20000;
+    else:
+        $users = [];
+        while ($row = $result->fetch_assoc()):
+            $users[] = ['usernumber' => $row['usernumber'], 'username' => $row['username']];
+        endwhile;
+    endif;
+
+    //Find if it's in any user collections
+    foreach($users as $user):
+        $table = $user['usernumber']."collection";
+        $sql = "SELECT SUM(COALESCE(`$table`.`normal`, 0) + COALESCE(`$table`.`foil`, 0) + COALESCE(`$table`.`etched`, 0)) AS total FROM `$table` WHERE id = ?";
+        $params = [$id];
+        $result = $db->execute_query($sql,$params);
+        if ($result === false):
+            $safeScore = $safeScore + 100000;
+        else:
+            while ($row = $result->fetch_assoc()):
+                if($row['total'] !== NULL AND $row['total'] != 0):
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Found one!: User: {$user['username']}, ID: $id: Total: {$row['total']}",$logfile);
+                    $safeScore = $safeScore + 5;
+                endif;
+            endwhile;
+        endif;
+    endforeach;
+    return $safeScore;
+}
+
 // Script logic runs from here
 $page = 0;
 $file = getMigrationData($starturl,$file_folder,$max_fileage,$page);
@@ -190,12 +247,25 @@ foreach($result_files as $data):
                 if ($stmt === false):
                     trigger_error('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error, E_USER_ERROR);
                 endif;
-                if ($stmt->num_rows > 0):
+                $deleteCheck = safeDeleteCheck($old_scryfall_id);
+                if ($stmt->num_rows > 0 && $deleteCheck > 0):
                     $db_match = 1;
                     $need_action = $need_action + 1;
                     $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, $need_action to be actioned",$logfile);
                     $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note\n\n";
+                elseif ($stmt->num_rows > 0 && $deleteCheck === 0):
+                    //In db, but ok to remove
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
+                    //Delete query here
+                elseif ($stmt->num_rows > 0 && $deleteCheck > 10000):
+                    //In db, but safety check failed
+                    $db_match = 1;
+                    $need_action = $need_action + 1;
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data and safety check failed, $need_action to be actioned",$logfile);
+                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Safety check failed)\n\n";
                 else:
+                    //Not in db
+                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id does not exist in existing data",$logfile);
                     $db_match = 0;
                 endif;
                 $stmt = $db->prepare("INSERT INTO 
