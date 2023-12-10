@@ -28,32 +28,26 @@ else:
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
     $useremail = str_replace("'","",$_SESSION['useremail']);
-
-    if (isset($_POST['group'])):
-        $group = $db->escape($_POST['group']);
-        if ($group == 'OPT OUT'):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt out of groups",$logfile);
-            $updatedata = array (
-                'grpinout' => '0'
-            );
-            $optinquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-            if($optinquery === false):
-                trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-            else:    
-                $obj = new Message;
-                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Group opt-out run for $useremail",$logfile);
-            endif;
-        elseif ($group == 'OPT IN'):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt in to groups",$logfile);
-            $updatedata = array (
-                'grpinout' => 1
-            );
-            $optoutquery = $db->update('users',$updatedata,"WHERE usernumber='$user'");
-            if($optoutquery === false):
-                trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-            else:    
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Group opt-in run for $useremail",$logfile);
-            endif;
+    
+    if(isset($_POST['group']) && $_POST['group'] === 'OPT OUT'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt out of groups",$logfile);
+        $query = "UPDATE users SET grpinout = ? WHERE usernumber = ?";
+        $params = ['0', $user];
+        $result = $db->execute_query($query, $params);
+        if($result === false):
+            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+        else:    
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Group opt-out run for $useremail",$logfile);
+        endif;
+    elseif(isset($_POST['group']) && $_POST['group'] === 'OPT IN'):
+        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Call to opt into groups",$logfile);
+        $query = "UPDATE users SET grpinout = ? WHERE usernumber = ?";
+        $params = ['1', $user];
+        $result = $db->execute_query($query, $params);
+        if($result === false):
+            trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
+        else:    
+            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Group opt-in run for $useremail",$logfile);
         endif;
     endif;
 endif;
