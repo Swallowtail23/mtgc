@@ -17,7 +17,7 @@ endif;
 ?>
 
 <div id="logout">
-    <a href="/logout.php"></a>
+    <a href="/logout.php"><span class="material-symbols-outlined logouta">logout</span></a>
 </div>
 
 <div id="float_cview_div">

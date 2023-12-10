@@ -72,7 +72,7 @@ if((isset($mtcestatus)) AND ($mtcestatus != 1) AND (!isset($_SESSION["chgpwd"]))
    ?>
     <div id="ajaxresult">
     </div>
-    <div class="searchicon"> 
+    <div class="searchicon"><span class="material-symbols-outlined searchicon">search</span>
     </div>
     <div id='headersearch_div'>
         <div id='cancelsearch'>
