@@ -247,34 +247,38 @@ foreach($result_files as $data):
                 $stmt = $db->execute_query('SELECT id from cards_scry WHERE id = ?',[$old_scryfall_id]);
                 if ($stmt === false):
                     trigger_error('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                endif;
-                $deleteCheck = safeDeleteCheck($old_scryfall_id);
-                if ($stmt->num_rows > 0 && $deleteCheck > 0):
-                    $db_match = 1;
-                    $need_action = $need_action + 1;
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data but not safe to delete, $need_action to be actioned",$logfile);
-                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Not safe to delete)\n\n";
-                elseif ($stmt->num_rows > 0 && $deleteCheck === 0):
-                    //In db, but ok to remove
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
-                    $deleted = $deleted + 1;
-                    //Delete query here
-                    $sql = "DELETE FROM cards_scry WHERE id = ?";
-                    $params = [$old_scryfall_id];
-                    $deleteResult = $db->execute_query($sql,$params);
-                    if ($deleteResult !== false):
-                        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $old_scryfall_id from cards_scry", $logfile);
-                    endif;
-                elseif ($stmt->num_rows > 0 && $deleteCheck > 10000):
-                    //In db, but safety check failed
-                    $db_match = 1;
-                    $need_action = $need_action + 1;
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data and safety check failed, $need_action to be actioned",$logfile);
-                    $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Safety check failed)\n\n";
                 else:
-                    //Not in db
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id does not exist in existing data",$logfile);
-                    $db_match = 0;
+                    $deleteCheck = safeDeleteCheck($old_scryfall_id);
+                    if ($stmt->num_rows > 0 && $deleteCheck > 10000):
+                        //In db, but safety check failed
+                        $db_match = 1;
+                        $need_action = $need_action + 1;
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data and safety check failed, $need_action to be actioned",$logfile);
+                        $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Safety check failed)\n\n";
+                    elseif ($stmt->num_rows > 0 && $deleteCheck > 0):
+                        $db_match = 1;
+                        $need_action = $need_action + 1;
+                        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data but not safe to delete, $need_action to be actioned",$logfile);
+                        $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Not safe to delete)\n\n";
+                    elseif ($stmt->num_rows > 0 && $deleteCheck === 0):
+                        //In db, but ok to remove
+                        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
+                        $deleted = $deleted + 1;
+                        //Delete query here
+                        $sql = "DELETE FROM cards_scry WHERE id = ?";
+                        $params = [$old_scryfall_id];
+                        $deleteResult = $db->execute_query($sql,$params);
+                        if ($deleteResult !== false):
+                            $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $old_scryfall_id from cards_scry", $logfile);
+                            $db_match = 0;
+                        else:
+                            $db_match = 1;
+                        endif;
+                    else:
+                        //Not in db
+                        $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id does not exist in existing data",$logfile);
+                        $db_match = 0;
+                    endif;
                 endif;
                 $stmt = $db->prepare("INSERT INTO 
                                         `migrations`
