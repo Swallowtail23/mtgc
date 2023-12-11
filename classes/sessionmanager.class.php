@@ -63,13 +63,28 @@ class SessionManager {
         // Get user status and info for logged-in user, and currency fx rate if set
         $userNumber = $this->session['user'];
         $query = "SELECT status, username, admin, grpinout, groupid, collection_view, currency FROM users WHERE usernumber = ?";
-
         $stmt = $this->db->prepare($query);
+        if ($stmt === false):
+            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Prepare failed: " . $this->db->error,$this->logfile);
+            return false;
+        endif;
         $stmt->bind_param("s", $userNumber);
-        $stmt->execute();
+        if (!$stmt->execute()):
+            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Execute failed: " . $this->db->error,$this->logfile);
+            return false;
+        endif;
         $stmt->store_result();
+        if ($stmt->num_rows === 0):
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No records found for usernumber: $userNumber",$this->logfile);
+            return false;
+        endif;
         $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view, $currency);
-            
+        if ($stmt->fetch()):
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User status: $status, $username, $adminDb, $grpinout, $groupid, $collection_view, $currency",$this->logfile);
+        else:
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Fetch failed",$this->logfile);
+        endif;
+        
         if ($stmt->error OR $stmt->num_rows === 0 OR $status === '' OR $status === 'disabled' OR $status === 'locked'):
             $stmt->close();
             session_destroy();

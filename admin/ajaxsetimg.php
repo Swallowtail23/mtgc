@@ -67,8 +67,8 @@ else:
 
             $db->close();
             $completediterations = $iteration - 1;
-            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Processed $completediterations of $num_rows images for $setcode. Sucess: $success_count; Failed: $fail_count", $logfile);
-            echo json_encode(["status" => "success", "message" => "Processed $completediterations of $num_rows images for $setcode. Sucess: $success_count; Failed: $fail_count"]);
+            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; Failed: $fail_count", $logfile);
+            echo json_encode(["status" => "success", "message" => "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; Failed: $fail_count"]);
         else:
             echo json_encode(["status" => "error", "message" => "SQL error"]);
             trigger_error('[ERROR] ajaxsetimg.php: Error: ' . $db->error, E_USER_ERROR);
