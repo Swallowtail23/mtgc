@@ -57,7 +57,7 @@
  *              Migrate more to prepared statements, and add collector number to Quick Add
  * 
  * 18.1         11/12/23
- *              Move deck functions to DeckManager class
+ *              Move deck, price, import/export, image functions to respective classes
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -102,11 +102,13 @@ function cssver()
 function spamcheck($field)
 {
     global $db, $logfile;
+    $msg = new Message;
+    
     // Sanitize e-mail address
-    $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Checking email address <$field>", $logfile);
+    $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Checking email address <$field>", $logfile);
     $field = filter_var($field, FILTER_SANITIZE_EMAIL);
     if (!filter_var($field, FILTER_VALIDATE_EMAIL)):
-        $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Invalid email address <$field> passed", $logfile);
+        $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Invalid email address <$field> passed", $logfile);
         return FALSE;
     else:
         $sql = "SELECT usernumber, username FROM users WHERE email = ? LIMIT 1";
@@ -118,7 +120,7 @@ function spamcheck($field)
             if (empty($row)):
                 return FALSE;
             elseif (filter_var($field, FILTER_VALIDATE_EMAIL)):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Email address validated for reset request", $logfile);
+                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Email address validated for reset request", $logfile);
                 return $field;
             else:
                 return FALSE;
@@ -130,7 +132,9 @@ function spamcheck($field)
 function mtcemode($user)
 {
     global $db,$logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking maintenance mode, user $user", $logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking maintenance mode, user $user", $logfile);
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
     $result1 = $db->execute_query($sql1);
     if ($result1 === false):
@@ -138,7 +142,7 @@ function mtcemode($user)
     else:
         $row1 = $result1->fetch_assoc();
         if (!empty($row1) AND $row1['mtce'] == 1):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, running admin check", $logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, running admin check", $logfile);
             $sql2 = "SELECT admin FROM users WHERE usernumber = ?";
             $result2 = $db->execute_query($sql2, [$user]);
             if ($result2 === false):
@@ -147,10 +151,10 @@ function mtcemode($user)
                 $row2 = $result2->fetch_assoc();
                 if (!empty($row2)):
                     if ($row2['admin'] == 1):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is admin, ignoring (return 2)", $logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is admin, ignoring (return 2)", $logfile);
                         return 2;
                     else:
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is not admin (return 1, destroy session)", $logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is not admin (return 1, destroy session)", $logfile);
                         return 1;
                     endif;
                 else:
@@ -158,7 +162,7 @@ function mtcemode($user)
                 endif;
             endif;
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode not set", $logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode not set", $logfile);
             return 0; // maintenance mode not set
         endif;
     endif;
@@ -289,6 +293,8 @@ function finddates($str)
 function checkRemoteFile($url)
 {
     global $logfile;
+    $msg = new Message;
+    
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL,$url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
@@ -303,24 +309,14 @@ function checkRemoteFile($url)
     $curldetail = curl_getinfo($ch);
     curl_close($ch);
     if($curlresult === FALSE or $curldetail['http_code'] != 200 or $curldetail['download_content_length'] < 1):
-        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} DOES NOT exist, HTTP code is: ".
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} DOES NOT exist, HTTP code is: ".
                 $curldetail['http_code'].", file size is: ".$curldetail['download_content_length']." bytes",$logfile);
         return false;
     else: 
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} exists, HTTP code is: ".
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} exists, HTTP code is: ".
                 $curldetail['http_code'].", file size is: ".$curldetail['download_content_length']." bytes",$logfile);
         return true;
     endif;
-}
-
-function getimgname($cardid)
-{
-    global $logfile;
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Getting image name - cardid: $cardid",$logfile);
-    $imgname = $cardid.'.jpg';
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": card image name is $imgname",$logfile);
-    return $imgname;
 }
 
 function getStringParameters($input,$ignore1,$ignore2='')
@@ -379,71 +375,6 @@ function valid_pass($candidate)
     $hole='';
 }
 
-function exportCollectionToCsv($table,$filename = 'export.csv')
-{
-        global $db, $logfile;
-        $csv_terminated = "\n";
-	$csv_separator = ",";
-	$csv_enclosed = '"';
-	$csv_escaped = "\\";
-	$table = $db->real_escape_string($table);
-        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$logfile);
-        
-	// Gets the data from the database
-	$result = $db->query($sql);
-        if($result === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-        else:
-            $fields_cnt = $result->field_count;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Number of fields: $fields_cnt",$logfile);
-            $schema_insert = '';
-            for ($i = 0; $i < $fields_cnt; $i++):
-                $fieldinfo = mysqli_fetch_field_direct($result, $i);
-                $l = $csv_enclosed.str_replace($csv_enclosed, $csv_escaped.$csv_enclosed, stripslashes($fieldinfo->name)).$csv_enclosed;
-                $schema_insert .= $l;
-                $schema_insert .= $csv_separator;
-            endfor;
-
-            $out = trim(substr($schema_insert, 0, -1));
-            $out .= $csv_terminated;
-
-            // Format the data
-            while($row = $result->fetch_row()):
-                $schema_insert = '';
-                for ($j = 0; $j < $fields_cnt; $j++):
-                    if ($row[$j] == '0' || $row[$j] != ''):
-                        if ($csv_enclosed == ''):
-                            $schema_insert .= $row[$j];
-                        else:
-                            $schema_insert .= $csv_enclosed .
-                            str_replace($csv_enclosed, $csv_escaped . $csv_enclosed, $row[$j]) . $csv_enclosed;
-                        endif;
-                    else:
-                        $schema_insert .= '';
-                    endif;
-                    if ($j < $fields_cnt - 1):
-                        $schema_insert .= $csv_separator;
-                    endif;
-                endfor;
-                $out .= $schema_insert;
-                $out .= $csv_terminated;
-            endwhile;
-                $out .= $csv_enclosed;
-                $out .= $csv_terminated;
-            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-            header("Content-Length: " . strlen($out));
-            // Output to browser with appropriate mime type, you choose ;)
-            header("Content-type: text/x-csv; charset=UTF-8");
-            //header("Content-type: text/csv");
-            //header("Content-type: application/csv");
-            header("Content-Disposition: attachment; filename=$filename");
-            echo "\xEF\xBB\xBF"; // UTF-8 BOM
-            echo $out;
-            exit;
-        endif;
-}
-
 function autolink($str, $attributes=array()) {
     $attrs = '';
     foreach ($attributes as $attribute => $value):
@@ -473,336 +404,19 @@ function get_full_url()
     return $myUrl;
 }
 
-function scryfall($cardid,$action = '')
-// Fetch TCG buy URI and price from scryfall.com JSON data
-{
-    //Set up the function
-    global $db,$logfile,$useremail,$max_card_data_age;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail for $cardid",$logfile);
-    if(!isset($cardid)):
-        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail without required card id",$logfile);
-        exit;
-    endif;
-    $baseurl = "https://api.scryfall.com/";
-    $cardid = $db->real_escape_string($cardid);
-    $time = time();
-    //Set the URL
-    $url = $baseurl."cards/".$cardid."?".$time;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail URL for $cardid is $url",$logfile);
-        
-    if($row = $db->execute_query("Select id FROM cards_scry WHERE id = ?",[$cardid])):
-        if ($row->num_rows === 0):
-            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, no card with this id - exiting (2)",$logfile);
-            exit;
-        elseif ($row->num_rows === 1):
-            $scrymethod = 'id';
-        endif;
-    else:
-        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API error",$logfile);
-        $this->status = 0;
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-    
-    // Check for existing data, not too old, and set required action
-    $rowqry = $db->execute_query("SELECT jsonupdatetime, tcg_buy_uri FROM scryfalljson WHERE id = ? LIMIT 1",[$cardid]);
-    if ($rowqry !== false AND $rowqry->num_rows < 1):
-        //No data, fetch and insert:
-        $scryaction = 'get';
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: No data exists for $cardid, running '$scryaction'",$logfile);
-    elseif ($rowqry !== false):
-        $row = $rowqry->fetch_assoc();
-        $lastjsontime = $row['jsonupdatetime'];
-        $record_age = (time() - $lastjsontime);
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data exists for $cardid, $record_age seconds old",$logfile);
-        if ($record_age > $max_card_data_age):
-            //Old data, fetch and update:
-            $scryaction = 'update';
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data stale (older than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
-        elseif ($action == "update"):
-            //Update forced
-            $scryaction = 'update';
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data update requested for $cardid, running '$scryaction'",$logfile);
-        else:
-            //data is there and is current:
-            $scryaction = 'read';
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with result: Data not stale (younger than $max_card_data_age seconds) for $cardid, running '$scryaction'",$logfile);
-        endif;
-    else:
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
-    endif;
-            
-    // Actions:
-
-    // UPDATE
-    if($scryaction === 'update'):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with 'update' result: fetching $url",$logfile);
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $curlresult = curl_exec($ch);
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with update: $curlresult",$logfile);
-        curl_close($ch);
-        $scryfall_result = json_decode($curlresult,true);
-        if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
-            $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
-        else:
-            $tcg_buy_uri = null;
-        endif;
-        if(isset($scryfall_result["prices"])):
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price section included",$logfile);
-            if(isset($scryfall_result["prices"]["usd"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd set: {$scryfall_result["prices"]["usd"]}",$logfile);
-                if($scryfall_result["prices"]["usd"] == ''):
-                    $price = 0.00;
-                elseif($scryfall_result["prices"]["usd"] == 'null'):
-                    $price = NULL;
-                else:
-                    $price = $scryfall_result["prices"]["usd"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to null",$logfile);
-                $price = NULL;
-            endif;
-            if(isset($scryfall_result["prices"]["usd_foil"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}",$logfile);
-                if($scryfall_result["prices"]["usd_foil"] == ''):
-                    $price_foil = 0.00;
-                elseif($scryfall_result["prices"]["usd_foil"] == 'null'):
-                    $price_foil = NULL;
-                else:
-                    $price_foil = $scryfall_result["prices"]["usd_foil"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to null",$logfile);
-                $price_foil = NULL;
-            endif;
-            if(isset($scryfall_result["prices"]["usd_etched"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched set: {$scryfall_result["prices"]["usd_etched"]}",$logfile);
-                if($scryfall_result["prices"]["usd_etched"] == ''):
-                    $price_etched = 0.00;
-                elseif($scryfall_result["prices"]["usd_etched"] == 'null'):
-                    $price_etched = NULL;
-                else:
-                    $price_etched = $scryfall_result["prices"]["usd_etched"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched not set, setting to null",$logfile);
-                $price_etched = NULL;
-            endif;
-
-            if(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = 0.00;
-            elseif(($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = $price;
-            elseif(($price == 0.00 OR $price === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = $price_foil;
-            elseif(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL)):
-                $price_sort = $price_etched;
-            elseif($price == 0.00 OR $price === NULL):
-                $price_sort = min($price_etched,$price_foil);
-            elseif($price_foil == 0.00 OR $price_foil === NULL):
-                $price_sort = min($price_etched,$price);
-            elseif($price_etched == 0.00 OR $price_etched === NULL):
-                $price_sort = min($price,$price_foil);
-            else:
-                $price_sort = min($price,$price_foil,$price_etched);
-            endif;
-
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Scryfall data: price: $price, price foil: $price_foil, price etched: $price_etched, therefore $price_sort is used for sorting price",$logfile);
-            $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri = ?,jsonupdatetime = ? WHERE id = ?';
-            $stmt = $db->prepare($update_tcg_uri);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_tcg_uri",$logfile);
-            $stmt->bind_param('sss', $tcg_buy_uri,$time,$cardid);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri failed ".$db->error, E_USER_ERROR,$logfile);
-            else:
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updating tcg uri, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
-            endif;
-
-            $update_prices = 'UPDATE cards_scry SET price = ?,price_foil = ?,price_etched = ?,price_sort = ? WHERE id = ?';
-            $stmt = $db->prepare($update_prices);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $update_prices",$logfile);
-            $stmt->bind_param('sssss', $price,$price_foil,$price_etched,$price_sort,$cardid);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed: ".$db->error, E_USER_ERROR,$logfile);
-            else:
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
-            endif;
-        else:
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
-            $prices = 0;
-            $price = 0;
-            $price_foil = 0;
-            $price_etched = 0;
-        endif;
-        $returnarray = array("action" => "update", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
-
-    // READ
-    elseif($scryaction === 'read'):
-        $tcg_buy_uri = $row['tcg_buy_uri'];
-        $obj = new Message;
-        $price = NULL;
-        $price_foil = NULL;
-        $price_etched = NULL;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, returning $tcg_buy_uri",$logfile);
-        $returnarray = array("action" => "read", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
-    
-    // GET
-    elseif($scryaction === 'get'):
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with 'get' result: fetching $url",$logfile);
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $curlresult = curl_exec($ch);
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail with get: $curlresult",$logfile);
-        curl_close($ch);
-        $scryfall_result = json_decode($curlresult,true);
-        if(isset($scryfall_result["purchase_uris"]["tcgplayer"])):
-            $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result contain tcg link {$scryfall_result["purchase_uris"]["tcgplayer"]}",$logfile);
-        else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a tcg link",$logfile);
-            $tcg_buy_uri = 0;
-        endif;
-        if(isset($scryfall_result["prices"])):
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price section included",$logfile);
-            if(isset($scryfall_result["prices"]["usd"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd set: {$scryfall_result["prices"]["usd"]}",$logfile);
-                if($scryfall_result["prices"]["usd"] == ''):
-                    $price = 0.00;
-                elseif($scryfall_result["prices"]["usd"] == 'null'):
-                    $price = NULL;
-                else:
-                    $price = $scryfall_result["prices"]["usd"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd not set, setting to null",$logfile);
-                $price = NULL;
-            endif;
-            if(isset($scryfall_result["prices"]["usd_foil"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}",$logfile);
-                if($scryfall_result["prices"]["usd_foil"] == ''):
-                    $price_foil = 0.00;
-                elseif($scryfall_result["prices"]["usd_foil"] == 'null'):
-                    $price_foil = NULL;
-                else:
-                    $price_foil = $scryfall_result["prices"]["usd_foil"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_foil not set, setting to null",$logfile);
-                $price_foil = NULL;            
-            endif;
-            if(isset($scryfall_result["prices"]["usd_etched"])):
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched set: {$scryfall_result["prices"]["usd_etched"]}",$logfile);
-                if($scryfall_result["prices"]["usd_etched"] == ''):
-                    $price_etched = 0.00;
-                elseif($scryfall_result["prices"]["usd_etched"] == 'null'):
-                    $price_etched = NULL;
-                else:
-                    $price_etched = $scryfall_result["prices"]["usd_etched"];
-                endif;
-            else:
-                $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price/usd_etched not set, setting to null",$logfile);
-                $price_etched = NULL;            
-            endif;
-            
-            if(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = 0.00;
-            elseif(($price_foil == 0.00 OR $price_foil === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = $price;
-            elseif(($price == 0.00 OR $price === NULL) AND ($price_etched == 0.00 OR $price_etched === NULL)):
-                $price_sort = $price_foil;
-            elseif(($price == 0.00 OR $price === NULL) AND ($price_foil == 0.00 OR $price_foil === NULL)):
-                $price_sort = $price_etched;
-            elseif($price == 0.00 OR $price === NULL):
-                $price_sort = min($price_etched,$price_foil);
-            elseif($price_foil == 0.00 OR $price_foil === NULL):
-                $price_sort = min($price_etched,$price);
-            elseif($price_etched == 0.00 OR $price_etched === NULL):
-                $price_sort = min($price,$price_foil);
-            else:
-                $price_sort = min($price,$price_foil,$price_etched);
-            endif;
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, prices are: $price, $price_foil and $price_etched; Sort price = $price_sort",$logfile);
-        else:
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, result does not contain a prices section",$logfile);
-            $prices = 0;
-            $price = 0;
-            $price_foil = 0;
-            $price_etched = 0;
-            
-        endif;
-        $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
-        $stmt = $db->prepare($query);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $query",$logfile);
-        $stmt->bind_param('sss', $cardid, $time, $tcg_buy_uri);
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-        endif;
-        $exec = $stmt->execute();
-        if ($exec === false):
-            $obj = new Message;
-            $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Adding update notice: failed ".$db->error, E_USER_ERROR,$logfile);
-        else:
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, new data written for $cardid: Insert ID: ".$stmt->insert_id,$logfile);
-        endif;
-        if(!isset($prices)):
-            $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, writing prices $price, $price_foil, $price_sort",$logfile);
-            $query = 'UPDATE cards_scry SET price = ?,price_foil = ?,price_sort = ? WHERE id = ?';
-            $stmt = $db->prepare($query);
-            $stmt->bind_param('ssss',$price,$price_foil,$price_sort,$cardid);
-            if ($stmt === false):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $exec = $stmt->execute();
-            if ($exec === false):
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data update failed",$logfile);
-            else:
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall API by $useremail, price data updated: Insert ID: ".$stmt->insert_id,$logfile);
-            endif;
-        endif;
-        $returnarray = array("action" => "get", "tcg_uri" => $tcg_buy_uri, "price" => $price, "price_foil" => $price_foil, "price_etched" => $price_etched);
-    endif;
-    return $returnarray;
-}
-
 function loginstamp($useremail)
 {
     global $db, $logfile;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login",$logfile);
-        $logindate = date("Y-m-d");
-        $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
+    $msg = new Message;
+    
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login",$logfile);
+    $logindate = date("Y-m-d");
+    $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
     if($db->execute_query($query,[$logindate,$useremail]) === TRUE):
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login successful",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login successful",$logfile);
         return 1;
     else:
-        $obj = new Message;
-        $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login failed",$logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login failed",$logfile);
         return 0;
     endif;
 }
@@ -841,140 +455,16 @@ function validateTrueDecimal($v)
 {	
     global $logfile;
     $result = floor($v);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking $v for true decimal, result is $result",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking $v for true decimal, result is $result",$logfile);
     return(floor($v) != $v);
-    
 }
-
-function refresh_image($cardid)
-{
-    global $db, $logfile, $ImgLocation, $two_card_detail_sections, $serveremail, $adminemail;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$logfile);
-    
-    set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    });
-    
-    $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = ? LIMIT 1";
-    $result = $db->execute_query($sql,[$cardid]);
-    if ($result === false):
-        restore_error_handler();
-        return 'failure'; 
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
-    else:
-        $row = $result->fetch_assoc();
-        $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-        $imagefunction = $imageManager->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
-        if($imagefunction['front'] != 'error'):
-            $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
-            $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
-            try {
-                if (!unlink($imageurl)):
-                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
-                    throw new Exception('Failed to unlink image');
-                endif;
-                $imagedelete = 'success';
-            } catch (Exception $e) {
-                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
-                $imagedelete = 'failure';
-                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                $subject = "Image unlink failure";
-                $message = "Failed image unlink: $imageurl";
-                mail($adminemail, $subject, $message, $from);
-                restore_error_handler();
-                return $imagedelete; // Return failure if unlink fails
-            }
-        endif;
-        if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
-            $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
-            $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
-            try {
-                if (!unlink($imagebackurl)):
-                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$logfile);
-                    throw new Exception('Failed to unlink back image');
-                endif;
-                $imagebackdelete = 'success';
-            } catch (Exception $e) {
-                $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$logfile);
-                $imagebackdelete = 'failure';
-                $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                $subject = "Image unlink failure";
-                $message = "Failed image unlink: $imagebackurl";
-                mail($adminemail, $subject, $message, $from);
-                restore_error_handler();
-                return $imagebackdelete; // Return failure if unlink fails
-            }
-        endif;
-    endif;
-    //Refresh image
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$logfile);
-    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-    $imagefunction = $imageManager->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
-    return 'success';
-}
-
-function update_collection_values($collection)
-{
-    global $db, $logfile;
-    if($findcards = $db->query("SELECT
-                            `$collection`.id AS id,
-                            IFNULL(`$collection`.normal,0) AS mynormal,
-                            IFNULL(`$collection`.foil, 0) AS myfoil,
-                            IFNULL(`$collection`.etched, 0) AS myetch,
-                            topvalue,
-                            IFNULL(price, 0) AS normalprice,
-                            IFNULL(price_foil, 0) AS foilprice,
-                            IFNULL(price_etched, 0) AS etchedprice
-                            FROM `$collection` LEFT JOIN `cards_scry` 
-                            ON `$collection`.id = `cards_scry`.id
-                            WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SQL query succeeded",$logfile);
-        $i = 0;
-        while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
-            $normalqty = $row['mynormal'];
-            $normalprice = $row['normalprice'];
-            $foilqty = $row['myfoil'];
-            $foilprice = $row['foilprice'];
-            $etchedqty = $row['myetch'];
-            $etchedprice = $row['etchedprice'];
-            if($normalqty * $normalprice > 0):
-                $normalrate = $normalprice;
-            else:
-                $normalrate = 0;
-            endif;
-            if($foilqty * $foilprice > 0):
-                $foilrate = $foilprice;
-            else:
-                $foilrate = 0;
-            endif;
-            if($etchedqty * $etchedprice > 0):
-                $etchedrate = $etchedprice;
-            else:
-                $etchedrate = 0;
-            endif;
-            $selectedrate = max($normalrate,$foilrate,$etchedrate);
-            $cardid = $db->real_escape_string($row['id']);
-            $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
-                VALUES (?,?)
-                ON DUPLICATE KEY UPDATE topvalue = ?";
-            $params = [$selectedrate,$cardid,$selectedrate];
-            if($updatemax = $db->execute_query($updatemaxqry,$params)):
-                //succeeded
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
-            endif;
-            $i = $i + 1;
-        endwhile;
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection value update completed",$logfile);
-    else: 
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
-    endif;
-    return $i;
-}
-
 function update_topvalue_card($collection,$scryid)
 {
     global $db, $logfile;
+    $msg = new Message;
+    
     if($findcards = $db->execute_query("SELECT
                             `$collection`.id AS id,
                             IFNULL(`$collection`.normal,0) AS mynormal,
@@ -989,7 +479,7 @@ function update_topvalue_card($collection,$scryid)
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
                             AND `$collection`.id = ?",[$scryid])):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
         while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
             $normalqty = $row['mynormal'];
             $normalprice = $row['normalprice'];
@@ -1067,7 +557,9 @@ function cardtypes($finishes)
 function cardtype_for_id($id)
 {
     global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up card types for card $id",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up card types for card $id",$logfile);
     $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", [$id]);
     if($stmt != TRUE):
         trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -1075,463 +567,60 @@ function cardtype_for_id($id)
         if ($stmt->num_rows > 0):
             $result = $stmt->fetch_assoc();
             if(isset($result['finishes'])):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, looking up finishes",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, looking up finishes",$logfile);
                 $finishes = json_decode($result['finishes'], TRUE);
                 $cardtypes = cardtypes($finishes);
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, but no finishes",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, but no finishes",$logfile);
                 $cardtypes = 'none';
             endif;
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id has no match",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id has no match",$logfile);
             $cardtypes = 'nomatch';
         endif;
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card type for $id is $cardtypes",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card type for $id is $cardtypes",$logfile);
     return $cardtypes;
-}
-
-function import($filename)
-{
-    global $db, $logfile, $mytable, $useremail, $serveremail;
-    //Import uploaded file to Database
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Import starting",$logfile);
-    $handle = fopen($filename, "r");
-    $i = 0;
-    $count = 0;
-    $total = 0;
-    $warningsummary = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable) \n \n';
-    while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
-        $idimport = 0;
-        $row_no = $i + 1;
-        if ($i === 0):
-            if (       (strpos($data[0],'setcode') === FALSE)
-                    OR (strpos($data[1],'number') === FALSE)
-                    OR (strpos($data[2],'name') === FALSE)
-                    OR (strpos($data[3],'normal') === FALSE)
-                    OR (strpos($data[4],'foil') === FALSE)
-                    OR (strpos($data[5],'etched') === FALSE) 
-                    OR (strpos($data[6],'id') === FALSE)):
-                echo "<h4>Incorrect file format</h4>";
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} does not contain header row",$logfile);
-                exit;
-            endif;
-        elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
-            $data0 = $data[0];
-            $data1 = $data[1];
-            $data2 = stripslashes($data[2]);
-            if (!empty($data[3])): // normal qty
-                $data3 = $data[3];
-            else:
-                $data3 = 0;
-            endif;
-            if (!empty($data[4])): // foil qty
-                $data4 = $data[4];
-            else:
-                $data4 = 0;
-            endif;
-            if (!empty($data[5])): // etched qty
-                $data5 = $data[5];
-            else:
-                $data5 = 0;
-            endif;
-            if (!empty($data[6])): // ID
-                $data6 = $data[6];
-            else:
-                $data6 = null;
-            endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Row $row_no of import file: setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})",$logfile);
-            $supplied_id = $data6; // id
-            if (!is_null($data6)): // ID has been supplied, run an ID check / import first
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data has an ID ($data6), checking for a match",$logfile);
-                $cardtype = cardtype_for_id($data6);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card type is: $cardtype",$logfile);
-                if($cardtype == 'nomatch'):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is not a valid id, trying setcode/number...",$logfile);
-                    $importable = FALSE;
-                elseif($cardtype == 'none'):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid but db has no cardtype info",$logfile);
-                    $importable = FALSE;
-                else:
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: ID $data6 is valid and we have cardtype info",$logfile);
-                    if($cardtype == 'normalfoiletched'):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$logfile);
-                        // All options available for import, no checks to be made
-                        $importable = TRUE;
-                    elseif($cardtype == 'normalfoil'):
-                        if($data5 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif; 
-                    elseif($cardtype == 'normaletched'):
-                        if($data4 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif; 
-                    elseif($cardtype == 'foiletched'):
-                        if($data3 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif; 
-                    elseif($cardtype == 'etchedonly'):
-                        if($data3 > 0 or $data4 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif;                                                
-                    elseif($cardtype == 'foilonly'):
-                        if($data3 > 0 or $data5 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif;
-                    elseif($cardtype == 'normalonly'):
-                        if($data4 > 0 or $data5 > 0):
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                            echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                            echo "<img src='/images/error.png' alt='Error'><br>";
-                            $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
-                            $warningsummary = $warningsummary.$newwarning;
-                            $i = $i + 1;
-                            continue;
-                        else:
-                            $importable = TRUE;
-                        endif;
-                    endif;
-                endif;
-                if(isset($importable) AND $importable != FALSE):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Match found for ID $data6 with no misallocated card types, will import",$logfile);
-                    $stmt = $db->prepare("  INSERT INTO
-                                                `$mytable`
-                                                (id,normal,foil,etched)
-                                            VALUES
-                                                (?,?,?,?)
-                                            ON DUPLICATE KEY UPDATE
-                                                id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil),etched=VALUES(etched)
-                                        ");
-                    if ($stmt === false):
-                        trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $bind = $stmt->bind_param("ssss",
-                                    $data6,
-                                    $data3,
-                                    $data4,
-                                    $data5
-                                );
-                    if ($bind === false):
-                        trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $exec = $stmt->execute();
-                    if ($exec === false):
-                        trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
-                    else:
-                        $status = $db->affected_rows; // 1 = add, 2 = change, 0 = no change
-                        if($status === 1):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
-                        elseif($status === 2):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
-                        else:
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
-                        endif;
-                    endif;
-                        $stmt->close();
-                    if($status === 1 OR $status === 2 OR $status === 0):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran - checking",$logfile);
-                        if($sqlcheckqry = $db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
-                            $rowcount = $sqlcheckqry->num_rows;
-                            if($rowcount > 0):
-                                $sqlcheck = $sqlcheckqry->fetch_assoc();
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                    $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                    $count = $count + 1;
-                                    $idimport = 1;
-                                endif;
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = No match",$logfile);
-                                $idimport = 0;
-                            endif;
-                        else:
-                            trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
-                        endif;
-                    endif;
-                endif;    
-            endif;
-            if (!empty($data0) AND !empty($data1) AND !empty($data2) AND $idimport === 0): // ID import has not been successful, try with setcode, number, name
-                $obj = new Message;
-                $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - trying setcode/number",$logfile);
-                $stmt = $db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", [$data0,$data1]);
-                if($stmt != TRUE):
-                    trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
-                else:
-                    if ($stmt->num_rows > 0):
-                        $result = $stmt->fetch_assoc();
-                        if(isset($result['name'])):
-                            $db_name = $result['name'];
-                            $db_id = $result['id'];
-                            $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
-                            if($db_name != $data2):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$logfile);
-                                if(!in_array($data2,$db_all_names)):
-                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])",$logfile);
-                                    echo "Row $row_no: ERROR: ID and Name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                    echo "<img src='/images/error.png' alt='Error'><br>";
-                                    $newwarning = "ERROR - name mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                    $warningsummary = $warningsummary.$newwarning;
-                                    $i = $i + 1;
-                                    continue;
-                                else:
-                                    $importtype = 'alternate_name';
-                                    $data6 = $result['id'];
-                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Supplied name $data2 matches with a secondary name for id {$result['id']}, will import",$logfile);
-                                endif;
-                            else:
-                                if(isset($result['finishes'])):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes",$logfile);
-                                    $data6 = $result['id'];
-                                    $finishes = json_decode($result['finishes'], TRUE);
-                                    $cardtype = cardtypes($finishes);
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card type is: $cardtype",$logfile);
-                                    if($cardtype != 'none'):
-                                        if($cardtype == 'normalfoiletched'):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$logfile);
-                                        elseif($cardtype == 'normalfoil'):
-                                            if($data5 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif; 
-                                        elseif($cardtype == 'normaletched'):
-                                            if($data4 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif; 
-                                        elseif($cardtype == 'foiletched'):
-                                            if($data3 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif; 
-                                        elseif($cardtype == 'etchedonly'):
-                                            if($data3 > 0 or $data4 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif;                                                
-                                        elseif($cardtype == 'foilonly'):
-                                            if($data3 > 0 or $data5 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif;
-                                        elseif($cardtype == 'normalonly'):
-                                            if($data4 > 0 or $data5 > 0):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$logfile);
-                                                echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                                                echo "<img src='/images/error.png' alt='Error'><br>";
-                                                $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
-                                                $warningsummary = $warningsummary.$newwarning;
-                                                $i = $i + 1;
-                                                continue;
-                                            endif;
-                                        endif;
-                                    endif;    
-                                endif; 
-                            endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Setcode ($data0)/collector number ($data1) with supplied ID ($supplied_id) matched on name and importing as ID $data6",$logfile);
-                        endif;
-                    else: //if ($stmt->num_rows > 0)
-                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card setcode and number do not match a card in db",$logfile);
-                        echo "Row $row_no: ERROR: ID and name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
-                        echo "<img src='/images/error.png' alt='Error'><br>";
-                        $newwarning = "ERROR - failed to find an ID and name match, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
-                        $warningsummary = $warningsummary.$newwarning;
-                        $i = $i + 1;
-                        continue;
-                    endif;
-                endif;    
-
-                if (!empty($data6)): //write the import
-                    $stmt = $db->prepare("  INSERT INTO
-                                                `$mytable`
-                                                (id,normal,foil,etched)
-                                            VALUES
-                                                (?,?,?,?)
-                                            ON DUPLICATE KEY UPDATE
-                                                id=VALUES(id),normal=VALUES(normal),foil=VALUES(foil),etched=VALUES(etched)
-                                        ");
-                    if ($stmt === false):
-                        trigger_error('[ERROR] profile.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $bind = $stmt->bind_param("ssss",
-                                    $data6,
-                                    $data3,
-                                    $data4,
-                                    $data5
-                                );
-                    if ($bind === false):
-                        trigger_error('[ERROR] profile.php: Binding parameters: ' . $db->error, E_USER_ERROR);
-                    endif;
-                    $exec = $stmt->execute();
-                    if ($exec === false):
-                        trigger_error("[ERROR] profile.php: Importing row $row_no" . $db->error, E_USER_ERROR);
-                    else:
-                        $status = $db->affected_rows; // 1 = add, 2 = change, 0 = no change
-                        if($status === 1):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: New, imported - no error returned; return code: $status",$logfile);
-                        elseif($status === 2):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Updated - no error returned; return code: $status",$logfile);
-                        else:
-                            $obj = new Message;
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: No change - no error returned; return code: $status",$logfile);
-                        endif;
-                    endif;
-                    $stmt->close();
-                    if($status === 1 OR $status === 2 OR $status === 0):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Import query ran OK - checking...",$logfile);
-                        if($sqlcheckqry = $db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
-                            $rowcount = $sqlcheckqry->num_rows;
-                            if($rowcount > 0):
-                                $sqlcheck = $sqlcheckqry->fetch_assoc();
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$logfile);
-                                if (($sqlcheck['normal'] == $data3) AND ($sqlcheck['foil'] == $data4) AND ($sqlcheck['etched'] == $data5)):
-                                    if(isset($importtype) AND $importtype == 'alternate_name'):
-                                        echo "Row $row_no: WARNING: Matched on alternate name, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/warning.png' alt='Warning'><br>";
-                                        $newwarning = "WARNING - card matched to alternate card name, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $supplied_id, $db_name, $db_id \n";
-                                        $warningsummary = $warningsummary.$newwarning;
-                                    else:
-                                        // echo "Row $row_no: NORMAL: Setcode/number matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
-                                    endif;
-                                        $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
-                                        $count = $count + 1;
-                                else: ?>
-                                    <img src='/images/error.png' alt='Failure'><br> <?php
-                                endif;
-                            else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,": Row $row_no: Check result = No match",$logfile);
-                                $idimport = 0;                                
-                            endif;
-                        else:
-                            trigger_error("[ERROR]: SQL failure: " . $db->error, E_USER_ERROR);
-                        endif;
-                    endif;
-                endif;
-            elseif($idimport === 1):
-                // do nothing
-            else:
-                echo "Row ",$i+1,": Check row - not enough data to identify card <img src='/images/error.png' alt='Failure'><br>";
-                $newwarning = "ERROR - not enough data to identify card, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
-                $warningsummary = $warningsummary.$newwarning;
-            endif;
-        endif;
-        $i = $i + 1;
-    endwhile;
-    fclose($handle);
-    $summary = "Import done - $count unique cards, $total in total.";
-    print $summary;
-    $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-    $subject = "Import failures / warnings"; 
-    $message = "$warningsummary \n \n $summary";
-    mail($useremail, $subject, $message, $from); ?>
-    <script>
-        (function() {
-            fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
-        })();
-    </script>
-    <script type="text/javascript">
-        alert('Import completed - a full collection value resync is being run, and can also take several minutes. Accessing your Profile page while this is running will take longer than usual.');
-        window.onload=function(){document.body.style.cursor='default';}
-    </script> <?php
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": Import finished",$logfile);
 }
 
 function card_legal_db_field($decktype)
 {
     global $db, $deck_legality_map, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up db_field for legality for deck type '$decktype'",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up db_field for legality for deck type '$decktype'",$logfile);
     $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
     if ($index !== false):
         $db_field = $deck_legality_map[$index]['db_field'];
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Deck type '$decktype' has legality in '$db_field'",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Deck type '$decktype' has legality in '$db_field'",$logfile);
     return $db_field;
 }
 
 function promo_lookup($promo_type)
 {
     global $promos_to_show, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up promo description for '$promo_type'",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up promo description for '$promo_type'",$logfile);
     $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));
     if ($index !== false):
         $promo_description = $promos_to_show[$index]['display'];
     else:
         $promo_description = 'skip';
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Promo description for '$promo_type' is '$promo_description'",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Promo description for '$promo_type' is '$promo_description'",$logfile);
     return $promo_description;
 }
 
 function deck_legal_list($decknumber,$deck_type,$db_field)
 {
     global $db, $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')",$logfile);
     $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
     $sqlresult = $db->execute_query($sql,[$decknumber]);
     if($sqlresult === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -1564,13 +653,15 @@ function deck_legal_list($decknumber,$deck_type,$db_field)
 function valid_uuid($uuid)
 {
     global $db, $logfile;
-    $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid UUID ($uuid)",$logfile);
+    $msg = new Message;
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid UUID ($uuid)",$logfile);
     if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $uuid)):
-        $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid UUID ($uuid)",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid UUID ($uuid)",$logfile);
         $uuid = $db->real_escape_string($uuid);
         return $uuid;
     else:
-        $obj = new Message; $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid UUID ($uuid), returning 'false'",$logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid UUID ($uuid), returning 'false'",$logfile);
         return false;
     endif;
 }
@@ -1578,13 +669,15 @@ function valid_uuid($uuid)
 function valid_tablename($input)
 {
     global $db, $logfile;
-    $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid table name ($input)",$logfile);
+    $msg = new Message; 
+    
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid table name ($input)",$logfile);
     $pattern = '/^\d+collection$/';
     if (preg_match($pattern, $input)):
-        $obj = new Message; $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid table name",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid table name",$logfile);
         return $input;
     else:
-        $obj = new Message; $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid table name",$logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid table name",$logfile);
         return false;
     endif;
 }

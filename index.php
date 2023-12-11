@@ -39,6 +39,8 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                               //Check if user is disabled or needs to change password
+$msg = new Message;
+
 // Default numbers per page and max
 $listperpage = 30;
 $gridperpage = 30;
@@ -47,7 +49,7 @@ $maxresults = 2500;
 $time = time();
 
 // Is admin running the page
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
 
 // Define layout and results per page for each layout type
 if (isset($_GET['layout'])):
@@ -82,12 +84,12 @@ $start_from = ($page - 1) * $perpage;
 $start_from = (int)$start_from;
 if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $nameget = htmlspecialchars($_GET["name"],ENT_NOQUOTES);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name in GET is $nameget",$logfile);
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after trimming is $nametrim",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after trimming is $nametrim",$logfile);
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after URL removal is $name",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Name after URL removal is $name",$logfile);
     // Remove any embedded setcodes in [] into a variable
     preg_match('/\[(.*?)\]/', $name, $matches);
     $setcodesearch = isset($matches[1]) ? $matches[1] : '';
@@ -192,15 +194,15 @@ $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
+$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if user has a collection table...",$logfile);
 if($db->query($tablecheck) === FALSE):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
+    $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": No existing collection table...",$logfile);
     $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+    $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
     if($db->query($query2) === TRUE):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy successful",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Collection template copy failed",$logfile);
     endif;
 endif;
     
@@ -245,7 +247,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // If search is Mycollection / Sort By Price: 
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') AND ( $scope == 'mycollection')):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"My Collection / Price query called, updating collection pricing",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"My Collection / Price query called, updating collection pricing",$logfile);
     update_collection_values($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
@@ -256,17 +258,17 @@ else:
 endif;    
 // Run the query
 if ($validsearch === "true"):
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}",$logfile);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"with parameters: ".var_export($params, true),$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"with parameters: ".var_export($params, true),$logfile);
     // parameterised query has been built in criteria.php, proceed with it
     if($result = $db->execute_query($query, $params)):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
         $queryQty = "SELECT COUNT(*) FROM cards_scry LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id LEFT JOIN `sets` ON cards_scry.setcode = sets.code WHERE ".$criteria;
         // Execute the count query
         if ($countResult = $db->execute_query($queryQty, $params)):
             $row = $countResult->fetch_row();
             $qtyresults = $row[0];
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Query has $qtyresults results",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Query has $qtyresults results",$logfile);
 
             if ($qtyresults > $maxresults AND $collectionsearch == false):
                 $validsearch = "toomany"; //variable set for header.php to display warning
@@ -650,7 +652,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
                             if(isset($row['finishes'])):
@@ -660,7 +662,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $finishes = null;
                                 $cardtypes = 'none';
                             endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -791,11 +793,11 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     <div id='results' class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) : 
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']}",$logfile);
                             $scryid = $row['cs_id']; ?>
                             <div class='item' style="cursor: pointer;" onclick="location.href='carddetail.php?id=<?php echo $scryid;?>';">
                                 <table> <?php
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: $scryid",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: $scryid",$logfile);
                                     $setcode = strtolower($row['setcode']);
                                     $uppercasesetcode = strtoupper($setcode);
                                     $scryid = $row['cs_id'];
@@ -909,7 +911,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 $finishes = null;
                                 $cardtypes = 'none';
                             endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
                             if (strpos($row['game_types'], 'paper') == false):
                                 $not_paper = true;
                             else:
@@ -932,7 +934,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             endif;
                             //If page is being loaded by admin, don't cache the image
                             if(($admin == 1) AND ($imageurl !== '/cardimg/back.jpg')):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                 $imageurl = $imageurl.'?='.$time;
                             endif;
                             if(!is_null($imagefunction['back'])):
@@ -960,7 +962,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myetch = $row['etched'];
                             endif;
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is $collection_view",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is $collection_view",$logfile);
                             if(($myqty + $myfoil + $myetch) == 0 AND $collection_view == 1):
                                 $in_collection = ' none no_collection';
                             elseif(($myqty + $myfoil + $myetch) == 0):
@@ -973,7 +975,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             ?>
                             <div class='gridbox item'>
                                 <?php
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." $imageurl",$logfile);
                                 if(in_array($row['layout'],$flip_button_cards)):
                                     echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
                                 elseif($row['layout'] === 'flip'):

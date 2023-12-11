@@ -26,6 +26,7 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
+$msg = new Message;
 
 //page specific variables
 $newdeck        = isset($_POST['newdeck']) ? 'yes' : '';
@@ -139,7 +140,7 @@ require('includes/menu.php'); //mobile menu
                                 if ($checkcreated->num_rows !== 1):
                                     trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
                                 else:
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
                                 endif;    
                             else:
                                 trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);

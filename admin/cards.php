@@ -28,12 +28,14 @@ require ('adminfunctions.php');
 require ('../includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
 
+    
+$msg = new Message;
 
 //Check if user is logged in, if not redirect to login.php
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin page called by user $username ($useremail)",$logfile);
+$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin page called by user $username ($useremail)",$logfile);
 
 // Is admin running the page
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
+$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin is $admin",$logfile);
 if ($admin !== 1):
     require('reject.php');
 endif;
@@ -42,7 +44,7 @@ endif;
 if(isset($_GET['cardtoedit'])): 
     $id = valid_uuid($_GET['cardtoedit']);
     if($id === false):
-        $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin card page called without valid UUID",$logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin card page called without valid UUID",$logfile);
         trigger_error("[ERROR] cards.php: Invalid UUID", E_USER_ERROR);
         exit;
     endif;
@@ -124,7 +126,7 @@ if ((isset($_GET['delete'])) AND ($_GET['delete'] == 'DELETE')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}", $logfile);
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}", $logfile);
 
     // Delete from cards_scry
     $sql = "DELETE FROM cards_scry WHERE id = ?";
@@ -141,7 +143,7 @@ if ((isset($_GET['delete'])) AND ($_GET['delete'] == 'DELETE')):
             $result = $stmt->get_result();
             $rowcount = $result->num_rows;
             if ($rowcount === 0):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id successful", $logfile);
+                $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id successful", $logfile);
                 ?> <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
             endif;
         endif;
@@ -159,7 +161,8 @@ elseif ((isset($_GET['deleteimg'])) AND ($_GET['deleteimg'] == 'DELETEIMG')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    refresh_image($id);
+    $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $obj->refreshImage($id);
 endif;
 
 ?>

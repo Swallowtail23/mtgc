@@ -15,6 +15,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions_new.php');
 include '../includes/colour.php';
+$msg = new Message;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
     echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
@@ -31,7 +32,7 @@ else:
     $response = ['success' => false, 'message' => ''];
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with 'update'", $logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with 'update'", $logfile);
         // Get the deck number from the form data
         $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
@@ -45,14 +46,14 @@ else:
 
             // Create 'deck_photos' folder if it doesn't exist
             if (!file_exists($deckPhotosDir)):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Creating 'deck_photos' folder in $ImgLocation", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating 'deck_photos' folder in $ImgLocation", $logfile);
 
                 if (!@mkdir($deckPhotosDir, 0755, true)):
                     $response['message'] = '<br>Failed to create directory for deck photos';
                     returnResponse();
                 endif;
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "'deck_photos' folder already in $ImgLocation", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": 'deck_photos' folder already in $ImgLocation", $logfile);
             endif;
 
             $uploadFile = $deckPhotosDir . $decknumber . '.jpg';
@@ -60,12 +61,12 @@ else:
             // Check if the file size is greater than 1MB
             list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
             if ($width > 800 OR $height > 800):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Resizing $uploadFile using php-gd", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Resizing $uploadFile using php-gd", $logfile);
 
                 // Get EXIF data for orientation, and rotate if required
                 $exif = @exif_read_data($_FILES['photo']['tmp_name']);
                 $orientation = isset($exif['Orientation']) ? $exif['Orientation'] : 0;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "EXIF orientation: $orientation", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": EXIF orientation: $orientation", $logfile);
                 if($orientation === 6):
                     $sourceCopy = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
                     $rotatedImg = imagerotate($sourceCopy, -90, 0);
@@ -96,7 +97,7 @@ else:
                     $response['message'] = 'Failed to get image size<br>';
                     returnResponse();
                 endif;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Width: $width --> $newWidth, Height: $height --> $newHeight", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Width: $width --> $newWidth, Height: $height --> $newHeight", $logfile);
 
                 // Get the submitted file input, already rotated if needed
                 $uploadedImage = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
@@ -110,7 +111,7 @@ else:
                 imagedestroy($uploadedImage);
                 imagedestroy($resizedImage);
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image $uploadFile does not need resizing", $logfile);
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image $uploadFile does not need resizing", $logfile);
 
                 // Move the uploaded file to the specified directory with the specific name
                 if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)):
@@ -118,15 +119,15 @@ else:
                     returnResponse();
                 endif;
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload success", $logfile);
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image upload success", $logfile);
             $response['success'] = true;
             $response['message'] = 'File is valid and was successfully uploaded<br>';
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image upload failed", $logfile);
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image upload failed", $logfile);
             $response['message'] = 'Invalid file or file upload error<br>';
         endif;
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with 'delete'", $logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with 'delete'", $logfile);
         $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
         // Path to the file to be deleted

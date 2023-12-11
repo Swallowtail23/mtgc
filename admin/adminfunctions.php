@@ -23,18 +23,19 @@ endif;
 function newuser($username, $postemail, $password, $dbname = '') 
 {
     global $logfile, $db;
+    $msg = new Message;
     $mysql_date = date( 'Y-m-d' );
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) 
                 VALUES (?, ?, ?, ?, 'chgpwd', 1, 0) 
                 ON DUPLICATE KEY UPDATE password=?, status='chgpwd' ";
-    $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}", $logfile);
+    $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}", $logfile);
     $stmt = $db->prepare($query);
     if ($stmt):
         $stmt->bind_param("sssss", $username, $mysql_date, $postemail, $hashed_password, $hashed_password);
         if ($stmt->execute()):
             $affected_rows = $stmt->affected_rows;
-            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows", $logfile);
+            $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows", $logfile);
         else:
             trigger_error("[ERROR] admin.php: Adding update notice: failed " . $stmt->error, E_USER_ERROR);
         endif;
@@ -55,7 +56,7 @@ function newuser($username, $postemail, $password, $dbname = '')
         if ($stmt_select->fetch()):
             if (password_verify($password, $db_password)):
                 // User has been created OK
-                $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation successful, password matched", $logfile);
+                $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation successful, password matched", $logfile);
                 $usersuccess = 1;
 
                 // Create the user's database table
@@ -70,18 +71,18 @@ function newuser($username, $postemail, $password, $dbname = '')
                     $collection_exists = $stmt_exists->num_rows; // $collection_exists now includes the quantity of tables with the collection name
                     $stmt_exists->close();
 
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": Collection table check returned $collection_exists rows", $logfile);
+                    $msg->MessageTxt('[DEBUG]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": Collection table check returned $collection_exists rows", $logfile);
 
                     if ($collection_exists === 0): // No existing collection table
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": No Collection table, creating...", $logfile);
+                        $msg->MessageTxt('[DEBUG]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": No Collection table, creating...", $logfile);
                         $query_create = "CREATE TABLE `$mytable` LIKE collectionTemplate";
                         $stmt_create = $db->prepare($query_create);
 
                         if ($stmt_create->execute()):
-                            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": Collection table copy ok", $logfile);
+                            $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": Collection table copy ok", $logfile);
                             $tablesuccess = 1;
                         else:
-                            $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy failed", $logfile);
+                            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy failed", $logfile);
                             $tablesuccess = 5;
                         endif;
                         $stmt_create->close();
@@ -91,19 +92,19 @@ function newuser($username, $postemail, $password, $dbname = '')
                         $tablesuccess = 0;
                     endif;
                 else:
-                    $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check failed", $logfile);
+                    $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check failed", $logfile);
                 endif;
             else:
-                $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful, password check failed, aborting", $logfile);
+                $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful, password check failed, aborting", $logfile);
                 $usersuccess = 0;
             endif;
         else:
-            $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful", $logfile);
+            $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful", $logfile);
             $usersuccess = 0;
         endif;
         $stmt_select->close();
     else:
-        $obj = new Message;$obj->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful", $logfile);
+        $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "Function ".__FUNCTION__.": User creation unsuccessful", $logfile);
         $usersuccess = 0;
     endif;
 
@@ -121,11 +122,12 @@ function newuser($username, $postemail, $password, $dbname = '')
 function setmtcemode($toggle)
 {
     global $db, $logfile;
+    $msg = new Message;
     if ($toggle == 'off'):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode off",$logfile);
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode off",$logfile);
         $mtcequery = 0;
     elseif ($toggle == 'on'):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode on",$logfile);
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode on",$logfile);
         $mtcequery = 1;
     endif;
         $query = 'UPDATE admin SET mtce=?';
@@ -136,8 +138,8 @@ function setmtcemode($toggle)
         endif;
         $exec = $stmt->execute();
         if ($exec === false):
-            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Setting mtce mode to $mtcequery failed",$logfile);
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Setting mtce mode to $mtcequery failed",$logfile);
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set mtce mode to $mtcequery",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set mtce mode to $mtcequery",$logfile);
         endif;
 }

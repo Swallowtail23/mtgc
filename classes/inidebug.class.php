@@ -32,4 +32,9 @@ class IniDebug {
             closelog();
         endif;
     }
+
+    public function __toString() {
+        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        return "Called as a string";
+    }
 }

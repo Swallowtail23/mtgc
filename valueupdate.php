@@ -17,8 +17,8 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
-
 $msg = new Message;
+
 $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading valueupdate.php...",$logfile);
                 
 // Page content starts here
@@ -26,7 +26,8 @@ if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     //Make sure only number+collection is passed as table name
     if (valid_tablename($table) !== false):
-        update_collection_values($table);
+        $obj = new PriceManager($db,$logfile,$useremail);
+        $obj->updateCollectionValues($table);
     else:
         trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);
     endif;

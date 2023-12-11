@@ -14,8 +14,9 @@ require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions_new.php');   //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
+$msg = new Message;
 
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to generate jpg...",$logfile);
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to generate jpg...",$logfile);
 
 // Check if the request is coming from deckdetail.php
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -23,7 +24,7 @@ $expectedReferringPage = $myURL.'/deckdetail.php';
 if (strpos($referringPage, $expectedReferringPage) !== false):
     
     // Access is OK
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called from deckdetail.php",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called from deckdetail.php",$logfile);
 
     if(isset($_GET['deck']) AND ($_GET['deck']) !== ''):
         $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -44,7 +45,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
 
 else:
     //Otherwise forbid access
-    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from deckdetail.php",$logfile);
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from deckdetail.php",$logfile);
     http_response_code(403);
     echo 'Access forbidden';
 endif;

@@ -31,23 +31,24 @@ endif;?>
     include '../includes/overlays.php'; 
     include '../includes/header.php';
     require('../includes/menu.php');
+    $msg = new Message;
     ?>
     <div id='page'>
         <div class='staticpagecontent'>
             <?php 
-            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Admin page called by user number {$_SESSION['user']}, admin status is $admin",$logfile);
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Admin page called by user number {$_SESSION['user']}, admin status is $admin",$logfile);
             if ($admin == 3): 
                 echo "<meta http-equiv='refresh' content='2;url=../index.php'>";
                 echo "<div class='alert-box error' id='adminerror'><span>error: </span>"
                         . "Insufficient rights to access this page. "
                         . "Redirecting to main page.</div>";    
-                $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin page called by non-admin user from ".$_SERVER['REMOTE_ADDR'].", exiting",$logfile);
+                $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin page called by non-admin user from ".$_SERVER['REMOTE_ADDR'].", exiting",$logfile);
                 exit();
             elseif ($admin == 2): 
                 echo "<meta http-equiv='refresh' content='2;url=../index.php'>";
                 echo "<div class='alert-box error' id='adminerror'><span>error: </span>"
                         . "This page only accessible from location specified in ini file. "
                         . "Redirecting to main page.</div>";    
-                $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin page called by admin user from non-secure location: ".$_SERVER['REMOTE_ADDR'].", exiting",$logfile);
+                $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Admin page called by admin user from non-secure location: ".$_SERVER['REMOTE_ADDR'].", exiting",$logfile);
                 exit();
             endif;

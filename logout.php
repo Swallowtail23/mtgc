@@ -11,10 +11,12 @@
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
+session_regenerate_id();
+$userEmail = isset($_SESSION['useremail']) ? $_SESSION['useremail'] : 'Unknown User';
 session_destroy();
 date_default_timezone_set('Australia/Brisbane');
 $filename = "/var/log/mtg/mtgapp.log";
-$msg = "User ".$_SESSION['useremail']." logged out from ".$_SERVER['REMOTE_ADDR']."";
+$msg = "User $userEmail logged out from ".$_SERVER['REMOTE_ADDR']."";
 if (($fd = fopen($filename, "a")) !== false):
     $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
     fwrite($fd, $str . "\n");

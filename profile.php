@@ -32,6 +32,8 @@ require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
+$msg = new Message;
+
 ?> 
 <!DOCTYPE html>
 <html>
@@ -53,21 +55,21 @@ require('includes/menu.php');
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
 if($db->query($tablecheck) === FALSE):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
     $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"...copying collection template...: $query2",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"...copying collection template...: $query2",$logfile);
     if($db->query($query2) === TRUE):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
     else:
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
     endif;
 endif;
 
 //1. Get user details for current user
 if($rowqry = $db->execute_query("SELECT username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE usernumber = ? LIMIT 1",[$user])):
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
     $row = $rowqry->fetch_assoc();
 else:
     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -86,19 +88,19 @@ endif;  ?>
                 $old_password = $_POST['curPass'];
                 $db_password = $row['password'];
                 if ($new_password == $new_password_2):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New passwords double type = match",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New passwords double type = match",$logfile);
                     if (valid_pass($new_password)):
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is a valid password",$logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is a valid password",$logfile);
                         if($new_password != $old_password):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is different to old password",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is different to old password",$logfile);
                             if (password_verify($old_password, $db_password)):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Old password is correct",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Old password is correct",$logfile);
                                 $new_password = password_hash("$new_password", PASSWORD_DEFAULT);
                                 $data = array(
                                     'password' => "$new_password"
                                 );
                                 $pwdchg = $db->execute_query("UPDATE users SET password = ? WHERE email = ?",[$new_password,$useremail]);
-                                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                 if ($pwdchg === false):
                                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                 endif;
@@ -108,7 +110,7 @@ endif;  ?>
                                 else:
                                     $pwdvalidate = $pwdvalidateqry->fetch_assoc();
                                     if ($pwdvalidate['password'] == $new_password):
-                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                         echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed, please log in again</div>";
                                         // Clear the force password flag and session variable
                                         $chgflagclear = $db->execute_query("UPDATE users SET status = 'active' WHERE email = ?",[$useremail]);
@@ -122,7 +124,7 @@ endif;  ?>
                                         exit();
                                     else:
                                         echo "<div class='alert-box error' id='pwdchange'><span>error: </span>Password change failed... contact support</div>";
-                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                     endif;
                                 endif;
                             else:
@@ -144,19 +146,25 @@ endif;  ?>
     //3. User needs to change password (status = chgpwd). Needs to be in DIV for error display
         if ((isset($_SESSION["chgpwd"])) AND ($_SESSION["chgpwd"] == TRUE)):
             echo "<div class='alert-box notice' id='pwdchange'><span>notice: </span>You must set a new password.</div>";
-            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
         endif;
     //4. Collection view
         $current_coll_view = $row['collection_view'];
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is '$current_coll_view'",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is '$current_coll_view'",$logfile);
 
     //5. Groups
         $current_group_status = $row['grpinout'];
         $current_group = $row['groupid'];
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Groups are '$current_group_status', group id '$current_group'",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Groups are '$current_group_status', group id '$current_group'",$logfile);
                 
     //6. Update pricing in case any new cards have been added to collection
-        update_collection_values($mytable);
+        //Make sure only number+collection is passed as table name
+        if (valid_tablename($mytable) !== false):
+            $obj = new PriceManager($db,$logfile,$useremail);
+            $obj->updateCollectionValues($mytable);
+        else:
+            trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);
+        endif;
         
         //Get card total
         if($totalcount = $db->query("SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) as TOTAL from `$mytable`")):
@@ -169,7 +177,7 @@ endif;  ?>
         else:
             $totalcardcount = $rowcount['TOTAL'];
         endif;
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total card count = $totalcardcount",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total card count = $totalcardcount",$logfile);
         if($totalmrcount = $db->query("SELECT (SUM(IFNULL(`$mytable`.normal, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.etched, 0))) 
                                         as TOTALMR FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id
                                         WHERE rarity IN ('mythic', 'rare');")):
@@ -182,7 +190,7 @@ endif;  ?>
         else:
             $totalmrcardcount = $rowmrcount['TOTALMR'];
         endif;
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total mythics and rares count = $totalmrcardcount",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total mythics and rares count = $totalmrcardcount",$logfile);
         
         // Get total values
         $sqlvalue = "SELECT (
@@ -196,7 +204,7 @@ endif;  ?>
         if($totalvalue = $db->query($sqlvalue)):
             $rowvalue = $totalvalue->fetch_assoc();
             $unformatted_value = $rowvalue['TOTAL'];
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Unformatted value = $unformatted_value",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Unformatted value = $unformatted_value",$logfile);
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
         endif;
@@ -213,7 +221,7 @@ endif;  ?>
             <?php
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $collectionmoney = $a->format($unformatted_value);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
                 $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
                 $rowcounttotal = number_format($totalcardcount);
                 $totalmrcardcount = number_format($totalmrcardcount);
@@ -428,17 +436,18 @@ endif;  ?>
                 </div>
                 <?php
                 if (isset($_POST['import'])):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
                     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                         echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." uploaded successfully. Processing..." . "</h4>";
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
                     else:
                         echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." did not upload successfully. Exiting..." . "</h4>";
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
                         exit;
                     endif;
                     $importfile = $_FILES['filename']['tmp_name'];
-                    $importcards = import($importfile);
+                    $obj = new ImportExport($db,$logfile);
+                    $importcards = $obj->importCollection($importfile, $mytable, $useremail, $serveremail);
                 else: ?>
                     <div id='exportdiv'>
                         <form action="csv.php"  method="GET">

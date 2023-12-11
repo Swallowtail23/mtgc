@@ -72,6 +72,7 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 // Find CSS Version
 $cssver = cssver();
+$msg = new Message;
 
 ?>
 <!DOCTYPE html>
@@ -94,16 +95,16 @@ $cssver = cssver();
             $verifyResponse = $turnstile->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()):
                 // successfully verified captcha resolving
-                $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}",$logfile);
             elseif ($verifyResponse->hasErrors()):
                 foreach ($verifyResponse->errorCodes as $errorCode):
-                    $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}",$logfile);
                 endforeach;
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
                 exit();
             else:
-                $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}",$logfile);
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
                 exit();
@@ -116,83 +117,107 @@ $cssver = cssver();
             exit();
         endif;
         if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has been submitted  
-            if (isset($_POST['password']) AND isset($_POST['email'])):  //Login form contains data
-                $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon called for {$_POST['email']} from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                $email = $_POST['email'];
+            if (isset($_POST['password'], $_POST['email'])):            //Login form contains data
+                
+                $rawemail = $_POST['email'];
                 $password = $_POST['password'];
-                $badlog = new UserStatus;
-                $badlog_result = $badlog->GetBadLogin($email);
-                if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
-                    $pwval = new PasswordCheck;
-                    $pwval_result = $pwval->PWValidate($email,$password);
-                    if ($pwval_result === 10):
-                        // username and password checks out OK - carry on!
-                        $userstat = new UserStatus;
-                        $userstat_result = $userstat->GetUserStatus($email);
-                        $msg = new Message;$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"UserStatus for $email is {$userstat_result['code']}",$logfile);
-                        if ($userstat_result['code'] === 0):
-                            trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
-                        elseif ($userstat_result['code'] === 1): //pwdchg required
-                            $msg = new Message;$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"UserStatus for $email is ok, but password change required",$logfile);
-                            $_SESSION["logged"]=TRUE;
-                            $user = $_SESSION["user"] = $userstat_result['number'];
-                            $_SESSION["useremail"] = $email;
-                            $_SESSION["chgpwd"]=TRUE;
-                            $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                        elseif ($userstat_result['code'] === 2): //locked
-                            echo 'There is a problem with your account. Contact the administrator. Returning to login...';
-                            $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                            session_destroy();
-                            echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                            exit();
-                        elseif ($userstat_result === 3): //disabled
-                            echo 'There is a problem with your account. Contact the administrator. Returning to login...';
-                            $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                            session_destroy();
-                            echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                            exit();
-                        elseif ($userstat_result['code'] === 10): //active
-                            $_SESSION["logged"]=TRUE;
-                            $user = $_SESSION["user"] = $userstat_result['number'];
-                            $_SESSION["useremail"]=$email;
-                            $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                            if($badlog_result['count'] != 0):
-                                $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})",$logfile);
-                                $zerobadlog = new UserStatus;
-                                $zerobadlog->ZeroBadLogin($email);
+                
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon called for '$rawemail' from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                
+                $email = trim($rawemail);
+                $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+                if (!empty($email) && !empty($password)):
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL)):
+                        $badlog = new UserStatus($db,$logfile,$email);
+                        $badlog_result = $badlog->GetBadLogin();
+                        if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
+                            $pwval = new PasswordCheck($db, $logfile);
+                            $pwval_result = $pwval->PWValidate($email,$password);
+                            if ($pwval_result === 10):
+                                // username and password checks out OK - carry on!
+                                $userstat = new UserStatus($db,$logfile,$email);
+                                $userstat_result = $userstat->GetUserStatus();
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"UserStatus for $email is {$userstat_result['code']}",$logfile);
+                                if ($userstat_result['code'] === 0):
+                                    trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
+                                elseif ($userstat_result['code'] === 1): //pwdchg required
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"UserStatus for $email is ok, but password change required",$logfile);
+                                    $_SESSION["logged"]=TRUE;
+                                    $user = $_SESSION["user"] = $userstat_result['number'];
+                                    $_SESSION["useremail"] = $email;
+                                    $_SESSION["chgpwd"]=TRUE;
+                                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                elseif ($userstat_result['code'] === 2): //locked
+                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                    session_destroy();
+                                    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
+                                    exit();
+                                elseif ($userstat_result === 3): //disabled
+                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                    session_destroy();
+                                    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
+                                    exit();
+                                elseif ($userstat_result['code'] === 10): //active
+                                    session_regenerate_id();
+                                    $_SESSION["logged"]=TRUE;
+                                    $user = $_SESSION["user"] = $userstat_result['number'];
+                                    $_SESSION["useremail"]=$email;
+                                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                    if($badlog_result['count'] != 0):
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})",$logfile);
+                                        $zerobadlog = new UserStatus($db,$logfile,$email);
+                                        $zerobadlog->ZeroBadLogin();
+                                    endif;
+                                else:
+                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                    session_destroy();
+                                    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
+                                    exit();
+                                endif;            
+                            elseif ($pwval_result === 2):
+                                echo 'Incorrect username/password. Please try again.';
+                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                $obj = new UserStatus($db,$logfile,$email);
+                                $obj->IncrementBadLogin();
+                                session_destroy();
+                                echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+                                exit();
                             endif;
+                        elseif($badlog_result['count'] === null):
+                            echo 'Incorrect username/password. Please try again.';
+                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                            session_destroy();
+                            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+                            exit();
                         else:
-                            echo 'There is a problem with your account. Contact the administrator. Returning to login...';
-                            $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                            echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
+                            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                            $obj = new UserStatus($db,$logfile,$email);
+                            $obj->TriggerLocked();
                             session_destroy();
                             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                             exit();
-                        endif;            
-                    elseif ($pwval_result === 2):
-                        echo 'Incorrect username/password. Please try again.';
-                        $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                        $obj = new UserStatus;$obj->IncrementBadLogin($email);
+                        endif;
+                    else:
+                        echo 'Incorrect data submitted. Returning to login...';
+                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)",$logfile);
                         session_destroy();
-                        echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+                        echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                         exit();
                     endif;
-                elseif($badlog_result['count'] === null):
-                    echo 'Incorrect username/password. Please try again.';
-                    $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    session_destroy();
-                    echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-                    exit();
                 else:
-                    echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
-                    $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    $obj = new UserStatus;$obj->TriggerLocked($email);
+                    echo 'Incorrect data submitted. Returning to login...';
+                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (email or password is empty)",$logfile);
                     session_destroy();
                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                     exit();
                 endif;
             else:
                 echo 'Incorrect data submitted. Returning to login...';
-                $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)",$logfile);
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
@@ -200,7 +225,7 @@ $cssver = cssver();
         endif;
         //Check if login has been successful
         if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) : 
-            $msg = new Message;$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $email logged in from {$_SERVER['REMOTE_ADDR']}",$logfile);
+            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $email logged in from {$_SERVER['REMOTE_ADDR']}",$logfile);
             //Write user's login date to the user table in the database (help track inactive users)
             loginstamp($email);
             //Is maintenance mode enabled?
