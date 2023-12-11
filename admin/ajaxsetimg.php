@@ -31,8 +31,10 @@ else:
     $useremail = str_replace("'", "", $_SESSION['useremail']);
     
     if (isset($_POST['setcode'])):
+        $msg = new Message;
+        $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
         $setcode = $_POST['setcode'];
-        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Called with set $setcode", $logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with set $setcode", $logfile);
         
         $query = "SELECT id FROM cards_scry WHERE setcode = ?";
         $stmt = $db->prepare($query);
@@ -41,7 +43,7 @@ else:
             $stmt->bind_param("s", $setcode);
             $stmt->execute();
             $stmt->store_result();
-            $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Number of images to be refreshed in $setcode: " . $stmt->num_rows, $logfile);
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Number of images to be refreshed in $setcode: " . $stmt->num_rows, $logfile);
             $stmt->bind_result($cardid);
 
             $iteration = 1;
@@ -49,11 +51,11 @@ else:
             $success_count = 0;
             $num_rows = $stmt->num_rows;
             while ($stmt->fetch()):
-                $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image #$iteration/$num_rows", $logfile);
-                $refresh_result = refresh_image($cardid);
+                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Image #$iteration/$num_rows", $logfile);
+                $refresh_result = $obj->refreshImage($cardid);
                 if($refresh_result === 'failure'):
                     $fail_count++;
-                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Function 'refresh_image' failed",$logfile);
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Function 'refreshImage' failed",$logfile);
                 else:
                     $success_count++;
                 endif;
@@ -65,7 +67,7 @@ else:
 
             $db->close();
             $completediterations = $iteration - 1;
-            $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Processed $completediterations of $num_rows images for $setcode. Sucess: $success_count; Failed: $fail_count", $logfile);
+            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Processed $completediterations of $num_rows images for $setcode. Sucess: $success_count; Failed: $fail_count", $logfile);
             echo json_encode(["status" => "success", "message" => "Processed $completediterations of $num_rows images for $setcode. Sucess: $success_count; Failed: $fail_count"]);
         else:
             echo json_encode(["status" => "error", "message" => "SQL error"]);
@@ -73,7 +75,7 @@ else:
         endif;
     else:
         echo json_encode(["status" => "error", "message" => "No setcode supplied"]);
-        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "No setcode supplied", $logfile);
+        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": No setcode supplied", $logfile);
     endif;
 endif;
 ?>

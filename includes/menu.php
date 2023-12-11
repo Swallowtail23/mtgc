@@ -30,7 +30,8 @@ endif;
         
         //If Update notice within last week, display NEW on menu
         if(isset($db)):
-            if($row = $db->select_one('date','updatenotices',"ORDER by date DESC")):
+            if($rowqry = $db->execute_query("SELECT date FROM updatenotices ORDER by date DESC LIMIT 1")):
+                $row = $rowqry->fetch_assoc();
                 $latestupdate = strtotime($row['date']);
                 if((time()-(60*60*24*7)) < $latestupdate):
                     ?>

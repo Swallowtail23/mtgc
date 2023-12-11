@@ -20,13 +20,14 @@ require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading csv.php...",$logfile);
+$msg = new Message;
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading csv.php...",$logfile);
                 
 // Page content starts here
 if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    exportCollectionToCsv($table);
+    $obj = new ImportExport($db,$logfile);
+    $obj->exportCollectionToCsv($table);
 else:
     trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);
 endif;

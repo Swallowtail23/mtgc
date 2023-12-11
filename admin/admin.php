@@ -24,9 +24,10 @@ require ('../includes/functions_new.php');     //Includes basic functions for no
 require ('adminfunctions.php');
 require ('../includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
+$msg = new Message;
 
 //Check if user is logged in, if not redirect to login.php
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin page called by user $username ($useremail) Admin result: ".$admin,$logfile);
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin page called by user $username ($useremail) Admin result: ".$admin,$logfile);
 if ($admin !== 1):
     require('reject.php');
 endif;
@@ -56,7 +57,7 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD'):
     if ($stmt):
         $stmt->bind_param("sss", $date, $name, $updatetext);
         if ($stmt->execute()):
-            $obj = new Message;$obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Adding update notice: Insert ID: " . $stmt->insert_id, $logfile);
+            $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Adding update notice: Insert ID: " . $stmt->insert_id, $logfile);
         else:
             trigger_error("[ERROR] admin.php: Adding update notice: failed " . $stmt->error, E_USER_ERROR);
         endif;
@@ -67,27 +68,25 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD'):
 endif;
 
 if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DELETE')):
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Delete all migrations called", $logfile);
+    $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Delete all migrations called", $logfile);
     
     // Delete records from cards_scry table
     $deleteSql = "DELETE cards_scry FROM cards_scry INNER JOIN migrations ON cards_scry.id = migrations.old_scryfall_id WHERE migrations.db_match = 1";
     $deleteResult = $db->query($deleteSql);
     if ($deleteResult !== false):
         // Log the total number of rows deleted in migrations
-        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $db->affected_rows . " rows in cards_scry", $logfile);
+        $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted " . $db->affected_rows . " rows in cards_scry", $logfile);
     endif;
     // Update records in migrations table
     $updateSql = "UPDATE migrations set db_match = 0 WHERE db_match = 1";
     $updateResult = $db->query($updateSql);
     if ($updateResult !== false):
         // Log the total number of rows deleted in migrations
-        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Updated " . $db->affected_rows . " rows in migrations", $logfile);
+        $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Updated " . $db->affected_rows . " rows in migrations", $logfile);
     endif;
     
 elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'TEST')):
-    $obj = new Message;
-    $obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Test delete migrations called", $logfile);
+    $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Test delete migrations called", $logfile);
 
     $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
     $result = $db->query($sql);
@@ -99,8 +98,8 @@ elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 
             $oldScryfallId = $row['old_scryfall_id'];
 
             // Count the matching records in cards_scry table (for testing)
-            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = '$oldScryfallId'";
-            $countResult = $db->query($countSql);
+            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = ?";
+            $countResult = $db->execute_query($countSql,[$oldScryfallId]);
 
             if ($countResult !== false):
                 $rowCount = $countResult->fetch_row();
@@ -112,21 +111,21 @@ elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 
         endwhile;
 
         // Log the total number of matches found in cards_scry (for testing)
-        $obj->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Total matches found in cards_scry (TEST): $totalMatchesInCardsScry", $logfile);
+        $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Total matches found in cards_scry (TEST): $totalMatchesInCardsScry", $logfile);
     endif;
 endif;
 
 if(isset($_GET['loglevel'])):
     $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
     $ini->data['general']['Loglevel'] = "$newloglevel";
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change by user $username to $newloglevel",$logfile);
+    $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change by user $username to $newloglevel",$logfile);
     $ini->write();
     //re-read ini file
     $ini = new INI("/opt/mtg/mtg_new.ini");
     $ini_array = $ini->data;
     $loglevelini = $ini_array['general']['Loglevel'];
     if($loglevelini == $newloglevel):
-        $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change success to $newloglevel",$logfile);
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Log level change success to $newloglevel",$logfile);
     endif;
 endif;
 ?>
@@ -212,22 +211,22 @@ require('../includes/menu.php');
             </form>
             If log level set fails, check permissions of web server to the ini file. <?php
             if((isset($togglecss)) AND ($togglecss == "y")):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning off minimised CSS...",$logfile);
+                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning off minimised CSS...",$logfile);
                 $cssquery = 0;
                 $query = 'UPDATE admin SET usemin=?';
                 if ($db->execute_query($query, [$cssquery]) === TRUE):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned off minimised CSS",$logfile);
+                    $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned off minimised CSS",$logfile);
                 else:
                     trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
                 $cssver = cssver(); //run again
             endif;
             if((isset($publishcss)) AND ($publishcss == "y")):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning on minimised CSS...",$logfile);
+                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning on minimised CSS...",$logfile);
                 $cssquery = 1;
                 $query = 'UPDATE admin SET usemin=?';
                 if ($db->execute_query($query, [$cssquery]) === TRUE):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned on minimised CSS",$logfile);
+                    $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Turned on minimised CSS",$logfile);
                 else:
                     trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
@@ -235,7 +234,7 @@ require('../includes/menu.php');
             endif;
             if((isset($clearscryfalljson)) AND ($clearscryfalljson == "y")):
                 if ($db->query('TRUNCATE TABLE scryfalljson') === TRUE):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"JSON data removed",$logfile);
+                    $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"JSON data removed",$logfile);
                 else:
                     trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
                 endif;
@@ -388,7 +387,7 @@ require('../includes/menu.php');
                             endif;
                             while ($stmt4->fetch()):
                                 if($total !== NULL AND $total != 0):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Found one!: User: {$userArray['username']}, ID: {$row['old_scryfall_id']}: Total: $total",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Found one!: User: {$userArray['username']}, ID: {$row['old_scryfall_id']}: Total: $total",$logfile);
                                     $collectionResultArray[] = array('owner' => $userArray['username'], 'total' => $total);
                                 endif;
                             endwhile;
@@ -422,7 +421,7 @@ require('../includes/menu.php');
                             </td>
                             <td><?php 
                                 if (!empty($collectionResultArray)):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Should be here if there is one",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Should be here if there is one",$logfile);
                                     echo '<table border="1">';
                                     echo '<tr><th>Owner</th><th>Total</th></tr>';
                                     foreach ($collectionResultArray as $userresult):
@@ -445,7 +444,7 @@ require('../includes/menu.php');
             
                 <?php
                 else:
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No rows",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No rows",$logfile);
                     echo "No cards needing action <br>";
                     echo "&nbsp;<br>";
                 endif;

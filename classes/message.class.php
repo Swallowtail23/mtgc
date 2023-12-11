@@ -38,5 +38,4 @@ class Message {
         $this->textstring = "$errorlevel $source: $text";
         writelog($this->textstring,$logfile);
     }
-
 }

@@ -66,8 +66,10 @@ require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 require ('includes/colour.php');
 
+$msg = new Message;
+
 // Is admin running the page
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
 
 // Enable / disable deck functionality
 $decks_on = 1;
@@ -75,10 +77,11 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456 
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])):
-    $cardid = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS); 
+    $cardid = valid_uuid($_GET["id"]);
 elseif (isset($_POST["id"])):
-    $cardid = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_SPECIAL_CHARS);     
+    $cardid = valid_uuid($_POST["id"]); 
 endif;
+
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 $newdeckname = filter_input(INPUT_GET, 'newdeckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 if(filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT) == ''):
@@ -312,22 +315,26 @@ require('includes/menu.php'); //mobile menu
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">    
 <div id="page">
-    <div id="carddetail">
+    <div id="carddetail"> <?php
+        if($cardid === false):
+            echo "<h2 class='h2pad'>Invalid card UUID</h2>";
+            exit;
+        endif; ?>
         <div id="printtitle" class="headername">
             <img src="images/white_m.png">MtG collection
         </div>
     <?php
     // Does the user have a collection table?
     $tablecheck = "SELECT * FROM $mytable";
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
     if($db->query($tablecheck) === FALSE):
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
         $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
+        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2",$logfile);
         if($db->query($query2) === TRUE):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
         else:
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
         endif;
     endif;
     
@@ -460,9 +467,9 @@ require('includes/menu.php'); //mobile menu
                 LIMIT 1";
         $params = [$cardid];
         
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query is: $searchqry",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query is: $searchqry",$logfile);
         if($result = $db->execute_query($searchqry, $params)):
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
         else:
             trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
         endif;
@@ -504,14 +511,14 @@ require('includes/menu.php'); //mobile menu
             endif;
             if (strpos($row['game_types'], 'paper') == false):
                 $not_paper = true;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Arena/Online only card",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Arena/Online only card",$logfile);
             else:
                 $not_paper = false;
             endif;
             $thick = $serialised = false;
             if (isset($row['promo_types']) AND $row['promo_types'] !== null):
                 $promo = json_decode($row['promo_types']);
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card has a promo_type set: {$row['promo_types']}",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card has a promo_type set: {$row['promo_types']}",$logfile);
                 $full_promo_text = '';
                 foreach($promo as $value):
                     $promo_description = promo_lookup($value);
@@ -560,26 +567,25 @@ require('includes/menu.php'); //mobile menu
             else:
                 $price_etched_log = NULL;
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log",$logfile);
             //Populate JSON data
-            $scryfallresult = scryfall($id);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall run, returned action '{$scryfallresult["action"]}'",$logfile);
+            $obj = new PriceManager($db,$logfile,$useremail);
+            $scryfallresult = $obj->scryfall($id);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall run, returned action '{$scryfallresult["action"]}'",$logfile);
             $tcg_buy_uri = $scryfallresult["tcg_uri"];
-            // $tcg_buy_uri = scryfall($id);
             if(isset($row['layout']) AND $row['layout'] === "normal"):
                 $scryfallimg = $row['image_uri'];
             else:
                 $scryfallimg = null;
             endif;
 
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall image location called by $useremail: $scryfallimg",$logfile);
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getimgname by $useremail with $setcode, $cardnumber, $cardname, $cardid",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scryfall image location called by $useremail: $scryfallimg",$logfile);
             $imgname = $cardid.".jpg";
             $imgname_2 = $cardid."_b.jpg";
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImage by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Call for getImage by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}",$logfile);
             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
             $imagefunction = $imageManager->getImage($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImage result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"getImage result: {$imagefunction['front']} / {$imagefunction['back']}",$logfile);
             if($imagefunction['front'] == 'error'):
                 $imageurl = '/cardimg/back.jpg';
             else:
@@ -627,7 +633,7 @@ require('includes/menu.php'); //mobile menu
                 $sqlbeforeqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
                 $beforeparams = [$id];
                 if($sqlbefore = $db->execute_query($sqlbeforeqry,$beforeparams)):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Before SQL query succeeded ",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Before SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                 endif;
@@ -638,7 +644,7 @@ require('includes/menu.php'); //mobile menu
                         $writerowforlog .= "index: '$key', value: '$value' "; 
                     endif;
                 endforeach;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) Before values: $writerowforlog",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) Before values: $writerowforlog",$logfile);
                 
                 //Write new notes
                 $updatequery = "
@@ -646,9 +652,9 @@ require('includes/menu.php'); //mobile menu
                         VALUES (?,?)
                         ON DUPLICATE KEY UPDATE notes = ? ";
                 $updateparams = [$newnotes,$id,$newnotes];
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) running update query: $updatequery",$logfile);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) running update query: $updatequery",$logfile);
                 if($sqlupdate = $db->execute_query($updatequery,$updateparams)):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL update query succeeded",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL update query succeeded",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL update failure: " . $db->error, E_USER_ERROR);
                 endif;
@@ -657,7 +663,7 @@ require('includes/menu.php'); //mobile menu
                 $sqlafterqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
                 $afterparams = [$id];
                 if($sqlafter = $db->execute_query($sqlafterqry,$afterparams)):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"After SQL query succeeded ",$logfile);
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"After SQL query succeeded ",$logfile);
                 else:
                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                 endif;
@@ -668,18 +674,18 @@ require('includes/menu.php'); //mobile menu
                         $writerowforlog .= "index: '$key', value: '$value' "; 
                     endif;
                 endforeach;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) After values: $writerowforlog",$logfile);
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) After values: $writerowforlog",$logfile);
                 
                 //Compare 
                 $afternotes = $afterresult['notes'];
                 if ($newnotes === $afternotes):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record matches input",$logfile); ?>
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record matches input",$logfile); ?>
                     <div class="msg-new success-new" onclick='CloseMe(this)'><span>Notes updated</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                     </div>
                 <?php else: 
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record does not match input",$logfile); ?>?>
+                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record does not match input",$logfile); ?>?>
                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Update failed</span>
                         <br>
                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -692,12 +698,12 @@ require('includes/menu.php'); //mobile menu
             
             //Process image change if it's been called by an admin.
             if (isset($_POST['import']) AND $admin == 1):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload called by $useremail",$logfile);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload called by $useremail",$logfile);
                 if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                     $handle = fopen($_FILES['filename']['tmp_name'], "r");
                     $info = getimagesize($_FILES['filename']['tmp_name']);
                     if (($info === FALSE) OR ($info[2] !== IMAGETYPE_JPEG)):
-                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload failed - not an image or not a JPG",$logfile); ?>
+                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload failed - not an image or not a JPG",$logfile); ?>
                         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Not a JPG image</span>
                             <br>
                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -709,18 +715,19 @@ require('includes/menu.php'); //mobile menu
                             <br>
                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
-                            $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail failed",$logfile);
+                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail failed",$logfile);
                         else:
                             //Image upload successful. Set variable to load card page 'fresh' at completion (see end of script)
                             $ctrlf5 = 1;
-                            $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail ok",$logfile);
+                            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image upload for $cardid by $useremail ok",$logfile);
                         endif;
                     endif;
                 endif;
             endif;
             if (isset($refreshimage) AND $refreshimage === 'REFRESH'):
-                $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image refresh called for $cardid by $useremail",$logfile);
-                refresh_image($cardid);
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Image refresh called for $cardid by $useremail",$logfile);
+                $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                $obj->refreshImage($cardid);
                 echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
                 exit;
             endif;
@@ -751,7 +758,7 @@ require('includes/menu.php'); //mobile menu
                 $finishes = null;
                 $cardtypes = 'none';
             endif;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card: {$row['cs_id']} is $cardtypes",$logfile);
             ?>
                 <div id="carddetailheader">
                     <table>
@@ -821,7 +828,7 @@ require('includes/menu.php'); //mobile menu
                             echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
                         endif; 
                         // Find the prev number card's ID
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
                         $query = "SELECT id FROM cards_scry WHERE setcode = ? ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
                         $stmt = $db->prepare($query);
                         $stmt->bind_param('s', $row['cs_setcode']);
@@ -829,14 +836,14 @@ require('includes/menu.php'); //mobile menu
                         $result = $stmt->get_result();
                         $results = $result->fetch_all(MYSQLI_ASSOC);
                         $currentCardIndex = array_search($row['cs_id'], array_column($results, 'id'));
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card is index number $currentCardIndex in setcode {$row['cs_setcode']}",$logfile);
+                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current card is index number $currentCardIndex in setcode {$row['cs_setcode']}",$logfile);
                         if ($currentCardIndex !== false) :
                             $prevCardIndex = $currentCardIndex - 1;
                             if (isset($results[$prevCardIndex])) :
                                 // Retrieve the next card details
                                 $prevCard = $results[$prevCardIndex];
                                 $prevcardid = $prevCard['id'];
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card is $prevcardid",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card is $prevcardid",$logfile);
                             else :
                                 $prevcardid = '';
                             endif;
@@ -845,7 +852,7 @@ require('includes/menu.php'); //mobile menu
                                 // Retrieve the next card details
                                 $nextCard = $results[$nextCardIndex];
                                 $nextcardid = $nextCard['id'];
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card is $nextcardid",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card is $nextcardid",$logfile);
                             else :
                                 $nextcardid = '';
                             endif; 
@@ -860,15 +867,13 @@ require('includes/menu.php'); //mobile menu
                                     $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                     //If page is being loaded by admin, don't cache the main image
                                     if(($admin == 1) AND ($imageurl !== '/cardimg/back.jpg')):
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
+                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                         $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$imgname);
                                         $imagelocation = $imageurl.'?='.$imgmodtime;
                                     else:
                                         $imagelocation = $imageurl;
                                     endif;
-                                    $obj = new Message;
-                                    $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocation,$logfile);
                                     // Set classes for hover image
                                     if(in_array($row['layout'],$image90rotate) OR in_array($row['f1_type'],$image90rotate)):
                                         $hoverclass = 'imgfloat splitfloat';
@@ -906,7 +911,7 @@ require('includes/menu.php'); //mobile menu
                                         document.getElementById('next_card').submit();
                                     }
                                 </script> <?php
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"> <?php 
                                         if(!empty($prevcardid)): ?>
@@ -957,7 +962,7 @@ require('includes/menu.php'); //mobile menu
                                         document.getElementById('next_card').submit();
                                     }
                                 </script> <?php
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card ($nextcardid)",$logfile); ?>
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card ($nextcardid)",$logfile); ?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;
                                     </td>
@@ -992,7 +997,7 @@ require('includes/menu.php'); //mobile menu
                                     }
 
                                 </script> <?php
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
                                         if(!empty($prevcardid)): ?>
@@ -1158,7 +1163,7 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             if(validateTrueDecimal($row['cmc']) === false):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round cmc {$row['cmc']}",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round cmc {$row['cmc']}",$logfile);
                                 $row['cmc'] = round($row['cmc']);
                             endif;
                             if(!in_array($row['layout'],$token_layouts)):
@@ -1175,7 +1180,7 @@ require('includes/menu.php'); //mobile menu
                             echo "<br>";
                             if($row['layout'] === 'reversible_card'):
                                 if(validateTrueDecimal($row['f1_cmc']) === false):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f1_cmc {$row['f1_cmc']}",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f1_cmc {$row['f1_cmc']}",$logfile);
                                     $row['f1_cmc'] = round($row['f1_cmc']);
                                 endif;
                                 echo "<b>Mana value: </b>".$row['f1_cmc'];
@@ -1302,7 +1307,7 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         if((substr($row['type'],0,6) != 'Plane ') AND $row['type'] != 'Phenomenon'):
                             echo "<b>Legal in: </b>";    
-                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting legalities for $setcode, $cardname, $id",$logfile);
                             $legalitystring = '';
                             
                             if($row['legalitystandard'] == 'legal'):
@@ -1448,7 +1453,7 @@ require('includes/menu.php'); //mobile menu
                             <form id="updatenotesform" action="?" method="POST">
                             <h3 class="shallowh3">My collection</h3>
                             <?php
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card types: $cardtypes",$logfile);
+                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card types: $cardtypes",$logfile);
                             $cellid = "cell".$id;
                             $cellid_one = $cellid.'_one';
                             $cellid_two = $cellid.'_two';
@@ -1647,7 +1652,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
                                 $normalprice = TRUE; 
                                 $localnormal = number_format(($scryfallresult["price"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1659,7 +1664,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database normal price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database normal price",$logfile);
                                 $normalprice = TRUE; 
                                 $localnormal = number_format(($row["price"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1672,11 +1677,11 @@ require('includes/menu.php'); //mobile menu
                                 </tr>
                       <?php 
                             else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No normal price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No normal price",$logfile);
                                 $normalprice = FALSE;
                             endif;      
                             if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00 AND $scryfallresult["price_foil"] !== NULL AND str_contains($cardtypes,'foil'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall foil price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall foil price",$logfile);
                                 $foilprice = TRUE;
                                 $localfoil = number_format(($scryfallresult["price_foil"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1688,7 +1693,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database foil price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database foil price",$logfile);
                                 $foilprice = TRUE;
                                 $localfoil = number_format(($row["price_foil"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1700,11 +1705,11 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No foil price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No foil price",$logfile);
                                 $foilprice = FALSE;
                             endif;
                             if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00 AND $scryfallresult["price_etched"] !== NULL AND str_contains($cardtypes,'etch'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall etched price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall etched price",$logfile);
                                 $etchprice = TRUE;
                                 $localetched = number_format(($scryfallresult["price_etched"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1716,7 +1721,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database etched price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database etched price",$logfile);
                                 $etchprice = TRUE;
                                 $localetched = number_format(($row["price_etched"] * $rate), 2, '.', ',');?>
                                 <tr>
@@ -1728,7 +1733,7 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                       <?php else:
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No etched price",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No etched price",$logfile);
                                 $etchprice = FALSE;
                             endif; 
                             if ($normalprice == FALSE AND $foilprice == FALSE AND $etchprice == FALSE): ?>
@@ -1787,18 +1792,18 @@ require('includes/menu.php'); //mobile menu
                             $usergrprowqry = "SELECT grpinout,groupid FROM users WHERE usernumber = ? LIMIT 1";
                             $usergrprowparams = [$user];
                             if($sqlusergrp = $db->execute_query($usergrprowqry,$usergrprowparams)):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                             else:
                                 trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                             endif;
                             $usergrprow = $sqlusergrp->fetch_array(MYSQLI_ASSOC);
                             if ($usergrprow['grpinout'] == 1):
                                 $usergroup = $usergrprow['groupid'];
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Groups are active, group ID = $usergroup",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Groups are active, group ID = $usergroup",$logfile);
                                 $grpquery = "SELECT usernumber, username, status, groupid, groupname, owner FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE groupid = ? AND usernumber <> ?";
                                 $grpparams = [$usergroup,$_SESSION["user"]];
                                 if($sqluserqry = $db->execute_query($grpquery,$grpparams)):
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
                                 else:
                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                 endif;
@@ -1806,7 +1811,7 @@ require('includes/menu.php'); //mobile menu
                                 $q = 0;
                                 while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
                                     if($userrow['status'] !== 'disabled'):
-                                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
+                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
                                         $grpuser[$q]['id'] = $userrow['usernumber'];
                                         $grpuser[$q]['name'] = $userrow['username'];
                                         $q = $q + 1;
@@ -1814,7 +1819,7 @@ require('includes/menu.php'); //mobile menu
                                         $sqlqry = "SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = ?";
                                         $sqlparams = [$id];
                                         if($sqlqtyqry = $db->execute_query($sqlqry,$sqlparams)):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
+                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
                                         else:
                                             trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                         endif;
@@ -1845,19 +1850,18 @@ require('includes/menu.php'); //mobile menu
                             ?>
                             <hr class='hr324'>
                             <?php
-                            $obj = new Message;
-                            $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decks enabled: $decks_on",$logfile);
+                            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decks enabled: $decks_on",$logfile);
                                 if(in_array($row['layout'],$token_layouts)):
                                     $decks_on = 0;
                                 endif;
                                 if($decks_on === 1):
                                     echo "<div id='deckadd'>";
                                     if (isset($decktoaddto)):
-                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
                                         // If the deck is new, is the new name unique? If yes, create it.
                                         $decksuccess = 0;
                                         if($decktoaddto == "newdeck"):
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Asked to create new deck $newdeckname",$logfile);
+                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Asked to create new deck $newdeckname",$logfile);
                                             $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
                                             $decknameparams = [$user,$newdeckname];
                                             $result = $db->execute_query($decknamechecksql,$decknameparams);
@@ -1867,24 +1871,24 @@ require('includes/menu.php'); //mobile menu
                                                 $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
                                                 $params = [$user,$newdeckname];
                                                 if($deckinsert = $db->execute_query($sql,$params) && $db->affected_rows === 1):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$logfile);
+                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$logfile);
                                                 else:
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
                                                 
                                                 //Checking if it created OK
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
+                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
                                                 $checksql = "SELECT decknumber FROM decks
                                                                 WHERE owner = ? AND deckname = ? LIMIT 1";
                                                 $checkparams = [$user,$newdeckname];
                                                 $runquery = $db->execute_query($checksql,$checkparams);
                                                 if($runquery !== false && $runquery->num_rows === 1):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
+                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
                                                     $deckcheckrow = $runquery->fetch_assoc();
                                                     $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
                                                     $decktoaddto = $deckcheckrow['decknumber'];
                                                 elseif($runquery !== false && $runquery->num_rows === 0):  
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
+                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
                                                     ?>
                                                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
                                                         <br>
@@ -1896,7 +1900,7 @@ require('includes/menu.php'); //mobile menu
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
                                             elseif($result !== false && $result->num_rows === 1):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile); ?>
+                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile); ?>
                                                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -1907,7 +1911,8 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                         else:
                                             // Check that the proposed deck exists and belongs to owner.
-                                            if (deckownercheck($decktoaddto,$user) == FALSE): ?>
+                                            $obj = new DeckManager($db, $logfile);
+                                            if($obj->deckOwnerCheck($decktoaddto,$user) == FALSE): ?>
                                                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>You don't have that deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -1919,18 +1924,17 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                         endif;
                                         // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
-                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
                                         if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
                                             if ($decksuccess === 2): //Not a new deck, run card check
-                                                $obj = new Message;
-                                                $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
+                                                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
                                                 
                                                 $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))";
                                                 $params = [$decktoaddto,$cardid];
                                                 $resultchk = $db->execute_query($sql,$params);
                                                 if($resultchk !== false && $resultchk->num_rows === 1):
                                                     $cardcheckrow = $resultchk->fetch_assoc();
-                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$cardcheckrow['cardnumber']} is already in that deck",$logfile);
+                                                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"{$cardcheckrow['cardnumber']} is already in that deck",$logfile);
                                                     ?>
                                                     <div class="msg-new error-new" onclick='CloseMe(this)'><span>Card already in deck</span>
                                                         <br>
@@ -1939,7 +1943,7 @@ require('includes/menu.php'); //mobile menu
                                                     <?php
                                                     $cardchecksuccess = 0;
                                                 elseif($resultchk !== false && $resultchk->num_rows === 0):   
-                                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
+                                                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card is not in the deck, proceeding to write",$logfile);
                                                     $cardchecksuccess = 1;
                                                 else:
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
@@ -1952,14 +1956,15 @@ require('includes/menu.php'); //mobile menu
                                                 $deckqty = (int)$deckqty;
                                             
                                                 //Call add card function
-                                                adddeckcard($decktoaddto,$cardid,'main',$deckqty);
+                                                $obj = new DeckManager($db,$logfile);
+                                                $obj->addDeckCard($decktoaddto,$cardid,'main',$deckqty);
                                                 
                                                 //Check it's added
                                                 $sql = "SELECT cardnumber,cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND cardqty = ? LIMIT 1";
                                                 $params = [$decktoaddto,$cardid,$deckqty];
                                                 $resultchksql = $db->execute_query($sql,$params);
                                                 if($resultchksql !== false && $resultchksql->num_rows === 1):
-                                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
+                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
                                                     $resultchkins = $resultchksql->fetch_assoc();
                                                     if(($resultchkins['cardnumber'] == $cardid) AND ($resultchkins['cardqty'] == $deckqty)):
                                                         ?>
@@ -1968,14 +1973,14 @@ require('includes/menu.php'); //mobile menu
                                                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                                                         </div>
                                                         <?php
-                                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
+                                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid added to deck $decktoaddto",$logfile);
                                                     else:?>
                                                         <div class="msg-new warning-new" onclick='CloseMe(this)'><span>Card in deck, but quantity mismatch</span>
                                                             <br>
                                                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                                                         </div>
                                                         <?php 
-                                                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid in deck $decktoaddto, but quantity mismatch",$logfile);
+                                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Card $cardid in deck $decktoaddto, but quantity mismatch",$logfile);
                                                     endif;
                                                 else:
                                                     ?>
@@ -1984,13 +1989,14 @@ require('includes/menu.php'); //mobile menu
                                                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                                                     </div>
                                                     <?php 
-                                                    $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
+                                                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Card $cardid was not added to deck $decktoaddto",$logfile);
                                                 endif;
                                             endif;
                                         endif;
                                     endif; 
-                                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking to see if $cardid is in any owned decks",$logfile);
-                                    $inmydecks = deckcardcheck($cardid,$user);
+                                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking to see if $cardid is in any owned decks",$logfile);
+                                    $obj = new DeckManager($db,$logfile);
+                                    $inmydecks = $obj->deckCardCheck($cardid,$user);
                                     if (!empty($inmydecks)):
                                         echo "<b>Your decks with this card:</b><br>";
                                         foreach ($inmydecks as $decksrow):
@@ -2008,8 +2014,9 @@ require('includes/menu.php'); //mobile menu
                                         foreach ($grpuser as $decksgrprow):
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
-                                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
-                                            $ingrpdecks = deckcardcheck($cardid,$grpuserid);
+                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
+                                            $obj = new DeckManager($db,$logfile);
+                                            $ingrpdecks = $obj->deckCardCheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):
                                                 echo "<b>Group decks with this card:</b><br>";
@@ -2044,7 +2051,7 @@ require('includes/menu.php'); //mobile menu
                                             $decklistsql = $db->execute_query($sql,$params);
                                             
                                             if($decklistsql !== false):
-                                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
+                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL select for card succeeded",$logfile);
                                                 while ($dlrow = $decklistsql->fetch_assoc()):
                                                     $dlrow['decknumber'] = htmlentities($dlrow['decknumber'],ENT_QUOTES,"UTF-8");
                                                     $dlrow['deckname'] = htmlentities($dlrow['deckname'],ENT_QUOTES,"UTF-8");
@@ -2085,7 +2092,7 @@ require('includes/menu.php'); //mobile menu
                         trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": Executing SQL: " . $db->error, E_USER_ERROR);
                     else:     
                         $result = $stmt->get_result();
-                        $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
+                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Rulings: {$result->num_rows} ({$row['oracle_id']})",$logfile);
                         if (($result->num_rows === 0) AND !in_array($row['layout'],$two_card_detail_sections)):
                             // no rulings ?>
                             <div>
@@ -2128,16 +2135,14 @@ require('includes/menu.php'); //mobile menu
                                         $lookupid = htmlentities($row['cs_id'],ENT_QUOTES,"UTF-8");
                                         //If page is being loaded by admin, don't cache the main image
                                         if(($admin == 1) AND ($imagebackurl !== '/cardimg/back.jpg')):
-                                            $obj = new Message;
-                                            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
+                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin loading, don't cache image",$logfile);
                                             $imgmodtime = filemtime($ImgLocation.strtolower($setcode)."/".$imgname_2);
                                             $imagelocationback = $imagebackurl.'?='.$imgmodtime;
                                         else:
                                             $imagelocationback = $imagebackurl;
                                         endif;
                                         
-                                        $obj = new Message;
-                                        $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
+                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Image location is ".$imagelocationback,$logfile);
                                         ?>
                                             <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
                                                 <img alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
@@ -2168,7 +2173,7 @@ require('includes/menu.php'); //mobile menu
                             endif;
                             echo "<br>";
                             if(isset($row['f2_cmc']) AND validateTrueDecimal($row['f2_cmc']) === false):
-                                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f2_cmc {$row['f2_cmc']}",$logfile);
+                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Trying to round f2_cmc {$row['f2_cmc']}",$logfile);
                                 $row['f2_cmc'] = round($row['f2_cmc']);
                                 echo "<b>Mana value: </b>".$row['f2_cmc'];
                                 echo "<br>";

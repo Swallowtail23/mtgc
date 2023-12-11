@@ -22,11 +22,12 @@ require ('../includes/functions_new.php');      //Includes basic functions for n
 require ('adminfunctions.php');
 require ('../includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
+$msg = new Message;
 
 //Check if user is logged in, if not redirect to login.php
-$obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin page called by user $username ($useremail)",$logfile);
+$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin page called by user $username ($useremail)",$logfile);
 // Is admin running the page
-$obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Admin is $admin",$logfile);
+$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin is $admin",$logfile);
 if ($admin !== 1):
     require('reject.php');
 endif;
@@ -98,78 +99,77 @@ require('../includes/menu.php');
         // Multiple user form update
         if ((isset($updateusers)) AND ($updateusers === "yes")):
             foreach ($updatearray[0]['id'] as $i => $id) :
-                $sql_id = $db->escape($updatearray[0]['id'][$i]);
+                $sql_id = $db->real_escape_string($updatearray[0]['id'][$i]);
                 ${'sqlid'.$id} = $sql_id;
-                $sql_eml = $db->escape($updatearray[0]['eml'][$i]);
+                $sql_eml = $db->real_escape_string($updatearray[0]['eml'][$i]);
                 ${'sqleml'.$id} = $sql_eml;
-                $sql_name = $db->escape($updatearray[0]['name'][$i]);
+                $sql_name = $db->real_escape_string($updatearray[0]['name'][$i]);
                 ${'sqlname'.$id} = $sql_name;
-                $sql_status = $db->escape($updatearray[0]['status'][$i]);
+                $sql_status = $db->real_escape_string($updatearray[0]['status'][$i]);
                 ${'sqlstatus'.$id} = $sql_status;
-                $sql_adm = $db->escape($updatearray[0]['adm'][$i]);
+                $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
                 ${'sqladm'.$id} = $sql_adm;
                 //Simple update of fields
-                if ($simpleupdate = $db->query("UPDATE users SET username='$sql_name',
-                                email='$sql_eml', status='$sql_status',
-                                admin=$sql_adm WHERE usernumber='$sql_id'") === TRUE):
+                $query = "UPDATE users SET username = ?, email = ?, status = ?, admin = ? WHERE usernumber = ?";
+                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_id];
+                if ($result = $db->execute_query($query, $params)):
                     $affected_rows = $db->affected_rows;
-                    $obj = new Message;
-                    $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows",$logfile);
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows", $logfile);
                 else:
-                    $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Update user query unsuccessful",$logfile);
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Update user query unsuccessful", $logfile);
                 endif;
                 $usertable = $sql_id."collection";
                 // More complex updates
                 // - delete card collection for a user
                 if (($updatearray[0]['actions'][$i]) == 'deletecards'):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    if ($db->delete("$usertable")):
-                        if($deletecards = $db->select('*',"$usertable")):
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    if ($db->execute_query("DELETE FROM $usertable")):
+                        if($deletecards = $db->execute_query("SELECT * FROM $usertable")):
                             if ($deletecards->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>Cards cleared for $sql_name</div>";    
-                                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Table empty successful",$logfile);
+                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table empty successful",$logfile);
                             else:    
                                 echo "<div class='alert-box error'><span>error: </span>Cards not cleared for $sql_name</div>";    
-                                $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Table empty failed",$logfile);
+                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table empty failed",$logfile);
                             endif;
                         endif;
                     endif;
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser'):
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
-                    if ($db->delete('users',"WHERE usernumber = '$sql_id'")):
-                        if($nukeuser = $db->select('username','users',"WHERE usernumber = '$sql_id'")):
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    if ($db->execute_query("DELETE FROM users WHERE usernumber = ?",[$sql_id])):
+                        if($nukeuser = $db->execute_query("SELECT username FROM users WHERE usernumber = ?",[$sql_id])):
                             if ($nukeuser->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>User $sql_name removed</div>";    
-                                $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User deletion successful",$logfile);
+                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": User deletion successful",$logfile);
                             else:    
                                 echo "<div class='alert-box error'><span>error: </span>User $sql_name not removed</div>";    
-                                $obj = new Message;$obj->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User deletion failed",$logfile);
+                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": User deletion failed",$logfile);
                             endif;
                         endif;
                     endif;
                     $sqldrop = "DROP TABLE $usertable";
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running $sqldrop",$logfile);
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running $sqldrop",$logfile);
                     $db->query($sqldrop);
                     $queryexists = "SHOW TABLES LIKE '$usertable'";
                     $stmt = $db->prepare($queryexists);
-                    $obj = new Message;$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Checking if collection table still exists: $queryexists",$logfile);
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking if collection table still exists: $queryexists",$logfile);
                     $exec = $stmt->execute();
                     if ($exec === false):
-                        $obj = new Message;$obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check failed",$logfile);
+                        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check failed",$logfile);
                     else:
                         $stmt->store_result();
                         $collection_exists = $stmt->num_rows; //$collection_exists now includes the quantity of tables with the collection name
                         $stmt->close();
-                        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check returned $collection_exists rows",$logfile);
+                        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check returned $collection_exists rows",$logfile);
                         if($collection_exists === 0): //No existing collection table
                             echo "<div class='alert-box success'><span>success: </span>Table dropped for $sql_name</div>";
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check shows 0",$logfile);
+                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check shows 0",$logfile);
                         elseif($collection_exists == -1):
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Shouldn't be here...",$logfile);
+                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Shouldn't be here...",$logfile);
                         else: // There is still a table with this name
                             echo "<div class='alert-box error'><span>error: </span>Table not dropped for $sql_name</div>";
-                            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table still exists",$logfile);
+                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table still exists",$logfile);
                         endif;
                     endif;
                 endif;
@@ -188,10 +188,8 @@ require('../includes/menu.php');
         </form>
 
         <div>
-            <h3>User table</h3>
-            <?php 
-            $allusertable = $db->select('username, usernumber, email, reg_date, lastlogin_date, status, admin','users');
-            ?>
+            <h3>User table</h3> <?php 
+            $allusertable = $db->execute_query("SELECT username, usernumber, email, reg_date, lastlogin_date, status, admin FROM users");?>
             <form name="updateusers" action="users.php" method="post">
                 <table>
                     <tr>
@@ -248,11 +246,13 @@ require('../includes/menu.php');
                             <?php if($updateusers === 'yes'): ?>
                             <td>
                                 <?php 
-                                $updateoutcome = $db->select_one('username, email, status, admin','users',"WHERE usernumber={$alluserresults['usernumber']}");
-                                if(($updateoutcome['username'] === ${'sqlname'.$alluserresults['usernumber']}) 
-                                    AND ($updateoutcome['email'] === ${'sqleml'.$alluserresults['usernumber']})
-                                    AND ($updateoutcome['status'] === ${'sqlstatus'.$alluserresults['usernumber']})
-                                    AND ($updateoutcome['admin'] === ${'sqladm'.$alluserresults['usernumber']})): ?>
+                                $aur_usernumber = $alluserresults['usernumber'];
+                                $updatesql = $db->execute_query("SELECT username, email, status, admin FROM users WHERE usernumber = ? LIMIT 1",[$aur_usernumber]);
+                                $updateoutcome = $updatesql->fetch_assoc();
+                                if(((string)$updateoutcome['username'] === (string)${'sqlname'.$alluserresults['usernumber']}) 
+                                    AND ((string)$updateoutcome['email'] === (string)${'sqleml'.$alluserresults['usernumber']})
+                                    AND ((string)$updateoutcome['status'] === (string)${'sqlstatus'.$alluserresults['usernumber']})
+                                    AND ((string)$updateoutcome['admin'] === (string)${'sqladm'.$alluserresults['usernumber']})): ?>
                                     <img src='/images/success.png' alt='Success'>
                                 <?php else: ?>
                                     <img src='/images/error.png' alt='Failure'>
@@ -280,7 +280,7 @@ require('../includes/menu.php');
             <form action="/csv.php"  method="GET">
                 <select name='table'>
                 <?php 
-                $exportlist = $db->select('usernumber,username','users');
+                $exportlist = $db->execute_query("SELECT usernumber,username FROM users");
                 while ($listuser = $exportlist->fetch_assoc()):
                     $userno = $listuser['usernumber'];
                     $userid = $listuser['username'];

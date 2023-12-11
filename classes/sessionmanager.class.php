@@ -29,6 +29,7 @@ class SessionManager {
     private $fxLocal;
     private $sessionArray = [];
     private $logfile;
+    private $message;
     
     const ADMIN_OK = 1;
     const ADMIN_WRONG_LOCATION = 2;
@@ -41,6 +42,7 @@ class SessionManager {
         $this->fxAPI = $fxAPI;
         $this->fxLocal = $fxLocal;
         $this->logfile = $logfile;
+        $this->message = new Message();
         $this->sessionArray = [
             'usernumber' => '',
             'username' => '',
@@ -88,35 +90,35 @@ class SessionManager {
                 $defaultLocalCurrency = $this->fxLocal;
                 $userLocalCurrency = $currency;
                 if(isset($userLocalCurrency) AND $userLocalCurrency !== NULL AND $userLocalCurrency !== ""): //Does user have a currency set?
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User has currency set: $userLocalCurrency",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User has currency set: $userLocalCurrency",$this->logfile);
                     $currencies = "usd_".$userLocalCurrency;
                 elseif(isset($defaultLocalCurrency) AND $defaultLocalCurrency !== NULL AND $defaultLocalCurrency !== ""): //...else use default
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No user currency set, using default: $defaultLocalCurrency",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No user currency set, using default: $defaultLocalCurrency",$this->logfile);
                     $currencies = "usd_".$defaultLocalCurrency;
                 else:                                                                                       ///... else disable fx 
                     $fx = FALSE;
                 endif;
                 list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
                 if($baseCurrency === $targetCurrency):
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Base currency same as target, disabling conversion",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Base currency same as target, disabling conversion",$this->logfile);
                     $fx = FALSE;
                 else:
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Currency conversion from $baseCurrency to $targetCurrency",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Currency conversion from $baseCurrency to $targetCurrency",$this->logfile);
                 endif;
             else:
                 $fx = FALSE;
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (1)",$this->logfile);
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (1)",$this->logfile);
             endif;
             if(isset($fx) AND $fx === TRUE):
                 $rate = $this->getRateForCurrencyPair($currencies);
                 if($rate === NULL):
                     $fx = FALSE;
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (2)",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (2)",$this->logfile);
                 else:
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$this->logfile);
+                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Conversion rate for $currencies is $rate",$this->logfile);
                 endif;
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (3)",$this->logfile);
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"FX conversion disabled (3)",$this->logfile);
                 $rate = FALSE;
             endif;
             $this->addToSessionArray([
@@ -152,7 +154,7 @@ class SessionManager {
 
     public function getRateForCurrencyPair($currencies)
     {
-        $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called for $currencies", $this->logfile);
+        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called for $currencies", $this->logfile);
         // Ensure $currencies is safe to use in the query (sanitize if necessary)
         $query = "SELECT rate, updatetime FROM fx WHERE currencies = ?";
 
@@ -168,26 +170,26 @@ class SessionManager {
             $stmt->fetch();
             // If the timestamp is more than an hour old, proceed with the update
             $age = time() - $lastUpdateTime;
-            $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Existing rate age is $age", $this->logfile);
+            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Existing rate age is $age", $this->logfile);
             if ($lastUpdateTime === null OR $age > 3600) :
                 $rate = $this->updateFxRate($currencies);
                 if($rate === NULL):
-                    $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
+                    $this->message->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
                     return $rate;
                 else:
-                    $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Updating... new rate is $rate", $this->logfile);
+                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Updating... new rate is $rate", $this->logfile);
                 endif;
             else :
                 $rate = $existingRate; // Keep the existing rate from the database
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Not updating... rate is $rate", $this->logfile);
+                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Not updating... rate is $rate", $this->logfile);
             endif;
         elseif ($stmt->num_rows === 0) :
             $rate = $this->updateFxRate($currencies);
             if($rate === NULL):
-                $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
+                $this->message->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": API has not provided a rate", $this->logfile);
                 return $rate;
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": New currency pair... rate is $rate", $this->logfile);
+                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": New currency pair... rate is $rate", $this->logfile);
             endif;
         endif;
 
@@ -203,8 +205,7 @@ class SessionManager {
         $freecurrencyData = $freecurrencyapi->latest(['base_currency' => "$baseCurrency",'currencies' => "$targetCurrency",]);
         if (isset($freecurrencyData["data"][$targetCurrency])):
             $fxResult = $freecurrencyData["data"]["$targetCurrency"];
-            $obj = new Message;
-            $obj->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, $baseCurrency to $targetCurrency is $fxResult", $this->logfile);
+            $this->message->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call, $baseCurrency to $targetCurrency is $fxResult", $this->logfile);
             $time = time();
             $stmt = $this->db->prepare("
                 INSERT INTO fx (updatetime, rate, currencies)
@@ -226,7 +227,7 @@ class SessionManager {
             $stmt->close();
             return $fxResult;
         else:
-            $obj = new Message;$obj->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call failed for $targetCurrency", $this->logfile);
+            $this->message->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": FreecurrencyAPI call failed for $targetCurrency", $this->logfile);
             return null;
         endif;
     }
@@ -263,6 +264,11 @@ class SessionManager {
         $stmt->close();
 
         return strtotime($lastUpdateTime);
+    }
+
+    public function __toString() {
+        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        return "Called as a string";
     }
 }
 

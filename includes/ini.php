@@ -135,9 +135,16 @@ define('DB_NAME', $ini_array['database']['DBName']);    // db name
 $dbname = $ini_array['database']['DBName'];
 
 try {
-    $db = new Mysqli_Manager();
-    $db->conn(); // connect DB
-    $db->set_charset("utf8mb4");
+    $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    if ($db->connect_error):
+        throw new Exception('Failed to connect to MySQL Database <br /> Error Info : ' . $db->connect_error);
+    endif;
+    $db->set_charset('utf8mb4');
+
+//try {
+//    $db = new Mysqli_Manager();
+//    $db->conn(); // connect DB
+//    $db->set_charset("utf8mb4");
 
 } catch (Exception $err) {
     if(($fd = fopen($logfile, "a")) !== false):

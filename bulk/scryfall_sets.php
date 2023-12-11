@@ -11,6 +11,7 @@
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions_new.php');
+$msg = new Message;
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
@@ -27,43 +28,37 @@ $file_location = $ImgLocation.'json/sets.json';
 
 //Check image location
 if (!file_exists($ImgLocation."seticons")):
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory {$ImgLocation}/seticons",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating new directory {$ImgLocation}/seticons",$logfile);
     mkdir($ImgLocation."seticons");
 endif;
 
 // Set counts
 $total_count = 0;
 
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: Download URI: $url",$logfile);
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: Download URI: $url",$logfile);
 if (file_exists($file_location)):
     $fileage = filemtime($file_location);
     $file_date = date('d-m-Y H:i',$fileage);
     if (time()-$fileage > $max_fileage):
         $download = 2;
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: File old ($file_location, $file_date), downloading",$logfile);  
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: File old ($file_location, $file_date), downloading",$logfile);  
     else:
         $download = 0;
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: File fresh ($file_location, $file_date), skipping download",$logfile);    
     endif;
 else:
     $download = 1;
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: No file at ($file_location), downloading: $url",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: No file at ($file_location), downloading: $url",$logfile);
 endif;
 if($download > 0):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: ($file_location), downloading: $url",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: ($file_location), downloading: $url",$logfile);
     $setsreturn = downloadbulk($url,$file_location);
 endif;
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: Local file: $file_location",$logfile);
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall sets API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($ImgLocation.'json/sets.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE sets')):
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Sets API: sets table cleared",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Sets API: sets table cleared",$logfile);
 else:
     trigger_error('[ERROR] scryfall_sets.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
 endif;
@@ -115,15 +110,15 @@ foreach($data AS $key => $value):
             if (!$stmt->execute()):
                 trigger_error("[ERROR] scryfall_sets: Writing new ruling details: " . $db->error, E_USER_ERROR);
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add sets $total_count - no error returned ",$logfile);
+                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add sets $total_count - no error returned ",$logfile);
                 $total_count = $total_count + 1;
             endif;
             $stmt->close();
             //$seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
             $seticon = $ImgLocation."seticons/".$code.".svg";
-            $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set icon for '$code' to be $seticon from $icon_svg_uri?$time",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set icon for '$code' to be $seticon from $icon_svg_uri?$time",$logfile);
             if(!file_exists($seticon)):
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Icon not at $seticon",$logfile);
+                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Icon not at $seticon",$logfile);
                 downloadbulk($icon_svg_uri."?".$time,$seticon);
             endif;
             $seticon = $icon_svg_uri = '';
@@ -132,8 +127,7 @@ foreach($data AS $key => $value):
 endforeach;
 
 
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk sets completed",$logfile);
+$msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk sets completed",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
 $subject = "MTG sets update completed"; 
 $message = "Total: $total_count";

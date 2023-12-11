@@ -25,6 +25,8 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
+$msg = new Message;
+
 ?> 
 <!DOCTYPE html>
 
@@ -110,8 +112,7 @@ require('includes/menu.php');
             trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Executing SQL: " . $db->error, E_USER_ERROR);
         else: 
             $result = $stmt->get_result();
-            $obj = new Message;
-            $obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$result->num_rows." results",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$result->num_rows." results",$logfile);
             if ($result->num_rows === 0):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": No results ". $db->error, E_USER_ERROR);
             endif;
@@ -151,8 +152,7 @@ require('includes/menu.php');
             $currentYear = null;
             if($result === false):
                 // Should never get here with catches above
-                $obj = new Message;
-                $obj->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Error retrieving data",$logfile); ?>
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Error retrieving data",$logfile); ?>
                 <tr>
                     <td colspan="2">Error retrieving data</td>
                 </tr> <?php

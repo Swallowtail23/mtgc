@@ -11,6 +11,7 @@
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions_new.php');
+$msg = new Message;
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
@@ -27,8 +28,7 @@ $file_location = $ImgLocation.'json/rulings.json';
 // Set counts
 $total_count = 0;
 
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: fetching $url",$logfile);
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: fetching $url",$logfile);
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
@@ -38,38 +38,31 @@ $scryfall_rulings = json_decode($curlresult,true);
 if(isset($scryfall_rulings["type"]) AND $scryfall_rulings["type"] === "rulings"):
     $rulings_uri = $scryfall_rulings["download_uri"];
 endif;
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
 
 if (file_exists($file_location)):
     $fileage = filemtime($file_location);
     $file_date = date('d-m-Y H:i',$fileage);
     if (time()-$fileage > $max_fileage):
         $download = 2;
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File old ($file_location, $file_date), downloading $rulings_uri",$logfile);
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File old ($file_location, $file_date), downloading $rulings_uri",$logfile);
     else:
         $download = 0;
-        $obj = new Message;
-        $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File fresh ($file_location, $file_date), skipping download",$logfile);    
     endif;
 else:
     $download = 1;
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: No file at ($file_location), downloading: $url",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: No file at ($file_location), downloading: $url",$logfile);
 endif;
 if($download > 0):
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: downloading: $url",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: downloading: $url",$logfile);
     $rulingreturn = downloadbulk($rulings_uri,$file_location);
 endif;
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Local file: $file_location",$logfile);
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Local file: $file_location",$logfile);
 
 $data = Items::fromFile($ImgLocation.'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE rulings_scry')):
-    $obj = new Message;
-    $obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Old rulings cleared",$logfile);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Old rulings cleared",$logfile);
 else:
     trigger_error('[ERROR] scryfall_rulings.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
 endif;
@@ -97,14 +90,12 @@ foreach($data AS $key => $value):
     if (!$stmt->execute()):
         trigger_error("[ERROR] scryfall_rulings: Writing new ruling details: " . $db->error, E_USER_ERROR);
     else:
-        $obj = new Message;
-        $obj->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add ruling $total_count - no error returned ",$logfile);
+        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add ruling $total_count - no error returned ",$logfile);
         $total_count = $total_count + 1;
     endif;
     $stmt->close();
 endforeach;
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk rulings completed",$logfile);
+$msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk rulings completed",$logfile);
 $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
 $subject = "MTG rulings update completed"; 
 $message = "Total: $total_count";

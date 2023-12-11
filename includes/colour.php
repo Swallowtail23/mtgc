@@ -23,7 +23,8 @@ endif;
 function colourfunction($colourcode)
 {
     global $logfile;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": run with input: $colourcode",$logfile);
+    $msg = new Message;
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": run with input: $colourcode",$logfile);
     $decode = json_decode($colourcode);
     $colourcode = '';
     if($decode !== null):
@@ -31,7 +32,7 @@ function colourfunction($colourcode)
             $colourcode = $colourcode.$value;
         endforeach;
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Checking card, colour identity $colourcode",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Checking card, colour identity $colourcode",$logfile);
     if (strlen($colourcode) === 1):
         if ($colourcode === "B") :
             $colour = "black";
@@ -214,6 +215,6 @@ function colourfunction($colourcode)
     if (empty($colour)):
         $colour = "other";
     endif;
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Returning colour: $colour",$logfile);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Returning colour: $colour",$logfile);
     return $colour;
 }

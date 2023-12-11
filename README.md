@@ -31,7 +31,7 @@ Install under web server as applicable
 
 #### JsonMachine ####
 Used for bulk script parsing
-Composer install
+Composer install (see below section)
 
 #### Cloudflare Turnstile ####
 Used on login page to provide "captcha" style validation before login
@@ -40,7 +40,7 @@ Uses https://packagist.org/packages/andkab/php-turnstile
 If tier is "dev", dummy keys are used
 
 To setup Turnstile
-- Composer install
+- Composer install (see below section)
 - in Ini file (see section below on Ini file):
     - enable/disable (anything other than Turnstile = "enabled" will disable)
     - if enabled, you must set keys
@@ -50,7 +50,7 @@ Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
-Composer install
+Composer install (see below section)
 Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
 Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
 
@@ -61,7 +61,7 @@ The rate is updated at most every 60 minutes on demand, with the target currency
 -- composer require andkab/php-turnstile
 -- composer require everapi/freecurrencyapi-php:dev-master
 -- composer require halaxa/json-machine
-To install as apache: sudo -Hu apache composer require halaxa/json-machine
+To install as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 
 ### File locations ###
 - Create a new folder at /opt/mtg
@@ -143,7 +143,7 @@ Edit my.cnf and set as follows:
 Note 2G sizing is based on 4G or more server RAM.
 
 ### PHP session.name ###
-set the same unique session.name on all pages which call session.start
+Set the same unique session.name on all pages which call session.start
 
 ### Initial user ###
 
@@ -161,10 +161,10 @@ Adjust folder and user to suit.
 
 1. Load ini.php
 2. Ini.php sets:
-    - class autoload
+    - class autoloader
     - reads in the ini file
     - checks the logfile is accessible and writable
-    - establishes a MySQLi_Manager database connection ($db)
+    - establishes a mysqli database connection ($db)
     - sets the function for handling errors (mtg_error)
     - ... and exceptions (mtg_exception)
     - sets the writelog function (to be rewritten)

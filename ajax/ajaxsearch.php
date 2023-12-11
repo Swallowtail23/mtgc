@@ -26,6 +26,7 @@ require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions_new.php');
 include '../includes/colour.php';
+$msg = new Message;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
     echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
@@ -68,7 +69,7 @@ else:
             $u = ''; // No brackets in this case
         endif;
         
-        $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Seaarch string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Seaarch string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
         $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                       FROM cards_scry
                       WHERE

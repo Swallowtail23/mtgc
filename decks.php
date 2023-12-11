@@ -26,6 +26,7 @@ require ('includes/error_handling.php');
 require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
+$msg = new Message;
 
 //page specific variables
 $newdeck        = isset($_POST['newdeck']) ? 'yes' : '';
@@ -123,7 +124,7 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <?php
             else:
-                if ($checkunique = $db->select('decknumber','decks',"WHERE owner = $user AND deckname = '$deckname' LIMIT 1")):
+                if ($checkunique = $db->execute_query("SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1",[$user,$deckname])):
                     if ($checkunique->num_rows > 0):
                         ?>
                         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Name already used</span>
@@ -134,16 +135,12 @@ require('includes/menu.php'); //mobile menu
                         <?php
                     else:
                         //Create new deck
-                        $data = array(
-                            'owner' => $user,
-                            'deckname' => $deckname
-                        );
-                        if($db->insert('decks',$data) === TRUE):
-                            if ($checkcreated = $db->select('decknumber','decks',"WHERE owner = $user AND deckname = '$deckname' LIMIT 1")):
+                        if($db->execute_query("INSERT into decks (owner,deckname) VALUES (?,?)",[$user,$deckname]) === TRUE):
+                            if ($checkcreated = $db->execute_query("SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1",[$user,$deckname])):
                                 if ($checkcreated->num_rows !== 1):
                                     trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
                                 else:
-                                    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
+                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
                                 endif;    
                             else:
                                 trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
@@ -160,14 +157,15 @@ require('includes/menu.php'); //mobile menu
         
         // Delete a deck
         if($deletedeck == "yes"):
-            deldeck($decktodelete);
+            $obj = new DeckManager($db,$logfile);
+            $obj->delDeck($decktodelete);
         endif;
         // List decks
         ?>
         <div id='decklistdiv'>
         <h2 class='h2pad'>My Decks</h2>
         <?php
-        if($sqlquery = $db->select('*','decks',"WHERE owner = $user ORDER BY type ASC, deckname ASC")):?>
+        if($sqlquery = $db->execute_query("SELECT * FROM decks WHERE owner = ? ORDER BY type ASC, deckname ASC",[$user])):?>
             <table class="decklist">
                 <?php
                 $typeheader = '';

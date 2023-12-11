@@ -37,9 +37,7 @@ require('includes/header.php');
 require('includes/menu.php');
 // Next the main DIV section
 
-// cardtype_for_id('abcd');
-// cardtype_for_id('9ac68519-ed7f-4f38-9549-c02975f88eed');
-// cardtype_for_id('f8de8199-2977-47ed-a2f6-2a1617a409c8');
+
 ?>
 <div id="page">
     <div class="staticpagecontent">
