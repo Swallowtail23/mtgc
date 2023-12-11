@@ -248,7 +248,8 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') AND ( $scope == 'mycollection')):
     $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"My Collection / Price query called, updating collection pricing",$logfile);
-    update_collection_values($mytable);
+    $obj = new PriceManager($db,$logfile,$useremail);
+    $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
 if ( $scope == 'mycollection' OR $sortBy == 'price'): // Price search waives the limit
