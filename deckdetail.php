@@ -197,7 +197,8 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking deck $decknumber",$logfile);
-if(deckownercheck($decknumber,$user) == FALSE): ?>
+$obj = new DeckManager($db, $logfile);
+if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
     <h3>This deck is not yours... returning to your deck page...</h3>
@@ -219,9 +220,10 @@ endif;
 
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck to $newname",$logfile);
-    $renameresult = renamedeck($decknumber,$newname,$user);
-    $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck result: $renameresult",$logfile);
+    $msg = new Message;$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck to $newname",$logfile);
+    $obj = new DeckManager($db,$logfile);
+    $renameresult = $obj->renameDeck($decknumber,$newname,$user);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck result: $renameresult",$logfile);
     if($renameresult == 2):
         ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
@@ -344,44 +346,47 @@ else:
 endif;
 
 // Add / delete, before calling the deck list
+$obj = new DeckManager($db,$logfile);
+$msg = new Message;
+
 if($deletemain == 'yes'):
-    subtractdeckcard($decknumber,$cardtoaction,"main","all");
+    $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");
     $redirect = true;
 elseif($deleteside == 'yes'):
-    subtractdeckcard($decknumber,$cardtoaction,"side","all");
+    $obj->subtractDeckCard($decknumber,$cardtoaction,"side","all");
     $redirect = true;
 elseif($maintoside == 'yes'):
-    if (subtractdeckcard($decknumber,$cardtoaction,'main','1') != "-error"):
-        adddeckcard($decknumber,$cardtoaction,"side","1");
+    if ($obj->subtractDeckCard($decknumber,$cardtoaction,'main','1') != "-error"):
+        $obj->addDeckCard($decknumber,$cardtoaction,"side","1");
     endif;
     $redirect = true;
 elseif($sidetomain == 'yes'):
-    if (subtractdeckcard($decknumber,$cardtoaction,'side','1') != "-error"):
-        adddeckcard($decknumber,$cardtoaction,"main","1");
+    if ($obj->subtractDeckCard($decknumber,$cardtoaction,'side','1') != "-error"):
+        $obj->addDeckCard($decknumber,$cardtoaction,"main","1");
     endif;
     $redirect = true;
 elseif($plusmain == 'yes'):
-    adddeckcard($decknumber,$cardtoaction,"main","1");
+    $obj->addDeckCard($decknumber,$cardtoaction,"main","1");
     $redirect = true;
 elseif($minusmain == 'yes'):
-    subtractdeckcard($decknumber,$cardtoaction,'main','1');
+    $obj->subtractDeckCard($decknumber,$cardtoaction,'main','1');
     $redirect = true;
 elseif($plusside == 'yes'):
-    adddeckcard($decknumber,$cardtoaction,"side","1");
+    $obj->addDeckCard($decknumber,$cardtoaction,"side","1");
     $redirect = true;
 elseif($minusside == 'yes'):
-    subtractdeckcard($decknumber,$cardtoaction,'side','1');
+    $obj->subtractDeckCard($decknumber,$cardtoaction,'side','1');
     $redirect = true;
 elseif($commander == 'yes'):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
-    addcommander($decknumber,$cardtoaction);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
+    $obj->addCommander($decknumber,$cardtoaction);
     $redirect = true;
 elseif($partner == 'yes'):
-    $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Moving Commander to Partner for deck $decknumber: $cardtoaction",$logfile);
-    addpartner($decknumber,$cardtoaction);
+    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Moving Commander to Partner for deck $decknumber: $cardtoaction",$logfile);
+    $obj->addPartner($decknumber,$cardtoaction);
     $redirect = true;
 elseif($commander == 'no'):
-    delcommander($decknumber,$cardtoaction);
+    $obj->delCommander($decknumber,$cardtoaction);
     $redirect = true;
 endif;
 

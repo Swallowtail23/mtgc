@@ -18,15 +18,14 @@ require ('includes/functions_new.php');      //Includes basic functions for non-
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
 
-$obj = new Message;
-$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading valueupdate.php...",$logfile);
+$msg = new Message;
+$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading valueupdate.php...",$logfile);
                 
 // Page content starts here
 if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     //Make sure only number+collection is passed as table name
-    $pattern = '/^\d+collection$/';
-    if (preg_match($pattern, $table)):
+    if (valid_tablename($table) !== false):
         update_collection_values($table);
     else:
         trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);

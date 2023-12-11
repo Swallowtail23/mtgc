@@ -1912,7 +1912,8 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                         else:
                                             // Check that the proposed deck exists and belongs to owner.
-                                            if (deckownercheck($decktoaddto,$user) == FALSE): ?>
+                                            $obj = new DeckManager($db, $logfile);
+                                            if($obj->deckOwnerCheck($decktoaddto,$user) == FALSE): ?>
                                                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>You don't have that deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -1957,7 +1958,8 @@ require('includes/menu.php'); //mobile menu
                                                 $deckqty = (int)$deckqty;
                                             
                                                 //Call add card function
-                                                adddeckcard($decktoaddto,$cardid,'main',$deckqty);
+                                                $obj = new DeckManager($db,$logfile);
+                                                $obj->addDeckCard($decktoaddto,$cardid,'main',$deckqty);
                                                 
                                                 //Check it's added
                                                 $sql = "SELECT cardnumber,cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND cardqty = ? LIMIT 1";
@@ -1995,7 +1997,8 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                     endif; 
                                     $obj = new Message;$obj->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking to see if $cardid is in any owned decks",$logfile);
-                                    $inmydecks = deckcardcheck($cardid,$user);
+                                    $obj = new DeckManager($db,$logfile);
+                                    $inmydecks = $obj->deckCardCheck($cardid,$user);
                                     if (!empty($inmydecks)):
                                         echo "<b>Your decks with this card:</b><br>";
                                         foreach ($inmydecks as $decksrow):
@@ -2014,7 +2017,8 @@ require('includes/menu.php'); //mobile menu
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
                                             $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking user $grpusername for $cardid",$logfile);
-                                            $ingrpdecks = deckcardcheck($cardid,$grpuserid);
+                                            $obj = new DeckManager($db,$logfile);
+                                            $ingrpdecks = $obj->deckCardCheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):
                                                 echo "<b>Group decks with this card:</b><br>";

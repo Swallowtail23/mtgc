@@ -156,7 +156,8 @@ require('includes/menu.php'); //mobile menu
         
         // Delete a deck
         if($deletedeck == "yes"):
-            deldeck($decktodelete);
+            $obj = new DeckManager($db,$logfile);
+            $obj->delDeck($decktodelete);
         endif;
         // List decks
         ?>
