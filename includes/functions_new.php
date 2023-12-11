@@ -1,6 +1,6 @@
 <?php
-/* Version:     18.0
-    Date:       25/11/23
+/* Version:     18.1
+    Date:       11/12/23
     Name:       functions_new.php
     Purpose:    Functions for all pages
     Notes:      
@@ -55,6 +55,9 @@
  *
  * 18.0         25/11/23
  *              Migrate more to prepared statements, and add collector number to Quick Add
+ * 
+ * 18.1         11/12/23
+ *              Move deck functions to DeckManager class
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
