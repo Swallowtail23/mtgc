@@ -2740,6 +2740,25 @@ td.columnhide
     color: darkgrey;
 }
 
+.sets-header-container
+{
+    display: flex;
+    align-items: center; 
+    max-width: 600px;
+}
+
+.h2pad.sets-header 
+{
+    flex: 1; /* Allow the heading to grow and take available space */
+}
+
+.filter-container 
+{
+    flex: 1; /* Allow the filter container to grow and take available space */
+    text-align: left; /* Align the content to the right within the container */
+    padding-top: 15px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
