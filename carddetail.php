@@ -307,6 +307,25 @@ jQuery( function($) {
         }
     };
 </script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        var textarea = document.getElementById('cardnotes');
+        var saveButton = document.querySelector('.save_icon');
+
+        // Store the initial value of the textarea
+        var initialValue = textarea.value;
+
+        // Add an event listener to the textarea
+        textarea.addEventListener('input', function() {
+            // Check if the current value is different from the initial value
+            if (textarea.value !== initialValue) {
+                saveButton.disabled = false;
+            } else {
+                saveButton.disabled = true;
+            }
+        });
+    });
+</script>
 
 </head>
 
@@ -1534,7 +1553,7 @@ require('includes/menu.php'); //mobile menu
                             echo "<input type='hidden' name='id' value=".$lookupid.">";
                             echo "<input type='hidden' name='update' value='yes'>";?>
                             <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
-                            <button class='inline_button' style="cursor: pointer;" type="button" onclick="submitForm()" title="Save"><span class="material-symbols-outlined">save</span></button>
+                            <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled><span class="material-symbols-outlined">save</span></button>
                             </form>
                             <script>
                                 function submitForm() {

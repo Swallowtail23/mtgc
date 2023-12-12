@@ -2729,6 +2729,17 @@ td.columnhide
     transform: rotateY(180deg) scaleX(-1);
 }
 
+.save_icon
+{
+    cursor: pointer;
+}
+
+.save_icon:disabled
+{
+    cursor: not-allowed;
+    color: darkgrey;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
