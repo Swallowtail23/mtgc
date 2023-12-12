@@ -130,6 +130,35 @@ $msg = new Message;
                 document.body.style.cursor='wait';
             }
     </script> 
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var notesTextarea = document.getElementById('notes');
+            var sidenotesTextarea = document.getElementById('sidenotes');
+            var saveButton = document.querySelector('.save_icon');
+
+            // Store the initial values of the textareas
+            var initialNotesValue = notesTextarea.value;
+            var initialSidenotesValue = sidenotesTextarea.value;
+
+            // Add an event listener to the "Notes" textarea
+            notesTextarea.addEventListener('input', checkChanges);
+
+            // Add an event listener to the "Sideboard notes" textarea (if it exists)
+            if (sidenotesTextarea) {
+                sidenotesTextarea.addEventListener('input', checkChanges);
+            }
+
+            function checkChanges() {
+                // Check if either textarea is different from its initial value
+                if (notesTextarea.value !== initialNotesValue || (sidenotesTextarea && sidenotesTextarea.value !== initialSidenotesValue)) {
+                    saveButton.disabled = false;
+                } else {
+                    saveButton.disabled = true;
+                }
+            }
+        });
+    </script>
+
 </head>
 
 <body class="body">
@@ -2074,17 +2103,24 @@ endif;
                 echo "</ul>";
             endif;
             ?>
-            <form action="?" method="POST">
+            <form id="updatenotesform" action="?" method="POST">
                 <h4>&nbsp;Notes</h4>
-                <textarea class='decknotes textinput' name='newnotes' rows='2' cols='40'><?php echo $notes; ?></textarea>
+                <textarea class='decknotes textinput' id="notes" name='newnotes' rows='2' cols='40'><?php echo $notes; ?></textarea>
                 <?php if ($decktype != 'Wishlist'):  ?>
                     <h4>&nbsp;Sideboard notes</h4>
-                    <textarea class='decknotes textinput' name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
+                    <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
                 <?php endif;  ?>
                 <input type='hidden' name='updatenotes' value='yes'>
                 <input type='hidden' name='deck' value='<?php echo $decknumber?>'>
-                <input class='inline_button stdwidthbutton noprint' type="submit" value="UPDATE NOTES">
+                <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
+                <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled><span class="material-symbols-outlined">save</span></button>
             </form>
+            <script>
+                function submitForm() {
+                    document.getElementById('hiddenSubmitValue').value = 'UPDATE NOTES';
+                    document.getElementById('updatenotesform').submit();
+                }
+            </script>
             <hr id='deckline' class='hr324'>
             <?php
             if($total + $sidetotal > 0):

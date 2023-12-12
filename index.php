@@ -860,31 +860,31 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         </table>    
                     </div> <?php 
                 elseif ($layout == 'grid') :?>
-                <script type="text/javascript">
-                    function swapImage(img_id, card_id, imageurl, imagebackurl) {
-                        var ImageId = document.getElementById(img_id);
-                        var FrontImg = card_id + ".jpg";
-                        var BackImg = card_id + "_b.jpg";
+                    <script type="text/javascript">
+                        function swapImage(img_id, card_id, imageurl, imagebackurl) {
+                            var ImageId = document.getElementById(img_id);
+                            var FrontImg = card_id + ".jpg";
+                            var BackImg = card_id + "_b.jpg";
 
-                        if (!ImageId.classList.contains('flipped')) {
-                            // If not flipped, apply flip effect
-                            ImageId.classList.add('flipped');
+                            if (!ImageId.classList.contains('flipped')) {
+                                // If not flipped, apply flip effect
+                                ImageId.classList.add('flipped');
 
-                            // Set a timeout for half of the transition duration
-                            setTimeout(function () {
-                                ImageId.src = imagebackurl;
-                            }, 80);
-                        } else {
-                            // If already flipped, remove flip effect
-                            ImageId.classList.remove('flipped');
+                                // Set a timeout for half of the transition duration
+                                setTimeout(function () {
+                                    ImageId.src = imagebackurl;
+                                }, 80);
+                            } else {
+                                // If already flipped, remove flip effect
+                                ImageId.classList.remove('flipped');
 
-                            // Set a timeout for half of the transition duration
-                            setTimeout(function () {
-                                ImageId.src = imageurl;
-                            }, 80);
+                                // Set a timeout for half of the transition duration
+                                setTimeout(function () {
+                                    ImageId.src = imageurl;
+                                }, 80);
+                            }
                         }
-                    }
-                </script>
+                    </script>
                     <script type="text/javascript">
                         function rotateImg(img_id) {
                             if ( document.getElementById(img_id).style.transform == 'none' ){

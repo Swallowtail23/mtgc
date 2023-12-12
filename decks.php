@@ -114,6 +114,7 @@ require('includes/menu.php'); //mobile menu
 <div id="page">
     <div class="staticpagecontent">
         <?php
+        
         // Create a new deck
         if($newdeck == "yes"):
             if($deckname == ''):
@@ -124,39 +125,15 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <?php
             else:
-                if ($checkunique = $db->execute_query("SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1",[$user,$deckname])):
-                    if ($checkunique->num_rows > 0):
-                        ?>
-                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Name already used</span>
-
-                            <br>
-                            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                        </div>
-                        <?php
-                    else:
-                        //Create new deck
-                        if($db->execute_query("INSERT into decks (owner,deckname) VALUES (?,?)",[$user,$deckname]) === TRUE):
-                            if ($checkcreated = $db->execute_query("SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1",[$user,$deckname])):
-                                if ($checkcreated->num_rows !== 1):
-                                    trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
-                                else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deckname created ",$logfile);
-                                endif;    
-                            else:
-                                trigger_error('Error: Deck creation validation check failed', E_USER_ERROR);
-                            endif;
-                        else:
-                            trigger_error('Error: Deck creation SQL error', E_USER_ERROR);
-                        endif;
-                    endif;
-                else:
-                    trigger_error('Error: Deck exists check SQL error', E_USER_ERROR);
-                endif;
+                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Calling Deckmanager->addDeck: '$user/$deckname'",$logfile);
+                $obj = new DeckManager($db, $logfile);
+                $decksuccess = $obj->addDeck($user,$deckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
             endif;
         endif;
         
         // Delete a deck
         if($deletedeck == "yes"):
+            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Calling Deckmanager->deleteDeck: '($user) $decktodelete'",$logfile);
             $obj = new DeckManager($db,$logfile);
             $obj->delDeck($decktodelete);
         endif;

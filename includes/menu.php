@@ -15,7 +15,7 @@ endif;
 ?>
 
 <div id='menubuttondiv' class="togglemenu">    
-    <a href="#" id='toggle-menu'></a>
+    <a href="#" id='toggle-menu'><span id ="menu-icon" class="material-symbols-outlined menu">menu</span></a>
 </div>
 <div id="menu">
     <div class='nav_profile'>

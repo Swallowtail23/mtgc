@@ -107,12 +107,13 @@ table
   top:38px;
   right: 5%;
   z-index: 99998;
+  cursor: pointer;
 }
 
 .material-symbols-outlined.logouta
 {
     font-size: 40px;
-    color: white;
+    color: #f0f2f9;
     font-variation-settings:
         'FILL' 1,
         'wght' 500,
@@ -1376,14 +1377,22 @@ table
     display: block; 
     height: 40px; 
     width: 40px; 
-    background:transparent url('/images/menul.png') center no-repeat;
     text-decoration: none;
 }
 #toggle-menu:hover
 { 
-   background:transparent url('/images/menul_h.png') center no-repeat;
+   color: lightgrey;
 }
-
+.material-symbols-outlined.menu
+{
+    font-size: 40px;
+    color: #f0f2f9;
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 500,
+        'GRAD' 0,
+        'opsz' 40;
+}
 /* Mobile menu */
 
 #menu 
@@ -1624,7 +1633,7 @@ table
 .material-symbols-outlined.searchicon
 {
     font-size: 36px;
-    color: white;
+    color: #f0f2f9;
     font-variation-settings:
         'FILL' 1,
         'wght' 500,
@@ -1635,6 +1644,7 @@ table
 .searchicon
 {
     display: inline-block;
+    cursor: pointer;
     text-align:center;
     position: fixed;
     line-height: 40px;
@@ -2711,12 +2721,23 @@ td.columnhide
         'GRAD' -50;
 }
 
-.card-image {
+.card-image, .mainimg{
     transition: transform 0.5s ease;
 }
 
 .flipped {
     transform: rotateY(180deg) scaleX(-1);
+}
+
+.save_icon
+{
+    cursor: pointer;
+}
+
+.save_icon:disabled
+{
+    cursor: not-allowed;
+    color: darkgrey;
 }
 
 /* Media Queries from here  */
