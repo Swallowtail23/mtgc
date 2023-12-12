@@ -285,7 +285,7 @@ class DeckManager {
     public function addDeckCard($deck,$card,$section,$quantity)
     {
         global $commander_decktypes, $commander_multiples, $any_quantity;
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $quantity x $card to $deck ($section)", $this->logfile);
+        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: '$quantity' x '$card' to '$deck' ($section)", $this->logfile);
 
         // Get card name of addition
         $cardnamequery = "SELECT name,type,ability FROM cards_scry WHERE id = ? LIMIT 1";
@@ -327,16 +327,19 @@ class DeckManager {
         endif;
 
         // Get deck type and existing cards in it
-        $decktypesql = $this->db->execute_query("SELECT type
+        if($decktypesql = $this->db->execute_query("SELECT type
                                     FROM decks 
-                                    WHERE decknumber = ?",[$deck]);
-        while ($row = $decktypesql->fetch_assoc()):
-            if ($row['type'] == NULL):
-                $decktype = "none";
-            else:
-                $decktype = $row['type'];
-            endif;
-        endwhile;
+                                    WHERE decknumber = ?",[$deck])):
+            while ($row = $decktypesql->fetch_assoc()):
+                if ($row['type'] == NULL):
+                    $decktype = "none";
+                else:
+                    $decktype = $row['type'];
+                endif;
+            endwhile;
+        else:
+            $decktype = "none";
+        endif;
         $cardlist = $this->db->execute_query("SELECT name,decks.type
                                     FROM deckcards 
                                 LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
@@ -656,6 +659,65 @@ class DeckManager {
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
             </div> <?php
         endif;
+    }
+
+    public function addDeck($user,$newdeckname)
+    {
+        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add deck called: deck $newdeckname",$this->logfile);
+        $decksuccess = [];
+        
+        $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
+        $decknameparams = [$user,$newdeckname];
+        $result = $this->db->execute_query($decknamechecksql,$decknameparams);
+        if($result !== false && $result->num_rows === 0):
+            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck does not exist for user: $user, deckname: '$newdeckname'",$this->logfile);
+            
+            //Create new deck
+            $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
+            $params = [$user,$newdeckname];
+            if($deckinsert = $this->db->execute_query($sql,$params) && $this->db->affected_rows === 1):
+                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$this->logfile);
+            else:
+                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+            endif;
+
+            //Checking if it created OK
+            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running confirm SQL query",$this->logfile);
+            $checksql = "SELECT decknumber FROM decks
+                            WHERE owner = ? AND deckname = ? LIMIT 1";
+            $checkparams = [$user,$newdeckname];
+            $runquery = $this->db->execute_query($checksql,$checkparams);
+            if($runquery !== false && $runquery->num_rows === 1):
+                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Confirmed existence of deck: $newdeckname",$this->logfile);
+                $deckcheckrow = $runquery->fetch_assoc();
+                $decksuccess['flag'] = 1; //set flag so we know we don't need to check for cards in deck.
+                $decksuccess['decknumber'] = $deckcheckrow['decknumber'];
+            elseif($runquery !== false && $runquery->num_rows === 0):  
+                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed - deck: $newdeckname not created",$this->logfile);
+                ?>
+                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
+                    <br>
+                    <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+                </div>
+                <?php
+                $decksuccess['flag'] = 10; //set flag so we know to break.
+            else:
+                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+            endif;
+        elseif($result !== false && $result->num_rows === 1):
+            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": New deck name already exists",$this->logfile); ?>
+            <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
+                <br>
+                <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+            </div> <?php
+            $decksuccess['flag'] = 10; //set flag so we know to break.
+        else:
+            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+        endif;
+        if(!isset($decksuccess['decknumber'])):
+            $decksuccess['decknumber'] = NULL;
+        endif;
+        return $decksuccess;
     }
     
     public function renameDeck($deck,$newname,$user)

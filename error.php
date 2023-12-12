@@ -39,7 +39,7 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
 endif;
 require('includes/header.php'); ?>
 <div id='menubuttondiv' class="togglemenu">    
-    <a href="#" id='toggle-menu'></a>
+    <a href="#" id='toggle-menu'><span class="material-symbols-outlined menu">menu</span></a>
 </div>
 <div id="menu">
     <div class='nav_nodivider'><a title="Home" href="/">Home</a></div>

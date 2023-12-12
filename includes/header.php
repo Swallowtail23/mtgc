@@ -33,11 +33,13 @@ endif;
         $('#menubuttondiv').click(function(e){
             if(menuout === 0) {
                 e.stopPropagation();
-                $('#menu').css("left", "0")
+                $('#menu').css("left", "0");
+                $('#menu-icon').text('menu_open'); 
                 menuout = 1;
             } else if(menuout === 1) {
                 e.stopPropagation();
-                $('#menu').css("left", "-185px")
+                $('#menu').css("left", "-185px");
+                $('#menu-icon').text('menu'); 
                 menuout = 0;
             };
         });

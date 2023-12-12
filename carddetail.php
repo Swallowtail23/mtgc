@@ -292,15 +292,22 @@ jQuery( function($) {
         var ImageId = document.getElementById(img_id);
         var FrontImg = card_id + ".jpg";
         var BackImg = card_id + "_b.jpg";
+        
         if (ImageId.src.match(FrontImg))
         { 
-            document.getElementById(img_id).src = imagebackurl; 
-        } else if (ImageId.src.match(BackImg))
-        {
-            document.getElementById(img_id).src = imageurl; 
+            ImageId.classList.add('flipped');
+            setTimeout(function () {
+                ImageId.src = imagebackurl;
+            }, 80);
+        } else {
+            ImageId.classList.remove('flipped');
+            setTimeout(function () {
+                ImageId.src = imageurl;
+            }, 80);
         }
     };
 </script>
+
 </head>
 
 <body class="body">
@@ -820,12 +827,12 @@ require('includes/menu.php'); //mobile menu
                     <div id="carddetailimage"><?php 
                         if($row['layout'] === 'flip'): ?>
                             <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
-                                <span class='material-icons md-24'>refresh</span>
+                                <span class='material-symbols-outlined refresh'>refresh</span>
                             </div> <?php 
                         endif; 
                         $img_id = 'cardimg';
                         if (in_array($row['layout'],$two_card_detail_sections)):
-                            echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-icons md-24'>refresh</span></div>";
+                            echo "<div style='cursor: pointer;' class='flipbuttondetail' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
                         endif; 
                         // Find the prev number card's ID
                         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
@@ -1857,57 +1864,16 @@ require('includes/menu.php'); //mobile menu
                                 if($decks_on === 1):
                                     echo "<div id='deckadd'>";
                                     if (isset($decktoaddto)):
-                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck $decktoaddto $newdeckname",$logfile);
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Received request to add $deckqty x card $cardid to deck: '$decktoaddto'; Newdeck: '$newdeckname'",$logfile);
                                         // If the deck is new, is the new name unique? If yes, create it.
-                                        $decksuccess = 0;
                                         if($decktoaddto == "newdeck"):
-                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Asked to create new deck $newdeckname",$logfile);
-                                            $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
-                                            $decknameparams = [$user,$newdeckname];
-                                            $result = $db->execute_query($decknamechecksql,$decknameparams);
-                                            if($result !== false && $result->num_rows === 0):
-                                                
-                                                //Create new deck
-                                                $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
-                                                $params = [$user,$newdeckname];
-                                                if($deckinsert = $db->execute_query($sql,$params) && $db->affected_rows === 1):
-                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$logfile);
-                                                else:
-                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                                endif;
-                                                
-                                                //Checking if it created OK
-                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Running confirm SQL query",$logfile);
-                                                $checksql = "SELECT decknumber FROM decks
-                                                                WHERE owner = ? AND deckname = ? LIMIT 1";
-                                                $checkparams = [$user,$newdeckname];
-                                                $runquery = $db->execute_query($checksql,$checkparams);
-                                                if($runquery !== false && $runquery->num_rows === 1):
-                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Confirmed existence of deck: $newdeckname",$logfile);
-                                                    $deckcheckrow = $runquery->fetch_assoc();
-                                                    $decksuccess = 1; //set flag so we know we don't need to check for cards in deck.
-                                                    $decktoaddto = $deckcheckrow['decknumber'];
-                                                elseif($runquery !== false && $runquery->num_rows === 0):  
-                                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Failed - deck: $newdeckname not created",$logfile);
-                                                    ?>
-                                                    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
-                                                        <br>
-                                                        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                                                    </div>
-                                                    <?php
-                                                    $decksuccess = 10; //set flag so we know to break.
-                                                else:
-                                                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                                                endif;
-                                            elseif($result !== false && $result->num_rows === 1):
-                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New deck name already exists",$logfile); ?>
-                                                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
-                                                    <br>
-                                                    <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                                                </div> <?php
-                                                $decksuccess = 10; //set flag so we know to break.
+                                            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Calling Deckmanager->addDeck: '$user/$newdeckname'",$logfile);
+                                            $obj = new DeckManager($db, $logfile);
+                                            $decksuccess = $obj->addDeck($user,$newdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
+                                            if($decksuccess['flag'] === 1):
+                                                $decktoaddto = $decksuccess['decknumber'];
                                             else:
-                                                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+                                                $decktoaddto = NULL;
                                             endif;
                                         else:
                                             // Check that the proposed deck exists and belongs to owner.
@@ -1918,15 +1884,21 @@ require('includes/menu.php'); //mobile menu
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                                                 </div>
                                                 <?php
-                                                $decksuccess = 10;
+                                                $decksuccess = [
+                                                    'decknumber' => NULL,
+                                                    'flag' => 10
+                                                ];
                                             else:
-                                                $decksuccess = 2;
+                                                $decksuccess = [
+                                                    'decknumber' => NULL,
+                                                    'flag' => 2
+                                                ];
                                             endif;
                                         endif;
                                         // Here we either have successfully created a new deck (1), failed to create (10), or confirmed ownership and existence (2)
-                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is $decksuccess",$logfile);
-                                        if ($decksuccess !== 10):  //I.e. the deck now exists and belongs to the caller
-                                            if ($decksuccess === 2): //Not a new deck, run card check
+                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Decksuccess code is {$decksuccess['flag']}",$logfile);
+                                        if ($decksuccess['flag'] !== 10):  //I.e. the deck now exists and belongs to the caller
+                                            if ($decksuccess['flag'] === 2): //Not a new deck, run card check
                                                 $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Running SQL to see if $cardid is already in deck $decktoaddto",$logfile);
                                                 
                                                 $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))";
@@ -1948,7 +1920,7 @@ require('includes/menu.php'); //mobile menu
                                                 else:
                                                     trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
                                                 endif;
-                                            elseif ($decksuccess === 1):
+                                            elseif ($decksuccess['flag'] === 1):
                                                 $cardchecksuccess = 2;
                                             endif;
                                             //Insert card to deck
