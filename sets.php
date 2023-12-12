@@ -40,6 +40,7 @@ $msg = new Message;
     <script src="/js/jquery.js"></script>
     <script>
         function reloadImages(setcode) {
+            document.body.style.cursor = "wait";
             $.ajax({
                 type: 'POST',
                 url: 'admin/ajaxsetimg.php',
@@ -56,11 +57,13 @@ $msg = new Message;
                     } else {
                         console.error(result.message);
                     }
+                    document.body.style.cursor = "default";
                 },
                 error: function(error) {
                     // Display an error message using an alert box
                     showMessage('error', 'An error occurred.');
                     console.error(error);
+                    document.body.style.cursor = "default";
                 }
             });
         }
@@ -69,6 +72,127 @@ $msg = new Message;
             // Display the message using an alert box
             alert(message);
         }
+    </script>
+    <script>
+        // Function to send an AJAX request to filter sets
+        var isAdmin = <?php echo json_encode($admin == 1); ?>;
+        function filterSets(filterValue, setsPerPage) {
+            var filterValue = document.getElementById('setCodeFilter').value;
+
+            if (filterValue.length >= 2) {
+                $.ajax({
+                    type: 'GET',
+                    url: 'ajax/ajaxsets.php',
+                    data: { filter: filterValue,
+                            setsPerPage: setsPerPage },
+                    dataType: 'json',
+                    success: function(response) {
+                        // Update the table with the filtered results
+                        updateTable(response);
+                        document.getElementById('pagination').style.display = 'none';
+                    },
+                    error: function(error) {
+                        console.error(error);
+                    }
+                });
+            } else if (filterValue.length === 0) {
+                // Reload the default sets.php when filterValue is less than 2 characters
+                window.location.href = 'sets.php';
+            }
+        }
+
+        // Function to update the table with filtered results
+            function updateTable(filteredSets) {
+                var table = document.querySelector('#setlist');
+                var tableBody = table.getElementsByTagName('tbody')[0];
+                var currentYear = ''; // Variable to keep track of the current year
+                var totalColumns = isAdmin ? 8 : 7; // Total columns in the table
+
+                while (tableBody.rows.length > 1) {
+                    tableBody.deleteRow(1);
+                }
+
+                filteredSets.forEach(function (set) {
+                    var setYear = new Date(set.setdate).getFullYear().toString();
+                    if (setYear != currentYear) {
+                        var yearRow = tableBody.insertRow(tableBody.rows.length);
+                        var yearCell = yearRow.insertCell(0);
+                        yearCell.colSpan = totalColumns;
+                        yearCell.className = "year-header";
+                        yearCell.innerHTML = '<h3>' + setYear + '</h3>';
+                        currentYear = setYear;
+                    }
+
+                    var row = tableBody.insertRow(tableBody.rows.length);
+                // Populate the row with data from set
+                var iconCell = row.insertCell(0);
+                var setcode = set.setcode;
+                var time = new Date().getTime(); // To ensure fresh image load
+                var img = document.createElement('img');
+                img.className = 'seticon';
+                img.src = 'cardimg/seticons/' + setcode + '.svg?' + time;
+                img.alt = setcode.toUpperCase();
+                iconCell.appendChild(img);
+
+                var codeCell = row.insertCell(1);
+                var setcodeupper = set.setcode.toUpperCase();
+                var link = document.createElement('a');
+                link.href = 'index.php?adv=yes&searchname=yes&legal=any&set%5B%5D=' + encodeURIComponent(setcodeupper) + '&sortBy=setdown&layout=grid';
+                link.textContent = setcodeupper;
+                codeCell.appendChild(link);
+
+                var nameCell = row.insertCell(2);
+                nameCell.textContent = set.set_name;
+
+                var typeCell = row.insertCell(3);
+                var setType = set.set_type.charAt(0).toUpperCase() + set.set_type.slice(1);
+                typeCell.textContent = setType;
+
+                var parentCell = row.insertCell(4);
+                parentCell.textContent = set.parent_set_code.toUpperCase();
+
+                var dateCell = row.insertCell(5);
+                var inputDate = set.setdate; // Replace set.setdate with your date variable
+
+                // Split the input date into components
+                var dateComponents = inputDate.split('-');
+                var year = dateComponents[0];
+                var month = dateComponents[1];
+                var day = parseInt(dateComponents[2]);
+
+                // Create an array of month names
+                var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+                // Format the date as "30 Oct 2010" and set it in dateCell
+                dateCell.textContent = monthNames[parseInt(month) - 1] + " " + day;
+
+                var countCell = row.insertCell(6);
+                countCell.textContent = set.card_count.toLocaleString();
+
+                if (isAdmin) {
+                    var reloadCell = row.insertCell(7);
+                    reloadCell.style.textAlign = 'center';
+
+                    var link = document.createElement('a');
+                    link.href = "javascript:void(0);";
+                    link.onclick = function() {
+                        reloadImages(set.setcode);
+                    };
+
+                    var iconSpan = document.createElement('span');
+                    iconSpan.className = "material-symbols-outlined";
+                    iconSpan.textContent = "frame_reload";
+
+                    link.appendChild(iconSpan);
+                    reloadCell.appendChild(link);
+                }
+            });
+        }
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#setCodeFilter').focus();
+        });
     </script>
 </head>
 
@@ -85,6 +209,7 @@ require('includes/menu.php');
         <?php 
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
         $setsPerPage = 50; // Adjust this value based on your preference
+        $maxFilterResults = 30;
         $offset = ($page - 1) * $setsPerPage;
         $stmt = $db->prepare("SELECT 
                                 set_name,
@@ -118,7 +243,12 @@ require('includes/menu.php');
             endif;
         endif;
         ?>
-        <h2 class='h2pad'>Sets Information</h2>
+        <div class="sets-header-container">
+            <h2 class='h2pad sets-header'>Sets Information</h2>
+            <div class="filter-container">
+                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $maxFilterResults; ?>)" placeholder="SETNAME/CODE FILTER">
+            </div>
+        </div>
         <table id='setlist'>
             <tr>
                 <td class='setcell'>
@@ -205,8 +335,7 @@ require('includes/menu.php');
                         <td class='setcell'>
                             <?php 
                             $time = time();
-                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; 
-                            //echo "<i><i class='ss ss-{$row['parent_set_code']} ss-grad ss-2x'></i>"; ?>
+                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; ?>
                         </td>
                         <td class='setcell'>
                             <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
@@ -240,7 +369,7 @@ require('includes/menu.php');
         $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
         $totalPages = ceil($totalSets / $setsPerPage);
 
-        echo '<div class="pagination">';
+        echo '<div id="pagination" class="pagination">';
             for ($i = 1; $i <= $totalPages; $i++):
                 if ($i == $page):
                     // Current page, display without hyperlink
