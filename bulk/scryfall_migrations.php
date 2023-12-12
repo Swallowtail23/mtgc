@@ -35,6 +35,8 @@ $max_fileage = 23 * 3600;
 function getMigrationData($url,$file_location,$max_fileage,$pageNumber)
 {
     global $db, $logfile;
+    $msg = new Message;
+    
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": fetching Download URI: $url",$logfile);
     if($pageNumber == 0):
         $page = $file_location.'migrations.json';
@@ -66,6 +68,8 @@ function getMigrationData($url,$file_location,$max_fileage,$pageNumber)
 function checkMigrationDataForMore($file)
 {
     global $db, $logfile;
+    $msg = new Message;
+    
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $next_page = 'none';
     foreach($data AS $key => $value):
@@ -82,6 +86,8 @@ function checkMigrationDataForMore($file)
 function clearDBMigrations()
 {
     global $db, $logfile;
+    $msg = new Message;
+    
     if ($result = $db->query('TRUNCATE TABLE migrations')):
         $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall migrations API: migrations table cleared",$logfile);
     else:
@@ -91,6 +97,8 @@ function clearDBMigrations()
 function getRowCount($file)
 {
     global $logfile;
+    $msg = new Message;
+    
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $count = 0;
     foreach($data AS $key => $value):
@@ -111,6 +119,7 @@ function safeDeleteCheck ($id)
 {
     global $db, $logfile;
     $safeScore = null;
+    $msg = new Message;
 
     //Find if it's in any decks
     $userResultArray = $collectionResultArray = $resultArray = array();
