@@ -1,5 +1,7 @@
 {
     "require": {
-        "halaxa/json-machine": "^0.8.0"
+        "halaxa/json-machine": "^1.1",
+        "andkab/php-turnstile": "^1.0",
+        "everapi/freecurrencyapi-php": "dev-master"
     }
 }
