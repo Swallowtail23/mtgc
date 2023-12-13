@@ -18,10 +18,21 @@ require ('../includes/functions_new.php');
 include '../includes/colour.php';
 $msg = new Message;
 
-// Check if the request is coming from sets.php
+// Check if the request is coming from valid page(s)
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$expectedReferringPage = $myURL.'/sets.php';
-if (strpos($referringPage, $expectedReferringPage) !== false):
+$expectedReferringPages = [
+                            $myURL . '/index.php',
+                            $myURL . '/profile.php'
+                          ];
+
+$isValidReferrer = false;
+foreach ($expectedReferringPages as $page):
+    if (strpos($referringPage, $page) !== false):
+        $isValidReferrer = true;
+        break;
+    endif;
+endforeach;
+if ($isValidReferrer):
 
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
         echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
@@ -51,7 +62,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from sets.php",$logfile);
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from valid page",$logfile);
     http_response_code(403);
     echo 'Access forbidden';
 endif;

@@ -2125,7 +2125,7 @@ endif;
             <?php
             if($total + $sidetotal > 0):
                 ?>
-                <h4>&nbsp;CMC</h4>
+                <h4>&nbsp;Mana value</h4>
                 <script type="text/javascript">
                   google.charts.load('current', {'packages':['bar']});
                   google.charts.setOnLoadCallback(drawChart);
@@ -2170,11 +2170,11 @@ endif;
             <?php 
                 if(($total - $lands) != 0):
                     $avgcmc = round(($cmctotal / ($total - $lands)),2);
-                    echo "<br>Average CMC = $avgcmc" ;
+                    echo "<br>Average mana value = $avgcmc" ;
                 else:
-                    echo "<br>Average CMC = N/A";
+                    echo "<br>Average mana value = N/A";
                 endif;
-                echo "<br>Total deck value (Fair Trade) = $".$deckvalue;
+                echo "<br>Total deck value (TCGplayer) = $".$deckvalue;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
                 <h4>Random draw</h4><?php 
