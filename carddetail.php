@@ -192,7 +192,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
         } else {
             $.ajax({
                 type: "GET",
-                url: "gridupdate.php",
+                url: "ajax/ajaxgrid.php",
                 data: poststring,
                 cache: true,
                 success: function (data) {

@@ -1,7 +1,7 @@
 <?php 
 /* Version:     5.1
     Date:       10/12/23
-    Name:       gridupdate.php
+    Name:       ajaxgrid.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
     To do:      -
@@ -23,11 +23,11 @@
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
-require ('includes/ini.php');                //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions_new.php');      //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');       //Setup page variables
-include 'includes/colour.php';
+require ('../includes/ini.php');                //Initialise and load ini file
+require ('../includes/error_handling.php');
+require ('../includes/functions_new.php');      //Includes basic functions for non-secure pages
+require ('../includes/secpagesetup.php');       //Setup page variables
+include '../includes/colour.php';
 $msg = new Message;
 
 $cardid = $_GET['cardid'] ?? '';
