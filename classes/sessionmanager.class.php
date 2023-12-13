@@ -91,6 +91,12 @@ class SessionManager {
             header("Location: /login.php");
             exit();
         else:
+            if ($status === 'chgpwd'):
+                $_SESSION["chgpwd"] = TRUE;
+                session_destroy();
+                header("Location: /login.php");
+                exit();
+            endif;
             $stmt->fetch();
             $stmt->close();
             if($adminDb):                                       //Boolean true in db

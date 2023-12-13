@@ -44,12 +44,12 @@ class PasswordCheck
          * 10 for valid email / password combination
          */
         if (!isset($email) || !isset($password)):
-            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__," called without correct parameters",$this->logfile);
+            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called without correct parameters",$this->logfile);
             return $this->passwordvalidate = 0;
         else:
             if($row = $this->db->execute_query("SELECT password FROM users WHERE email = ? LIMIT 1",[$email])):
                 if ($row->num_rows === 0):
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Invalid email address, returning 1",$this->logfile);
+                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Invalid email address, returning 1",$this->logfile);
                     $this->passwordvalidate = 1;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
@@ -73,8 +73,165 @@ class PasswordCheck
         return $this->passwordvalidate;
     }
 
+    public function passwordReset($email,$admin, $dbname) 
+    {
+        global $serveremail, $adminemail;
+        if (!isset($email)):
+            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called without target account",$this->logfile);
+            return 0;
+            exit;
+        elseif($admin !== 1):
+            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called by non-admin user",$this->logfile);
+            return 0;      
+            exit;
+        else:
+            if($row = $this->db->execute_query("SELECT username, email FROM users WHERE email = ? LIMIT 1",[$email])):
+                if ($row->num_rows === 0):
+                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Invalid email address",$this->logfile);
+                    return 0;
+                    exit;
+                elseif ($row->num_rows === 1): // $email matches a user
+                    $row = $row->fetch_assoc();
+                    $username = $row['username'];
+                    $randompassword = $this->generateRandomPassword(12);
+                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": New password generated for $email, $username",$this->logfile);
+                    $reset = $this->newuser($username, $email, $randompassword, $dbname);
+                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Newuser result: $reset",$this->logfile);
+                    if($reset === 1):
+                        $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+                        $subject = "Password reset"; 
+                        $message = "$randompassword";
+                        mail($email, $subject, $message, $from); 
+                    elseif($reset === 0):
+                        $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+                        $subject = "Password reset failed";
+                        $message = "Password reset failed for $username / $email";
+                        mail($adminemail, $subject, $message, $from); 
+                    endif;
+                else:
+                    trigger_error("[ERROR] Class Passwords: passwordReset - Other failure: Error: " . $this->db->error, E_USER_ERROR);
+                    return 0;
+                    exit;
+                endif;
+            else:
+                trigger_error("[ERROR] Class Passwords: passwordReset - SQL failure: Error: " . $this->db->error, E_USER_ERROR);
+                return 0;
+                exit;
+            endif;
+        endif;
+        return 1;
+    }
+    
+    private function generateRandomPassword($length = 10) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&$@^*-_';
+        $charactersLength = strlen($characters);
+        $randomPassword = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomPassword .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomPassword;
+    }
+    
+    public function newUser($username, $postemail, $password, $dbname = '') 
+    {
+        $msg = new Message;
+        $mysql_date = date( 'Y-m-d' );
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) 
+                    VALUES (?, ?, ?, ?, 'chgpwd', 1, 0) 
+                    ON DUPLICATE KEY UPDATE password=?, status='chgpwd' ";
+        $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}", $this->logfile);
+        $stmt = $this->db->prepare($query);
+        if ($stmt):
+            $stmt->bind_param("sssss", $username, $mysql_date, $postemail, $hashed_password, $hashed_password);
+            if ($stmt->execute()):
+                $affected_rows = $stmt->affected_rows;
+                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows", $this->logfile);
+            else:
+                trigger_error("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error, E_USER_ERROR);
+            endif;
+            $stmt->close();
+        else:
+            trigger_error("[ERROR] Class Passwords: newUser: New user query failed to prepare statement " . $this->db->error, E_USER_ERROR);
+        endif;
+
+        // Retrieve the new user to confirm that it has written OK
+        $query_select = "SELECT password, username, usernumber FROM users WHERE email=?";
+        $stmt_select = $this->db->prepare($query_select);
+        $stmt_select->bind_param("s", $postemail);
+
+        if ($stmt_select->execute()):
+            $stmt_select->store_result();
+            $stmt_select->bind_result($db_password, $db_username, $db_usernumber);
+
+            if ($stmt_select->fetch()):
+                if (password_verify($password, $db_password)):
+                    // User has been created OK
+                    $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation successful, password matched", $this->logfile);
+                    $usersuccess = 1;
+
+                    // Create the user's database table
+                    $mytable = "{$db_usernumber}collection";
+
+                    // Does it already exist
+                    $queryexists = "SHOW TABLES FROM $dbname LIKE '$mytable'";
+                    $stmt_exists = $this->db->prepare($queryexists);
+
+                    if ($stmt_exists->execute()):
+                        $stmt_exists->store_result();
+                        $collection_exists = $stmt_exists->num_rows; // $collection_exists now includes the quantity of tables with the collection name
+                        $stmt_exists->close();
+
+                        $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check returned $collection_exists rows", $this->logfile);
+
+                        if ($collection_exists === 0): // No existing collection table
+                            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": No Collection table, creating...", $this->logfile);
+                            $query_create = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+                            $stmt_create = $this->db->prepare($query_create);
+
+                            if ($stmt_create->execute()):
+                                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy ok", $this->logfile);
+                                $tablesuccess = 1;
+                            else:
+                                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy failed", $this->logfile);
+                                $tablesuccess = 5;
+                            endif;
+                            $stmt_create->close();
+                        elseif ($collection_exists == -1):
+                            $tablesuccess = 5;
+                        else: // There is already a table with this name
+                            $tablesuccess = 0;
+                        endif;
+                    else:
+                        $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check failed", $this->logfile);
+                    endif;
+                else:
+                    $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful, password check failed, aborting", $this->logfile);
+                    $usersuccess = 0;
+                endif;
+            else:
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful", $this->logfile);
+                $usersuccess = 0;
+            endif;
+            $stmt_select->close();
+        else:
+            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful", $this->logfile);
+            $usersuccess = 0;
+        endif;
+
+        if (($usersuccess === 1) && ($tablesuccess === 1)):
+            return 2;
+        elseif (($usersuccess === 1) && ($tablesuccess === 0)):
+            return 1;
+        elseif (($usersuccess === 1) && ($tablesuccess === 5)):
+            return 5;
+        else:
+            return 0;
+        endif;
+    }
+    
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, ": Called as string");
         return "Called as a string";
     }
 }

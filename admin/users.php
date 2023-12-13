@@ -19,7 +19,6 @@ session_start();
 require ('../includes/ini.php');                //Initialise and load ini file
 require ('../includes/error_handling.php');
 require ('../includes/functions_new.php');      //Includes basic functions for non-secure pages
-require ('adminfunctions.php');
 require ('../includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
 $msg = new Message;
@@ -84,7 +83,8 @@ require('../includes/menu.php');
         <?php 
         // Generate new account or do password reset
         if ((isset($newuser)) AND ($newuser === "yes")):
-            $newuserstatus = newuser($username_raw, $postemail_raw, $password, $dbname); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
+            $obj = new PasswordCheck($db, $logfile);
+            $newuserstatus = $obj->newUser($username_raw, $postemail_raw, $password, $dbname); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
             if ($newuserstatus === 2):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, password successfully recorded and checked.</div>";    
                 echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";    
@@ -172,6 +172,19 @@ require('../includes/menu.php');
                             $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table still exists",$logfile);
                         endif;
                     endif;
+                elseif (($updatearray[0]['actions'][$i]) == 'resetpassword'):
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $obj = new PasswordCheck ($db, $logfile);
+                    $reset = $obj->passwordReset ($sql_eml, $admin, $dbname);
+                    if ($reset === 2):
+                        echo "<div class='alert-box success'><span>success: </span>User $username / $sql_eml created, password successfully recorded and checked.</div>";    
+                        echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";    
+                    elseif ($reset === 1):
+                        echo "<div class='alert-box success'><span>success: </span>User $username / $sql_eml password successfully recorded and checked.</div>";    
+                        echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, already exists for this user.</div>"; 
+                    else:
+                        echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";    
+                    endif;
                 endif;
             endforeach;
         else:
@@ -251,7 +264,10 @@ require('../includes/menu.php');
                                 $updateoutcome = $updatesql->fetch_assoc();
                                 if(((string)$updateoutcome['username'] === (string)${'sqlname'.$alluserresults['usernumber']}) 
                                     AND ((string)$updateoutcome['email'] === (string)${'sqleml'.$alluserresults['usernumber']})
-                                    AND ((string)$updateoutcome['status'] === (string)${'sqlstatus'.$alluserresults['usernumber']})
+                                    AND 
+                                        (((string)$updateoutcome['status'] === (string)${'sqlstatus'.$alluserresults['usernumber']})
+                                        OR
+                                        (isset($reset) AND ($reset === 1 || $reset === 2)))
                                     AND ((string)$updateoutcome['admin'] === (string)${'sqladm'.$alluserresults['usernumber']})): ?>
                                     <img src='/images/success.png' alt='Success'>
                                 <?php else: ?>
@@ -264,6 +280,7 @@ require('../includes/menu.php');
                                     <option value='' selected></option>
                                     <option value=deletecards>Delete collection</option>
                                     <option value=deleteuser>Delete user & cards</option>
+                                    <option value=resetpassword>Reset password</option>
                                 </select> 
                             </td>
                         </tr>
