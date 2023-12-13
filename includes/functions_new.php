@@ -129,6 +129,31 @@ function spamcheck($field)
     endif;
 }
 
+function setmtcemode($toggle)
+{
+    global $db, $logfile;
+    $msg = new Message;
+    if ($toggle == 'off'):
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode off",$logfile);
+        $mtcequery = 0;
+    elseif ($toggle == 'on'):
+        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode on",$logfile);
+        $mtcequery = 1;
+    endif;
+        $query = 'UPDATE admin SET mtce=?';
+        $stmt = $db->prepare($query);
+        $stmt->bind_param('i', $mtcequery);
+        if ($stmt === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL: ". $db->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === false):
+            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Setting mtce mode to $mtcequery failed",$logfile);
+        else:
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set mtce mode to $mtcequery",$logfile);
+        endif;
+}
+
 function mtcemode($user)
 {
     global $db,$logfile;

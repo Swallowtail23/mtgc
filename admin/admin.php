@@ -21,7 +21,6 @@ session_start();
 require ('../includes/ini.php');               //Initialise and load ini file
 require ('../includes/error_handling.php');
 require ('../includes/functions_new.php');     //Includes basic functions for non-secure pages
-require ('adminfunctions.php');
 require ('../includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 $msg = new Message;
