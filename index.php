@@ -484,7 +484,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     } else {
                         $.ajax({
                             type: "GET",
-                            url: "gridupdate.php",
+                            url: "ajax/ajaxgrid.php",
                             data: poststring,
                             cache: true,
                             success: function (data) {
