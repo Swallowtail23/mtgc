@@ -296,9 +296,10 @@ require('includes/menu.php');
         endif;
         ?>
         <div class="sets-header-container">
-            <h2 class='h2pad sets-header'>Sets Information</h2>
+            <h2 class='h2pad sets-header'>Sets</h2>
             <div class="filter-container">
                 <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="SETNAME/CODE FILTER">
+                <div id='cancelsetfilter'><span class="material-symbols-outlined">close</span></div>
             </div>
         </div>
         <table id='setlist'>
@@ -436,5 +437,13 @@ require('includes/menu.php');
 <?php     
     require('includes/footer.php'); 
 ?>
+    <script>
+        document.getElementById('cancelsetfilter').addEventListener('click', function() {
+            document.getElementById('setCodeFilter').value = '';
+            var filterValue = document.getElementById('setCodeFilter').value;
+            var setsPerPage = <?php echo $setsPerPage; ?>;
+            fetchAndDisplaySets(filterValue, 1, setsPerPage);
+        });
+    </script>
 </body>
 </html>
