@@ -298,7 +298,7 @@ require('includes/menu.php');
         <div class="sets-header-container">
             <h2 class='h2pad sets-header'>Sets</h2>
             <div class="filter-container">
-                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="SETNAME/CODE FILTER">
+                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="NAME/CODE/YEAR FILTER">
                 <div id='cancelsetfilter'><span class="material-symbols-outlined">close</span></div>
             </div>
         </div>

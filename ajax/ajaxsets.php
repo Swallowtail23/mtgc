@@ -75,12 +75,12 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
                                 FROM cards_scry 
                                 LEFT JOIN sets ON cards_scry.set_id = sets.id
                                 WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
-                                OR set_name LIKE ?
+                                OR set_name LIKE ? OR sets.release_date LIKE ?
                                 GROUP BY set_name");
 
             $filter = '%' . $filter . '%'; // Add wildcards to the filter value
 
-            $stmt->bind_param("sss", $filter, $filter, $filter);
+            $stmt->bind_param("ssss", $filter, $filter, $filter, $filter);
 
             if ($stmt === false):
                 http_response_code(400);
@@ -127,7 +127,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
                                 FROM cards_scry 
                                 LEFT JOIN sets ON cards_scry.set_id = sets.id
                                 WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
-                                OR set_name LIKE ?
+                                OR set_name LIKE ? OR sets.release_date LIKE ?
                                 GROUP BY 
                                     set_name
                                 ORDER BY 
@@ -136,7 +136,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
 
             $filter = '%' . $filter . '%'; // Add wildcards to the filter value
 
-            $stmt->bind_param("sssii", $filter, $filter, $filter, $setsPerPage, $offset);
+            $stmt->bind_param("ssssii", $filter, $filter, $filter, $filter, $setsPerPage, $offset);
 
             if ($stmt === false):
                 http_response_code(400);
