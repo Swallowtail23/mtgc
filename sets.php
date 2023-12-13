@@ -38,6 +38,11 @@ $msg = new Message;
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
+    <?php
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $setsPerPage = 30; // Adjust this value based on your preference
+    $offset = ($page - 1) * $setsPerPage;
+    ?>
     <script>
         function reloadImages(setcode) {
             document.body.style.cursor = "wait";
@@ -79,25 +84,41 @@ $msg = new Message;
         function filterSets(filterValue, setsPerPage) {
             var filterValue = document.getElementById('setCodeFilter').value;
 
-            if (filterValue.length >= 2) {
+            if (filterValue.length >= 3) {
                 $.ajax({
                     type: 'GET',
                     url: 'ajax/ajaxsets.php',
                     data: { filter: filterValue,
-                            setsPerPage: setsPerPage },
+                            setsPerPage: setsPerPage,
+                            offset: 0},
                     dataType: 'json',
                     success: function(response) {
                         // Update the table with the filtered results
                         updateTable(response);
                         document.getElementById('pagination').style.display = 'none';
                     },
-                    error: function(error) {
-                        console.error(error);
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("AJAX error: " + textStatus + " - " + errorThrown);
                     }
                 });
             } else if (filterValue.length === 0) {
-                // Reload the default sets.php when filterValue is less than 2 characters
-                window.location.href = 'sets.php';
+                // Reload the default sets.php when filterValue is back to zero
+                $.ajax({
+                    type: 'GET',
+                    url: 'ajax/ajaxsets.php',
+                    data: { filter: filterValue,
+                            setsPerPage: setsPerPage,
+                            offset: <?php echo $offset; ?>},
+                    dataType: 'json',
+                    success: function(response) {
+                        // Update the table with the filtered results
+                        updateTable(response);
+                        document.getElementById('pagination').style.display = '';
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                    }
+                });
             }
         }
 
@@ -145,11 +166,16 @@ $msg = new Message;
                 nameCell.textContent = set.set_name;
 
                 var typeCell = row.insertCell(3);
-                var setType = set.set_type.charAt(0).toUpperCase() + set.set_type.slice(1);
+                var setType = set.set_type.split('_').map(function(word) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                    }).join(' ');
+                setType = setType.replace(/_/g, ' ');
                 typeCell.textContent = setType;
+                typeCell.classList.add('columnhide');
 
                 var parentCell = row.insertCell(4);
                 parentCell.textContent = set.parent_set_code.toUpperCase();
+                parentCell.classList.add('columnhide');
 
                 var dateCell = row.insertCell(5);
                 var inputDate = set.setdate; // Replace set.setdate with your date variable
@@ -168,6 +194,7 @@ $msg = new Message;
 
                 var countCell = row.insertCell(6);
                 countCell.textContent = set.card_count.toLocaleString();
+                countCell.classList.add('columnhide');
 
                 if (isAdmin) {
                     var reloadCell = row.insertCell(7);
@@ -206,11 +233,7 @@ require('includes/menu.php');
     
 <div id='page'>
     <div class='staticpagecontent'>
-        <?php 
-        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-        $setsPerPage = 50; // Adjust this value based on your preference
-        $maxFilterResults = 30;
-        $offset = ($page - 1) * $setsPerPage;
+        <?php
         $stmt = $db->prepare("SELECT 
                                 set_name,
                                 setcode,
@@ -246,7 +269,7 @@ require('includes/menu.php');
         <div class="sets-header-container">
             <h2 class='h2pad sets-header'>Sets Information</h2>
             <div class="filter-container">
-                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $maxFilterResults; ?>)" placeholder="SETNAME/CODE FILTER">
+                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="SETNAME/CODE FILTER">
             </div>
         </div>
         <table id='setlist'>
@@ -300,7 +323,7 @@ require('includes/menu.php');
                         $setname = '';
                     endif;
                     if(isset($row['set_type']) AND $row['set_type'] !== null):
-                        $settype = ucfirst($row['set_type']);
+                        $settype = ucwords(str_replace('_', ' ', $row['set_type']));
                     else:
                         $settype = '';
                     endif;
