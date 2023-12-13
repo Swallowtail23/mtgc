@@ -118,10 +118,10 @@ if((isset($mtcestatus)) AND ($mtcestatus != 1) AND (!isset($_SESSION["chgpwd"]))
     <div id='headersearch_div'>
         <div id='cancelsearch'>
         </div>
-            <form action="/index.php" method="get">
-                <input type="text" class='headersearch' id="searchid" name="name" autocomplete='off' placeholder="Basic search">
-                <input type='hidden' name='layout' value='grid'>
-            </form>
+        <form action="/index.php" method="get">
+            <input type="text" class='headersearch' id="searchid" name="name" autocomplete='off' placeholder="Basic search">
+            <input type='hidden' name='layout' value='grid'>
+        </form>
     </div>
     <?php
 elseif ($adminpages !== FALSE):

@@ -45,6 +45,7 @@ if ($isValidReferrer):
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         $useremail = str_replace("'","",$_SESSION['useremail']);
+        
         if(isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF'):
             $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off collection view",$logfile);
             $query = "UPDATE users SET collection_view = ? WHERE usernumber = ?";
@@ -65,6 +66,11 @@ if ($isValidReferrer):
             else:    
                 $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off collection view run for $useremail",$logfile);
             endif;
+        else:
+            http_response_code(400);
+            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with invalid input", $logfile);
+            echo json_encode(['error' => 'Called with invalid input']);
+            exit();
         endif;
     endif;
 else:

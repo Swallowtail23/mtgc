@@ -70,7 +70,50 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
                 exit();
             endif;
             
-            // Construct the SQL query with the filter condition and pagination
+            // Construct the SQL query with the filter condition and WITHOUT pagination
+            $stmt = $db->prepare("SELECT setcode
+                                FROM cards_scry 
+                                LEFT JOIN sets ON cards_scry.set_id = sets.id
+                                WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
+                                OR set_name LIKE ?
+                                GROUP BY set_name");
+
+            $filter = '%' . $filter . '%'; // Add wildcards to the filter value
+
+            $stmt->bind_param("sss", $filter, $filter, $filter);
+
+            if ($stmt === false):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                echo json_encode(['error' => 'Error preparing SQL: ' . $db->error]);
+                exit();
+            endif;
+
+            $exec = $stmt->execute();
+
+            if ($exec === false):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                echo json_encode(['error' => 'Error executing SQL: ' . $db->error]);
+                exit();
+            else:
+                $result = $stmt->get_result();
+                $filteredSets = [];
+
+                while ($row = $result->fetch_assoc()):
+                    // Get each set, add to array
+                    $set =  [
+                            'setcode' => $row['setcode']
+                            ];
+                    $filteredSets[] = $set;
+                endwhile;
+                
+                $numRows = count($filteredSets);
+                $numPages = ceil($numRows / $setsPerPage);
+                $stmt->close();
+            endif;
+            
+            // Construct the SQL query with the filter condition and WITH pagination
             $stmt = $db->prepare("SELECT 
                                     set_name,
                                     setcode,
@@ -128,10 +171,17 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
                     ];
                     $filteredSets[] = $set;
                 endwhile;
-
-                $numRows = count($filteredSets);
-                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset': '$numRows' results", $logfile);
-                echo json_encode($filteredSets); // Send the filtered sets as JSON response
+                
+                $currentPage = ($offset / $setsPerPage) + 1;
+                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset': '$numRows' results: '$numPages' pages", $logfile);
+                $response = [
+                            'numResults' => $numRows,
+                            'numPages' => $numPages,
+                            'currentPage' => $currentPage,
+                            'filteredSets' => $filteredSets,
+                            'setsPerPage' => $setsPerPage
+                            ];
+                echo json_encode($response); // Send the filtered sets as JSON response
                 exit();
             endif;
         else:
