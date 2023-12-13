@@ -18,89 +18,133 @@ require ('../includes/functions_new.php');
 include '../includes/colour.php';
 $msg = new Message;
 
-if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
-    echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
-    exit(); 
-else: 
-    //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $fxLocal, $logfile);
-    $userArray = $sessionManager->getUserInfo();
-    $user = $userArray['usernumber'];
-    $mytable = $userArray['table'];
-    $useremail = str_replace("'","",$_SESSION['useremail']);
-    
-    if (isset($_GET['filter'], $_GET['setsPerPage'])):
-        $filter = $_GET['filter'];
-        $setsPerPage = intval($_GET['setsPerPage']);
+// Check if the request is coming from sets.php
+$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+$expectedReferringPage = $myURL.'/sets.php';
+if (strpos($referringPage, $expectedReferringPage) !== false):
 
-        // Calculate the OFFSET based on the page and setsPerPage
-        
-        $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage'", $logfile);
+    if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
+        echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
+        echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
+        exit(); 
+    else: 
+        //Need to run these as secpagesetup not run (see page notes)
+        $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $fxLocal, $logfile);
+        $userArray = $sessionManager->getUserInfo();
+        $user = $userArray['usernumber'];
+        $mytable = $userArray['table'];
+        $useremail = str_replace("'","",$_SESSION['useremail']);
 
-        // Construct the SQL query with the filter condition and pagination
-        $stmt = $db->prepare("SELECT 
-                                set_name,
-                                setcode,
-                                parent_set_code,
-                                set_type,
-                                card_count,
-                                nonfoil_only,
-                                foil_only,
-                                min(cards_scry.release_date) as date,
-                                sets.release_date as setdate
-                            FROM cards_scry 
-                            LEFT JOIN sets ON cards_scry.set_id = sets.id
-                            WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
-                            OR set_name LIKE ?
-                            GROUP BY 
-                                set_name
-                            ORDER BY 
-                                setdate DESC, parent_set_code DESC 
-                            LIMIT ?");
+        if (isset($_GET['filter'], $_GET['setsPerPage'], $_GET['offset']) ):
+            $filter = $_GET['filter'];
+            $setsPerPage = intval($_GET['setsPerPage']);
+            $offset = intval($_GET['offset']);
 
-        $filter = '%' . $filter . '%'; // Add wildcards to the filter value
+            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'", $logfile);
+            
+            // Filtering filter
+            $filtertrim = trim($filter, " \t\n\r\0\x0B");
+            $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
+            $filter = preg_replace($regex, ' ', $filtertrim);
+            $filter = filter_var($filter,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Filter after URL removal and filtering is '$filter'",$logfile);
+            
+            if (strlen($filter)< 3 && strlen($filter)!== 0):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Filter not long enough after trimming", $logfile);
+                echo json_encode(['error' => 'Filter not long enough after trimming']);
+                exit();
+            endif;
+            
+            if ($offset < 0 || $offset > 10000):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Offset not in range", $logfile);
+                echo json_encode(['error' => 'Offset not in range']);
+                exit();
+            endif;
+            
+            if ($setsPerPage < 2 || $setsPerPage > 100):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Sets per page not in range", $logfile);
+                echo json_encode(['error' => 'Sets per page not in range']);
+                exit();
+            endif;
+            
+            // Construct the SQL query with the filter condition and pagination
+            $stmt = $db->prepare("SELECT 
+                                    set_name,
+                                    setcode,
+                                    parent_set_code,
+                                    set_type,
+                                    card_count,
+                                    nonfoil_only,
+                                    foil_only,
+                                    min(cards_scry.release_date) as date,
+                                    sets.release_date as setdate
+                                FROM cards_scry 
+                                LEFT JOIN sets ON cards_scry.set_id = sets.id
+                                WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
+                                OR set_name LIKE ?
+                                GROUP BY 
+                                    set_name
+                                ORDER BY 
+                                    setdate DESC, parent_set_code DESC 
+                                LIMIT ? OFFSET ?");
 
-        $stmt->bind_param("sssi", $filter, $filter, $filter, $setsPerPage);
+            $filter = '%' . $filter . '%'; // Add wildcards to the filter value
 
-        if ($stmt === false):
-            echo json_encode(['error' => 'Error preparing SQL: ' . $db->error]);
-            exit();
-        endif;
+            $stmt->bind_param("sssii", $filter, $filter, $filter, $setsPerPage, $offset);
 
-        $exec = $stmt->execute();
+            if ($stmt === false):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                echo json_encode(['error' => 'Error preparing SQL: ' . $db->error]);
+                exit();
+            endif;
 
-        if ($exec === false):
-            echo json_encode(['error' => 'Error executing SQL: ' . $db->error]);
-            exit();
+            $exec = $stmt->execute();
+
+            if ($exec === false):
+                http_response_code(400);
+                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                echo json_encode(['error' => 'Error executing SQL: ' . $db->error]);
+                exit();
+            else:
+                $result = $stmt->get_result();
+                $filteredSets = [];
+
+                while ($row = $result->fetch_assoc()):
+                    // Construct each set data and add it to the array
+                    $set = [
+                        'set_name' => $row['set_name'],
+                        'setcode' => $row['setcode'],
+                        'parent_set_code' => $row['parent_set_code'],
+                        'set_type' => $row['set_type'],
+                        'card_count' => $row['card_count'],
+                        'nonfoil_only' => $row['nonfoil_only'],
+                        'foil_only' => $row['foil_only'],
+                        'date' => $row['date'],
+                        'setdate' => $row['setdate']
+                    ];
+                    $filteredSets[] = $set;
+                endwhile;
+
+                $numRows = count($filteredSets);
+                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset': '$numRows' results", $logfile);
+                echo json_encode($filteredSets); // Send the filtered sets as JSON response
+                exit();
+            endif;
         else:
-            $result = $stmt->get_result();
-            $filteredSets = [];
-
-            while ($row = $result->fetch_assoc()):
-                // Construct each set data and add it to the array
-                $set = [
-                    'set_name' => $row['set_name'],
-                    'setcode' => $row['setcode'],
-                    'parent_set_code' => $row['parent_set_code'],
-                    'set_type' => $row['set_type'],
-                    'card_count' => $row['card_count'],
-                    'nonfoil_only' => $row['nonfoil_only'],
-                    'foil_only' => $row['foil_only'],
-                    'date' => $row['date'],
-                    'setdate' => $row['setdate']
-                ];
-                $filteredSets[] = $set;
-            endwhile;
-
-            $numRows = count($filteredSets);
-            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage': '$numRows' results", $logfile);
-            echo json_encode($filteredSets); // Send the filtered sets as JSON response
+            http_response_code(400);
+            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called without required GETS", $logfile);
+            echo json_encode(['error' => 'No filter, page, or setsPerPage provided']);
             exit();
         endif;
-    else:
-        echo json_encode(['error' => 'No filter, page, or setsPerPage provided']);
-        exit();
     endif;
+else:
+    //Otherwise forbid access
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from sets.php",$logfile);
+    http_response_code(403);
+    echo 'Access forbidden';
 endif;
 ?>
