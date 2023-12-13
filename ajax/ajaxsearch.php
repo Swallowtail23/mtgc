@@ -45,6 +45,11 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
         //
         if($_POST):
             $r = $_POST['search'];
+            $rtrim = trim($r, " \t\n\r\0\x0B");
+            $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
+            $r = preg_replace($regex, ' ', $rtrim);
+            $r = filter_var($r,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Ajax search after URL removal and filtering is '$r'",$logfile);        
             // Test for the existence of a string enclosed in parentheses
             if (strpos($r, '[') !== false):
                 $insideBrackets = $closingBracket = false;
@@ -73,7 +78,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
                 $u = ''; // No brackets in this case
             endif;
 
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Seaarch string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
+            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Search string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
             $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                           FROM cards_scry
                           WHERE

@@ -42,6 +42,18 @@ $msg = new Message;
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
     $setsPerPage = 30; // Adjust this value based on your preference
     $offset = ($page - 1) * $setsPerPage;
+    $range = 4; // Number of page results to show around current page in pagination
+    
+    // Get total sets count
+    $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT set_name) as totalSets FROM cards_scry");
+    $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
+    $totalPages = ceil($totalSets / $setsPerPage);
+    
+    if ($page > $totalPages):
+        header("Location: /sets.php?page=" . max(1, $totalPages));
+        exit;
+    endif;
+    
     ?>
     <script>
         function reloadImages(setcode) {
@@ -81,70 +93,88 @@ $msg = new Message;
     <script>
         // Function to send an AJAX request to filter sets
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
-        function filterSets(filterValue, setsPerPage) {
-            var filterValue = document.getElementById('setCodeFilter').value;
+        
+        function buildPagination(totalPages, currentPage, setsPerPage) {
+            var paginationHTML = '';
+            paginationHTML += '<br>Page<br>';
+            var range = <?php echo $range; ?>; // Number of pages to show before and after the current page
 
-            if (filterValue.length >= 3) {
-                $.ajax({
-                    type: 'GET',
-                    url: 'ajax/ajaxsets.php',
-                    data: { filter: filterValue,
-                            setsPerPage: setsPerPage,
-                            offset: 0},
-                    dataType: 'json',
-                    success: function(response) {
-                        // Update the table with the filtered results
-                        updateTable(response);
-                        document.getElementById('pagination').style.display = 'none';
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.error("AJAX error: " + textStatus + " - " + errorThrown);
-                    }
-                });
-            } else if (filterValue.length === 0) {
-                // Reload the default sets.php when filterValue is back to zero
-                $.ajax({
-                    type: 'GET',
-                    url: 'ajax/ajaxsets.php',
-                    data: { filter: filterValue,
-                            setsPerPage: setsPerPage,
-                            offset: <?php echo $offset; ?>},
-                    dataType: 'json',
-                    success: function(response) {
-                        // Update the table with the filtered results
-                        updateTable(response);
-                        document.getElementById('pagination').style.display = '';
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.error("AJAX error: " + textStatus + " - " + errorThrown);
-                    }
-                });
+            for (var i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+                    paginationHTML += buildPageLink(i, currentPage, setsPerPage);
+                } else if ((i === currentPage - range - 1 || i === currentPage + range + 1)) {
+                    paginationHTML += '... ';
+                }
+            }
+
+            paginationHTML += '<br>&nbsp;';
+            return paginationHTML;
+        }
+
+        function buildPageLink(page, currentPage, setsPerPage) {
+            if (page === currentPage) {
+                return '<span style="font-weight: bold">' + page + '&nbsp;&nbsp;</span>';
+            } else {
+                return '<a href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">' + page + '&nbsp;&nbsp;</a>';
+            }
+        }
+
+        function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
+            var offset = (pageNumber - 1) * setsPerPage;
+
+            $.ajax({
+                type: 'GET',
+                url: 'ajax/ajaxsets.php',
+                data: { filter: filterValue, setsPerPage: setsPerPage, offset: offset },
+                dataType: 'json',
+                success: function(response) {
+                    updateTable(response.filteredSets);
+                    var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
+                    document.getElementById('pagination').innerHTML = paginationHTML;
+                    console.log("Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                }
+            });
+        }
+
+        function loadPage(pageNumber, setsPerPage) {
+            var filterValue = document.getElementById('setCodeFilter').value;
+            fetchAndDisplaySets(filterValue, pageNumber, setsPerPage);
+        }
+
+        function filterSets() {
+            var filterValue = document.getElementById('setCodeFilter').value;
+            var setsPerPage = <?php echo $setsPerPage; ?>;
+            if (filterValue.length >= 3 || filterValue.length === 0) {
+                fetchAndDisplaySets(filterValue, 1, setsPerPage);
             }
         }
 
         // Function to update the table with filtered results
-            function updateTable(filteredSets) {
-                var table = document.querySelector('#setlist');
-                var tableBody = table.getElementsByTagName('tbody')[0];
-                var currentYear = ''; // Variable to keep track of the current year
-                var totalColumns = isAdmin ? 8 : 7; // Total columns in the table
+        function updateTable(filteredSets) {
+            var table = document.querySelector('#setlist');
+            var tableBody = table.getElementsByTagName('tbody')[0];
+            var currentYear = ''; // Variable to keep track of the current year
+            var totalColumns = isAdmin ? 8 : 7; // Total columns in the table
 
-                while (tableBody.rows.length > 1) {
-                    tableBody.deleteRow(1);
+            while (tableBody.rows.length > 1) {
+                tableBody.deleteRow(1);
+            }
+
+            filteredSets.forEach(function (set) {
+                var setYear = new Date(set.setdate).getFullYear().toString();
+                if (setYear != currentYear) {
+                    var yearRow = tableBody.insertRow(tableBody.rows.length);
+                    var yearCell = yearRow.insertCell(0);
+                    yearCell.colSpan = totalColumns;
+                    yearCell.className = "year-header";
+                    yearCell.innerHTML = '<h3>' + setYear + '</h3>';
+                    currentYear = setYear;
                 }
 
-                filteredSets.forEach(function (set) {
-                    var setYear = new Date(set.setdate).getFullYear().toString();
-                    if (setYear != currentYear) {
-                        var yearRow = tableBody.insertRow(tableBody.rows.length);
-                        var yearCell = yearRow.insertCell(0);
-                        yearCell.colSpan = totalColumns;
-                        yearCell.className = "year-header";
-                        yearCell.innerHTML = '<h3>' + setYear + '</h3>';
-                        currentYear = setYear;
-                    }
-
-                    var row = tableBody.insertRow(tableBody.rows.length);
+                var row = tableBody.insertRow(tableBody.rows.length);
                 // Populate the row with data from set
                 var iconCell = row.insertCell(0);
                 var setcode = set.setcode;
@@ -260,7 +290,6 @@ require('includes/menu.php');
             trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Executing SQL: " . $db->error, E_USER_ERROR);
         else: 
             $result = $stmt->get_result();
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,$result->num_rows." results",$logfile);
             if ($result->num_rows === 0):
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": No results ". $db->error, E_USER_ERROR);
             endif;
@@ -386,23 +415,21 @@ require('includes/menu.php');
                 endwhile;
             endif;
             ?>
-        </table>
-        <br>&nbsp; <?php
-        $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT set_name) as totalSets FROM cards_scry");
-        $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
-        $totalPages = ceil($totalSets / $setsPerPage);
-
-        echo '<div id="pagination" class="pagination">';
-            for ($i = 1; $i <= $totalPages; $i++):
+        </table> <?php
+        echo '<div id="pagination" class="pagination"><br>Page<br>';
+        for ($i = 1; $i <= $totalPages; $i++):
+            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
+                // Highlight the current page, or add a link for other pages
                 if ($i == $page):
-                    // Current page, display without hyperlink
-                    echo '<span>' . $i . '&nbsp;&nbsp;</span>';
+                    echo '<span style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
                 else:
-                    // Other pages, display with hyperlink
-                    echo '<a href="?page=' . $i . '">' . $i . '&nbsp;&nbsp;</a>';
+                    echo '<a href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
                 endif;
-            endfor;
-        echo '</div>';
+            elseif ($i === $page - $range - 1 || $i === $page + $range + 1):
+                echo '... ';
+            endif;
+        endfor;
+        echo '<br>&nbsp;</div>';
         ?>
     </div>
 </div>

@@ -278,22 +278,25 @@ endif;  ?>
                 <script>
                 $(document).ready(function(){
                         $('#cview_toggle').on('change',function(){
-                        var checkBox = document.getElementById("cview_toggle");
-                        if (checkBox.checked == true){
-                            var cview = "TURN ON";
-                        } else {
-                            var cview = "TURN OFF";
-                        }
-                        $.ajax({  
-                            url:"/ajax/ajaxcview.php",  
-                            method:"POST",  
-                            data:{"collection_view":cview},
-                            success:function(data){  
-                            //   $('#result').html(data);  
+                            var checkBox = document.getElementById("cview_toggle");
+                            if (checkBox.checked == true){
+                                var cview = "TURN ON";
+                            } else {
+                                var cview = "TURN OFF";
                             }
-                        });    
+                            $.ajax({  
+                                url:"/ajax/ajaxcview.php",  
+                                method:"POST",  
+                                data:{"collection_view":cview},
+                                success:function(data){
+
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                                }
+                            });
+                        });
                     });
-                });
                 </script>
                 <script>
                 $(document).ready(function(){

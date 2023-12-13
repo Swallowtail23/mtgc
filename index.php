@@ -536,38 +536,36 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 $floating_button = true; ?>
                 <script>
                     $(document).ready(function(){
-                            var sliderElement = document.querySelector('.slider.round.material-symbols-outlined');
-                            // Function to remove "no_collection" class from images
-                            function removeNoCollectionClass() {
-                                // Get all elements with the classes "cardimg none no_collection"
-                                var elements = document.querySelectorAll('.cardimg.none.no_collection');
+                        var sliderElement = document.querySelector('.slider.round.material-symbols-outlined');
+                        // Function to remove "no_collection" class from images
+                        function removeNoCollectionClass() {
+                            // Get all elements with the classes "cardimg none no_collection"
+                            var elements = document.querySelectorAll('.cardimg.none.no_collection');
 
-                                // Loop through each element and remove the "no_collection" class
-                                elements.forEach(function (element) {
-                                    element.classList.remove('no_collection');
-                                });
-                            }
-                            // Function to add "no_collection" class to images
-                            function addNoCollectionClass() {
-                                // Get all elements with the classes "cardimg none"
-                                var elements = document.querySelectorAll('.cardimg.none');
+                            // Loop through each element and remove the "no_collection" class
+                            elements.forEach(function (element) {
+                                element.classList.remove('no_collection');
+                            });
+                        }
+                        // Function to add "no_collection" class to images
+                        function addNoCollectionClass() {
+                            // Get all elements with the classes "cardimg none"
+                            var elements = document.querySelectorAll('.cardimg.none');
 
-                                // Loop through each element and add the "no_collection" class
-                                elements.forEach(function (element) {
-                                    element.classList.add('no_collection');
-                                });
-                            }
-                            $('#float_cview').on('change',function(){
+                            // Loop through each element and add the "no_collection" class
+                            elements.forEach(function (element) {
+                                element.classList.add('no_collection');
+                            });
+                        }
+                        $('#float_cview').on('change',function(){
                             var checkBox = document.getElementById("float_cview");
                             if (checkBox.checked == true){
                                 var cview = "TURN ON";
-                                // Call the function to add "no_collection" class
                                 addNoCollectionClass();
                                 document.getElementById("floating_button_label").title = "Toggle collection view off";
                                 sliderElement.classList.remove('book_2');
                             } else {
                                 var cview = "TURN OFF";
-                                // Call the function to remove "no_collection" class
                                 removeNoCollectionClass();
                                 document.getElementById("floating_button_label").title = "Toggle collection view on";
                                 sliderElement.classList.add('book_2');
@@ -576,10 +574,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 url:"/ajax/ajaxcview.php",  
                                 method:"POST",  
                                 data:{"collection_view":cview},
-                                success:function(data){  
-                                //   $('#result').html(data);  
+                                success:function(data){
+                                    
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
                                 }
-                            });    
+                            });
                         });
                     });
                 </script> <?php

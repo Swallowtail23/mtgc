@@ -55,6 +55,11 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
             else:    
                 $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Group opt-in run for $useremail",$logfile);
             endif;
+        else:
+            http_response_code(400);
+            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with invalid input", $logfile);
+            echo json_encode(['error' => 'Called with invalid input']);
+            exit();
         endif;
     endif;
 else:
