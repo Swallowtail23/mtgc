@@ -67,6 +67,9 @@ endif;
 $adminemail = $ini_array['security']['AdminEmail'];
 $serveremail = $ini_array['security']['ServerEmail'];
 
+//Web root URL
+$myURL = $ini_array['general']['URL'];
+
 //DB connect
 define('DB_HOST', $ini_array['database']['DBServer']);  //host
 define('DB_USER', $ini_array['database']['DBUser']);    // db username

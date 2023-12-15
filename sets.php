@@ -60,7 +60,7 @@ $msg = new Message;
             document.body.style.cursor = "wait";
             $.ajax({
                 type: 'POST',
-                url: 'admin/ajaxsetimg.php',
+                url: 'ajax/ajaxsetimg.php',
                 data: { setcode: setcode },
                 success: function(response) {
                     // Parse the JSON response
@@ -89,8 +89,6 @@ $msg = new Message;
             // Display the message using an alert box
             alert(message);
         }
-    </script>
-    <script>
         // Function to send an AJAX request to filter sets
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
         
@@ -245,8 +243,6 @@ $msg = new Message;
                 }
             });
         }
-    </script>
-    <script>
         $(document).ready(function() {
             $('#setCodeFilter').focus();
         });
