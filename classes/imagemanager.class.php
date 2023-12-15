@@ -234,8 +234,8 @@ class ImageManager
         if ($result === false):
             restore_error_handler();
             return 'failure'; 
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $this->db->error, E_USER_ERROR);
         else:
+            $imagebackdelete = $imagedelete = '';
             $row = $result->fetch_assoc();
             $imagefunction = $this->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
             if($imagefunction['front'] != 'error'):
@@ -250,12 +250,9 @@ class ImageManager
                 } catch (Exception $e) {
                     $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$this->logfile);
                     $imagedelete = 'failure';
-                    $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                    $subject = "Image unlink failure";
-                    $message = "Failed image unlink: $imageurl";
-                    mail($adminemail, $subject, $message, $from);
+                    
+                } finally {
                     restore_error_handler();
-                    return $imagedelete; // Return failure if unlink fails
                 }
             endif;
             if($imagefunction['back'] != '' AND $imagefunction['back'] != 'error' AND $imagefunction['back'] != 'empty'):
@@ -263,26 +260,29 @@ class ImageManager
                 $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
                 try {
                     if (!unlink($imagebackurl)):
-                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$this->logfile);
+                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$this->logfile);
                         throw new Exception('Failed to unlink back image');
                     endif;
                     $imagebackdelete = 'success';
                 } catch (Exception $e) {
                     $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$this->logfile);
                     $imagebackdelete = 'failure';
-                    $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-                    $subject = "Image unlink failure";
-                    $message = "Failed image unlink: $imagebackurl";
-                    mail($adminemail, $subject, $message, $from);
                     restore_error_handler();
-                    return $imagebackdelete; // Return failure if unlink fails
                 }
             endif;
         endif;
         //Refresh image
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$this->logfile);
-        $imagefunction = $this->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
-        return 'success';
+        if($imagebackdelete === 'failure' || $imagedelete === 'failure'):
+            $from = "From: $this->serveremail\r\nReturn-path: $this->serveremail"; 
+            $subject = "Image unlink failure";
+            $message = "Failed image unlink: $imageurl. Front: $imagedelete; Back: $imagebackdelete";
+            mail($this->adminemail, $subject, $message, $from);
+            return 'failure'; 
+        else:
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$this->logfile);
+            $imagefunction = $this->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
+            return 'success';
+        endif;
     }
 
     public function __toString() {
