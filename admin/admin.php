@@ -181,7 +181,7 @@ require('../includes/menu.php');
                             <textarea class='textinput' id='updatetext' name='updatetext' rows='8'></textarea>
                         </td>
                         <td>
-                            <input class='inline_button stdwidthbutton updatebutton' name='update' type="submit" value="ADD">
+                            <input class='profilebutton' name='update' type="submit" value="ADD">
                         </td>
                     </tr>
                 </table>
@@ -206,9 +206,9 @@ require('../includes/menu.php');
                 <label class="radio"><input type="radio" name="loglevel" value="1" <?php if($loglevelini === '1'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>1 - Error;</label><br>
                 <label class="radio"><input type="radio" name="loglevel" value="2" <?php if($loglevelini === '2'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>2 - Notice;</label><br>
                 <label class="radio"><input type="radio" name="loglevel" value="3" <?php if($loglevelini === '3'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>3 - Debug;</label><br>
-                <input class='inline_button stdwidthbutton' type="submit" value="SET" />
+                <br><input class='profilebutton' type="submit" value="SET" />
             </form>
-            If log level set fails, check permissions of web server to the ini file. <?php
+            <br>If log level set fails, check permissions of web server to the ini file. <?php
             if((isset($togglecss)) AND ($togglecss == "y")):
                 $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Turning off minimised CSS...",$logfile);
                 $cssquery = 0;
@@ -245,20 +245,20 @@ require('../includes/menu.php');
                 echo "Current CSS status: Minified <p>";
                 echo "Un-minify to see results of editing CSS!!"; ?>
                 <form action="/admin/admin.php">
-                    <input type="submit" value="Use non-minified CSS for editing" />
+                    <input class='profilebutton' type="submit" value="UNMINIFY" />
                     <input type="hidden" name="togglecss" value="y"/>
                 </form> <?php
             else: 
                 echo "Current CSS status: Not minified <p> Make required edits to CSS file style$cssver.css, save it, minify it in NetBeans to 'css/style-min.css', then come back here and 'publish' it."; ?>
                 <form action="/admin/admin.php">
-                    <input type="submit" value="Use minified CSS" />
+                    <input class='profilebutton' type="submit" value="MINIFY" />
                     <input type="hidden" name="publishcss" value="y"/>
                 </form> <?php
             endif;?> 
             <h4>Scryfall JSON</h4> <?php 
                 echo "Clear all Scryfall data from JSON table"; ?>
                 <form action="/admin/admin.php">
-                    <input type="submit" value="Clear JSON" />
+                    <input class='profilebutton' type="submit" value="CLEAR JSON" />
                     <input type="hidden" name="clearscryfalljson" value="y"/>
                 </form>
             <h4>Maintenance Mode</h4>
@@ -272,12 +272,12 @@ require('../includes/menu.php');
             if (($mtcestatus == 1) OR ($mtcestatus == 2)):
                 echo "On"; ?>
                 <form action='admin.php' method='GET'>
-                    <input class='inline_button stdwidthbutton' id='mtce' type='submit' value='MTCE OFF' name='mtce' />
+                    <input class='profilebutton' id='mtce' type='submit' value='MTCE OFF' name='mtce' />
                 </form> <?php
             else:
                 echo "Off"; ?>
                 <form action='admin.php' method='GET'>
-                    <input class='inline_button stdwidthbutton' id='mtce' type='submit' value='MTCE ON' name='mtce' />
+                    <input class='profilebutton' id='mtce' type='submit' value='MTCE ON' name='mtce' />
                 </form> <?php
             endif; ?>
             
