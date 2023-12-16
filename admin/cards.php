@@ -187,15 +187,17 @@ require('../includes/menu.php');
                 if(isset($_GET['cardtoedit'])):  ?>
                     <h3>Delete cards / images</h3>
                     <?php echo "Card id loaded: $id"; ?>
+                        <br><br>
                         <form id='carddeleteform' action="?" method="GET">
                             <input type='hidden' name='id' value='<?php echo "$id";?>' >
-                            <input class='inline_button stdwidthbutton updatebutton' id='deletebutton' name='delete' type="submit" value="DELETE" 
+                            <input class='profilebutton' id='deletebutton' name='delete' type="submit" value="DELETE" 
                                    onclick="return confirm('Do you really want to delete this card?');">
                         </form>
+                        <br>
                         <form id='cardimgdeleteform' action="?" method="GET">
                             <input type='hidden' name='id' value='<?php echo "$id";?>' >
-                            <button class='inline_button stdwidthbutton updatebutton' id='deleteimgbutton' name='deleteimg' type="submit" value="DELETEIMG" 
-                                   onclick="return confirm('Do you really want to delete this card image?');">DELETE IMAGE</button>
+                            <button class='profilebutton' id='deleteimgbutton' name='deleteimg' type="submit" value="DELETEIMG" 
+                                   onclick="return confirm('Do you really want to delete this card image?');">DEL IMAGE</button>
                     </form>  <?php
                         // Fetch and print the results
                         

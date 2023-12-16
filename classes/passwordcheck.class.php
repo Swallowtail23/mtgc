@@ -95,7 +95,7 @@ class PasswordCheck
                     $username = $row['username'];
                     $randompassword = $this->generateRandomPassword(12);
                     $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": New password generated for $email, $username",$this->logfile);
-                    $reset = $this->newuser($username, $email, $randompassword, $dbname);
+                    $reset = $this->newUser($username, $email, $randompassword, $dbname);
                     $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Newuser result: $reset",$this->logfile);
                     if($reset === 1):
                         $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
@@ -139,7 +139,7 @@ class PasswordCheck
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) 
                     VALUES (?, ?, ?, ?, 'chgpwd', 1, 0) 
-                    ON DUPLICATE KEY UPDATE password=?, status='chgpwd' ";
+                    ON DUPLICATE KEY UPDATE password=?, status='chgpwd', badlogins=0 ";
         $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}", $this->logfile);
         $stmt = $this->db->prepare($query);
         if ($stmt):

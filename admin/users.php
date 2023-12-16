@@ -191,57 +191,57 @@ require('../includes/menu.php');
             $updateusers = '';
         endif;?>
         <form id='newuserform' name="newuser" action="users.php" method="post" autocomplete="user-form">
-            <h3> Add a new user </h3>
-            To change an existing user's password, use this form.<br>
+            <h3> New user </h3>
             <input type='hidden' name="newuser" value="yes">
-            <input title="Please enter username" placeholder="Username" id="username" autocomplete="off" name="username" type="text" size="12" maxlength="12" /><br>
-            <input title="Email address" placeholder="Email" id="email" autocomplete="user-email-for-form" name="email" type="email" size="64" maxlength="64" /><br>
-            <input type="password" id='pword' title="Please Enter Your Password" placeholder="Password" size="20" autocomplete="user-password-for-form" name="password" maxlength="20" />
-            <input type="submit" value="Create user" />
+            <input class="textinput" title="Please enter username" placeholder="Username" id="username" autocomplete="off" name="username" type="text" size="12" maxlength="12" /><br>
+            <input class="textinput" title="Email address" placeholder="Email" id="email" autocomplete="user-email-for-form" name="email" type="email" size="64" maxlength="64" /><br>
+            <input class="textinput" type="password" id='pword' title="Please Enter Your Password" placeholder="Password" size="20" autocomplete="user-password-for-form" name="password" maxlength="20" />
+            <br><br>
+            <input class="profilebutton" type="submit" value="ADD USER" />
         </form>
 
         <div>
             <h3>User table</h3> <?php 
-            $allusertable = $db->execute_query("SELECT username, usernumber, email, reg_date, lastlogin_date, status, admin FROM users");?>
+            $allusertable = $db->execute_query("SELECT username, usernumber, email, badlogins, reg_date, lastlogin_date, status, admin FROM users");?>
             <form name="updateusers" action="users.php" method="post">
                 <table>
                     <tr>
-                        <td>User #</td>
-                        <td>Registered</td>
-                        <td>Last login</td>
-                        <td>Username</td>
-                        <td>Email</td>
-                        <td>Status</td>
-                        <td>Admin</td>
+                        <th style="padding: 5px;">User #</th>
+                        <th style="padding: 5px;">Registered</th>
+                        <th style="padding: 5px;">Last login</th>
+                        <th style="padding: 5px;">Username</th>
+                        <th style="padding: 5px;">Email</th>
+                        <th style="padding: 5px;">Status</th>
+                        <th style="padding: 5px;">Bad logins</th>
+                        <th style="padding: 5px;">Admin</th>
                         <?php if($updateusers === 'yes'): ?>
-                        <td></td>
+                        <th style="padding: 5px;"></th>
                         <?php endif; ?>
-                        <td>Actions</td>
-
+                        <th style="padding: 5px;">Actions</th>
                     </tr>
                     <?php 
                     while ($alluserresults = $allusertable->fetch_assoc()): 
                         $usertable = $alluserresults['usernumber']."collection";
                         ?>
                         <tr>
-                            <td> 
+                            <td style="padding: 5px;"> 
                                 <?php echo $alluserresults['usernumber']; ?> 
                                 <input type='hidden' name=id[] value='<?php echo $alluserresults['usernumber']; ?>'>
                             </td>
-                            <td> 
+                            <td style="padding: 5px;"> 
                                 <?php echo $alluserresults['reg_date']; ?> 
                             </td>
-                            <td> 
+                            <td style="padding: 5px;"> 
                                 <?php echo $alluserresults['lastlogin_date']; ?> 
                             </td>
-                            <td> 
-                                <input type='text' size='10' name=name[] value='<?php echo $alluserresults['username']; ?>'>
+                            <td style="padding: 5px;"> 
+                                <input class="textinput" type='text' size='10' name=name[] value='<?php echo $alluserresults['username']; ?>'>
                             </td>
-                            <td> 
-                                <input type='email' size='30' name=eml[] value='<?php echo $alluserresults['email']; ?>'>
+                            <td style="padding: 5px;">
+                                <input class="textinput" type='email' size='30' name=eml[] value='<?php echo $alluserresults['email']; ?>'>
                             </td>
-                            <td> 
-                                <select name='status[]'>
+                            <td style="padding: 5px;"> 
+                                <select class="dropdown" name='status[]'>
                                     <option value='active' <?php if($alluserresults['status'] === 'active'): echo "selected"; endif; ?> >active</option>
                                     <option value='disabled'  <?php if($alluserresults['status'] === 'disabled'): echo "selected"; endif; ?> >disabled</option>
                                     <option value='locked' <?php if($alluserresults['status'] === 'locked'): echo "selected"; endif; ?> >locked</option>
@@ -249,15 +249,18 @@ require('../includes/menu.php');
                                     <option value='mtce' <?php if($alluserresults['status'] === 'mtce'): echo "selected"; endif; ?> >site maintenance</option>
                                 </select> 
                             </td>
-                            <td> 
-                                <select name='adm[]'>
+                            <td style="padding: 5px;"> 
+                                <?php echo $alluserresults['badlogins']; ?> 
+                            </td>
+                            <td style="padding: 5px;"> 
+                                <select class="dropdown" name='adm[]'>
                                     <option value=1 <?php if($alluserresults['admin'] == 1): echo "selected"; endif; ?> >Yes</option>
                                     <option value=0  <?php if($alluserresults['admin'] == 0): echo "selected"; endif; ?> >No</option>
                                 </select> 
                             </td>
 
                             <?php if($updateusers === 'yes'): ?>
-                            <td>
+                            <td style="padding: 5px;">
                                 <?php 
                                 $aur_usernumber = $alluserresults['usernumber'];
                                 $updatesql = $db->execute_query("SELECT username, email, status, admin FROM users WHERE usernumber = ? LIMIT 1",[$aur_usernumber]);
@@ -275,8 +278,8 @@ require('../includes/menu.php');
                                 <?php endif; ?>
                             </td>
                             <?php endif; ?>
-                            <td>
-                                <select name='actions[]'>
+                            <td style="padding: 5px;">
+                                <select class="dropdown" name='actions[]'>
                                     <option value='' selected></option>
                                     <option value=deletecards>Delete collection</option>
                                     <option value=deleteuser>Delete user & cards</option>
@@ -289,13 +292,14 @@ require('../includes/menu.php');
                 </table>
                 <input type='hidden' name="updateusers" value="yes">
                 <br>
-                <input type="submit" value="Update users" />
+                <input class="profilebutton" type="submit" value="UPDATE" />
             </form>
             <form id='exportcsv' action="/csv.php"  method="GET">
             </form>
             <h4>Export</h4>
+            Export specific user's collection to a .csv file.
             <form action="/csv.php"  method="GET">
-                <select name='table'>
+                <select class="dropdown" name='table'>
                 <?php 
                 $exportlist = $db->execute_query("SELECT usernumber,username FROM users");
                 while ($listuser = $exportlist->fetch_assoc()):
@@ -305,7 +309,8 @@ require('../includes/menu.php');
                 endwhile;
                 ?>
                 </select>
-                <input type="submit" value="Export to CSV">
+                <br><br>
+                <input class="profilebutton" type="submit" value="EXPORT CSV">
             </form>
         </div>
     </div>
