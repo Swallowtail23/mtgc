@@ -29,8 +29,8 @@ include '../includes/colour.php';
 $msg = new Message;
 
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$expectedReferringPage = $myURL.'/index.php';
-if (strpos($referringPage, $expectedReferringPage) !== false):
+$expectedReferringSite = $myURL;
+if (strpos($referringPage, $expectedReferringSite) !== false):
 
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
         echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
@@ -148,7 +148,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from index.php",$logfile);
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from index.php($expectedReferringSite,$referringPage",$logfile);
     http_response_code(403);
     echo 'Access forbidden';
 endif;

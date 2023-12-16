@@ -14,26 +14,22 @@ endif;
 ?>
 
 <script>
-    $(function()
-    {
-        $(".headersearch").keyup(function() 
-        { 
-
-        var searchid = $(this).val();
-        var dataString = 'search='+ searchid;
-        if(searchid!='')
-        {
-            $.ajax({
-            type: "POST",
-            url: "/ajax/ajaxsearch.php",
-            data: dataString,
-            cache: false,
-            success: function(html)
-            {
-            $("#ajaxresult").html(html).show();
-            }
-            });
-        }return false;    
+    $(function() {
+        $("#searchid").on("input keyup", function() {
+            var searchid = $(this).val();
+            var dataString = 'search='+ searchid;
+            if(searchid!='') {
+                $.ajax({
+                type: "POST",
+                url: "/ajax/ajaxsearch.php",
+                data: dataString,
+                cache: false,
+                success: function(html)
+                {
+                $("#ajaxresult").html(html).show();
+                }
+                });
+            }return false;    
         });
 
         jQuery("#ajaxresult").on("click",function(e){ 
@@ -92,19 +88,27 @@ endif;
             e.stopPropagation();
             $('#headersearch_div').css("opacity", "0");
             $('#headersearch_div').css("z-index", "0");
-            $('#headerresults').css("opacity", "1");
-            $('#headerresults').css("z-index", "10000");
+            
+            $('#ajaxresult').css("opacity", "0");
+            $('#ajaxresult').css("z-index", "-1");
+            
             $('.searchicon').css("opacity", "1");
             $('.searchicon').css("z-index", "100000");
+            
+            $('#searchid').val('');
         });
     });
     $(document).click(function() {
         $('#headersearch_div').css("opacity", "0");
         $('#headersearch_div').css("z-index", "0");
-        $('#headerresults').css("opacity", "1");
-        $('#headerresults').css("z-index", "10000");
+        
+        $('#ajaxresult').css("opacity", "0");
+        $('#ajaxresult').css("z-index", "-1");
+        
         $('.searchicon').css("opacity", "1");
         $('.searchicon').css("z-index", "100000");
+        
+        $('#searchid').val('');
     });
 </script>  
 <?php
