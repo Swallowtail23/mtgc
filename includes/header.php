@@ -120,8 +120,7 @@ if((isset($mtcestatus)) AND ($mtcestatus != 1) AND (!isset($_SESSION["chgpwd"]))
     <div class="searchicon"><span class="material-symbols-outlined searchicon">search</span>
     </div>
     <div id='headersearch_div'>
-        <div id='cancelsearch'>
-        </div>
+        <div id='cancelsearch'><span class="material-symbols-outlined">close</span></div>
         <form action="/index.php" method="get">
             <input type="text" class='headersearch' id="searchid" name="name" autocomplete='off' placeholder="Basic search">
             <input type='hidden' name='layout' value='grid'>

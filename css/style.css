@@ -135,17 +135,24 @@ table
 }
 #cancelsearch 
 { 
-  height: 30px; 
-  width: 30px; 
+  height: 20px; 
+  width: 20px; 
   position: fixed; 
   left:468px;
-  top:42px;
+  top:48px;
   z-index: 99998;
-  background:transparent url('/images/cancel_w.png') center no-repeat;
+  cursor: pointer;
+  color: #f0f2f9;
+  font-size: 20px;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 20;
 }
 #cancelsearch:hover 
 { 
-   background:transparent url('/images/cancel_h.png') center no-repeat;
+   color: #c4c8d4;
 }
 /* CSS for Grid / List / Bulk menus buttons */
 
@@ -1392,6 +1399,10 @@ table
         'wght' 500,
         'GRAD' 0,
         'opsz' 40;
+}
+.material-symbols-outlined.menu:hover
+{
+    color: #c4c8d4;
 }
 /* Mobile menu */
 
@@ -3076,7 +3087,7 @@ td.columnhide
     }
     #cancelsearch
     {
-        top: 21px;
+        top: 24px;
     }
     .gridlist, .activegridlist
     {
