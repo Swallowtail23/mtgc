@@ -1,6 +1,6 @@
 <?php 
-/* Version:     8.0
-    Date:       20/10/23
+/* Version:     9.0
+    Date:       17/12/23
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -25,6 +25,9 @@
  *              Added handling for etched cards
  *  8.0
  *              Toggles for options (calling ajax updates)
+ * 
+ *  9.0         17/12/23
+ *              Add currency selection
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -68,7 +71,12 @@ if($db->query($tablecheck) === FALSE):
 endif;
 
 //1. Get user details for current user
-if($rowqry = $db->execute_query("SELECT username, password, email, reg_date, status, admin, groupid, grpinout, groupname, collection_view FROM users LEFT JOIN `groups` ON users.groupid = groups.groupnumber WHERE usernumber = ? LIMIT 1",[$user])):
+if($rowqry = $db->execute_query("SELECT username, password, email, reg_date, status, admin,
+                                        groupid, grpinout, groupname, collection_view, currency 
+                                    FROM users 
+                                    LEFT JOIN `groups` 
+                                    ON users.groupid = groups.groupnumber 
+                                    WHERE usernumber = ? LIMIT 1",[$user])):
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
     $row = $rowqry->fetch_assoc();
 else:
@@ -156,8 +164,12 @@ endif;  ?>
         $current_group_status = $row['grpinout'];
         $current_group = $row['groupid'];
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Groups are '$current_group_status', group id '$current_group'",$logfile);
+
+    //6. Currency
+        $current_currency = $row['currency'];
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current currency is '$current_currency'",$logfile);
                 
-    //6. Update pricing in case any new cards have been added to collection
+    //7. Update pricing in case any new cards have been added to collection
         //Make sure only number+collection is passed as table name
         if (valid_tablename($mytable) !== false):
             $obj = new PriceManager($db,$logfile,$useremail);
@@ -321,6 +333,35 @@ endif;  ?>
                     });
                 });
                 </script>
+                <script>
+                $(document).ready(function() {
+                    $('#currencySelect').on('change', function() {
+                        var selectedCurrency = $(this).val();
+
+                        $.ajax({  
+                            url: "/ajax/ajaxcurrency.php",
+                            method: "GET",
+                            data: {currency: selectedCurrency},
+                            success: function(data) {
+                                // Handle the response here
+                                var response = JSON.parse(data);
+                                console.log(response); // or update the UI accordingly
+
+                                // Add the flash effect
+                                var $currencySelect = $('#currencySelect');
+                                $currencySelect.addClass('flash-success');
+                                setTimeout(function() {
+                                    $currencySelect.removeClass('flash-success');
+                                }, 1000); // Adjust the duration of the flash as needed
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                            }
+                        });
+                    });
+                });
+                </script>
+
                 <h2 class='h2pad'>Options</h2>
                 <table>
                     <tr>
@@ -339,7 +380,6 @@ endif;  ?>
                                 <div class="slider round"></div>
                                 </label> <?php
                             endif; ?>
-                            <!-- <div id="result"></div> -->
                         </td>
                     </tr>
                     <tr>
@@ -364,7 +404,21 @@ endif;  ?>
                                 <div class="slider round"></div>
                                 </label> <?php
                             endif; ?>
-                            <!-- <div id="result"></div> -->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            <b>Local currency:</b> Set the currency you want to use for localised pricing<br>
+                        </td>
+                        <td class="options_right">  
+                            <select class="dropdown" name='currency' id='currencySelect'>
+                                <?php foreach($currencies as $currency): ?>
+                                    <option value='<?php echo $currency['code']; ?>' 
+                                        <?php if($current_currency === $currency['db']): ?>selected<?php endif; ?>>
+                                        <?php echo $currency['pretty']; ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
                     </tr>
                 </table>
