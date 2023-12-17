@@ -2796,6 +2796,21 @@ td.columnhide
 {
     margin-right: 0px;
 }
+
+#currencySelect {
+    transition: background-color 1.0s ease;
+}
+
+.flash-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.flash-error {
+    background-color: #dc3545;
+    color: white;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {

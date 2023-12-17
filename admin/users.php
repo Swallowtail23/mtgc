@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       25/03/2023
+/* Version:     5.0
+    Date:       17/12/2023
     Name:       admin/users.php
     Purpose:    User administrative tasks
     Notes:      
@@ -13,6 +13,9 @@
  *              Migrate from writelog to message class
  *  4.0
  *              PHP 8.1 compatibility
+ * 
+ *  5.0         17/12/2023
+ *              Add local currency control
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -107,11 +110,18 @@ require('../includes/menu.php');
                 ${'sqlname'.$id} = $sql_name;
                 $sql_status = $db->real_escape_string($updatearray[0]['status'][$i]);
                 ${'sqlstatus'.$id} = $sql_status;
+                $sql_fx = $db->real_escape_string($updatearray[0]['currency'][$i]);
+                if($sql_fx === 'zzz'):
+                    $sql_fx = NULL;
+                elseif (!in_array($sql_fx, array_column($currencies, 'code'))):
+                    $sql_fx = NULL;
+                endif;
+                ${'sqlfx'.$id} = $sql_fx;
                 $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
                 ${'sqladm'.$id} = $sql_adm;
                 //Simple update of fields
-                $query = "UPDATE users SET username = ?, email = ?, status = ?, admin = ? WHERE usernumber = ?";
-                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_id];
+                $query = "UPDATE users SET username = ?, email = ?, status = ?, admin = ?, currency = ? WHERE usernumber = ?";
+                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
                 if ($result = $db->execute_query($query, $params)):
                     $affected_rows = $db->affected_rows;
                     $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows", $logfile);
@@ -201,8 +211,9 @@ require('../includes/menu.php');
         </form>
 
         <div>
-            <h3>User table</h3> <?php 
-            $allusertable = $db->execute_query("SELECT username, usernumber, email, badlogins, reg_date, lastlogin_date, status, admin FROM users");?>
+            <h3>User table</h3> 
+            Note, default currency is set in ini file ([fx], TargetCurrency)<?php 
+            $allusertable = $db->execute_query("SELECT username, usernumber, email, badlogins, reg_date, lastlogin_date, status, admin, currency FROM users");?>
             <form name="updateusers" action="users.php" method="post">
                 <table>
                     <tr>
@@ -213,6 +224,7 @@ require('../includes/menu.php');
                         <th style="padding: 5px;">Email</th>
                         <th style="padding: 5px;">Status</th>
                         <th style="padding: 5px;">Bad logins</th>
+                        <th style="padding: 5px;">Local FX</th>
                         <th style="padding: 5px;">Admin</th>
                         <?php if($updateusers === 'yes'): ?>
                         <th style="padding: 5px;"></th>
@@ -251,6 +263,16 @@ require('../includes/menu.php');
                             </td>
                             <td style="padding: 5px;"> 
                                 <?php echo $alluserresults['badlogins']; ?> 
+                            </td>
+                            <td style="padding: 5px;"> 
+                                <select class="dropdown" name='currency[]'>
+                                    <?php foreach($currencies as $currency): ?>
+                                        <option value='<?php echo $currency['code']; ?>' 
+                                            <?php if($alluserresults['currency'] === $currency['db']): ?>selected<?php endif; ?>>
+                                            <?php echo $currency['pretty']; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </td>
                             <td style="padding: 5px;"> 
                                 <select class="dropdown" name='adm[]'>

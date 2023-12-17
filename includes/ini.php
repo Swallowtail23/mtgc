@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.1
-    Date:       27/11/2023
+/* Version:     3.0
+    Date:       17/12/2023
     Name:       ini.php
     Purpose:    PHP script to manage error routines and logging
     Notes:      {none}
@@ -12,6 +12,9 @@
  *  2.1
  *              27/11/23
  *              Added fx variables from ini file
+ *  
+ *  3.0         17/12/23
+ *              Added local fx currency array
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -173,6 +176,45 @@ $seconds_in_hour = 3600;
 $max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;
 
 /** Define card types and variables which require special treatment **/
+
+// Selectable currencies
+$currencies = array(
+                        array(
+                            'code' => 'zzz',
+                            'pretty' => 'None',
+                            'db' => NULL
+                            ),
+                        array(
+                            'code' => 'aud',
+                            'pretty' => 'Australian dollar',
+                            'db' => 'aud'
+                            ),
+                        array(
+                            'code' => 'cad',
+                            'pretty' => 'Canadian dollar',
+                            'db' => 'cad'
+                            ),
+                        array(
+                            'code' => 'eur',
+                            'pretty' => 'Euro',
+                            'db' => 'eur'
+                            ),
+                        array(
+                            'code' => 'gbp',
+                            'pretty' => 'British Pound',
+                            'db' => 'gbp'
+                            ),
+                        array(
+                            'code' => 'jpy',
+                            'pretty' => 'Japanese Yen',
+                            'db' => 'jpy'
+                            ),
+                        array(
+                            'code' => 'nzd',
+                            'pretty' => 'New Zealand dollar',
+                            'db' => 'nzd'
+                            )
+);
 
 // Card layouts which get a flip button
 $flip_button_cards = array('transform',
