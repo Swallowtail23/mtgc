@@ -118,7 +118,7 @@ function spamcheck($field)
         else:
             $row = $result->fetch_assoc();
             if (empty($row)):
-                return FALSE;
+                return 'No match';
             elseif (filter_var($field, FILTER_VALIDATE_EMAIL)):
                 $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Email address validated for reset request", $logfile);
                 return $field;

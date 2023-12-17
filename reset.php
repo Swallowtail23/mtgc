@@ -34,18 +34,22 @@ $cssver = cssver();
     if(isset($_REQUEST['action'])):
         $action=$_REQUEST['action']; 
         if(isset($_POST['email'])):
-            $email = spamcheck($_POST['email']);;
+            $email = spamcheck($_POST['email']);
         else:
             $email = FALSE;
         endif;
         if ($email == FALSE):
             echo "Valid email is required, please fill <a href=\"\">the form</a> again."; 
+        elseif ($email == 'No match'):
+            // Not a valid email, don't send an email
+            echo "If the email address exists, your request will be actioned"; 
+            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
         else:
             $from = "From: $email\r\nReturn-path: $email"; 
             $subject = "Password reset request for $email"; 
             $message = "Password reset request for $email\r\n$from";
             mail($adminemail, $subject, $message, $from); 
-            echo "Request sent"; 
+            echo "If the email address exists, your request will be actioned"; 
             echo "<meta http-equiv='refresh' content='3;url=login.php'>";
         endif;
     else:
