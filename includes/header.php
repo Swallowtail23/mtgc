@@ -60,6 +60,8 @@ endif;
             $('.searchicon').css("z-index", "0");
             $('#headerresults').css("opacity", "0");
             $('#headerresults').css("z-index", "0");
+            $('#ajaxresult').css("opacity", "1");
+            $('#ajaxresult').css("z-index", "99999");
             $('#headersearch_div').css("opacity", "1");
             $('#headersearch_div').css("z-index", "99999");
             document.getElementById('searchid').focus();
@@ -88,6 +90,9 @@ endif;
             e.stopPropagation();
             $('#headersearch_div').css("opacity", "0");
             $('#headersearch_div').css("z-index", "0");
+        
+            $('#headerresults').css("opacity", "1");
+            $('#headerresults').css("z-index", "9999");               
             
             $('#ajaxresult').css("opacity", "0");
             $('#ajaxresult').css("z-index", "-1");
@@ -101,6 +106,9 @@ endif;
     $(document).click(function() {
         $('#headersearch_div').css("opacity", "0");
         $('#headersearch_div').css("z-index", "0");
+        
+        $('#headerresults').css("opacity", "1");
+        $('#headerresults').css("z-index", "9999");        
         
         $('#ajaxresult').css("opacity", "0");
         $('#ajaxresult').css("z-index", "-1");
@@ -141,13 +149,13 @@ endif;
     <a class="headername" href="/index.php">MtG collection </a>
 </div> 
 <div <?php 
-            if ($tier == 'dev'):
-                echo "class='headerdev'";
-            else:
-                echo "class='headerprod'";
-            endif; 
-            ?>
-            id='header' class='fullsize'> 
+    if ($tier == 'dev'):
+        echo "class='headerdev'";
+    else:
+        echo "class='headerprod'";
+    endif; 
+    ?>
+    id='header' class='fullsize'> 
        
     <div id='headerresults'>
             <?php 
