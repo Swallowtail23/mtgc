@@ -60,8 +60,6 @@ class SessionManager {
     
     public function getUserInfo()
     {
-        global $myURL;
-        
         // Get user status and info for logged-in user, and currency fx rate if set
         $userNumber = $this->session['user'];
         $query = "SELECT status, username, admin, grpinout, groupid, collection_view, currency FROM users WHERE usernumber = ?";
@@ -95,8 +93,12 @@ class SessionManager {
         else:
             if ($status === 'chgpwd'):
                 if ($_SERVER['REQUEST_URI'] == '/profile.php' && isset($_SESSION['just_logged_in'])):
-                    unset($_SESSION['just_logged_in']); // Clear the flag
+                    // First visit to profile.php will clear the flag
+                    unset($_SESSION['just_logged_in']);
+                elseif ($_SERVER['REQUEST_URI'] == '/profile.php'):
+                    // Subsequent vists to profile.php with chgpwd set OK - allows password form submit to complete
                 else:
+                    // any other page, destroy the session and logout
                     session_destroy();
                     header("Location: /login.php");
                     exit();
