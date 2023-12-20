@@ -49,7 +49,7 @@ if ($isValidReferrer):
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
         exit(); 
     else: 
-        $cardid = $_GET['cardid'] ?? '';
+        $cardid = $_POST['cardid'] ?? '';
         if (valid_uuid($cardid) === false):
             $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID", $logfile);
             $response['status'] = 'error';
@@ -61,8 +61,8 @@ if ($isValidReferrer):
         endif;
 
         //Process and log new quantity request
-        if (isset($_GET['newqty'])): 
-            $qty = $_GET['newqty']; 
+        if (isset($_POST['newqty'])): 
+            $qty = $_POST['newqty']; 
             if(is_int($qty / 1) AND $qty > -1):
                 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty",$logfile);
             else:
@@ -74,8 +74,8 @@ if ($isValidReferrer):
                 echo json_encode($response);
                 exit;
             endif;
-        elseif (isset($_GET['newfoil'])): 
-            $qty = $_GET['newfoil']; 
+        elseif (isset($_POST['newfoil'])): 
+            $qty = $_POST['newfoil']; 
             if(is_int($qty / 1) AND $qty > -1):
                 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty",$logfile);
             else:
@@ -87,8 +87,8 @@ if ($isValidReferrer):
                 echo json_encode($response);
                 exit;
             endif;
-        elseif (isset($_GET['newetch'])): 
-            $qty = $_GET['newetch']; 
+        elseif (isset($_POST['newetch'])): 
+            $qty = $_POST['newetch']; 
             if(is_int($qty / 1) AND $qty > -1):
                 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty",$logfile);
             else:
@@ -155,19 +155,19 @@ if ($isValidReferrer):
             $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
         endif;
         // Run update
-        if (isset($_GET['newqty'])): 
+        if (isset($_POST['newqty'])): 
             $updatequery = "
                 INSERT INTO $mytable (normal,id)
                 VALUES (?,?)
                 ON DUPLICATE KEY UPDATE 
                 normal = ?";
-        elseif (isset($_GET['newfoil'])): 
+        elseif (isset($_POST['newfoil'])): 
             $updatequery = "
                 INSERT INTO $mytable (foil,id)
                 VALUES (?,?)
                 ON DUPLICATE KEY UPDATE 
                 foil = ?";
-        elseif (isset($_GET['newetch'])): 
+        elseif (isset($_POST['newetch'])): 
             $updatequery = "
                 INSERT INTO $mytable (etched,id)
                 VALUES (?,?)
@@ -211,7 +211,7 @@ if ($isValidReferrer):
             exit;
         else:
             $checkresult = $checkresultqry->fetch_assoc();
-            if (isset($_GET['newqty'])):
+            if (isset($_POST['newqty'])):
                 if ((int)$sqlqty === (int)$checkresult['normal']):
                     $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}", $logfile);
                     $response['status'] = 'success';
@@ -222,7 +222,7 @@ if ($isValidReferrer):
                     $response['message'] = "Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}";
                     http_response_code(400);
                 endif;
-            elseif (isset($_GET['newfoil'])):
+            elseif (isset($_POST['newfoil'])):
                 if ((int)$sqlqty === (int)$checkresult['foil']):
                     $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}", $logfile);
                     $response['status'] = 'success';
@@ -233,7 +233,7 @@ if ($isValidReferrer):
                     $response['message'] = "Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}";
                     http_response_code(400);
                 endif;
-            elseif (isset($_GET['newetch'])):
+            elseif (isset($_POST['newetch'])):
                 if ((int)$sqlqty === (int)$checkresult['etched']):
                     $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}", $logfile);
                     $response['status'] = 'success';

@@ -103,17 +103,20 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
 <?php include('includes/googlefonts.php');?>
 <script src="/js/jquery.js"></script>
+<script src="/js/ajaxUpdate.js"></script>
 <script type="text/javascript">
-    jQuery(document).ready(function(){
-        $("img").each(function(){
-        $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
+    $(function() {  // On document ready
+        $("img").on("error", function() {
+            $(this).attr("src", "/cardimg/back.jpg");
         });
-    });
-</script>
-<script type="text/javascript">   
-    jQuery( function($) {
+
+        $("#importsubmit").prop('disabled', true);
+        $("#importfile").change(function() {
+            $("#importsubmit").prop('disabled', !$(this).val());
+        });
+
         $('#deckselect').change(function (event) {
-            if($('#deckselect').val() === 'newdeck'){
+            if($(this).val() === 'newdeck'){
                 $('#newdeckname').removeAttr("disabled");
                 $('#newdeckname').attr("placeholder", "New deck name");
             } else {
@@ -130,38 +133,53 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
                 $('#deckqty').attr("placeholder", "N/A"); 
             }
         });
-    });
-</script>
-<script type="text/javascript">   
-    jQuery( function($) {
+
         $('#addtodeck').submit(function() {
             if(($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ==='')){
                 alert("You need to complete the form...")
                 return false;
             }
         });
-    });
-</script>
-<script type="text/javascript"> 
-    function CloseMe( obj )
-    {
-        obj.style.display = 'none';
-        window.location.href="carddetail.php?id=<?php echo $cardid;?>";
-    }
-</script> 
-<!-- Following script is to ensure that card numbers entered are valid-->
-<script type="text/javascript">
-    function isInteger(x) {
-        if(x<0)
-        {
-            return false;
-        }
-        else
-        {
-            return x % 1 === 0;
-        }
-    }
-    $(function() { 
+        
+        var mainImg = $(".mainimg");
+        var imgFloat = $(".imgfloat");
+        var backImg = $(".backimg");
+        var backImgFloat = $(".backimgfloat");
+        mainImg.mousemove(function(e) {         
+            var transform = mainImg.css('transform');
+            if (transform === 'rotate(180deg)' && window.innerWidth > 1208) {
+                imgFloat.show();         
+                imgFloat.css({
+                    top: (e.pageY - 170) + "px",
+                    left: (e.pageX + 95) + "px",
+                    transform: 'rotate(180deg)'
+                });     
+            } else if (window.innerWidth > 1208) {
+                imgFloat.show();         
+                imgFloat.css({
+                    top: (e.pageY - 170) + "px",
+                    left: (e.pageX + 95) + "px",
+                    transform: ''
+                });     
+            }
+        }).mouseout(function(e) {
+            imgFloat.hide();
+        });
+
+        backImg.mousemove(function(e){         
+            backImgFloat.show();         
+            backImgFloat.css(
+                {
+                    top: (e.pageY - 170) + "px",
+                    left: (e.pageX + 95) + "px"
+                }
+            );     
+        }).mouseout(function(e)
+            {
+                backImgFloat.hide();
+            }
+        );
+
         $(".carddetailqtyinput").change(function(){
             var ths = this;
             var myqty = $(ths).val();
@@ -176,118 +194,38 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
                 $(ths).focus();
             }
         });
-    });
-</script>
-<script type="text/javascript">
-    function ajaxUpdate(cardid,cellid,qty,flash,type) {
-        var activeCell = document.getElementById(cellid);
-        var activeFlash = document.getElementById(flash);
-        var poststring = type + '=' + (activeCell.value) + '&cardid=' + cardid;
-        if ((activeCell.value) == '') {
-            alert("Enter a number");
-            activeCell.focus();
-        } else if (!isInteger(activeCell.value)) {
-            alert("Enter an integer");
-            activeCell.focus();
-        } else {
-            $.ajax({
-                type: "GET",
-                url: "ajax/ajaxgrid.php",
-                data: poststring,
-                cache: true,
-                success: function (data) {
-                    activeFlash.classList.remove("bulksubmitsuccessfont");
-                    activeFlash.classList.add("bulksubmitnormalfont");
-                    activeFlash.classList.add("bulksubmitsuccessbg");
-                    setTimeout(function() {
-                      activeFlash.classList.remove("bulksubmitsuccessbg");
-                      activeFlash.classList.add("bulksubmitsuccessfont");
-                    }, 2000);
-                }
-            });
-        }
-        return false;
-    };
-</script>
-<script type="text/javascript">
-$(document).ready(function(){
-    $("#importsubmit").attr('disabled',true);
-    $("#importfile").change(
-        function(){
-            if ($(this).val()){
-                $("#importsubmit").removeAttr('disabled'); 
-            }
-            else {
-                $("#importsubmit").attr('disabled',true);
-            }
-        });
-});
-</script>
-<!-- following script rotates flipimage -->
-<script type="text/javascript">
-    function rotateImg() {
-        if ( document.querySelector(".mainimg").style.transform == 'none' ){
-            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
-        } 
-        else if ( document.querySelector(".mainimg").style.transform == '' ){
-            document.querySelector(".mainimg").style.transform = "rotate(180deg)";
-        } else {
-            document.querySelector(".mainimg").style.transform = "none";
-        }
-    }
-</script>
-<script type="text/javascript"> 
-    jQuery( function($) {
-        $(".mainimg").mousemove(function(e)
-            {         
-                if (  document.querySelector(".mainimg").style.transform == 'rotate(180deg)' &&  (window.innerWidth > 1208)  ) {
-                    $(".imgfloat").show();         
-                    $(".imgfloat").css(
-                        {
-                            top: (e.pageY - 170) + "px",
-                            left: (e.pageX + 95) + "px",
-                            transform: 'rotate(180deg)'
-                        }
-                    );     
-                } else if (window.innerWidth > 1208) {
-                    $(".imgfloat").show();         
-                    $(".imgfloat").css(
-                        {
-                            top: (e.pageY - 170) + "px",
-                            left: (e.pageX + 95) + "px",
-                            transform: ''
-                        }
-                    );     
-                }
-            });
-        $(".mainimg").mouseout(function(e)
-            {
-                $(".imgfloat").hide();
-            }
-        );
-    });
 
-</script>
-<script type="text/javascript"> 
-jQuery( function($) {
-    $(".backimg").mousemove(function(e)
-        {         
-            $(".backimgfloat").show();         
-            $(".backimgfloat").css(
-                {
-                    top: (e.pageY - 170) + "px",
-                    left: (e.pageX + 95) + "px"
-                }
-            );     
-        });     
-    $(".backimg").mouseout(function(e)
+        var textarea = $('#cardnotes');
+        var saveButton = $('.save_icon');
+        var initialValue = textarea.val();
+        textarea.on('input', function() {
+            saveButton.prop('disabled', textarea.val() === initialValue);
+        });
+    });
+    
+    // Other js functions
+    function CloseMe( obj )
+    {
+        obj.style.display = 'none';
+        window.location.href="carddetail.php?id=<?php echo $cardid;?>";
+    };
+
+    function isInteger(x) {
+        if(x<0)
         {
-            $(".backimgfloat").hide();     
+            return false;
         }
-    );
-});
-</script> 
-<script type="text/javascript">
+        else
+        {
+            return x % 1 === 0;
+        }
+    };
+
+    function rotateImg() {
+        var mainImg = document.querySelector(".mainimg");
+        mainImg.style.transform = mainImg.style.transform === 'rotate(180deg)' ? 'none' : 'rotate(180deg)';
+    };
+
     function swapImage(img_id,card_id,imageurl,imagebackurl){
         var ImageId = document.getElementById(img_id);
         var FrontImg = card_id + ".jpg";
@@ -306,25 +244,6 @@ jQuery( function($) {
             }, 80);
         }
     };
-</script>
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        var textarea = document.getElementById('cardnotes');
-        var saveButton = document.querySelector('.save_icon');
-
-        // Store the initial value of the textarea
-        var initialValue = textarea.value;
-
-        // Add an event listener to the textarea
-        textarea.addEventListener('input', function() {
-            // Check if the current value is different from the initial value
-            if (textarea.value !== initialValue) {
-                saveButton.disabled = false;
-            } else {
-                saveButton.disabled = true;
-            }
-        });
-    });
 </script>
 
 </head>
@@ -919,7 +838,7 @@ require('includes/menu.php'); //mobile menu
                                     endif; ?>
                                 </td>
                             </tr> <?php
-                            if (!empty($prevcardid) AND !empty($nextcardid)): ?>
+                            if (!empty($prevcardid) && !empty($nextcardid)): ?>
                                 <script>
                                     document.addEventListener('keydown', function(event) {
                                         if (event.key === 'ArrowLeft') {
@@ -937,12 +856,14 @@ require('includes/menu.php'); //mobile menu
                                         document.getElementById('next_card').submit();
                                     }
                                 </script> <?php
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid) next card ($nextcardid)",$logfile);?>
+                                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . ' ' . __LINE__, 'Previous card (' . $prevcardid . ')', $logfile);
+                                ?>
                                 <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"> <?php 
-                                        if(!empty($prevcardid)): ?>
+                                    <td colspan="3" class="previousbutton" style="cursor: pointer;"
+                                        onclick="document.getElementById('prev_card').submit();">
+                                        <?php if (!empty($prevcardid)): ?>
                                             <form action="?" method="get" id="prev_card">
-                                                <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
+                                                <?php echo "<input type='hidden' name='id' value=" . $prevcardid . ">"; ?>
                                                 <label style="cursor: pointer;">
                                                     <span
                                                         onclick="document.getElementById('prev_card').submit();"
@@ -954,13 +875,13 @@ require('includes/menu.php'); //mobile menu
                                                     </span>
                                                 </label>
                                             </form>
-                                            <?php
-                                        endif; ?>
+                                        <?php endif; ?>
                                     </td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
-                                        if(!empty($nextcardid)): ?>
-                                            <form action="?" method="get" id="next_card"> <?php 
-                                                echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
+                                    <td colspan="3" class="nextbutton" style="cursor: pointer;"
+                                        onclick="document.getElementById('next_card').submit();">
+                                        <?php if (!empty($nextcardid)): ?>
+                                            <form action="?" method="get" id="next_card">
+                                                <?php echo "<input type='hidden' name='id' value=" . $nextcardid . ">"; ?>
                                                 <label style="cursor: pointer;">
                                                     <span
                                                         onclick="document.getElementById('next_card').submit();"
@@ -972,11 +893,10 @@ require('includes/menu.php'); //mobile menu
                                                     </span>
                                                 </label>
                                             </form>
-                                        <?php endif;
-                                        ?>
+                                        <?php endif; ?>
                                     </td>
-                                </tr> <?php
-                            elseif (!empty($nextcardid)):?>
+                                </tr> <?php 
+                            elseif (!empty($nextcardid)): ?>
                                 <script>
                                     document.addEventListener('keydown', function(event) {
                                         if (event.key === 'ArrowRight') {
@@ -987,15 +907,17 @@ require('includes/menu.php'); //mobile menu
                                     function moveRight() {
                                         document.getElementById('next_card').submit();
                                     }
-                                </script> <?php
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Next card ($nextcardid)",$logfile); ?>
+                                </script>
+                                <?php
+                                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . ' ' . __LINE__, 'Next card (' . $nextcardid . ')', $logfile);
+                                ?>
                                 <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;
-                                    </td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;" onclick="document.getElementById('next_card').submit();"><?php 
-                                        if(!empty($nextcardid)): ?>
-                                            <form action="?" method="get" id="next_card"> <?php 
-                                                echo "<input type='hidden' name='id' value=".$nextcardid.">"; ?>
+                                    <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;</td>
+                                    <td colspan="3" class="nextbutton" style="cursor: pointer;"
+                                        onclick="document.getElementById('next_card').submit();">
+                                        <?php if (!empty($nextcardid)): ?>
+                                            <form action="?" method="get" id="next_card">
+                                                <?php echo "<input type='hidden' name='id' value=" . $nextcardid . ">"; ?>
                                                 <label style="cursor: pointer;">
                                                     <span
                                                         onclick="document.getElementById('next_card').submit();"
@@ -1007,28 +929,30 @@ require('includes/menu.php'); //mobile menu
                                                     </span>
                                                 </label>
                                             </form>
-                                        <?php endif;
-                                        ?>
+                                        <?php endif; ?>
                                     </td>
-                                </tr> <?php
-                            elseif (!empty($prevcardid)):?>
+                                </tr> <?php 
+                            elseif (!empty($prevcardid)): ?>
                                 <script>
                                     document.addEventListener('keydown', function(event) {
                                         if (event.key === 'ArrowLeft') {
                                             moveLeft();
+                                        }
                                     });
 
                                     function moveLeft() {
                                         document.getElementById('prev_card').submit();
                                     }
-
-                                </script> <?php
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Previous card ($prevcardid)",$logfile);?>
+                                </script>
+                                <?php
+                                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . ' ' . __LINE__, 'Previous card (' . $prevcardid . ')', $logfile);
+                                ?>
                                 <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;" onclick="document.getElementById('prev_card').submit();"><?php 
-                                        if(!empty($prevcardid)): ?>
+                                    <td colspan="3" class="previousbutton" style="cursor: pointer;"
+                                        onclick="document.getElementById('prev_card').submit();">
+                                        <?php if (!empty($prevcardid)): ?>
                                             <form action="?" method="get" id="prev_card">
-                                                <?php echo "<input type='hidden' name='id' value=".$prevcardid.">"; ?>
+                                                <?php echo "<input type='hidden' name='id' value=" . $prevcardid . ">"; ?>
                                                 <label style="cursor: pointer;">
                                                     <span
                                                         onclick="document.getElementById('prev_card').submit();"
@@ -1040,14 +964,12 @@ require('includes/menu.php'); //mobile menu
                                                     </span>
                                                 </label>
                                             </form>
-                                            <?php
-                                        endif;
-                                        ?>
+                                        <?php endif; ?>
                                     </td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;">&nbsp;
-                                    </td>
-                                </tr> <?php
+                                    <td colspan="3" class="nextbutton" style="cursor: pointer;">&nbsp;</td>
+                                </tr><?php 
                             endif;
+
                             //If if's an admin, show controls to change/refresh the image(s) for the card.
                             if ($admin == 1):
                                 // Form to change the image

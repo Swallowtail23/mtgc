@@ -79,86 +79,65 @@ $msg = new Message;
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
-        jQuery(document).ready(function(){
-            $("img").each(function(){
-            $(this).attr("onerror","this.src=’/cardimg/back.jpg'");
-            });
-        });
-    </script>
-    <script type="text/javascript"> 
-        $(document).ready(function() {
-            $('.deckcardimgdiv').click(function(e){
+        jQuery(document).ready(function ($) {
+            // Update the 'onerror' attribute for all images
+            $("img").attr("onerror", "this.src='/cardimg/back.jpg'");
+
+            // Click event for .deckcardimgdiv elements
+            $('.deckcardimgdiv').click(function (e) {
                 e.stopPropagation();
-                $('.deckcardimgdiv').hide("slow");
+                $(this).hide("slow");
             });
         });
-        $(document).click(function() {
+
+        // Click event for the document (outside .deckcardimgdiv)
+        $(document).click(function () {
             $('.deckcardimgdiv').hide("slow");
         });
-        $(window).scroll(function() { 
+
+        // Scroll event for the window
+        $(window).scroll(function () {
             $('.deckcardimgdiv').hide("slow");
         });
-    </script>  
-    <script>
-        function toggleForm() 
-        {
-          var form = document.getElementById("renameForm");
-          if (form.style.display === "none") {
-            form.style.display = "block";
-            document.getElementById("newname").focus();
-            document.getElementById("newname").select();
-          } else {
-            form.style.display = "none";
-          }
-          var form = document.getElementById("changeType");
-          if (form.style.display === "none") {
-            form.style.display = "block";
-          } else {
-            form.style.display = "none";
-          }
-          var form = document.getElementById("currentType");
-          if (form.style.display === "none") {
-            form.style.display = "block";
-          } else {
-            form.style.display = "none";
-          }
+
+        // Toggle form visibility using jQuery
+        function toggleForm() {
+            $("#renameForm, #changeType, #currentType").toggle("block");
         }
-    </script>
-    <script type="text/javascript"> 
-        function ComparePrep()
-            {
-                document.body.style.cursor='wait';
-            }
-    </script> 
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            var notesTextarea = document.getElementById('notes');
-            var sidenotesTextarea = document.getElementById('sidenotes');
-            var saveButton = document.querySelector('.save_icon');
+
+        // Cursor change function using jQuery
+        function ComparePrep() {
+            $('body').css('cursor', 'wait');
+        }
+
+        // Event listener for textareas using jQuery
+        $(document).ready(function () {
+            var notesTextarea = $('#notes');
+            var sidenotesTextarea = $('#sidenotes');
+            var saveButton = $('.save_icon');
 
             // Store the initial values of the textareas
-            var initialNotesValue = notesTextarea.value;
-            var initialSidenotesValue = sidenotesTextarea.value;
+            var initialNotesValue = notesTextarea.val();
+            var initialSidenotesValue = sidenotesTextarea.val();
 
             // Add an event listener to the "Notes" textarea
-            notesTextarea.addEventListener('input', checkChanges);
+            notesTextarea.on('input', checkChanges);
 
             // Add an event listener to the "Sideboard notes" textarea (if it exists)
-            if (sidenotesTextarea) {
-                sidenotesTextarea.addEventListener('input', checkChanges);
+            if (sidenotesTextarea.length) {
+                sidenotesTextarea.on('input', checkChanges);
             }
 
             function checkChanges() {
                 // Check if either textarea is different from its initial value
-                if (notesTextarea.value !== initialNotesValue || (sidenotesTextarea && sidenotesTextarea.value !== initialSidenotesValue)) {
-                    saveButton.disabled = false;
+                if (notesTextarea.val() !== initialNotesValue || (sidenotesTextarea.length && sidenotesTextarea.val() !== initialSidenotesValue)) {
+                    saveButton.prop('disabled', false);
                 } else {
-                    saveButton.disabled = true;
+                    saveButton.prop('disabled', true);
                 }
             }
         });
     </script>
-
 </head>
 
 <body class="body">

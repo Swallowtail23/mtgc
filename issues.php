@@ -43,7 +43,6 @@ require('includes/menu.php');
         </div>
         <h2 class='h2pad'>Known issues and bugs</h2>
     <ul>
-        <li><b>The scrolling results page never goes past the first page.</b> Turn off AdBlock for the site</li>
         <li><b>Images are slow to load.</b> Images for new cards are fetched when they are added to the database, but for older cards the images are fetched the first time they are needed. This can take a while - be patient.</li>
         <li><b>The type search does an OR search.</b> Correct, workaround for now is to use fuzzy type search. AND / OR is on the list.</li>
     </ul>

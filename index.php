@@ -179,7 +179,7 @@ $power = isset($_GET['power']) ? filter_input(INPUT_GET, 'power', FILTER_SANITIZ
 $tough = isset($_GET['tough']) ? filter_input(INPUT_GET, 'tough', FILTER_SANITIZE_NUMBER_INT):'';
 $loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_SANITIZE_NUMBER_INT):'';
 $mytable = $user . "collection";
-$adv = isset($_GET['adv']) ? 'yes' : '';
+$adv = isset($_GET['complex']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
 $valid_scope = array("all","mycollection","notcollection");
 if (!in_array($scope,$valid_scope)):
@@ -308,74 +308,33 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
-            // Selecting Notes search deselects other scope options, and vice versa. Need to functionalise this.
-            jQuery(function ($) {
-                $('#searchsetcode').click(function (event) {
-                    if (this.checked) { // check select status of "searchsetcode"
-                        $('.notsetcode').each(function () { //deselect "notsetcode"
-                            this.checked = false;
-                        });
+            // Setup search form radio button exclusions
+            $(function() {
+                function setupMutualExclusion(selectorA, selectorB) {
+                    $(selectorA).click(function () {
+                        if ($(this).is(':checked')) {
+                            $(selectorB).prop('checked', false);
+                        }
+                    });
+                }
+
+                setupMutualExclusion('#searchsetcode', '.notsetcode');
+                setupMutualExclusion('#yesnotes', '.notnotes');
+                setupMutualExclusion('#searchpromo', '.notpromo');
+                setupMutualExclusion('.notnotes', '#yesnotes');
+                setupMutualExclusion('.notsetcode', '#searchsetcode');
+                setupMutualExclusion('.notpromo', '#searchpromo');
+                setupMutualExclusion('#abilityall', '#abilityexact');
+                setupMutualExclusion('#abilityexact', '#abilityall');
+
+                $('.scopecheckbox').click(function () {
+                    if ($('.scopecheckbox:checked').length === 0) {
+                        $('#cb1').prop('checked', true);
                     }
-                });
-                $('#yesnotes').click(function (event) {
-                    if (this.checked) { // check select status of "yesnotes"
-                        $('.notnotes').each(function () { //loop through and deselect each "notnotes" checkbox
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('#searchpromo').click(function (event) {
-                    if (this.checked) { // check select status of "searchpromo"
-                        $('.notpromo').each(function () { //loop through and deselect each "notpromo" checkbox
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('.notnotes').click(function (event) {
-                    if (this.checked) { // check select status when clicking on a "notnotes"
-                        $('#yesnotes').each(function () { // deselect "yesnotes"
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('.notsetcode').click(function (event) {
-                    if (this.checked) { // check select status when clicking on a "notnotes"
-                        $('#searchsetcode').each(function () { // deselect "searchsetcode"
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('.notpromo').click(function (event) {
-                    if (this.checked) { // check select status when clicking on a "notpromo"
-                        $('#searchpromo').each(function () { // deselect "searchpromo"
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('#abilityall').click(function (event) {
-                    if (this.checked) { // check select status of "abilityall"
-                        $('#abilityexact').each(function () { //deselect "abilityexact"
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('#abilityexact').click(function (event) {
-                    if (this.checked) 
-                    {  // check select status of "abilityexact"
-                        $('#abilityall').each(function () 
-                        { //deselect "abilityall"
-                            this.checked = false;
-                        });
-                    }
-                });
-                $('.scopecheckbox').click(function (event) {
-                    if ($('.scopecheckbox:checked').length === 0) 
-                    {
-                        $('#cb1').prop("checked", true);
-                    };
                 });
             });
         </script>
+
         <?php
         if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
             // Only load IAS if results are more than a page-full per page type
@@ -422,8 +381,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         let el = document.querySelector('.ias-no-more');
                         el.style.opacity = '1';
                     });
-                </script>
-            <?php
+                </script> <?php
             endif; ?>
             <script type="text/javascript">
                 $(document).ready(function () {
@@ -434,156 +392,35 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                         $(".top").show();
                     }
                 });
-            </script>                    
-            <script type="text/javascript">
+
                 function isInteger(x) {
                     return x % 1 === 0;
                 };
-            </script>
-            <script type="text/javascript">
-                function toggleNoCollectionClass(cardid) {
-                    const cellone = document.getElementById('cell' + cardid + '_one');
-                    const celltwo = document.getElementById('cell' + cardid + '_two');
-                    const cellthree = document.getElementById('cell' + cardid + '_three');
-                    var celloneValue = cellone ? cellone.value : 0;
-                    var celltwoValue = celltwo ? celltwo.value : 0;
-                    var cellthreeValue = cellthree ? cellthree.value : 0;
-                    var totalCards = parseInt(celloneValue) + parseInt(celltwoValue) + parseInt(cellthreeValue);
-                    const imageID = (cardid + 'img');
-                    const image = document.getElementById(cardid + 'img');
-                    var checkBox = document.getElementById("float_cview");
 
-                    // Check if the image element exists
-                    if (image) {
-                        if (totalCards > 0 && checkBox.checked === true) {
-                            // Remove the 'none' and 'no_collection' classes
-                            image.classList.remove('none', 'no_collection');
-                        } else if (totalCards === 0 && checkBox.checked === true) {
-                            // Add the 'none' and 'no_collection' classes
-                            image.classList.add('none', 'no_collection');
-                        } else if (totalCards > 0 && checkBox.checked === false) {
-                            image.classList.remove('none');
-                        } else if (totalCards === 0 && checkBox.checked === false) {
-                            image.classList.add('none');
-                        }
-                    } else {
-                        // Log an error if the image element is not found
-                        console.error(`Image element with ID '${cardid}' not found.`);
+                function getUrlVars(){
+                    var vars = [], hash; 
+                    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&'); // cut the URL string down to just everything after the ?, split this into an array with information like this: array [0] = "var=xxx"; array [1] = "var2=yyy";
+                    //loop through each item in that array
+                    for(var i = 0; i < hashes.length; i++)
+                    {   //split the item at the "="
+                        hash = hashes[i].split('=');
+                        //put the value name of the first variable into the "vars" array
+                        vars.push(hash[0]);
+                        //assign the value to the variable name, now you can access it like this:
+                        // alert(vars["var1"]); //alerts the value of the var1 variable from the url string
+                        vars[hash[0]] = hash[1];
                     }
-                }
-                function ajaxUpdate(cardid,cellid,qty,flash,type) {
-                    var activeCell = document.getElementById(cellid);
-                    var activeFlash = document.getElementById(flash);
-                    var poststring = type + '=' + (activeCell.value) + '&cardid=' + cardid;
-                    if ((activeCell.value) == '') {
-                        alert("Enter a number");
-                        activeCell.focus();
-                    } else if (!isInteger(activeCell.value)) {
-                        alert("Enter an integer");
-                        activeCell.focus();
-                    } else {
-                        $.ajax({
-                            type: "GET",
-                            url: "ajax/ajaxgrid.php",
-                            data: poststring,
-                            cache: true,
-                            success: function (data) {
-                                console.log("Success response:", data);
-                                activeFlash.classList.remove("bulksubmitsuccessfont");
-                                activeFlash.classList.remove("bulksubmiterrorfont");
-                                activeFlash.classList.add("bulksubmitnormalfont");
-                                activeFlash.classList.add("bulksubmitsuccessbg");
-                                setTimeout(function() {
-                                  activeFlash.classList.remove("bulksubmitsuccessbg");
-                                  activeFlash.classList.add("bulksubmitsuccessfont");
-                                }, 2000);
-                            },
-                            error: function (xhr, status, error) {
-                                // Error handling logic here
-                                console.error("Error response:", xhr.responseText);
-                                var response = JSON.parse(xhr.responseText);
-                                activeFlash.classList.remove("bulksubmitsuccessfont");
-                                activeFlash.classList.remove("bulksubmitsuccessbg");
-                                activeFlash.classList.remove("bulksubmitnormalfont");
-                                activeFlash.classList.add("bulksubmiterrorfont");
-                            }
-                        });
-                        console.log("Ajaxupddate: " + cardid);
-                        toggleNoCollectionClass(cardid);
-                    }
-                    return false;
+                    return vars;
                 };
-            </script>
-            <script type="text/javascript">
-                function getUrlVars()
-                    {
-                        var vars = [], hash; 
-                        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&'); // cut the URL string down to just everything after the ?, split this into an array with information like this: array [0] = "var=xxx"; array [1] = "var2=yyy";
-                        //loop through each item in that array
-                        for(var i = 0; i < hashes.length; i++)
-                        {   //split the item at the "="
-                            hash = hashes[i].split('=');
-                            //put the value name of the first variable into the "vars" array
-                            vars.push(hash[0]);
-                            //assign the value to the variable name, now you can access it like this:
-                            // alert(vars["var1"]); //alerts the value of the var1 variable from the url string
-                            vars[hash[0]] = hash[1];
-                        }
-                        return vars;
-                    }
-            </script> <?php 
+            </script> <?php
+            if(($layout == 'grid' || $layout == 'bulk') AND isset($validsearch) AND ($validsearch !== "toomany")):  
+                // Load ajax grid update JS ?>
+                <script src="/js/ajaxUpdate.js"></script> <?php
+            endif; 
             if($layout == 'grid' AND isset($validsearch) AND ($validsearch !== "toomany")):  
-                $floating_button = true; ?>
-                <script>
-                    $(document).ready(function(){
-                        var sliderElement = document.querySelector('.slider.round.material-symbols-outlined');
-                        // Function to remove "no_collection" class from images
-                        function removeNoCollectionClass() {
-                            // Get all elements with the classes "cardimg none no_collection"
-                            var elements = document.querySelectorAll('.cardimg.none.no_collection');
-
-                            // Loop through each element and remove the "no_collection" class
-                            elements.forEach(function (element) {
-                                element.classList.remove('no_collection');
-                            });
-                        }
-                        // Function to add "no_collection" class to images
-                        function addNoCollectionClass() {
-                            // Get all elements with the classes "cardimg none"
-                            var elements = document.querySelectorAll('.cardimg.none');
-
-                            // Loop through each element and add the "no_collection" class
-                            elements.forEach(function (element) {
-                                element.classList.add('no_collection');
-                            });
-                        }
-                        $('#float_cview').on('change',function(){
-                            var checkBox = document.getElementById("float_cview");
-                            if (checkBox.checked == true){
-                                var cview = "TURN ON";
-                                addNoCollectionClass();
-                                document.getElementById("floating_button_label").title = "Toggle collection view off";
-                                sliderElement.classList.remove('book_2');
-                            } else {
-                                var cview = "TURN OFF";
-                                removeNoCollectionClass();
-                                document.getElementById("floating_button_label").title = "Toggle collection view on";
-                                sliderElement.classList.add('book_2');
-                            }
-                            $.ajax({  
-                                url:"/ajax/ajaxcview.php",  
-                                method:"POST",  
-                                data:{"collection_view":cview},
-                                success:function(data){
-                                    
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
-                                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
-                                }
-                            });
-                        });
-                    });
-                </script> <?php
+                $floating_button = true; 
+                // Load script to manage toggle of classes to show B&W (Collection View)?>
+                <script src="/js/cviewClassToggle.js"></script> <?php
             endif; 
         endif;?>
     </head>
@@ -863,38 +700,35 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                 elseif ($layout == 'grid') :?>
                     <script type="text/javascript">
                         function swapImage(img_id, card_id, imageurl, imagebackurl) {
-                            var ImageId = document.getElementById(img_id);
-                            var FrontImg = card_id + ".jpg";
-                            var BackImg = card_id + "_b.jpg";
+                            var $ImageId = $('#' + img_id);
 
-                            if (!ImageId.classList.contains('flipped')) {
+                            if (!$ImageId.hasClass('flipped')) {
                                 // If not flipped, apply flip effect
-                                ImageId.classList.add('flipped');
+                                $ImageId.addClass('flipped');
 
                                 // Set a timeout for half of the transition duration
                                 setTimeout(function () {
-                                    ImageId.src = imagebackurl;
+                                    $ImageId.attr('src', imagebackurl);
                                 }, 80);
                             } else {
                                 // If already flipped, remove flip effect
-                                ImageId.classList.remove('flipped');
+                                $ImageId.removeClass('flipped');
 
                                 // Set a timeout for half of the transition duration
                                 setTimeout(function () {
-                                    ImageId.src = imageurl;
+                                    $ImageId.attr('src', imageurl);
                                 }, 80);
                             }
-                        }
-                    </script>
-                    <script type="text/javascript">
+                        };
+
                         function rotateImg(img_id) {
-                            if ( document.getElementById(img_id).style.transform == 'none' ){
-                                document.getElementById(img_id).style.transform = "rotate(180deg)";
-                            } 
-                            else if ( document.getElementById(img_id).style.transform == '' ){
-                                document.getElementById(img_id).style.transform = "rotate(180deg)";
+                            var $img = $('#' + img_id);
+                            var currentTransform = $img.css('transform');
+
+                            if (currentTransform === 'none' || currentTransform === '') {
+                                $img.css('transform', 'rotate(180deg)');
                             } else {
-                                document.getElementById(img_id).style.transform = "none";
+                                $img.css('transform', 'none');
                             }
                         };
                     </script>

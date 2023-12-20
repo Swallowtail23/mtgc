@@ -287,81 +287,72 @@ endif;  ?>
         <?php 
         if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
             <div id='profilebuttons'>
-                <script>
-                $(document).ready(function(){
-                        $('#cview_toggle').on('change',function(){
-                            var checkBox = document.getElementById("cview_toggle");
-                            if (checkBox.checked == true){
-                                var cview = "TURN ON";
-                            } else {
-                                var cview = "TURN OFF";
-                            }
-                            $.ajax({  
-                                url:"/ajax/ajaxcview.php",  
-                                method:"POST",  
-                                data:{"collection_view":cview},
-                                success:function(data){
-
-                                },
-                                error: function(jqXHR, textStatus, errorThrown) {
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        // Toggle collection view
+                        $('#cview_toggle').on('change', function () {
+                            var cview = this.checked ? "TURN ON" : "TURN OFF";
+                            $.ajax({
+                                url: "/ajax/ajaxcview.php",
+                                method: "POST",
+                                data: { "collection_view": cview },
+                                error: function (jqXHR, textStatus, errorThrown) {
                                     console.error("AJAX error: " + textStatus + " - " + errorThrown);
                                 }
                             });
                         });
-                    });
-                </script>
-                <script>
-                $(document).ready(function(){
-                        $('#group_toggle').on('change',function(){
-                        var checkBox = document.getElementById("group_toggle");
-                        if (checkBox.checked == true){
-                            var group = "OPT IN";
-                            var display = "";
-                        } else {
-                            var group = "OPT OUT";
-                            var display = "none";
-                        }
-                        $.ajax({  
-                            url:"/ajax/ajaxgroup.php",  
-                            method:"POST",  
-                            data:{"group":group},
-                            success:function(data){  
-                            //   $('#result').html(data);
-                            document.getElementById("grpname").style.display = display;
+
+                        // Toggle group
+                        $('#group_toggle').on('change', function () {
+                            var group = this.checked ? "OPT IN" : "OPT OUT";
+                            var display = this.checked ? "" : "none";
+                            $.ajax({
+                                url: "/ajax/ajaxgroup.php",
+                                method: "POST",
+                                data: { "group": group },
+                                success: function () {
+                                    document.getElementById("grpname").style.display = display;
+                                }
+                            });
+                        });
+
+                        // Flash effect for currency select
+                        $('#currencySelect').on('change', function () {
+                            var selectedCurrency = $(this).val();
+                            $.ajax({
+                                url: "/ajax/ajaxcurrency.php",
+                                method: "GET",
+                                data: { "currency": selectedCurrency },
+                                success: function (data) {
+                                    var response = JSON.parse(data);
+                                    console.log(response);
+                                    $('#currencySelect').addClass('flash-success');
+                                    setTimeout(function () {
+                                        $('#currencySelect').removeClass('flash-success');
+                                    }, 1000);
+                                },
+                                error: function (jqXHR, textStatus, errorThrown) {
+                                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                                }
+                            });
+                        });
+                        
+                        $("#importsubmit").attr('disabled',true);
+                        $("#importfile").change(function() {
+                            if ($(this).val()){
+                                $("#importsubmit").removeAttr('disabled'); 
                             }
-                        });    
-                    });
-                });
-                </script>
-                <script>
-                $(document).ready(function() {
-                    $('#currencySelect').on('change', function() {
-                        var selectedCurrency = $(this).val();
-
-                        $.ajax({  
-                            url: "/ajax/ajaxcurrency.php",
-                            method: "GET",
-                            data: {currency: selectedCurrency},
-                            success: function(data) {
-                                // Handle the response here
-                                var response = JSON.parse(data);
-                                console.log(response); // or update the UI accordingly
-
-                                // Add the flash effect
-                                var $currencySelect = $('#currencySelect');
-                                $currencySelect.addClass('flash-success');
-                                setTimeout(function() {
-                                    $currencySelect.removeClass('flash-success');
-                                }, 1000); // Adjust the duration of the flash as needed
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                            else {
+                                $("#importsubmit").attr('disabled',true);
                             }
                         });
                     });
-                });
-                </script>
-
+                    
+                    function ImportPrep() {
+                        alert('Import can take several minutes, please be patient...');
+                        document.body.style.cursor='wait';
+                    };
+                </script> 
                 <h2 class='h2pad'>Options</h2>
                 <table>
                     <tr>
@@ -460,28 +451,6 @@ endif;  ?>
                 else:
                     echo "<br>";
                 endif;?>
-                <script type="text/javascript">
-                    $(document).ready(
-                    function(){
-                        $("#importsubmit").attr('disabled',true);
-                        $("#importfile").change(
-                            function(){
-                                if ($(this).val()){
-                                    $("#importsubmit").removeAttr('disabled'); 
-                                }
-                                else {
-                                    $("#importsubmit").attr('disabled',true);
-                                }
-                            });
-                    });
-                </script>
-                <script type="text/javascript"> 
-                    function ImportPrep()
-                        {
-                            alert('Import can take several minutes, please be patient...');
-                            document.body.style.cursor='wait';
-                        }
-                </script> 
                 <div id='importdiv'>
                     <form enctype='multipart/form-data' action='?' method='post'>
                         <label class='importlabel'>
