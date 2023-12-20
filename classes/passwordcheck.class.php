@@ -132,10 +132,17 @@ class PasswordCheck
         return $randomPassword;
     }
     
-    public function newUser($username, $postemail, $password, $dbname = '') 
+    public function newUser($username, $postemail, $password = '', $dbname = '') 
     {
+        global $serveremail, $adminemail;
         $msg = new Message;
         $mysql_date = date( 'Y-m-d' );
+        if($password === ''):
+            $noSuppliedPW = TRUE;
+            $password = $this->generateRandomPassword();
+        else:
+            $noSuppliedPW = FALSE;
+        endif;
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) 
                     VALUES (?, ?, ?, ?, 'chgpwd', 1, 0) 
@@ -218,7 +225,14 @@ class PasswordCheck
             $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful", $this->logfile);
             $usersuccess = 0;
         endif;
-
+        
+        if($usersuccess === 1 && $noSuppliedPW === TRUE):
+            $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+            $subject = "New account at MtG Collection"; 
+            $message = "Your new password is $password";
+            mail($postemail, $subject, $message, $from); 
+        endif;
+        
         if (($usersuccess === 1) && ($tablesuccess === 1)):
             return 2;
         elseif (($usersuccess === 1) && ($tablesuccess === 0)):
