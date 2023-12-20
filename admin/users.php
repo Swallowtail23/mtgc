@@ -66,7 +66,7 @@ endif;
 <script type="text/javascript">   
     jQuery( function($) {
         $('#newuserform').submit(function() {
-            if(($('#username').val() === '') || ($('#email').val() === '') || ($('#pword').val() === '')){
+            if(($('#username').val() === '') || ($('#email').val() === ''))){
                 alert("You need to complete all fields");
                 return false;
             }
@@ -202,6 +202,7 @@ require('../includes/menu.php');
         endif;?>
         <form id='newuserform' name="newuser" action="users.php" method="post" autocomplete="user-form">
             <h3> New user </h3>
+            Leave password blank to have a random password generated and sent to the new user's email address.<br>
             <input type='hidden' name="newuser" value="yes">
             <input class="textinput" title="Please enter username" placeholder="Username" id="username" autocomplete="off" name="username" type="text" size="12" maxlength="12" /><br>
             <input class="textinput" title="Email address" placeholder="Email" id="email" autocomplete="user-email-for-form" name="email" type="email" size="64" maxlength="64" /><br>
