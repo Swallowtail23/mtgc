@@ -58,10 +58,13 @@ endif;
             e.stopPropagation();
             $('.searchicon').css("opacity", "0");
             $('.searchicon').css("z-index", "0");
+            
             $('#headerresults').css("opacity", "0");
             $('#headerresults').css("z-index", "0");
+            
             $('#ajaxresult').css("opacity", "1");
             $('#ajaxresult').css("z-index", "99999");
+            
             $('#headersearch_div').css("opacity", "1");
             $('#headersearch_div').css("z-index", "99999");
             document.getElementById('searchid').focus();
