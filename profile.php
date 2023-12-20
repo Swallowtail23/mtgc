@@ -289,6 +289,8 @@ endif;  ?>
             <div id='profilebuttons'>
                 <script type="text/javascript">
                     $(document).ready(function () {
+                        document.body.style.cursor='normal';
+                        
                         // Toggle collection view
                         $('#cview_toggle').on('change', function () {
                             var cview = this.checked ? "TURN ON" : "TURN OFF";
@@ -474,6 +476,7 @@ endif;  ?>
                     $importfile = $_FILES['filename']['tmp_name'];
                     $obj = new ImportExport($db,$logfile);
                     $importcards = $obj->importCollection($importfile, $mytable, $useremail, $serveremail);
+                    echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
                 else: ?>
                     <div id='exportdiv'>
                         <form action="csv.php"  method="GET">

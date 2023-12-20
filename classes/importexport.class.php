@@ -94,15 +94,14 @@ class ImportExport
     endif;
     }
 
-    public function importCollection($filename, $mytable, $useremail, $serveremail)
-    {
+    public function importCollection($filename, $mytable, $useremail, $serveremail) {
         //Import uploaded file to Database
         $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import starting",$this->logfile);
         $handle = fopen($filename, "r");
         $i = 0;
         $count = 0;
         $total = 0;
-        $warningsummary = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable) \n \n';
+        $warningsummary = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)';
         while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
             $idimport = 0;
             $row_no = $i + 1;
@@ -486,17 +485,16 @@ class ImportExport
         $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
         $subject = "Import failures / warnings"; 
         $message = "$warningsummary \n \n $summary";
-        mail($useremail, $subject, $message, $from); ?>
-        <script>
+        mail($useremail, $subject, $message, $from); 
+        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import finished",$this->logfile); ?>
+        <script type="text/javascript">
             (function() {
                 fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
             })();
-        </script>
-        <script type="text/javascript">
+
             alert('Import completed - a full collection value resync is being run, and can also take several minutes. Accessing your Profile page while this is running will take longer than usual.');
-            window.onload=function(){document.body.style.cursor='default';}
+            window.onload=function(){document.body.style.cursor='wait';}
         </script> <?php
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import finished",$this->logfile);
     }
 
     public function __toString() {
