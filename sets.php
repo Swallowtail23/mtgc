@@ -22,7 +22,7 @@ ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
+require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 $msg = new Message;
@@ -83,12 +83,13 @@ $msg = new Message;
                     document.body.style.cursor = "default";
                 }
             });
-        }
+        };
 
         function showMessage(status, message) {
             // Display the message using an alert box
             alert(message);
-        }
+        };
+        
         // Function to send an AJAX request to filter sets
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
         
@@ -107,7 +108,7 @@ $msg = new Message;
 
             paginationHTML += '<br>&nbsp;';
             return paginationHTML;
-        }
+        };
 
         function buildPageLink(page, currentPage, setsPerPage) {
             if (page === currentPage) {
@@ -115,7 +116,7 @@ $msg = new Message;
             } else {
                 return '<a href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">' + page + '&nbsp;&nbsp;</a>';
             }
-        }
+        };
 
         function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
             var offset = (pageNumber - 1) * setsPerPage;
@@ -135,12 +136,12 @@ $msg = new Message;
                     console.error("AJAX error: " + textStatus + " - " + errorThrown);
                 }
             });
-        }
+        };
 
         function loadPage(pageNumber, setsPerPage) {
             var filterValue = document.getElementById('setCodeFilter').value;
             fetchAndDisplaySets(filterValue, pageNumber, setsPerPage);
-        }
+        };
 
         function filterSets() {
             var filterValue = document.getElementById('setCodeFilter').value;
@@ -148,7 +149,7 @@ $msg = new Message;
             if (filterValue.length >= 3 || filterValue.length === 0) {
                 fetchAndDisplaySets(filterValue, 1, setsPerPage);
             }
-        }
+        };
 
         // Function to update the table with filtered results
         function updateTable(filteredSets) {
@@ -242,7 +243,8 @@ $msg = new Message;
                     reloadCell.appendChild(link);
                 }
             });
-        }
+        };
+        
         $(document).ready(function() {
             $('#setCodeFilter').focus();
         });

@@ -32,7 +32,7 @@ endif;
         </div>
         <div id='first_div'>
             <h2 id="h2">Advanced search</h2>
-            <input type="hidden" name="adv" value="yes">
+            <input type="hidden" name="complex" value="yes">
             <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
             <input title="Leave empty for broad search" id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>

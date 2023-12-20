@@ -46,7 +46,7 @@ To setup Turnstile
     - if enabled, you must set keys
 
 #### JQuery and IAS ####
-Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
+Works with JQuery 3.7.1:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
@@ -170,7 +170,7 @@ Adjust folder and user to suit.
     - sets the writelog function (to be rewritten)
     - sets several arrays and variables to allow for changes to cards and types,
         which would otherwise need to be hard-coded into pages
-3. Read in all functions from functions_new.php
+3. Read in all functions from functions.php
 4. Read in page variable set in secpagesetup.php
     - css version
     - check the user is logged in

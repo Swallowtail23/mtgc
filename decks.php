@@ -23,7 +23,7 @@ ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
+require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 $msg = new Message;
@@ -44,13 +44,12 @@ $decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'deck
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
     <script type="text/javascript">
-        jQuery( function($) {
+        $(function() {
             $('tbody tr[data-href]').addClass('clickable').click( function() {
             window.location = $(this).attr('data-href');
              });
         });
-    </script>
-    <script type="text/javascript">
+
         $(function() {
             $("#deletedeck").submit(function(event){
                 if (!confirm("Confirm OK to delete deck?")){
@@ -58,46 +57,35 @@ $decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'deck
                 }
             });
         });
-    </script>
-    <script type="text/javascript"> 
-        function CloseMe( obj )
-            {
-                obj.style.display = 'none';
+
+        function CloseMe( obj ) {
+            obj.style.display = 'none';
+        };
+
+        function updateButtonState(elementId, value) {
+            var button = document.getElementById(elementId);
+            if (value === "") {
+                button.disabled = true;
+                button.style.cursor = 'not-allowed';
+                button.classList.remove('inline_button');
+                button.classList.add('inline_button_disabled');
+            } else {
+                button.disabled = false;
+                button.style.cursor = 'pointer';
+                button.classList.add('inline_button');
+                button.classList.remove('inline_button_disabled');
             }
-    </script>
-    <script type="text/javascript">
+        };
+
         function createready() {
             var newdeckname = document.getElementById("newdeckname");
-            var createsubmit = document.getElementById("createsubmit");
-            if(newdeckname.value==="") { 
-                createsubmit.disabled = true; 
-                createsubmit.style.cursor = 'not-allowed';
-                createsubmit.classList.remove('inline_button');
-                createsubmit.classList.add('inline_button_disabled');
-            } else { 
-                createsubmit.disabled = false;
-                createsubmit.style.cursor = 'pointer';
-                createsubmit.classList.add('inline_button');
-                createsubmit.classList.remove('inline_button_disabled');
-            }
-        }
-    </script>
-    <script type="text/javascript">
+            updateButtonState("createsubmit", newdeckname.value);
+        };
+
         function deleteready() {
             var deckselect = document.getElementById("deckselect");
-            var deletebutton = document.getElementById("deletebutton");
-            if(deckselect.value==="Pick one") { 
-                deletebutton.disabled = true; 
-                deletebutton.style.cursor = 'not-allowed';
-                deletebutton.classList.remove('inline_button');
-                deletebutton.classList.add('inline_button_disabled');
-            } else { 
-                deletebutton.disabled = false;
-                deletebutton.style.cursor = 'pointer';
-                deletebutton.classList.add('inline_button');
-                deletebutton.classList.remove('inline_button_disabled');
-            }
-        }
+            updateButtonState("deletebutton", deckselect.value);
+        };
     </script>
 </head>
 

@@ -14,7 +14,7 @@ ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
-require ('../includes/functions_new.php');
+require ('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new Message;
 
@@ -35,7 +35,6 @@ endforeach;
 if ($isValidReferrer):
 
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
-        echo "<table class='ajaxshow'><tr><td class='name'>You are not logged in.</td></tr></table>";
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
         exit(); 
     else: 
@@ -44,7 +43,7 @@ if ($isValidReferrer):
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
         
         if(isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF'):
             $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off collection view",$logfile);

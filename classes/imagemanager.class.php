@@ -14,8 +14,8 @@
  * 
  * 
     Example usage
-        $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-        $result = $imageManager->getImage($setcode, $cardid, $ImgLocation, $layout, $two_card_detail_sections);
+        $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+        $result = $obj->getImage($setcode, $cardid, $ImgLocation, $layout, $two_card_detail_sections);
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

@@ -17,7 +17,7 @@
                 Initial version
  * 
  *  1.1         11/12/23
- *              Move deck-related methods from functions_new
+ *              Move deck-related methods from functions
  *              Move to single instance of Message class
 */
 

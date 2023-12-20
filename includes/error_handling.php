@@ -23,7 +23,7 @@ function mtg_error($number,$string,$file,$line,$context='')
     $msg = new Message;
     
     if (isset($_SESSION['useremail']) AND !empty($_SESSION['useremail'])):
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
     else:
         $useremail = $serveremail;
     endif;
