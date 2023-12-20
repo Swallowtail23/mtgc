@@ -1,7 +1,7 @@
 <?php
 /* Version:     18.1
     Date:       11/12/23
-    Name:       functions_new.php
+    Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
         

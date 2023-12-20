@@ -14,7 +14,7 @@ ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
-require ('../includes/functions_new.php');
+require ('../includes/functions.php');
 include '../includes/colour.php';
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 

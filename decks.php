@@ -23,7 +23,7 @@ ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
+require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 $msg = new Message;

@@ -12,7 +12,7 @@
 */
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
-require ('../includes/functions_new.php');
+require ('../includes/functions.php');
 $msg = new Message;
 $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
 

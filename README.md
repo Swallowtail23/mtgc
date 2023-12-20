@@ -170,7 +170,7 @@ Adjust folder and user to suit.
     - sets the writelog function (to be rewritten)
     - sets several arrays and variables to allow for changes to cards and types,
         which would otherwise need to be hard-coded into pages
-3. Read in all functions from functions_new.php
+3. Read in all functions from functions.php
 4. Read in page variable set in secpagesetup.php
     - css version
     - check the user is logged in

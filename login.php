@@ -69,7 +69,7 @@ endif;
 header ("Cache-Control: max-age=0");
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions_new.php');     //Includes basic functions for non-secure pages
+require ('includes/functions.php');     //Includes basic functions for non-secure pages
 // Find CSS Version
 $cssver = cssver();
 $msg = new Message;
