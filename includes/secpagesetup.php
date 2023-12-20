@@ -26,23 +26,30 @@ else:
     // Session information \\
     $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
-    $user = $userArray['usernumber'];
-    $username = $userArray['username'];                         // get user name
-    $mytable = $userArray['table'];                             // user's collection table
-    $collection_view = $userArray['collection_view'];           // has this user selected Collection View
-    $admin = $userArray['admin'];
-    $grpinout = $userArray['grpinout'];
-    $groupid = $userArray['groupid'];
-    $fx = $userArray['fx'];
-    $targetCurrency = $userArray['currency'];
-    $rate = $userArray['rate'];
+    if($userArray !== FALSE):
+        $user = $userArray['usernumber'];
+        $username = $userArray['username'];                         // get user name
+        $mytable = $userArray['table'];                             // user's collection table
+        $collection_view = $userArray['collection_view'];           // has this user selected Collection View
+        $admin = $userArray['admin'];
+        $grpinout = $userArray['grpinout'];
+        $groupid = $userArray['groupid'];
+        $fx = $userArray['fx'];
+        $targetCurrency = $userArray['currency'];
+        $rate = $userArray['rate'];
 
-    $useremail = $_SESSION['useremail'];                        // get email address of user, available in SESSION
+        $useremail = $_SESSION['useremail'];                        // get email address of user, available in SESSION
 
-    $mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
-    if($mtcestatus == 1):                                       // check if site is in maintenance mode
-        include ('includes/mtcestub.php');
+        $mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
+        if($mtcestatus == 1):                                       // check if site is in maintenance mode
+            include ('includes/mtcestub.php');
+            session_destroy();
+            exit();
+        endif;
+    else:
+        $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"User array returned false - user no longer exists?",$logfile);
         session_destroy();
+        echo "<meta http-equiv='refresh' content='1;url=login.php'>";
         exit();
     endif;
 endif;
