@@ -142,10 +142,11 @@ $msg = new Message;
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
                                 elseif ($userstat_result['code'] === 1): //pwdchg required
                                     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"UserStatus for $email is ok, but password change required",$logfile);
-                                    $_SESSION["logged"]=TRUE;
+                                    $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
                                     $_SESSION["useremail"] = $email;
-                                    $_SESSION["chgpwd"]=TRUE;
+                                    $_SESSION["chgpwd"] = TRUE;
+                                    $_SESSION['just_logged_in'] = TRUE; // Set a flag indicating a fresh login to prevent redirect loops on chgpwd
                                     $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                 elseif ($userstat_result['code'] === 2): //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
@@ -161,9 +162,9 @@ $msg = new Message;
                                     exit();
                                 elseif ($userstat_result['code'] === 10): //active
                                     session_regenerate_id();
-                                    $_SESSION["logged"]=TRUE;
+                                    $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
-                                    $_SESSION["useremail"]=$email;
+                                    $_SESSION["useremail"] = $email;
                                     $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}",$logfile);
                                     if($badlog_result['count'] != 0):
                                         $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})",$logfile);
@@ -242,13 +243,19 @@ $msg = new Message;
                 echo "You are logged in";   //normal user login notice
                 $_SESSION['admin'] = FALSE;
             endif;
-            // Check if there is a redirect URL set in the session
-            if (isset($_SESSION['redirect_url'])) :
+            // Check for chgpwd, or if there is a redirect URL set in the session
+            if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $email being redirected to profile.php for password change",$logfile);
+                echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
+                exit();
+            elseif (isset($_SESSION['redirect_url'])) :
                 $redirectUrl = $_SESSION['redirect_url'];
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $email being redirected to requested URL: '$redirectUrl'",$logfile);
                 unset($_SESSION['redirect_url']); // Clear the redirect URL from the session
                 echo "<meta http-equiv='refresh' content='0;url=$redirectUrl'>";
                 exit();
-            else :
+            else: // go to index.php
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $email being redirected to index.php",$logfile);
                 echo "<meta http-equiv='refresh' content='2;url=index.php'>";
             endif;
         else:
