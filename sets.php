@@ -187,7 +187,7 @@ $msg = new Message;
                 var codeCell = row.insertCell(1);
                 var setcodeupper = set.setcode.toUpperCase();
                 var link = document.createElement('a');
-                link.href = 'index.php?adv=yes&searchname=yes&legal=any&set%5B%5D=' + encodeURIComponent(setcodeupper) + '&sortBy=setdown&layout=grid';
+                link.href = 'index.php?complex=yes&searchname=yes&legal=any&set%5B%5D=' + encodeURIComponent(setcodeupper) + '&sortBy=setdown&layout=grid';
                 link.textContent = setcodeupper;
                 codeCell.appendChild(link);
 
@@ -389,7 +389,7 @@ require('includes/menu.php');
                             echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; ?>
                         </td>
                         <td class='setcell'>
-                            <?php echo "<a href='index.php?adv=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
+                            <?php echo "<a href='index.php?complex=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td class='setcell'>
                             <?php echo $setname; ?>
