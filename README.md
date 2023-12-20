@@ -46,7 +46,7 @@ To setup Turnstile
     - if enabled, you must set keys
 
 #### JQuery and IAS ####
-Works with JQuery 3.6:  <script src="/js/jquery.js"></script> where required
+Works with JQuery 3.7.1:  <script src="/js/jquery.js"></script> where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
