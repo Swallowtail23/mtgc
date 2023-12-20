@@ -28,7 +28,7 @@ else:
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
-    $useremail = str_replace("'", "", $_SESSION['useremail']);
+    $useremail = $_SESSION['useremail'];
     
     if (isset($_POST['setcode'])):
         $setcode = $_POST['setcode'];

@@ -33,7 +33,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
 
         if(isset($_POST['group']) && $_POST['group'] === 'OPT OUT'):
             $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to opt out of groups",$logfile);

@@ -32,7 +32,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = str_replace("'", "", $_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
 
         $response = ['success' => false, 'message' => ''];
 

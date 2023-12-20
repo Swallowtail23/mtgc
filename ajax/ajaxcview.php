@@ -44,7 +44,7 @@ if ($isValidReferrer):
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
         
         if(isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF'):
             $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off collection view",$logfile);

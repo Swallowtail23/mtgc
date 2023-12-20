@@ -44,7 +44,7 @@ if ($isValidReferrer):
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
 
         if (isset($_GET['filter'], $_GET['setsPerPage'], $_GET['offset']) ):  //Update GET details
             $filter = $_GET['filter'];

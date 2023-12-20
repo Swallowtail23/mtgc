@@ -38,7 +38,7 @@ else:
     $targetCurrency = $userArray['currency'];
     $rate = $userArray['rate'];
 
-    $useremail = str_replace("'","",$_SESSION['useremail']);    // get email address of user, without quotes, available in SESSION
+    $useremail = $_SESSION['useremail'];                        // get email address of user, available in SESSION
 
     $mtcestatus = mtcemode($user);                              // check mtce mode active and if an admin user
     if($mtcestatus == 1):                                       // check if site is in maintenance mode

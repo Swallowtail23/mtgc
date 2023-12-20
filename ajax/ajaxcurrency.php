@@ -44,7 +44,7 @@ if ($isValidReferrer):
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         $fx = $userArray['fx'];
-        $useremail = str_replace("'","",$_SESSION['useremail']);
+        $useremail = $_SESSION['useremail'];
 
         if (isset($_GET['currency']) ):  //Update GET details
             $usercurrency = $db->real_escape_string($_GET['currency']);
