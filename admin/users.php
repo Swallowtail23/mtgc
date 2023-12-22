@@ -58,20 +58,21 @@ endif;
 <!DOCTYPE html>
 <head>
     <title>MtG collection administration - users</title>
+    <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
-<?php include('../includes/googlefonts.php');?>
-<script src="../js/jquery.js"></script>
-<script type="text/javascript">   
-    jQuery( function($) {
-        $('#newuserform').submit(function() {
-            if(($('#username').val() === '') || ($('#email').val() === ''))){
-                alert("You need to complete all fields");
-                return false;
-            }
+    <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
+    <?php include('../includes/googlefonts.php');?>
+    <script src="../js/jquery.js"></script>
+    <script type="text/javascript">   
+        jQuery( function($) {
+            $('#newuserform').submit(function() {
+                if(($('#username').val() === '') || ($('#email').val() === ''))){
+                    alert("You need to complete all fields");
+                    return false;
+                }
+            });
         });
-    });
 </script>
 </head>
 <body id="body" class="body">

@@ -22,10 +22,11 @@ $cssver = cssver();
 ?>
 <!DOCTYPE html>
 <head>
-<title> MTG collection </title>
-<link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-<?php include('includes/googlefonts.php');?>
-<meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
+    <title> MTG collection </title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <?php include('includes/googlefonts.php');?>
+    <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">    

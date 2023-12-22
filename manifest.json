@@ -1,0 +1,29 @@
+{
+  "name": "MtG Collection",
+  "start_url": "index.php",
+  "display_override": ["minimal-ui"],
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "images/w_png.png",
+      "type": "image/png",
+      "sizes": "200x200"
+    }
+  ],
+  "screenshots": [
+    {
+     "src": "images/home.png",
+      "sizes": "964x562",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "MtG Collection home page"
+    },
+    {
+     "src": "images/mobile.png",
+      "sizes": "401x769",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "MtG Collection home page"
+    }
+]
+}

@@ -132,21 +132,22 @@ endif;
 <!DOCTYPE html>
 <head>
     <title>MtG collection administration - site</title>
+    <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
-<?php include('../includes/googlefonts.php');?>
-<script src="../js/jquery.js"></script>
-<script type="text/javascript">   
-    jQuery( function($) {
-        $('#newinfoupdate').submit(function() {
-            if(($('#updatetext').val() === '') || ($('#updatedate').val() === '')){
-                alert("You need to complete the date and update text fields");
-                return false;
-            }
+    <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
+    <?php include('../includes/googlefonts.php');?>
+    <script src="../js/jquery.js"></script>
+    <script type="text/javascript">   
+        jQuery( function($) {
+            $('#newinfoupdate').submit(function() {
+                if(($('#updatetext').val() === '') || ($('#updatedate').val() === '')){
+                    alert("You need to complete the date and update text fields");
+                    return false;
+                }
+            });
         });
-    });
-</script>
+    </script>
 </head>
 <body id="body" class="body">
 

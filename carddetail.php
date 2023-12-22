@@ -99,153 +99,153 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
     <title>MtG collection card details</title>
-<link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-<link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-<?php include('includes/googlefonts.php');?>
-<script src="/js/jquery.js"></script>
-<script src="/js/ajaxUpdate.js"></script>
-<script type="text/javascript">
-    $(function() {  // On document ready
-        $("img").on("error", function() {
-            $(this).attr("src", "/cardimg/back.jpg");
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
+    <?php include('includes/googlefonts.php');?>
+    <script src="/js/jquery.js"></script>
+    <script src="/js/ajaxUpdate.js"></script>
+    <script type="text/javascript">
+        $(function() {  // On document ready
+            $("img").on("error", function() {
+                $(this).attr("src", "/cardimg/back.jpg");
+            });
+
+            $("#importsubmit").prop('disabled', true);
+            $("#importfile").change(function() {
+                $("#importsubmit").prop('disabled', !$(this).val());
+            });
+
+            $('#deckselect').change(function (event) {
+                if($(this).val() === 'newdeck'){
+                    $('#newdeckname').removeAttr("disabled");
+                    $('#newdeckname').attr("placeholder", "New deck name");
+                } else {
+                    $('#newdeckname').attr("disabled", "disabled");
+                    $('#newdeckname').attr("placeholder", "N/A");
+                }
+                if($('#deckselect').val() !== 'none'){
+                    $('#addtodeckbutton').removeAttr("disabled");
+                    $('#deckqty').removeAttr("disabled");
+                    $('#deckqty').attr("placeholder", "");
+                } else {
+                    $('#addtodeckbutton').attr("disabled", "disabled"); 
+                    $('#deckqty').attr("disabled", "disabled"); 
+                    $('#deckqty').attr("placeholder", "N/A"); 
+                }
+            });
+
+            $('#addtodeck').submit(function() {
+                if(($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ==='')){
+                    alert("You need to complete the form...")
+                    return false;
+                }
+            });
+
+            var mainImg = $(".mainimg");
+            var imgFloat = $(".imgfloat");
+            var backImg = $(".backimg");
+            var backImgFloat = $(".backimgfloat");
+            mainImg.mousemove(function(e) {         
+                var transform = mainImg.css('transform');
+                if (transform === 'rotate(180deg)' && window.innerWidth > 1208) {
+                    imgFloat.show();         
+                    imgFloat.css({
+                        top: (e.pageY - 170) + "px",
+                        left: (e.pageX + 95) + "px",
+                        transform: 'rotate(180deg)'
+                    });     
+                } else if (window.innerWidth > 1208) {
+                    imgFloat.show();         
+                    imgFloat.css({
+                        top: (e.pageY - 170) + "px",
+                        left: (e.pageX + 95) + "px",
+                        transform: ''
+                    });     
+                }
+            }).mouseout(function(e) {
+                imgFloat.hide();
+            });
+
+            backImg.mousemove(function(e){         
+                backImgFloat.show();         
+                backImgFloat.css(
+                    {
+                        top: (e.pageY - 170) + "px",
+                        left: (e.pageX + 95) + "px"
+                    }
+                );     
+            }).mouseout(function(e)
+                {
+                    backImgFloat.hide();
+                }
+            );
+
+            $(".carddetailqtyinput").change(function(){
+                var ths = this;
+                var myqty = $(ths).val();
+                if(myqty=='')
+                {
+                    alert("Enter a number");
+                    $(ths).focus();
+                }
+                else if(!isInteger(myqty))
+                {
+                    alert("Enter a valid quantity");
+                    $(ths).focus();
+                }
+            });
+
+            var textarea = $('#cardnotes');
+            var saveButton = $('.save_icon');
+            var initialValue = textarea.val();
+            textarea.on('input', function() {
+                saveButton.prop('disabled', textarea.val() === initialValue);
+            });
         });
 
-        $("#importsubmit").prop('disabled', true);
-        $("#importfile").change(function() {
-            $("#importsubmit").prop('disabled', !$(this).val());
-        });
+        // Other js functions
+        function CloseMe( obj )
+        {
+            obj.style.display = 'none';
+            window.location.href="carddetail.php?id=<?php echo $cardid;?>";
+        };
 
-        $('#deckselect').change(function (event) {
-            if($(this).val() === 'newdeck'){
-                $('#newdeckname').removeAttr("disabled");
-                $('#newdeckname').attr("placeholder", "New deck name");
-            } else {
-                $('#newdeckname').attr("disabled", "disabled");
-                $('#newdeckname').attr("placeholder", "N/A");
-            }
-            if($('#deckselect').val() !== 'none'){
-                $('#addtodeckbutton').removeAttr("disabled");
-                $('#deckqty').removeAttr("disabled");
-                $('#deckqty').attr("placeholder", "");
-            } else {
-                $('#addtodeckbutton').attr("disabled", "disabled"); 
-                $('#deckqty').attr("disabled", "disabled"); 
-                $('#deckqty').attr("placeholder", "N/A"); 
-            }
-        });
-
-        $('#addtodeck').submit(function() {
-            if(($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ==='')){
-                alert("You need to complete the form...")
+        function isInteger(x) {
+            if(x<0)
+            {
                 return false;
             }
-        });
-        
-        var mainImg = $(".mainimg");
-        var imgFloat = $(".imgfloat");
-        var backImg = $(".backimg");
-        var backImgFloat = $(".backimgfloat");
-        mainImg.mousemove(function(e) {         
-            var transform = mainImg.css('transform');
-            if (transform === 'rotate(180deg)' && window.innerWidth > 1208) {
-                imgFloat.show();         
-                imgFloat.css({
-                    top: (e.pageY - 170) + "px",
-                    left: (e.pageX + 95) + "px",
-                    transform: 'rotate(180deg)'
-                });     
-            } else if (window.innerWidth > 1208) {
-                imgFloat.show();         
-                imgFloat.css({
-                    top: (e.pageY - 170) + "px",
-                    left: (e.pageX + 95) + "px",
-                    transform: ''
-                });     
-            }
-        }).mouseout(function(e) {
-            imgFloat.hide();
-        });
-
-        backImg.mousemove(function(e){         
-            backImgFloat.show();         
-            backImgFloat.css(
-                {
-                    top: (e.pageY - 170) + "px",
-                    left: (e.pageX + 95) + "px"
-                }
-            );     
-        }).mouseout(function(e)
+            else
             {
-                backImgFloat.hide();
+                return x % 1 === 0;
             }
-        );
+        };
 
-        $(".carddetailqtyinput").change(function(){
-            var ths = this;
-            var myqty = $(ths).val();
-            if(myqty=='')
-            {
-                alert("Enter a number");
-                $(ths).focus();
+        function rotateImg() {
+            var mainImg = document.querySelector(".mainimg");
+            mainImg.style.transform = mainImg.style.transform === 'rotate(180deg)' ? 'none' : 'rotate(180deg)';
+        };
+
+        function swapImage(img_id,card_id,imageurl,imagebackurl){
+            var ImageId = document.getElementById(img_id);
+            var FrontImg = card_id + ".jpg";
+            var BackImg = card_id + "_b.jpg";
+
+            if (ImageId.src.match(FrontImg))
+            { 
+                ImageId.classList.add('flipped');
+                setTimeout(function () {
+                    ImageId.src = imagebackurl;
+                }, 80);
+            } else {
+                ImageId.classList.remove('flipped');
+                setTimeout(function () {
+                    ImageId.src = imageurl;
+                }, 80);
             }
-            else if(!isInteger(myqty))
-            {
-                alert("Enter a valid quantity");
-                $(ths).focus();
-            }
-        });
-
-        var textarea = $('#cardnotes');
-        var saveButton = $('.save_icon');
-        var initialValue = textarea.val();
-        textarea.on('input', function() {
-            saveButton.prop('disabled', textarea.val() === initialValue);
-        });
-    });
-    
-    // Other js functions
-    function CloseMe( obj )
-    {
-        obj.style.display = 'none';
-        window.location.href="carddetail.php?id=<?php echo $cardid;?>";
-    };
-
-    function isInteger(x) {
-        if(x<0)
-        {
-            return false;
-        }
-        else
-        {
-            return x % 1 === 0;
-        }
-    };
-
-    function rotateImg() {
-        var mainImg = document.querySelector(".mainimg");
-        mainImg.style.transform = mainImg.style.transform === 'rotate(180deg)' ? 'none' : 'rotate(180deg)';
-    };
-
-    function swapImage(img_id,card_id,imageurl,imagebackurl){
-        var ImageId = document.getElementById(img_id);
-        var FrontImg = card_id + ".jpg";
-        var BackImg = card_id + "_b.jpg";
-        
-        if (ImageId.src.match(FrontImg))
-        { 
-            ImageId.classList.add('flipped');
-            setTimeout(function () {
-                ImageId.src = imagebackurl;
-            }, 80);
-        } else {
-            ImageId.classList.remove('flipped');
-            setTimeout(function () {
-                ImageId.src = imageurl;
-            }, 80);
-        }
-    };
-</script>
-
+        };
+    </script>
 </head>
 
 <body class="body">

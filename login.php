@@ -77,11 +77,12 @@ $msg = new Message;
 ?>
 <!DOCTYPE html>
 <head>
-<title> MTG collection </title>
-<link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
-<?php include('includes/googlefonts.php'); ?>
-<meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <title> MTG collection </title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
+    <?php include('includes/googlefonts.php'); ?>
+    <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
