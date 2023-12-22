@@ -22,7 +22,8 @@ function ajaxUpdate(cardid, cellid, qty, flash, type) {
                     activeFlash.removeClass("bulksubmitsuccessbg")
                                .addClass("bulksubmitsuccessfont");
                 }, 2000);
-                if (document.location.pathname === '/index.php') {
+                // If called from index.php in grid view, update grid view classes
+                if (document.location.pathname === '/index.php' && typeof toggleNoCollectionClass === 'function') {
                     toggleNoCollectionClass(cardid); // located in cviewClassToggle.js
                 }
             },
