@@ -22,7 +22,7 @@ $cssver = cssver();
 ?>
 <!DOCTYPE html>
 <head>
-    <title> MTG collection </title>
+    <title> MTG collection - reset</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

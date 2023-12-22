@@ -168,7 +168,7 @@ endif;
 
 <!DOCTYPE html>
 <head>
-    <title>MtG collection administration - cards</title>
+    <title>MtG collection - admin (cards)</title>
     <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
