@@ -39,7 +39,7 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
     ?>
     <!DOCTYPE html>
         <head>
-        <title> MTG collection </title>
+        <title> MtG collection - login</title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
         <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
