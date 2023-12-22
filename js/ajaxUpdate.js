@@ -22,6 +22,9 @@ function ajaxUpdate(cardid, cellid, qty, flash, type) {
                     activeFlash.removeClass("bulksubmitsuccessbg")
                                .addClass("bulksubmitsuccessfont");
                 }, 2000);
+                if (document.location.pathname === '/index.php') {
+                    toggleNoCollectionClass(cardid); // located in cviewClassToggle.js
+                }
             },
             error: function (xhr, status, error) {
                 console.error("Error response:", xhr.responseText);
@@ -30,9 +33,6 @@ function ajaxUpdate(cardid, cellid, qty, flash, type) {
                            .addClass("bulksubmiterrorfont");
             }
         });
-        if (document.location.pathname === '/index.php') {
-            toggleNoCollectionClass(cardid); // located in cviewClassToggle.js
-        }
     }
     return false;
 };
