@@ -719,7 +719,7 @@ require('includes/menu.php'); //mobile menu
                             </td>
                             <td id="carddetailset">
                                 <?php
-                                echo "<a href='index.php?adv=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;"; ?>
+                                echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;"; ?>
                             </td>
                             <td id="carddetaillogo">
                                 <?php 
@@ -759,7 +759,7 @@ require('includes/menu.php'); //mobile menu
                             echo $row['name'];
                         endif;
                         echo "</h2>";
-                    echo "<a href='index.php?adv=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>"; ?>
+                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>"; ?>
                 </div> 
                 <div id="carddetailmain">
                     <div id="carddetailimage"><?php 
