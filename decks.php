@@ -39,7 +39,7 @@ $decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'deck
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title> MtG collection - Decks</title>
+    <title> MtG collection - decks</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

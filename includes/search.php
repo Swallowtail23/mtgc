@@ -385,11 +385,11 @@ endif;
                     </label>
                 </span>
             </div>
-            <h4 class="h4">Kindred</h4>
+            <h4 class="h4">Typal</h4>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>
             <label class="radio"><input type="radio" name="tribe" value="treefolk"><span class="outer"><span class="inner"></span></span>Treefolk</label><br>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="centaur"><span class="outer"><span class="inner"></span></span>Centaur</label></span>
+            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="elf"><span class="outer"><span class="inner"></span></span>Elf</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="vampire"><span class="outer"><span class="inner"></span></span>Vampire</label></span>
             <label class="radio"><input type="radio" name="tribe" value="sliver"><span class="outer"><span class="inner"></span></span>Sliver</label><br>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>
