@@ -143,13 +143,21 @@ $msg = new Message;
             var filterValue = document.getElementById('setCodeFilter').value;
             fetchAndDisplaySets(filterValue, pageNumber, setsPerPage);
         };
-
+        
+        var debounceTimer;
+        
         function filterSets() {
             var filterValue = document.getElementById('setCodeFilter').value;
             var setsPerPage = <?php echo $setsPerPage; ?>;
-            if (filterValue.length >= 3 || filterValue.length === 0) {
-                fetchAndDisplaySets(filterValue, 1, setsPerPage);
-            }
+            
+            // Clear the previous timer if it exists
+            clearTimeout(debounceTimer);
+            
+            debounceTimer = setTimeout(function() {
+                if (filterValue.length >= 3 || filterValue.length === 0) {
+                    fetchAndDisplaySets(filterValue, 1, setsPerPage);
+                }
+            }, 300); // Adjust the delay (in milliseconds) as needed
         };
 
         // Function to update the table with filtered results
