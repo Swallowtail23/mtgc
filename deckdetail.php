@@ -550,7 +550,7 @@ while ($row = $result->fetch_assoc()):
     $cardref = str_replace('.','-',$row['cardsid']);
     ?>
     <div class='deckcardimgdiv' id='card-<?php echo $cardref;?>'>
-        <a href='carddetail.php?setabbrv=<?php echo $row['setcode'] ?>&amp;number=<?php echo $row['number'] ?>&amp;id=<?php echo $row['cardsid'] ?>' target='_blank'>
+        <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
             <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
     </div> 
     <?php
@@ -586,7 +586,7 @@ while ($row = $sideresult->fetch_assoc()):
     $cardref = str_replace('.','-',$row['cardsid']);
     ?>
     <div class='deckcardimgdiv' id='side-<?php echo $cardref;?>'>
-        <a href='carddetail.php?setabbrv=<?php echo $row['setcode'] ?>&amp;number=<?php echo $row['number'] ?>&amp;id=<?php echo $row['cardsid'] ?>' target='_blank'>
+        <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
             <img alt='<?php echo $row["name"];?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
     </div>
     <?php
@@ -785,7 +785,7 @@ endif;
                                 ?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname">
-                                    <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>"; ?>
+                                    <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>"; ?>
                                 <script type="text/javascript">
                                     $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                         'use strict'; //satisfy code inspectors
@@ -918,7 +918,7 @@ endif;
                                     ?>
                                     <tr class='deckrow'>
                                     <td class="deckcardname">
-                                        <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; ?>
+                                        <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; ?>
                                     <script type="text/javascript">
                                         $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
                                             'use strict'; //satisfy code inspectors
@@ -1104,9 +1104,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1314,9 +1314,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1500,9 +1500,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1725,9 +1725,9 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
                                 ?>
                             <script type="text/javascript">
@@ -1935,9 +1935,9 @@ endif;
                                         $i++;
                                     endwhile;
                                     if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     else:
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?setabbrv={$row['setcode']}&amp;number={$row['number']}&amp;id={$row['cardsid']}' target='_blank'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     endif;
                                     ?>
                                 <script type="text/javascript">
