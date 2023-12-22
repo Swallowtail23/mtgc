@@ -332,11 +332,11 @@ else:
             endif;
             $criteriaTribe .= "cards_scry.type LIKE '%treefolk%' ";
         endif;
-        if ($tribe === "centaur"):
+        if ($tribe === "elf"):
             if (!empty($criteriaTribe)) :
                 $criteriaTribe .= "OR ";
             endif;
-            $criteriaTribe .= "cards_scry.type LIKE '%centaur%' ";
+            $criteriaTribe .= "cards_scry.type LIKE '%elf%' ";
         endif;    
         if ($tribe === "sliver"):
             if (!empty($criteriaTribe)) :
