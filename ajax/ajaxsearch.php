@@ -29,8 +29,12 @@ include '../includes/colour.php';
 $msg = new Message;
 
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$expectedReferringSite = $myURL;
-if (strpos($referringPage, $expectedReferringSite) !== false):
+$expectedReferringPage = $myURL;
+
+$normalizedReferringPage = str_replace('www.', '', $referringPage);
+$normalizedExpectedReferringPage = str_replace('www.', '', $expectedReferringPage);
+
+if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false):
 
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php

@@ -32,18 +32,24 @@ $msg = new Message;
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$expectedReferringPages = [
-                            $myURL . '/index.php',
-                            $myURL . '/carddetail.php'
-                          ];
+$expectedReferringPages =   [
+                                $myURL . '/index.php',
+                                $myURL . '/carddetail.php'
+                            ];
+
+// Normalize the referring page URL
+$normalizedReferringPage = str_replace('www.', '', $referringPage);
 
 $isValidReferrer = false;
 foreach ($expectedReferringPages as $page):
-    if (strpos($referringPage, $page) !== false):
+    // Normalize each expected referring page URL
+    $normalizedPage = str_replace('www.', '', $page);
+    if (strpos($normalizedReferringPage, $normalizedPage) !== false):
         $isValidReferrer = true;
         break;
     endif;
 endforeach;
+
 if ($isValidReferrer):
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
