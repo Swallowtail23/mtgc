@@ -192,7 +192,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from sets.php",$logfile);
+    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from sets.php (called from $referringPage; expected: $expectedReferringPage)",$logfile);
     http_response_code(403);
     echo 'Access forbidden';
 endif;
