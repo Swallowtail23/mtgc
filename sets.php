@@ -128,13 +128,24 @@ $msg = new Message;
                 data: { filter: filterValue, setsPerPage: setsPerPage, offset: offset },
                 dataType: 'json',
                 success: function(response) {
-                    updateTable(response.filteredSets);
-                    var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
-                    document.getElementById('pagination').innerHTML = paginationHTML;
-                    console.log("Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                    if (response.numResults < 1) {
+                        document.getElementById('setlist').style = "display: none";
+                        document.getElementById('pagination').style = "display: none";
+                        document.getElementById('noResults').style = "display: block";
+                        console.log("Set search: No results");
+                    } else {
+                        document.getElementById('setlist').style = "display: block";
+                        updateTable(response.filteredSets);
+                        window.scrollTo(0,0);
+                        document.getElementById('pagination').style = "display: block";
+                        document.getElementById('noResults').style = "display: none";
+                        var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
+                        document.getElementById('pagination').innerHTML = paginationHTML;
+                        console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                    console.error("Set search: AJAX error: " + textStatus + " - " + errorThrown);
                 }
             });
         };
@@ -424,6 +435,7 @@ require('includes/menu.php');
             endif;
             ?>
         </table> <?php
+        echo '<div id="noResults" style="display:none"><br>No results<br></div>';
         echo '<div id="pagination" class="pagination"><br>Page<br>';
         for ($i = 1; $i <= $totalPages; $i++):
             if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
