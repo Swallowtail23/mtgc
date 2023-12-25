@@ -95,27 +95,42 @@ $msg = new Message;
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
         
         function buildPagination(totalPages, currentPage, setsPerPage) {
+            console.log('Total: ' + totalPages + ', Current: ' + currentPage);
             var paginationHTML = '';
-            paginationHTML += '<br>Page<br>';
+            paginationHTML += '<br>Page &nbsp;';
             var range = <?php echo $range; ?>; // Number of pages to show before and after the current page
+            
+            if (currentPage !== 1) {
+                paginationHTML += buildPageLink('previous', currentPage, setsPerPage);
+            }
 
             for (var i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
                     paginationHTML += buildPageLink(i, currentPage, setsPerPage);
                 } else if ((i === currentPage - range - 1 || i === currentPage + range + 1)) {
-                    paginationHTML += '... ';
+                    paginationHTML += '<span class="pagination-item">...&nbsp;</span>';
                 }
             }
-
+            
+            if (currentPage !== totalPages) {
+                paginationHTML += buildPageLink('next', currentPage, setsPerPage);
+            }
+            
             paginationHTML += '<br>&nbsp;';
             return paginationHTML;
         };
 
         function buildPageLink(page, currentPage, setsPerPage) {
             if (page === currentPage) {
-                return '<span style="font-weight: bold">' + page + '&nbsp;&nbsp;</span>';
+                return '<span class="pagination-item" style="font-weight: bold">' + page + '&nbsp;&nbsp;</span>';
+            } else if (page === 'next') {
+                var nextPage = currentPage + 1;
+                return '<a class="pagination-item" href="javascript:loadPage(' + nextPage + ', ' + setsPerPage + ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+            } else if (page === 'previous') {
+                var previousPage = currentPage - 1;
+                return '<a class="pagination-item" href="javascript:loadPage(' + previousPage + ', ' + setsPerPage + ');"><span class="material-symbols-outlined set-page pagination-item">skip_previous</span></a>&nbsp;';
             } else {
-                return '<a href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">' + page + '&nbsp;&nbsp;</a>';
+                return '<a class="pagination-item" href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">' + page + '&nbsp;&nbsp;</a>';
             }
         };
 
@@ -128,13 +143,35 @@ $msg = new Message;
                 data: { filter: filterValue, setsPerPage: setsPerPage, offset: offset },
                 dataType: 'json',
                 success: function(response) {
-                    updateTable(response.filteredSets);
-                    var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
-                    document.getElementById('pagination').innerHTML = paginationHTML;
-                    console.log("Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                    if (response.numResults === 0) {
+                        document.getElementById('setlist').style = "display: none";
+                        document.getElementById('paginationTop').style = "display: none";
+                        document.getElementById('paginationBottom').style = "display: none";
+                        document.getElementById('noResults').style = "display: block";
+                        console.log("Set search: No results");
+                    } else if (response.numPages === 1) {
+                        document.getElementById('setlist').style = "display: block";
+                        updateTable(response.filteredSets);
+                        window.scrollTo(0,0);
+                        document.getElementById('paginationTop').style = "display: none";
+                        document.getElementById('paginationBottom').style = "display: none";
+                        document.getElementById('noResults').style = "display: none";
+                        console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                    } else {
+                        document.getElementById('setlist').style = "display: block";
+                        updateTable(response.filteredSets);
+                        window.scrollTo(0,0);
+                        document.getElementById('paginationTop').style = "display: block";
+                        document.getElementById('paginationBottom').style = "display: block";
+                        document.getElementById('noResults').style = "display: none";
+                        var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
+                        document.getElementById('paginationTop').innerHTML = paginationHTML;
+                        document.getElementById('paginationBottom').innerHTML = paginationHTML;
+                        console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                    }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                    console.error("Set search: AJAX error: " + textStatus + " - " + errorThrown);
                 }
             });
         };
@@ -308,7 +345,22 @@ require('includes/menu.php');
                 <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="NAME/CODE/YEAR FILTER">
                 <div id='cancelsetfilter'><span class="material-symbols-outlined">close</span></div>
             </div>
-        </div>
+        </div> <?php
+        echo '<div id="paginationTop" class="pagination" style="display: block;"><br>Page &nbsp;';
+        for ($i = 1; $i <= $totalPages; $i++):
+            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
+                // Highlight the current page, or add a link for other pages
+                if ($i == $page):
+                    echo '<span class="pagination-item" style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
+                else:
+                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
+                endif;
+            elseif ($i === $page - $range - 1 || $i === $page + $range + 1):
+                echo '<span class="pagination-item">...&nbsp;</span>';
+            endif;
+        endfor;
+        echo '<a class="pagination-item" href="javascript:loadPage(' . $page + 1 . ', ' . $setsPerPage . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+        echo '<br>&nbsp;</div>'; ?>
         <table id='setlist'>
             <tr>
                 <td class='setcell'>
@@ -424,22 +476,25 @@ require('includes/menu.php');
             endif;
             ?>
         </table> <?php
-        echo '<div id="pagination" class="pagination"><br>Page<br>';
+        echo '<div id="noResults" style="display:none"><br>No results<br></div>';
+        echo '<div id="paginationBottom" class="pagination"><br>Page &nbsp;';
         for ($i = 1; $i <= $totalPages; $i++):
             if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
                 // Highlight the current page, or add a link for other pages
                 if ($i == $page):
-                    echo '<span style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
+                    echo '<span class="pagination-item" style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
                 else:
-                    echo '<a href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
+                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
                 endif;
             elseif ($i === $page - $range - 1 || $i === $page + $range + 1):
-                echo '... ';
+                echo '<span class="pagination-item">...&nbsp;</span>';
             endif;
         endfor;
-        echo '<br>&nbsp;</div>';
+        echo '<a class="pagination-item" href="javascript:loadPage(' . $page + 1 . ', ' . $setsPerPage . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+        echo '</div>';
         ?>
-    </div>
+        <br>&nbsp;
+    </div>echo '<br>&nbsp;</div>';
 </div>
 <?php     
     require('includes/footer.php'); 
