@@ -1059,7 +1059,7 @@ require('includes/menu.php'); //mobile menu
                         if(isset($admin) AND $admin == 1):
                             echo "<a href='admin/cards.php?cardtoedit=$lookupid'><i><i class='ss ss-$setcode ss-{$row['rarity']} ss-grad ss-2x'></i>&nbsp;$setname ($setcodeupper) no. {$row['number_import']}</i></a><br>";
                         else:
-                            echo "<i>$setname($setcodeupper) no. {$row['number_import']}</i><br>";
+                            echo "<i><i class='ss ss-$setcode ss-{$row['rarity']} ss-grad ss-2x'></i>&nbsp;$setname ($setcodeupper) no. {$row['number_import']}</i><br>";
                         endif;
                         
                         $gametypestring = '';
