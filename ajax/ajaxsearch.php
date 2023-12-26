@@ -51,7 +51,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
             $rtrim = trim($r, " \t\n\r\0\x0B");
             $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
             $r = preg_replace($regex, ' ', $rtrim);
-            $r = filter_var($r,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $r = filter_var($r,FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
             $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Ajax search after URL removal and filtering is '$r'",$logfile);        
             // Test for the existence of a string enclosed in parentheses
             if (strpos($r, '[') !== false):
