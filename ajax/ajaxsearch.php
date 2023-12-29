@@ -139,7 +139,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                                 $final_name = str_ireplace($t, $b_name, $name);
                                 ?>
                                 <tr>
-                                    <td class="name"><?php echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - $final_name</a></td>"; ?>
+                                    <td title='<?php echo "$displaysetcode - $name" ?>' class="name"><?php echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - $final_name</a></td>"; ?>
                                 </tr>
                                 <?php
                             endif;
