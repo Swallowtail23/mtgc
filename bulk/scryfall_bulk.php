@@ -28,10 +28,6 @@ $msg = new Message;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 
-// Lists
-$langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','ph','zht','ko','pt'];
-$layouts_to_skip = [];
-
 // How old to overwrite
 // call script with "scryfall_bulk.php new" to always re-download
 if(isset($argv[1]) AND $argv[1] == "new"):
