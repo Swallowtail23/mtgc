@@ -545,7 +545,10 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 else:
                                     $bulkname = $row['name'];
                                 endif;
-                                echo "&nbsp;&nbsp;<a class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
+                                if(strlen($bulkname) > 22):
+                                    $bulkname = substr($bulkname,0,22)."...";
+                                endif;
+                                echo "&nbsp;&nbsp;<a title='{$row['name']}' class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
                                 $cellid = "cell".$scryid;
                                 $cellid_one = $cellid.'_one';
                                 $cellid_two = $cellid.'_two';
@@ -648,9 +651,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     else:
                                         $meld = '';
                                     endif;
+                                    if(strlen($row['name']) > 18):
+                                        $listname = substr($row['name'],0,18)."...";
+                                    else:
+                                        $listname = $row['name'];
+                                    endif;
                                     ?>
                                     <tr class='resultsrow'>
-                                        <td class="valuename"> <?php echo "{$row['name']}"; ?> </td>    
+                                        <td title='<?php echo "{$row['name']}" ?>' class="valuename"> <?php echo "$listname"; ?> </td>    
                                             <?php
                                             if(isset($row['manacost']) AND !empty($row['manacost'])):
                                                 $manac = symbolreplace($row['manacost']);

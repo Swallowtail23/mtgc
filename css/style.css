@@ -1171,13 +1171,15 @@ table
     line-height: 1.3em;
     background: #fff;
     width: 300px;
+    overflow: hidden;
 }
 
 .ajaxshow
 {
     padding: 5px;
     color: #000;
-    width: 301px;
+    width: 100%;
+    table-layout: fixed;
 }
 
 .ajaxshow tr
@@ -1188,6 +1190,9 @@ table
 .ajaxshow td
 {
     padding: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .ajaxshow tr:hover
@@ -1214,11 +1219,6 @@ table
 .ajaxshow a:active
 {
     color:#000;
-}
-
-.ajaxshow td a
-{
-   display: block;
 }
 
 #headersubmit
@@ -2843,10 +2843,6 @@ td.columnhide
         top: 48px;
         width: 100px;
     }
-    .ajaxshow
-    {
-        width: 100px;
-    }
     #headerresults
     {
         left: 120px;
@@ -2872,10 +2868,6 @@ td.columnhide
     {
         left: 126px;
         top: 48px;
-        width: 150px;
-    }
-    .ajaxshow
-    {
         width: 150px;
     }
     #headerresults
@@ -2908,10 +2900,6 @@ td.columnhide
     {
         left: 126px;
         top: 48px;
-        width: 200px;
-    }
-    .ajaxshow
-    {
         width: 200px;
     }
     #info-button 
