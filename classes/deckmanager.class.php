@@ -64,6 +64,8 @@ class DeckManager {
     
     public function quickadd($decknumber,$get_string,$batch = false)
     {
+        global $noQuickAddLayouts;
+        
         $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)",$this->logfile);
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $quickaddstring, $matches);
@@ -94,6 +96,11 @@ class DeckManager {
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
         $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
         $stmt = null;
+        
+        // Get card layouts to not include in quick add
+        $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
+        $placeholdersString = implode(',', $placeholders);
+        
         if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name, setcode, and collector number provided
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
@@ -105,12 +112,15 @@ class DeckManager {
                                                        flavor_name = ? OR
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
-                                                       setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
+                                                       setcode = ? AND number_import = ? AND 
+                                                       `layout` NOT IN ($placeholdersString) 
+                                                       ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
-            $params[] = $quickaddset;
-            $params[] = $quickaddNumber;
-            $stmt->bind_param("sssssssssss", ...$params);
+            array_push($params, $quickaddset, $quickaddNumber);
+            $params = array_merge($params, $noQuickAddLayouts);
+            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+            
         elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
             // Card name and setcode provided
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
@@ -122,11 +132,15 @@ class DeckManager {
                                                        flavor_name = ? OR
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
-                                                       setcode = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
+                                                       setcode = ? AND 
+                                                       `layout` NOT IN ($placeholdersString) 
+                                                       ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
-            $params[] = $quickaddset;
-            $stmt->bind_param("ssssssssss", ...$params);
+            array_push($params, $quickaddset);
+            $params = array_merge($params, $noQuickAddLayouts);
+            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
         elseif ($quickaddcard !== '' AND $quickaddset === ''):
             // Card name only provided, or with a number (but useless without setcode) - just grab a name match
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
@@ -138,15 +152,25 @@ class DeckManager {
                                                        flavor_name = ? OR
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
-                                                       `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC, number ASC LIMIT 1";
+                                                       `layout` NOT IN ($placeholdersString) 
+                                                       ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
-            $stmt->bind_param("sssssssss", ...$params);
+            $params = array_merge($params, $noQuickAddLayouts);
+            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+            
         elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name not provided, setcode, and collector number provided
-            $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND `layout` NOT IN ('token','double_faced_token','emblem','meld') ORDER BY release_date DESC LIMIT 1";
+            $query = "SELECT id FROM cards_scry WHERE
+                                                        setcode = ? AND 
+                                                        number_import = ? AND 
+                                                        `layout` NOT IN ($placeholdersString) 
+                                                        ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
-            $stmt->bind_param("ss", $quickaddset, $quickaddNumber);
+            $params = [$quickaddset, $quickaddNumber];
+            $params = array_merge($params, $noQuickAddLayouts);
+            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+            
         else:
             // Not enough info, cannot add
             $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Not enough info to identify a card to add",$this->logfile);
