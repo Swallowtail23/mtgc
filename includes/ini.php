@@ -277,7 +277,15 @@ $validtypes = array('Commander',
                     'Tiny Leader',
                     'Standard',
                     'Modern',
-                    'Wishlist');                     // Deck types
+                    'Wishlist');                     
+
+// Card layouts to NOT import in deck quick add routine
+$noQuickAddLayouts = array(
+                    'token',
+                    'double_faced_token',
+                    'emblem',
+                    'meld',
+                    'art_series'); 
 
 // Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');

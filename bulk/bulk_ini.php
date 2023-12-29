@@ -115,3 +115,7 @@ $two_card_detail_sections = array('transform',
                                   'double_faced_token',
                                   'battle',
                                   'art_series');
+
+// Langs and layouts (used in card bulk)
+$langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+$layouts_to_skip = [];
