@@ -35,15 +35,17 @@ else:
         // Not an advanced search called
         if (strlen($name) > 2): // Needs to have more than 2 characters to search
             if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
-                $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
-                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
-                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) AND primary_card = 1 ";
-                $params = array_fill(0, 9, $name);
+                $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
+                                cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
+                                cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
+                                AGAINST(? IN BOOLEAN MODE) AND primary_card = 1 ";
+                $params = array_fill(0, 1, '"'.$name.'"');
             elseif ($allprintings === "yes"):  // Used in 'All Printings' search from card_detail page
-                $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
-                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
-                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
-                $params = array_fill(0, 9, $name);
+                $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
+                                cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
+                                cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
+                                AGAINST(? IN BOOLEAN MODE) ";
+                $params = array_fill(0, 1, '"'.$name.'"');
             else:
                 $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
                             OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
