@@ -28,6 +28,8 @@ Install under web server as applicable
 
 #### MySQL ####
 - Tested with version 8+
+- Indexes are vital for performance
+- cards_scry table should be InnoDB
 
 #### JsonMachine ####
 Used for bulk script parsing

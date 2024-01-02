@@ -720,6 +720,8 @@ require('includes/menu.php'); //mobile menu
                                 <?php 
                                     if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
                                         echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                                    elseif ($card_lang === 'ph'):
+                                        echo $row['name'];
                                     elseif ($row['printed_name'] != '' AND $row['printed_name'] != $row['name']):
                                         echo "{$row['printed_name']} <i>({$row['name']})</i>";
                                     else:
