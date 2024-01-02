@@ -2227,6 +2227,7 @@ endif;
             endif;
             ?>
             <h4>Quick add</h4>
+            Note, adds primary language cards only.<br>
             Format: <i>"qty {optional} name {optional if set and number included} [set {optional unless number included} number {optional}]" </i><br>E.g.: 
             "Madame Vastra", "Madame Vastra [WHO]", "Madame Vastra [WHO 425]", "4 Madame Vastra [WHO]", "2 [WHO 425]"
             <br><br>
@@ -2237,8 +2238,9 @@ endif;
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
             <h4>Import</h4>
-            Import text file, formatted per Quick add above. Note, large decks may take several minutes to import and fetch data and images.
-            <br>Cards already in the deck will have quantity updated.
+            Text file needs to be formatted as Quick add (adds primary language cards only). 
+            Decks may take several minutes to import and fetch data. 
+            Cards already in the deck will have quantity updated.
             <script type="text/javascript">
                 $(document).ready(function(){
                     $("#importsubmit").attr('disabled',true);
@@ -2372,7 +2374,7 @@ endif;
             </form> 
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
-                You can upload a photo here to store with the deck. Large photos will be resized.<br><br>
+                Upload deck photo. Large photos will be resized.<br><br>
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';

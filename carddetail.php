@@ -432,6 +432,7 @@ require('includes/menu.php'); //mobile menu
             $cardname = stripslashes($row['name']);
             $id = $row['cs_id'];
             $card_lang = $row['lang'];
+            $card_lang_uc = strtoupper($card_lang);
             $card_primary = $row['primary_card'];
                         
             if($row['color'] !== null):
@@ -719,6 +720,8 @@ require('includes/menu.php'); //mobile menu
                                 <?php 
                                     if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
                                         echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                                    elseif ($row['printed_name'] != '' AND $row['printed_name'] != $row['name']):
+                                        echo "{$row['printed_name']} <i>({$row['name']})</i>";
                                     else:
                                         echo $row['name'];
                                     endif;
@@ -726,7 +729,11 @@ require('includes/menu.php'); //mobile menu
                             </td>
                             <td id="carddetailset">
                                 <?php
-                                echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;"; ?>
+                                if ($card_primary === 1):
+                                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
+                                else:
+                                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>&nbsp;";
+                                endif; ?>
                             </td>
                             <td id="carddetaillogo">
                                 <?php 
@@ -757,16 +764,21 @@ require('includes/menu.php'); //mobile menu
                         </tr>
                     </table>
                 </div>
-                <div id="minicarddetailheader">
-                    <?php
-                        echo "<h2 class = 'h2pad'>";
-                        if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
-                            echo "{$row['flavor_name']} <br><i>({$row['name']})</i>";
-                        else:
-                            echo $row['name'];
-                        endif;
-                        echo "</h2>";
-                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>"; ?>
+                <div id="minicarddetailheader"> <?php
+                    echo "<h2 class = 'h2pad'>";
+                    if(isset($row['flavor_name']) AND $row['flavor_name'] !== ''):
+                        echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                    elseif ($row['printed_name'] != '' AND $row['printed_name'] != $row['name']):
+                        echo "{$row['printed_name']} <i>({$row['name']})</i>";
+                    else:
+                        echo $row['name'];
+                    endif;
+                    echo "</h2>";
+                    if ($card_primary === 1):
+                        echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
+                    else:
+                        echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>";
+                    endif; ?>
                 </div> 
                 <div id="carddetailmain">
                     <div id="carddetailimage"><?php 
@@ -1399,16 +1411,6 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Loyalty: </b>".$row['f2_loyalty']."<br>"; 
                             endif;
                         endif;
-                        if(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== "" AND $not_paper === true):
-                            echo "<a href='".$row['scryfall_uri']."' target='_blank'>Card on Scryfall</a></br>";
-                            echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary printings </a></br>";
-                            echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All printings </a>";
-                        elseif($not_paper === true):
-                            $namehtml = str_replace("//","",$namehtml);
-                            $namehtml = str_replace("  ","%20",$namehtml);
-                            $namehtml = str_replace(" ","%20",$namehtml);
-                            echo "<a href='https://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
-                        endif;
                         ?>                
                     </div><?php 
                     if(($meld !== 'meld_result') AND ($not_paper !== true ) AND ($cardtypes != 'none' )): ?>
@@ -1708,14 +1710,32 @@ require('includes/menu.php'); //mobile menu
                                 <?php 
                             endif; ?>
                             </table>
-                            <hr class='hr324'>
-
-                            <b>Links</b> <?php
+                            <?php
                             if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
                                 $tcgdirectlink = $tcg_buy_uri;
                             else:
                                 $tcgdirectlink = null;
                             endif; ?>
+                            
+                            <hr class='hr324'>
+                            <b>Other printings</b>
+                            <table width="100%">
+                                <?php 
+                            endif; ?>
+                                <tr>
+                                    <td colspan=2 class="buycellleft">
+                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary language </a>"; ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan=2 class="buycellleft">
+                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All languages </a>"; ?>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <hr class='hr324'>
+                            <b>Links</b>
                             <table width="100%">
                                 <tr>
                                     <td colspan=2 class="buycellleft">
@@ -1739,19 +1759,8 @@ require('includes/menu.php'); //mobile menu
                                     ?>
                                     </td>
                                 </tr>
-                                <?php 
-                            endif; ?>
-                                <tr>
-                                    <td colspan=2 class="buycellleft">
-                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary printings </a>"; ?>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan=2 class="buycellleft">
-                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All printings </a>"; ?>
-                                    </td>
-                                </tr>
                             </table>
+                            
                             <hr class='hr324'>
                             <?php
 

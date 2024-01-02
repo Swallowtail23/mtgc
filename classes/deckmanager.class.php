@@ -113,7 +113,8 @@ class DeckManager {
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
                                                        setcode = ? AND number_import = ? AND 
-                                                       `layout` NOT IN ($placeholdersString) 
+                                                       `layout` NOT IN ($placeholdersString) AND
+                                                       primary_card = 1
                                                        ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
@@ -133,7 +134,8 @@ class DeckManager {
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
                                                        setcode = ? AND 
-                                                       `layout` NOT IN ($placeholdersString) 
+                                                       `layout` NOT IN ($placeholdersString)  AND
+                                                       primary_card = 1
                                                        ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
@@ -152,7 +154,8 @@ class DeckManager {
                                                        flavor_name = ? OR
                                                        f1_flavor_name = ? OR 
                                                        f2_flavor_name = ?) AND 
-                                                       `layout` NOT IN ($placeholdersString) 
+                                                       `layout` NOT IN ($placeholdersString) AND
+                                                       primary_card = 1
                                                        ORDER BY release_date DESC, number ASC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = array_fill(0, 9, $quickaddcard);
@@ -162,10 +165,11 @@ class DeckManager {
         elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name not provided, setcode, and collector number provided
             $query = "SELECT id FROM cards_scry WHERE
-                                                        setcode = ? AND 
-                                                        number_import = ? AND 
-                                                        `layout` NOT IN ($placeholdersString) 
-                                                        ORDER BY release_date DESC LIMIT 1";
+                                                    setcode = ? AND 
+                                                    number_import = ? AND 
+                                                    `layout` NOT IN ($placeholdersString) AND
+                                                    primary_card = 1
+                                                    ORDER BY release_date DESC LIMIT 1";
             $stmt = $this->db->prepare($query);
             $params = [$quickaddset, $quickaddNumber];
             $params = array_merge($params, $noQuickAddLayouts);
