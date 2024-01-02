@@ -1,8 +1,8 @@
 <?php
-/* Version:     3.0
-    Date:       17/12/2023
+/* Version:     4.0
+    Date:       02/01/24
     Name:       ini.php
-    Purpose:    PHP script to manage error routines and logging
+    Purpose:    PHP script to manage error routines, logging and setup global variables/arrays
     Notes:      {none}
  *
     1.0         Initial version
@@ -15,6 +15,9 @@
  *  
  *  3.0         17/12/23
  *              Added local fx currency array
+ * 
+ *  4.0         02/01/24
+ *              Add language arrays
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -176,6 +179,79 @@ $seconds_in_hour = 3600;
 $max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;
 
 /** Define card types and variables which require special treatment **/
+
+// Valid search languages
+$search_langs = array(
+                        array(
+                            'code' => 'en',
+                            'pretty' => 'English'
+                            ),
+                        array(
+                            'code' => 'es',
+                            'pretty' => 'Spanish'
+                            ),
+                        array(
+                            'code' => 'fr',
+                            'pretty' => 'French'
+                            ),
+                        array(
+                            'code' => 'de',
+                            'pretty' => 'German'
+                            ),
+                        array(
+                            'code' => 'it',
+                            'pretty' => 'Italian'
+                            ),
+                        array(
+                            'code' => 'pt',
+                            'pretty' => 'Portuguese'
+                            ),
+                        array(
+                            'code' => 'ja',
+                            'pretty' => 'Japanese'
+                            ),
+                        array(
+                            'code' => 'ko',
+                            'pretty' => 'Korean'
+                            ),
+                        array(
+                            'code' => 'ru',
+                            'pretty' => 'Russian'
+                            ),
+                        array(
+                            'code' => 'zhs',
+                            'pretty' => 'Chinese (simplified)'
+                            ),
+                        array(
+                            'code' => 'zht',
+                            'pretty' => 'Chinese (traditional)'
+                            ),
+                        array(
+                            'code' => 'he',
+                            'pretty' => 'Hebrew'
+                            ),
+                        array(
+                            'code' => 'la',
+                            'pretty' => 'Latin'
+                            ),
+                        array(
+                            'code' => 'grc',
+                            'pretty' => 'Ancient Greek'
+                            ),
+                        array(
+                            'code' => 'ar',
+                            'pretty' => 'Arabic'
+                            ),
+                        array(
+                            'code' => 'sa',
+                            'pretty' => 'Sanskrit'
+                            ),
+                        array(
+                            'code' => 'ph',
+                            'pretty' => 'Phyrexian'
+                            )
+                      );
+$search_langs_codes = array_column($search_langs, 'code');
 
 // Selectable currencies
 $currencies = array(

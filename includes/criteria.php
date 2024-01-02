@@ -1,6 +1,6 @@
 <?php
-/* Version:     6.0
-    Date:       09/12/23
+/* Version:     7.0
+    Date:       02/01/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -18,6 +18,9 @@
  *
  *  6.0         09/12/23
  *              Move main card search to parameterised queries
+ * 
+ *  7.0         02/01/24
+ *              Add language search capability
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -31,21 +34,35 @@ else:
     if ($adv != "yes") :
         // Not an advanced search called
         if (strlen($name) > 2): // Needs to have more than 2 characters to search
-            if ($exact === "yes"):  // Not used for anything but leaving in code for possible later use
-                $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
-                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
-                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
-                $params = array_fill(0, 9, $name);
+            if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
+                $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
+                                cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
+                                cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
+                                AGAINST(? IN BOOLEAN MODE) AND primary_card = 1 ";
+                $params = array_fill(0, 1, '"'.$name.'"');
+            elseif ($allprintings === "yes"):  // Used in 'All Printings' search from card_detail page
+                $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
+                                cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
+                                cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
+                                AGAINST(? IN BOOLEAN MODE) ";
+                $params = array_fill(0, 1, '"'.$name.'"');
             else:
                 $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
                             OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
                             OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
                 $params = array_fill(0, 9, "%{$name}%");
+                if (!empty($searchLang)):
+                    $criteria .= "AND lang LIKE ? ";
+                    $params[] = $searchLang;
+                else:
+                    $criteria .= "AND primary_card = 1 ";
+                endif;
             endif;
             if (!empty($setcodesearch)):
                 $criteria .= "AND setcode LIKE ? ";
                 $params[] = $setcodesearch;
             endif;
+
             $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
             $query = $selectAll.$criteria.$order.$sorting;
             $validsearch = "true";
@@ -536,6 +553,15 @@ else:
         if (!empty($setcodesearch)):
             $criteria .= "AND setcode LIKE ? ";
             $params[] = $setcodesearch;
+        endif;
+        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $searchLang",$logfile);
+        if (!empty($searchLang) && $searchLang === 'all'):
+            // get all
+        elseif (!empty($searchLang)):
+            $criteria .= "AND lang LIKE ? ";
+            $params[] = $searchLang;
+        else:
+            $criteria .= "AND primary_card = 1 ";
         endif;
         // Sort order
         if (!empty($sortBy)):

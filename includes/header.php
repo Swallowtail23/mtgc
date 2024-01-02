@@ -1,12 +1,15 @@
 <?php 
-/* Version:     1.0
-    Date:       17/10/16
+/* Version:     1.1
+    Date:       02/01/24
     Name:       header.php
     Purpose:    PHP script to display header
     Notes:      {none}
  * 
     1.0
                 Initial version
+ * 
+ *  1.1         02/01/24
+ *              Add debounce to search calls
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -15,21 +18,39 @@ endif;
 
 <script>
     $(function() {
-        $("#searchid").on("input keyup", function() {
-            var searchid = $(this).val();
-            var dataString = 'search='+ searchid;
-            if(searchid!='') {
-                $.ajax({
+        var debounce = function(func, delay) {
+            var inDebounce;
+            return function() {
+                var context = this;
+                var args = arguments;
+                clearTimeout(inDebounce);
+                inDebounce = setTimeout(function() {
+                    func.apply(context, args);
+                }, delay);
+            }
+        };
+
+        var ajaxCall = debounce(function(searchid) {
+            var dataString = 'search=' + searchid;
+            $.ajax({
                 type: "POST",
                 url: "/ajax/ajaxsearch.php",
                 data: dataString,
                 cache: false,
-                success: function(html)
-                {
-                $("#ajaxresult").html(html).show();
+                success: function(html) {
+                    $("#ajaxresult").html(html).show();
                 }
-                });
-            }return false;    
+            });
+        }, 300); // Delay of 300 milliseconds
+
+        $("#searchid").on("input keyup", function() {
+            var searchid = $(this).val();
+            if(searchid != '') {
+                ajaxCall(searchid);
+            } else {
+                $("#ajaxresult").html('').hide(); // Hide and clear results if search is empty
+            }
+            return false;
         });
 
         jQuery("#ajaxresult").on("click",function(e){ 

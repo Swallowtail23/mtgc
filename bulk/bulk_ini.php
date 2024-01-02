@@ -1,11 +1,16 @@
 <?php
-/* Version:     1.0
-    Date:       22/01/22
+/* Version:     2.0
+    Date:       02/01/24
     Name:       bulk_ini.php
     Purpose:    ini settings for bulk files
     Notes:      {none} 
         
     1.0         ini settings for bulk files
+ * 
+ *  2.0         02/01/24
+ *              Bring card game types variable into here
+ *              Also bulk file location URLs
+ *              And languages to import
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -117,5 +122,21 @@ $two_card_detail_sections = array('transform',
                                   'art_series');
 
 // Langs and layouts (used in card bulk)
-$langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+
+/// Languages to ignore in Default cards download (currently importing all)
+// $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+$langs_to_skip = [];
+
+/// Languages to ignore in All cards download (currently importing all)
+// $langs_to_skip_all = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+$langs_to_skip_all = [];
+
+/// Layouts to skip (currently empty, so all layouts are imported)
 $layouts_to_skip = [];
+
+// Which type of cards to include
+$games_to_include = ['paper','arena'];
+
+// Where to get URL of latest bulk downloads
+$default_cards_url = "https://api.scryfall.com/bulk-data/default-cards";
+$all_cards_url = "https://api.scryfall.com/bulk-data/all-cards";

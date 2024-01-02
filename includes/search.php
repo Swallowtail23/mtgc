@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       6/12/2026
+/* Version:     5.0
+    Date:       02/01/24
     Name:       search.php
     Purpose:    Layout for search on index.php
     Notes:      
@@ -12,9 +12,11 @@
  *  3.0
  *              Add Arena legalities
  * 
- *  4.0         6/12/2026
+ *  4.0         6/12/23
  *              Add year to optgroup
- *              
+ * 
+ *  5.0         02/01/24
+ *              Add language search capability             
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -107,16 +109,15 @@ endif;
                 <?php 
                 $result = $db->query(
                        'SELECT 
-                            set_name,
-                            setcode,
-                            min(sets.release_date) as date,
+                            name AS set_name,
+                            code AS setcode,
+                            min(release_date) as date,
                             parent_set_code
-                        FROM cards_scry 
-                        LEFT JOIN sets ON cards_scry.setcode = sets.code
+                        FROM sets
                         GROUP BY 
-                            set_name
+                            name
                         ORDER BY 
-                            date DESC, parent_set_code DESC');
+                            release_date DESC, parent_set_code DESC');
                 if ($result === false):
                     trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
                 else:
@@ -395,6 +396,18 @@ endif;
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>
             <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="spider"><span class="outer"><span class="inner"></span></span>Spider</label></span>
             <label class="radio"><input type="radio" name="tribe" value="zombie"><span class="outer"><span class="inner"></span></span>Zombie</label>
+            
+            <h4 class="h4">Language</h4>
+            <select class="dropdown" name='lang' id='langSelect'> 
+                <option value='default' selected>Default</option><?php 
+                foreach($search_langs as $lang): ?>
+                    <option value='<?php echo $lang['code']; ?>'>
+                        <?php echo $lang['pretty']; ?>
+                    </option> <?php 
+                endforeach; ?>
+                <option value='all'>All languages</option>
+            </select>
+            
             <h4 class="h4">Power / Toughness / Loyalty / Mana value</h4>
             Power<br>
             <select class="dropdown" name="poweroperator">

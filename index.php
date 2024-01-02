@@ -1,6 +1,6 @@
 <?php
-/* Version:     10.0
-    Date:       09/12/23
+/* Version:     11.0
+    Date:       02/01/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -28,7 +28,10 @@
  *              Add javascript to add/remove b/w based on cview mode
  *
  * 10.0         09/12/23
- *              Move main search to parameterised queries  
+ *              Move main search to parameterised queries
+ * 
+ * 11.0         02/01/24
+ *              Add language search parameters
 */
 
 //Call script initiation mechs
@@ -149,6 +152,7 @@ $legendary = isset($_GET['legendary']) ? 'yes' : '';
 $token = isset($_GET['token']) ? 'yes' : '';
 # $rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
 $exact = isset($_GET['exact']) ? 'yes' : '';
+$allprintings = isset($_GET['allprintings']) ? 'yes' : '';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
     $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 endif;
@@ -191,6 +195,12 @@ if (!in_array($legal,$valid_legal)):
     $legal == '';
 endif;
 $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
+$searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
+if ($searchLang === 'all'):
+    $searchLang = 'all';
+elseif ($searchLang === 'default' || !in_array($searchLang,$search_langs_codes)):
+    $searchLang = '';
+endif;
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
@@ -237,7 +247,8 @@ $selectAll = "SELECT
                 p3_component,
                 p1_name,
                 p2_name,
-                p3_name
+                p3_name,
+                lang
                 FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 LEFT JOIN `sets` ON cards_scry.setcode = sets.code
@@ -297,6 +308,7 @@ endif;
 $getstringbulk = getStringParameters($_GET, 'layout', 'page');
 
 // Page layout starts here
+$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading page layout",$logfile);
 ?>
 <!DOCTYPE html>
 <html>
@@ -545,10 +557,13 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 else:
                                     $bulkname = $row['name'];
                                 endif;
-                                if(strlen($bulkname) > 22):
-                                    $bulkname = substr($bulkname,0,22)."...";
+                                if(strlen($bulkname) > 17):
+                                    $bulkname = substr($bulkname,0,17)."...";
                                 endif;
-                                echo "&nbsp;&nbsp;<a title='{$row['name']}' class='gridlinkbulk' href='/carddetail.php?id={$row['cs_id']}' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname</a>";
+                                $displayName = htmlspecialchars($row['name'], ENT_QUOTES, 'UTF-8');
+                                $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
+                                $csId = htmlspecialchars($row['cs_id'], ENT_QUOTES, 'UTF-8');
+                                echo "&nbsp;&nbsp;<a title='$displayName ($displayLang)' class='gridlinkbulk' href='/carddetail.php?id=$csId' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname ($displayLang)</a>";
                                 $cellid = "cell".$scryid;
                                 $cellid_one = $cellid.'_one';
                                 $cellid_two = $cellid.'_two';
@@ -651,14 +666,17 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                     else:
                                         $meld = '';
                                     endif;
-                                    if(strlen($row['name']) > 18):
-                                        $listname = substr($row['name'],0,18)."...";
+                                    if(strlen($row['name']) > 14):
+                                        $listname = substr($row['name'],0,14)."...";
                                     else:
                                         $listname = $row['name'];
                                     endif;
+                                    $displayName = htmlspecialchars($row['name'], ENT_QUOTES, 'UTF-8');
+                                    $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
+                                    $csId = htmlspecialchars($row['cs_id'], ENT_QUOTES, 'UTF-8');
                                     ?>
                                     <tr class='resultsrow'>
-                                        <td title='<?php echo "{$row['name']}" ?>' class="valuename"> <?php echo "$listname"; ?> </td>    
+                                        <td title='<?php echo "$displayName ($displayLang)" ?>' class="valuename"> <?php echo "$listname ($displayLang)"; ?> </td>    
                                             <?php
                                             if(isset($row['manacost']) AND !empty($row['manacost'])):
                                                 $manac = symbolreplace($row['manacost']);
@@ -807,6 +825,8 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                             else:
                                 $myetch = $row['etched'];
                             endif;
+                            $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
+                                    
                             $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is $collection_view",$logfile);
                             if(($myqty + $myfoil + $myetch) == 0 AND $collection_view == 1):
                                 $in_collection = ' none no_collection';
@@ -828,7 +848,7 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
-                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname) no. $number_import' class='card-image cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
+                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) no. $number_import' class='card-image cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
                                 $cellid = "cell".$scryid;
                                 $cellid_one = $cellid.'_one';
                                 $cellid_two = $cellid.'_two';
@@ -914,10 +934,12 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
                     <?php
                 endif;
             else :
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading search layout",$logfile);
                 require('includes/search.php');
             endif;
             ?>
         </div>
-<?php require('includes/footer.php'); ?>
+<?php require('includes/footer.php'); 
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finished",$logfile);?>
     </body>
 </html>
