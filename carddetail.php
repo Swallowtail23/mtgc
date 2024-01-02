@@ -299,6 +299,7 @@ require('includes/menu.php'); //mobile menu
                     printed_name,
                     flavor_name,
                     lang,
+                    primary_card,
                     release_date,
                     set_name as cs_setname,
                     setcode as cs_setcode,
@@ -430,6 +431,9 @@ require('includes/menu.php'); //mobile menu
             $setname = stripslashes($row['cs_setname']);
             $cardname = stripslashes($row['name']);
             $id = $row['cs_id'];
+            $card_lang = $row['lang'];
+            $card_primary = $row['primary_card'];
+                        
             if($row['color'] !== null):
                 $card_colour = colourfunction($row['color']);
             else:
@@ -777,9 +781,14 @@ require('includes/menu.php'); //mobile menu
                         endif; 
                         // Find the prev number card's ID
                         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finding previous and next cards",$logfile);
-                        $query = "SELECT id FROM cards_scry WHERE setcode = ? ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
+                        // Get the current card's language and primary_card status
+                        $query = "SELECT id FROM cards_scry
+                                    WHERE setcode = ? 
+                                    AND lang = ? 
+                                    AND primary_card = ?
+                                    ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
                         $stmt = $db->prepare($query);
-                        $stmt->bind_param('s', $row['cs_setcode']);
+                        $stmt->bind_param('ssi', $row['cs_setcode'], $card_lang, $card_primary);
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $results = $result->fetch_all(MYSQLI_ASSOC);
@@ -1098,8 +1107,10 @@ require('includes/menu.php'); //mobile menu
                             if(isset($row['type']) AND $row['type'] != ''):
                                 echo "<b>Type: </b>".$row['type'];
                             endif;
-                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<br><b>Language: </b>".langreplace($row['lang']);
+                            if (isset($card_lang) AND $card_lang != '' AND $card_lang != 'en' AND $row['primary_card'] === 1):
+                                echo "<br><b>Language: </b>".langreplace($card_lang)." (primary print)";
+                            elseif (isset($card_lang) AND $card_lang != '' AND $card_lang != 'en'):
+                                echo "<br><b>Language: </b>".langreplace($card_lang);
                             endif;
                             echo "<br>";
                             echo "<b>Rarity: </b>";
@@ -1146,8 +1157,8 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['f1_type'];
                                 echo "<br>";
                             endif;
-                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<b>Lang: </b>".langreplace($row['lang']);
+                            if(isset($card_lang) AND $card_lang != '' AND $card_lang != 'en'):
+                                echo "<b>Lang: </b>".langreplace($card_lang);
                                 echo "<br>";
                             endif;
                             if($row['f1_ability'] != ''):
@@ -1348,8 +1359,8 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['f2_type'];
                                 echo "<br>";
                             endif;
-                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<b>Lang: </b>".langreplace($row['lang']);
+                            if(isset($card_lang) AND $card_lang != '' AND $card_lang != 'en'):
+                                echo "<b>Lang: </b>".langreplace($card_lang);
                                 echo "<br>";
                             endif;
                             if(isset($flipability) AND $flipability != ''):
@@ -1373,8 +1384,8 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['f2_type'];
                                 echo "<br>";
                             endif;
-                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<b>Lang: </b>".langreplace($row['lang']);
+                            if(isset($card_lang) AND $card_lang != '' AND $card_lang != 'en'):
+                                echo "<b>Lang: </b>".langreplace($card_lang);
                                 echo "<br>";
                             endif;
                             if(isset($flipability) AND $flipability != ''):
@@ -1390,7 +1401,8 @@ require('includes/menu.php'); //mobile menu
                         endif;
                         if(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== "" AND $not_paper === true):
                             echo "<a href='".$row['scryfall_uri']."' target='_blank'>Card on Scryfall</a></br>";
-                            echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>";
+                            echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary printings </a></br>";
+                            echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All printings </a>";
                         elseif($not_paper === true):
                             $namehtml = str_replace("//","",$namehtml);
                             $namehtml = str_replace("  ","%20",$namehtml);
@@ -1731,7 +1743,12 @@ require('includes/menu.php'); //mobile menu
                             endif; ?>
                                 <tr>
                                     <td colspan=2 class="buycellleft">
-                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>All printings </a>"; ?>
+                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary printings </a>"; ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan=2 class="buycellleft">
+                                        <?php echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All printings </a>"; ?>
                                     </td>
                                 </tr>
                             </table>
@@ -2106,8 +2123,8 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['f2_type'];
                                 echo "<br>";
                             endif;
-                            if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<b>Lang: </b>".langreplace($row['lang']);
+                            if(isset($card_lang) AND $card_lang != '' AND $card_lang != 'en'):
+                                echo "<b>Lang: </b>".langreplace($card_lang);
                                 echo "<br>";
                             endif;
                             if(isset($flipability) AND $flipability != ''):

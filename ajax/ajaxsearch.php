@@ -82,6 +82,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
             endif;
 
             $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Search string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
+            // Header search only searches within primary_card set, not additional languages
             $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                           FROM cards_scry
                           WHERE
@@ -96,6 +97,8 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                           OR f2_name LIKE ?)
                           AND
                           (setcode LIKE ? OR ? = '')
+                          AND 
+                          (primary_card = 1) 
                           ORDER BY release_date DESC, name ASC LIMIT 20");
             $stmt->bind_param("sssssssssss", $q, $q, $q, $q, $q, $q, $q, $q, $q, $u, $u);
             $stmt->execute();
