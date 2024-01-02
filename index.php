@@ -217,7 +217,7 @@ if($db->query($tablecheck) === FALSE):
 endif;
     
 // More general query building:
-$selectAll = "SELECT SQL_CALC_FOUND_ROWS
+$selectAll = "SELECT 
                 cards_scry.id as cs_id,
                 price,
                 price_foil,
@@ -275,9 +275,11 @@ if ($validsearch === "true"):
     // parameterised query has been built in criteria.php, proceed with it
     if($result = $db->execute_query($query, $params)):
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-        $qtyResultsQuery = "SELECT FOUND_ROWS()";
-        if ($qtyResult = $db->execute_query($qtyResultsQuery)):
-            $row = $qtyResult->fetch_row();
+        $queryQty = "SELECT COUNT(*) FROM cards_scry WHERE ".$criteria;
+        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail called count query $queryQty",$logfile);
+        // Execute the count query
+        if ($countResult = $db->execute_query($queryQty, $params)):
+            $row = $countResult->fetch_row();
             $qtyresults = $row[0];
             $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Query has $qtyresults results",$logfile);
 
