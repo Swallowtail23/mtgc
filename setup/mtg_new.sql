@@ -198,8 +198,14 @@ CREATE TABLE `cards_scry` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   KEY `oracle_id` (`oracle_id`),
-  KEY `release_date` (`release_date`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  KEY `release_date` (`release_date`),
+  KEY `setcode` (`setcode`),
+  KEY `primary_card` (`setcode`,`primary_card`) USING BTREE,
+  KEY `set_name` (`set_name`),
+  KEY `lang` (`lang`),
+  KEY `type_2` (`type`),
+  KEY `number` (`number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -435,6 +441,7 @@ ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_printed_name` (`f1_printed_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_flavor_name` (`f1_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_printed_name` (`f2_printed_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_flavor_name` (`f2_flavor_name`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_name_index` (`name`,`f1_name`,`f2_name`,`printed_name`,`f1_printed_name`,`f2_printed_name`,`flavor_name`,`f1_flavor_name`,`f2_flavor_name`);
 
 --
 -- Indexes for table `sets`
