@@ -46,7 +46,7 @@ $msg = new Message;
     $range = 4; // Number of page results to show around current page in pagination
     
     // Get total sets count
-    $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT set_name) as totalSets FROM cards_scry");
+    $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT name) as totalSets FROM sets");
     $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
     $totalPages = ceil($totalSets / $setsPerPage);
     
@@ -309,19 +309,18 @@ require('includes/menu.php');
     <div class='staticpagecontent'>
         <?php
         $stmt = $db->prepare("SELECT 
-                                set_name,
-                                setcode,
+                                name as set_name,
+                                code as setcode,
                                 parent_set_code,
                                 set_type,
                                 card_count,
                                 nonfoil_only,
                                 foil_only,
-                                min(cards_scry.release_date) as date,
-                                sets.release_date as setdate
-                            FROM cards_scry 
-                            LEFT JOIN sets ON cards_scry.set_id = sets.id
+                                min(release_date) as date,
+                                release_date as setdate
+                            FROM sets 
                             GROUP BY 
-                                set_name
+                                name
                             ORDER BY 
                                 setdate DESC, parent_set_code DESC 
                             LIMIT ? OFFSET ?");

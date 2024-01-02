@@ -86,12 +86,11 @@ if ($isValidReferrer):
             endif;
             
             // Construct the SQL query with the filter condition and WITHOUT pagination
-            $stmt = $db->prepare("SELECT setcode
-                                FROM cards_scry 
-                                LEFT JOIN sets ON cards_scry.set_id = sets.id
-                                WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
-                                OR set_name LIKE ? OR sets.release_date LIKE ?
-                                GROUP BY set_name");
+            $stmt = $db->prepare("SELECT code as setcode
+                                FROM sets 
+                                WHERE code LIKE ? OR parent_set_code LIKE ?
+                                OR name LIKE ? OR release_date LIKE ?
+                                GROUP BY name");
 
             $filter = '%' . $filter . '%'; // Add wildcards to the filter value
 
@@ -130,21 +129,20 @@ if ($isValidReferrer):
             
             // Construct the SQL query with the filter condition and WITH pagination
             $stmt = $db->prepare("SELECT 
-                                    set_name,
-                                    setcode,
+                                    name as set_name,
+                                    code as setcode,
                                     parent_set_code,
                                     set_type,
                                     card_count,
                                     nonfoil_only,
                                     foil_only,
-                                    min(cards_scry.release_date) as date,
-                                    sets.release_date as setdate
-                                FROM cards_scry 
-                                LEFT JOIN sets ON cards_scry.set_id = sets.id
-                                WHERE sets.code LIKE ? OR sets.parent_set_code LIKE ?
-                                OR set_name LIKE ? OR sets.release_date LIKE ?
+                                    min(release_date) as date,
+                                    release_date as setdate
+                                FROM sets
+                                WHERE code LIKE ? OR parent_set_code LIKE ?
+                                OR name LIKE ? OR release_date LIKE ?
                                 GROUP BY 
-                                    set_name
+                                    name
                                 ORDER BY 
                                     setdate DESC, parent_set_code DESC 
                                 LIMIT ? OFFSET ?");
