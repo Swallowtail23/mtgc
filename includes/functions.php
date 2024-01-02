@@ -648,7 +648,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
 function scryfallImport($file_location,$type)
 // Function to process and import lines within Scryfall bulk data files
 {
-    global $db, $logfile, $games_to_include, $langs_to_skip, $layouts_to_skip, $serveremail, $adminemail, $ImgLocation, $two_card_detail_sections;
+    global $db, $logfile, $games_to_include, $langs_to_skip, $langs_to_skip_all, $layouts_to_skip, $serveremail, $adminemail, $ImgLocation, $two_card_detail_sections;
     $msg = new Message;
 
     // Initiate counters at zero
@@ -701,7 +701,13 @@ function scryfallImport($file_location,$type)
                 endforeach;
             endif;
         endforeach;
-        if(in_array($value["lang"],$langs_to_skip) OR in_array($value["layout"],$layouts_to_skip)):
+        if (   
+                (in_array($value["lang"],$langs_to_skip) && $type === 'default')
+                    OR 
+                (in_array($value["lang"],$langs_to_skip_all) && $type === 'all')
+                    OR 
+                (in_array($value["layout"],$layouts_to_skip))
+            ):
             $skip = 1;
         endif;
         // Actions on skip value

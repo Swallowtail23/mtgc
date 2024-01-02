@@ -123,14 +123,13 @@ $two_card_detail_sections = array('transform',
 
 // Langs and layouts (used in card bulk)
 
-/// Languages to ignore in Default cards download
+/// Languages to ignore in Default cards download (currently importing all)
 // $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
-
-// Changed, now all primary cards in Default Cards JSON are loaded
 $langs_to_skip = [];
 
-/// Languages to ignore in All cards download
-$langs_to_skip_all = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+/// Languages to ignore in All cards download (currently importing all)
+// $langs_to_skip_all = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
+$langs_to_skip_all = [];
 
 /// Layouts to skip (currently empty, so all layouts are imported)
 $layouts_to_skip = [];
