@@ -275,7 +275,7 @@ if ($validsearch === "true"):
     // parameterised query has been built in criteria.php, proceed with it
     if($result = $db->execute_query($query, $params)):
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
-        $queryQty = "SELECT COUNT(*) FROM cards_scry WHERE ".$criteria;
+        $queryQty = "SELECT COUNT(*) FROM cards_scry LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id WHERE ".$criteria;
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"User $useremail called count query $queryQty",$logfile);
         // Execute the count query
         if ($countResult = $db->execute_query($queryQty, $params)):
