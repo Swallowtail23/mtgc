@@ -1,6 +1,6 @@
 <?php
-/* Version:     6.0
-    Date:       09/12/23
+/* Version:     7.0
+    Date:       02/01/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -18,6 +18,9 @@
  *
  *  6.0         09/12/23
  *              Move main card search to parameterised queries
+ * 
+ *  7.0         02/01/24
+ *              Add language search capability
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -45,6 +48,12 @@ else:
             if (!empty($setcodesearch)):
                 $criteria .= "AND setcode LIKE ? ";
                 $params[] = $setcodesearch;
+            endif;
+            if (!empty($searchLang)):
+                $criteria .= "AND lang LIKE ? ";
+                $params[] = $searchLang;
+            else:
+                $criteria .= "AND primary_card = 1 ";
             endif;
             $order = "ORDER BY cards_scry.name ASC, set_date DESC, number ASC, cs_id ASC ";
             $query = $selectAll.$criteria.$order.$sorting;
@@ -536,6 +545,12 @@ else:
         if (!empty($setcodesearch)):
             $criteria .= "AND setcode LIKE ? ";
             $params[] = $setcodesearch;
+        endif;
+        if (!empty($searchLang)):
+            $criteria .= "AND lang LIKE ? ";
+            $params[] = $searchLang;
+        else:
+            $criteria .= "AND primary_card = 1 ";
         endif;
         // Sort order
         if (!empty($sortBy)):

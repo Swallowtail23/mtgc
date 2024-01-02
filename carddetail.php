@@ -1,6 +1,6 @@
 <?php 
-/* Version:     18.0
-    Date:       10/12/23
+/* Version:     19.0
+    Date:       02/01/24
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -55,6 +55,9 @@
  * 
  * 18.0         10/12/23
  *              SQL parameterised query fixes
+ * 
+ * 19.0         02/01/24
+ *              Correctly interpret language codes to 'pretty' descriptions
 */
 
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
@@ -1096,7 +1099,7 @@ require('includes/menu.php'); //mobile menu
                                 echo "<b>Type: </b>".$row['type'];
                             endif;
                             if(isset($row['lang']) AND $row['lang'] != '' AND $row['lang'] != 'en'):
-                                echo "<br><b>Lang: </b>".langreplace($row['lang']);
+                                echo "<br><b>Language: </b>".langreplace($row['lang']);
                             endif;
                             echo "<br>";
                             echo "<b>Rarity: </b>";

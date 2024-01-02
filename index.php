@@ -1,6 +1,6 @@
 <?php
-/* Version:     10.0
-    Date:       09/12/23
+/* Version:     11.0
+    Date:       02/01/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -28,7 +28,10 @@
  *              Add javascript to add/remove b/w based on cview mode
  *
  * 10.0         09/12/23
- *              Move main search to parameterised queries  
+ *              Move main search to parameterised queries
+ * 
+ * 11.0         02/01/24
+ *              Add language search parameters
 */
 
 //Call script initiation mechs
@@ -191,6 +194,10 @@ if (!in_array($legal,$valid_legal)):
     $legal == '';
 endif;
 $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
+$searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
+if ($searchLang === 'default' || !in_array($searchLang,$search_langs_codes)):
+    $searchLang = '';
+endif;
 
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
