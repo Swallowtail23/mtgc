@@ -128,7 +128,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
                 if($(this).val() === 'newdeck'){
                     $('#deckqtyspan').attr("style", "display: inline");
                     $('#deckqty').removeAttr("disabled");
-                    $('#deckqty').attr("placeholder", "");
+                    $('#deckqty').attr("placeholder", "1");
                     $('#newdecknamespan').attr("style", "display: block");
                     $('#newdeckname').removeAttr("disabled");
                     $('#newdeckname').attr("placeholder", "New deck name");
@@ -145,7 +145,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
                     $('#addtodeckbutton').attr("disabled", "disabled");
                 } else {
                     $('#deckqtyspan').attr("style", "display: inline");
-                    $('#deckqty').attr("placeholder", "");
+                    $('#deckqty').attr("placeholder", "1");
                     $('#deckqty').removeAttr("disabled");
                     $('#newdecknamespan').attr("style", "display: none");
                     $('#newdeckname').attr("disabled", "disabled");
@@ -1977,7 +1977,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "<input type='hidden' name='number' value=".$row['number'].">";
                                         echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
                                         <select id='deckselect' name='decktoaddto'>
-                                            <option value='none'>Select</option>
+                                            <option value='none'>Add...</option>
                                             <option value='newdeck'>Add to new deck...</option>
                                             <?php 
                                             
@@ -2003,7 +2003,7 @@ require('includes/menu.php'); //mobile menu
                                             <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19' style="padding-top: 10px;"/>
                                         </span>
                                         <span id="addtodecksubmitspan" style="display: none">
-                                            <input class='importlabel' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
+                                            <input class='importlabel' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK" style="margin-top: 10px;">
                                         </span>
                                     </form>
                                     </div>
