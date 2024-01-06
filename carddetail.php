@@ -1728,9 +1728,6 @@ require('includes/menu.php'); //mobile menu
                                         <?php echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All languages </a>"; ?>
                                     </td>
                                 </tr>
-                            </table>
-                            
-                            <table width="100%">
                                 <tr>
                                     <td class="buycellleft">
                                         <?php
