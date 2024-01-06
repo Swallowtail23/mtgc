@@ -75,8 +75,12 @@ else:
         // An advanced search called
         $criteriaNTA = "";
         if ($searchnotes === "yes"):
-            $criteriaNTA = "$mytable.notes LIKE ? ";
-            $params[] = "%$name%";
+            if($name === ''):
+                $criteriaNTA = "$mytable.notes IS NOT NULL AND $mytable.notes NOT LIKE ''";
+            else:
+                $criteriaNTA = "$mytable.notes LIKE ? ";
+                $params[] = "%$name%";
+            endif;
         elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact))):
             $criteriaNTA .= "cards_scry.name LIKE '%%' ";
         elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact)):
