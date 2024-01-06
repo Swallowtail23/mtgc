@@ -109,6 +109,11 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <script src="/js/jquery.js"></script>
     <script src="/js/ajaxUpdate.js"></script>
     <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var button = document.getElementById('addtodeckbutton');
+            button.value = 'ADD'; // Replace 'New Button Text' with the text you want to display
+        });
+        
         $(function() {  // On document ready
             $("img").on("error", function() {
                 $(this).attr("src", "/cardimg/back.jpg");
@@ -121,20 +126,31 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 
             $('#deckselect').change(function (event) {
                 if($(this).val() === 'newdeck'){
+                    $('#deckqtyspan').attr("style", "display: inline");
+                    $('#deckqty').removeAttr("disabled");
+                    $('#deckqty').attr("placeholder", "1");
+                    $('#newdecknamespan').attr("style", "display: block");
                     $('#newdeckname').removeAttr("disabled");
                     $('#newdeckname').attr("placeholder", "New deck name");
-                } else {
+                    $('#addtodecksubmitspan').attr("style", "display: block");
+                    $('#addtodeckbutton').removeAttr("disabled");
+                } else if($('#deckselect').val() === 'none'){
+                    $('#deckqtyspan').attr("style", "display: none");
+                    $('#deckqty').attr("disabled", "disabled");
+                    $('#deckqty').attr("placeholder", "N/A");
+                    $('#newdecknamespan').attr("style", "display: none");
                     $('#newdeckname').attr("disabled", "disabled");
                     $('#newdeckname').attr("placeholder", "N/A");
-                }
-                if($('#deckselect').val() !== 'none'){
-                    $('#addtodeckbutton').removeAttr("disabled");
-                    $('#deckqty').removeAttr("disabled");
-                    $('#deckqty').attr("placeholder", "");
+                    $('#addtodecksubmitspan').attr("style", "display: none");
+                    $('#addtodeckbutton').attr("disabled", "disabled");
                 } else {
-                    $('#addtodeckbutton').attr("disabled", "disabled"); 
-                    $('#deckqty').attr("disabled", "disabled"); 
-                    $('#deckqty').attr("placeholder", "N/A"); 
+                    $('#deckqtyspan').attr("style", "display: inline");
+                    $('#deckqty').attr("placeholder", "1");
+                    $('#deckqty').removeAttr("disabled");
+                    $('#newdecknamespan').attr("style", "display: none");
+                    $('#newdeckname').attr("disabled", "disabled");
+                    $('#addtodecksubmitspan').attr("style", "display: block");
+                    $('#addtodeckbutton').removeAttr("disabled");
                 }
             });
 
@@ -739,7 +755,7 @@ require('includes/menu.php'); //mobile menu
                             </td>
                             <td id="carddetaillogo">
                                 <?php 
-                                echo "<img alt='image' src=images/".$colour."_s.png>"; ?>
+                                echo "<img style='height: 25px' alt='image' src=images/".$colour."_s.png>"; ?>
                             </td>
                         </tr>
                         <tr>
@@ -760,6 +776,8 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                                 if($mainflavour !== null):
                                     echo $mainflavour;
+                                else:
+                                    echo "&nbsp;";
                                 endif;
                                 ?>
                             </td>
@@ -1482,14 +1500,13 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                             </table>
-                            <table style="margin-top:10px">
-                                <tr><td>My notes</td></tr> <?php
+                            <table style="margin-top:10px"><?php
                                 if ($afternotes === ''):
                                     $displaynotes = $oldnotes;
                                 else:
                                     $displaynotes = $afternotes;
                                 endif;
-                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40'>$displaynotes</textarea></td></tr>"; ?>
+                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40' placeholder='My notes'>$displaynotes</textarea></td></tr>"; ?>
                             </table> <?php
                             echo "<input type='hidden' name='id' value=".$lookupid.">";
                             echo "<input type='hidden' name='update' value='yes'>";?>
@@ -1603,116 +1620,97 @@ require('includes/menu.php'); //mobile menu
                             <hr class='hr324'>
                             <?php 
 
-                            // Price section ?>
-                            <table id='tcgplayer' width="100%">
-                                <tr>
-                                    <td>
-                                        <b>Price</b>
-                                    </td>
-                                    <td>
-                                        <b>USD <?php if($fx === TRUE):echo "($targetCurrency)";endif; ?></b>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2">
-                                        <i>TCGPlayer market price</i>
-                                    </td>
-                                </tr>
-                      <?php if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
+                            // Price section
+                            if((isset($scryfallresult["price"]) AND $scryfallresult["price"] !== "" AND $scryfallresult["price"] != 0.00 AND $scryfallresult["price"] !== NULL AND str_contains($cardtypes,'normal'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall normal price",$logfile);
-                                $normalprice = TRUE; 
-                                $localnormal = number_format(($scryfallresult["price"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Normal
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price'],2) . " ($localnormal)" : number_format($scryfallresult['price'],2); ?>
-                                    </td>
-                                </tr>
-                      <?php elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
+                                $normalprice = number_format($scryfallresult['price'],2); 
+                                $localnormal = number_format(($scryfallresult["price"] * $rate), 2, '.', ',');
+                            elseif((isset($row["price"]) AND $row["price"] !== "" AND $row["price"] != 0.00  AND str_contains($cardtypes,'normal'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database normal price",$logfile);
-                                $normalprice = TRUE; 
-                                $localnormal = number_format(($row["price"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Normal
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($row["price"],2) . " ($localnormal)" : number_format($row['price'],2); ?>
-                                    </td>
-                                </tr>
-                      <?php 
+                                $normalprice = number_format($row['price'],2); 
+                                $localnormal = number_format(($row["price"] * $rate), 2, '.', ',');
                             else:
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No normal price",$logfile);
                                 $normalprice = FALSE;
                             endif;      
                             if((isset($scryfallresult["price_foil"]) AND $scryfallresult["price_foil"] !== "" AND $scryfallresult["price_foil"] != 0.00 AND $scryfallresult["price_foil"] !== NULL AND str_contains($cardtypes,'foil'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall foil price",$logfile);
-                                $foilprice = TRUE;
-                                $localfoil = number_format(($scryfallresult["price_foil"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Foil
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price_foil'],2) . " ($localfoil)" : number_format($scryfallresult['price_foil'],2); ?>
-                                    </td>
-                                </tr>
-                      <?php elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
+                                $foilprice = number_format($scryfallresult['price_foil'],2); ;
+                                $localfoil = number_format(($scryfallresult["price_foil"] * $rate), 2, '.', ',');
+                            elseif((isset($row["price_foil"]) AND $row["price_foil"] !== "" AND $row["price_foil"] != 0.00  AND str_contains($cardtypes,'foil'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database foil price",$logfile);
-                                $foilprice = TRUE;
-                                $localfoil = number_format(($row["price_foil"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Foil
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($row["price_foil"],2) . " ($localfoil)" : number_format($row["price_foil"],2); ?>
-                                    </td>
-                                </tr>
-                      <?php else:
+                                $foilprice = number_format($row['price_foil'],2);
+                                $localfoil = number_format(($row["price_foil"] * $rate), 2, '.', ',');
+                            else:
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No foil price",$logfile);
                                 $foilprice = FALSE;
                             endif;
                             if((isset($scryfallresult["price_etched"]) AND $scryfallresult["price_etched"] !== "" AND $scryfallresult["price_etched"] != 0.00 AND $scryfallresult["price_etched"] !== NULL AND str_contains($cardtypes,'etch'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using Scryfall etched price",$logfile);
-                                $etchprice = TRUE;
-                                $localetched = number_format(($scryfallresult["price_etched"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Etched
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($scryfallresult['price_etched'],2) . " ($localetched)" : number_format($scryfallresult['price_etched'],2); ?>
-                                    </td>
-                                </tr>
-                      <?php elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
+                                $etchprice = number_format($scryfallresult['price_etched'],2);
+                                $localetched = number_format(($scryfallresult["price_etched"] * $rate), 2, '.', ',');
+                            elseif((isset($row["price_etched"]) AND $row["price_etched"] !== "" AND $row["price_etched"] != 0.00  AND str_contains($cardtypes,'etch'))):
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Using database etched price",$logfile);
-                                $etchprice = TRUE;
-                                $localetched = number_format(($row["price_etched"] * $rate), 2, '.', ',');?>
-                                <tr>
-                                    <td class="buycellleft">
-                                        Etched
-                                    </td>
-                                    <td class="buycell mid">
-                                        <?= ($fx === TRUE) ? number_format($row['price_etched'],2) . " ($localetched)" : number_format($row['price_etched'],2); ?>
-                                    </td>
-                                </tr>
-                      <?php else:
+                                $etchprice = number_format($row['price_etched'],2);
+                                $localetched = number_format(($row["price_etched"] * $rate), 2, '.', ',');
+                            else:
                                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No etched price",$logfile);
                                 $etchprice = FALSE;
-                            endif; 
+                            endif;
+                            
                             if ($normalprice == FALSE AND $foilprice == FALSE AND $etchprice == FALSE): ?>
-                                <tr>
-                                    <td colspan="2" class="buycellleft">
-                                        No prices available <br>
-                                    </td>
-                                </tr>
-                                <?php 
-                            endif; ?>
-                            </table>
-                            <?php
+                                <table id='tcgplayer' width="100%">
+                                    <tr>
+                                        <td colspan="2" class="buycellleft">
+                                            No prices available <br>
+                                        </td>
+                                    </tr>
+                                </table> <?php 
+                            else: ?>                          
+                                <table id='tcgplayer' width="100%">
+                                    <tr>
+                                        <td>
+                                            <b>Price</b>
+                                        </td>
+                                        <td>
+                                            <b>USD <?php if($fx === TRUE):echo "($targetCurrency)";endif; ?></b>
+                                        </td>
+                                    </tr> <?php 
+
+                                    if($normalprice !== FALSE): ?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Normal
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?= ($fx === TRUE) ? $normalprice . " ($localnormal)" : $normalprice; ?>
+                                        </td>
+                                    </tr> <?php
+                                    endif;
+
+                                    if($foilprice !== FALSE): ?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Foil
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?= ($fx === TRUE) ? $foilprice . " ($localfoil)" : $foilprice; ?>
+                                        </td>
+                                    </tr> <?php 
+                                    endif;
+
+                                    if($etchprice !== FALSE):?>
+                                    <tr>
+                                        <td class="buycellleft">
+                                            Etched
+                                        </td>
+                                        <td class="buycell mid">
+                                            <?= ($fx === TRUE) ? $etchprice . " ($localetched)" : $etchprice; ?>
+                                        </td>
+                                    </tr> <?php
+                                    endif; ?>                          
+                                </table> <?php
+                            endif;
                             if(isset($tcg_buy_uri) AND $tcg_buy_uri !== ""):
                                 $tcgdirectlink = $tcg_buy_uri;
                             else:
@@ -1720,54 +1718,40 @@ require('includes/menu.php'); //mobile menu
                             endif; ?>
                             
                             <hr class='hr324'>
-                            <b>Other printings</b>
+                            <b>Printings & links</b>
                             <table width="100%">
-                                <?php 
-                            endif; ?>
                                 <tr>
-                                    <td colspan=2 class="buycellleft">
+                                    <td class="buycellleft">
                                         <?php echo "<a href='index.php?name=".$row['name']."&amp;exact=yes'>Primary language </a>"; ?>
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td colspan=2 class="buycellleft">
+                                    <td class="buycellleft">
                                         <?php echo "<a href='index.php?name=".$row['name']."&amp;allprintings=yes'>All languages </a>"; ?>
                                     </td>
                                 </tr>
-                            </table>
-                            
-                            <hr class='hr324'>
-                            <b>Links</b>
-                            <table width="100%">
                                 <tr>
-                                    <td colspan=2 class="buycellleft">
+                                    <td class="buycellleft">
                                         <?php
                                         if(isset($row['scryfall_uri']) AND $row['scryfall_uri'] !== ""):
-                                            echo "<a href='".$row['scryfall_uri']."' target='_blank'>Card on Scryfall</a>";
+                                            echo "<a href='".$row['scryfall_uri']."' target='_blank'>Scryfall</a>";
                                         else:
                                             $namehtml = str_replace("//","",$namehtml);
                                             $namehtml = str_replace("  ","%20",$namehtml);
                                             $namehtml = str_replace(" ","%20",$namehtml);
                                             echo "<a href='https://magiccards.info/query?q=".$namehtml."' target='_blank'>Search Scryfall</a>";
-                                        endif;
-                                        ?>
+                                        endif;?>
                                     </td>
-                                </tr>
-                      <?php if(isset($tcgdirectlink) AND $tcgdirectlink !== null): ?>
-                                <tr>
-                                    <td colspan=2 class="buycellleft">
-                                    <?php
-                                    echo "<a href='".$tcgdirectlink."' target='_blank'>Card on TCGPlayer</a>";
-                                    ?>
+                                    <td class="buycellleft"> <?php
+                                        if(isset($tcgdirectlink) AND $tcgdirectlink !== null):
+                                            echo "<a href='".$tcgdirectlink."' target='_blank'>TCGPlayer</a>"; 
+                                        endif; ?>
                                     </td>
-                                </tr>
+                                </tr> 
                             </table>
                             
-                            <hr class='hr324'>
+                            
                             <?php
 
                             // Others with this card section 
-                            echo "<b>Others with this card</b><br>";
                             $usergrprowqry = "SELECT grpinout,groupid FROM users WHERE usernumber = ? LIMIT 1";
                             $usergrprowparams = [$user];
                             if($sqlusergrp = $db->execute_query($usergrprowqry,$usergrprowparams)):
@@ -1788,6 +1772,8 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                                 $others = 0;
                                 $q = 0;
+                                $first = TRUE;
+                                
                                 while ($userrow = $sqluserqry->fetch_array(MYSQLI_ASSOC)):
                                     if($userrow['status'] !== 'disabled'):
                                         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Scanning ".$userrow['username']."'s cards",$logfile);
@@ -1795,7 +1781,7 @@ require('includes/menu.php'); //mobile menu
                                         $grpuser[$q]['name'] = $userrow['username'];
                                         $q = $q + 1;
                                         $usertable = $userrow['usernumber'].'collection';
-                                        $sqlqry = "SELECT id,normal,foil,notes,topvalue FROM `$usertable` WHERE id = ?";
+                                        $sqlqry = "SELECT id,normal,foil,etched,notes,topvalue FROM `$usertable` WHERE id = ?";
                                         $sqlparams = [$id];
                                         if($sqlqtyqry = $db->execute_query($sqlqry,$sqlparams)):
                                             $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded for {$userrow['username']}, $row[0]",$logfile);
@@ -1811,20 +1797,30 @@ require('includes/menu.php'); //mobile menu
                                                 if (empty($userqtyresult['foil'])):
                                                     $userqtyresult['foil'] = 0;
                                                 endif;
+                                                if (empty($userqtyresult['etched'])):
+                                                    $userqtyresult['etched'] = 0;
+                                                endif;
                                                 $others = 1;
                                                 $userrow['username'] = htmlentities($userrow['username'],ENT_QUOTES,"UTF-8");
                                                 $userqtyresult['normal'] = htmlentities($userqtyresult['normal'],ENT_QUOTES,"UTF-8");
                                                 $userqtyresult['foil'] = htmlentities($userqtyresult['foil'],ENT_QUOTES,"UTF-8");
-                                                echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> ",$userqtyresult['normal']," &nbsp;&nbsp;<i>Foil:</i> ",$userqtyresult['foil'],"<br>";
+                                                $userqtyresult['etched'] = htmlentities($userqtyresult['etched'],ENT_QUOTES,"UTF-8");
+                                                if($first === TRUE):
+                                                    echo "<hr class='hr324'>";
+                                                    echo "<b>Others with this card</b><br>";
+                                                    $first = FALSE;
+                                                endif;
+                                                echo ucfirst($userrow['username']),": &nbsp;<i>Normal:</i> {$userqtyresult['normal']} &nbsp;&nbsp;<i>Foil:</i> {$userqtyresult['foil']} &nbsp;&nbsp;<i>Etch:</i> {$userqtyresult['etched']}<br>";
                                             endif;
                                         endif;
                                     endif;
                                 endwhile;
                                 if ($others == 0):
-                                    echo "N/A<br>";
+                                    // echo "N/A<br>";
                                 endif;
                             else:
-                                echo "Opt in for groups in Profile";
+                                // echo "<b>Others with this card</b><br>";
+                                // echo "Opt in for groups in Profile";
                             endif;
                             ?>
                             <hr class='hr324'>
@@ -1941,8 +1937,8 @@ require('includes/menu.php'); //mobile menu
                                     $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking to see if $cardid is in any owned decks",$logfile);
                                     $obj = new DeckManager($db,$logfile);
                                     $inmydecks = $obj->deckCardCheck($cardid,$user);
+                                    echo "<b>Decks</b><br>";
                                     if (!empty($inmydecks)):
-                                        echo "<b>Your decks with this card:</b><br>";
                                         foreach ($inmydecks as $decksrow):
                                             if($decksrow['qty'] != ''):
                                                 echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>{$decksrow['deckname']}</a> (main x{$decksrow['qty']}) <br>";
@@ -1950,7 +1946,6 @@ require('includes/menu.php'); //mobile menu
                                                 echo "<a href='/deckdetail.php?deck={$decksrow['decknumber']}'>{$decksrow['deckname']}</a> (sideboard x{$decksrow['sideqty']}) <br>";
                                             endif;
                                         endforeach;
-                                        echo "<hr class='hr324'>";
                                     endif;
                                     $t = 0;
                                     $grpdecks = array();
@@ -1963,15 +1958,13 @@ require('includes/menu.php'); //mobile menu
                                             $ingrpdecks = $obj->deckCardCheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):
-                                                echo "<b>Group decks with this card:</b><br>";
                                                 foreach ($ingrpdecks as $decksgrprow):
                                                     if($decksgrprow['qty'] != ''):
-                                                        echo "$grpusername: {$decksgrprow['deckname']} (main x{$decksgrprow['qty']}) <br>";
+                                                        echo "<i>Group:</i> $grpusername: {$decksgrprow['deckname']} (main x{$decksgrprow['qty']}) <br>";
                                                     else:
-                                                        echo "$grpusername: {$decksgrprow['deckname']} (sideboard x{$decksgrprow['sideqty']}) <br>";
+                                                        echo "<i>Group:</i> $grpusername: {$decksgrprow['deckname']} (sideboard x{$decksgrprow['sideqty']}) <br>";
                                                     endif;
                                                 endforeach;
-                                                echo "<hr class='hr324'>";
                                             endif;
                                         endforeach;
                                     endif;
@@ -1979,14 +1972,12 @@ require('includes/menu.php'); //mobile menu
 
                                     <!-- Display Add to Deck form -->
 
-                                    <b>Add card to my decks</b><br>
-
                                     <form id="addtodeck" action="<?php echo basename(__FILE__); ?>#deck" method="GET">
                                         <?php echo "<input type='hidden' name='setabbrv' value=".$row['cs_setcode'].">";
                                         echo "<input type='hidden' name='number' value=".$row['number'].">";
                                         echo "<input type='hidden' name='id' value=".$row[0].">"; ?>
                                         <select id='deckselect' name='decktoaddto'>
-                                            <option value='none'>Select</option>
+                                            <option value='none'>Add...</option>
                                             <option value='newdeck'>Add to new deck...</option>
                                             <?php 
                                             
@@ -2004,10 +1995,16 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                             ?>
                                         </select>
-                                        Quantity <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
-                                        <br><br>
-                                        <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19'/>
-                                        <input class='inline_button addtodeckbutton' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK">
+                                        <span id="deckqtyspan" style="display: none">
+                                            &nbsp;Qty <input class='textinput' id='deckqty' type='number' min='0' disabled placeholder='N/A' name='deckqty' value="">
+                                            <br>
+                                        </span>
+                                        <span id="newdecknamespan" style="display: none">
+                                            <input class='textinput' id='newdeckname' disabled type='text' name='newdeckname' placeholder='N/A' size='19' style="padding-top: 10px;"/>
+                                        </span>
+                                        <span id="addtodecksubmitspan" style="display: none">
+                                            <input class='importlabel' id="addtodeckbutton" disabled type="submit" value="ADD TO DECK" style="margin-top: 10px;">
+                                        </span>
                                     </form>
                                     </div>
                                     <?php 
