@@ -57,6 +57,13 @@ require('includes/overlays.php');
 require('includes/header.php');
 require('includes/menu.php');
 
+$import = isset($_POST['import']) ? 'yes' : '';
+$valid_importType = ['add','replace'];
+$importType = isset($_POST['importscope']) ? "{$_POST['importscope']}" : '';
+if (!in_array($importType,$valid_importType)):
+    $importType = '';
+endif;
+
 // Does the user have a collection table?
 $tablecheck = "SELECT * FROM $mytable";
 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
@@ -425,9 +432,8 @@ endif;  ?>
                 </ul>
                 <b>Import guidelines - read carefully!</b><br>
                 <ul>
-                    <li>It is <b>strongly recommended</b> that you export (backup) your collection before doing an import; save that file, and if it goes wrong, reset your database and rollback by importing the original collection</li>
-                    <li>Ideally only do a full import to an empty collection</li>
-                    <li>If a card is not in your collection Import will <b>add</b> it with imported quantities; if a card is in your collection Import will <b>over-write</b> the existing quantity with imported quantities;</li>
+                    <li>It is recommended to export (backup) your collection before doing an import; save that file, and if it goes wrong, reset your database and rollback by importing the original collection</li>
+                    <li>Select Add or Replace to either: (Add): add imports to existing quantities; or (Replace): overwrite existing quantities</li>
                     <li>Import file must be a comma-delimited file; delimiters and enclosing should be as the following example (which also shows how to have a name that includes a comma):</li>
                 </ul>
                 <pre>
@@ -436,35 +442,40 @@ endif;  ?>
                 LTR,4,"Boromir, Warden of the Tower",2,0,0,f6bc3720-2892-4dda-8f30-079a1ac8e1e2</pre>
                 <ul>
                     <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
-                    <li>If a Scryfall UUID cannot be matched, an attempt will be made to match based on setcode, name and collector number. If this fails the row will generate an error and be skipped</li>
+                    <li>If a Scryfall UUID cannot be matched, an attempt will be made to match based on setcode, name and collector number. If this fails the row will be skipped</li>
                     <li>Set codes and collector numbers MUST be as on this site (see <a href='sets.php'> for Set codes </a>) for successful import</li>
                     <li>For an example of the right format export first and use that file as a template</li>
-                    <li>Be cautious importing promos or specials, unless you have validated the Scryfall UUID</li>
-                    <li>The import routine will validate if a foil or etched version is actually available, but the results will depend on the quality of the data being imported</li>
                     <li>Check the last line of exported files before importing to make sure that it has been closed properly - it should have terminating quotes and a newline; this can be seen on a sample export in an app like Notepad++ (<b>don't use Excel</b>)</li>
-                    <li>The import process imports a line, then does a follow-up check to see if it has been successfully written to the database</li>
-                    <li>Warnings are shown for lines which you should check and fix - database write failures, name matches, etc.</li>
                     <li>You will be sent a list of the failures and warnings at the end of the import</li>
                 </ul>
                 <span id='importspan'>
                     <b>Import</b>
                 </span> <?php
-                if (!isset($_POST['import'])): 
+                if ($import === ''):
                     echo "<b>Export</b><br>"; 
                 else:
                     echo "<br>";
                 endif;?>
                 <div id='importdiv'>
                     <form enctype='multipart/form-data' action='?' method='post'>
+                        
                         <label class='importlabel'>
                             <input id='importfile' type='file' name='filename'>
                             <span>UPLOAD</span>
                         </label>
                         <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT CSV' disabled onclick='ImportPrep()';>
+                        <br>&nbsp;
+                        <br>
+                        <span title="Add to existing values" class="parametersmall">
+                            <label class="radio"><input type="radio" name="importscope" value="add" checked="checked"><span class="outer"><span class="inner"></span></span>Add</label>
+                        </span>
+                        <span title="Overwrite existing values" class="parametersmall">
+                            <label class="radio"><input type="radio" name="importscope" value="replace"><span class="outer"><span class="inner"></span></span>Replace</label>
+                        </span>
                     </form> 
                 </div>
                 <?php
-                if (isset($_POST['import'])):
+                if ($import === 'yes' && $importType !== ''):
                     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
                     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                         echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." uploaded successfully. Processing..." . "</h4>";
@@ -476,8 +487,12 @@ endif;  ?>
                     endif;
                     $importfile = $_FILES['filename']['tmp_name'];
                     $obj = new ImportExport($db,$logfile);
-                    $importcards = $obj->importCollection($importfile, $mytable, $useremail, $serveremail);
+                    $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail);
                     echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
+                elseif ($import === 'yes' && $importType !== ''):
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import called without valid importType",$logfile);
+                    echo "Invalid parameters";
+                    echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
                 else: ?>
                     <div id='exportdiv'>
                         <form action="csv.php"  method="GET">
