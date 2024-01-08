@@ -93,55 +93,143 @@ class ImportExport
         exit;
     endif;
     }
+    
+    private function checkFormat($format,$d0,$d1,$d2,$d3,$d4,$d5,$d6)
+    {
+        if ($format === 'mtgc'):
+            if (    (strpos(strtolower($d0),'code') === FALSE) OR
+                    (strpos(strtolower($d1),'number') === FALSE) OR
+                    (strpos(strtolower($d2),'name') === FALSE) OR
+                    (strpos(strtolower($d3),'normal') === FALSE) OR
+                    (strpos(strtolower($d4),'foil') === FALSE) OR
+                    (strpos(strtolower($d5),'etched') === FALSE) OR
+                    (strpos(strtolower($d6),'id') === FALSE)
+                ):
+                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain correct '$format' header row",$this->logfile);
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+                return "incorrect format";
+            else:
+                return "ok header";
+            endif;
+        elseif ($format === 'delverlens'):
+            if (    (strpos(strtolower($d0),'code') === FALSE) OR
+                    (strpos(strtolower($d1),'number') === FALSE) OR
+                    (strpos(strtolower($d2),'name') === FALSE) OR
+                    (strpos(strtolower($d3),'non-foil') === FALSE) OR
+                    ((strpos(strtolower($d4),'foil') === FALSE) OR (strpos(strtolower($d4),'non-foil') !== FALSE)) OR
+                    (strpos(strtolower($d5),'id') === FALSE)
+                ):
+                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain correct '$format' header row",$this->logfile);
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+                return "incorrect format";
+            else:
+                return "ok header";
+            endif;
+        else:
+            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain valid header row",$this->logfile);
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+            return "incorrect format";
+        endif;
+    }
 
-    public function importCollection($filename, $mytable, $importType, $useremail, $serveremail) {
+    private function mapFormat($format,$d0,$d1,$d2,$d3,$d4,$d5,$d6)
+    {
+        $data = [];
+        if ($format === 'mtgc'):
+            $data[0] = $d0;
+            $data[1] = $d1;
+            $data[2] = stripslashes($d2);
+            if (!empty($d3)): // normal qty
+                $data[3] = $d3;
+            else:
+                $data[3] = 0;
+            endif;
+            if (!empty($d4)): // foil qty
+                $data[4] = $d4;
+            else:
+                $data[4] = 0;
+            endif;
+            if (!empty($d5)): // etched qty
+                $data[5] = $d5;
+            else:
+                $data[5] = 0;
+            endif;
+            if (!empty($d6)): // ID
+                $data[6] = $d6;
+            else:
+                $data[6] = null;
+            endif;
+        elseif ($format === 'delverlens'):
+            $data[0] = $d0;
+            $data[1] = $d1;
+            $data[2] = stripslashes($d2);
+
+            if (!empty($d3)): // normal qty
+                $data[3] = $d3;
+            else:
+                $data[3] = 0;
+            endif;
+
+            if (!empty($d4)): // foil qty
+                $data[4] = $d4;
+            else:
+                $data[4] = 0;
+            endif;
+
+            $data[5] = 0; // Always set etched to 0 for Delver Lens, as it does not correctly support it
+
+            if (!empty($d5)): // ID
+                $data[6] = $d5;
+            else:
+                $data[6] = null;
+            endif;
+        else:
+            return "error";
+        endif;
+        return $data;
+    }
+
+    public function importCollection($filename, $mytable, $importType, $useremail, $serveremail, $importFormat = 'mtgc') {
+        
+        // Check if called with a valid import type definition
+        $validFormats = ['mtgc','delverlens'];
+        if (!in_array($importFormat,$validFormats)):
+            return "incorrect format";
+        endif;
+        
+        // 'mtgc' expects header row to be: setcode,number,name,normal,foil,etched,id
+        // 'delverlens' expects header row to be: Edition code,Collector's number,Name,Non-foil quantity,Foil quantity,Scryfall ID
+        
         //Import uploaded file to Database
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import starting in '$importType' mode",$this->logfile);
+        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import starting in '$importType' mode, '$importFormat' format",$this->logfile);
         $handle = fopen($filename, "r");
         $i = 0;
         $count = 0;
         $total = 0;
-        $warningsummary = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)';
+        $warningsummary = '';
+        $warningheading = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)';
         while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
             $idimport = 0;
             $row_no = $i + 1;
-            if ($i === 0):
-                if (       (strpos($data[0],'setcode') === FALSE)
-                        OR (strpos($data[1],'number') === FALSE)
-                        OR (strpos($data[2],'name') === FALSE)
-                        OR (strpos($data[3],'normal') === FALSE)
-                        OR (strpos($data[4],'foil') === FALSE)
-                        OR (strpos($data[5],'etched') === FALSE) 
-                        OR (strpos($data[6],'id') === FALSE)):
-                    echo "<h4>Incorrect file format</h4>";
-                    $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain header row",$this->logfile);
-                    exit;
-                endif;
-            elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):
-                $data0 = $data[0];
-                $data1 = $data[1];
-                $data2 = stripslashes($data[2]);
-                if (!empty($data[3])): // normal qty
-                    $data3 = $data[3];
+            if ($i === 0): // It's the header row, check to see if it matches the stated format
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: " . implode(',', $data), $this->logfile);
+                $validHeader = $this->checkFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],isset($data[6]) ? $data[6] : '');
+                if ($validHeader !== "ok header"):
+                    return "incorrect format";
                 else:
-                    $data3 = 0;
+
                 endif;
-                if (!empty($data[4])): // foil qty
-                    $data4 = $data[4];
-                else:
-                    $data4 = 0;
-                endif;
-                if (!empty($data[5])): // etched qty
-                    $data5 = $data[5];
-                else:
-                    $data5 = 0;
-                endif;
-                if (!empty($data[6])): // ID
-                    $data6 = $data[6];
-                else:
-                    $data6 = null;
-                endif;
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no of import file: setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})",$this->logfile);
+            elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):  // We have bare minimum info - a setcode, a number and a name
+                $dataMap = $this->mapFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],isset($data[6]) ? $data[6] : '');
+                $data0 = $dataMap[0];
+                $data1 = $dataMap[1];
+                $data2 = $dataMap[2];
+                $data3 = $dataMap[3];
+                $data4 = $dataMap[4];
+                $data5 = $dataMap[5];
+                $data6 = $dataMap[6];
+                
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no of import file (format: '$importFormat'): setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})",$this->logfile);
                 $supplied_id = $data6; // id
                 if (!is_null($data6)): // ID has been supplied, run an ID check / import first
                     $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Data has an ID ($data6), checking for a match",$this->logfile);
@@ -308,7 +396,7 @@ class ImportExport
                                     $sqlcheck = $sqlcheckqry->fetch_assoc();
                                     $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$this->logfile);
                                     if (($sqlcheck['normal'] == $desiredValues['normal']) AND ($sqlcheck['foil'] == $desiredValues['foil']) AND ($sqlcheck['etched'] == $desiredValues['etched'])):
-                                        $total = $total + $sqlcheck['normal'] + $sqlcheck['foil'] + $sqlcheck['etched'];
+                                        $total = $total + $data3 + $data4 + $data5;
                                         $count = $count + 1;
                                         $idimport = 1;
                                     else:
@@ -547,11 +635,15 @@ class ImportExport
         fclose($handle);
         $summary = "Import done - $count unique cards, $total in total.";
         print $summary;
+        if ($warningsummary === ''):
+            $warningsummary = 'No warnings or errors';
+        endif;
         $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
         $subject = "Import failures / warnings"; 
-        $message = "$warningsummary \n \n $summary";
+        $message = "$warningheading \n \n $warningsummary \n \n $summary";
         mail($useremail, $subject, $message, $from); 
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import finished",$this->logfile); ?>
+        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import finished",$this->logfile);
+        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Warnings: '$warningsummary'",$this->logfile); ?>
         <script type="text/javascript">
             (function() {
                 fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');

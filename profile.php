@@ -58,10 +58,17 @@ require('includes/header.php');
 require('includes/menu.php');
 
 $import = isset($_POST['import']) ? 'yes' : '';
+
 $valid_importType = ['add','replace'];
 $importType = isset($_POST['importscope']) ? "{$_POST['importscope']}" : '';
 if (!in_array($importType,$valid_importType)):
     $importType = '';
+endif;
+
+$valid_format = ['mtgc','delverlens'];
+$importFormat = isset($_POST['format']) ? $_POST['format'] : '';
+if (!in_array($importFormat,$valid_format)):
+    $importFormat = '';
 endif;
 
 // Does the user have a collection table?
@@ -472,10 +479,19 @@ endif;  ?>
                         <span title="Overwrite existing values" class="parametersmall">
                             <label class="radio"><input type="radio" name="importscope" value="replace"><span class="outer"><span class="inner"></span></span>Replace</label>
                         </span>
-                    </form> 
+                        <br>
+                        <h5>Format</h5>
+                        <span title="MtG Collection format" class="parametersmall">
+                            <label class="radio"><input type="radio" name="format" value="mtgc" checked="checked"><span class="outer"><span class="inner"></span></span>MTGC</label>
+                        </span>
+                        <span title="Delver Lens format" class="parametersmall">
+                            <label class="radio"><input type="radio" name="format" value="delverlens"><span class="outer"><span class="inner"></span></span>Delver</label>
+                        </span>
+                    </form>
+                    <br>&nbsp;
                 </div>
                 <?php
-                if ($import === 'yes' && $importType !== ''):
+                if ($import === 'yes' && $importType !== '' && $importFormat !== ''):
                     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
                     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                         echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." uploaded successfully. Processing..." . "</h4>";
@@ -487,9 +503,14 @@ endif;  ?>
                     endif;
                     $importfile = $_FILES['filename']['tmp_name'];
                     $obj = new ImportExport($db,$logfile);
-                    $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail);
-                    echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
-                elseif ($import === 'yes' && $importType !== ''):
+                    $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
+                    if ($importcards === 'incorrect format'):
+                        echo "<h4>Incorrect file format</h4>";
+                        exit;
+                    else:
+                        echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
+                    endif;
+                elseif ($import === 'yes' && ($importType === '' OR $importFormat === '')):
                     $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import called without valid importType",$logfile);
                     echo "Invalid parameters";
                     echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
