@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       11/12/23
+/* Version:     2.0
+    Date:       10/01/24
     Name:       importexport.class.php
     Purpose:    Import / export management class
     Notes:      - 
@@ -11,6 +11,9 @@
     
  *  1.0
                 Initial version
+ * 
+ *  2.0
+ *              Break import into MTGC and Delver formats
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -90,12 +93,13 @@ class ImportExport
         header("Content-Disposition: attachment; filename=$filename");
         echo "\xEF\xBB\xBF"; // UTF-8 BOM
         echo $out;
-        exit;
+        // exit;
     endif;
     }
     
     private function checkFormat($format,$d0,$d1,$d2,$d3,$d4,$d5,$d6)
     {
+        // Check native MTG Collection import format
         if ($format === 'mtgc'):
             if (    (strpos(strtolower($d0),'code') === FALSE) OR
                     (strpos(strtolower($d1),'number') === FALSE) OR
@@ -111,6 +115,8 @@ class ImportExport
             else:
                 return "ok header";
             endif;
+        
+        // Check Delver Lens import format
         elseif ($format === 'delverlens'):
             if (    (strpos(strtolower($d0),'code') === FALSE) OR
                     (strpos(strtolower($d1),'number') === FALSE) OR

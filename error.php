@@ -28,6 +28,7 @@ $cssver = "";
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
+    <script src="/js/jquery.js"></script>
 </head>
 
 <body class="body">

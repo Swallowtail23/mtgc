@@ -438,10 +438,12 @@ $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading page layout"
             endif; 
         endif;?>
     </head>
+
     <body> <?php 
         include_once("includes/analyticstracking.php");
         $getString = getStringParameters($_GET, 'page'); ?>
-        <div class="top"> <?php echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
+        <div class="top"> <?php 
+            echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
         </div>
         <?php
         require('includes/overlays.php'); //menus
@@ -944,8 +946,8 @@ $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading page layout"
                 require('includes/search.php');
             endif;
             ?>
-        </div>
-<?php require('includes/footer.php'); 
+        </div> <?php 
+        require('includes/footer.php'); 
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finished",$logfile);?>
     </body>
 </html>
