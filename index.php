@@ -120,7 +120,7 @@ $battle = isset($_GET['battle']) ? 'yes' : '';
 $valid_colourOp = array("and","or","");
 $colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
 if (!in_array($colourOp,$valid_colourOp)):
-    $colourOp == '';
+    $colourOp = '';
 endif;
 $colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
 $common = isset($_GET['common']) ? 'yes' : '';
@@ -133,7 +133,7 @@ $online = isset($_GET['online']) ? 'yes' : '';
 $valid_gametypeOp = array("and","or","");
 $gametypeOp = isset($_GET['gametypeOp']) ? "{$_GET['gametypeOp']}" : '';
 if (!in_array($gametypeOp,$valid_gametypeOp)):
-    $gametypeOp == '';
+    $gametypeOp = '';
 endif;
 $gametypeExcl = isset($_GET['gametypeExcl']) ? 'ONLY' : '';
 $online = isset($_GET['online']) ? 'yes' : '';
@@ -146,7 +146,7 @@ $tribal = isset($_GET['tribal']) ? 'yes' : '';
 $valid_tribe = array("merfolk","goblin","treefolk","centaur","sliver","human","zombie","vampire");
 $tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
 if (!in_array($tribe,$valid_tribe)):
-    $tribe == '';
+    $tribe = '';
 endif;
 $legendary = isset($_GET['legendary']) ? 'yes' : '';
 $token = isset($_GET['token']) ? 'yes' : '';
@@ -159,24 +159,24 @@ endif;
 $valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown");
 $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
 if (!in_array($sortBy,$valid_sortBy)):
-    $sortBy == '';
+    $sortBy = '';
 endif;
 $valid_operator = array("ltn","gtr","eq");
 $poweroperator = isset($_GET['poweroperator']) ? "{$_GET['poweroperator']}" : '';
 if (!in_array($poweroperator,$valid_operator)):
-    $poweroperator == '';
+    $poweroperator = '';
 endif;
 $toughoperator = isset($_GET['toughoperator']) ? "{$_GET['toughoperator']}" : '';
 if (!in_array($toughoperator,$valid_operator)):
-    $toughoperator == '';
+    $toughoperator = '';
 endif;
 $loyaltyoperator = isset($_GET['loyaltyoperator']) ? "{$_GET['loyaltyoperator']}" : '';
 if (!in_array($loyaltyoperator,$valid_operator)):
-    $loyaltyoperator == '';
+    $loyaltyoperator = '';
 endif;
 $cmcoperator = isset($_GET['cmcoperator']) ? "{$_GET['cmcoperator']}" : '';
 if (!in_array($cmcoperator,$valid_operator)):
-    $cmcoperator == '';
+    $cmcoperator = '';
 endif;
 $cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT):'';
 $power = isset($_GET['power']) ? filter_input(INPUT_GET, 'power', FILTER_SANITIZE_NUMBER_INT):'';
@@ -187,12 +187,12 @@ $adv = isset($_GET['complex']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
 $valid_scope = array("all","mycollection","notcollection");
 if (!in_array($scope,$valid_scope)):
-    $scope == '';
+    $scope = '';
 endif;
 $valid_legal = array("std","pnr","mdn","vin","lgc","alc","his");
 $legal = isset($_GET['legal']) ? "{$_GET['legal']}" : '';
 if (!in_array($legal,$valid_legal)):
-    $legal == '';
+    $legal = '';
 endif;
 $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
 $searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
@@ -438,10 +438,12 @@ $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading page layout"
             endif; 
         endif;?>
     </head>
+
     <body> <?php 
         include_once("includes/analyticstracking.php");
         $getString = getStringParameters($_GET, 'page'); ?>
-        <div class="top"> <?php echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
+        <div class="top"> <?php 
+            echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
         </div>
         <?php
         require('includes/overlays.php'); //menus
@@ -944,8 +946,8 @@ $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Loading page layout"
                 require('includes/search.php');
             endif;
             ?>
-        </div>
-<?php require('includes/footer.php'); 
+        </div> <?php 
+        require('includes/footer.php'); 
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finished",$logfile);?>
     </body>
 </html>
