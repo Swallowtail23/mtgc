@@ -24,17 +24,22 @@ class ImportExport
 {
     private $db;
     private $logfile;
+    private $useremail;
+    private $serveremail;
     private $message;
-
-    public function __construct($db, $logfile)
+    
+    public function __construct($db, $logfile, $useremail, $serveremail)
     {
         $this->db = $db;
         $this->logfile = $logfile;
+        $this->useremail = $useremail;
+        $this->serveremail = $serveremail;
         $this->message = new Message();
     }
 
-    public function exportCollectionToCsv($table,$filename = 'export.csv')
+    public function exportCollectionToCsv($table, $format = 'echo', $filename = 'export.csv')
     {
+    
     $csv_terminated = "\n";
     $csv_separator = ",";
     $csv_enclosed = '"';
@@ -84,16 +89,42 @@ class ImportExport
         endwhile;
             $out .= $csv_enclosed;
             $out .= $csv_terminated;
-        header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-        header("Content-Length: " . strlen($out));
-        // Output to browser with appropriate mime type, you choose ;)
-        header("Content-type: text/x-csv; charset=UTF-8");
-        //header("Content-type: text/csv");
-        //header("Content-type: application/csv");
-        header("Content-Disposition: attachment; filename=$filename");
-        echo "\xEF\xBB\xBF"; // UTF-8 BOM
-        echo $out;
-        // exit;
+        if ($format === 'echo'):
+            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+            header("Content-Length: " . strlen($out));
+            header("Content-type: text/x-csv; charset=UTF-8");
+            header("Content-Disposition: attachment; filename=$filename");
+            echo "\xEF\xBB\xBF"; // UTF-8 BOM
+            echo $out;
+        elseif($format === 'email'):
+            // Headers for the email
+            $boundary = uniqid('np'); // A unique boundary is important.
+            $headers = "From: $this->serveremail\r\n";
+            $headers .= "Return-path: $this->serveremail\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
+
+            // Message Body
+            $message = "--$boundary\r\n";
+            $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
+            $message .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+            $message .= "Collection export is attached\r\n\r\n";
+
+            // Attachment
+            $message .= "--$boundary\r\n";
+            $message .= "Content-Type: text/x-csv; name=\"$filename\"\r\n";
+            $message .= "Content-Disposition: attachment; filename=\"$filename\"\r\n";
+            $message .= "Content-Transfer-Encoding: base64\r\n\r\n";
+            $message .= chunk_split(base64_encode($out)) . "\r\n";
+            $message .= "--$boundary--";
+
+            // Subject of the email
+            $subject = "Collection export";
+
+            // Sending the mail
+            mail($this->useremail, $subject, $message, $headers);
+            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Export emailed to '$this->useremail'",$this->logfile);
+        endif;
     endif;
     }
     
@@ -194,7 +225,32 @@ class ImportExport
         endif;
         return $data;
     }
+    
+    public function guessCsvDelimiter($filePath, $numLines = 5) 
+    {
+        $file = fopen($filePath, 'r');
+        $delimiters = [",", "\t", ";", "|", "&"];
+        $results = array_fill_keys($delimiters, 0);
+        $lines = [];
 
+        while ($numLines-- > 0 && ($line = fgets($file)) !== false):
+            $lines[] = $line;
+        endwhile;
+        fclose($file);
+
+        foreach ($lines as $line):
+            foreach ($delimiters as $delimiter):
+                $result = count(str_getcsv($line, $delimiter));
+                if ($result > $results[$delimiter]):
+                    $results[$delimiter] = $result;
+                endif;
+            endforeach;
+        endforeach;
+
+        return array_search(max($results), $results);
+    }
+
+    
     public function importCollection($filename, $mytable, $importType, $useremail, $serveremail, $importFormat = 'mtgc') {
         
         // Check if called with a valid import type definition
@@ -214,11 +270,19 @@ class ImportExport
         $total = 0;
         $warningsummary = '';
         $warningheading = 'Warning type, Setcode, Row number, Setcode, Number, Import Name, Import Normal, Import Foil, Import Etched, Supplied ID, Database Name (if applicable), Database ID (if applicable)';
-        while (($data = fgetcsv ($handle, 100000, ',')) !== FALSE):
+        if ($importFormat === 'mtgc'):
+            $delimiter = ',';
+        elseif ($importFormat === 'delverlens'):
+            $delimiter = $this->guessCsvDelimiter($filename);
+        else:
+            $delimiter = ',';
+        endif;
+        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file delimiter is '$delimiter'", $this->logfile);
+        while (($data = fgetcsv ($handle, 100000, $delimiter)) !== FALSE):
             $idimport = 0;
             $row_no = $i + 1;
             if ($i === 0): // It's the header row, check to see if it matches the stated format
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: " . implode(',', $data), $this->logfile);
+                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: " . implode($delimiter, $data), $this->logfile);
                 $validHeader = $this->checkFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],isset($data[6]) ? $data[6] : '');
                 if ($validHeader !== "ok header"):
                     return "incorrect format";

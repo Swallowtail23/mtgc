@@ -42,30 +42,27 @@ require ('includes/secpagesetup.php');      //Setup page variables
 $msg = new Message;
 
 // Has DELETE collection been called? 
-$deletesuccess = (isset($_GET['del']) && $_GET['del'] === 'yes') ? 'YES' : 'NO';
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
 $delcollresult = ''; // Variable to hold error message
 
 if ($deletecollection === 'DELETE'):    
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to delete collection '$mytable'",$logfile);
-    $obj = new ImportExport($db,$logfile);
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Exporting collection...",$logfile);
-    $obj->exportCollectionToCsv($mytable);
+    $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Exporting collection to email...",$logfile);
+    $obj->exportCollectionToCsv($mytable,'email');
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Truncating collection table...",$logfile);
     if(!$db->execute_query("TRUNCATE TABLE `$mytable`")):
         $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Truncate table failed",$logfile);
         $delcollresult = "Error: Failed to delete collection";
     else:
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"PRG with success parameter...",$logfile);
-        header("Location: profile.php?del=yes");
-        exit;
+        $delcollresult = "Success: Deleted collection";
     endif;
-elseif ($deletesuccess === 'YES'):
-    $delcollresult = "Success: Deleted collection";
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection deleted, PRG completed",$logfile);
 else:
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Normal page load...",$logfile);
-endif; ?> 
+endif; 
+
+?> 
 
 <!DOCTYPE html>
 <html>
@@ -87,11 +84,6 @@ endif; ?>
     </head>
 
     <body> <?php 
-    
-        if (!empty($delcollresult)):
-            echo "<script>alert('$delcollresult');</script>";
-        endif;
-    
         include_once("includes/analyticstracking.php");
         require('includes/overlays.php');  
         require('includes/header.php');
@@ -172,6 +164,12 @@ endif; ?>
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php 
+                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"delcollresult is '$delcollresult'",$logfile);
+                if (!empty($delcollresult)):
+                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"In here",$logfile);
+                    echo "<script>alert('$delcollresult');</script>";
+                    echo "<meta http-equiv='refresh' content='0; url=profile.php'>";
+                endif;
                 //Page PHP processing
 
                 //2. Has a password reset been called? Needs to be in DIV for error display
@@ -440,7 +438,14 @@ endif; ?>
                                 document.body.style.cursor='wait';
                             };
                             function confirmDelete() {
-                                return confirm("Are you sure you want to delete all cards from your collection? Selecting OK will do a CSV export and then delete all cards.");
+                                var firstConfirm = confirm("Are you sure you want to delete all cards from your collection? Selecting OK will email you an extract of your collection and then delete all cards. To export manually, press cancel and Export from further down this page.");
+    
+                                if (firstConfirm) {
+                                    var secondConfirm = confirm("This action is irreversible. Are you absolutely sure you want to delete all cards from your collection?");
+                                    return secondConfirm;
+                                }
+    
+                                return false;
                             };
                         </script> 
 
@@ -599,7 +604,7 @@ endif; ?>
                                 exit;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
-                            $obj = new ImportExport($db,$logfile);
+                            $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
                             $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
                             if ($importcards === 'incorrect format'):
                                 echo "<h4>Incorrect file format</h4>";
@@ -619,7 +624,7 @@ endif; ?>
                 endif; ?>
             </div>
         </div> <?php 
-        require('includes/footer.php'); 
+        require('includes/footer.php');
         $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finished",$logfile);?>
     </body>
 </html>
