@@ -1,11 +1,14 @@
 <?php
-/* Version:     1.0
-    Date:       22/01/22
+/*  Version:    2.0
+    Date:       13/01/24
     Name:       scryfall_rulings.php
     Purpose:    Import/update Scryfall rulings data
     Notes:      {none} 
         
     1.0         Downloads Scryfall rulings file, wipes and writes rulings_scry table
+ * 
+ *  2.0         13/01/24
+ *              Move to PHPMailer for email output
 */
 
 require ('bulk_ini.php');
@@ -96,7 +99,10 @@ foreach($data AS $key => $value):
     $stmt->close();
 endforeach;
 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk rulings completed",$logfile);
-$from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+
+// Email results
 $subject = "MTG rulings update completed"; 
-$message = "Total: $total_count";
-mail($adminemail, $subject, $message, $from); 
+$body = "Total rulings: $total_count";
+$mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+$mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
+$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);

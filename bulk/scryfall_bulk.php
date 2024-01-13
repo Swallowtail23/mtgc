@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.0
-    Date:       02/01/24
+/* Version:     8.0
+    Date:       13/01/24
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -21,11 +21,15 @@
  * 
  *  7.0         02/01/24
  *              Major rewrite, moving logic to functions and adding ability to process All Cards as well as Default Cards
+ * 
+ *  8.0         13/01/24
+ *              Move email function to use phpmailer
 */
 
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
+
 $msg = new Message;
 
 // Get and interpret parameter 1
@@ -81,7 +85,13 @@ if ($bulkInfo !== FALSE):
             elseif ($file_location === $ImgLocation.'json/bulk_all.json'):
                 $type = 'all';
             endif;
-            scryfallImport($file_location,$type);
+            
+            // Email results
+            $bulkResultMessage = scryfallImport($file_location,$type);
+            $subject = "MTG bulk update completed ($type)";
+            $mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+            $mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $bulkResultMessage);
+            $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);
         endif;
     endif;
 else:

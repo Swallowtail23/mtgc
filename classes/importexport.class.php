@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       10/01/24
+/* Version:     3.0
+    Date:       13/01/24
     Name:       importexport.class.php
     Purpose:    Import / export management class
     Notes:      - 
@@ -14,6 +14,9 @@
  * 
  *  2.0
  *              Break import into MTGC and Delver formats
+ * 
+ *  3.0         13/01/24
+ *              Move to use PHPMailer
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -37,95 +40,83 @@ class ImportExport
         $this->message = new Message();
     }
 
-    public function exportCollectionToCsv($table, $format = 'echo', $filename = 'export.csv')
+    public function exportCollectionToCsv($table, $myURL, $smtpParameters, $format = 'echo', $filename = 'export.csv')
     {
-    
-    $csv_terminated = "\n";
-    $csv_separator = ",";
-    $csv_enclosed = '"';
-    $csv_escaped = "\\";
-    $table = $this->db->real_escape_string($table);
-    $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
-    $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$this->logfile);
+        $csv_terminated = "\n";
+        $csv_separator = ",";
+        $csv_enclosed = '"';
+        $csv_escaped = "\\";
+        $table = $this->db->real_escape_string($table);
+        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
+        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$this->logfile);
 
-    // Gets the data from the database
-    $result = $this->db->query($sql);
-    if($result === false):
-        trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-    else:
-        $fields_cnt = $result->field_count;
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Number of fields: $fields_cnt",$this->logfile);
-        $schema_insert = '';
-        for ($i = 0; $i < $fields_cnt; $i++):
-            $fieldinfo = mysqli_fetch_field_direct($result, $i);
-            $l = $csv_enclosed.str_replace($csv_enclosed, $csv_escaped.$csv_enclosed, stripslashes($fieldinfo->name)).$csv_enclosed;
-            $schema_insert .= $l;
-            $schema_insert .= $csv_separator;
-        endfor;
-
-        $out = trim(substr($schema_insert, 0, -1));
-        $out .= $csv_terminated;
-
-        // Format the data
-        while($row = $result->fetch_row()):
+        // Gets the data from the database
+        $result = $this->db->query($sql);
+        if($result === false):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+        else:
+            $fields_cnt = $result->field_count;
+            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Number of fields: $fields_cnt",$this->logfile);
             $schema_insert = '';
-            for ($j = 0; $j < $fields_cnt; $j++):
-                if ($row[$j] == '0' || $row[$j] != ''):
-                    if ($csv_enclosed == ''):
-                        $schema_insert .= $row[$j];
-                    else:
-                        $schema_insert .= $csv_enclosed .
-                        str_replace($csv_enclosed, $csv_escaped . $csv_enclosed, $row[$j]) . $csv_enclosed;
-                    endif;
-                else:
-                    $schema_insert .= '';
-                endif;
-                if ($j < $fields_cnt - 1):
-                    $schema_insert .= $csv_separator;
-                endif;
+            for ($i = 0; $i < $fields_cnt; $i++):
+                $fieldinfo = mysqli_fetch_field_direct($result, $i);
+                $l = $csv_enclosed.str_replace($csv_enclosed, $csv_escaped.$csv_enclosed, stripslashes($fieldinfo->name)).$csv_enclosed;
+                $schema_insert .= $l;
+                $schema_insert .= $csv_separator;
             endfor;
-            $out .= $schema_insert;
+
+            $out = trim(substr($schema_insert, 0, -1));
             $out .= $csv_terminated;
-        endwhile;
-            $out .= $csv_enclosed;
+
+            // Format the data
+            while($row = $result->fetch_row()):
+                $schema_insert = '';
+                for ($j = 0; $j < $fields_cnt; $j++):
+                    if ($row[$j] == '0' || $row[$j] != ''):
+                        if ($csv_enclosed == ''):
+                            $schema_insert .= $row[$j];
+                        else:
+                            $schema_insert .= $csv_enclosed .
+                            str_replace($csv_enclosed, $csv_escaped . $csv_enclosed, $row[$j]) . $csv_enclosed;
+                        endif;
+                    else:
+                        $schema_insert .= '';
+                    endif;
+                    if ($j < $fields_cnt - 1):
+                        $schema_insert .= $csv_separator;
+                    endif;
+                endfor;
+                $out .= $schema_insert;
+                $out .= $csv_terminated;
+            endwhile;
             $out .= $csv_terminated;
-        if ($format === 'echo'):
-            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-            header("Content-Length: " . strlen($out));
-            header("Content-type: text/x-csv; charset=UTF-8");
-            header("Content-Disposition: attachment; filename=$filename");
-            echo "\xEF\xBB\xBF"; // UTF-8 BOM
-            echo $out;
-        elseif($format === 'email'):
-            // Headers for the email
-            $boundary = uniqid('np'); // A unique boundary is important.
-            $headers = "From: $this->serveremail\r\n";
-            $headers .= "Return-path: $this->serveremail\r\n";
-            $headers .= "MIME-Version: 1.0\r\n";
-            $headers .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
+            if ($format === 'echo'):
+                header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+                header("Content-Length: " . strlen($out));
+                header("Content-type: text/x-csv; charset=UTF-8");
+                header("Content-Disposition: attachment; filename=$filename");
+                echo "\xEF\xBB\xBF"; // UTF-8 BOM
+                echo $out;
+            elseif($format === 'email'):
+                $mail = new myPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
 
-            // Message Body
-            $message = "--$boundary\r\n";
-            $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
-            $message .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-            $message .= "Collection export is attached\r\n\r\n";
+                $tempFile = tempnam(sys_get_temp_dir(), 'export_');
+                file_put_contents($tempFile, $out);
 
-            // Attachment
-            $message .= "--$boundary\r\n";
-            $message .= "Content-Type: text/x-csv; name=\"$filename\"\r\n";
-            $message .= "Content-Disposition: attachment; filename=\"$filename\"\r\n";
-            $message .= "Content-Transfer-Encoding: base64\r\n\r\n";
-            $message .= chunk_split(base64_encode($out)) . "\r\n";
-            $message .= "--$boundary--";
-
-            // Subject of the email
-            $subject = "Collection export";
-
-            // Sending the mail
-            mail($this->useremail, $subject, $message, $headers);
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Export emailed to '$this->useremail'",$this->logfile);
+                $subject = "Collection export";
+                $emailbody = "Your MtG collection export is attached. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your MtG Collection profile page</a>";
+                $emailhtmlbody = "Your MtG collection export is attached. \r\n\r\n Opt out of automated emails in your profile at your MtG Collection profile page ($myURL/profile.php) \r\n\r\n";
+                $mailresult = $mail->sendEmail($this->useremail, TRUE, $subject, $emailbody, $emailhtmlbody, $tempFile, $filename);
+                if (isset($tempFile)):
+                    unlink($tempFile);
+                endif;
+                if($mailresult === TRUE):
+                    return TRUE;
+                else:
+                    return FALSE;
+                endif;
+            endif;
         endif;
-    endif;
     }
     
     private function checkFormat($format,$d0,$d1,$d2,$d3,$d4,$d5,$d6)

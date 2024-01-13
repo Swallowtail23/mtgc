@@ -1,11 +1,14 @@
 <?php
-/* Version:     1.0
-    Date:       22/01/22
+/* Version:     2.0
+    Date:       13/01/24
     Name:       scryfall_sets.php
     Purpose:    Import/update Scryfall sets data
     Notes:      {none} 
         
     1.0         Release 1
+ * 
+ *  2.0         13/01/24
+ *              Move to PHPMailer for email output
 */
 
 require ('bulk_ini.php');
@@ -125,10 +128,11 @@ foreach($data AS $key => $value):
         endforeach;
     endif;
 endforeach;
-
-
 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk sets completed",$logfile);
-$from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+
+// Email results
 $subject = "MTG sets update completed"; 
-$message = "Total: $total_count";
-mail($adminemail, $subject, $message, $from); 
+$body = "Total sets: $total_count";
+$mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+$mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
+$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);

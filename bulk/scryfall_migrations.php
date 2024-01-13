@@ -1,20 +1,24 @@
 <?php
-/* Version:     1.0
-    Date:       09/07/23
+/* Version:     2.0
+    Date:       13/01/24
     Name:       scryfall_migrations.php
     Purpose:    Import/update Scryfall migrations/deletions data
     Notes:      {none} 
         
     1.0         First version
+ * 
+ *  2.0         13/01/24
+ *              Move to PHPMailer for email output
 */
+
+use JsonMachine\JsonDecoder\ExtJsonDecoder;
+use JsonMachine\Items;
 
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-$msg = new Message;
 
-use JsonMachine\JsonDecoder\ExtJsonDecoder;
-use JsonMachine\Items;
+$msg = new Message;
 
 // URLs
 $starturl = "https://api.scryfall.com/migrations";
@@ -326,7 +330,10 @@ foreach($result_files as $data):
 endforeach;
 
 $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk migrations completed, $need_action actions needed",$logfile);
-$from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-$subject = "MTG migrations update completed"; 
-$message = "Total: $total_count \nNeed action: $need_action \n$action_text";
-mail($adminemail, $subject, $message, $from); 
+
+// Email results
+$subject = "MTG migrations update completed";
+$body = "Total: $total_count \nNeed action: $need_action \n$action_text";
+$mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+$mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
+$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);

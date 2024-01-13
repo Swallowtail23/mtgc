@@ -35,6 +35,10 @@ Install under web server as applicable
 Used for bulk script parsing
 Composer install (see below section)
 
+#### PHPMailer ####
+Used for emails
+Composer install (see below section)
+
 #### Cloudflare Turnstile ####
 Used on login page to provide "captcha" style validation before login
 Needs to be setup on Cloudflare account to obtain valid keys
@@ -63,6 +67,8 @@ The rate is updated at most every 60 minutes on demand, with the target currency
 -- composer require andkab/php-turnstile
 -- composer require everapi/freecurrencyapi-php:dev-master
 -- composer require halaxa/json-machine
+-- composer require phpmailer/phpmailer
+
 To install as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 
 ### File locations ###

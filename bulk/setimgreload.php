@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       02/12/23
+/* Version:     1.1
+    Date:       13/01/24
     Name:       ajax/ajaxsetimg.php
     Purpose:    Trigger reload all images for a set
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,12 +9,17 @@
 
     1.0
                 Initial version
+ 
+ *  1.1         13/01/24
+ *              Use PHPMailer for email report
 */
+
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-$msg = new Message;
-$obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+
+$msg  = new Message;
+$obj  = new ImageManager($db, $logfile, $serveremail, $adminemail);
 
 if(isset($argv[1])):
     $setcode = $argv[1];
@@ -49,10 +54,13 @@ if(isset($argv[1])):
         $db->close();
         $completediterations = $iteration - 1;
         $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; Failed: $fail_count", $logfile);
-        $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
+        
+        // Email result
         $subject = "MTG Images reloaded for $setcode";
-        $message = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; Failed: $fail_count";
-        mail($adminemail, $subject, $message, $from); 
+        $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; Failed: $fail_count";
+        $mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+        $mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
+        $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Mail result is '$mailresult'",$logfile);
     else:
         echo json_encode(["status" => "error", "message" => "SQL error"]);
         trigger_error('[ERROR] ajaxsetimg.php: Error: ' . $db->error, E_USER_ERROR);

@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.0
-    Date:       02/01/24
+/* Version:     20.0
+    Date:       13/01/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -61,6 +61,9 @@
  * 
  * 19.0         02/01/24
  *              Move bulk functions into this file
+ * 
+ * 20.0         13/01/24
+ *              Move import/export function to just return message instead of emailing
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1160,10 +1163,9 @@ function scryfallImport($file_location,$type)
         endif;
     endforeach;
     $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, included $count_inc, updated: $count_update, other: $count_other",$logfile);
-    $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-    $subject = "MTG bulk update completed ($type)";
     $message = "Total: $total_count; total added: $count_add; total skipped: $count_skip; total included: $count_inc; total updated: $count_update";
-    mail($adminemail, $subject, $message, $from);
+    return $message;
+    // return $message to then use in parent to send email using myPHPMailer
 }
 
 function validateTrueDecimal($v) 
