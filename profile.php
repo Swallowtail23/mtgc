@@ -173,7 +173,8 @@ endif;
         
         //1. Get user details for current user
         if($rowqry = $db->execute_query("SELECT username, password, email, reg_date, status, admin,
-                                                groupid, grpinout, groupname, collection_view, currency 
+                                                groupid, grpinout, groupname, collection_view, 
+                                                currency, weeklyexport
                                             FROM users 
                                             LEFT JOIN `groups` 
                                             ON users.groupid = groups.groupnumber 
@@ -275,8 +276,12 @@ endif;
             //6. Currency
                 $current_currency = $row['currency'];
                 $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current currency is '$current_currency'",$logfile);
+            
+            //7. Weekly exports
+                $current_weekly = $row['weeklyexport'];
+                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Weekly exports are set to '$current_weekly'",$logfile);
 
-            //7. Update pricing in case any new cards have been added to collection
+            //8. Update pricing in case any new cards have been added to collection
                 //Make sure only number+collection is passed as table name
                 if (valid_tablename($mytable) !== false):
                     $obj = new PriceManager($db,$logfile,$useremail);
@@ -420,6 +425,19 @@ endif;
                                         data: { "group": group },
                                         success: function () {
                                             document.getElementById("grpname").style.display = display;
+                                        }
+                                    });
+                                });
+
+                                // Toggle weekly export
+                                $('#weekly_toggle').on('change', function () {
+                                    var weekly = this.checked ? "TURN ON" : "TURN OFF";
+                                    $.ajax({
+                                        url: "/ajax/ajaxweekly.php",
+                                        method: "POST",
+                                        data: { "weekly": weekly },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+                                            console.error("AJAX error: " + textStatus + " - " + errorThrown);
                                         }
                                     });
                                 });
@@ -627,6 +645,27 @@ endif;
                                         <input type='hidden' name='type' value='email'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="options_left">
+                                    <b>Weekly export: &nbsp;</b>
+                                </td>
+                                <td class="options_centre">
+                                    Weekly email to you with a CSV file of your collection
+                                </td>
+                                <td class="options_right"> <?php 
+                                    if($current_weekly == 1): ?>
+                                        <label class="switch"> 
+                                            <input type="checkbox" id="weekly_toggle" class="option_toggle" checked="true" value="on"/>
+                                        <div class="slider round"></div>
+                                        </label> <?php
+                                    else: ?>
+                                        <label class="switch"> 
+                                            <input type="checkbox" id="weekly_toggle" class="option_toggle" value="off"/>
+                                        <div class="slider round"></div>
+                                        </label> <?php
+                                    endif; ?>
                                 </td>
                             </tr>
                         </table>
