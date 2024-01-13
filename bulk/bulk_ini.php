@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       02/01/24
+/* Version:     3.0
+    Date:       13/01/24
     Name:       bulk_ini.php
     Purpose:    ini settings for bulk files
     Notes:      {none} 
@@ -11,6 +11,9 @@
  *              Bring card game types variable into here
  *              Also bulk file location URLs
  *              And languages to import
+ *
+ *  3.0         13/01/24
+ *              Move to PHPMailer for email output
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -47,6 +50,23 @@ endif;
 //Logging levels
 $loglevelini = $ini_array['general']['Loglevel'];
 
+//Email settings (PHPMailer, see https://github.com/PHPMailer/PHPMailer
+//Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $ini_array['general']['Loglevel'] = 3
+$smtpParameters =   [
+                    'SMTPDebug' => $ini_array['email']['SMTPDebug'],
+                    'SMTPHost' => $ini_array['email']['Host'],
+                    'SMTPAuth' => $ini_array['email']['SMTPAuth'],
+                    'SMTPUsername' => $ini_array['email']['Username'],
+                    'SMTPPassword' => $ini_array['email']['Password'],
+                    'SMTPSecure' => $ini_array['email']['SMTPSecure'],
+                    'SMTPPort' => $ini_array['email']['Port'],
+                    'globalDebug' => $loglevelini
+                    ];
+
+//Email addresses
+$adminemail = $ini_array['email']['AdminEmail'];
+$serveremail = $ini_array['email']['ServerEmail'];
+
 //Card image location
 $ImgLocation = $ini_array['general']['ImgLocation'];
 
@@ -67,10 +87,6 @@ elseif($loglevelini === '3' AND ($fd = fopen($logfile, "a")) !== false):
     $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
     fclose($fd); 
 endif;
-
-//Email addresses
-$adminemail = $ini_array['security']['AdminEmail'];
-$serveremail = $ini_array['security']['ServerEmail'];
 
 //Web root URL
 $myURL = $ini_array['general']['URL'];

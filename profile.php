@@ -1,6 +1,6 @@
 <?php 
-/* Version:     10.0
-    Date:       10/01/24
+/* Version:     11.0
+    Date:       13/01/24
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -32,6 +32,9 @@
  * 10.0         10/01/24
  *              Rewrite of import display and code
  *              Add Delver Lens import
+ * 
+ * 11.0         13/01/24
+ *              Add email export for CSV
 */
 ini_set('session.name', '5VDSjp7k-n-_yS-_');
 session_start();
@@ -45,11 +48,20 @@ $msg = new Message;
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
 $delcollresult = ''; // Variable to hold error message
 
+// If redirected back to this page after a successful CSV export
+if(isset($_GET['csvsuccess']) && $_GET['csvsuccess'] === 'true'):
+    $csvsuccess = 'true';
+elseif(isset($_GET['csvsuccess']) && $_GET['csvsuccess'] === 'false'):
+    $csvsuccess = 'true';
+else:
+    $csvsuccess = '';
+endif;
+
 if ($deletecollection === 'DELETE'):    
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to delete collection '$mytable'",$logfile);
     $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Exporting collection to email...",$logfile);
-    $obj->exportCollectionToCsv($mytable,'email');
+    $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Truncating collection table...",$logfile);
     if(!$db->execute_query("TRUNCATE TABLE `$mytable`")):
         $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Truncate table failed",$logfile);
@@ -75,6 +87,17 @@ endif;
         <?php include('includes/googlefonts.php');?>
         <script src="/js/jquery.js"></script>
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var csvSuccess = "<?php echo $csvsuccess; ?>";
+                if (csvSuccess === 'true') {
+                    alert("CSV email send was successful.");
+                    window.location.href = "<?php echo $myURL; ?>/profile.php";
+                }
+                else if (csvSuccess === 'false') {
+                    alert("ERROR: CSV email send was NOT successful.");
+                    window.location.href = "<?php echo $myURL; ?>/profile.php";
+                }
+            });
             // Function to toggle the visibility of the info box
             function toggleInfoBox() {
                 var infoBox = document.getElementById("infoBox");
@@ -438,7 +461,7 @@ endif;
                                 document.body.style.cursor='wait';
                             };
                             function confirmDelete() {
-                                var firstConfirm = confirm("Are you sure you want to delete all cards from your collection? Selecting OK will email you an extract of your collection and then delete all cards. To export manually, press cancel and Export from further down this page.");
+                                var firstConfirm = confirm("Delete all cards from your collection? Selecting OK will send a CSV collection export to your registered email address and then delete all cards.");
     
                                 if (firstConfirm) {
                                     var secondConfirm = confirm("This action is irreversible. Are you absolutely sure you want to delete all cards from your collection?");
@@ -523,7 +546,7 @@ endif;
                             </tr>
                             <tr>
                                 <td colspan="3">
-                                    <h2 class='h2pad'>Delete / Import / Export</h2>
+                                    <h2 class='h2pad'>Collection management</h2>
                                 </td>
                             </tr>
                             <tr>
@@ -531,7 +554,7 @@ endif;
                                     <b>Delete: &nbsp;</b>
                                 </td>
                                 <td class="options_centre">
-                                     Delete all cards in your collection
+                                     Email CSV and delete all cards in your collection
                                 </td>
                                 <td class="options_right">
                                     <form action="?"  method="GET" onsubmit="return confirmDelete()">
@@ -581,11 +604,27 @@ endif;
                                     <b>Export: </b> 
                                 </td>
                                 <td class="options_centre">
-                                     Export all cards in your collection
+                                     Download a CSV file with all cards in your collection
                                 </td>
                                 <td class="options_right">
                                     <form action="csv.php"  method="GET">
                                         <input id='exportsubmit' class='profilebutton' type="submit" value="EXPORT CSV">
+                                        <input type='hidden' name='type' value='echo'>
+                                        <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="options_left">
+                                    &nbsp;
+                                </td>
+                                <td class="options_centre">
+                                    Email a CSV file with all cards in your collection to your email address
+                                </td>
+                                <td class="options_right">
+                                    <form action="csv.php"  method="GET">
+                                        <input id='exportsubmit' class='profilebutton' type="submit" value="EMAIL CSV">
+                                        <input type='hidden' name='type' value='email'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>
                                 </td>
