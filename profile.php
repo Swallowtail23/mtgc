@@ -649,7 +649,7 @@ endif;
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Weekly export: &nbsp;</b>
+                                    <b>&nbsp;</b>
                                 </td>
                                 <td class="options_centre">
                                     Weekly email to you with a CSV file of your collection

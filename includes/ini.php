@@ -278,32 +278,32 @@ $currencies = array(
                             ),
                         array(
                             'code' => 'aud',
-                            'pretty' => 'Australian dollar',
+                            'pretty' => 'Australian $',
                             'db' => 'aud'
                             ),
                         array(
                             'code' => 'cad',
-                            'pretty' => 'Canadian dollar',
+                            'pretty' => 'Canadian $',
                             'db' => 'cad'
                             ),
                         array(
                             'code' => 'eur',
-                            'pretty' => 'Euro',
+                            'pretty' => 'Euro €',
                             'db' => 'eur'
                             ),
                         array(
                             'code' => 'gbp',
-                            'pretty' => 'British Pound',
+                            'pretty' => 'British £',
                             'db' => 'gbp'
                             ),
                         array(
                             'code' => 'jpy',
-                            'pretty' => 'Japanese Yen',
+                            'pretty' => 'Japanese ¥',
                             'db' => 'jpy'
                             ),
                         array(
                             'code' => 'nzd',
-                            'pretty' => 'New Zealand dollar',
+                            'pretty' => 'New Zealand $',
                             'db' => 'nzd'
                             )
 );
