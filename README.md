@@ -1,5 +1,11 @@
 # README # (v06/07/23)
 
+## What is this? ##
+
+This is a 'host your own' MtG site, designed for personal hosting.
+
+It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting the development journey.
+
 ## How do I get set up? ## 
 * Summary of set up
 * Configuration
