@@ -140,6 +140,7 @@ else:
             endif;
         endif;
         $criteria = "(".$criteriaNTA.") ";
+        
         // Colours first
         $criteriaCol = "";
         if ($white === "yes"):
@@ -302,6 +303,7 @@ else:
 
         // Then game type
         $criteriaGameType = "";
+        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $gametypeOp",$logfile);
         if ($paper === "yes"):
             $criteriaGameType = "cards_scry.game_types LIKE '%paper%'";
         endif;
