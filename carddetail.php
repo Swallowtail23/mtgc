@@ -1,6 +1,6 @@
 <?php 
-/* Version:     19.0
-    Date:       02/01/24
+/* Version:     19.1
+    Date:       14/01/24
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -58,6 +58,9 @@
  * 
  * 19.0         02/01/24
  *              Correctly interpret language codes to 'pretty' descriptions
+ *
+ * 19.1         14/01/24
+ *              Move session.name to include
 */
 
 require ('includes/sessionname.php');        //Set global session.name
