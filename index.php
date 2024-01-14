@@ -117,7 +117,7 @@ $artifact = isset($_GET['artifact']) ? 'yes' : '';
 $colourless = isset($_GET['colourless']) ? 'yes' : '';
 $land = isset($_GET['land']) ? 'yes' : '';
 $battle = isset($_GET['battle']) ? 'yes' : '';
-$valid_colourOp = array("and","or","");
+$valid_colourOp = array("AND","OR","");
 $colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
 if (!in_array($colourOp,$valid_colourOp)):
     $colourOp = '';
@@ -130,7 +130,7 @@ $mythic = isset($_GET['mythic']) ? 'yes' : '';
 $paper = isset($_GET['paper']) ? 'yes' : '';
 $arena = isset($_GET['arena']) ? 'yes' : '';
 $online = isset($_GET['online']) ? 'yes' : '';
-$valid_gametypeOp = array("and","or","");
+$valid_gametypeOp = array("AND","OR","");
 $gametypeOp = isset($_GET['gametypeOp']) ? "{$_GET['gametypeOp']}" : '';
 if (!in_array($gametypeOp,$valid_gametypeOp)):
     $gametypeOp = '';
