@@ -659,6 +659,8 @@ function scryfallImport($file_location,$type)
 
     $data = JsonMachine\Items::fromFile($file_location, ['decoder' => new JsonMachine\JsonDecoder\ExtJsonDecoder(true)]);
 
+    $date = date('Y-m-d');
+    
     if ($type === 'default'):
         $primary = 1;
         
