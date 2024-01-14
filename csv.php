@@ -18,6 +18,7 @@
  *
  *  4.1         14/01/24
  *              Documentation tweaks and minor changes
+                Move to use logMessage function
  */
       
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -28,12 +29,12 @@ require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');          //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
-$msg = new Message;
+$msg = new Message($logfile);
                 
 // Page content starts here
 if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"csv.php running for '$table'",$logfile);
+    $msg->logMessage('[NOTICE]',"csv.php running for '$table'");
     
     $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
     
@@ -41,16 +42,16 @@ if(isset($_GET['table'])):
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output
     // In email mode, if SMTP is set to debug (PHPMailer) and site is in Debug log level, the SMTP output will also be output to screen
     if(isset($_GET['type']) && $_GET['type'] === 'echo'):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"csv.php running for '$table', output ('{$_GET['type']}')",$logfile);
+        $msg->logMessage('[DEBUG]',"csv.php running for '$table', output ('{$_GET['type']}')");
         $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'echo');
     elseif(isset($_GET['type']) && $_GET['type'] === 'email'):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"csv.php running for '$table', output ('{$_GET['type']}')",$logfile);
+        $msg->logMessage('[DEBUG]',"csv.php running for '$table', output ('{$_GET['type']}')");
         $mailexport = $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'email');
         if($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3):
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"In debug, not redirecting",$logfile);
+            $msg->logMessage('[DEBUG]',"In debug, not redirecting");
         else:
             // If not in debug mode, redirect back to profile.php
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Not in SMTP/site debug, redirecting back to profile.php",$logfile);
+            $msg->logMessage('[DEBUG]',"Not in SMTP/site debug, redirecting back to profile.php");
             // If the mailexport was successful
             if($mailexport === TRUE):
                 header('Location: profile.php?csvsuccess=true');
@@ -60,11 +61,11 @@ if(isset($_GET['table'])):
             exit;
         endif;
     else:
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"csv.php called for '$table', output type unclear ('{$_GET['type']}')",$logfile);
+        $msg->logMessage('[DEBUG]',"csv.php called for '$table', output type unclear ('{$_GET['type']}')");
         trigger_error("[ERROR] csv.php: Called with incorrect parameters", E_USER_ERROR);
     endif;
 else:
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"csv.php running, failed",$logfile);
+    $msg->logMessage('[DEBUG]',"csv.php running, failed");
     trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);
 endif;
 ?>
