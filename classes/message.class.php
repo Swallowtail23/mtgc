@@ -42,16 +42,6 @@ class Message
     {
         $this->logfile = $logfile ?: $GLOBALS['logfile'];
     }
-
-    public function MessageTxt($errorlevel,$source,$text,$logfile = '') 
-    {
-        $logfile = $logfile ?: $this->logfile;
-        $this->textstring = "$errorlevel $source: $text";
-        writelog($this->textstring,$logfile);
-    }
-    
-    // Migrating to class function which does not need to have the source set, but gets it automatically
-    // This is to improve logging consistency
     
     public function logMessage($errorlevel, $text, $logfile = '') 
     {
@@ -71,7 +61,7 @@ class Message
             $file = isset($caller['file']) ? basename($caller['file']) : 'Unknown file';
             $line = isset($caller['line']) ? $caller['line'] : 'Unknown line';
 
-            // Check if there's a calling function and it's not 'logMessage'.
+            // Check if there's a calling function and it's not 'logMessage' (not interested in tagging as in this function)
             $functionName = '';
             if (isset($backtrace[1]['function']) && $backtrace[1]['function'] !== 'logMessage'):
                 $functionName = ": Function " . $backtrace[1]['function'];

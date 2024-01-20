@@ -101,6 +101,7 @@ The rate is updated at most every 60 minutes on demand, with the default currenc
 -- composer require phpmailer/phpmailer
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
+To install all required: ```sudo -Hu apache composer update```
 
 ### File locations ###
 The site uses two locations:
