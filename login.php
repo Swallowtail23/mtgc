@@ -58,7 +58,6 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
     exit();
 else:
     session_destroy();
-    require ('includes/sessionname.php');
     startCustomSession(); // Start a new session after destroying the previous one
 
     // Reassign the redirect URL to the new session
