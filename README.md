@@ -1,5 +1,8 @@
 # README # (v 20/01/24)
 
+![screenshot](images/home.png)
+![mobile screenshot](images/mobile.png)
+
 ## What is this? ##
 
 This is a 'host your own' MtG collection-tracking website application for personal hosting.
