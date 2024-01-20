@@ -296,17 +296,22 @@ require('includes/menu.php'); //mobile menu
         </div>
     <?php
     // Does the user have a collection table?
-    $tablecheck = "SELECT * FROM $mytable";
-    $msg->logMessage('[DEBUG]',"Checking if user has a collection table...");
-    if($db->query($tablecheck) === FALSE):
-        $msg->logMessage('[DEBUG]',"No existing collection table...");
+    $tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
+    $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
+
+    $result = $db->query($tableExistsQuery);
+    if ($result->num_rows == 0):
+        $msg->logMessage('[NOTICE]', "No existing collection table...");
         $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-        $msg->logMessage('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": ...copying collection template...: $query2");
-        if($db->query($query2) === TRUE):
-            $msg->logMessage('[DEBUG]',"Collection template copy successful");
+        $msg->logMessage('[DEBUG]', "Copying collection template...: $query2");
+
+        if ($db->query($query2) === TRUE):
+            $msg->logMessage('[NOTICE]', "Collection template copy successful");
         else:
-            $msg->logMessage('[DEBUG]',"Collection template copy failed");
+            $msg->logMessage('[NOTICE]', "Collection template copy failed: " . $db->error);
         endif;
+    else:
+        $msg->logMessage('[DEBUG]', "Collection table exists");
     endif;
     
     // Check that we have an id before calling SQL query
