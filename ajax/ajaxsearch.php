@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       01/12/23
+/* Version:     5.1
+    Date:       20/01/24
     Name:       ajaxsearch.php
     Purpose:    PHP script to run ajax search from header
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -19,14 +19,18 @@
  *              Move to prepared statements
  *  5.0
  *              Add [set] search interpretation
+ * 
+    5.1         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $expectedReferringPage = $myURL;
@@ -52,7 +56,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
             $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
             $r = preg_replace($regex, ' ', $rtrim);
             $r = filter_var($r,FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Ajax search after URL removal and filtering is '$r'",$logfile);        
+            $msg->logMessage('[DEBUG]',"Ajax search after URL removal and filtering is '$r'");        
             // Test for the existence of a string enclosed in parentheses
             if (strpos($r, '[') !== false):
                 $insideBrackets = $closingBracket = false;
@@ -81,7 +85,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                 $u = ''; // No brackets in this case
             endif;
 
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Search string (q) is '$q', match string (t) is '$t', setcode is '$u'",$logfile);
+            $msg->logMessage('[DEBUG]',"Search string (q) is '$q', match string (t) is '$t', setcode is '$u'");
             // Header search only searches within primary_card set, not additional languages
             $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                           FROM cards_scry
@@ -154,7 +158,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from index.php($expectedReferringSite,$referringPage",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from index.php($expectedReferringSite,$referringPage");
     http_response_code(403);
     echo 'Access forbidden';
 endif;

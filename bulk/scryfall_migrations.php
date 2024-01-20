@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       13/01/24
+/* Version:     2.1
+    Date:       20/01/24
     Name:       scryfall_migrations.php
     Purpose:    Import/update Scryfall migrations/deletions data
     Notes:      {none} 
@@ -9,6 +9,9 @@
  * 
  *  2.0         13/01/24
  *              Move to PHPMailer for email output
+ *  
+ *  2.1         20/01/24
+ *              Move to logMessage
 */
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
@@ -17,8 +20,7 @@ use JsonMachine\Items;
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-
-$msg = new Message;
+$msg = new Message($logfile);
 
 // URLs
 $starturl = "https://api.scryfall.com/migrations";
@@ -39,9 +41,8 @@ $max_fileage = 23 * 3600;
 function getMigrationData($url,$file_location,$max_fileage,$pageNumber)
 {
     global $db, $logfile;
-    $msg = new Message;
-    
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": fetching Download URI: $url",$logfile);
+    $msg = new Message($logfile);
+    $msg->logMessage('[DEBUG]',"Fetching Download URI: $url");
     if($pageNumber == 0):
         $page = $file_location.'migrations.json';
     else:
@@ -53,18 +54,18 @@ function getMigrationData($url,$file_location,$max_fileage,$pageNumber)
         $file_date = date('d-m-Y H:i',$fileage);
         if (time()-$fileage > $max_fileage):
             $download = 2;
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall migrations API: File old ($page, $file_date), downloading",$logfile);  
+            $msg->logMessage('[DEBUG]',"Scryfall migrations API: File old ($page, $file_date), downloading");  
         else:
             $download = 0;
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall migrations API: File fresh ($page, $file_date), skipping download",$logfile);    
+            $msg->logMessage('[DEBUG]',"Scryfall migrations API: File fresh ($page, $file_date), skipping download");    
         endif;
     else:
         $download = 1;
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall migrations API: No file at ($page), downloading: $url",$logfile);
+        $msg->logMessage('[DEBUG]',"Scryfall migrations API: No file at ($page), downloading: $url");
     endif;
     
     if($download > 0):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall migrations API: ($page), downloading: $url",$logfile);
+        $msg->logMessage('[DEBUG]',"Scryfall migrations API: ($page), downloading: $url");
         $setsreturn = downloadbulk($url,$page);
     endif;
     return $page;
@@ -72,14 +73,14 @@ function getMigrationData($url,$file_location,$max_fileage,$pageNumber)
 function checkMigrationDataForMore($file)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $next_page = 'none';
     foreach($data AS $key => $value):
         if($key == 'has_more' AND $value == 'true'):
             $more = TRUE;
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Further pages available",$logfile);
+            $msg->logMessage('[DEBUG]',"Further pages available");
         endif;
         if(isset($more) AND $more == TRUE AND $key == 'next_page'):
             $next_page = $value;
@@ -90,19 +91,16 @@ function checkMigrationDataForMore($file)
 function clearDBMigrations()
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     if ($result = $db->query('TRUNCATE TABLE migrations')):
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall migrations API: migrations table cleared",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall migrations API: migrations table cleared");
     else:
         trigger_error('[ERROR] scryfall_migrations.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
     endif;
 }
 function getRowCount($file)
 {
-    global $logfile;
-    $msg = new Message;
-    
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $count = 0;
     foreach($data AS $key => $value):
@@ -123,7 +121,7 @@ function safeDeleteCheck ($id)
 {
     global $db, $logfile;
     $safeScore = null;
-    $msg = new Message;
+    $msg = new Message($logfile);
 
     //Find if it's in any decks
     $userResultArray = $collectionResultArray = $resultArray = array();
@@ -137,7 +135,7 @@ function safeDeleteCheck ($id)
         $safeScore = 10000;
     else:
         $deckMatches = $result->num_rows;
-        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Matches in decks for '$id': $deckMatches",$logfile);
+        $msg->logMessage('[DEBUG]',"Matches in decks for '$id': $deckMatches");
         if($deckMatches > 0):
             $safeScore = 1;
         else:
@@ -168,7 +166,7 @@ function safeDeleteCheck ($id)
         else:
             while ($row = $result->fetch_assoc()):
                 if($row['total'] !== NULL AND $row['total'] != 0):
-                    $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Found one!: User: {$user['username']}, ID: $id: Total: {$row['total']}",$logfile);
+                    $msg->logMessage('[DEBUG]',"Found one!: User: {$user['username']}, ID: $id: Total: {$row['total']}");
                     $safeScore = $safeScore + 5;
                 endif;
             endwhile;
@@ -263,30 +261,30 @@ foreach($result_files as $data):
                         //In db, but safety check failed
                         $db_match = 1;
                         $need_action = $need_action + 1;
-                        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data and safety check failed, $need_action to be actioned",$logfile);
+                        $msg->logMessage('[DEBUG]',"$old_scryfall_id exists in existing data and safety check failed, $need_action to be actioned");
                         $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Safety check failed)\n\n";
                     elseif ($stmt->num_rows > 0 && $deleteCheck > 0):
                         $db_match = 1;
                         $need_action = $need_action + 1;
-                        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data but not safe to delete, $need_action to be actioned",$logfile);
+                        $msg->logMessage('[NOTICE]',"$old_scryfall_id exists in existing data but not safe to delete, $need_action to be actioned");
                         $action_text = $action_text."Old ID: $myURL/carddetail.php?id=$old_scryfall_id\n Migration strategy: $migration_strategy\n New ID (if applicable): $myURL/carddetail.php?id=$new_scryfall_id\n Note: $note (Not safe to delete)\n\n";
                     elseif ($stmt->num_rows > 0 && $deleteCheck === 0):
                         //In db, but ok to remove
-                        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted",$logfile);
+                        $msg->logMessage('[NOTICE]',"$old_scryfall_id exists in existing data, but not in any decks or collections - can be deleted");
                         $deleted = $deleted + 1;
                         //Delete query here
                         $sql = "DELETE FROM cards_scry WHERE id = ?";
                         $params = [$old_scryfall_id];
                         $deleteResult = $db->execute_query($sql,$params);
                         if ($deleteResult !== false):
-                            $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Deleted $old_scryfall_id from cards_scry", $logfile);
+                            $msg->logMessage('[NOTICE]',"Deleted $old_scryfall_id from cards_scry");
                             $db_match = 0;
                         else:
                             $db_match = 1;
                         endif;
                     else:
                         //Not in db
-                        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"$old_scryfall_id does not exist in existing data",$logfile);
+                        $msg->logMessage('[DEBUG]',"$old_scryfall_id does not exist in existing data");
                         $db_match = 0;
                     endif;
                 endif;
@@ -320,7 +318,7 @@ foreach($result_files as $data):
                 if (!$stmt->execute()):
                     trigger_error("[ERROR] scryfall_migrations: Writing new migration details: " . $db->error, E_USER_ERROR);
                 else:
-                    $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add migrations $total_count - no error returned ",$logfile);
+                    $msg->logMessage('[DEBUG]',"Add migrations $total_count - no error returned");
                     $total_count = $total_count + 1;
                 endif;
                 $stmt->close();
@@ -329,11 +327,11 @@ foreach($result_files as $data):
     endforeach;
 endforeach;
 
-$msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk migrations completed, $need_action actions needed",$logfile);
+$msg->logMessage('[NOTICE]',"$total_count bulk migrations completed, $need_action actions needed");
 
 // Email results
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
 $mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
 $mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
-$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);
+$msg->logMessage('[DEBUG]',"Mail result is '$mailresult'");

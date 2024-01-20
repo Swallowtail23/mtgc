@@ -14,7 +14,7 @@
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-$msg = new Message;
+$msg = new Message($logfile);
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
@@ -31,7 +31,7 @@ $file_location = $ImgLocation.'json/rulings.json';
 // Set counts
 $total_count = 0;
 
-$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: fetching $url",$logfile);
+$msg->logMessage('[NOTICE]',"Scryfall Rulings API: fetching $url");
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
@@ -41,31 +41,31 @@ $scryfall_rulings = json_decode($curlresult,true);
 if(isset($scryfall_rulings["type"]) AND $scryfall_rulings["type"] === "rulings"):
     $rulings_uri = $scryfall_rulings["download_uri"];
 endif;
-$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Download URI: $rulings_uri",$logfile);
+$msg->logMessage('[NOTICE]',"Scryfall Rulings API: Download URI: $rulings_uri");
 
 if (file_exists($file_location)):
     $fileage = filemtime($file_location);
     $file_date = date('d-m-Y H:i',$fileage);
     if (time()-$fileage > $max_fileage):
         $download = 2;
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File old ($file_location, $file_date), downloading $rulings_uri",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Rulings API: File old ($file_location, $file_date), downloading $rulings_uri");
     else:
         $download = 0;
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: File fresh ($file_location, $file_date), skipping download",$logfile);    
+        $msg->logMessage('[NOTICE]',"Scryfall Rulings API: File fresh ($file_location, $file_date), skipping download");    
     endif;
 else:
     $download = 1;
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: No file at ($file_location), downloading: $url",$logfile);
+    $msg->logMessage('[NOTICE]',"Scryfall Rulings API: No file at ($file_location), downloading: $url");
 endif;
 if($download > 0):
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: downloading: $url",$logfile);
+    $msg->logMessage('[NOTICE]',"Scryfall Rulings API: downloading: $url");
     $rulingreturn = downloadbulk($rulings_uri,$file_location);
 endif;
-$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Local file: $file_location",$logfile);
+$msg->logMessage('[NOTICE]',"Scryfall Rulings API: Local file: $file_location");
 
 $data = Items::fromFile($ImgLocation.'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE rulings_scry')):
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,": scryfall Rulings API: Old rulings cleared",$logfile);
+    $msg->logMessage('[NOTICE]',"Scryfall Rulings API: Old rulings cleared");
 else:
     trigger_error('[ERROR] scryfall_rulings.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
 endif;
@@ -93,16 +93,16 @@ foreach($data AS $key => $value):
     if (!$stmt->execute()):
         trigger_error("[ERROR] scryfall_rulings: Writing new ruling details: " . $db->error, E_USER_ERROR);
     else:
-        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Add ruling $total_count - no error returned ",$logfile);
+        $msg->logMessage('[DEBUG]',"Add ruling $total_count - no error returned ");
         $total_count = $total_count + 1;
     endif;
     $stmt->close();
 endforeach;
-$msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"$total_count bulk rulings completed",$logfile);
+$msg->logMessage('[NOTICE]',"$total_count bulk rulings completed");
 
 // Email results
 $subject = "MTG rulings update completed"; 
 $body = "Total rulings: $total_count";
 $mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
 $mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $body);
-$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);
+$msg->logMessage('[DEBUG]',"Mail result is '$mailresult'");

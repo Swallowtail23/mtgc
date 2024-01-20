@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.1
-    Date:       04/12/23
+/* Version:     19.3
+    Date:       20/01/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -55,16 +55,22 @@
  *  19.1
  *              04/12/2023
  *              Refine photo security by serving images through a php script
+ *
+ *  19.2        14/01/24
+ *              Move session.name to include
+ * 
+ *  19.3        20/01/24
+ *              Move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
-require ('includes/ini.php');               //Initialise and load ini file
+require ('includes/sessionname.php');
+startCustomSession();
+require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');      //Setup page variables
+require ('includes/functions.php');          //Includes basic functions for non-secure pages
+require ('includes/secpagesetup.php');       //Setup page variables
 require ('includes/colour.php');
-forcechgpwd();                              //Check if user is disabled or needs to change password
-$msg = new Message;
+forcechgpwd();                               //Check if user is disabled or needs to change password
+$msg = new Message($logfile);
 ?> 
 
 <!DOCTYPE html>
@@ -206,7 +212,7 @@ else:
 endif;
 
 // Check to see if the called deck belongs to the logged in user.
-$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Checking deck $decknumber",$logfile);
+$msg->logMessage('[NOTICE]',"Checking deck $decknumber");
 $obj = new DeckManager($db, $logfile);
 if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
@@ -222,7 +228,7 @@ endif;
 // Update notes if called before reading info
 if ((isset($updatenotes)) AND ($updatenotes == 'yes')):
     if ($db->execute_query("UPDATE decks SET notes = ?, sidenotes = ? WHERE decknumber = ?",[$newnotes,$newsidenotes,$decknumber]) === FALSE):
-        trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+        trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
     else:
         $redirect = true;
     endif;
@@ -230,10 +236,10 @@ endif;
 
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck to $newname",$logfile);
+    $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
     $obj = new DeckManager($db,$logfile);
     $renameresult = $obj->renameDeck($decknumber,$newname,$user);
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Renaming deck result: $renameresult",$logfile);
+    $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
     if($renameresult == 2):
         ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
@@ -256,49 +262,49 @@ endif;
 //Update deck type if called before reading info
 if (isset($updatetype)):
     if(in_array($updatetype,$validtypes)):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to '$updatetype'",$logfile);
+        $msg->logMessage('[DEBUG]',"Updating deck type to '$updatetype'");
         if ($db->execute_query("UPDATE decks set type = ? WHERE decknumber = ?",[$updatetype,$decknumber]) === FALSE):
-            trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
             if(!in_array($updatetype,$commander_decktypes)):
                 if ($db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$decknumber]) === FALSE):    
-                    trigger_error('[ERROR] deckdetail.php: Error: '.$db->error, E_USER_ERROR);
+                    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
                 endif;
             endif;
         endif;
     else:
-        trigger_error('[ERROR] deckdetail.php: Error: Invalid deck type', E_USER_ERROR);
+        trigger_error("[ERROR] deckdetail.php ".__LINE__.": Error: Invalid deck type", E_USER_ERROR);
     endif;
     
     // Set quantities to 1 for commander decks
     if(in_array($updatetype,$commander_decktypes)):
         $query = 'UPDATE deckcards SET cardqty=? WHERE (decknumber = ? AND (sideqty IS NULL or sideqty = 0) )';
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Commander type, setting quantities to 1",$logfile);
+        $msg->logMessage('[DEBUG]',"Updating deck type to a Commander type, setting quantities to 1");
         if ($db->execute_query($query, [1,$decknumber]) != TRUE):
-            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty=? WHERE (decknumber = ? AND (cardqty IS NULL or cardqty = 0) )';
         if ($db->execute_query($query, [1,$decknumber]) != TRUE):
-            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
         if ($db->execute_query($query, [$decknumber]) != TRUE):
-            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
         endif;
     endif;
     if($updatetype == 'Wishlist'):
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Updating deck type to a Wishlist, deleting sideboard cards",$logfile);
+        $msg->logMessage('[DEBUG]',"Updating deck type to a Wishlist, deleting sideboard cards");
         if ($db->execute_query($query, [$decknumber]) != TRUE):
-            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$db->info}",$logfile);
+            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
         endif;
     endif;
     $redirect = true;
@@ -312,9 +318,9 @@ endif;
 
 //Deck import
 if (isset($_POST['import'])):
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
+    $msg->logMessage('[DEBUG]',"Import called, checking file uploaded...");
     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+        $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
         $deckManager = new DeckManager($db, $logfile);
         // Read the entire file content into a variable
@@ -325,7 +331,7 @@ if (isset($_POST['import'])):
         $deckManager->processInput($decknumber, $fileContent);
         $redirect = true;
     else:
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
+        $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} failed");
     endif; 
 endif;
 
@@ -337,7 +343,7 @@ if($deckinfoqry = $db->execute_query("SELECT deckname,notes,sidenotes,type FROM 
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
 else:
-    trigger_error('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ".$db->error, E_USER_ERROR);
+    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
 // Get relevant db_field with legality
@@ -346,7 +352,7 @@ if($decktype != ''):
 else:
     $db_field = '';
 endif;
-$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Legality db-field for this deck is '$db_field'",$logfile);
+$msg->logMessage('[DEBUG]',"Legality db-field for this deck is '$db_field'");
 
 // Get deck legalities
 if($db_field != ''):
@@ -387,11 +393,11 @@ elseif($minusside == 'yes'):
     $obj->subtractDeckCard($decknumber,$cardtoaction,'side','1');
     $redirect = true;
 elseif($commander == 'yes'):
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Adding Commander to deck $decknumber: $cardtoaction",$logfile);
+    $msg->logMessage('[NOTICE]',"Adding Commander to deck $decknumber: $cardtoaction");
     $obj->addCommander($decknumber,$cardtoaction);
     $redirect = true;
 elseif($partner == 'yes'):
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Moving Commander to Partner for deck $decknumber: $cardtoaction",$logfile);
+    $msg->logMessage('[NOTICE]',"Moving Commander to Partner for deck $decknumber: $cardtoaction");
     $obj->addPartner($decknumber,$cardtoaction);
     $redirect = true;
 elseif($commander == 'no'):
@@ -411,10 +417,10 @@ $mainquery = ("SELECT *,cards_scry.id AS cardsid
                     LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
                     LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
                     WHERE decknumber = ? AND cardqty > 0 ORDER BY name");
-$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": $mainquery",$logfile);
+$msg->logMessage('[DEBUG]',"$mainquery");
 $result = $db->execute_query($mainquery, [$decknumber]);
 if ($result != TRUE):
-    trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
+    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
 $sidequery = ("SELECT *,cards_scry.id AS cardsid 
@@ -424,7 +430,7 @@ $sidequery = ("SELECT *,cards_scry.id AS cardsid
                     WHERE decknumber = ? AND sideqty > 0 ORDER BY name");
 $sideresult = $db->execute_query($sidequery, [$decknumber]);
 if ($sideresult != TRUE):
-    trigger_error("[ERROR] Line ".__LINE__." - SQL failure: Error: " . $db->error, E_USER_ERROR);
+    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
 //Initialise variables to 0
@@ -455,7 +461,7 @@ while ($row = $sideresult->fetch_assoc()):
     endif;
 endwhile;
 $uniquecardscount = count($resultnames);
-$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards in deck: $uniquecardscount",$logfile);
+$msg->logMessage('[DEBUG]',"Cards in deck: $uniquecardscount");
 $requiredlist = '';
 $requiredbuy = '';
 if($uniquecardscount > 0):
@@ -500,8 +506,8 @@ if($uniquecardscount > 0):
                 //
             endif;
         endforeach;
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required list: $requiredlist",$logfile);
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cards required buy: $requiredbuy",$logfile);
+        $msg->logMessage('[DEBUG]',"Cards required list: $requiredlist");
+        $msg->logMessage('[DEBUG]',"Cards required buy: $requiredbuy");
     endif;
 endif;
 
@@ -518,7 +524,7 @@ while ($row = $result->fetch_assoc()):
         $row['name'] = $row['flavor_name'];
     endif;
     if($row['commander'] != 0 AND $row['commander'] != NULL):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking card, colour identity {$row['color_identity']}",$logfile);
+        $msg->logMessage('[DEBUG]',"Checking card, colour identity {$row['color_identity']}");
         //card is a commander, get its colour identity
         $cdrSet = TRUE;
         $cdr_colours[$i] = $row['color_identity'];
@@ -559,7 +565,7 @@ endwhile;
 if(isset($cdrSet) AND $cdrSet === TRUE):
     // Finalise allowable colour identity for Commander decks
     $cdr_colours_raw = $cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Commander value (variable i) is $i, Colour identity to check is $cdr_colours",$logfile);
+    $msg->logMessage('[DEBUG]',"Commander value (variable i) is $i, Colour identity to check is $cdr_colours");
 
     if($i > 0 AND $cdr_colours == '[""]'):
         $cdr_colours = '["C"]';
@@ -724,7 +730,7 @@ endif;
                 <?php
                 // Only show this row if the decktype is Commander style
                 if(in_array($decktype,$commander_decktypes)): 
-                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, adding commander row",$logfile);
+                    $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, adding commander row");
                     ?>
                     <tr>
                         <td colspan='4'>
@@ -758,14 +764,14 @@ endif;
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number"];
                                 if($deck_legality_list != ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                     $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                     if ($index !== false):
                                         $card_legal = $deck_legality_list[$index]['legality'];
                                         if($card_legal === 'legal' OR $card_legal === NULL):
                                             $illegal_tag = '';
                                         else:
-                                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                            $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                             $illegal_cards = TRUE;
                                         endif;
                                     else:
@@ -799,7 +805,7 @@ endif;
                                 <?php
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 $validpartner = FALSE;
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid partner or background",$logfile);
+                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid partner or background");
                                 $i = 0;
                                 while($i < count($second_commander_text)):
                                     if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
@@ -891,14 +897,14 @@ endif;
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number"];
                                     if($deck_legality_list != ''):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                         $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                         if ($index !== false):
                                             $card_legal = $deck_legality_list[$index]['legality'];
                                             if($card_legal === 'legal' OR $card_legal === NULL):
                                                 $illegal_tag = '';
                                             else:
-                                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                                $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                                 $illegal_cards = TRUE;
                                             endif;
                                         else:
@@ -1040,14 +1046,14 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
                                         $illegal_tag = '';
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1058,22 +1064,22 @@ endif;
                             endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
                                 foreach($colour_id_array as $value):
                                     if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
                                         $card_colour_mismatch = TRUE;
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
                                     endif;
                                 endforeach;
                                 if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
@@ -1122,7 +1128,7 @@ endif;
                             <?php
                             if(in_array($decktype,$commander_decktypes)):
                                 $validcommander = FALSE;
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is a valid commander",$logfile);
+                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid commander");
                                 if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
                                     $validcommander = TRUE;
                                 endif;
@@ -1251,14 +1257,14 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
                                         $illegal_tag = '';
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1269,22 +1275,22 @@ endif;
                             endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
                                 foreach($colour_id_array as $value):
                                     if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
                                         $card_colour_mismatch = TRUE;
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
                                     endif;
                                 endforeach;
                                 if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
@@ -1437,14 +1443,14 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
                                         $illegal_tag = '';
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1455,22 +1461,22 @@ endif;
                             endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
                                 foreach($colour_id_array as $value):
                                     if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
                                         $card_colour_mismatch = TRUE;
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
                                     endif;
                                 endforeach;
                                 if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
@@ -1519,7 +1525,7 @@ endif;
                             echo "</td>";
                             if(in_array($decktype,$commander_decktypes)):
                                 $validcommander = FALSE;
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a commander",$logfile);
+                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a commander");
                                 $i = 0;
                                 while($i < count($valid_commander_text)):
                                     if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
@@ -1528,7 +1534,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 $secondcommander = FALSE;
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander",$logfile);
+                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander");
                                 $i = 0;
                                 while($i < count($second_commander_text)):
                                     if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
@@ -1537,7 +1543,7 @@ endif;
                                     $i++;
                                 endwhile;
                                 $secondcommanderonly = FALSE;
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only",$logfile);
+                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only");
                                 $i = 0;
                                 while($i < count($second_commander_only_type)):
                                     if(isset($row['type']) AND str_contains($row['type'],$second_commander_only_type[$i]) == TRUE):
@@ -1675,14 +1681,14 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"]; 
                             if($deck_legality_list != ''):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for main deck card '$cardname'",$logfile);
+                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
                                         $illegal_tag = '';
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
@@ -1693,22 +1699,22 @@ endif;
                             endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
                                 foreach($colour_id_array as $value):
                                     if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
                                         $card_colour_mismatch = TRUE;
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
                                     endif;
                                 endforeach;
                                 if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
@@ -1873,43 +1879,43 @@ endif;
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number"];
                             if($deck_legality_list != ''):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking legality for sideboard card '$cardname'",$logfile);
+                                $msg->logMessage('[DEBUG]',"Checking legality for sideboard card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
                                 if ($index !== false):
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if($card_legal === 'legal' OR $card_legal === NULL):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is 'legal' or null",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card legality is 'legal' or null");
                                         $illegal_tag = '';
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card not legal in this format",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
                                         $illegal_cards = TRUE;
                                     endif;
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is unknown",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card legality is unknown");
                                     $illegal_tag = '';
                                 endif;
                             else:
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card legality is not needed",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card legality is not needed");
                                 $illegal_tag = '';
                             endif;
                             if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
                                 $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is $colour_id",$logfile);
+                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
                                 foreach($colour_id_array as $value):
                                     if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity not OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
                                         $card_colour_mismatch = TRUE;
                                     else:
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Colour $value in card's colour identity is OK with Commander(s)",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
                                     endif;
                                 endforeach;
                                 if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity is OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
                                 else:
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card's colour identity not OK with Commander(s)",$logfile);
+                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
@@ -2378,7 +2384,7 @@ endif;
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Imagefilepath $imageFilePath, existingImage $existingImage",$logfile); ?>
+                $msg->logMessage('[DEBUG]',"Imagefilepath $imageFilePath, existingImage $existingImage"); ?>
                 <form id="uploadForm">
                     <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
                     <label class='importlabel'>
@@ -2408,7 +2414,7 @@ endif;
 </div>
 
 <?php 
-$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Page complete",$logfile);
+$msg->logMessage('[DEBUG]',"Page complete");
 require('includes/footer.php'); ?>        
 </body>
 </html>

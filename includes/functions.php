@@ -1,6 +1,6 @@
 <?php
-/* Version:     20.0
-    Date:       13/01/24
+/* Version:     21.0
+    Date:       20/01/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -64,6 +64,9 @@
  * 
  * 20.0         13/01/24
  *              Move import/export function to just return message instead of emailing
+ * 
+ * 21.0         20/01/24
+ *              Move to logMessage method
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -108,13 +111,13 @@ function cssver()
 function spamcheck($field)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     // Sanitize e-mail address
-    $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Checking email address <$field>", $logfile);
+    $msg->logMessage('[DEBUG]',"Checking email address <$field>");
     $field = filter_var($field, FILTER_SANITIZE_EMAIL);
     if (!filter_var($field, FILTER_VALIDATE_EMAIL)):
-        $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Invalid email address <$field> passed", $logfile);
+        $msg->logMessage('[ERROR]',"Invalid email address <$field> passed");
         return FALSE;
     else:
         $sql = "SELECT usernumber, username FROM users WHERE email = ? LIMIT 1";
@@ -126,7 +129,7 @@ function spamcheck($field)
             if (empty($row)):
                 return 'No match';
             elseif (filter_var($field, FILTER_VALIDATE_EMAIL)):
-                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Email address validated for reset request", $logfile);
+                $msg->logMessage('[NOTICE]',"Email address validated for reset request");
                 return $field;
             else:
                 return FALSE;
@@ -138,12 +141,12 @@ function spamcheck($field)
 function setmtcemode($toggle)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     if ($toggle == 'off'):
-        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode off",$logfile);
+        $msg->logMessage('[NOTICE]',"Setting maintenance mode off");
         $mtcequery = 0;
     elseif ($toggle == 'on'):
-        $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": Setting maintenance mode on",$logfile);
+        $msg->logMessage('[NOTICE]',"Setting maintenance mode on");
         $mtcequery = 1;
     endif;
         $query = 'UPDATE admin SET mtce=?';
@@ -154,18 +157,18 @@ function setmtcemode($toggle)
         endif;
         $exec = $stmt->execute();
         if ($exec === false):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Setting mtce mode to $mtcequery failed",$logfile);
+            $msg->logMessage('[NOTICE]',"Setting mtce mode to $mtcequery failed");
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Set mtce mode to $mtcequery",$logfile);
+            $msg->logMessage('[NOTICE]',"Set mtce mode to $mtcequery");
         endif;
 }
 
 function mtcemode($user)
 {
     global $db,$logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking maintenance mode, user $user", $logfile);
+    $msg->logMessage('[DEBUG]',"Checking maintenance mode, user $user");
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
     $result1 = $db->execute_query($sql1);
     if ($result1 === false):
@@ -173,7 +176,7 @@ function mtcemode($user)
     else:
         $row1 = $result1->fetch_assoc();
         if (!empty($row1) AND $row1['mtce'] == 1):
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, running admin check", $logfile);
+            $msg->logMessage('[DEBUG]',"Maintenance mode on, running admin check");
             $sql2 = "SELECT admin FROM users WHERE usernumber = ?";
             $result2 = $db->execute_query($sql2, [$user]);
             if ($result2 === false):
@@ -182,10 +185,10 @@ function mtcemode($user)
                 $row2 = $result2->fetch_assoc();
                 if (!empty($row2)):
                     if ($row2['admin'] == 1):
-                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is admin, ignoring (return 2)", $logfile);
+                        $msg->logMessage('[DEBUG]',"Maintenance mode on, user is admin, ignoring (return 2)");
                         return 2;
                     else:
-                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode on, user is not admin (return 1, destroy session)", $logfile);
+                        $msg->logMessage('[DEBUG]',"Maintenance mode on, user is not admin (return 1, destroy session)");
                         return 1;
                     endif;
                 else:
@@ -193,7 +196,7 @@ function mtcemode($user)
                 endif;
             endif;
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Maintenance mode not set", $logfile);
+            $msg->logMessage('[DEBUG]',"Maintenance mode not set");
             return 0; // maintenance mode not set
         endif;
     endif;
@@ -331,7 +334,7 @@ function finddates($str)
 function checkRemoteFile($url)
 {
     global $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL,$url);
@@ -347,12 +350,10 @@ function checkRemoteFile($url)
     $curldetail = curl_getinfo($ch);
     curl_close($ch);
     if($curlresult === FALSE or $curldetail['http_code'] != 200 or $curldetail['download_content_length'] < 1):
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} DOES NOT exist, HTTP code is: ".
-                $curldetail['http_code'].", file size is: ".$curldetail['download_content_length']." bytes",$logfile);
+        $msg->logMessage('[ERROR]',"{$curldetail['url']} DOES NOT exist, HTTP code is: {$curldetail['http_code']}, file size is: {$curldetail['download_content_length']} bytes");
         return false;
     else: 
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": {$curldetail['url']} exists, HTTP code is: ".
-                $curldetail['http_code'].", file size is: ".$curldetail['download_content_length']." bytes",$logfile);
+        $msg->logMessage('[NOTICE]',"{$curldetail['url']} exists, HTTP code is: {$curldetail['http_code']}, file size is: {$curldetail['download_content_length']} bytes");
         return true;
     endif;
 }
@@ -445,16 +446,16 @@ function get_full_url()
 function loginstamp($useremail)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login",$logfile);
+    $msg->logMessage('[NOTICE]',"Writing user login");
     $logindate = date("Y-m-d");
     $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
     if($db->execute_query($query,[$logindate,$useremail]) === TRUE):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login successful",$logfile);
+        $msg->logMessage('[DEBUG]',"Writing user login successful");
         return 1;
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Writing user login failed",$logfile);
+        $msg->logMessage('[ERROR]',"Writing user login failed");
         return 0;
     endif;
 }
@@ -493,13 +494,13 @@ function getBulkInfo($type)
 // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
 {
     global $logfile, $default_cards_url, $all_cards_url, $ImgLocation;
-    $msg = new Message;
+    $msg = new Message($logfile);
     $date = date('Y-m-d');
     $bulk_info = FALSE;
     
     $url = $url_default = $url_all = $fileLocation = $fileLocation_default = $fileLocation_all = '';
     
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: called with '$type'",$logfile);
+    $msg->logMessage('[NOTICE]',"scryfall Bulk API: called with '$type'");
     
     if ($type === "all"):
         $url = $all_cards_url;
@@ -518,7 +519,7 @@ function getBulkInfo($type)
     endif;
     
     if (isset($url) && $url !== '' && isset($fileLocation)):
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching current URL $url",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: fetching current URL $url");
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
@@ -527,7 +528,7 @@ function getBulkInfo($type)
         $scryfall_bulk = json_decode($curlresult,true);
     elseif (isset($url_default) && $url_default !== '' && isset($url_all) && $url_all !== '' && isset($fileLocation_default) && $fileLocation_default !== '' && isset($fileLocation_all) && $fileLocation_all !== '' ):
         // Run twice, once for each file and location
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching current URL $url_default",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: fetching current URL $url_default");
         $ch = curl_init($url_default);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
@@ -535,7 +536,7 @@ function getBulkInfo($type)
         curl_close($ch);
         $scryfall_bulk_default = json_decode($curlresult,true);
         
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: fetching current URL $url_all",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: fetching current URL $url_all");
         $ch = curl_init($url_all);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
@@ -543,7 +544,7 @@ function getBulkInfo($type)
         curl_close($ch);
         $scryfall_bulk_all = json_decode($curlresult,true);
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: failed",$logfile);
+        $msg->logMessage('[ERROR]',"Scryfall Bulk API: failed");
         $bulk_info = FALSE;
         return $bulk_info;
     endif;
@@ -551,29 +552,29 @@ function getBulkInfo($type)
     if (isset($scryfall_bulk["type"]) AND ($scryfall_bulk["type"] === "default_cards" || $scryfall_bulk["type"] === "all_cards")):
         if (isset($scryfall_bulk["download_uri"])):
             $bulk_uri = $scryfall_bulk["download_uri"];
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri",$logfile);
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URI: $bulk_uri");
             $bulk_info = [
                 'bulkUrl' => $bulk_uri,
                 'fileLocation' => $fileLocation
             ];
         else:
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API info not available",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API info not available");
             $bulk_info = FALSE;
         endif;
     elseif ((isset($scryfall_bulk_default["type"]) AND $scryfall_bulk_default["type"] === "default_cards") AND (isset($scryfall_bulk_all["type"]) AND $scryfall_bulk_all["type"] === "all_cards")):
         if (isset($scryfall_bulk_default["download_uri"])):
             $bulk_uri_default = $scryfall_bulk_default["download_uri"];
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri_default",$logfile);
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URI: $bulk_uri_default");
         else:
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Error",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API: Error");
             $bulk_info = FALSE;
             return $bulk_info;
         endif;
         if (isset($scryfall_bulk_all["download_uri"])):
             $bulk_uri_all = $scryfall_bulk_all["download_uri"];
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri_all",$logfile);
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URI: $bulk_uri_all");
         else:
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Error",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API: Error");
             $bulk_info = FALSE;
             return $bulk_info;
         endif;
@@ -584,7 +585,7 @@ function getBulkInfo($type)
             'fileLocationAll' => $fileLocation_all,
         ];
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API info not available",$logfile);
+        $msg->logMessage('[ERROR]',"Scryfall Bulk API info not available");
         $bulk_info = FALSE;
     endif;
     
@@ -595,7 +596,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
 // Function to download and save bulk Scryfall data files
 {
     global $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     $download_bulk = FALSE;
     
     if (file_exists($file_location) AND filesize($file_location) > 0):
@@ -604,42 +605,42 @@ function getBulkJson($uri, $file_location, $max_fileage)
         $file_size = filesize($file_location);
         if (time()-$fileage > $max_fileage):
             $download = 2;
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File old ($file_date), downloading: $uri",$logfile);
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: File old ($file_date), downloading: $uri");
         else:
             $download = 0;
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File fresh ($file_location, $file_date, $file_size), skipping download",$logfile);    
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: File fresh ($file_location, $file_date, $file_size), skipping download");    
         endif;
     elseif (file_exists($file_location) AND filesize($file_location) == 0):
         $download = 1;
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: 0-byte file at ($file_location), downloading: $uri",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: 0-byte file at ($file_location), downloading: $uri");
     else:
         $download = 1;
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: No file at ($file_location), downloading: $uri",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: No file at ($file_location), downloading: $uri");
     endif;
     if($download > 0):
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: downloading: $uri",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: downloading: $uri");
         $bulkreturn = downloadbulk($uri,$file_location);
         if ($bulkreturn == true AND file_exists($file_location) AND filesize($file_location) > 0):
             $file_size = filesize($file_location);
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Bulk function returned no error, file at ($file_location), size greater than 0 ($file_size), proceeding",$logfile);
+            $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Bulk function returned no error, file at ($file_location), size greater than 0 ($file_size), proceeding");
             $download_bulk = 'Success';
             return $download_bulk;
         else:
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File download error, waiting 5 minutes to try again",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API: File download error, waiting 5 minutes to try again");
             sleep(300);
             $bulkreturn = downloadbulk($bulk_uri,$file_location);
             if (!($bulkreturn == true AND file_exists($file_location) AND filesize($file_location) > 0)):
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: File download error on retry, exiting.",$logfile);
+                $msg->logMessage('[ERROR]',"Scryfall Bulk API: File download error on retry, exiting.");
                 $download_bulk = FALSE;
                 return $download_bulk;
             else:
-                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Bulk function returned no error, file at ($file_location), size greater than 0 ($file_size), proceeding",$logfile);
+                $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Bulk function returned no error, file at ($file_location), size greater than 0 ($file_size), proceeding");
                 $download_bulk = 'Success';
                 return $download_bulk;
             endif;
         endif;
     else:
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Existing file not too old, skipping",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Existing file not too old, skipping");
         $download_bulk = 'Skipped';
         return $download_bulk;
     endif;
@@ -652,7 +653,7 @@ function scryfallImport($file_location,$type)
 // Function to process and import lines within Scryfall bulk data files
 {
     global $db, $logfile, $games_to_include, $langs_to_skip, $langs_to_skip_all, $layouts_to_skip, $serveremail, $adminemail, $ImgLocation, $two_card_detail_sections;
-    $msg = new Message;
+    $msg = new Message($logfile);
 
     // Initiate counters at zero
     $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
@@ -678,7 +679,7 @@ function scryfallImport($file_location,$type)
     foreach($data AS $key => $value):
         $total_count = $total_count + 1;
         $id = $value["id"];
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall bulk API ($type), Record $id: $total_count",$logfile);
+        $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count");
         $multi_1 = $multi_2 = $name_1 = $name_2 = null;
         $printed_name_1 = $printed_name_2 = $manacost_1 = $manacost_2 = null;
         $flavor_name_1 = $flavor_name_2 = $power_1 = $power_2 = null;
@@ -1147,7 +1148,7 @@ function scryfallImport($file_location,$type)
                 $status = mysqli_affected_rows($db); // 1 = add, 2 = change, 0 = no change
                 if($status === 1):
                     $count_add = $count_add + 1;
-                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Added card - no error returned; return code: $status",$logfile);
+                    $msg->logMessage('[DEBUG]',"Added card - no error returned; return code: $status");
                     //Fetching image
                     if($imageDownloads === TRUE):
                         $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
@@ -1155,16 +1156,16 @@ function scryfallImport($file_location,$type)
                     endif;
                 elseif($status === 2):
                     $count_update = $count_update + 1;
-                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updated card - no error returned; return code: $status",$logfile);
+                    $msg->logMessage('[DEBUG]',"Updated card - no error returned; return code: $status");
                 else:
                     $count_other = $count_other + 1;
-                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Updated card - no error returned; return code: $status",$logfile);
+                    $msg->logMessage('[DEBUG]',"Updated card - no error returned; return code: $status");
                 endif;
             endif;
             $stmt->close();
         endif;
     endforeach;
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, included $count_inc, updated: $count_update, other: $count_other",$logfile);
+    $msg->logMessage('[NOTICE]',"Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, included $count_inc, updated: $count_update, other: $count_other");
     $message = "Total: $total_count; total added: $count_add; total skipped: $count_skip; total included: $count_inc; total updated: $count_update";
     return $message;
     // return $message to then use in parent to send email using myPHPMailer
@@ -1174,15 +1175,15 @@ function validateTrueDecimal($v)
 {	
     global $logfile;
     $result = floor($v);
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking $v for true decimal, result is $result",$logfile);
+    $msg->logMessage('[DEBUG]',"Checking $v for true decimal, result is $result");
     return(floor($v) != $v);
 }
 function update_topvalue_card($collection,$scryid)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     if($findcards = $db->execute_query("SELECT
                             `$collection`.id AS id,
@@ -1198,7 +1199,7 @@ function update_topvalue_card($collection,$scryid)
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
                             AND `$collection`.id = ?",[$scryid])):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query succeeded",$logfile);
+        $msg->logMessage('[DEBUG]',"SQL query succeeded");
         while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
             $normalqty = $row['mynormal'];
             $normalprice = $row['normalprice'];
@@ -1276,9 +1277,9 @@ function cardtypes($finishes)
 function cardtype_for_id($id)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up card types for card $id",$logfile);
+    $msg->logMessage('[DEBUG]',"Looking up card types for card $id");
     $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", [$id]);
     if($stmt != TRUE):
         trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -1286,60 +1287,60 @@ function cardtype_for_id($id)
         if ($stmt->num_rows > 0):
             $result = $stmt->fetch_assoc();
             if(isset($result['finishes'])):
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, looking up finishes",$logfile);
+                $msg->logMessage('[DEBUG]',"Card $id is valid, looking up finishes");
                 $finishes = json_decode($result['finishes'], TRUE);
                 $cardtypes = cardtypes($finishes);
             else:
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id is valid, but no finishes",$logfile);
+                $msg->logMessage('[DEBUG]',"Card $id is valid, but no finishes");
                 $cardtypes = 'none';
             endif;
         else:
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card $id has no match",$logfile);
+            $msg->logMessage('[DEBUG]',"Card $id has no match");
             $cardtypes = 'nomatch';
         endif;
     endif;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Card type for $id is $cardtypes",$logfile);
+    $msg->logMessage('[DEBUG]',"Card type for $id is $cardtypes");
     return $cardtypes;
 }
 
 function card_legal_db_field($decktype)
 {
     global $db, $deck_legality_map, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up db_field for legality for deck type '$decktype'",$logfile);
+    $msg->logMessage('[DEBUG]',"Looking up db_field for legality for deck type '$decktype'");
     $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
     if ($index !== false):
         $db_field = $deck_legality_map[$index]['db_field'];
     endif;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Deck type '$decktype' has legality in '$db_field'",$logfile);
+    $msg->logMessage('[DEBUG]',"Deck type '$decktype' has legality in '$db_field'");
     return $db_field;
 }
 
 function promo_lookup($promo_type)
 {
     global $promos_to_show, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up promo description for '$promo_type'",$logfile);
+    $msg->logMessage('[DEBUG]',"Looking up promo description for '$promo_type'");
     $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));
     if ($index !== false):
         $promo_description = $promos_to_show[$index]['display'];
     else:
         $promo_description = 'skip';
     endif;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Promo description for '$promo_type' is '$promo_description'",$logfile);
+    $msg->logMessage('[DEBUG]',"Promo description for '$promo_type' is '$promo_description'");
     return $promo_description;
 }
 
 function deck_legal_list($decknumber,$deck_type,$db_field)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')",$logfile);
+    $msg->logMessage('[DEBUG]',"Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')");
     $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Looking up SQL: $sql",$logfile);
+    $msg->logMessage('[DEBUG]',"Looking up SQL: $sql");
     $sqlresult = $db->execute_query($sql,[$decknumber]);
     if($sqlresult === false):
         trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $db->error, E_USER_ERROR);
@@ -1372,15 +1373,15 @@ function deck_legal_list($decknumber,$deck_type,$db_field)
 function valid_uuid($uuid)
 {
     global $db, $logfile;
-    $msg = new Message;
+    $msg = new Message($logfile);
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid UUID ($uuid)",$logfile);
+    $msg->logMessage('[DEBUG]',"Checking for valid UUID ($uuid)");
     if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/', $uuid)):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid UUID ($uuid)",$logfile);
+        $msg->logMessage('[DEBUG]',"Valid UUID ($uuid)");
         $uuid = $db->real_escape_string($uuid);
         return $uuid;
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid UUID ($uuid), returning 'false'",$logfile);
+        $msg->logMessage('[ERROR]',"Invalid UUID ($uuid), returning 'false'");
         return false;
     endif;
 }
@@ -1388,15 +1389,15 @@ function valid_uuid($uuid)
 function valid_tablename($input)
 {
     global $db, $logfile;
-    $msg = new Message; 
+    $msg = new Message($logfile); 
     
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking for valid table name ($input)",$logfile);
+    $msg->logMessage('[DEBUG]',"Checking for valid table name ($input)");
     $pattern = '/^\d+collection$/';
     if (preg_match($pattern, $input)):
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Valid table name",$logfile);
+        $msg->logMessage('[DEBUG]',"Valid table name");
         return $input;
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Invalid table name",$logfile);
+        $msg->logMessage('[ERROR]',"Invalid table name");
         return false;
     endif;
 }

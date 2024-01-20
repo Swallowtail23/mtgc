@@ -1,5 +1,5 @@
 <?php 
-/* Version:     1.1
+/* Version:     1.2
     Date:       10/12/23
     Name:       valueupdate.php
     Purpose:    PHP script to update topvalue across collection
@@ -9,17 +9,20 @@
                 Initial version
  *  1.1
  *              Filter table name with regex
+ * 
+ *  1.2         20/01/24
+ *              Move to logMessage
  */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');      //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
 include 'includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
-$msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Loading valueupdate.php...",$logfile);
+$msg->logMessage('[NOTICE]',"Loading valueupdate.php...");
                 
 // Page content starts here
 if(isset($_GET['table'])):

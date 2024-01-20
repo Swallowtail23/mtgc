@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.0
-    Date:       12/12/23
+/* Version:     1.1
+    Date:       20/01/24
     Name:       ajaxtemplate.php
     Purpose:    PHP script to...
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,14 +9,18 @@
 
     1.0
                 Initial version
+ 
+    1.1         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -56,18 +60,18 @@ if ($isValidReferrer):
             $setsPerPage = intval($_GET['setsPerPage']);
             $offset = intval($_GET['offset']);
 
-            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'", $logfile);
+            $msg->logMessage('[DEBUG]',"Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'");
 
         else:  // Error handling
             http_response_code(400);
-            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Offset not in range", $logfile);
+            $msg->logMessage('[ERROR]',"Offset not in range");
             echo json_encode(['error' => 'Offset not in range']);
             exit();
         endif;
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from valid page",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from valid page");
     http_response_code(403);
     echo 'Access forbidden';
 endif;

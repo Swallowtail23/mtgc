@@ -1,5 +1,6 @@
 <?php 
-/* Version:     2.025/03/23
+/* Version:     2.1
+ *              25/03/23
     Name:       menu.php
     Purpose:    PHP script to display menu
     Notes:      {none}
@@ -8,7 +9,11 @@
                 Initial version
  *  2.0
  *              PHP 8.1 compatibility
+ * 
+ *  2.1         20/01/24
+ *              Move to logMessage
 */
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
@@ -44,7 +49,8 @@ endif;
                     <?php
                 endif;
             else:
-                $obj = new Message;$obj->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"No menu updates",$logfile);
+                $obj = new Message($logfile);
+                $obj->logMessage('[DEBUG]',"No menu updates");
             endif;
         endif;
         ?>

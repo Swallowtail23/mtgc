@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.1
-    Date:       10/12/2023
+/* Version:     5.2
+    Date:       20/01/24
     Name:       admin/cards.php
     Purpose:    Card administrative tasks
     Notes:      
@@ -18,9 +18,12 @@
  * 
  *  5.1         10/12/2023
  *              Sanitise UUID
+ * 
+ *  5.2         20/01/24
+ *              Move to include sessionname and logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');                //Initialise and load ini file
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');      //Includes basic functions for non-secure pages
@@ -28,13 +31,13 @@ require ('../includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
 
     
-$msg = new Message;
+$msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
-$msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Admin page called by user $username ($useremail)",$logfile);
+$msg->logMessage('[DEBUG]',"Admin page called by user $username ($useremail)");
 
 // Is admin running the page
-$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin is $admin",$logfile);
+$msg->logMessage('[ERROR]',"Admin is $admin");
 if ($admin !== 1):
     require('reject.php');
 endif;
@@ -43,7 +46,7 @@ endif;
 if(isset($_GET['cardtoedit'])): 
     $id = valid_uuid($_GET['cardtoedit']);
     if($id === false):
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin card page called without valid UUID",$logfile);
+        $msg->logMessage('[ERROR]',"Admin card page called without valid UUID");
         trigger_error("[ERROR] cards.php: Invalid UUID", E_USER_ERROR);
         exit;
     endif;
@@ -125,7 +128,7 @@ if ((isset($_GET['delete'])) AND ($_GET['delete'] == 'DELETE')):
     if (isset($_GET['id'])):
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}", $logfile);
+    $msg->logMessage('[ERROR]',"Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}");
 
     // Delete from cards_scry
     $sql = "DELETE FROM cards_scry WHERE id = ?";
@@ -142,7 +145,7 @@ if ((isset($_GET['delete'])) AND ($_GET['delete'] == 'DELETE')):
             $result = $stmt->get_result();
             $rowcount = $result->num_rows;
             if ($rowcount === 0):
-                $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "Delete card $id successful", $logfile);
+                $msg->logMessage('[NOTICE]',"Delete card $id successful");
                 ?> <div class="alert-box success" id="setdeletealert2"><span>success: </span>Deleted</div> <?php
             endif;
         endif;

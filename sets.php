@@ -1,6 +1,6 @@
 <?php 
-/* Version:     4.0
-    Date:       02/12/2023
+/* Version:     4.1
+    Date:       20/01/24
     Name:       sets.php
     Purpose:    Lists all setcodes and sets in the database
     Notes:      This page is the only one NOT mobile responsive design. 
@@ -17,15 +17,19 @@
  *
  *  4.0         02/12/2023
  *              Add pagination and set image reload for admins
+ * 
+ *  4.1         20/01/24
+ *              Move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
-$msg = new Message;
+$msg = new Message($logfile);
 
 ?> 
 <!DOCTYPE html>
@@ -393,7 +397,7 @@ require('includes/menu.php');
             $currentYear = null;
             if($result === false):
                 // Should never get here with catches above
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Error retrieving data",$logfile); ?>
+                $msg->logMessage('[ERROR]',"Error retrieving data"); ?>
                 <tr>
                     <td colspan="2">Error retrieving data</td>
                 </tr> <?php

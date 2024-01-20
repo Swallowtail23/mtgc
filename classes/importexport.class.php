@@ -1,6 +1,6 @@
 <?php
-/* Version:     3.0
-    Date:       13/01/24
+/* Version:     3.1
+    Date:       20/01/24
     Name:       importexport.class.php
     Purpose:    Import / export management class
     Notes:      - 
@@ -17,6 +17,9 @@
  * 
  *  3.0         13/01/24
  *              Move to use PHPMailer
+ *  
+    3.1         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -37,7 +40,7 @@ class ImportExport
         $this->logfile = $logfile;
         $this->useremail = $useremail;
         $this->serveremail = $serveremail;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
     }
 
     public function exportCollectionToCsv($table, $myURL, $smtpParameters, $format = 'echo', $filename = 'export.csv', $username = '', $useremail = '')
@@ -48,7 +51,7 @@ class ImportExport
         $csv_escaped = "\\";
         $table = $this->db->real_escape_string($table);
         $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running Export Collection to CSV: $sql",$this->logfile);
+        $this->message->logMessage('[NOTICE]',"Running Export Collection to CSV: $sql");
 
         // Gets the data from the database
         $result = $this->db->query($sql);
@@ -56,7 +59,7 @@ class ImportExport
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
         else:
             $fields_cnt = $result->field_count;
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Number of fields: $fields_cnt",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Number of fields: $fields_cnt");
             $schema_insert = '';
             for ($i = 0; $i < $fields_cnt; $i++):
                 $fieldinfo = mysqli_fetch_field_direct($result, $i);
@@ -149,8 +152,8 @@ class ImportExport
                     (strpos(strtolower($d5),'etched') === FALSE) OR
                     (strpos(strtolower($d6),'id') === FALSE)
                 ):
-                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain correct '$format' header row",$this->logfile);
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+                $this->message->logMessage('[ERROR]',"Import file {$_FILES['filename']['name']} does not contain correct '$format' header row");
+                $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'");
                 return "incorrect format";
             else:
                 return "ok header";
@@ -165,15 +168,15 @@ class ImportExport
                     ((strpos(strtolower($d4),'foil') === FALSE) OR (strpos(strtolower($d4),'non-foil') !== FALSE)) OR
                     (strpos(strtolower($d5),'id') === FALSE)
                 ):
-                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain correct '$format' header row",$this->logfile);
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+                $this->message->logMessage('[ERROR]',"Import file {$_FILES['filename']['name']} does not contain correct '$format' header row");
+                $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'");
                 return "incorrect format";
             else:
                 return "ok header";
             endif;
         else:
-            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file {$_FILES['filename']['name']} does not contain valid header row",$this->logfile);
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'",$this->logfile);
+            $this->message->logMessage('[ERROR]',"Import file {$_FILES['filename']['name']} does not contain valid header row");
+            $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'");
             return "incorrect format";
         endif;
     }
@@ -272,7 +275,7 @@ class ImportExport
         // 'delverlens' expects header row to be: Edition code,Collector's number,Name,Non-foil quantity,Foil quantity,Scryfall ID
         
         //Import uploaded file to Database
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import starting in '$importType' mode, '$importFormat' format",$this->logfile);
+        $this->message->logMessage('[DEBUG]',"Import starting in '$importType' mode, '$importFormat' format");
         $handle = fopen($filename, "r");
         $i = 0;
         $count = 0;
@@ -286,12 +289,12 @@ class ImportExport
         else:
             $delimiter = ',';
         endif;
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file delimiter is '$delimiter'", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"Import file delimiter is '$delimiter'");
         while (($data = fgetcsv ($handle, 100000, $delimiter)) !== FALSE):
             $idimport = 0;
             $row_no = $i + 1;
             if ($i === 0): // It's the header row, check to see if it matches the stated format
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import file header row: " . implode($delimiter, $data), $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Import file header row: " . implode($delimiter, $data));
                 $validHeader = $this->checkFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],isset($data[6]) ? $data[6] : '');
                 if ($validHeader !== "ok header"):
                     return "incorrect format";
@@ -308,27 +311,27 @@ class ImportExport
                 $data5 = $dataMap[5];
                 $data6 = $dataMap[6];
                 
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no of import file (format: '$importFormat'): setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})",$this->logfile);
+                $this->message->logMessage('[DEBUG]',"Row $row_no of import file (format: '$importFormat'): setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})");
                 $supplied_id = $data6; // id
                 if (!is_null($data6)): // ID has been supplied, run an ID check / import first
-                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Data has an ID ($data6), checking for a match",$this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Row $row_no: Data has an ID ($data6), checking for a match");
                     $cardtype = cardtype_for_id($data6);
-                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card type is: $cardtype",$this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card type is: $cardtype");
                     if($cardtype == 'nomatch'):
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: ID $data6 is not a valid id, trying setcode/number...",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 is not a valid id, trying setcode/number...");
                         $importable = FALSE;
                     elseif($cardtype == 'none'):
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: ID $data6 is valid but db has no cardtype info",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 is valid but db has no cardtype info");
                         $importable = FALSE;
                     else:
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: ID $data6 is valid and we have cardtype info",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 is valid and we have cardtype info");
                         if($cardtype == 'normalfoiletched'):
-                            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$this->logfile);
+                            $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import");
                             // All options available for import, no checks to be made
                             $importable = TRUE;
                         elseif($cardtype == 'normalfoil'):
                             if($data5 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -340,7 +343,7 @@ class ImportExport
                             endif; 
                         elseif($cardtype == 'normaletched'):
                             if($data4 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -352,7 +355,7 @@ class ImportExport
                             endif; 
                         elseif($cardtype == 'foiletched'):
                             if($data3 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -364,7 +367,7 @@ class ImportExport
                             endif; 
                         elseif($cardtype == 'etchedonly'):
                             if($data3 > 0 or $data4 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -376,7 +379,7 @@ class ImportExport
                             endif;                                                
                         elseif($cardtype == 'foilonly'):
                             if($data3 > 0 or $data5 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -388,7 +391,7 @@ class ImportExport
                             endif;
                         elseif($cardtype == 'normalonly'):
                             if($data4 > 0 or $data5 > 0):
-                                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$this->logfile);
+                                $this->message->logMessage('[ERROR]',"Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards");
                                 echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                 echo "<img src='/images/error.png' alt='Error'><br>";
                                 $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6"."\n";
@@ -401,7 +404,7 @@ class ImportExport
                         endif;
                     endif;
                     if(isset($importable) AND $importable != FALSE):
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Match found for ID $data6 with no misallocated card types, will import",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: Match found for ID $data6 with no misallocated card types, will import");
                         // Get existing values
                         $beforeStmt = $this->db->prepare("SELECT normal, foil, etched FROM `$mytable` WHERE id = ? LIMIT 1");
                         $beforeStmt->bind_param("s", $data6);
@@ -413,7 +416,7 @@ class ImportExport
                         else:
                             $currentValues = ['normal' => 0, 'foil' => 0, 'etched' => 0];
                         endif;
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'");
                         if ($importType === 'add'):
                             $stmt = $this->db->prepare("  INSERT INTO
                                                     `$mytable`
@@ -459,31 +462,31 @@ class ImportExport
                         else:
                             $status = $this->db->affected_rows; // 1 = add, 2 = change, 0 = no change
                             if($status === 1):
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: New, imported - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: New, imported - no error returned; return code: $status");
                             elseif($status === 2):
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Updated - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Updated - no error returned; return code: $status");
                             else:
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: No change - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: No change - no error returned; return code: $status");
                             endif;
                         endif;
                             $stmt->close();
                         if($status === 1 OR $status === 2 OR $status === 0):
-                            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Import query ran - checking",$this->logfile);
+                            $this->message->logMessage('[DEBUG]',"Row $row_no: Import query ran - checking");
                             if($sqlcheckqry = $this->db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
                                 $rowcount = $sqlcheckqry->num_rows;
                                 if($rowcount > 0):
                                     $sqlcheck = $sqlcheckqry->fetch_assoc();
-                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$this->logfile);
+                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}");
                                     if (($sqlcheck['normal'] == $desiredValues['normal']) AND ($sqlcheck['foil'] == $desiredValues['foil']) AND ($sqlcheck['etched'] == $desiredValues['etched'])):
                                         $total = $total + $data3 + $data4 + $data5;
                                         $count = $count + 1;
                                         $idimport = 1;
                                     else:
-                                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = new result qties do not match desired result qties",$this->logfile);
+                                        $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = new result qties do not match desired result qties");
                                         $idimport = 20;
                                     endif;
                                 else:
-                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = No match",$this->logfile);
+                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = No match");
                                     $idimport = 0;
                                 endif;
                             else:
@@ -493,7 +496,7 @@ class ImportExport
                     endif;    
                 endif;
                 if (!empty($data0) AND !empty($data1) AND !empty($data2) AND $idimport === 0): // ID import has not been successful, try with setcode, number, name
-                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - trying setcode/number",$this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Row $row_no: Data place 1 (setcode - $data0), place 2 (number - $data1) place 3 (name - $data2) without ID - trying setcode/number");
                     $stmt = $this->db->execute_query("SELECT id,name,printed_name,flavor_name,f1_name,f1_printed_name,f1_flavor_name,f2_name,f2_printed_name,f2_flavor_name,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? LIMIT 1", [$data0,$data1]);
                     if($stmt != TRUE):
                         trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $this->db->error, E_USER_ERROR);
@@ -505,9 +508,9 @@ class ImportExport
                                 $db_id = $result['id'];
                                 $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
                                 if($db_name != $data2):
-                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names",$this->logfile);
+                                    $this->message->logMessage('[DEBUG]',"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names");
                                     if(!in_array($data2,$db_all_names)):
-                                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])",$this->logfile);
+                                        $this->message->logMessage('[ERROR]',"No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])");
                                         echo "Row $row_no: ERROR: ID and Name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                         echo "<img src='/images/error.png' alt='Error'><br>";
                                         $newwarning = "ERROR - name mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -517,21 +520,21 @@ class ImportExport
                                     else:
                                         $importtype = 'alternate_name';
                                         $data6 = $result['id'];
-                                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Supplied name $data2 matches with a secondary name for id {$result['id']}, will import",$this->logfile);
+                                        $this->message->logMessage('[ERROR]',"Supplied name $data2 matches with a secondary name for id {$result['id']}, will import");
                                     endif;
                                 else:
                                     if(isset($result['finishes'])):
-                                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes",$this->logfile);
+                                        $this->message->logMessage('[DEBUG]',"Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes");
                                         $data6 = $result['id'];
                                         $finishes = json_decode($result['finishes'], TRUE);
                                         $cardtype = cardtypes($finishes);
-                                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card type is: $cardtype",$this->logfile);
+                                        $this->message->logMessage('[DEBUG]',"Row $row_no: Card type is: $cardtype");
                                         if($cardtype != 'none'):
                                             if($cardtype == 'normalfoiletched'):
-                                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import",$this->logfile);
+                                                $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Normal/Foil/Etched ID, no restrictions on card import");
                                             elseif($cardtype == 'normalfoil'):
                                                 if($data5 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Normal and Foil ID, but import contains Etched cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -541,7 +544,7 @@ class ImportExport
                                                 endif; 
                                             elseif($cardtype == 'normaletched'):
                                                 if($data4 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Normal and Etched ID, but import contains Foil cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -551,7 +554,7 @@ class ImportExport
                                                 endif; 
                                             elseif($cardtype == 'foiletched'):
                                                 if($data3 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Foil and Etched ID, but import contains Normal cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -561,7 +564,7 @@ class ImportExport
                                                 endif; 
                                             elseif($cardtype == 'etchedonly'):
                                                 if($data3 > 0 or $data4 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Etched-only ID, but import contains Normal and/or Foil cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -571,7 +574,7 @@ class ImportExport
                                                 endif;                                                
                                             elseif($cardtype == 'foilonly'):
                                                 if($data3 > 0 or $data5 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Foil-only ID, but import contains Normal and/or Etched cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -581,7 +584,7 @@ class ImportExport
                                                 endif;
                                             elseif($cardtype == 'normalonly'):
                                                 if($data4 > 0 or $data5 > 0):
-                                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards",$this->logfile);
+                                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Card matches to a Foil-only ID, but import contains Foil and/or Etched cards");
                                                     echo "Row $row_no: ERROR: Cardtype not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                                     echo "<img src='/images/error.png' alt='Error'><br>";
                                                     $newwarning = "ERROR - Cardtype mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -593,10 +596,10 @@ class ImportExport
                                         endif;    
                                     endif; 
                                 endif;
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Setcode ($data0)/collector number ($data1) with supplied ID ($supplied_id) matched on name and importing as ID $data6",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Setcode ($data0)/collector number ($data1) with supplied ID ($supplied_id) matched on name and importing as ID $data6");
                             endif;
                         else: //if ($stmt->num_rows > 0)
-                            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card setcode and number do not match a card in db",$this->logfile);
+                            $this->message->logMessage('[ERROR]',"Card setcode and number do not match a card in db");
                             echo "Row $row_no: ERROR: ID and name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                             echo "<img src='/images/error.png' alt='Error'><br>";
                             $newwarning = "ERROR - failed to find an ID and name match, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, N/A, N/A \n";
@@ -618,7 +621,7 @@ class ImportExport
                         else:
                             $currentValues = ['normal' => 0, 'foil' => 0, 'etched' => 0];
                         endif;
-                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'",$this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'");
                         if ($importType === 'add'):
                             $stmt = $this->db->prepare("  INSERT INTO
                                                     `$mytable`
@@ -664,21 +667,21 @@ class ImportExport
                         else:
                             $status = $this->db->affected_rows; // 1 = add, 2 = change, 0 = no change
                             if($status === 1):
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: New, imported - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: New, imported - no error returned; return code: $status");
                             elseif($status === 2):
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Updated - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Updated - no error returned; return code: $status");
                             else:
-                                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: No change - no error returned; return code: $status",$this->logfile);
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: No change - no error returned; return code: $status");
                             endif;
                         endif;
                         $stmt->close();
                         if($status === 1 OR $status === 2 OR $status === 0):
-                            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Import query ran OK - checking...",$this->logfile);
+                            $this->message->logMessage('[DEBUG]',"Row $row_no: Import query ran OK - checking...");
                             if($sqlcheckqry = $this->db->execute_query("SELECT normal,foil,etched FROM $mytable WHERE id = ? LIMIT 1",[$data6])):
                                 $rowcount = $sqlcheckqry->num_rows;
                                 if($rowcount > 0):
                                     $sqlcheck = $sqlcheckqry->fetch_assoc();
-                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}",$this->logfile);
+                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}");
                                     if (($sqlcheck['normal'] == $desiredValues['normal']) AND ($sqlcheck['foil'] == $desiredValues['foil']) AND ($sqlcheck['etched'] == $desiredValues['etched'])):
                                         if(isset($importtype) AND $importtype == 'alternate_name'):
                                             $newwarning = "WARNING - card matched to alternate card name, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $supplied_id, $db_name, $db_id \n";
@@ -689,11 +692,11 @@ class ImportExport
                                             $total = $total + $data3 + $data4 + $data5;
                                             $count = $count + 1;
                                     else: 
-                                        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = new result qties do not match desired result qties",$this->logfile); ?>
+                                        $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = new result qties do not match desired result qties"); ?>
                                         <img src='/images/error.png' alt='Failure'><br> <?php
                                     endif;
                                 else:
-                                    $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Row $row_no: Check result = No match",$this->logfile);
+                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = No match");
                                     $idimport = 0;                                
                                 endif;
                             else:
@@ -721,8 +724,8 @@ class ImportExport
         $subject = "Import failures / warnings"; 
         $message = "$warningheading \n \n $warningsummary \n \n $summary";
         mail($useremail, $subject, $message, $from); 
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Import finished",$this->logfile);
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Warnings: '$warningsummary'",$this->logfile); ?>
+        $this->message->logMessage('[NOTICE]',"Import finished");
+        $this->message->logMessage('[DEBUG]',"Warnings: '$warningsummary'"); ?>
         <script type="text/javascript">
             (function() {
                 fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
@@ -734,7 +737,7 @@ class ImportExport
     }
 
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

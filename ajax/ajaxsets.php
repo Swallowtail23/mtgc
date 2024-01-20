@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.0
-    Date:       12/12/23
+/* Version:     1.1
+    Date:       20/01/24
     Name:       ajaxsets.php
     Purpose:    PHP script to update sets page
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,14 +9,17 @@
 
     1.0
                 Initial version
+ 
+    1.1         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -55,32 +58,32 @@ if ($isValidReferrer):
             $setsPerPage = intval($_GET['setsPerPage']);
             $offset = intval($_GET['offset']);
 
-            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'", $logfile);
+            $msg->logMessage('[DEBUG]',"Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'");
             
             // Filtering filter
             $filtertrim = trim($filter, " \t\n\r\0\x0B");
             $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
             $filter = preg_replace($regex, ' ', $filtertrim);
             $filter = filter_var($filter,FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Filter after URL removal and filtering is '$filter'",$logfile);
+            $msg->logMessage('[DEBUG]',"Filter after URL removal and filtering is '$filter'");
             
             if (strlen($filter)< 3 && strlen($filter)!== 0):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Filter not long enough after trimming", $logfile);
+                $msg->logMessage('[ERROR]',"Filter not long enough after trimming");
                 echo json_encode(['error' => 'Filter not long enough after trimming']);
                 exit();
             endif;
             
             if ($offset < 0 || $offset > 10000):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Offset not in range", $logfile);
+                $msg->logMessage('[ERROR]',"Offset not in range");
                 echo json_encode(['error' => 'Offset not in range']);
                 exit();
             endif;
             
             if ($setsPerPage < 2 || $setsPerPage > 100):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Sets per page not in range", $logfile);
+                $msg->logMessage('[ERROR]',"Sets per page not in range");
                 echo json_encode(['error' => 'Sets per page not in range']);
                 exit();
             endif;
@@ -98,7 +101,7 @@ if ($isValidReferrer):
 
             if ($stmt === false):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                $msg->logMessage('[ERROR]',"SQL error: ".$db->error);
                 echo json_encode(['error' => 'Error preparing SQL: ' . $db->error]);
                 exit();
             endif;
@@ -107,7 +110,7 @@ if ($isValidReferrer):
 
             if ($exec === false):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                $msg->logMessage('[ERROR]',"SQL error: ".$db->error);
                 echo json_encode(['error' => 'Error executing SQL: ' . $db->error]);
                 exit();
             else:
@@ -147,13 +150,11 @@ if ($isValidReferrer):
                                     setdate DESC, parent_set_code DESC 
                                 LIMIT ? OFFSET ?");
 
-            $filter = '%' . $filter . '%'; // Add wildcards to the filter value
-
             $stmt->bind_param("ssssii", $filter, $filter, $filter, $filter, $setsPerPage, $offset);
 
             if ($stmt === false):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                $msg->logMessage('[ERROR]',"SQL error: ".$db->error);
                 echo json_encode(['error' => 'Error preparing SQL: ' . $db->error]);
                 exit();
             endif;
@@ -162,7 +163,7 @@ if ($isValidReferrer):
 
             if ($exec === false):
                 http_response_code(400);
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": SQL error: ".$db->error, $logfile);
+                $msg->logMessage('[ERROR]',"SQL error: ".$db->error);
                 echo json_encode(['error' => 'Error executing SQL: ' . $db->error]);
                 exit();
             else:
@@ -186,7 +187,7 @@ if ($isValidReferrer):
                 endwhile;
                 
                 $currentPage = ($offset / $setsPerPage) + 1;
-                $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset': '$numRows' results: '$numPages' pages", $logfile);
+                $msg->logMessage('[DEBUG]',"Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset': '$numRows' results: '$numPages' pages");
                 $response = [
                             'numResults' => $numRows,
                             'numPages' => $numPages,
@@ -199,14 +200,14 @@ if ($isValidReferrer):
             endif;
         else:
             http_response_code(400);
-            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called without required GETS", $logfile);
+            $msg->logMessage('[ERROR]',"Called without required GETS");
             echo json_encode(['error' => 'No filter, page, or setsPerPage provided']);
             exit();
         endif;
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from sets.php (called from $referringPage; expected: $expectedReferringPage)",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from sets.php (called from $referringPage; expected: $expectedReferringPage)");
     http_response_code(403);
     echo 'Access forbidden';
 endif;

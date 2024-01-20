@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       02/12/23
+/* Version:     1.1
+    Date:       20/01/24
     Name:       ajax/ajaxsetimg.php
     Purpose:    Trigger reload all images for a set
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,13 +9,18 @@
 
     1.0
                 Initial version
+ 
+    1.1         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
 include '../includes/colour.php';
+$msg = new Message($logfile);
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
     // Return an error in JSON format
@@ -33,14 +38,13 @@ else:
     if (isset($_POST['setcode'])):
         $setcode = $_POST['setcode'];
         $root = $_SERVER['DOCUMENT_ROOT'];
-        $msg = new Message;
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with set $setcode", $logfile);
+        $msg->logMessage('[NOTICE]',"Called with set '$setcode'");
         $cmd = "php $root/bulk/setimgreload.php '$setcode'> /dev/null 2>&1 &";
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": running $cmd", $logfile);
+        $msg->logMessage('[NOTICE]',"Running '$cmd'");
         exec($cmd);
-        echo json_encode(["status" => "success", "message" => "Image reloading started for set $setcode - result will be emailed to server admin"]);
+        echo json_encode(["status" => "success", "message" => "Image reloading started for set '$setcode' - result will be emailed to server admin"]);
     else:
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": No setcode supplied", $logfile);
+        $msg->logMessage('[ERROR]',"No setcode supplied");
         echo json_encode(["status" => "error", "message" => "No setcode supplied"]);
     endif;
 endif;

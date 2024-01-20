@@ -12,8 +12,8 @@
     2.0         
                 Removed database call (secpagesetup provides all the info needed)
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages

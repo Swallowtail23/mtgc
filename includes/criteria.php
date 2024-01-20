@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.0
-    Date:       02/01/24
+/* Version:     7.1
+    Date:       20/01/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -21,6 +21,8 @@
  * 
  *  7.0         02/01/24
  *              Add language search capability
+ *  7.1         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -303,7 +305,7 @@ else:
 
         // Then game type
         $criteriaGameType = "";
-        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $gametypeOp",$logfile);
+        $msg->logMessage('[DEBUG]',"$gametypeOp");
         if ($paper === "yes"):
             $criteriaGameType = "cards_scry.game_types LIKE '%paper%'";
         endif;
@@ -560,7 +562,7 @@ else:
             $criteria .= "AND setcode LIKE ? ";
             $params[] = $setcodesearch;
         endif;
-        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $searchLang",$logfile);
+        $msg->logMessage('[DEBUG]',"$searchLang");
         if (!empty($searchLang) && $searchLang === 'all'):
             // get all
         elseif (!empty($searchLang)):

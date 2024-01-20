@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       28/01/22
+/* Version:     3.1
+    Date:       20/01/24
     Name:       colour.php
     Purpose:    PHP script with function to return colour name
     Notes:      
@@ -12,8 +12,8 @@
  *  3.0
  *              Fixes for cards_scry database
  * 
- *  TO DO
- *              Should move to be database lookup rather than PHP?
+ *  3.1         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -23,8 +23,8 @@ endif;
 function colourfunction($colourcode)
 {
     global $logfile;
-    $msg = new Message;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": run with input: $colourcode",$logfile);
+    $msg = new Message($logfile);
+    $msg->logMessage('[DEBUG]',"run with input: $colourcode");
     $decode = json_decode($colourcode);
     $colourcode = '';
     if($decode !== null):
@@ -32,7 +32,7 @@ function colourfunction($colourcode)
             $colourcode = $colourcode.$value;
         endforeach;
     endif;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Checking card, colour identity $colourcode",$logfile);
+    $msg->logMessage('[DEBUG]',"Checking card, colour identity $colourcode");
     if (strlen($colourcode) === 1):
         if ($colourcode === "B") :
             $colour = "black";
@@ -215,6 +215,6 @@ function colourfunction($colourcode)
     if (empty($colour)):
         $colour = "other";
     endif;
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"function ".__FUNCTION__.": Returning colour: $colour",$logfile);
+    $msg->logMessage('[DEBUG]',"Returning colour: $colour");
     return $colour;
 }

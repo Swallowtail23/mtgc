@@ -1,6 +1,6 @@
 <?php 
-/* Version:     11.0
-    Date:       13/01/24
+/* Version:     11.1
+    Date:       20/01/24
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -35,14 +35,18 @@
  * 
  * 11.0         13/01/24
  *              Add email export for CSV
-*/
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+ * 
+ * 11.1         20/01/24
+ *              Move to logMessage
+ */
+
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Has DELETE collection been called? 
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
@@ -58,20 +62,20 @@ else:
 endif;
 
 if ($deletecollection === 'DELETE'):    
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to delete collection '$mytable'",$logfile);
+    $msg->logMessage('[DEBUG]',"Called to delete collection '$mytable'");
     $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Exporting collection to email...",$logfile);
+    $msg->logMessage('[DEBUG]',"Exporting collection to email...");
     $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Truncating collection table...",$logfile);
+    $msg->logMessage('[DEBUG]',"Truncating collection table...");
     if(!$db->execute_query("TRUNCATE TABLE `$mytable`")):
-        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Truncate table failed",$logfile);
+        $msg->logMessage('[ERROR]',"Truncate table failed");
         $delcollresult = "Error: Failed to delete collection";
     else:
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"PRG with success parameter...",$logfile);
+        $msg->logMessage('[DEBUG]',"PRG with success parameter...");
         $delcollresult = "Success: Deleted collection";
     endif;
 else:
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Normal page load...",$logfile);
+    $msg->logMessage('[DEBUG]',"Normal page load...");
 endif; 
 
 ?> 
@@ -159,15 +163,15 @@ endif;
         
         // Does the user have a collection table?
         $tablecheck = "SELECT * FROM $mytable";
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Checking if user has a collection table...",$logfile);
+        $msg->logMessage('[DEBUG]',"Checking if user has a collection table...");
         if($db->query($tablecheck) === FALSE):
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"No existing collection table...",$logfile);
+            $msg->logMessage('[NOTICE]',"No existing collection table...");
             $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"...copying collection template...: $query2",$logfile);
+            $msg->logMessage('[DEBUG]',"...copying collection template...: $query2");
             if($db->query($query2) === TRUE):
-                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy successful",$logfile);
+                $msg->logMessage('[NOTICE]',"Collection template copy successful");
             else:
-                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Collection template copy failed",$logfile);
+                $msg->logMessage('[NOTICE]',"Collection template copy failed");
             endif;
         endif;
         
@@ -179,7 +183,7 @@ endif;
                                             LEFT JOIN `groups` 
                                             ON users.groupid = groups.groupnumber 
                                             WHERE usernumber = ? LIMIT 1",[$user])):
-            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"SQL query for user details succeeded",$logfile);
+            $msg->logMessage('[DEBUG]',"SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
         else:
             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
@@ -188,9 +192,8 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php 
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"delcollresult is '$delcollresult'",$logfile);
+                $msg->logMessage('[ERROR]',"delcollresult is '$delcollresult'");
                 if (!empty($delcollresult)):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"In here",$logfile);
                     echo "<script>alert('$delcollresult');</script>";
                     echo "<meta http-equiv='refresh' content='0; url=profile.php'>";
                 endif;
@@ -204,19 +207,19 @@ endif;
                         $old_password = $_POST['curPass'];
                         $db_password = $row['password'];
                         if ($new_password == $new_password_2):
-                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New passwords double type = match",$logfile);
+                            $msg->logMessage('[DEBUG]',"New passwords double type = match");
                             if (valid_pass($new_password)):
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is a valid password",$logfile);
+                                $msg->logMessage('[DEBUG]',"New password is a valid password");
                                 if($new_password != $old_password):
-                                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"New password is different to old password",$logfile);
+                                    $msg->logMessage('[DEBUG]',"New password is different to old password");
                                     if (password_verify($old_password, $db_password)):
-                                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Old password is correct",$logfile);
+                                        $msg->logMessage('[DEBUG]',"Old password is correct");
                                         $new_password = password_hash("$new_password", PASSWORD_DEFAULT);
                                         $data = array(
                                             'password' => "$new_password"
                                         );
                                         $pwdchg = $db->execute_query("UPDATE users SET password = ? WHERE email = ?",[$new_password,$useremail]);
-                                        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                        $msg->logMessage('[NOTICE]',"Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}");
                                         if ($pwdchg === false):
                                             trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                                         endif;
@@ -226,7 +229,7 @@ endif;
                                         else:
                                             $pwdvalidate = $pwdvalidateqry->fetch_assoc();
                                             if ($pwdvalidate['password'] == $new_password):
-                                                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                                $msg->logMessage('[NOTICE]',"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}");
                                                 echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed, please log in again</div>";
                                                 // Clear the force password flag and session variable
                                                 $chgflagclear = $db->execute_query("UPDATE users SET status = 'active' WHERE email = ?",[$useremail]);
@@ -240,7 +243,7 @@ endif;
                                                 exit();
                                             else:
                                                 echo "<div class='alert-box error' id='pwdchange'><span>error: </span>Password change failed... contact support</div>";
-                                                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                                                $msg->logMessage('[NOTICE]',"New password not verified from database for $useremail from {$_SERVER['REMOTE_ADDR']}");
                                             endif;
                                         endif;
                                     else:
@@ -262,24 +265,24 @@ endif;
             //3. User needs to change password (status = chgpwd). Needs to be in DIV for error display
                 if ((isset($_SESSION["chgpwd"])) AND ($_SESSION["chgpwd"] == TRUE)):
                     echo "<div class='alert-box notice' id='pwdchange'><span>notice: </span>You must set a new password.</div>";
-                    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $msg->logMessage('[NOTICE]',"Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}");
                 endif;
             //4. Collection view
                 $current_coll_view = $row['collection_view'];
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Collection view is '$current_coll_view'",$logfile);
+                $msg->logMessage('[DEBUG]',"Collection view is '$current_coll_view'");
 
             //5. Groups
                 $current_group_status = $row['grpinout'];
                 $current_group = $row['groupid'];
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Groups are '$current_group_status', group id '$current_group'",$logfile);
+                $msg->logMessage('[DEBUG]',"Groups are '$current_group_status', group id '$current_group'");
 
             //6. Currency
                 $current_currency = $row['currency'];
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Current currency is '$current_currency'",$logfile);
+                $msg->logMessage('[DEBUG]',"Current currency is '$current_currency'");
             
             //7. Weekly exports
                 $current_weekly = $row['weeklyexport'];
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Weekly exports are set to '$current_weekly'",$logfile);
+                $msg->logMessage('[DEBUG]',"Weekly exports are set to '$current_weekly'");
 
             //8. Update pricing in case any new cards have been added to collection
                 //Make sure only number+collection is passed as table name
@@ -301,7 +304,7 @@ endif;
                 else:
                     $totalcardcount = $rowcount['TOTAL'];
                 endif;
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total card count = $totalcardcount",$logfile);
+                $msg->logMessage('[DEBUG]',"Total card count = $totalcardcount");
                 if($totalmrcount = $db->query("SELECT (SUM(IFNULL(`$mytable`.normal, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.etched, 0))) 
                                                 as TOTALMR FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id
                                                 WHERE rarity IN ('mythic', 'rare');")):
@@ -314,7 +317,7 @@ endif;
                 else:
                     $totalmrcardcount = $rowmrcount['TOTALMR'];
                 endif;
-                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Total mythics and rares count = $totalmrcardcount",$logfile);
+                $msg->logMessage('[DEBUG]',"Total mythics and rares count = $totalmrcardcount");
 
                 // Get total values
                 $sqlvalue = "SELECT (
@@ -328,7 +331,7 @@ endif;
                 if($totalvalue = $db->query($sqlvalue)):
                     $rowvalue = $totalvalue->fetch_assoc();
                     $unformatted_value = $rowvalue['TOTAL'];
-                    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Unformatted value = $unformatted_value",$logfile);
+                    $msg->logMessage('[DEBUG]',"Unformatted value = $unformatted_value");
                 else:
                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                 endif;
@@ -345,7 +348,7 @@ endif;
                     <?php
                         $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                         $collectionmoney = $a->format($unformatted_value);
-                        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Formatted value = $collectionmoney",$logfile);
+                        $msg->logMessage('[DEBUG]',"Formatted value = $collectionmoney");
                         $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
                         $rowcounttotal = number_format($totalcardcount);
                         $totalmrcardcount = number_format($totalmrcardcount);
@@ -672,13 +675,13 @@ endif;
 
                         <?php
                         if ($import === 'yes' && $importType !== '' && $importFormat !== ''):
-                            $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import called, checking file uploaded...",$logfile);
+                            $msg->logMessage('[DEBUG]',"Import called, checking file uploaded...");
                             if (is_uploaded_file($_FILES['filename']['tmp_name'])):
                                 echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." uploaded successfully. Processing..." . "</h4>";
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} uploaded",$logfile);
+                                $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
                             else:
                                 echo "<br><h4>" . "File ". $_FILES['filename']['name'] ." did not upload successfully. Exiting..." . "</h4>";
-                                $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Import file {$_FILES['filename']['name']} failed",$logfile);
+                                $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} failed");
                                 exit;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
@@ -691,7 +694,7 @@ endif;
                                 echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
                             endif;
                         elseif ($import === 'yes' && ($importType === '' OR $importFormat === '')):
-                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Import called without valid importType",$logfile);
+                            $msg->logMessage('[ERROR]',"Import called without valid importType");
                             echo "<h4>Invalid parameters</h4>";
                             echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
                         else: 
@@ -703,6 +706,6 @@ endif;
             </div>
         </div> <?php 
         require('includes/footer.php');
-        $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Finished",$logfile);?>
+        $msg->logMessage('[DEBUG]',"Finished");?>
     </body>
 </html>
