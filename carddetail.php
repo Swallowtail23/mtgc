@@ -2178,11 +2178,15 @@ require('includes/menu.php'); //mobile menu
                 ?>
         <!-- Disqus -->
         <?php
+                if($disqus === 1):
+                    $msg->logMessage('[DEBUG]',"Disqus enabled");
                     $page_url = strtok(get_full_url(),'?')."?id=".$cardid;
-                    if (strpos($page_url,'obelix') !== false):
-                        $disqus_site = 'https://mtgdev.disqus.com/embed.js';
+                    if ($tier === 'dev'):
+                        $msg->logMessage('[DEBUG]',"Disqus site is '$disqusDev'");
+                        $disqus_site = "$disqusDev/embed.js";
                     else:
-                        $disqus_site = 'https://mtgcollection.disqus.com/embed.js';
+                        $msg->logMessage('[DEBUG]',"Disqus site is '$disqusProd'");
+                        $disqus_site = "$disqusProd/embed.js";
                     endif;
                     ?>
                     <div id="disqus_thread"></div>
@@ -2201,6 +2205,9 @@ require('includes/menu.php'); //mobile menu
                         </script>
                         <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
             <?php
+                else:
+                    $msg->logMessage('[DEBUG]',"Disqus not enabled, skipping");
+                endif;
         else :
             echo 'No such card, check the details.';
         endif;

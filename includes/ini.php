@@ -98,6 +98,17 @@ else:
     $turnstile = 1;
 endif;
 
+// Enable Disqus card commenting
+if($ini_array['comments']['Disqus'] !== 'enabled'):
+    $disqus = 0;
+    $disqusDev = '';
+    $disqusProd = '';
+else:
+    $disqus = 1;
+    $disqusDev = $ini_array['comments']['DisqusDevURL'];
+    $disqusProd = $ini_array['comments']['DisqusProdURL'];
+endif;
+
 //Admin IP
 if($ini_array['security']['AdminIP'] === ''):
     $adminip = 1;

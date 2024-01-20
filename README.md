@@ -2,7 +2,7 @@
 
 ## What is this? ##
 
-This is a 'host your own' MtG site, designed for personal hosting.
+This is a 'host your own' MtG collection-tracking website application for personal hosting.
 
 NOTE: It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting my development journey across several years.
 
@@ -134,6 +134,12 @@ Run composer from mtg directory on server
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
+
+#### Disqus ####
+The site can integrate Disqus commenting into card detail pages.
+You will need to setup comments sites through https://www.disqus.com, 
+set Disqus to enabled in your localised ini file (likely in /opt/mtg)
+and add relevant Disqus site URLs.
 
 ### File locations ###
 The app/site uses three filesystem locations:
@@ -303,6 +309,17 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
 6. Load page and framework (header, page content, overlays, menu, footer)
 
 ### Notes on card images ###
-The initial database population with the 'all' parameter will NOT download any card images. 
-Subsequent 'default' (by default nightly) runs will download images for cards added.
-Sets can have card image downloads triggered on the sets page by admin users.
+- The initial database population with the 'all' parameter will NOT download any card images. 
+- Subsequent 'default' (by default nightly) runs will download images for cards added.
+- Sets can have card image downloads triggered on the sets page by admin users.
+- Otherwise, each card image will be downloaded when required by the site
+
+### Notes on data management ###
+- All cards, all languages are pulled down and imported
+- The primary language is English and by default searching will search these cards
+- Cards where the primary language is not English will be included in default searches
+- Non-primary language cards can be included by main page drop-down selection
+- Bulk import can be set to exclude anguages in bulk/bulk_ini.php
+- By default cards which have either a paper version or an Arena version are imported
+- Scryfall corrections (e.g. deletions) are implemented unless those cards are in someone's collection or decks
+    - If in collections or decks, a report will be sent to the site admin email, and will be visible on the site admin page
