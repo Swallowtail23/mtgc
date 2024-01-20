@@ -164,19 +164,24 @@ endif;
         if (!in_array($importFormat,$valid_format)):
             $importFormat = '';
         endif;
-        
+
         // Does the user have a collection table?
-        $tablecheck = "SELECT * FROM $mytable";
-        $msg->logMessage('[DEBUG]',"Checking if user has a collection table...");
-        if($db->query($tablecheck) === FALSE):
-            $msg->logMessage('[NOTICE]',"No existing collection table...");
+        $tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
+        $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
+
+        $result = $db->query($tableExistsQuery);
+        if ($result->num_rows == 0):
+            $msg->logMessage('[NOTICE]', "No existing collection table...");
             $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
-            $msg->logMessage('[DEBUG]',"...copying collection template...: $query2");
-            if($db->query($query2) === TRUE):
-                $msg->logMessage('[NOTICE]',"Collection template copy successful");
+            $msg->logMessage('[DEBUG]', "Copying collection template...: $query2");
+
+            if ($db->query($query2) === TRUE):
+                $msg->logMessage('[NOTICE]', "Collection template copy successful");
             else:
-                $msg->logMessage('[NOTICE]',"Collection template copy failed");
+                $msg->logMessage('[NOTICE]', "Collection template copy failed: " . $db->error);
             endif;
+        else:
+            $msg->logMessage('[DEBUG]', "Collection table exists");
         endif;
         
         //1. Get user details for current user
