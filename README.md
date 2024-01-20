@@ -3,6 +3,9 @@
 ## What is this? ##
 
 This is a 'host your own' MtG site, designed for personal hosting.
+
+NOTE: It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting my development journey across several years.
+
 It uses the great work done at scryfall.com:
 
 - card, set, legality and ruling databases in JSON form
@@ -10,7 +13,7 @@ It uses the great work done at scryfall.com:
 - card pricing (obtained from TCGPlayer via Scryfall)
 
 The site provides comprehensive search, collection tracking across all types of cards, localised currency conversion and full import/export capability.
-It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting the development journey.
+
 Whilst due care and precautions have been taken to protect against known security issues, I make no guarantees that the work is without issues.
 I can be reached at webmaster AT mtgcollection.info 
 
@@ -23,11 +26,19 @@ Thanks to:
 - Andrew Gioia for his Keyrune project (https://keyrune.andrewgioia.com/)
 - Scryfall for their great work which they make freely available (https://scryfall.com)
 
+## WORK IN PROGRESS ##
+- Lots to be done to automate and simplify
+-- Groups admininstration
+-- Site admin in admin pages, including email parameters
+-- Ongoing tidy-up and code improvement
+-- Some MTG-related tweaks, like Planes and Phenomena in decks
+-- Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
+
 ## How do I get set up? ## 
 ### Web server ###
 Install under a full-function web server (e.g. Apache)
 
-- e.g. git clone to /var/www/mtgc
+- e.g. git clone the master branch into /var/www/mtgc (I regularly break things in dev, and less regularly in master)
 - See setup/mtgc.conf for sample Apache configuration file
 - check and set all paths, names, IP addresses, certificates, etc.
 - IMPORTANT: Sample config restricts bulk and setup folders to localhost access
@@ -47,8 +58,15 @@ Check web security settings etc. carefully and at your own risk. The settings ar
 
 ### Dependencies ###
 #### Web server, domain name ####
-May seem obvious, but you will need to have access to a web server and a domain name to host the site.
-Ideally this will include command line console access, and ability to configure PHP in php.ini. You will also need access to install files into /opt.
+It may seem obvious, but you will need to have access to a web server and a domain name to host the site.
+
+This should include:
+
+- command line console access
+- ability to configure PHP in php.ini
+- access to MySQL through e.g. phpMyAdmin or similar to be able to easily setup MySQL tables, etc.
+
+You will also need access to install files into /opt.
 If you are setting up email from this site, you will also need appropriate DNS access, etc. 
 
 #### PHP ####
@@ -57,31 +75,30 @@ If you are setting up email from this site, you will also need appropriate DNS a
 - set upload_max_size and post_max to 25M (in php.ini)
 
 #### MySQL ####
-- setup/mtg_new.sql contains database structure and initial index setup
-- run the sql in your MySQL context
 - Tested with MySQL version 8+
 - Indexes are vital for performance, and are the difference between sub-1s and 5s+ searches
 - cards_scry table should be InnoDB for best performance
 
 #### JsonMachine ####
-Used for bulk script parsing
-Composer install (see below section)
+- See https://github.com/halaxa/json-machine
+- Used for bulk script parsing
+- Composer install (see below section)
 
 #### PHPMailer ####
-Used for emails
-Composer install (see below section)
-Requires a functioning email environment - outside the scope of this install
-
+- See https://github.com/PHPMailer/PHPMailer
+- Used for emails
+- Composer install (see below section)
+- Requires a functioning email environment - outside the scope of this install
 - can use local SMTP host (default, no authentication)
 - setup parameters in ini.php to configure other options
 
-If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered. 
+*If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered*
 
 #### Cloudflare Turnstile ####
-Used on login page to provide "captcha" style validation before login
-Setup Turnstile on a Cloudflare account to obtain keys
-Uses https://packagist.org/packages/andkab/php-turnstile
-If tier is "dev", dummy keys are used
+- Used on login page to provide "captcha" style validation before login
+- Setup Turnstile on a Cloudflare account to obtain keys
+- Uses https://packagist.org/packages/andkab/php-turnstile Composer package
+- If tier is "dev", dummy keys are used
 
 To setup Turnstile
 
@@ -92,14 +109,20 @@ To setup Turnstile
 
 #### JQuery and IAS ####
 Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
-IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
+
+IAS:
+
+- See https://infiniteajaxscroll.com/
+- Used in index.php
+- Installed locally in /js folder
+- Pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
-Composer install (see below section)
-Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
-Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
-
-The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
+- Composer install (see below section)
+- Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
+- Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
+- See https://packagist.org/packages/everapi/freecurrencyapi-php Composer package
+- The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
 #### Composer apps ####
 Run composer from mtg directory on server
@@ -190,8 +213,13 @@ that IP address only.
 ### MySQL ###
 Work to be done here to automate first setup.
 
-- Database structure is noted in setup/mtg_new.sql
-- You will need to run the sql file in your MySQL context
+- setup/mtg_new.sql contains database structure and initial index setup
+- run the sql in your MySQL context
+
+
+- Required database structure is in setup/mtg_new.sql
+- You will need a MySQL user with access to the new 'mtg' database (see also [database] section of the ini file)
+- You will need to run and import mtg_new.sql in your MySQL context
 - You will also need:
 
 In `admin` (administration) table:
@@ -213,6 +241,18 @@ Edit my.cnf and set as follows:
 
 Note 2G sizing is based on 4G or more server RAM.
 
+#### Initial database population ####
+Check you have required database setup, and that the database user can use the database.
+
+On the server's console, from the 'bulk' folder, run:
+
+- ```php scryfall_bulk.php all```
+- ```php scryfall_sets.php```
+- ```php scryfall_rulings.php```
+- ```php scryfall_migrations.php```
+
+Note, the first bulk all load can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
+
 ### Initial user ###
 On the server command line, run:
 
@@ -225,6 +265,7 @@ On the server command line, run:
     - hashed password
     - reg_date (registration date)
     - status (active)
+- I also suggest that you make the first user 'admin' using MySQL
 
 ### Cron jobs ###
 Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
@@ -260,3 +301,8 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
     - get the user's collection table
     - check if the site is in maintenance mode, and if it is: trigger a message and logout
 6. Load page and framework (header, page content, overlays, menu, footer)
+
+### Notes on card images ###
+The initial database population with the 'all' parameter will NOT download any card images. 
+Subsequent 'default' (by default nightly) runs will download images for cards added.
+Sets can have card image downloads triggered on the sets page by admin users.
