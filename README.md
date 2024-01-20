@@ -91,7 +91,7 @@ To setup Turnstile
     - if enabled, you must set keys
 
 #### JQuery and IAS ####
-Works with JQuery 3.7.1:  <script src="/js/jquery.js"></script> where required
+Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
@@ -102,11 +102,12 @@ Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
 The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
 #### Composer apps ####
-- run composer from mtg directory on server
-    - composer require andkab/php-turnstile
-    - composer require everapi/freecurrencyapi-php:dev-master
-    - composer require halaxa/json-machine
-    - composer require phpmailer/phpmailer
+Run composer from mtg directory on server
+
+- composer require andkab/php-turnstile
+- composer require everapi/freecurrencyapi-php:dev-master
+- composer require halaxa/json-machine
+- composer require phpmailer/phpmailer
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
@@ -115,22 +116,23 @@ To install all required: ```sudo -Hu apache composer update```
 The app/site uses three filesystem locations:
 
 - website files, typically hosted under /var/www
-- application shell scripts, ini file - typically located under /opt
-- log location
+- application shell scripts, ini file - default is in /opt/mtg/
+- log location, default is in /var/log/mtg
 
 Setup:
 
 - Create a new folder at /opt/mtg
-- Copy the ini file from /setup (see next section)
-- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts. Alter them as needed so they point to where the bulk scripts are.
+- Copy the ini file from /setup (see next section) to /opt/mtg
+- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts
+- Alter shell scripts as needed so they point to where the bulk scripts are located (e.g. default /var/www/mtgnew/bulk)
 - Make sure the logfile location specified in the ini file exists and is web-server-writable (e.g. /var/log/mtg/mtgapp.log)
 - Make sure the ImgLocation folder (see ini file) exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
-- Make sure there is a json folder in the Imglocation folder (used for scryfall json files)
+- Make sure there is a web-server-readable/writeable json folder in the Imglocation folder (used for scryfall json files)
 
 ### Ini file ###
 - The application expects an ini file located at: /opt/mtg/mtg_new.ini (path can be changed in ini.php if required)
-- Apache must be able to read AND write this file
-- Setting tier to dev or prod changes the header colour (dev - green, prod - blue)
+- Your web server must be able to read AND write this file
+- Setting 'tier' to dev or prod changes the header colour (dev - green, prod - blue)
 - It must include:
 
 Ini file content:
