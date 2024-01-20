@@ -28,11 +28,11 @@ Thanks to:
 
 ## WORK IN PROGRESS ##
 - Lots to be done to automate and simplify
--- Groups admininstration
--- Site admin in admin pages, including email parameters
--- Ongoing tidy-up and code improvement
--- Some MTG-related tweaks, like Planes and Phenomena in decks
--- Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
+    - Groups admininstration
+    - Site admin in admin pages, including email parameters
+    - Ongoing tidy-up and code improvement
+    - Some MTG-related tweaks, like Planes and Phenomena in decks
+    - Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
 
 ## How do I get set up? ## 
 ### Web server ###
