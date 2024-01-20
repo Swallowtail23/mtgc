@@ -25,7 +25,11 @@
  *  6.1         20/01/24
  *              Move to logMessage
 */
-require ('includes/sessionname.php');
+if (file_exists('includes/sessionname.php')):
+    require('includes/sessionname.php');
+else:
+    require('includes/sessionname_template.php');
+endif;
 startCustomSession();
 
 // Temporary variable to store a redirection URL

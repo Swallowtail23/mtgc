@@ -12,7 +12,7 @@
  *              Moved to Message class from writelog
   * 
  *  2.1         20/01/24
- *              Move to include sessionname and logMessage
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

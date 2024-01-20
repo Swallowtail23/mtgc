@@ -19,7 +19,11 @@
  *  4.2         20/01/24
  *              Move to include sessionname and logMessage
 */
-require ('../includes/sessionname.php');
+if (file_exists('../includes/sessionname.php')):
+    require('../includes/sessionname.php');
+else:
+    require('../includes/sessionname_template.php');
+endif;
 startCustomSession();
 require ('../includes/ini.php');               //Initialise and load ini file
 require ('../includes/error_handling.php');

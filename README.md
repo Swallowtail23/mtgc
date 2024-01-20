@@ -1,4 +1,4 @@
-# README # (v06/07/23)
+# README # (v 20/01/24)
 
 ## What is this? ##
 
@@ -37,7 +37,7 @@ On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
     php_admin_value[session.cookie_secure] = 1
     php_admin_value[session.cookie_samesite] = Strict
 
-Set a custom session.name in includes/sessionname_template.php and rename to sessionname.php
+Set a custom session.name in includes/sessionname_template.php and copy/rename to sessionname.php
 
 Check web security settings etc. carefully and at your own risk. These settings are suggested only.
 

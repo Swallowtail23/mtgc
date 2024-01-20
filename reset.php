@@ -11,7 +11,11 @@
  *  2.0 
  *              Removed hard-coded email address, now uses ini.php
 */
-require ('includes/sessionname.php');
+if (file_exists('includes/sessionname.php')):
+    require('includes/sessionname.php');
+else:
+    require('includes/sessionname_template.php');
+endif;
 startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
