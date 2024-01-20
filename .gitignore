@@ -9,3 +9,4 @@ cardimg/
 ./well-known
 /.well-known/
 /vendor
+/includes/sessionname.php
