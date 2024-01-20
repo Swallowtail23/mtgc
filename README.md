@@ -189,7 +189,7 @@ Ini file content:
     [security]
     AdminIP = ""
     Badloginlimit = x
-    Turnstile = "enabled"
+    Turnstile = "disabled"
     Turnstile_site_key = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
     
@@ -208,6 +208,12 @@ Ini file content:
     Password       = '';
     SMTPSecure     = PHPMailer::ENCRYPTION_SMTPS;
     Port           = 25;
+
+    [comments]
+    Disqus         = "disabled"
+    DisqusDevURL   = "https://dev-url-here.disqus.com"
+    DisqusDevURL   = "https://prod-url-here.disqus.com"
+
 
 Before using:
 
