@@ -1,35 +1,60 @@
 # README # (v06/07/23)
 
+## What is this? ##
+
+This is a 'host your own' MtG site, designed for personal hosting.
+It uses the great work done at scryfall.com:
+- card, set, legality and ruling databases in JSON form
+- card images
+- card pricing (obtained from TCGPlayer via Scryfall)
+The site provides comprehensive search, collection tracking across all types of cards, localised currency conversion and full import/export capability.
+It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting the development journey.
+Whilst due care and precautions have been taken to protect against known security issues, I make no guarantees that the work is without issues.
+I can be reached at webmaster AT mtgcollection.info 
+
+This has been developed using NetBeans 20, and runs for me on Red Hat Enterprise Linux 8 amd 9, with PHP 8.2 on a cloud VM with 2 x CPU and 6GB RAM.
+Dependent on quantity of images downloaded, diskspace requirements can vary from <10GB to 100GB or more.
+
+Note: The information presented about Magic: The Gathering is copyrighted by Wizards of the Coast. The website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.
+Thanks to:
+- Andrew Gioia for his Keyrune project (https://keyrune.andrewgioia.com/)
+- Scryfall for their great work which they make freely available (https://scryfall.com)
+
 ## How do I get set up? ## 
-* Summary of set up
-* Configuration
-
 ### Web server ###
-Install under web server as applicable
+Install under a full-function web server (e.g. Apache)
+- e.g. git clone to /var/www/mtgc
 - See setup/mtgc.conf for sample Apache configuration file
-- check and set all paths
+- check and set all paths, names, IP addresses, certificates, etc.
 - Sample config restricts bulk and setup folders to localhost access
-- php-fpm config in /etc/php-fpm.d/www.conf
 
+On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
 
- php_admin_value[session.auto_start] = 0
- php_admin_value[session.use_cookies] = 1
- php_admin_value[session.use_only_cookies] = 1
- php_admin_value[session.cookie_httponly] = 1
- php_admin_value[session.cookie_secure] = 1
- php_admin_value[session.cookie_samesite] = Strict
+    php_admin_value[session.auto_start] = 0
+    php_admin_value[session.use_cookies] = 1
+    php_admin_value[session.use_only_cookies] = 1
+    php_admin_value[session.cookie_httponly] = 1
+    php_admin_value[session.cookie_secure] = 1
+    php_admin_value[session.cookie_samesite] = Strict
 
+Check web security settings etc. carefully and at your own risk. These settings are suggested only.
 
 ### Dependencies ###
+#### Web server, domain name ####
+May seem obvious, but you will need to have access to a web server and a domain name to host the site.
+Ideally this will include command line console access, and ability to configure PHP in php.ini. You will also need access to install files into /opt.
+If you are setting up email from this site, you will also need appropriate DNS access, etc. 
+
 #### PHP ####
 - Requires PHP 8.2
 - requires php-gd for deck photo manipulation
-- set upload_max_size and post_max to 25M
+- set upload_max_size and post_max to 25M (in php.ini)
 
 #### MySQL ####
-- Tested with version 8+
-- Indexes are vital for performance
-- cards_scry table should be InnoDB
+- setup/mtg_new.sql contains database structure and initial index setup
+- Tested with MySQL version 8+
+- Indexes are vital for performance, and are the difference between sub-1s and 5s+ searches
+- cards_scry table should be InnoDB for best performance
 
 #### JsonMachine ####
 Used for bulk script parsing
@@ -38,17 +63,21 @@ Composer install (see below section)
 #### PHPMailer ####
 Used for emails
 Composer install (see below section)
+Requires a functioning email environment - outside the scope of this install
+- can use local SMTP host (default, no authentication)
+- setup parameters in ini.php to configure other options
+If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered. 
 
 #### Cloudflare Turnstile ####
 Used on login page to provide "captcha" style validation before login
-Needs to be setup on Cloudflare account to obtain valid keys
+Setup Turnstile on a Cloudflare account to obtain keys
 Uses https://packagist.org/packages/andkab/php-turnstile
 If tier is "dev", dummy keys are used
 
 To setup Turnstile
 - Composer install (see below section)
 - in Ini file (see section below on Ini file):
-    - enable/disable (anything other than Turnstile = "enabled" will disable)
+    - enable/disable (anything other than Turnstile = "enabled" will disable Turnstile functionality)
     - if enabled, you must set keys
 
 #### JQuery and IAS ####
@@ -60,7 +89,7 @@ Composer install (see below section)
 Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
 Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
 
-The rate is updated at most every 60 minutes on demand, with the target currency set in ini file.
+The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
 #### Composer apps ####
 - run composer from mtg directory on server
@@ -69,54 +98,68 @@ The rate is updated at most every 60 minutes on demand, with the target currency
 -- composer require halaxa/json-machine
 -- composer require phpmailer/phpmailer
 
-To install as apache: ```sudo -Hu apache composer require halaxa/json-machine```
+To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 
 ### File locations ###
+The site uses two locations:
+- website files, typically hosted under /var/www
+- application shell scripts, ini file - typically located under /opt
 - Create a new folder at /opt/mtg
-- Copy the ini file (see next section) and the shell scripts to call bulk scripts to /opt/mtg (samples are in setup folder), altering as needed so they point to where the bulk scripts are
-- Make sure the logfile location specified in the ini file exists and is web-server-writable
-- Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache
-- Make sure there is a json folder in the Imglocation folder
+- Copy the ini file from /setup (see next section) 
+- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts, altering as needed so they point to where the bulk scripts are.
+- Make sure the logfile location specified in the ini file exists and is web-server-writable (e.g. /var/log/mtg/mtgapp.log)
+- Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
+- Make sure there is a json folder in the Imglocation folder (used for scryfall json files)
 
 ### Ini file ###
-- The application expects an ini file located at: /opt/mtg/mtg_new.ini
+- The application expects an ini file located at: /opt/mtg/mtg_new.ini (path can be changed in ini.php if required)
 - Apache must be able to read AND write this file
 - It must include:
 
 Ini file content:
 
     [general]
-    tier = "dev"                            //either 'dev' or 'prod'
+    tier = "prod"                           //either 'dev' or 'prod'
     ImgLocation = "/mnt/data/cardimg/"      //ensure web server can write here
     Logfile = "/var/log/mtg/mtgapp.log"     //ensure web server can write here
     Loglevel = 3                            //see admin pages
     Timezone = "Australia/Brisbane"
     Locale = "en_US" 
-    Copyright = "Name - 2023"
+    Copyright = "Simon Wilson - 2024"
     URL = "https://www.mtgcollection.info"
-
+    
     [database]
     DBServer = "********"
     DBUser = "********"
     DBPass = "********"
     DBName = "********"
-
+    
     [security]
-    ServerEmail = "emp06MTG@mtgcollection.net"
-    AdminEmail = "simon@simonandkate.net"
     AdminIP = ""
     Badloginlimit = x
     Turnstile = "enabled"
     Turnstile_site_key = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
-
+    
     [fx]
-    FreecurrencyAPI = "API_KEY"             // If empty, FX is disabled
+    FreecurrencyAPI = "YOUR-APIKEY"
     FreecurrencyURL = "https://api.freecurrencyapi.com/v1/latest?apikey="
     TargetCurrency = "aud"
+    
+    [email]
+    ServerEmail    = "DogmatixMTG@mtgcollection.net"
+    AdminEmail     = "simon@simonandkate.net"
+    SMTPDebug      = SMTP::DEBUG_OFF;
+    Host           = 'localhost';
+    SMTPAuth       = false;
+    Username       = '';
+    Password       = '';
+    SMTPSecure     = PHPMailer::ENCRYPTION_SMTPS;
+    Port           = 25;
 
-- Check all variables, remove all comments
-- Lines need to be fully left-aligned
+Before using:
+- Check all variables, remove all comments in ini file
+- All lines need to be fully left-aligned
 - If Turnstile is enabled, valid keys must be included
 
 NOTE: 
@@ -125,7 +168,6 @@ If AdminIP contains an IP address, then an admin user can access admin pages fro
 that IP address only.
 
 ### MySQL ###
-
 - Database structure is noted in setup/mtg_new.sql
 - You will also need:
 
@@ -151,22 +193,26 @@ Edit my.cnf and set as follows:
 Note 2G sizing is based on 4G or more server RAM.
 
 ### PHP session.name ###
-Set the same unique session.name on all pages which call session.start
+Set a unique session.name in include/sessionname.php for all pages which call session.start
 
 ### Initial user ###
-
-Run command line:
-- php initial.php username password from webserver's console in the setup folder
+On the server command line, run:
+- ```php initial.php username password``` from webserver's console in the setup folder
 - note the username and hashed password which are echoed back to the console, and write into the database for initial user
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
+Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
+- bulk
+- sets
+- migrations
+- rulings
 
-Setup cron job to run bulk files from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder. 
-Adjust folder and user to suit.
+Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder - check path and user.
 
 ### PAGE LOAD SEQUENCE ###
 
+0. get and set session.name from sessionname.php
 1. Load ini.php
 2. Ini.php sets:
     - class autoloader

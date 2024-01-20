@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.1
-    Date:       04/12/23
+/* Version:     19.2
+    Date:       14/01/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -55,15 +55,18 @@
  *  19.1
  *              04/12/2023
  *              Refine photo security by serving images through a php script
+ *
+ *  19.2        14/01/24
+ *              Move session.name to include
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
+require ('includes/sessionname.php');        //Set global session.name
 session_start();
-require ('includes/ini.php');               //Initialise and load ini file
+require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');      //Setup page variables
+require ('includes/functions.php');          //Includes basic functions for non-secure pages
+require ('includes/secpagesetup.php');       //Setup page variables
 require ('includes/colour.php');
-forcechgpwd();                              //Check if user is disabled or needs to change password
+forcechgpwd();                               //Check if user is disabled or needs to change password
 $msg = new Message;
 ?> 
 

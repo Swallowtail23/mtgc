@@ -1,6 +1,6 @@
 <?php 
-/* Version:     19.0
-    Date:       02/01/24
+/* Version:     19.1
+    Date:       14/01/24
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -58,15 +58,18 @@
  * 
  * 19.0         02/01/24
  *              Correctly interpret language codes to 'pretty' descriptions
+ *
+ * 19.1         14/01/24
+ *              Move session.name to include
 */
 
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
+require ('includes/sessionname.php');        //Set global session.name
 session_start();
-require ('includes/ini.php');               //Initialise and load ini file
-require ('includes/error_handling.php');    //Initialise and load error/logging file
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');      //Setup page variables
-forcechgpwd();                              //Check if user is disabled or needs to change password
+require ('includes/ini.php');                //Initialise and load ini file
+require ('includes/error_handling.php');     //Initialise and load error/logging file
+require ('includes/functions.php');          //Includes basic functions for non-secure pages
+require ('includes/secpagesetup.php');       //Setup page variables
+forcechgpwd();                               //Check if user is disabled or needs to change password
 require ('includes/colour.php');
 
 $msg = new Message;
