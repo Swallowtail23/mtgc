@@ -4,9 +4,11 @@
 
 This is a 'host your own' MtG site, designed for personal hosting.
 It uses the great work done at scryfall.com:
+
 - card, set, legality and ruling databases in JSON form
 - card images
 - card pricing (obtained from TCGPlayer via Scryfall)
+
 The site provides comprehensive search, collection tracking across all types of cards, localised currency conversion and full import/export capability.
 It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting the development journey.
 Whilst due care and precautions have been taken to protect against known security issues, I make no guarantees that the work is without issues.
@@ -17,12 +19,14 @@ Dependent on quantity of images downloaded, diskspace requirements can vary from
 
 Note: The information presented about Magic: The Gathering is copyrighted by Wizards of the Coast. The website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.
 Thanks to:
+
 - Andrew Gioia for his Keyrune project (https://keyrune.andrewgioia.com/)
 - Scryfall for their great work which they make freely available (https://scryfall.com)
 
 ## How do I get set up? ## 
 ### Web server ###
 Install under a full-function web server (e.g. Apache)
+
 - e.g. git clone to /var/www/mtgc
 - See setup/mtgc.conf for sample Apache configuration file
 - check and set all paths, names, IP addresses, certificates, etc.
@@ -67,8 +71,10 @@ Composer install (see below section)
 Used for emails
 Composer install (see below section)
 Requires a functioning email environment - outside the scope of this install
+
 - can use local SMTP host (default, no authentication)
 - setup parameters in ini.php to configure other options
+
 If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered. 
 
 #### Cloudflare Turnstile ####
@@ -78,13 +84,14 @@ Uses https://packagist.org/packages/andkab/php-turnstile
 If tier is "dev", dummy keys are used
 
 To setup Turnstile
+
 - Composer install (see below section)
 - in Ini file (see section below on Ini file):
     - enable/disable (anything other than Turnstile = "enabled" will disable Turnstile functionality)
     - if enabled, you must set keys
 
 #### JQuery and IAS ####
-Works with JQuery 3.7.1:  <script src="/js/jquery.js"></script> where required
+Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
 IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
@@ -95,33 +102,37 @@ Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
 The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
 #### Composer apps ####
-- run composer from mtg directory on server
--- composer require andkab/php-turnstile
--- composer require everapi/freecurrencyapi-php:dev-master
--- composer require halaxa/json-machine
--- composer require phpmailer/phpmailer
+Run composer from mtg directory on server
+
+- composer require andkab/php-turnstile
+- composer require everapi/freecurrencyapi-php:dev-master
+- composer require halaxa/json-machine
+- composer require phpmailer/phpmailer
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
 
 ### File locations ###
 The app/site uses three filesystem locations:
+
 - website files, typically hosted under /var/www
-- application shell scripts, ini file - typically located under /opt
-- log location
+- application shell scripts, ini file - default is in /opt/mtg/
+- log location, default is in /var/log/mtg
 
 Setup:
+
 - Create a new folder at /opt/mtg
-- Copy the ini file from /setup (see next section)
-- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts. Alter them as needed so they point to where the bulk scripts are.
+- Copy the ini file from /setup (see next section) to /opt/mtg
+- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts
+- Alter shell scripts as needed so they point to where the bulk scripts are located (e.g. default /var/www/mtgnew/bulk)
 - Make sure the logfile location specified in the ini file exists and is web-server-writable (e.g. /var/log/mtg/mtgapp.log)
 - Make sure the ImgLocation folder (see ini file) exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
-- Make sure there is a json folder in the Imglocation folder (used for scryfall json files)
+- Make sure there is a web-server-readable/writeable json folder in the Imglocation folder (used for scryfall json files)
 
 ### Ini file ###
 - The application expects an ini file located at: /opt/mtg/mtg_new.ini (path can be changed in ini.php if required)
-- Apache must be able to read AND write this file
-- Setting tier to dev or prod changes the header colour (dev - green, prod - blue)
+- Your web server must be able to read AND write this file
+- Setting 'tier' to dev or prod changes the header colour (dev - green, prod - blue)
 - It must include:
 
 Ini file content:
@@ -166,6 +177,7 @@ Ini file content:
     Port           = 25;
 
 Before using:
+
 - Check all variables, remove all comments in ini file
 - All lines need to be fully left-aligned
 - If Turnstile is enabled, valid keys must be included
@@ -177,6 +189,7 @@ that IP address only.
 
 ### MySQL ###
 Work to be done here to automate first setup.
+
 - Database structure is noted in setup/mtg_new.sql
 - You will need to run the sql file in your MySQL context
 - You will also need:
@@ -202,19 +215,21 @@ Note 2G sizing is based on 4G or more server RAM.
 
 ### Initial user ###
 On the server command line, run:
+
 - ```php initial.php username password``` from webserver's console in the setup folder
 - username is just FYI on the output, it's not used
 - note the username and hashed password echoed back to the console
 - in your MySQL write into the database for initial user
--- username
--- email
--- hashed password
--- reg_date (registration date)
--- status (active)
+    - username
+    - email
+    - hashed password
+    - reg_date (registration date)
+    - status (active)
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
 Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
+
 - bulk
 - sets
 - migrations
