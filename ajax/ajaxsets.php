@@ -135,6 +135,7 @@ if ($isValidReferrer):
             endif;
             
             // Construct the SQL query with the filter condition and WITH pagination
+            $msg->logMessage('[DEBUG]',"Limit: $setsPerPage, Offset: $offset");
             $stmt = $db->prepare("SELECT 
                                     name as set_name,
                                     code as setcode,

@@ -406,7 +406,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `admin` tinyint(1) DEFAULT NULL,
   `badlogins` smallint DEFAULT NULL,
   `groupid` int NOT NULL,
-  `grpinout` tinyint(1) NOT NULL,
+  `grpinout` tinyint(1) NOT NULL DEFAULT '0',
   `lastlogin_date` date DEFAULT NULL,
   `collection_view` tinyint NOT NULL DEFAULT '0',
   `currency` varchar(3) COLLATE utf8mb4_general_ci DEFAULT NULL,
