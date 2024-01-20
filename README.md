@@ -1,11 +1,12 @@
 # README # (v 20/01/24)
 
 ![screenshot](images/home.png)
+
 ![mobile screenshot](images/mobile.png)
 
 ## What is this? ##
 
-This is a 'host your own' MtG collection-tracking website application for personal hosting.
+This is a 'host your own' MtG collection-tracking website application for personal hosting. It is fully mobile-responsive.
 
 NOTE: It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting my development journey across several years.
 
