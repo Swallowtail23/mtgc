@@ -46,14 +46,14 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
     ?>
     <!DOCTYPE html>
         <head>
-        <title> MtG collection - login</title>
+        <title> <?php echo $siteTitle;?> - login</title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
         <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
         </head>
         <body id="loginbody" class="body">
         <div id="loginheader">    
-            <h2 id='h2'> MtG collection</h2>
+            <h2 id='h2'><?php echo $siteTitle;?></h2>
             You are already logged in!
         </div>
         </body>
@@ -93,7 +93,7 @@ $msg = new Message($logfile);
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
     <div id="loginheader">    
-        <h2 id='h2'> MtG collection</h2>
+        <h2 id='h2'><?php echo $siteTitle;?></h2>
         <?php
         // Cloudflare Turnstile
         use andkab\Turnstile\Turnstile;

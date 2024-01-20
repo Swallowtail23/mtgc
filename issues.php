@@ -27,7 +27,7 @@ forcechgpwd();                              //Check if user is disabled or needs
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title>MtG collection - issues</title>
+    <title><?php echo $siteTitle;?> - issues</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
@@ -45,7 +45,7 @@ require('includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <div id="printtitle" class="headername">
-            <img src="images/white_m.png">MtG collection
+            <img src="images/white_m.png"><?php echo $siteTitle;?>
         </div>
         <h2 class='h2pad'>Known issues and bugs</h2>
     <ul>

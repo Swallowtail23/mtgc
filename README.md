@@ -171,32 +171,33 @@ Setup:
 Ini file content:
 
     [general]
-    tier = "prod"                           //either 'dev' or 'prod' to set Header colour
-    ImgLocation = "/mnt/data/cardimg/"      //ensure web server can write here
-    Logfile = "/var/log/mtg/mtgapp.log"     //ensure web server can write here
-    Loglevel = 2                            //see admin pages
-    Timezone = "Australia/Brisbane"
-    Locale = "en_US" 
-    Copyright = "Simon Wilson - 2024"
-    URL = "https://your-mtg-site-url.com"   //update to your actual URL
+    title       = "MtG collection"
+    tier        = "prod"                            //either 'dev' or 'prod' to set Header colour
+    ImgLocation = "/mnt/data/cardimg/"              //ensure web server can write here
+    Logfile     = "/var/log/mtg/mtgapp.log"         //ensure web server can write here
+    Loglevel    = 2                                 //see admin pages
+    Timezone    = "Australia/Brisbane"
+    Locale      = "en_US" 
+    Copyright   = "Simon Wilson - 2024"
+    URL         = "https://your-mtg-site-url.com"   //update to your actual URL
     
     [database]
-    DBServer = "********"
-    DBUser = "********"
-    DBPass = "********"
-    DBName = "********"
+    DBServer    = "********"
+    DBUser      = "********"
+    DBPass      = "********"
+    DBName      = "********"
     
     [security]
-    AdminIP = ""
-    Badloginlimit = x
-    Turnstile = "disabled"
-    Turnstile_site_key = "xxxxxx"
+    AdminIP              = ""
+    Badloginlimit        = x
+    Turnstile            = "disabled"
+    Turnstile_site_key   = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
     
     [fx]
     FreecurrencyAPI = "YOUR-APIKEY"
     FreecurrencyURL = "https://api.freecurrencyapi.com/v1/latest?apikey="
-    TargetCurrency = "aud"
+    TargetCurrency  = "aud"
     
     [email]
     ServerEmail    = "no_reply@your-mtg-site-url.com"

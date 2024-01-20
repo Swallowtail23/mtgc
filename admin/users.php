@@ -64,7 +64,7 @@ endif;
 
 <!DOCTYPE html>
 <head>
-    <title>MtG collection - admin (users)</title>
+    <title><?php echo $siteTitle;?> - admin (users)</title>
     <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

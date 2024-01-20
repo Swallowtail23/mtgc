@@ -25,7 +25,7 @@ forcechgpwd();
 <html>
 <head>
     <meta charset="UTF-8">
-    <title> MtG collection - template</title>
+    <title><?php echo $siteTitle;?> - template</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

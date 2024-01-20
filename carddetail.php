@@ -108,7 +108,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title>MtG collection - card details</title>
+    <title><?php echo $siteTitle;?> - card details</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -292,7 +292,7 @@ require('includes/menu.php'); //mobile menu
             exit;
         endif; ?>
         <div id="printtitle" class="headername">
-            <img src="images/white_m.png">MtG collection
+            <img src="images/white_m.png"><?php echo $siteTitle;?>
         </div>
     <?php
     // Does the user have a collection table?

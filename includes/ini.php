@@ -59,6 +59,7 @@ spl_autoload_register('autoLoader');
 $ini = new INI("/opt/mtg/mtg_new.ini");
 $ini_array = $ini->data;
 $myURL = $ini_array['general']['URL'];
+$siteTitle = $ini_array['general']['title'];
 $fxAPI = $ini_array['fx']['FreecurrencyAPI'];
 $fxLocal = $ini_array['fx']['TargetCurrency'];
 if($ini_array['general']['tier'] === 'dev'):

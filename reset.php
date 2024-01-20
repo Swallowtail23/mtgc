@@ -34,7 +34,7 @@ $cssver = cssver();
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">    
-    <h2 id='h2'> MtG collection</h2>
+    <h2 id='h2'><?php echo $siteTitle;?></h2>
 <?php 
     if(isset($_REQUEST['action'])):
         $action=$_REQUEST['action']; 

@@ -89,7 +89,7 @@ endif;
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="initial-scale=1">
-        <title>MtG collection - profile</title>
+        <title><?php echo $siteTitle;?> - profile</title>
         <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css"> 
         <?php include('includes/googlefonts.php');?>
