@@ -9,7 +9,11 @@
     1.0
                 Initial version
 */
-require ('includes/sessionname.php');
+if (file_exists('includes/sessionname.php')):
+    require('includes/sessionname.php');
+else:
+    require('includes/sessionname_template.php');
+endif;
 startCustomSession();
 session_regenerate_id();
 $userEmail = isset($_SESSION['useremail']) ? $_SESSION['useremail'] : 'Unknown User';

@@ -38,7 +38,11 @@
 */
 
 //Call script initiation mechs
-require ('includes/sessionname.php');
+if (file_exists('includes/sessionname.php')):
+    require('includes/sessionname.php');
+else:
+    require('includes/sessionname_template.php');
+endif;
 startCustomSession();
 require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');

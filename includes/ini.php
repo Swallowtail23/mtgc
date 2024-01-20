@@ -30,7 +30,11 @@ endif;
 $status = session_status();
 if($status == PHP_SESSION_NONE):
     //There is no active session
-    require ('sessionname.php');
+    if (file_exists('sessionname.php')):
+        require('sessionname.php');
+    else:
+        require('sessionname_template.php');
+    endif;
     startCustomSession();
 endif;
 
