@@ -225,7 +225,6 @@ On the server command line, run:
     - hashed password
     - reg_date (registration date)
     - status (active)
-- copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
 Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
