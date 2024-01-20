@@ -1,6 +1,6 @@
 <?php
 
 function startCustomSession() {
-    ini_set('session.name', '6JKfVh7O_7kn-_De6L-_');
+    ini_set('session.name', '_kyzVf_wbLFjQMn9N_-Q');
     session_start();
 }
