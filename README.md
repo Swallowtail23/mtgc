@@ -26,7 +26,7 @@ Install under a full-function web server (e.g. Apache)
 - e.g. git clone to /var/www/mtgc
 - See setup/mtgc.conf for sample Apache configuration file
 - check and set all paths, names, IP addresses, certificates, etc.
-- Sample config restricts bulk and setup folders to localhost access
+- IMPORTANT: Sample config restricts bulk and setup folders to localhost access
 
 On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
 
@@ -37,9 +37,9 @@ On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
     php_admin_value[session.cookie_secure] = 1
     php_admin_value[session.cookie_samesite] = Strict
 
-Set a custom session.name in includes/sessionname_template.php and copy/rename to sessionname.php
+If you want to, set a custom session.name in a copy of includes/sessionname_template.php named sessionname.php
 
-Check web security settings etc. carefully and at your own risk. These settings are suggested only.
+Check web security settings etc. carefully and at your own risk. The settings are suggested only.
 
 ### Dependencies ###
 #### Web server, domain name ####
@@ -54,6 +54,7 @@ If you are setting up email from this site, you will also need appropriate DNS a
 
 #### MySQL ####
 - setup/mtg_new.sql contains database structure and initial index setup
+- run the sql in your MySQL context
 - Tested with MySQL version 8+
 - Indexes are vital for performance, and are the difference between sub-1s and 5s+ searches
 - cards_scry table should be InnoDB for best performance
@@ -104,14 +105,17 @@ To install composer apps as apache: ```sudo -Hu apache composer require halaxa/j
 To install all required: ```sudo -Hu apache composer update```
 
 ### File locations ###
-The site uses two locations:
+The app/site uses three filesystem locations:
 - website files, typically hosted under /var/www
 - application shell scripts, ini file - typically located under /opt
+- log location
+
+Setup:
 - Create a new folder at /opt/mtg
-- Copy the ini file from /setup (see next section) 
-- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts, altering as needed so they point to where the bulk scripts are.
+- Copy the ini file from /setup (see next section)
+- Copy the shell script samples from /setup to /opt/mtg, these are used to call bulk scripts. Alter them as needed so they point to where the bulk scripts are.
 - Make sure the logfile location specified in the ini file exists and is web-server-writable (e.g. /var/log/mtg/mtgapp.log)
-- Make sure the ImgLocation folder exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
+- Make sure the ImgLocation folder (see ini file) exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
 - Make sure there is a json folder in the Imglocation folder (used for scryfall json files)
 
 ### Ini file ###
@@ -172,6 +176,7 @@ If AdminIP contains an IP address, then an admin user can access admin pages fro
 that IP address only.
 
 ### MySQL ###
+Work to be done here to automate first setup.
 - Database structure is noted in setup/mtg_new.sql
 - You will need to run the sql file in your MySQL context
 - You will also need:
@@ -181,7 +186,7 @@ In `admin` (administration) table:
     INSERT INTO `admin` (`key`, `usemin`, `mtce`) VALUES
     (1, 0, 0);
 
-For groups to work:
+For groups to work (more work to be done here):
 
     INSERT INTO `groups` (`groupnumber`, `groupname`, `owner`) VALUES
     (1, 'Masters', 1);
@@ -195,13 +200,17 @@ Edit my.cnf and set as follows:
 
 Note 2G sizing is based on 4G or more server RAM.
 
-### PHP session.name ###
-Set a unique session.name in include/sessionname.php for all pages which call session.start
-
 ### Initial user ###
 On the server command line, run:
 - ```php initial.php username password``` from webserver's console in the setup folder
-- note the username and hashed password which are echoed back to the console, and write into the database for initial user
+- username is just FYI on the output, it's not used
+- note the username and hashed password echoed back to the console
+- in your MySQL write into the database for initial user
+-- username
+-- email
+-- hashed password
+-- reg_date (registration date)
+-- status (active)
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
@@ -210,14 +219,15 @@ Once database is setup and working, manually check and test-run the bulk scripts
 - sets
 - migrations
 - rulings
+- weekly
 
 Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder - check path and user.
 
 ### PAGE LOAD SEQUENCE ###
 
-0. get and set session.name from sessionname.php
-1. Load ini.php
-2. Ini.php sets:
+1. get and set session.name from sessionname.php or sessionname_template.php
+2. Load ini.php
+3. Ini.php sets:
     - class autoloader
     - reads in the ini file
     - checks the logfile is accessible and writable
@@ -227,12 +237,12 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
     - sets the writelog function (to be rewritten)
     - sets several arrays and variables to allow for changes to cards and types,
         which would otherwise need to be hard-coded into pages
-3. Read in all functions from functions.php
-4. Read in page variable set in secpagesetup.php
+4. Read in all functions from functions.php
+5. Read in page variable set in secpagesetup.php
     - css version
     - check the user is logged in
     - get the user name
     - get user email
     - get the user's collection table
     - check if the site is in maintenance mode, and if it is: trigger a message and logout
-5. Load page and framework (header, page content, overlays, menu, footer)
+6. Load page and framework (header, page content, overlays, menu, footer)
