@@ -103,11 +103,10 @@ The rate is updated at most every 60 minutes on demand, with the default currenc
 
 #### Composer apps ####
 - run composer from mtg directory on server
-
--- composer require andkab/php-turnstile
--- composer require everapi/freecurrencyapi-php:dev-master
--- composer require halaxa/json-machine
--- composer require phpmailer/phpmailer
+    - composer require andkab/php-turnstile
+    - composer require everapi/freecurrencyapi-php:dev-master
+    - composer require halaxa/json-machine
+    - composer require phpmailer/phpmailer
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
@@ -219,13 +218,11 @@ On the server command line, run:
 - username is just FYI on the output, it's not used
 - note the username and hashed password echoed back to the console
 - in your MySQL write into the database for initial user
-
--- username
--- email
--- hashed password
--- reg_date (registration date)
--- status (active)
-
+    - username
+    - email
+    - hashed password
+    - reg_date (registration date)
+    - status (active)
 - copy collectionTemplate database table to {usernumber}collection, e.g. 1collection for initial user
 
 ### Cron jobs ###
