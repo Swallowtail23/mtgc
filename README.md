@@ -3,6 +3,9 @@
 ## What is this? ##
 
 This is a 'host your own' MtG site, designed for personal hosting.
+
+NOTE: It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting my development journey across several years.
+
 It uses the great work done at scryfall.com:
 
 - card, set, legality and ruling databases in JSON form
@@ -10,7 +13,7 @@ It uses the great work done at scryfall.com:
 - card pricing (obtained from TCGPlayer via Scryfall)
 
 The site provides comprehensive search, collection tracking across all types of cards, localised currency conversion and full import/export capability.
-It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting the development journey.
+
 Whilst due care and precautions have been taken to protect against known security issues, I make no guarantees that the work is without issues.
 I can be reached at webmaster AT mtgcollection.info 
 
@@ -213,6 +216,16 @@ Edit my.cnf and set as follows:
 
 Note 2G sizing is based on 4G or more server RAM.
 
+#### Initial database population ####
+On the server's console, from the 'bulk' folder, run:
+
+- ```php scryfall_bulk.php all```
+- ```php scryfall_sets.php```
+- ```php scryfall_rulings.php```
+- ```php scryfall_migrations.php```
+
+Note, the first bulk all load can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
+
 ### Initial user ###
 On the server command line, run:
 
@@ -225,6 +238,7 @@ On the server command line, run:
     - hashed password
     - reg_date (registration date)
     - status (active)
+- also suggest that you make the first user 'admin' using MySQL
 
 ### Cron jobs ###
 Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
@@ -260,3 +274,8 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
     - get the user's collection table
     - check if the site is in maintenance mode, and if it is: trigger a message and logout
 6. Load page and framework (header, page content, overlays, menu, footer)
+
+### Notes on card images ###
+The initial database population with the 'all' parameter will NOT download any card images. 
+Subsequent 'default' (by default nightly) runs will download images for cards added.
+Sets can have card image downloads triggered on the sets page by admin users.
