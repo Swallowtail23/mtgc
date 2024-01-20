@@ -26,11 +26,19 @@ Thanks to:
 - Andrew Gioia for his Keyrune project (https://keyrune.andrewgioia.com/)
 - Scryfall for their great work which they make freely available (https://scryfall.com)
 
+## WORK IN PROGRESS ##
+- Lots to be done to automate and simplify
+-- Groups admininstration
+-- Site admin in admin pages, including email parameters
+-- Ongoing tidy-up and code improvement
+-- Some MTG-related tweaks, like Planes and Phenomena in decks
+-- Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
+
 ## How do I get set up? ## 
 ### Web server ###
 Install under a full-function web server (e.g. Apache)
 
-- e.g. git clone to /var/www/mtgc
+- e.g. git clone the master branch into /var/www/mtgc (I regularly break things in dev, and less regularly in master)
 - See setup/mtgc.conf for sample Apache configuration file
 - check and set all paths, names, IP addresses, certificates, etc.
 - IMPORTANT: Sample config restricts bulk and setup folders to localhost access
@@ -52,7 +60,7 @@ Check web security settings etc. carefully and at your own risk. The settings ar
 #### Web server, domain name ####
 It may seem obvious, but you will need to have access to a web server and a domain name to host the site.
 
-Ideally this will include:
+This should include:
 
 - command line console access
 - ability to configure PHP in php.ini
@@ -72,24 +80,25 @@ If you are setting up email from this site, you will also need appropriate DNS a
 - cards_scry table should be InnoDB for best performance
 
 #### JsonMachine ####
-Used for bulk script parsing
-Composer install (see below section)
+- See https://github.com/halaxa/json-machine
+- Used for bulk script parsing
+- Composer install (see below section)
 
 #### PHPMailer ####
-Used for emails
-Composer install (see below section)
-Requires a functioning email environment - outside the scope of this install
-
+- See https://github.com/PHPMailer/PHPMailer
+- Used for emails
+- Composer install (see below section)
+- Requires a functioning email environment - outside the scope of this install
 - can use local SMTP host (default, no authentication)
 - setup parameters in ini.php to configure other options
 
-If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered. 
+*If using direct SMTP from your own domain, you will likely need to learn about SPF, DKIM, DMARC etc. if you want your emails to be delivered*
 
 #### Cloudflare Turnstile ####
-Used on login page to provide "captcha" style validation before login
-Setup Turnstile on a Cloudflare account to obtain keys
-Uses https://packagist.org/packages/andkab/php-turnstile
-If tier is "dev", dummy keys are used
+- Used on login page to provide "captcha" style validation before login
+- Setup Turnstile on a Cloudflare account to obtain keys
+- Uses https://packagist.org/packages/andkab/php-turnstile Composer package
+- If tier is "dev", dummy keys are used
 
 To setup Turnstile
 
@@ -100,14 +109,20 @@ To setup Turnstile
 
 #### JQuery and IAS ####
 Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
-IAS (ued in index.php) installed locally in /js folder, pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
+
+IAS:
+
+- See https://infiniteajaxscroll.com/
+- Used in index.php
+- Installed locally in /js folder
+- Pulled down from CDN https://unpkg.com/@webcreate/infinite-ajax-scroll@3/dist/infinite-ajax-scroll.min.js
 
 #### FreecurrencyAPI ####
-Composer install (see below section)
-Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
-Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
-
-The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
+- Composer install (see below section)
+- Obtain API key from https://app.freecurrencyapi.com/. Free key has 10 per minute limit and 5,000 per month.
+- Note, if [fx][FreecurrencyAPI] in ini file is empty, FX is disabled.
+- See https://packagist.org/packages/everapi/freecurrencyapi-php Composer package
+- The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
 #### Composer apps ####
 Run composer from mtg directory on server
