@@ -230,7 +230,7 @@ $msg = new Message($logfile);
         endif;
         //Check if login has been successful
         if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) : 
-            $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}",$logfile);
+            $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}");
             //Write user's login date to the user table in the database (help track inactive users)
             loginstamp($email);
             //Is maintenance mode enabled?

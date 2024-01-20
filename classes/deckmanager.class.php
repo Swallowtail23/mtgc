@@ -336,7 +336,6 @@ class DeckManager
                     $while_result = TRUE;
                     $cdr_1_plus = TRUE;
                 endif;
-                $this->message->logMessage('[DEBUG]',"...outcome: $while_result");
                 $i++;
             endwhile;
             $i = 0;
@@ -347,7 +346,6 @@ class DeckManager
                     $while_result = TRUE;
                     $cdr_1_plus = TRUE;
                 endif;
-                $this->message->logMessage('[DEBUG]',"...outcome: $while_result");
                 $i++;
             endwhile;
             if($cdr_1_plus == FALSE):
