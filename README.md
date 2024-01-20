@@ -34,7 +34,8 @@ Thanks to:
     - Some MTG-related tweaks, like Planes and Phenomena in decks
     - Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
 
-## How do I get set up? ## 
+## How do I get set up? ##
+
 ### Web server ###
 Install under a full-function web server (e.g. Apache)
 
