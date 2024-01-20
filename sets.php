@@ -50,7 +50,6 @@ $msg = new Message($logfile);
     <?php
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
     $setsPerPage = 30; // Adjust this value based on your preference
-    $offset = ($page - 1) * $setsPerPage;
     $range = 4; // Number of page results to show around current page in pagination
     
     // Get total sets count
@@ -143,7 +142,8 @@ $msg = new Message($logfile);
         };
 
         function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
-            var offset = (pageNumber - 1) * setsPerPage;
+            var offset = (pageNumber * setsPerPage) - (setsPerPage + 1);
+            offset = Math.max(0, offset);
 
             $.ajax({
                 type: 'GET',
@@ -331,8 +331,8 @@ require('includes/menu.php');
                                 name
                             ORDER BY 
                                 setdate DESC, parent_set_code DESC 
-                            LIMIT ? OFFSET ?");
-        $stmt->bind_param("ii", $setsPerPage, $offset);
+                            LIMIT ?");
+        $stmt->bind_param("i", $setsPerPage);
         if ($stmt === false):
             trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Preparing SQL: " . $db->error, E_USER_ERROR);
         endif;
