@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.1
-   Date:        03/12/23
+/* Version:     1.2
+   Date:        20/01/24
    Name:        ajax/ajaxphoto.php
    Purpose:     PHP script to import deck photo
    Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -8,14 +8,17 @@
 
    1.1
                 Refactored error handling using a variable and return
+ 
+   1.2          20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('../includes/sessionname.php');
+startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -52,7 +55,7 @@ if ($isValidReferrer):
         $response = ['success' => false, 'message' => ''];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with 'update'", $logfile);
+            $msg->logMessage('[DEBUG]',"Called with 'update'");
             // Get the deck number from the form data
             $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
@@ -66,14 +69,14 @@ if ($isValidReferrer):
 
                 // Create 'deck_photos' folder if it doesn't exist
                 if (!file_exists($deckPhotosDir)):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Creating 'deck_photos' folder in $ImgLocation", $logfile);
+                    $msg->logMessage('[DEBUG]',"Creating 'deck_photos' folder in $ImgLocation");
 
                     if (!@mkdir($deckPhotosDir, 0755, true)):
                         $response['message'] = '<br>Failed to create directory for deck photos';
                         returnResponse();
                     endif;
                 else:
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": 'deck_photos' folder already in $ImgLocation", $logfile);
+                    $msg->logMessage('[DEBUG]',"'deck_photos' folder already in $ImgLocation");
                 endif;
 
                 $uploadFile = $deckPhotosDir . $decknumber . '.jpg';
@@ -81,12 +84,12 @@ if ($isValidReferrer):
                 // Check if the file size is greater than 1MB
                 list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
                 if ($width > 800 OR $height > 800):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Resizing $uploadFile using php-gd", $logfile);
+                    $msg->logMessage('[DEBUG]',"Resizing $uploadFile using php-gd");
 
                     // Get EXIF data for orientation, and rotate if required
                     $exif = @exif_read_data($_FILES['photo']['tmp_name']);
                     $orientation = isset($exif['Orientation']) ? $exif['Orientation'] : 0;
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": EXIF orientation: $orientation", $logfile);
+                    $msg->logMessage('[DEBUG]',"EXIF orientation: $orientation");
                     if($orientation === 6):
                         $sourceCopy = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
                         $rotatedImg = imagerotate($sourceCopy, -90, 0);
@@ -117,7 +120,7 @@ if ($isValidReferrer):
                         $response['message'] = 'Failed to get image size<br>';
                         returnResponse();
                     endif;
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Width: $width --> $newWidth, Height: $height --> $newHeight", $logfile);
+                    $msg->logMessage('[DEBUG]',"Width: $width --> $newWidth, Height: $height --> $newHeight");
 
                     // Get the submitted file input, already rotated if needed
                     $uploadedImage = imagecreatefromjpeg($_FILES['photo']['tmp_name']);
@@ -131,7 +134,7 @@ if ($isValidReferrer):
                     imagedestroy($uploadedImage);
                     imagedestroy($resizedImage);
                 else:
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image $uploadFile does not need resizing", $logfile);
+                    $msg->logMessage('[DEBUG]',"Image $uploadFile does not need resizing");
 
                     // Move the uploaded file to the specified directory with the specific name
                     if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)):
@@ -139,15 +142,15 @@ if ($isValidReferrer):
                         returnResponse();
                     endif;
                 endif;
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image upload success", $logfile);
+                $msg->logMessage('[DEBUG]',"Image upload success");
                 $response['success'] = true;
                 $response['message'] = 'File is valid and was successfully uploaded<br>';
             else:
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Image upload failed", $logfile);
+                $msg->logMessage('[ERROR]',"Image upload failed");
                 $response['message'] = 'Invalid file or file upload error<br>';
             endif;
         elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Called with 'delete'", $logfile);
+            $msg->logMessage('[DEBUG]',"Called with 'delete'");
             $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
             // Path to the file to be deleted
@@ -174,7 +177,7 @@ if ($isValidReferrer):
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from deckdetail.php",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from deckdetail.php");
     http_response_code(403);
     echo 'Access forbidden';
     exit();

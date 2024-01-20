@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       18/03/23
+/* Version:     2.1
+    Date:       20/01/24
     Name:       passwordcheck.class.php
     Purpose:    Password validation class.
     Notes:      - 
@@ -13,6 +13,9 @@
                 Initial version
  *  2.0
  *              Moved from crypt() to password_verify()
+ *  
+    2.1         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -31,7 +34,7 @@ class PasswordCheck
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
     }
 
     public function PWValidate($email, $password) 
@@ -44,21 +47,21 @@ class PasswordCheck
          * 10 for valid email / password combination
          */
         if (!isset($email) || !isset($password)):
-            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called without correct parameters",$this->logfile);
+            $this->message->logMessage("[DEBUG]","Called without correct parameters");
             return $this->passwordvalidate = 0;
         else:
             if($row = $this->db->execute_query("SELECT password FROM users WHERE email = ? LIMIT 1",[$email])):
                 if ($row->num_rows === 0):
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Invalid email address, returning 1",$this->logfile);
+                    $this->message->logMessage("[DEBUG]","Invalid email address, returning 1");
                     $this->passwordvalidate = 1;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
                         $db_password = $row['password'];
                         if (password_verify($password, $db_password)):
-                            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Email and password validated for $email, returning 10",$this->logfile);
+                            $this->message->logMessage("[DEBUG]","Email and password validated for $email, returning 10");
                             $this->passwordvalidate = 10;
                         else:
-                            $this->message->MessageTxt("[NOTICE]", "Class " .__METHOD__ . " ".__LINE__,"Valid email, invalid password, returning 2",$this->logfile);
+                            $this->message->logMessage("[NOTICE]","Valid email, invalid password, returning 2");
                             $this->passwordvalidate = 2;
                         endif;
                     //endif;    
@@ -77,26 +80,26 @@ class PasswordCheck
     {
         global $serveremail, $adminemail;
         if (!isset($email)):
-            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called without target account",$this->logfile);
+            $this->message->logMessage("[DEBUG]","Called without target account");
             return 0;
             exit;
         elseif($admin !== 1):
-            $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Called by non-admin user",$this->logfile);
+            $this->message->logMessage("[DEBUG]","Called by non-admin user");
             return 0;      
             exit;
         else:
             if($row = $this->db->execute_query("SELECT username, email FROM users WHERE email = ? LIMIT 1",[$email])):
                 if ($row->num_rows === 0):
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Invalid email address",$this->logfile);
+                    $this->message->logMessage("[DEBUG]","Invalid email address");
                     return 0;
                     exit;
                 elseif ($row->num_rows === 1): // $email matches a user
                     $row = $row->fetch_assoc();
                     $username = $row['username'];
                     $randompassword = $this->generateRandomPassword(12);
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": New password generated for $email, $username",$this->logfile);
+                    $this->message->logMessage("[DEBUG]","New password generated for $email, $username");
                     $reset = $this->newUser($username, $email, $randompassword, $dbname);
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,": Newuser result: $reset",$this->logfile);
+                    $this->message->logMessage("[DEBUG]","Newuser result: $reset");
                     if($reset === 1):
                         $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
                         $subject = "Password reset"; 
@@ -135,7 +138,7 @@ class PasswordCheck
     public function newUser($username, $postemail, $password = '', $dbname = '') 
     {
         global $serveremail, $adminemail;
-        $msg = new Message;
+        $msg = new Message($this->logfile);
         $mysql_date = date( 'Y-m-d' );
         if($password === ''):
             $noSuppliedPW = TRUE;
@@ -147,13 +150,13 @@ class PasswordCheck
         $query = "INSERT INTO users (username, reg_date, email, password, status, groupid, grpinout) 
                     VALUES (?, ?, ?, ?, 'chgpwd', 1, 0) 
                     ON DUPLICATE KEY UPDATE password=?, status='chgpwd', badlogins=0 ";
-        $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}", $this->logfile);
+        $msg->logMessage('[NOTICE]',"New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}");
         $stmt = $this->db->prepare($query);
         if ($stmt):
             $stmt->bind_param("sssss", $username, $mysql_date, $postemail, $hashed_password, $hashed_password);
             if ($stmt->execute()):
                 $affected_rows = $stmt->affected_rows;
-                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows", $this->logfile);
+                $msg->logMessage('[NOTICE]',"New user query from ".$_SERVER['REMOTE_ADDR']." affected $affected_rows rows");
             else:
                 trigger_error("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error, E_USER_ERROR);
             endif;
@@ -174,7 +177,7 @@ class PasswordCheck
             if ($stmt_select->fetch()):
                 if (password_verify($password, $db_password)):
                     // User has been created OK
-                    $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation successful, password matched", $this->logfile);
+                    $msg->logMessage('[NOTICE]',"User creation successful, password matched");
                     $usersuccess = 1;
 
                     // Create the user's database table
@@ -189,18 +192,18 @@ class PasswordCheck
                         $collection_exists = $stmt_exists->num_rows; // $collection_exists now includes the quantity of tables with the collection name
                         $stmt_exists->close();
 
-                        $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check returned $collection_exists rows", $this->logfile);
+                        $msg->logMessage('[DEBUG]',"Collection table check returned $collection_exists rows");
 
                         if ($collection_exists === 0): // No existing collection table
-                            $msg->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": No Collection table, creating...", $this->logfile);
+                            $msg->logMessage('[DEBUG]',"No Collection table, creating...");
                             $query_create = "CREATE TABLE `$mytable` LIKE collectionTemplate";
                             $stmt_create = $this->db->prepare($query_create);
 
                             if ($stmt_create->execute()):
-                                $msg->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy ok", $this->logfile);
+                                $msg->logMessage('[NOTICE]',"Collection table copy ok");
                                 $tablesuccess = 1;
                             else:
-                                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table copy failed", $this->logfile);
+                                $msg->logMessage('[ERROR]',"Collection table copy failed");
                                 $tablesuccess = 5;
                             endif;
                             $stmt_create->close();
@@ -210,19 +213,19 @@ class PasswordCheck
                             $tablesuccess = 0;
                         endif;
                     else:
-                        $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": Collection table check failed", $this->logfile);
+                        $msg->logMessage('[ERROR]',"Collection table check failed");
                     endif;
                 else:
-                    $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful, password check failed, aborting", $this->logfile);
+                    $msg->logMessage('[ERROR]',"User creation unsuccessful, password check failed, aborting");
                     $usersuccess = 0;
                 endif;
             else:
-                $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful", $this->logfile);
+                $msg->logMessage('[ERROR]',"User creation unsuccessful");
                 $usersuccess = 0;
             endif;
             $stmt_select->close();
         else:
-            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function ".__FUNCTION__.": User creation unsuccessful", $this->logfile);
+            $msg->logMessage('[ERROR]',"User creation unsuccessful");
             $usersuccess = 0;
         endif;
         
@@ -245,7 +248,7 @@ class PasswordCheck
     }
     
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, ": Called as string");
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

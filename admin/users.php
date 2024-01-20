@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       17/12/2023
+/* Version:     5.1
+    Date:       20/01/24
     Name:       admin/users.php
     Purpose:    User administrative tasks
     Notes:      
@@ -16,20 +16,23 @@
  * 
  *  5.0         17/12/2023
  *              Add local currency control
+  * 
+ *  5.1         20/01/24
+ *              Move to include sessionname and logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');                //Initialise and load ini file
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');      //Includes basic functions for non-secure pages
 require ('../includes/secpagesetup.php');       //Setup page variables
 forcechgpwd();                                  //Check if user is disabled or needs to change password
-$msg = new Message;
+$msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
-$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin page called by user $username ($useremail)",$logfile);
+$msg->logMessage('[ERROR]',"Admin page called by user $username ($useremail)");
 // Is admin running the page
-$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Admin is $admin",$logfile);
+$msg->logMessage('[ERROR]',"Admin is $admin");
 if ($admin !== 1):
     require('reject.php');
 endif;
@@ -125,66 +128,66 @@ require('../includes/menu.php');
                 $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
                 if ($result = $db->execute_query($query, $params)):
                     $affected_rows = $db->affected_rows;
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows", $logfile);
+                    $msg->logMessage('[ERROR]',"Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows");
                 else:
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Update user query unsuccessful", $logfile);
+                    $msg->logMessage('[ERROR]',"Update user query unsuccessful");
                 endif;
                 $usertable = $sql_id."collection";
                 // More complex updates
                 // - delete card collection for a user
                 if (($updatearray[0]['actions'][$i]) == 'deletecards'):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $msg->logMessage('[ERROR]',"Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM $usertable")):
                         if($deletecards = $db->execute_query("SELECT * FROM $usertable")):
                             if ($deletecards->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>Cards cleared for $sql_name</div>";    
-                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table empty successful",$logfile);
+                                $msg->logMessage('[ERROR]',"Table empty successful");
                             else:    
                                 echo "<div class='alert-box error'><span>error: </span>Cards not cleared for $sql_name</div>";    
-                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table empty failed",$logfile);
+                                $msg->logMessage('[ERROR]',"Table empty failed");
                             endif;
                         endif;
                     endif;
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser'):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $msg->logMessage('[ERROR]',"Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM users WHERE usernumber = ?",[$sql_id])):
                         if($nukeuser = $db->execute_query("SELECT username FROM users WHERE usernumber = ?",[$sql_id])):
                             if ($nukeuser->num_rows == 0):
                                 echo "<div class='alert-box success'><span>success: </span>User $sql_name removed</div>";    
-                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": User deletion successful",$logfile);
+                                $msg->logMessage('[ERROR]',"User deletion successful");
                             else:    
                                 echo "<div class='alert-box error'><span>error: </span>User $sql_name not removed</div>";    
-                                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": User deletion failed",$logfile);
+                                $msg->logMessage('[ERROR]',"User deletion failed");
                             endif;
                         endif;
                     endif;
                     $sqldrop = "DROP TABLE $usertable";
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running $sqldrop",$logfile);
+                    $msg->logMessage('[ERROR]',"Running $sqldrop");
                     $db->query($sqldrop);
                     $queryexists = "SHOW TABLES LIKE '$usertable'";
                     $stmt = $db->prepare($queryexists);
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking if collection table still exists: $queryexists",$logfile);
+                    $msg->logMessage('[ERROR]',"Checking if collection table still exists: $queryexists");
                     $exec = $stmt->execute();
                     if ($exec === false):
-                        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check failed",$logfile);
+                        $msg->logMessage('[ERROR]',"Collection table check failed");
                     else:
                         $stmt->store_result();
                         $collection_exists = $stmt->num_rows; //$collection_exists now includes the quantity of tables with the collection name
                         $stmt->close();
-                        $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check returned $collection_exists rows",$logfile);
+                        $msg->logMessage('[ERROR]',"Collection table check returned $collection_exists rows");
                         if($collection_exists === 0): //No existing collection table
                             echo "<div class='alert-box success'><span>success: </span>Table dropped for $sql_name</div>";
-                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Collection table check shows 0",$logfile);
+                            $msg->logMessage('[ERROR]',"Collection table check shows 0");
                         elseif($collection_exists == -1):
-                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Shouldn't be here...",$logfile);
+                            $msg->logMessage('[ERROR]',"Shouldn't be here...");
                         else: // There is still a table with this name
                             echo "<div class='alert-box error'><span>error: </span>Table not dropped for $sql_name</div>";
-                            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Table still exists",$logfile);
+                            $msg->logMessage('[ERROR]',"Table still exists");
                         endif;
                     endif;
                 elseif (($updatearray[0]['actions'][$i]) == 'resetpassword'):
-                    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}",$logfile);
+                    $msg->logMessage('[ERROR]',"Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}");
                     $obj = new PasswordCheck ($db, $logfile);
                     $reset = $obj->passwordReset ($sql_eml, $admin, $dbname);
                     if ($reset === 2):

@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.1
-    Date:       14/01/24
+/* Version:     1.2
+    Date:       20/01/24
     Name:       deckimage.php
     Purpose:    PHP script to get and output raw jpg
     Notes:      -
@@ -10,16 +10,19 @@
                 
     1.1         14/01/24
                 Move session.name to include
+ * 
+ *  1.2         20/01/24
+ *              Move to logMessage
  */
-require ('includes/sessionname.php');        //Set global session.name
-session_start();
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');          //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');       //Setup page variables
-$msg = new Message;
+$msg = new Message($logfile);
 
-$msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called to generate jpg...",$logfile);
+$msg->logMessage('[DEBUG]',"Called to generate jpg...");
 
 // Check if the request is coming from deckdetail.php
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -27,7 +30,7 @@ $expectedReferringPage = $myURL.'/deckdetail.php';
 if (strpos($referringPage, $expectedReferringPage) !== false):
     
     // Access is OK
-    $msg->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Called from deckdetail.php",$logfile);
+    $msg->logMessage('[DEBUG]',"Called from deckdetail.php");
 
     if(isset($_GET['deck']) AND ($_GET['deck']) !== ''):
         $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -48,7 +51,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
 
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from deckdetail.php",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from deckdetail.php");
     http_response_code(403);
     echo 'Access forbidden';
 endif;

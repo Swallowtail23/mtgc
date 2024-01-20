@@ -36,24 +36,24 @@ class ImageManager
         $this->logfile = $logfile;
         $this->serveremail = $serveremail;
         $this->adminemail = $adminemail;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
     }
 
     public function getImage($setcode, $cardid, $ImgLocation, $layout, $two_card_detail_sections)
     {
-        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": called for $setcode, $cardid, $ImgLocation, $layout", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"Called for $setcode, $cardid, $ImgLocation, $layout");
 
         $localfile = $ImgLocation . $setcode . '/' . $cardid . '.jpg';
-        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": File should be at $localfile", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"File should be at $localfile");
 
         if (in_array($layout, $two_card_detail_sections)):
             $localfile_b = $ImgLocation . $setcode . '/' . $cardid . '_b.jpg';
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Back file should be at $localfile_b", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Back file should be at $localfile_b");
         endif;
 
         // Front face
         if (!file_exists($localfile)):
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localfile missing, running get image function", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"$localfile missing, running get image function");
 
             $sql = "SELECT image_uri, layout, f1_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
             $result = $this->db->execute_query($sql,[$cardid]);
@@ -61,25 +61,25 @@ class ImageManager
             if ($result === false):
                 trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL error: " . $this->db->error, E_USER_ERROR);
             else:
-                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Query $sql successful", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Query $sql successful");
 
                 $coderow = $result->fetch_array(MYSQLI_ASSOC);
                 $imageurl = '';
 
                 if (isset($coderow['image_uri']) AND !is_null($coderow['image_uri'])):
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Standard card, {$coderow['image_uri']}", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Standard card, {$coderow['image_uri']}");
                     $imageurl = strtolower($coderow['image_uri']);
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Looking on scryfall.com ($cardid) for image to use as $localfile", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Looking on scryfall.com ($cardid) for image to use as $localfile");
 
                 elseif (isset($coderow['f1_image_uri']) AND !is_null($coderow['f1_image_uri'])):
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Flip card, {$coderow['f1_image_uri']}", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Flip card, {$coderow['f1_image_uri']}");
                     $imageurl = strtolower($coderow['f1_image_uri']);
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Looking on scryfall.com ($cardid) for images to use as $localfile", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Looking on scryfall.com ($cardid) for images to use as $localfile");
                 endif;
 
                 if (strpos($imageurl, '.jpg?') !== false):
                     $imageurl = substr($imageurl, 0, (strpos($imageurl, ".jpg?") + 5)) . "1";
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Imageurl is $imageurl", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Imageurl is $imageurl");
                 endif;
 
                 if ((checkRemoteFile($imageurl) == false) OR ($imageurl === '')):
@@ -95,7 +95,7 @@ class ImageManager
                     $image = file_get_contents($imageurl, false, $context);
 
                     if (!file_exists($ImgLocation . $setcode)):
-                        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Creating new directory $setcode", $this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Creating new directory $setcode");
                         mkdir($ImgLocation . $setcode);
                     endif;
 
@@ -105,7 +105,7 @@ class ImageManager
                 endif;
             endif;
         else:
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": File exists already at $localfile", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"File exists already at $localfile");
             $relativepath = strpos($localfile, 'cardimg');
             $frontimg = substr($localfile, $relativepath);
         endif;
@@ -116,7 +116,7 @@ class ImageManager
         // Back face
         if (isset($localfile_b)):
             if (!file_exists($localfile_b)):
-                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localfile_b missing, running get image function", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"$localfile_b missing, running get image function");
 
                 $sql = "SELECT layout, f2_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
                 $result2 = $this->db->execute_query($sql,[$cardid]);
@@ -124,23 +124,23 @@ class ImageManager
                 if ($result2 === false):
                     trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL error: " . $this->db->error, E_USER_ERROR);
                 else:
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Query $sql successful", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Query $sql successful");
 
                     $coderow2 = $result2->fetch_array(MYSQLI_ASSOC);
                     $imageurl_2 = '';
 
                     if (isset($coderow2['f2_image_uri']) AND !is_null($coderow2['f2_image_uri'])):
-                        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Flip card back, {$coderow2['f2_image_uri']}", $this->logfile);
-                        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Looking on scryfall.com ($cardid) for images to use as $localfile_b", $this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Flip card back, {$coderow2['f2_image_uri']}");
+                        $this->message->logMessage('[DEBUG]',"Looking on scryfall.com ($cardid) for images to use as $localfile_b");
                         $imageurl_2 = strtolower($coderow2['f2_image_uri']);
                     endif;
 
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Flip card back image, {$coderow2['f2_image_uri']}", $this->logfile);
-                    $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Looking on scryfall.com ($cardid) for image to use as $localfile_b", $this->logfile);
+                    $this->message->logMessage('[DEBUG]',"Flip card back image, {$coderow2['f2_image_uri']}");
+                    $this->message->logMessage('[DEBUG]',"Looking on scryfall.com ($cardid) for image to use as $localfile_b");
 
                     if (strpos($imageurl_2, '.jpg?') !== false):
                         $imageurl_2 = substr($imageurl_2, 0, (strpos($imageurl_2, ".jpg?") + 5)) . "1";
-                        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Imageurl_2 is $imageurl_2", $this->logfile);
+                        $this->message->logMessage('[DEBUG]',"Imageurl_2 is $imageurl_2");
                     endif;
 
                     if ($imageurl_2 === ''):
@@ -153,7 +153,7 @@ class ImageManager
                         $image2 = file_get_contents($imageurl_2, false, $context);
 
                         if (!file_exists($ImgLocation . $setcode)):
-                            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Creating new directory $setcode", $this->logfile);
+                            $this->message->logMessage('[DEBUG]',"Creating new directory $setcode");
                             mkdir($ImgLocation . $setcode);
                         endif;
 
@@ -163,7 +163,7 @@ class ImageManager
                     endif;
                 endif;
             elseif (file_exists($localfile_b)):
-                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": File exists already at $localfile_b", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"File exists already at $localfile_b");
                 $relativepath_2 = strpos($localfile_b, 'cardimg');
                 $backimg = substr($localfile_b, $relativepath_2);
             endif;
@@ -176,7 +176,7 @@ class ImageManager
     
     public function diffImage($url, $localFilePath) 
     {
-        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Comparing $url with local file $localFilePath", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"Comparing $url with local file $localFilePath");
         
         // Get headers for the online image
         $onlineHeaders = get_headers($url, 1);
@@ -189,7 +189,7 @@ class ImageManager
         // Get the "Content-Length" header to check file size
         if (isset($onlineHeaders['Content-Length'])):
             $onlineFileSize = $onlineHeaders['Content-Length'];
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $url size is $onlineFileSize", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"$url size is $onlineFileSize");
         else:
             $onlineFileSize = 0;
         endif;
@@ -197,25 +197,25 @@ class ImageManager
         // Get the "Last-Modified" header to check the modification date
         if (isset($onlineHeaders['Last-Modified'])):
             $onlineLastModified = strtotime($onlineHeaders['Last-Modified']);
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $url mod time is $onlineLastModified", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"$url mod time is $onlineLastModified");
         else:
             $onlineLastModified = 0;
         endif;
 
         // Get the local file size
         $localFileSize = filesize($localFilePath);
-        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localFilePath size is $localFileSize", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"$localFilePath size is $localFileSize");
 
         // Get the local file modification date
         $localLastModified = filemtime($localFilePath);
-        $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": $localFilePath mod time is $localLastModified", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"$localFilePath mod time is $localLastModified");
 
         // Compare file sizes and modification dates
         if ($onlineFileSize !== $localFileSize OR $onlineLastModified !== $localLastModified):
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Result:- files are different", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Result:- files are different");
             return true;
         else:
-            $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Result:- files are same", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Result:- files are same");
             return false;
         endif;
     }
@@ -223,7 +223,7 @@ class ImageManager
     function refreshImage($cardid)
     {
         global $ImgLocation, $two_card_detail_sections;
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Refresh image called for $cardid",$this->logfile);
+        $this->message->logMessage('[DEBUG]',"Refresh image called for $cardid");
 
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
             throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -243,12 +243,12 @@ class ImageManager
                 $imageurl = $ImgLocation.$row['setcode']."/".$imagename;
                 try {
                     if (!unlink($imageurl)):
-                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$this->logfile);
+                        $this->message->logMessage('[ERROR]',"Failed to unlink $imageurl");
                         throw new Exception('Failed to unlink image');
                     endif;
                     $imagedelete = 'success';
                 } catch (Exception $e) {
-                    $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imageurl",$this->logfile);
+                    $this->message->logMessage('[ERROR]',"Failed to unlink $imageurl");
                     $imagedelete = 'failure';
                     
                 } finally {
@@ -260,12 +260,12 @@ class ImageManager
                 $imagebackurl = $ImgLocation.$row['setcode']."/".$imagebackname;
                 try {
                     if (!unlink($imagebackurl)):
-                        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$this->logfile);
+                        $this->message->logMessage('[ERROR]',"Failed to unlink $imagebackurl");
                         throw new Exception('Failed to unlink back image');
                     endif;
                     $imagebackdelete = 'success';
                 } catch (Exception $e) {
-                    $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed to unlink $imagebackurl",$this->logfile);
+                    $this->message->logMessage('[ERROR]',"Failed to unlink $imagebackurl");
                     $imagebackdelete = 'failure';
                     restore_error_handler();
                 }
@@ -279,14 +279,14 @@ class ImageManager
             mail($this->adminemail, $subject, $message, $from);
             return 'failure'; 
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Re-fetching image for $cardid",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Re-fetching image for $cardid");
             $imagefunction = $this->getImage($row['setcode'],$cardid,$ImgLocation,$row['layout'],$two_card_detail_sections); //$ImgLocation is set in ini
             return 'success';
         endif;
     }
 
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

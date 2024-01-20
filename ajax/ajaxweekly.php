@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.0
-    Date:       13/01/24
+/* Version:     1.1
+    Date:       20/01/24
     Name:       ajaxweekly.php
     Purpose:    PHP script to turn weekly export on/off
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,14 +9,18 @@
 
     1.0
                 Initial version
+ 
+    1.1         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -51,35 +55,35 @@ if ($isValidReferrer):
         $useremail = $_SESSION['useremail'];
         
         if(isset($_POST['weekly']) && $_POST['weekly'] === 'TURN OFF'):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off weekly export",$logfile);
+            $msg->logMessage('[ERROR]',"Call to turn off weekly export");
             $query = "UPDATE users SET weeklyexport = ? WHERE usernumber = ?";
             $params = ['0', $user];
             $result = $db->execute_query($query, $params);
             if($result === false):
                 trigger_error('[ERROR] ajaxweekly.php: Error: '.$db->error, E_USER_ERROR);
             else:    
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off weekly export run for $useremail",$logfile);
+                $msg->logMessage('[ERROR]',"Call to turn off weekly export run for $useremail");
             endif;
         elseif(isset($_POST['weekly']) && $_POST['weekly'] === 'TURN ON'):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn on weekly export",$logfile);
+            $msg->logMessage('[ERROR]',"Call to turn on weekly export");
             $query = "UPDATE users SET weeklyexport = ? WHERE usernumber = ?";
             $params = ['1', $user];
             $result = $db->execute_query($query, $params);
             if($result === false):
                 trigger_error('[ERROR] ajaxweekly.php: Error: '.$db->error, E_USER_ERROR);
             else:    
-                $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Call to turn off weekly export run for $useremail",$logfile);
+                $msg->logMessage('[ERROR]',"Call to turn off weekly export run for $useremail");
             endif;
         else:
             http_response_code(400);
-            $msg->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Called with invalid input", $logfile);
+            $msg->logMessage('[ERROR]',"Called with invalid input");
             echo json_encode(['error' => 'Called with invalid input']);
             exit();
         endif;
     endif;
 else:
     //Otherwise forbid access
-    $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Not called from valid page",$logfile);
+    $msg->logMessage('[ERROR]',"Not called from valid page");
     http_response_code(403);
     echo 'Access forbidden';
 endif;

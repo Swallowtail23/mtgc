@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       25/03/23
+/* Version:     5.1
+    Date:       20/01/24
     Name:       decks.php
     Purpose:    Main decks list page
     Notes:       
@@ -18,15 +18,19 @@
  *              Refactoring for cards_scry data
  *  5.0
  *              PHP 8.1 compatibility
+ * 
+ *  5.1         20/01/24
+ *              Move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('includes/sessionname.php');
+startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
-$msg = new Message;
+$msg = new Message($logfile);
 
 //page specific variables
 $newdeck        = isset($_POST['newdeck']) ? 'yes' : '';
@@ -114,7 +118,7 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <?php
             else:
-                $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Calling Deckmanager->addDeck: '$user/$deckname'",$logfile);
+                $msg->logMessage('[NOTICE]',"Calling Deckmanager->addDeck: '$user/$deckname'");
                 $obj = new DeckManager($db, $logfile);
                 $decksuccess = $obj->addDeck($user,$deckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
             endif;
@@ -122,7 +126,7 @@ require('includes/menu.php'); //mobile menu
         
         // Delete a deck
         if($deletedeck == "yes"):
-            $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Calling Deckmanager->deleteDeck: '($user) $decktodelete'",$logfile);
+            $msg->logMessage('[NOTICE]',"Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
             $obj = new DeckManager($db,$logfile);
             $obj->delDeck($decktodelete);
         endif;

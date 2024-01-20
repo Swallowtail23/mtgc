@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.1
-    Date:       25/03/23
+/* Version:     2.2
+    Date:       20/01/24
     Name:       error_handling.php
     Purpose:    PHP script to process page initiation and setup
     Notes:      {none}
@@ -11,6 +11,9 @@
  *              Removed hard-coded email address, now uses ini file variables
  *  2.1
  *              Fix empty variable ($context)
+ * 
+ *  2.2         20/01/24
+ *              Move to logMessage
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -20,7 +23,7 @@ endif;
 function mtg_error($number,$string,$file,$line,$context='')
 {
     global $logfile,$adminemail,$serveremail; //set in ini.php
-    $msg = new Message;
+    $msg = new Message($logfile);
     
     if (isset($_SESSION['useremail']) AND !empty($_SESSION['useremail'])):
         $useremail = $_SESSION['useremail'];
@@ -33,7 +36,7 @@ function mtg_error($number,$string,$file,$line,$context='')
     endif;
     switch ($number):
         case E_USER_ERROR:
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $string (E_USER_ERROR) in $file on line $line",$logfile);
+            $msg->logMessage('[ERROR]',"$string (E_USER_ERROR) in $file on line $line");
             $from = "From: $useremail\r\nReturn-path: $useremail";
             $subject = "Error (E_USER_ERROR) on MTGCollection in file $file line $line";
             $message = wordwrap($string,70);
@@ -42,7 +45,7 @@ function mtg_error($number,$string,$file,$line,$context='')
             exit();
             break;
         case E_USER_WARNING:    
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $string (E_USER_WARNING) in $file on line $line",$logfile);
+            $msg->logMessage('[ERROR]',"$string (E_USER_WARNING) in $file on line $line");
             $from = "From: $useremail\r\nReturn-path: $useremail";
             $subject = "Error (E_USER_WARNING) on MTGCollection in file $file line $line";
             $message = wordwrap($string,70);
@@ -51,7 +54,7 @@ function mtg_error($number,$string,$file,$line,$context='')
             exit();
             break;
         case E_USER_NOTICE:
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $string (E_USER_NOTICE) in $file on line $line",$logfile);
+            $msg->logMessage('[ERROR]',"$string (E_USER_NOTICE) in $file on line $line");
             $from = "From: $useremail\r\nReturn-path: $useremail";
             $subject = "Error (E_USER_NOTICE) on MTGCollection in file $file line $line";
             $message = wordwrap($string,70);
@@ -60,7 +63,7 @@ function mtg_error($number,$string,$file,$line,$context='')
             exit();
             break;
         default:
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"Function ".__FUNCTION__.": $string Error in $file on line $line",$logfile);
+            $msg->logMessage('[ERROR]',"$string Error in $file on line $line");
             $from = "From: $useremail\r\nReturn-path: $useremail";
             $subject = "Error on MTGCollection in file $file line $line";
             $message = wordwrap($string,70);

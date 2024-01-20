@@ -1,6 +1,6 @@
 <?php
-/* Version:     8.0
-    Date:       13/01/24
+/* Version:     8.1
+    Date:       20/01/24
     Name:       scryfall_bulk.php
     Purpose:    Import/update Scryfall bulk data
     Notes:      {none} 
@@ -24,13 +24,15 @@
  * 
  *  8.0         13/01/24
  *              Move email function to use phpmailer
+ 
+ *  8.1         20/01/24
+ *              Move to logMessage
 */
 
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Get and interpret parameter 1
 
@@ -59,12 +61,12 @@ if ($bulkInfo !== FALSE):
         $bulk_uri_default = $bulkInfo['bulkUrlDefault'];
         $file_location_all = $bulkInfo['fileLocationAll'];
         $file_location_default = $bulkInfo['fileLocationDefault'];
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URIs: $bulk_uri_all / $bulk_uri_default; File locations: $file_location_all / $file_location_default",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URIs: $bulk_uri_all / $bulk_uri_default; File locations: $file_location_all / $file_location_default");
         $max_fileage = 0;
         $get_all = getBulkJson($bulk_uri_all, $file_location_all, $max_fileage);
         $get_default = getBulkJson($bulk_uri_default, $file_location_default, $max_fileage);
         if ($get_all === FALSE || $get_default === FALSE):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri_all / $bulk_uri_default",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri_all / $bulk_uri_default");
             exit;
         else:
             scryfallImport($file_location_all,'all');
@@ -73,11 +75,11 @@ if ($bulkInfo !== FALSE):
     else:
         $bulk_uri = $bulkInfo['bulkUrl'];
         $file_location = $bulkInfo['fileLocation'];
-        $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: $bulk_uri; File location: $file_location",$logfile);
+        $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URI: $bulk_uri; File location: $file_location");
         $max_fileage = 23 * 3600;
         $get_json = getBulkJson($bulk_uri, $file_location, $max_fileage);
         if ($get_json === FALSE):
-            $msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri",$logfile);
+            $msg->logMessage('[ERROR]',"Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri");
             exit;
         else:
             if ($file_location === $ImgLocation.'json/bulk.json'):
@@ -91,10 +93,10 @@ if ($bulkInfo !== FALSE):
             $subject = "MTG bulk update completed ($type)";
             $mail = new myPHPMailer(true, $smtpParameters, $serveremail, $logfile);
             $mailresult = $mail->sendEmail($adminemail, FALSE, $subject, $bulkResultMessage);
-            $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Mail result is '$mailresult'",$logfile);
+            $msg->logMessage('[DEBUG]',"Mail result is '$mailresult'");
         endif;
     endif;
 else:
-    $msg->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": scryfall Bulk API: Download URI: bulk_info function failed to return usable results",$logfile);
+    $msg->logMessage('[NOTICE]',"Scryfall Bulk API: Download URI: bulk_info function failed to return usable results");
     exit;
 endif;

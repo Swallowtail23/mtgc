@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       13/01/24
+/* Version:     1.1
+    Date:       20/01/24
     Name:       myPHPMailer.class.php
     Purpose:    extends PHPMailer with standard options
     Notes:      To use, instantiate a new:
@@ -12,8 +12,11 @@
     @author     Simon Wilson <simon@simonandkate.net>
     @copyright  2024 Simon Wilson
     
- *  1.0
+ *  1.0         13/01/24
                 Initial version
+ * 
+ *  1.1         20/01/24
+ *              Move to logMessage
 */
 
 //Import PHPMailer classes into the global namespace
@@ -21,7 +24,6 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-// echo __DIR__;exit;
 require __DIR__ . "/../vendor/autoload.php";
 
 class myPHPMailer extends PHPMailer
@@ -45,7 +47,7 @@ class myPHPMailer extends PHPMailer
         $this->smtpParameters = $smtpParameters;
         $this->serveremail = $serveremail;
         $this->logfile = $logfile;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
         
         // Set defaults for PHPMailer from ini.file
         $this->setFrom($this->serveremail, 'MtG Collection');
@@ -60,12 +62,12 @@ class myPHPMailer extends PHPMailer
         
         // Check if debugging is required
         if($smtpParameters['SMTPDebug'] === 'SMTP::DEBUG_OFF'):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SMTP debug is off ({$smtpParameters['SMTPDebug']},{$this->SMTPDebug})", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"SMTP debug is off ({$smtpParameters['SMTPDebug']},{$this->SMTPDebug})");
         elseif($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3):
             $this->SMTPDebug  = $smtpParameters['SMTPDebug'];
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SMTP debug is on ({$this->SMTPDebug})", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"SMTP debug is on ({$this->SMTPDebug})");
         else:
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SMTP debug is on ({$this->SMTPDebug}), but site log level not at DEBUG; NOT setting to SMTP debug", $this->logfile);
+            $this->message->logMessage('[NOTICE]',"SMTP debug is on ({$this->SMTPDebug}), but site log level not at DEBUG; NOT setting to SMTP debug");
         endif;
     }
     
@@ -89,10 +91,10 @@ class myPHPMailer extends PHPMailer
 
             // Send
             $this->send();
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Email sent to $recipient", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Email sent to $recipient");
             return TRUE;
         } catch (Exception $e) {
-            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Email NOT sent to $recipient ({$e->getMessage()})", $this->logfile);
+            $this->message->logMessage('[ERROR]',"Email NOT sent to $recipient ({$e->getMessage()})");
             return FALSE;
         }
     }

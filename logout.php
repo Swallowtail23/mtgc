@@ -9,8 +9,8 @@
     1.0
                 Initial version
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+require ('includes/sessionname.php');
+startCustomSession();
 session_regenerate_id();
 $userEmail = isset($_SESSION['useremail']) ? $_SESSION['useremail'] : 'Unknown User';
 session_destroy();

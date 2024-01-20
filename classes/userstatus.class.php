@@ -1,6 +1,6 @@
 <?php
-/* Version:     3.0
-    Date:       28/03/2023
+/* Version:     3.1
+    Date:       20/01/24
     Name:       userstatus.class.php
     Purpose:    User status class - gets user status, gets and increments 
                 bad login count. Also triggers 'locked' status when ini file 
@@ -18,6 +18,9 @@
  *                  zero after a good login
  *  3.0
  *              Corrected empty array key for invalid email address
+ * 
+    3.1         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -38,7 +41,7 @@ class UserStatus
         $this->db = $db;
         $this->logfile = $logfile;
         $this->email = $email;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
     }
     
     public function GetUserStatus() {
@@ -51,12 +54,12 @@ class UserStatus
          * 10 for active
          */
         if (!isset($this->email)):
-            $this->message->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__,"called without correct parameters",$this->logfile);
+            $this->message->logMessage("[ERROR]","Called without correct parameters");
             return $this->status['code'] = 0;
         else:
             if($row = $this->db->execute_query("SELECT status,usernumber,admin FROM users WHERE email = ? LIMIT 1",[$this->email])):
                 if ($row->num_rows === 0):
-                    $this->message->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__,"called with invalid email address $this->email",$this->logfile);
+                    $this->message->logMessage("[ERROR]","Called with invalid email address $this->email");
                     $this->status['code'] = 0;
                 elseif ($row->num_rows === 1):
                     $row = $row->fetch_assoc();
@@ -66,19 +69,19 @@ class UserStatus
                     $adminrights = $row['admin'];
                     $this->status['admin'] = $adminrights;
                     if ($status == 'active') :
-                        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"- user $this->email is active",$this->logfile);
+                        $this->message->logMessage("[DEBUG]","User $this->email is active");
                         $this->status['code'] = 10;
                     elseif ($status == 'disabled') :
-                        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"- user $this->email is disabled",$this->logfile);
+                        $this->message->logMessage("[DEBUG]","User $this->email is disabled");
                         $this->status['code'] = 3;
                     elseif ($status == 'locked') :
-                        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"- user $this->email is locked",$this->logfile);
+                        $this->message->logMessage("[DEBUG]","User $this->email is locked");
                         $this->status['code'] = 2;
                     elseif ($status == 'chgpwd') :
-                        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"- user $this->email needs to change password",$this->logfile);
+                        $this->message->logMessage("[DEBUG]","User $this->email needs to change password");
                         $this->status['code'] = 1;
                     else:
-                        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"- user $this->email unknown status",$this->logfile);
+                        $this->message->logMessage("[DEBUG]","User $this->email unknown status");
                         $this->status['code'] = 0;
                     endif;
                 else:
@@ -94,12 +97,12 @@ class UserStatus
     
     public function GetBadLogin() {
         if (!isset($this->email)):
-            $this->message->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__,"called without correct parameters",$this->logfile);
+            $this->message->logMessage("[ERROR]","Called without correct parameters");
             return $this->badlogincount['code'] = 0;
         else:
             if($row = $this->db->execute_query("SELECT badlogins FROM users WHERE email = ? LIMIT 1",[$this->email])):
                 if ($row->num_rows === 0):
-                    $this->message->MessageTxt("[ERROR]", "Class " .__METHOD__ . " ".__LINE__,"called with invalid email address $this->email",$this->logfile);
+                    $this->message->logMessage("[ERROR]","Called with invalid email address $this->email");
                     $this->badlogincount['code'] = 0;
                     $this->badlogincount['count'] = null;
                 elseif ($row->num_rows === 1):
@@ -109,7 +112,7 @@ class UserStatus
                         $row['badlogins'] = 0;
                     endif;
                     $this->badlogincount['count'] = $row['badlogins'];
-                    $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"called: $this->email has {$row['badlogins']} bad logins",$this->logfile);
+                    $this->message->logMessage("[DEBUG]","Called: $this->email has {$row['badlogins']} bad logins");
                 else:
                     trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__,"- Other failure: Error: " . $this->db->error, E_USER_ERROR);
                 endif;
@@ -118,12 +121,12 @@ class UserStatus
                 trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__,"- SQL failure: Error: " . $this->db->error, E_USER_ERROR);
             endif;
         endif;
-        $this->message->MessageTxt("[DEBUG]", "Class " .__METHOD__ . " ".__LINE__,"Returning {$this->badlogincount['code']}",$this->logfile);
+        $this->message->logMessage("[DEBUG]","Returning {$this->badlogincount['code']}");
         return $this->badlogincount;
     }
     
     public function IncrementBadLogin() {
-        $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Incrementing bad login count for $this->email...",$this->logfile);
+        $this->message->logMessage('[ERROR]',"Incrementing bad login count for $this->email...");
         $query =   "UPDATE users 
                     SET  badlogins = CASE WHEN badlogins IS NULL
                                                THEN 1
@@ -133,16 +136,16 @@ class UserStatus
         if ($this->db->execute_query($query, [$this->email]) !== TRUE):
             trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $this->db->error, E_USER_ERROR);
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...sql result: {$this->db->info}",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"...sql result: {$this->db->info}");
         endif;
     }    
     
     public function ZeroBadLogin() {
         $query = "UPDATE users SET  badlogins = 0 WHERE email=?";
         if ($this->db->execute_query($query, [$this->email]) !== TRUE):
-            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Resetting bad login count failed",$this->logfile);
+            $this->message->logMessage('[ERROR]',"Resetting bad login count failed");
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Reset bad login count to 0: {$this->db->info}",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Reset bad login count to 0: {$this->db->info}");
         endif;
     }
     
@@ -150,14 +153,14 @@ class UserStatus
         $status = 'locked';
         $query = "UPDATE users SET status=? WHERE email=?";
         if ($this->db->execute_query($query, [$status,$this->email]) !== TRUE):
-            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Locking account $this->email failed",$this->logfile);
+            $this->message->logMessage('[ERROR]',"Locking account $this->email failed");
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Locking account $this->email: {$this->db->info}",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Locking account $this->email: {$this->db->info}");
         endif;
     }    
     
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string",$this->logfile);
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

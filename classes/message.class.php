@@ -53,13 +53,33 @@ class Message
     // Migrating to class function which does not need to have the source set, but gets it automatically
     // This is to improve logging consistency
     
-    public function logMessage($errorlevel,$text,$logfile = '') 
+    public function logMessage($errorlevel, $text, $logfile = '') 
     {
         $logfile = $logfile ?: $this->logfile;
         $backtrace = debug_backtrace();
-        $functionName = isset($backtrace[1]['function']) ? " " . $backtrace[1]['function'] . " " : "";
-        $source = basename(__FILE__) . " " . __LINE__ . $functionName;
-        $this->textstring = "$errorlevel $source: $text";
-        writelog($this->textstring,$logfile);
+        $caller_info = $this->findCallerInfo($backtrace);
+
+        $this->textstring = "$errorlevel {$caller_info}: $text";
+        writelog($this->textstring, $logfile);
+    }
+
+    private function findCallerInfo($backtrace)
+    {
+        $caller = $backtrace[0] ?? null;
+
+        if ($caller):
+            $file = isset($caller['file']) ? basename($caller['file']) : 'Unknown file';
+            $line = isset($caller['line']) ? $caller['line'] : 'Unknown line';
+
+            // Check if there's a calling function and it's not 'logMessage'.
+            $functionName = '';
+            if (isset($backtrace[1]['function']) && $backtrace[1]['function'] !== 'logMessage'):
+                $functionName = ": Function " . $backtrace[1]['function'];
+            endif;
+
+            return "$file $line$functionName";
+        endif;
+
+        return 'Unknown file Unknown line';
     }
 }

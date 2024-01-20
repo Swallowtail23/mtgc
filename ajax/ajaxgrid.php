@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.1
-    Date:       10/12/23
+/* Version:     5.2
+    Date:       20/01/24
     Name:       ajaxgrid.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
@@ -20,15 +20,19 @@
  *  5.1         10/12/23
  *              Add cardid regex filter
  *              Improve error handling back to Ajax
+ *
+ *  5.2         20/01/24
+ *              Include sessionname.php and move to logMessage
 */
-ini_set('session.name', '5VDSjp7k-n-_yS-_');
-session_start();
+
+require ('../includes/sessionname.php');
+startCustomSession();
 require ('../includes/ini.php');                //Initialise and load ini file
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');      //Includes basic functions for non-secure pages
 require ('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
-$msg = new Message;
+$msg = new Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -57,7 +61,7 @@ if ($isValidReferrer):
     else: 
         $cardid = $_POST['cardid'] ?? '';
         if (valid_uuid($cardid) === false):
-            $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID", $logfile);
+            $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
             $response['status'] = 'error';
             $response['message'] = "Called with invalid card UUID";
             http_response_code(400);
@@ -70,9 +74,9 @@ if ($isValidReferrer):
         if (isset($_POST['newqty'])): 
             $qty = $_POST['newqty']; 
             if(is_int($qty / 1) AND $qty > -1):
-                $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty",$logfile);
+                $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty");
             else:
-                $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardid",$logfile);
+                $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardid");
                 $response['status'] = 'error';
                 $response['message'] = "Invalid normal qty";
                 http_response_code(400);
@@ -83,9 +87,9 @@ if ($isValidReferrer):
         elseif (isset($_POST['newfoil'])): 
             $qty = $_POST['newfoil']; 
             if(is_int($qty / 1) AND $qty > -1):
-                $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty",$logfile);
+                $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty");
             else:
-                $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardid",$logfile);
+                $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardid");
                 $response['status'] = 'error';
                 $response['message'] = "Invalid foil qty";
                 http_response_code(400);
@@ -96,9 +100,9 @@ if ($isValidReferrer):
         elseif (isset($_POST['newetch'])): 
             $qty = $_POST['newetch']; 
             if(is_int($qty / 1) AND $qty > -1):
-                $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty",$logfile);
+                $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty");
             else:
-                $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardid",$logfile);
+                $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardid");
                 $response['status'] = 'error';
                 $response['message'] = "Invalid etch qty";
                 http_response_code(400);
@@ -107,7 +111,7 @@ if ($isValidReferrer):
                 exit;
             endif;
         else:
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) called with no arguments",$logfile);
+            $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
             $response['status'] = 'error';
             $response['message'] = "Invalid call";
             http_response_code(400);
@@ -134,7 +138,7 @@ if ($isValidReferrer):
         //Check existing quantity
         $beforeresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
         if($beforeresultqry === false):
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values",$logfile);
+            $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -158,7 +162,7 @@ if ($isValidReferrer):
             else:
                 $myetch = $beforeresult['etched'];
             endif;
-            $msg->MessageTxt('[NOTICE]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch",$logfile);
+            $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, Foil:$myfoil, Etched:$myetch");
         endif;
         // Run update
         if (isset($_POST['newqty'])): 
@@ -183,7 +187,7 @@ if ($isValidReferrer):
         $params = [$sqlqty,$sqlid,$sqlqty];
         $sqlupdate = $db->execute_query($updatequery,$params);
         if($sqlupdate === false):
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error",$logfile);
+            $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -193,14 +197,14 @@ if ($isValidReferrer):
         else:
             $affected_rows = $db->affected_rows;
             if ($affected_rows === 2):
-                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update query run for $sqlid, existing entry updated",$logfile);
+                $msg->logMessage('[DEBUG]',"Update query run for $sqlid, existing entry updated");
             elseif ($affected_rows === 1):
-                $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Update query run for $sqlid, new row inserted",$logfile);
+                $msg->logMessage('[DEBUG]',"Update query run for $sqlid, new row inserted");
             endif;
 
         endif;
         // Update topvalue
-        $msg->MessageTxt('[DEBUG]',$_SERVER['PHP_SELF'],"Updating topvalue based on new quantities",$logfile);
+        $msg->logMessage('[DEBUG]',"Updating topvalue based on new quantities");
         update_topvalue_card($mytable,$sqlid);
 
         // Retrieve new record to display
@@ -208,7 +212,7 @@ if ($isValidReferrer):
 
         $checkresultqry = $db->execute_query("SELECT normal, foil, etched FROM $mytable WHERE id = ? LIMIT 1",[$sqlid]);
         if ($checkresultqry === false):
-            $msg->MessageTxt('[ERROR]',$_SERVER['PHP_SELF'],"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error",$logfile);
+            $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -219,33 +223,33 @@ if ($isValidReferrer):
             $checkresult = $checkresultqry->fetch_assoc();
             if (isset($_POST['newqty'])):
                 if ((int)$sqlqty === (int)$checkresult['normal']):
-                    $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}", $logfile);
+                    $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}");
                     $response['status'] = 'success';
                     $response['message'] = "Qty update completed for $sqlid, new value: Normal:{$checkresult['normal']}";
                 else:
-                    $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}", $logfile);
+                    $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}");
                     $response['status'] = 'error';
                     $response['message'] = "Grid check FAIL for $sqlid, new value: Normal:{$checkresult['normal']}";
                     http_response_code(400);
                 endif;
             elseif (isset($_POST['newfoil'])):
                 if ((int)$sqlqty === (int)$checkresult['foil']):
-                    $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}", $logfile);
+                    $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}");
                     $response['status'] = 'success';
                     $response['message'] = "Grid check completed for $sqlid, new value: Foil: {$checkresult['foil']}";
                 else:
-                    $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}", $logfile);
+                    $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}");
                     $response['status'] = 'error';
                     $response['message'] = "Grid check FAIL for $sqlid, new value: Foil: {$checkresult['foil']}";
                     http_response_code(400);
                 endif;
             elseif (isset($_POST['newetch'])):
                 if ((int)$sqlqty === (int)$checkresult['etched']):
-                    $msg->MessageTxt('[NOTICE]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}", $logfile);
+                    $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}");
                     $response['status'] = 'success';
                     $response['message'] = "Grid check completed for $sqlid, new value: Etched: {$checkresult['etched']}";
                 else:
-                    $msg->MessageTxt('[ERROR]', $_SERVER['PHP_SELF'], "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}", $logfile);
+                    $msg->logMessage('[ERROR]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}");
                     $response['status'] = 'error';
                     $response['message'] = "Grid check FAIL for $sqlid, new value: Etched: {$checkresult['etched']}";
                     http_response_code(400);

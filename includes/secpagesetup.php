@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.1
-    Date:       27/11/23
+/* Version:     2.2
+    Date:       20/01/24
     Name:       secpagesetup.php
     Purpose:    Establish variables on secure pages
     Notes:      {none}
@@ -12,6 +12,9 @@
  *  2.1
  *              27/11/23
  *              Moved fx logic into session manager class's user info method
+ * 
+ *  2.2         20/01/24
+ *              Move to logMessage
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -47,7 +50,8 @@ else:
             exit();
         endif;
     else:
-        $msg = new Message;$msg->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"User array returned false - user no longer exists?",$logfile);
+        $msg = new Message($logfile);
+        $msg->logMessage('[ERROR]',"User array returned false - user no longer exists?");
         session_destroy();
         echo "<meta http-equiv='refresh' content='1;url=login.php'>";
         exit();

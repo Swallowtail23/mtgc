@@ -11,7 +11,7 @@
 require ('bulk_ini.php');
 require ('../includes/error_handling.php');
 require ('../includes/functions.php');
-$msg = new Message;
+$msg = new Message($logfile);
 $obj = new ImportExport($db,$logfile,$serveremail,$serveremail);
 
 $list = '';

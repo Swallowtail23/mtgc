@@ -4,7 +4,7 @@
     Name:       inidebug.class.php
     Purpose:    If we are set in the ini file to do pre-database connection debugging, 
  *              this class will log messages to logfiles or syslog
-    Notes:      - 
+    Notes:      Not currently used in code
     To do:      -
     
     @author     Simon Wilson <simon@simonandkate.net>
@@ -18,8 +18,19 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-class IniDebug {
-    public function inidebugging($loglevelini,$logfile,$message) {
+class IniDebug 
+{
+    private $logfile;
+    private $message;
+    
+    public function __construct($logfile) 
+    {
+        $this->logfile = $logfile;
+        $this->message = new Message($this->logfile);
+    }
+
+    public function inidebugging($loglevelini,$logfile,$message) 
+    {
         if($loglevelini === '3' AND $logfile !== 0):
             $fd = fopen($logfile, "a");
             $msg = "[DEBUG] $message";
@@ -34,7 +45,7 @@ class IniDebug {
     }
 
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

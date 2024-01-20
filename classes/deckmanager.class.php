@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.1
-    Date:       11/12/23
+/* Version:     1.2
+    Date:       20/01/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -19,13 +19,17 @@
  *  1.1         11/12/23
  *              Move deck-related methods from functions
  *              Move to single instance of Message class
+ *  
+    1.2         20/01/24
+ *              Move to logMessage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
-class DeckManager {
+class DeckManager 
+{
     private $db;
     private $logfile;
     private $batchedCardIds = []; // Array to store batched cards to add
@@ -34,24 +38,24 @@ class DeckManager {
     public function __construct($db, $logfile) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message();
+        $this->message = new Message($this->logfile);
     }
     
     // processInput can handle either single-line or multi-line inputs, using quickadd to process. Multi-line inputs are batched for combined data write by addDeckCardsBatch
     public function processInput($decknumber, $input) {
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ProcessInput called for deck $decknumber with '$input'",$this->logfile);
+        $this->message->logMessage('[DEBUG]',"ProcessInput called for deck $decknumber with '$input'");
         // Check if input is multiline
         $lines = explode("\n", $input);
         if (count($lines) > 1):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Multi-line input, calling quickadd in batch mode",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Multi-line input, calling quickadd in batch mode");
             foreach ($lines as $line):
                 $line = trim($line);
                 $this->quickadd($decknumber, $line, true); // Set third parameter to true for batching
             endforeach;
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Single-line input, calling quickadd in single-line mode",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Single-line input, calling quickadd in single-line mode");
             $quickaddresult = $this->quickadd($decknumber, $input);
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Result: $quickaddresult",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Result: $quickaddresult");
             return $quickaddresult;
         endif;
         // If batched card array is not empty, perform batch insert
@@ -66,7 +70,7 @@ class DeckManager {
     {
         global $noQuickAddLayouts;
         
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)",$this->logfile);
+        $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)");
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $quickaddstring, $matches);
         // Quantity
@@ -94,7 +98,7 @@ class DeckManager {
             $quickaddNumber = '';
         endif;
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]",$this->logfile);
+        $this->message->logMessage('[DEBUG]',"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]");
         $stmt = null;
         
         // Get card layouts to not include in quick add
@@ -177,7 +181,7 @@ class DeckManager {
             
         else:
             // Not enough info, cannot add
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Not enough info to identify a card to add",$this->logfile);
+            $this->message->logMessage('[NOTICE]',"Quick add - Not enough info to identify a card to add");
             $cardtoadd = 'cardnotfound';
             return $cardtoadd;
         endif;
@@ -188,7 +192,7 @@ class DeckManager {
                 $row = $result->fetch_assoc();
                 $stmt->close();
                 $cardtoadd = $row['id'];
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Quick add result: $cardtoadd",$this->logfile);
+                $this->message->logMessage('[DEBUG]',"Quick add result: $cardtoadd");
                 if (!$batch):
                     // Call addDeckCard only if not in batch mode
                     $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
@@ -199,20 +203,20 @@ class DeckManager {
                 endif;
             else:
                 $stmt->close();
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - Card not found",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Quick add - Card not found");
                 $cardtoadd = 'cardnotfound';
                 return $cardtoadd;
             endif;
         else:
             $stmt->close();
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Quick add - SQL error: " . $stmt->error, $this->logfile);
+            $this->message->logMessage('[NOTICE]',"Quick add - SQL error: " . $stmt->error);
             $cardtoadd = 'cardnotfound';
             return $cardtoadd;
         endif;
     }
 
     public function addDeckCardsBatch($decknumber, $batchedCardIds) {
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": deckManager batch process called",$this->logfile);
+        $this->message->logMessage('[DEBUG]',"deckManager batch process called");
         $values = [];
         $placeholders = [];
 
@@ -250,9 +254,9 @@ class DeckManager {
             $stmt->bind_param($typeDefinition, ...$bindValues);
 
             if ($stmt->execute()) :
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": deckManager batch process completed",$this->logfile);
+                $this->message->logMessage('[DEBUG]',"deckManager batch process completed");
             else :
-                $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Error executing batch insert query: ".$stmt->error, $this->logfile);
+                $this->message->logMessage('[ERROR]',"Error executing batch insert query: ".$stmt->error);
             endif;
 
             $stmt->close();
@@ -261,7 +265,7 @@ class DeckManager {
     
     public function deckOwnerCheck($deck,$user)
     {
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ". __LINE__,"Function ".__FUNCTION__.": Checking deck ownership: $deck, $user", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"Checking deck ownership: $deck, $user");
         $sql = "SELECT deckname, owner FROM decks WHERE decknumber = ? LIMIT 1";
         $result = $this->db->execute_query($sql, [$deck]);
         if ($result === false):
@@ -270,15 +274,15 @@ class DeckManager {
             if ($row = $result->fetch_assoc()):
                 $deckname = $row['deckname'];
                 $owner = $row['owner'];
-                $this->message->MessageTxt('[DEBUG]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Deck $deck ($deckname) belongs to owner $owner (called by $user)", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Deck $deck ($deckname) belongs to owner $owner (called by $user)");
                 if ($owner != $user):
-                    $this->message->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Deck {$row['deckname']} does not belong to user $user, returning to deck page", $this->logfile);
+                    $this->message->logMessage('[ERROR]',"Deck {$row['deckname']} does not belong to user $user, returning to deck page");
                     return false;
                 else:
                     return $deckname;
                 endif;
             else:
-                $this->message->MessageTxt('[ERROR]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": No deck found for deck $deck, returning to deck page", $this->logfile);
+                $this->message->logMessage('[ERROR]',"No deck found for deck $deck, returning to deck page");
                 return false;
             endif;
         endif;
@@ -286,7 +290,7 @@ class DeckManager {
 
     public function deckCardCheck($card, $user)
     {
-        $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking to see what decks this card is in for user $user...", $this->logfile);
+        $this->message->logMessage('[DEBUG]',"Checking to see what decks this card is in for user $user...");
 
         $sql = "SELECT deckcards.decknumber, deckcards.cardqty, deckcards.sideqty, decks.deckname 
                 FROM deckcards 
@@ -299,7 +303,7 @@ class DeckManager {
             $i = 0;
             $record = array();
             while ($row = $result->fetch_assoc()):
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in decknumber {$row['decknumber']} owned by user $user", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in decknumber {$row['decknumber']} owned by user $user");
                 $record[$i]['decknumber'] = $row['decknumber'];
                 $record[$i]['qty'] = $row['cardqty'];
                 $record[$i]['sideqty'] = $row['sideqty'];
@@ -313,7 +317,7 @@ class DeckManager {
     public function addDeckCard($deck,$card,$section,$quantity)
     {
         global $commander_decktypes, $commander_multiples, $any_quantity;
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: '$quantity' x '$card' to '$deck' ($section)", $this->logfile);
+        $this->message->logMessage('[NOTICE]',"Add card called: '$quantity' x '$card' to '$deck' ($section)");
 
         // Get card name of addition
         $cardnamequery = "SELECT name,type,ability FROM cards_scry WHERE id = ? LIMIT 1";
@@ -327,23 +331,23 @@ class DeckManager {
             $cdr_1_plus = FALSE;
             while($i < count($commander_multiples)):
                 $while_result = FALSE;
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking type for: {$commander_multiples[$i]}", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Checking type for: {$commander_multiples[$i]}");
                 if(str_contains($cardname['type'],$commander_multiples[$i]) == TRUE):
                     $while_result = TRUE;
                     $cdr_1_plus = TRUE;
                 endif;
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...outcome: $while_result", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"...outcome: $while_result");
                 $i++;
             endwhile;
             $i = 0;
             while($i < count($any_quantity)):
                 $while_result = FALSE;
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Checking ability for: {$any_quantity[$i]}", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"Checking ability for: {$any_quantity[$i]}");
                 if(isset($cardname['ability']) AND (str_contains($cardname['ability'],$any_quantity[$i]) == TRUE)):
                     $while_result = TRUE;
                     $cdr_1_plus = TRUE;
                 endif;
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...outcome: $while_result", $this->logfile);
+                $this->message->logMessage('[DEBUG]',"...outcome: $while_result");
                 $i++;
             endwhile;
             if($cdr_1_plus == FALSE):
@@ -351,7 +355,7 @@ class DeckManager {
             else:
                 $multi_allowed = "yes";
             endif;
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Card name for $card is $cardnametext; Commander multiples allowed: $multi_allowed", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Card name for $card is $cardnametext; Commander multiples allowed: $multi_allowed");
         endif;
 
         // Get deck type and existing cards in it
@@ -380,38 +384,38 @@ class DeckManager {
             endif;
         endwhile;
         if(in_array($cardnametext,$cardlistnames)):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Cardname $cardnametext is already in this deck", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Cardname $cardnametext is already in this deck");
             $already_in_deck = TRUE;
         else:
             $already_in_deck = FALSE;
         endif;
         if(in_array($decktype,$commander_decktypes)):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $deck is Commander-type", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"Deck $deck is Commander-type");
             $cdr_type_deck = TRUE;
         else:
             $cdr_type_deck = FALSE;
         endif;
         if($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's a Commander-style deck, and multiples of this type not allowed, can't add", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's a Commander-style deck, and multiples of this type not allowed, can't add");
             $quantity = FALSE;
         elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card not already in this deck, it's a Commander-style deck, and multiples of this type not allowed, adding 1", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"This card not already in this deck, it's a Commander-style deck, and multiples of this type not allowed, adding 1");
             $quantity = 1;
         elseif($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty");
             $quantity = $quantity;
         elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is not already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"This card is not already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty");
             $quantity = $quantity;
         elseif($cdr_type_deck == FALSE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": This card is already in this deck, it's not a Commander-style deck, adding requested qty", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's not a Commander-style deck, adding requested qty");
             $quantity = $quantity;
         endif;
 
         // Add card to deck
 
         if($quantity != FALSE):
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...adding $quantity x $card, $cardnametext to deck #$deck", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"...adding $quantity x $card, $cardnametext to deck #$deck");
             if($section == "side"):
                 $checkqry = $this->db->execute_query("SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",[$deck,$card]);
                 if ($checkqry !== false):
@@ -462,14 +466,14 @@ class DeckManager {
                 endif;
             endif;
 
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add card called: $cardquery, status is $status", $this->logfile);
+            $this->message->logMessage('[NOTICE]',"Add card called: $cardquery, status is $status");
             if($runquery = $this->db->execute_query($cardquery,$params)):
                 return $status;
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
             endif;
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...skipping $cardnametext to deck #$deck", $this->logfile);
+            $this->message->logMessage('[DEBUG]',"...skipping $cardnametext to deck #$deck");
             return 'cardnotadded';
         endif;
     }
@@ -536,7 +540,7 @@ class DeckManager {
             endif;
         endif;
 
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: $cardquery, status is $status", $this->logfile);
+        $this->message->logMessage('[NOTICE]',"Delete deck card query called: $cardquery, status is $status");
 
         if($status != '-error'):
             if ($runquery = $this->db->execute_query($cardquery,$params)):
@@ -545,12 +549,12 @@ class DeckManager {
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
             endif;
         else:
-            $this->message->MessageTxt('[ERROR]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: ERROR status is $status", $this->logfile);
+            $this->message->logMessage('[ERROR]',"Delete deck card query called: ERROR status is $status");
         endif;
 
         // Clean-up empties
         if ($status == 'lastmain' OR $status == 'lastside' OR $status == 'allmain' OR $status == 'allside'):
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck card query called: $cardquery, status is $status", $this->logfile);
+            $this->message->logMessage('[NOTICE]',"Delete deck card query called: $cardquery, status is $status");
             $cardquery = "DELETE FROM deckcards WHERE decknumber = ? AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
             $params = [$deck];
             if ($runquery = $this->db->execute_query($cardquery,$params)):
@@ -576,7 +580,7 @@ class DeckManager {
             $removeCommanderStmt = $this->db->prepare($removeCommanderQuery);
             $removeCommanderStmt->bind_param('i', $deck);
             if ($removeCommanderStmt->execute()):
-                $this->message->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Old Commander removed", $this->logfile);
+                $this->message->logMessage('[NOTICE]',"Old Commander removed");
             else:
                 trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $this->db->error, E_USER_ERROR);
             endif;
@@ -589,7 +593,7 @@ class DeckManager {
         $addCommanderStmt = $this->db->prepare($addCommanderQuery);
         $addCommanderStmt->bind_param('is', $deck, $card);
         if ($addCommanderStmt->execute()):
-            $this->message->MessageTxt('[NOTICE]', basename(__FILE__) . " " . __LINE__, "Function " . __FUNCTION__ . ": Add Commander run: $addCommanderQuery, status is $status", $this->logfile);
+            $this->message->logMessage('[NOTICE]',"Add Commander run: $addCommanderQuery, status is $status");
             return $status;
         else:
             trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $this->db->error, E_USER_ERROR);
@@ -602,14 +606,14 @@ class DeckManager {
         $check = $this->db->execute_query('SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 2',[$deck]);
         if ($check->num_rows > 0): //Partner already there
             if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$deck])):
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Old Partner removed",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Old Partner removed");
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
             endif; 
         endif;
         $status = "+ptnr";
         if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = '2' WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add Partner run, status is $status",$this->logfile);
+            $this->message->logMessage('[NOTICE]',"Add Partner run, status is $status");
             return $status;
         else:
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
@@ -622,7 +626,7 @@ class DeckManager {
         if ($check->num_rows > 0):
             $status = "-cdr";
             if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Remove Commander called, status is $status",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Remove Commander called, status is $status");
                 return $status;
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
@@ -634,7 +638,7 @@ class DeckManager {
 
     public function delDeck($decktodelete)
     {
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Delete deck called: deck $decktodelete",$this->logfile);
+        $this->message->logMessage('[NOTICE]',"Delete deck called: deck $decktodelete");
         $stmt = $this->db->prepare("DELETE FROM decks WHERE decknumber = ?");
         if ($stmt === false):
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $this->db->error, E_USER_ERROR);
@@ -680,7 +684,7 @@ class DeckManager {
         endif;
         $stmt->close();
         if($deck_deleted === 1 AND $deckcards_deleted === 1):
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck $decktodelete deleted",$this->logfile);
+            $this->message->logMessage('[NOTICE]',"Deck $decktodelete deleted");
         else:?>
             <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck and/or cards not deleted</span>
                 <br>
@@ -691,37 +695,37 @@ class DeckManager {
 
     public function addDeck($user,$newdeckname)
     {
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Add deck called: deck $newdeckname",$this->logfile);
+        $this->message->logMessage('[NOTICE]',"Add deck called: deck $newdeckname");
         $decksuccess = [];
         
         $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
         $decknameparams = [$user,$newdeckname];
         $result = $this->db->execute_query($decknamechecksql,$decknameparams);
         if($result !== false && $result->num_rows === 0):
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Deck does not exist for user: $user, deckname: '$newdeckname'",$this->logfile);
+            $this->message->logMessage('[NOTICE]',"Deck does not exist for user: $user, deckname: '$newdeckname'");
             
             //Create new deck
             $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
             $params = [$user,$newdeckname];
             if($deckinsert = $this->db->execute_query($sql,$params) && $this->db->affected_rows === 1):
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": SQL deck insert succeeded for user: $user, deckname: '$newdeckname'",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'");
             else:
                 trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
             endif;
 
             //Checking if it created OK
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Running confirm SQL query",$this->logfile);
+            $this->message->logMessage('[NOTICE]',"Running confirm SQL query");
             $checksql = "SELECT decknumber FROM decks
                             WHERE owner = ? AND deckname = ? LIMIT 1";
             $checkparams = [$user,$newdeckname];
             $runquery = $this->db->execute_query($checksql,$checkparams);
             if($runquery !== false && $runquery->num_rows === 1):
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Confirmed existence of deck: $newdeckname",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Confirmed existence of deck: $newdeckname");
                 $deckcheckrow = $runquery->fetch_assoc();
                 $decksuccess['flag'] = 1; //set flag so we know we don't need to check for cards in deck.
                 $decksuccess['decknumber'] = $deckcheckrow['decknumber'];
             elseif($runquery !== false && $runquery->num_rows === 0):  
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Failed - deck: $newdeckname not created",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Failed - deck: $newdeckname not created");
                 ?>
                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
                     <br>
@@ -733,7 +737,7 @@ class DeckManager {
                 trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
             endif;
         elseif($result !== false && $result->num_rows === 1):
-            $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": New deck name already exists",$this->logfile); ?>
+            $this->message->logMessage('[NOTICE]',"New deck name already exists"); ?>
             <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
                 <br>
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -750,7 +754,7 @@ class DeckManager {
     
     public function renameDeck($deck,$newname,$user)
     {
-        $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Rename deck called: deck $deck to '$newname'",$this->logfile);
+        $this->message->logMessage('[NOTICE]',"Rename deck called: deck $deck to '$newname'");
 
         // CHECK IF NAME IS ALREADY USED
         $query = 'SELECT decknumber FROM decks WHERE deckname=? AND owner=?';
@@ -760,11 +764,11 @@ class DeckManager {
         else:
             if ($stmt->num_rows > 0):
                 $newnamereturn = 2;
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' already used",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Name '$newname' already used");
                 return($newnamereturn);
             else:
                 $newnamereturn = 0; //OK to continue
-                $this->message->MessageTxt('[NOTICE]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' not already used",$this->logfile);
+                $this->message->logMessage('[NOTICE]',"Name '$newname' not already used");
             endif;
         endif;
         $stmt->close();
@@ -775,18 +779,18 @@ class DeckManager {
         if ($stmt === FALSE):
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
         else:
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": Name '$newname' query run",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"Name '$newname' query run");
             if ($this->db->affected_rows !== 1):
                 $newnamereturn = 1; //Error
-                $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...result: Unknown error: {$this->db->affected_rows} row(s) affected",$this->logfile);
+                $this->message->logMessage('[DEBUG]',"...result: Unknown error: {$this->db->affected_rows} row(s) affected");
             endif;
-            $this->message->MessageTxt('[DEBUG]',basename(__FILE__)." ".__LINE__,"Function ".__FUNCTION__.": ...result: {$this->db->affected_rows} row affected ",$this->logfile);
+            $this->message->logMessage('[DEBUG]',"...result: {$this->db->affected_rows} row affected ");
         endif;
         return($newnamereturn);
     }
 
     public function __toString() {
-        $this->message->MessageTxt("[ERROR]", "Class " . __CLASS__, "Called as string");
+        $this->message->logMessage("[ERROR]","Called as string");
         return "Called as a string";
     }
 }
