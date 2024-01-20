@@ -3,7 +3,7 @@
     Date:       18/03/23
     Name:       initial.php
     Purpose:    generate a usable password without site access
-    Notes:      #### MUST NOT BE SERVER PUBLICLY BY Apache #### 
+    Notes:      #### MUST NOT BE SERVED PUBLICLY BY Apache #### 
         
     1.0
                 Initial version
