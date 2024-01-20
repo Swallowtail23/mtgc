@@ -269,6 +269,9 @@ On the server's console, from the 'bulk' folder, run:
 
 Note, the first bulk all load can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
 
+- It is important for the first bulk run to include 'all', otherwise the bulk script will attempt to download 80,000+ images in its first default run (Scryfall.com will likely have concerns about that)
+- See also notes below on card images
+
 ### Initial user ###
 On the server command line, run:
 
