@@ -327,3 +327,11 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
 - By default cards which have either a paper version or an Arena version are imported
 - Scryfall corrections (e.g. deletions) are implemented unless those cards are in someone's collection or decks
     - If in collections or decks, a report will be sent to the site admin email, and will be visible on the site admin page
+
+### Notes on currency FX ###
+- USD will always be shown as the primary currency
+- The default currency for the site can be set in the ini file
+- If it's set to usd, conversion is not enabled
+- FX conversion can be set to specific currencies per user in user profile settings
+
+© Simon Wilson, 2024
