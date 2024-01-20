@@ -108,11 +108,10 @@ To setup Turnstile
     - enable/disable (anything other than Turnstile = "enabled" will disable Turnstile functionality)
     - if enabled, you must set keys
 
-#### JQuery and IAS ####
-Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
+#### JQuery ####
+- Currently uses JQuery 3.7.1
 
-IAS:
-
+#### Infinite Ajax Scroll ####
 - See https://infiniteajaxscroll.com/
 - Used in index.php
 - Installed locally in /js folder
