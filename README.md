@@ -50,8 +50,15 @@ Check web security settings etc. carefully and at your own risk. The settings ar
 
 ### Dependencies ###
 #### Web server, domain name ####
-May seem obvious, but you will need to have access to a web server and a domain name to host the site.
-Ideally this will include command line console access, and ability to configure PHP in php.ini. You will also need access to install files into /opt.
+It may seem obvious, but you will need to have access to a web server and a domain name to host the site.
+
+Ideally this will include:
+
+- command line console access
+- ability to configure PHP in php.ini
+- access to MySQL through e.g. phpMyAdmin or similar to be able to easily setup MySQL tables, etc.
+
+You will also need access to install files into /opt.
 If you are setting up email from this site, you will also need appropriate DNS access, etc. 
 
 #### PHP ####
@@ -60,8 +67,6 @@ If you are setting up email from this site, you will also need appropriate DNS a
 - set upload_max_size and post_max to 25M (in php.ini)
 
 #### MySQL ####
-- setup/mtg_new.sql contains database structure and initial index setup
-- run the sql in your MySQL context
 - Tested with MySQL version 8+
 - Indexes are vital for performance, and are the difference between sub-1s and 5s+ searches
 - cards_scry table should be InnoDB for best performance
@@ -193,8 +198,13 @@ that IP address only.
 ### MySQL ###
 Work to be done here to automate first setup.
 
-- Database structure is noted in setup/mtg_new.sql
-- You will need to run the sql file in your MySQL context
+- setup/mtg_new.sql contains database structure and initial index setup
+- run the sql in your MySQL context
+
+
+- Required database structure is in setup/mtg_new.sql
+- You will need a MySQL user with access to the new 'mtg' database (see also [database] section of the ini file)
+- You will need to run and import mtg_new.sql in your MySQL context
 - You will also need:
 
 In `admin` (administration) table:
@@ -217,6 +227,8 @@ Edit my.cnf and set as follows:
 Note 2G sizing is based on 4G or more server RAM.
 
 #### Initial database population ####
+Check you have required database setup, and that the database user can use the database.
+
 On the server's console, from the 'bulk' folder, run:
 
 - ```php scryfall_bulk.php all```
@@ -238,7 +250,7 @@ On the server command line, run:
     - hashed password
     - reg_date (registration date)
     - status (active)
-- also suggest that you make the first user 'admin' using MySQL
+- I also suggest that you make the first user 'admin' using MySQL
 
 ### Cron jobs ###
 Once database is setup and working, manually check and test-run the bulk scripts that you copied to /opt/mtg, and make sure they call and successfully run the scripts in the webserver's bulk folder
