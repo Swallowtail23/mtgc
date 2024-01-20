@@ -117,19 +117,20 @@ The site uses two locations:
 ### Ini file ###
 - The application expects an ini file located at: /opt/mtg/mtg_new.ini (path can be changed in ini.php if required)
 - Apache must be able to read AND write this file
+- Setting tier to dev or prod changes the header colour (dev - green, prod - blue)
 - It must include:
 
 Ini file content:
 
     [general]
-    tier = "prod"                           //either 'dev' or 'prod'
+    tier = "prod"                           //either 'dev' or 'prod' to set Header colour
     ImgLocation = "/mnt/data/cardimg/"      //ensure web server can write here
     Logfile = "/var/log/mtg/mtgapp.log"     //ensure web server can write here
-    Loglevel = 3                            //see admin pages
+    Loglevel = 2                            //see admin pages
     Timezone = "Australia/Brisbane"
     Locale = "en_US" 
     Copyright = "Simon Wilson - 2024"
-    URL = "https://www.mtgcollection.info"
+    URL = "https://your-mtg-site-url.com"   //update to your actual URL
     
     [database]
     DBServer = "********"
@@ -150,8 +151,8 @@ Ini file content:
     TargetCurrency = "aud"
     
     [email]
-    ServerEmail    = "DogmatixMTG@mtgcollection.net"
-    AdminEmail     = "simon@simonandkate.net"
+    ServerEmail    = "no_reply@your-mtg-site-url.com"
+    AdminEmail     = "youremail@youremail.com"
     SMTPDebug      = SMTP::DEBUG_OFF;
     Host           = 'localhost';
     SMTPAuth       = false;
@@ -172,14 +173,13 @@ that IP address only.
 
 ### MySQL ###
 - Database structure is noted in setup/mtg_new.sql
+- You will need to run the sql file in your MySQL context
 - You will also need:
 
 In `admin` (administration) table:
 
-    INSERT INTO `admin` (`key`, `usemin`, `tier`, `mtce`) VALUES
-    (1, 0, 'dev', 0);
-
-Note: Set dev or prod as appropriate (sets header colour for identification)
+    INSERT INTO `admin` (`key`, `usemin`, `mtce`) VALUES
+    (1, 0, 0);
 
 For groups to work:
 

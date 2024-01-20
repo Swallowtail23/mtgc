@@ -16,6 +16,8 @@ $ini_array = parse_ini_file("/opt/mtg/mtg_new.ini");
 $copyright = $ini_array['Copyright'];
 if($ini_array['tier'] === 'dev'):
     $tier = 'dev';
+else:
+    $tier = 'prod';
 endif;
 $cssver = "";
 ?> 

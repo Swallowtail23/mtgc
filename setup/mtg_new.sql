@@ -34,7 +34,6 @@ DROP TABLE IF EXISTS `admin`;
 CREATE TABLE IF NOT EXISTS `admin` (
   `key` int NOT NULL AUTO_INCREMENT,
   `usemin` tinyint(1) NOT NULL,
-  `tier` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `mtce` tinyint(1) NOT NULL,
   PRIMARY KEY (`key`),
   UNIQUE KEY `key` (`key`)
