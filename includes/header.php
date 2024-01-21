@@ -32,6 +32,9 @@ endif;
 
         var ajaxCall = debounce(function(searchid) {
             var dataString = 'search=' + searchid;
+            
+            $('body').css('cursor', 'wait');
+            
             $.ajax({
                 type: "POST",
                 url: "/ajax/ajaxsearch.php",
@@ -39,13 +42,16 @@ endif;
                 cache: false,
                 success: function(html) {
                     $("#ajaxresult").html(html).show();
+                },
+                complete: function() {
+                    $('body').css('cursor', 'default');
                 }
             });
         }, 300); // Delay of 300 milliseconds
 
         $("#searchid").on("input keyup", function() {
             var searchid = $(this).val();
-            if(searchid != '') {
+            if(searchid !== '') {
                 ajaxCall(searchid);
             } else {
                 $("#ajaxresult").html('').hide(); // Hide and clear results if search is empty
