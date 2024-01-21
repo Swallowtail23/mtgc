@@ -585,9 +585,9 @@ else:
                 $order = "ORDER BY cards_scry.cmc DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "set"):
                 $order = "ORDER BY set_date ASC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC ";
-            elseif ($sortBy == "setdown"):
+            elseif ($sortBy == "setdown"):  // Set down number up - DEFAULT
                 $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
-            elseif ($sortBy == "setnumberdown"):
+            elseif ($sortBy == "setnumberdown"): // Set down number down
                 $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
             elseif ($sortBy == "powerup"):
                 $order = "ORDER BY cards_scry.maxpower * 1 ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
@@ -597,6 +597,8 @@ else:
                 $order = "ORDER BY cards_scry.maxtoughness * 1 ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "toughdown"):
                 $order = "ORDER BY cards_scry.mintoughness * 1 DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
+            elseif ($sortBy == "sldplst"): // For SLD and PLST type collation sets
+                $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
             else:
                 $order = "ORDER BY COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             endif;

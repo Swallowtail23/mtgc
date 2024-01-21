@@ -164,6 +164,7 @@ endif;
             <label class="radio"><input type="radio" name="sortBy" value="set"><span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="setdown" checked="checked"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="setnumberdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;</label><br>
+            <label class="radio"><input type="radio" name="sortBy" value="sldplst"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Date &#x25BC; / Number &#x25B2;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="price"><span class="outer"><span class="inner"></span></span>Price &#x25BC;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>Mana value &#x25B2;</label>

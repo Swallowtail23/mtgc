@@ -163,7 +163,7 @@ $allprintings = isset($_GET['allprintings']) ? 'yes' : '';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
     $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 endif;
-$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown");
+$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown","sldplst");
 $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
 if (!in_array($sortBy,$valid_sortBy)):
     $sortBy = '';
