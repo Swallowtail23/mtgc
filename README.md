@@ -57,7 +57,7 @@ On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
     php_admin_value[session.cookie_secure] = 1
     php_admin_value[session.cookie_samesite] = Strict
 
-If you want to, set a custom session.name in a copy of includes/sessionname_template.php named sessionname.php
+If you want to, set a custom session.name in a copy of includes/sessionname_template.php named sessionname.local.php
 
 Check web security settings etc. carefully and at your own risk. The settings are suggested only.
 
