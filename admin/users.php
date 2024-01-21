@@ -341,6 +341,7 @@ require('../includes/menu.php');
                 ?>
                 </select>
                 <br><br>
+                <input type='hidden' name='type' value='echo'>
                 <input class="profilebutton" type="submit" value="EXPORT CSV">
             </form>
         </div>

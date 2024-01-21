@@ -58,6 +58,10 @@ $name = ucfirst($username);
             if ((!isset($action)) OR ($action=="")):
                 if (isset($_SERVER['HTTP_REFERER'])):
                     $referpage = $_SESSION["referpage"] = $_SERVER['HTTP_REFERER'];
+                else:
+                    $host = $_SERVER['HTTP_HOST'];
+                    $uri = $_SERVER['REQUEST_URI'];
+                    $referpage = "https://" . $host . $uri;
                 endif;
                 ?> 
                 <form  action="#" method="POST" enctype="multipart/form-data"> 

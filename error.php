@@ -19,6 +19,7 @@ if($ini_array['tier'] === 'dev'):
 else:
     $tier = 'prod';
 endif;
+$siteTitle = $ini_array['title'];
 $cssver = "";
 ?> 
 
