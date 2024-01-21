@@ -88,46 +88,50 @@ foreach($data AS $key => $value):
             $nonfoil_only = $value2["nonfoil_only"];
             $foil_only = $value2["foil_only"];
             $icon_svg_uri = $value2['icon_svg_uri'];
-            $stmt = $db->prepare("INSERT INTO 
-                                    `sets`
-                                        (id, code, name, api_uri, scryfall_uri, search_uri, release_date, set_type, card_count, parent_set_code, nonfoil_only, foil_only, icon_svg_uri)
-                                    VALUES 
-                                        (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            if ($stmt === false):
-                trigger_error('[ERROR] scryfall_sets: Preparing SQL: ' . $db->error, E_USER_ERROR);
-            endif;
-            $stmt->bind_param("ssssssssisiis", 
-                    $id,
-                    $code,
-                    $name,
-                    $api_uri,
-                    $scryfall_uri,
-                    $search_uri,
-                    $release_date,
-                    $set_type,
-                    $card_count,
-                    $parent_set_code,
-                    $nonfoil_only,
-                    $foil_only,
-                    $icon_svg_uri);
-            if ($stmt === false):
-                trigger_error('[ERROR] scryfall_sets: Binding parameters: ' . $db->error, E_USER_ERROR);
-            endif;
-            if (!$stmt->execute()):
-                trigger_error("[ERROR] scryfall_sets: Writing new ruling details: " . $db->error, E_USER_ERROR);
+            if($card_count > 0):
+                $stmt = $db->prepare("INSERT INTO 
+                                        `sets`
+                                            (id, code, name, api_uri, scryfall_uri, search_uri, release_date, set_type, card_count, parent_set_code, nonfoil_only, foil_only, icon_svg_uri)
+                                        VALUES 
+                                            (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                if ($stmt === false):
+                    trigger_error('[ERROR] scryfall_sets: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                endif;
+                $stmt->bind_param("ssssssssisiis", 
+                        $id,
+                        $code,
+                        $name,
+                        $api_uri,
+                        $scryfall_uri,
+                        $search_uri,
+                        $release_date,
+                        $set_type,
+                        $card_count,
+                        $parent_set_code,
+                        $nonfoil_only,
+                        $foil_only,
+                        $icon_svg_uri);
+                if ($stmt === false):
+                    trigger_error('[ERROR] scryfall_sets: Binding parameters: ' . $db->error, E_USER_ERROR);
+                endif;
+                if (!$stmt->execute()):
+                    trigger_error("[ERROR] scryfall_sets: Writing new ruling details: " . $db->error, E_USER_ERROR);
+                else:
+                    $msg->logMessage('[DEBUG]',"Add sets $total_count - no error returned ");
+                    $total_count = $total_count + 1;
+                endif;
+                $stmt->close();
+                //$seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
+                $seticon = $ImgLocation."seticons/".$code.".svg";
+                $msg->logMessage('[DEBUG]',"Set icon for '$code' to be $seticon from $icon_svg_uri?$time");
+                if(!file_exists($seticon)):
+                    $msg->logMessage('[DEBUG]',"Icon not at $seticon");
+                    downloadbulk($icon_svg_uri."?".$time,$seticon);
+                endif;
+                $seticon = $icon_svg_uri = '';
             else:
-                $msg->logMessage('[DEBUG]',"Add sets $total_count - no error returned ");
-                $total_count = $total_count + 1;
+                $msg->logMessage('[DEBUG]',"Set '$code' has no cards, skipping");
             endif;
-            $stmt->close();
-            //$seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
-            $seticon = $ImgLocation."seticons/".$code.".svg";
-            $msg->logMessage('[DEBUG]',"Set icon for '$code' to be $seticon from $icon_svg_uri?$time");
-            if(!file_exists($seticon)):
-                $msg->logMessage('[DEBUG]',"Icon not at $seticon");
-                downloadbulk($icon_svg_uri."?".$time,$seticon);
-            endif;
-            $seticon = $icon_svg_uri = '';
         endforeach;
     endif;
 endforeach;
