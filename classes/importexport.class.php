@@ -294,7 +294,6 @@ class ImportExport
         $this->message->logMessage('[DEBUG]',"Import file delimiter is '$delimiter'");
         while (($data = fgetcsv ($handle, 100000, $delimiter)) !== FALSE):
             $idimport = 0;
-            $warningNormal = $warningFoil = $warningEtched = FALSE;
             $excessNormal = $excessFoil = $excessEtched = 0;
             $row_no = $i + 1;
             if ($i === 0): // It's the header row, check to see if it matches the stated format
@@ -315,7 +314,7 @@ class ImportExport
                 $data5 = $dataMap[5];
                 $data6 = $dataMap[6];
                 
-                $this->message->logMessage('[DEBUG]',"Row $row_no of import file (format: '$importFormat'): setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})");
+                $this->message->logMessage('[DEBUG]',"Row $row_no: Format: '$importFormat': setcode({$data0}), number({$data1}), name ({$data2}), normal ({$data3}), foil ({$data4}), etched ({$data5}), id ({$data6})");
                 $supplied_id = $data6; // id
                 if (!is_null($data6)): // ID has been supplied, run an ID check / import first
                     $this->message->logMessage('[DEBUG]',"Row $row_no: Data has an ID ($data6), checking for a match");
@@ -429,68 +428,54 @@ class ImportExport
                             $currentValues = ['normal' => 0, 'foil' => 0, 'etched' => 0];
                         endif;
                         $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'");
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: Running '$importType' import");
                         if ($importType === 'add'):
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = normal + VALUES(normal),
-                                                    foil   = foil + VALUES(foil),
-                                                    etched = etched + VALUES(etched)
-                                            ");
                             $desiredValues = ['normal' => $currentValues['normal'] + $data3, 'foil' => $currentValues['foil'] + $data4, 'etched' => $currentValues['etched'] + $data5];
+                            $desiredValuesString = implode(',',$desiredValues);
                         elseif ($importType === 'replace'):
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = VALUES(normal),
-                                                    foil   = VALUES(foil),
-                                                    etched = VALUES(etched)
-                                            ");
                             $desiredValues = ['normal' => $data3, 'foil' => $data4, 'etched' => $data5];
+                            $desiredValuesString = implode(',',$desiredValues);
                         elseif ($importType === 'subtract'):
                             if($data3 > $currentValues['normal']):
                                 $excessNormal = $data3 - $currentValues['normal'];
-                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, (can't remove $data3 from {$currentValues['normal']} - excess: $excessNormal), N/A, N/A, $data6, N/A, N/A"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data3 cards from {$currentValues['normal']} Normal cards");
+                                $newwarning = "ERROR - can't subtract Normal, $row_no, $data0, $data1, $data2, (setting {$currentValues['normal']} to 0 - excess: $excessNormal), N/A, N/A, $data6, N/A, N/A"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
                             if($data4 > $currentValues['foil']):
                                 $excessFoil = $data4 - $currentValues['foil'];
-                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, N/A, (can't remove $data4 from {$currentValues['foil']} - excess: $excessFoil), N/A, $data6, N/A, N/A"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data4 cards from {$currentValues['foil']} Foil cards");
+                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, N/A, (setting {$currentValues['foil']} to 0 - excess: $excessFoil), N/A, $data6, N/A, N/A"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
                             if($data5 > $currentValues['etched']):
                                 $excessEtched = $data5 - $currentValues['etched'];
-                                $newwarning = "ERROR - can't subtract Etched, $row_no, $data0, $data1, $data2, N/A, N/A, (can't remove $data5 from {$currentValues['etched']} - excess: $excessEtched), $data6, N/A, N/A"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data5 cards from {$currentValues['etched']} Etched cards");
+                                $newwarning = "ERROR - can't subtract Etched, $row_no, $data0, $data1, $data2, N/A, N/A, (setting {$currentValues['etched']} to 0 - excess: $excessEtched), $data6, N/A, N/A"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = GREATEST(0,normal - VALUES(normal)),
-                                                    foil   = GREATEST(0,foil - VALUES(foil)),
-                                                    etched = GREATEST(0,etched - VALUES(etched))
-                                            ");
                             $desiredValues = ['normal' => max(0,$currentValues['normal'] - $data3), 'foil' => max(0,$currentValues['foil'] - $data4), 'etched' => max(0,$currentValues['etched'] - $data5)];
+                            $desiredValuesString = implode(',',$desiredValues);
                         else:
-                            $stmt = FALSE;
+                            trigger_error('[ERROR] profile.php: Invalid ImportType', E_USER_ERROR);
                         endif;
-                        if ($stmt === false):
-                            trigger_error('[ERROR] profile.php: Preparing SQL: ' . $this->db->error, E_USER_ERROR);
-                        endif;
-                        $bind = $stmt->bind_param("ssss",
+                        $stmt = $this->db->prepare("INSERT INTO `$mytable` (id,normal,foil,etched)
+                                VALUES
+                                    (?,?,?,?)
+                                ON DUPLICATE KEY UPDATE
+                                    normal = ?,
+                                    foil   = ?,
+                                    etched = ?
+                            ");
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: $importType request: desired outcome: $desiredValuesString for $data6");
+                        $bind = $stmt->bind_param("sssssss",
                                         $data6,
-                                        $data3,
-                                        $data4,
-                                        $data5
+                                        $desiredValues['normal'],
+                                        $desiredValues['foil'],
+                                        $desiredValues['etched'],
+                                        $desiredValues['normal'],
+                                        $desiredValues['foil'],
+                                        $desiredValues['etched']
                                     );
                         if ($bind === false):
                             trigger_error('[ERROR] profile.php: Binding parameters: ' . $this->db->error, E_USER_ERROR);
@@ -518,7 +503,7 @@ class ImportExport
                                     $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = Normal: {$sqlcheck['normal']}; Foil: {$sqlcheck['foil']}; Etched: {$sqlcheck['etched']}");
                                     if (($sqlcheck['normal'] == $desiredValues['normal']) AND ($sqlcheck['foil'] == $desiredValues['foil']) AND ($sqlcheck['etched'] == $desiredValues['etched'])):
                                         $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = OK, new result qties match desired result qties");
-                                        $total = $total + $data3 + $data4 + $data5;
+                                        $total = $total + $data3 + $data4 + $data5 - ($excessNormal + $excessFoil + $excessEtched);
                                         $count = $count + 1;
                                         $idimport = 1;
                                     else:
@@ -551,9 +536,9 @@ class ImportExport
                                 $db_id = $result['id'];
                                 $db_all_names = array("{$result['name']}","{$result['printed_name']}","{$result['flavor_name']}","{$result['f1_name']}","{$result['f1_printed_name']}","{$result['f1_flavor_name']}","{$result['f2_name']}","{$result['f2_printed_name']}","{$result['f2_flavor_name']}");
                                 if($db_name != $data2):
-                                    $this->message->logMessage('[DEBUG]',"Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names");
+                                    $this->message->logMessage('[DEBUG]',"Row $row_no: Supplied card setcode and number do not match primary db name for id {$result['id']}, checking other db names");
                                     if(!in_array($data2,$db_all_names)):
-                                        $this->message->logMessage('[ERROR]',"No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])");
+                                        $this->message->logMessage('[ERROR]',"Row $row_no: No db name match for {$result['id']} (db names: $db_all_names[0], $db_all_names[1], $db_all_names[2], $db_all_names[3], $db_all_names[4], $db_all_names[5], $db_all_names[6], $db_all_names[7], $db_all_names[8])");
                                         echo "Row $row_no: ERROR: ID and Name not matched, failed import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) ";
                                         echo "<img src='/images/error.png' alt='Error'><br>";
                                         $newwarning = "ERROR - name mismatch, $row_no, $data0, $data1, $data2, $data3, $data4, $data5, $data6, $db_name, $db_id \n";
@@ -563,11 +548,11 @@ class ImportExport
                                     else:
                                         $importtype = 'alternate_name';
                                         $data6 = $result['id'];
-                                        $this->message->logMessage('[ERROR]',"Supplied name $data2 matches with a secondary name for id {$result['id']}, will import");
+                                        $this->message->logMessage('[ERROR]',"Row $row_no: Supplied name $data2 matches with a secondary name for id {$result['id']}, will import");
                                     endif;
                                 else:
                                     if(isset($result['finishes'])):
-                                        $this->message->logMessage('[DEBUG]',"Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes");
+                                        $this->message->logMessage('[DEBUG]',"Row $row_no: Card setcode and number matches on supplied name ($data2) for db id {$result['id']}, looking up finishes");
                                         $data6 = $result['id'];
                                         $finishes = json_decode($result['finishes'], TRUE);
                                         $cardtype = cardtypes($finishes);
@@ -673,68 +658,56 @@ class ImportExport
                             $currentValues = ['normal' => 0, 'foil' => 0, 'etched' => 0];
                         endif;
                         $this->message->logMessage('[DEBUG]',"Row $row_no: ID $data6 has existing quantities of '{$currentValues['normal']}'/'{$currentValues['foil']}'/'{$currentValues['etched']}'");
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: Running '$importType' import");
                         if ($importType === 'add'):
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = normal + VALUES(normal),
-                                                    foil   = foil + VALUES(foil),
-                                                    etched = etched + VALUES(etched)
-                                            ");
                             $desiredValues = ['normal' => $currentValues['normal'] + $data3, 'foil' => $currentValues['foil'] + $data4, 'etched' => $currentValues['etched'] + $data5];
+                            $desiredValuesString = implode(',',$desiredValues);
                         elseif ($importType === 'replace'):
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = VALUES(normal),
-                                                    foil   = VALUES(foil),
-                                                    etched = VALUES(etched)
-                                            ");
                             $desiredValues = ['normal' => $data3, 'foil' => $data4, 'etched' => $data5];
+                            $desiredValuesString = implode(',',$desiredValues);
                         elseif ($importType === 'subtract'):
                             if($data3 > $currentValues['normal']):
                                 $excessNormal = $data3 - $currentValues['normal'];
-                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, (can't remove $data3 from {$currentValues['normal']} - excess: $excessNormal), N/A, N/A, $data6, $db_name, $db_id"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data3 cards from {$currentValues['normal']} Normal cards");
+                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, (setting {$currentValues['normal']} to 0 - excess: $excessNormal), N/A, N/A, $data6, $db_name, $db_id"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
                             if($data4 > $currentValues['foil']):
                                 $excessFoil = $data4 - $currentValues['foil'];
-                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, N/A, (can't remove $data4 from {$currentValues['foil']} - excess: $excessFoil), N/A, $data6, $db_name, $db_id"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data4 cards from {$currentValues['foil']} Foil cards");
+                                $newwarning = "ERROR - can't subtract Foil, $row_no, $data0, $data1, $data2, N/A, (setting {$currentValues['foil']} to 0 - excess: $excessFoil), N/A, $data6, $db_name, $db_id"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
                             if($data5 > $currentValues['etched']):
                                 $excessEtched = $data5 - $currentValues['etched'];
-                                $newwarning = "ERROR - can't subtract Etched, $row_no, $data0, $data1, $data2, N/A, N/A, (can't remove $data5 from {$currentValues['etched']} - excess: $excessEtched), $data6, $db_name, $db_id"."\n";
+                                $this->message->logMessage('[DEBUG]',"Row $row_no: Can't subtract $data5 cards from {$currentValues['etched']} Etched cards");
+                                $newwarning = "ERROR - can't subtract Etched, $row_no, $data0, $data1, $data2, N/A, N/A, (setting {$currentValues['etched']} to 0 - excess: $excessEtched), $data6, $db_name, $db_id"."\n";
                                 $warningsummary = $warningsummary.$newwarning;
                             endif;
-                            $stmt = $this->db->prepare("  INSERT INTO
-                                                    `$mytable`
-                                                    (id,normal,foil,etched)
-                                                VALUES
-                                                    (?,?,?,?)
-                                                ON DUPLICATE KEY UPDATE
-                                                    normal = GREATEST(0,normal - VALUES(normal)),
-                                                    foil   = GREATEST(0,foil - VALUES(foil)),
-                                                    etched = GREATEST(0,etched - VALUES(etched))
-                                            ");
                             $desiredValues = ['normal' => max(0,$currentValues['normal'] - $data3), 'foil' => max(0,$currentValues['foil'] - $data4), 'etched' => max(0,$currentValues['etched'] - $data5)];
+                            $desiredValuesString = implode(',',$desiredValues);
                         else:
-                            $stmt = FALSE;
+                            trigger_error('[ERROR] profile.php: Invalid ImportType', E_USER_ERROR);
                         endif;
-                        if ($stmt === false):
-                            trigger_error('[ERROR] profile.php: Preparing SQL: ' . $this->db->error, E_USER_ERROR);
-                        endif;
-                        $bind = $stmt->bind_param("ssss",
+                        $stmt = $this->db->prepare("  INSERT INTO
+                                    `$mytable`
+                                    (id,normal,foil,etched)
+                                VALUES
+                                    (?,?,?,?)
+                                ON DUPLICATE KEY UPDATE
+                                    normal = ?,
+                                    foil   = ?,
+                                    etched = ?
+                            ");
+                        $this->message->logMessage('[DEBUG]',"Row $row_no: $importType request: desired outcome: $desiredValuesString for $data6");
+                        $bind = $stmt->bind_param("sssssss",
                                         $data6,
-                                        $data3,
-                                        $data4,
-                                        $data5
+                                        $desiredValues['normal'],
+                                        $desiredValues['foil'],
+                                        $desiredValues['etched'],
+                                        $desiredValues['normal'],
+                                        $desiredValues['foil'],
+                                        $desiredValues['etched']
                                     );
                         if ($bind === false):
                             trigger_error('[ERROR] profile.php: Binding parameters: ' . $this->db->error, E_USER_ERROR);
@@ -768,7 +741,7 @@ class ImportExport
                                         else:
                                             // echo "Row $row_no: NORMAL: Setcode/number matched, successful import for ($data0, $data1, $data2, $data3, $data4, $data5, $data6) <img src='/images/success.png' alt='Success'><br>";
                                         endif;
-                                        $total = $total + $data3 + $data4 + $data5;
+                                        $total = $total + $data3 + $data4 + $data5 - ($excessNormal + $excessFoil + $excessEtched);
                                         $count = $count + 1;
                                     else: 
                                         $this->message->logMessage('[DEBUG]',"Row $row_no: Check result = new result qties do not match desired result qties"); ?>
@@ -797,7 +770,7 @@ class ImportExport
         $this->deleteOrphans($mytable);
         
         fclose($handle);
-        $summary = "Import done - $count unique cards, $total in total.";
+        $summary = "Import done - $count unique cards, $importType total: $total.";
         print $summary;
         if ($warningsummary === ''):
             $warningsummary = 'No warnings or errors';
