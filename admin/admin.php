@@ -195,6 +195,7 @@ require('../includes/menu.php');
                 </table>
                 <input name='name' type='hidden' value='<?php echo ucfirst($username) ?>'/>
             </form>
+                        
             <h3>Logging </h3>
             <h4>Log file path</h4> <?php
             $filepath = "$logfile";
@@ -206,17 +207,10 @@ require('../includes/menu.php');
             else:
                 $lines = 8;
             endif;
-            for ($i = count($file)-$lines; $i < count($file); $i++) {
+            for ($i = count($file)-$lines; $i < count($file); $i++):
               echo $file[$i] . "\n", "<br>";
-            }
-            echo '<h4>Log level</h4>'; ?>
-            <form action="/admin/admin.php">
-                <label class="radio"><input type="radio" name="loglevel" value="1" <?php if($loglevelini === '1'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>1 - Error;</label><br>
-                <label class="radio"><input type="radio" name="loglevel" value="2" <?php if($loglevelini === '2'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>2 - Notice;</label><br>
-                <label class="radio"><input type="radio" name="loglevel" value="3" <?php if($loglevelini === '3'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>3 - Debug;</label><br>
-                <br><input class='profilebutton' type="submit" value="SET" />
-            </form>
-            <br>If log level set fails, check permissions of web server to the ini file. <?php
+            endfor; 
+            
             if((isset($togglecss)) AND ($togglecss == "y")):
                 $msg->logMessage('[DEBUG]',"Turning off minimised CSS...");
                 $cssquery = 0;
@@ -247,49 +241,239 @@ require('../includes/menu.php');
                 endif;
                 $cssver = cssver(); //run again
             endif;
-                ?>
-            <h4>CSS</h4> <?php 
-            if (strpos($cssver,"min") == true): 
-                echo "Current CSS status: Minified <p>";
-                echo "Un-minify to see results of editing CSS!!"; ?>
-                <form action="/admin/admin.php">
-                    <input class='profilebutton' type="submit" value="UNMINIFY" />
-                    <input type="hidden" name="togglecss" value="y"/>
-                </form> <?php
-            else: 
-                echo "Current CSS status: Not minified <p> Make required edits to CSS file style$cssver.css, save it, minify it in NetBeans to 'css/style-min.css', then come back here and 'publish' it."; ?>
-                <form action="/admin/admin.php">
-                    <input class='profilebutton' type="submit" value="MINIFY" />
-                    <input type="hidden" name="publishcss" value="y"/>
-                </form> <?php
-            endif;?> 
-            <h4>Scryfall JSON</h4> <?php 
-                echo "Clear all Scryfall data from JSON table"; ?>
-                <form action="/admin/admin.php">
-                    <input class='profilebutton' type="submit" value="CLEAR JSON" />
-                    <input type="hidden" name="clearscryfalljson" value="y"/>
-                </form>
-            <h4>Maintenance Mode</h4>
-            Current Maintenance mode status: <?php 
+            
             if ((isset($_GET['mtce'])) AND ($_GET['mtce'] == 'MTCE ON')):
                 setmtcemode('on');
             elseif ((isset($_GET['mtce'])) AND ($_GET['mtce'] == 'MTCE OFF')):
                 setmtcemode('off');    
             endif;
-            $mtcestatus = mtcemode($user); 
-            if (($mtcestatus == 1) OR ($mtcestatus == 2)):
-                echo "On"; ?>
-                <form action='admin.php' method='GET'>
-                    <input class='profilebutton' id='mtce' type='submit' value='MTCE OFF' name='mtce' />
-                </form> <?php
-            else:
-                echo "Off"; ?>
-                <form action='admin.php' method='GET'>
-                    <input class='profilebutton' id='mtce' type='submit' value='MTCE ON' name='mtce' />
-                </form> <?php
-            endif; ?>
+            $mtcestatus = mtcemode($user); ?>
+            <br>
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="options_left">
+                            <h4>Log level</h4>
+                            If log level set fails, check permissions of web server to the ini file
+                        </td>
+                        <td>
+                            <form action="/admin/admin.php">
+                                <label class="radio"><input type="radio" name="loglevel" value="1" <?php if($loglevelini === '1'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>1 - Error;</label><br>
+                                <label class="radio"><input type="radio" name="loglevel" value="2" <?php if($loglevelini === '2'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>2 - Notice;</label><br>
+                                <label class="radio"><input type="radio" name="loglevel" value="3" <?php if($loglevelini === '3'): echo 'checked="checked"';endif;?>><span class="outer"><span class="inner"></span></span>3 - Debug;</label><br>
+                                <input class='profilebutton' type="submit" value="SET" />
+                            </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            <h4>CSS</h4>
+                            <?php 
+                                if (strpos($cssver,"min") == true): 
+                                    echo "Current CSS status: Minified <p>";
+                                    echo "Un-minify to see results of editing CSS!!"; 
+                                else: 
+                                    echo "Current CSS status: Not minified <p> Edit style$cssver.css, save, minify it to 'css/style-min.css', then 'publish'";
+                                endif;?>
+                        </td>
+                        <td>
+                            <?php 
+                            if (strpos($cssver,"min") == true): ?>
+                                <form action="/admin/admin.php">
+                                    <input class='profilebutton' type="submit" value="UNMINIFY" />
+                                    <input type="hidden" name="togglecss" value="y"/>
+                                </form> <?php
+                            else: ?>
+                                <form action="/admin/admin.php">
+                                    <input class='profilebutton' type="submit" value="MINIFY" />
+                                    <input type="hidden" name="publishcss" value="y"/>
+                                </form> <?php
+                            endif;?> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            <h4>Scryfall JSON</h4>
+                            Clear all Scryfall data from JSON table
+                        </td>
+                        <td>
+                            <form action="/admin/admin.php">
+                                <input class='profilebutton' type="submit" value="CLEAR JSON" />
+                                <input type="hidden" name="clearscryfalljson" value="y"/>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            <h4>Maintenance Mode</h4>
+                            Current Maintenance mode status: <?php
+                            if (($mtcestatus == 1) OR ($mtcestatus == 2)):
+                                echo "On";
+                            else:
+                                echo "Off";
+                            endif; ?>
+                        </td>
+                        <td> <?php
+                            if (($mtcestatus == 1) OR ($mtcestatus == 2)): ?>
+                                <form action='admin.php' method='GET'>
+                                    <input class='profilebutton' id='mtce' type='submit' value='MTCE OFF' name='mtce' />
+                                </form> <?php
+                            else: ?>
+                                <form action='admin.php' method='GET'>
+                                    <input class='profilebutton' id='mtce' type='submit' value='MTCE ON' name='mtce' />
+                                </form> <?php
+                            endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            <h3>Ini file settings</h3>
+                        </td>
+                        <td>
+                            <i>(update in ini file)</i>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>General settings</h4>
+                        </td>
+                    <tr>
+                        <td class="options_left">
+                            Title<br>
+                            Tier<br>
+                            Image file path<br>
+                            Logfile path<br>
+                            Timezone<br>
+                            Locale<br>
+                            Copyright<br>
+                            URL<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $ini_array['general']['title'].'<br>';
+                            echo $ini_array['general']['tier'].'<br>';
+                            echo $ini_array['general']['ImgLocation'].'<br>';
+                            echo $ini_array['general']['Logfile'].'<br>';
+                            echo $ini_array['general']['Timezone'].'<br>';
+                            echo $ini_array['general']['Locale'].'<br>';
+                            echo $ini_array['general']['Copyright'].'<br>';
+                            echo $ini_array['general']['URL'].'<br>';
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>Database settings</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            Host<br>
+                            Database<br>
+                            User<br>
+                            Password<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $ini_array['database']['DBServer'].'<br>';
+                            echo $ini_array['database']['DBName'].'<br>';
+                            echo $ini_array['database']['DBUser'].'<br>';
+                            echo 'See ini file';
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>Security settings</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            Admin IP<br>
+                            Bad login limit<br>
+                            Turnstile<br>
+                            Turnstile site key<br>
+                            Turnstile secret key<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $ini_array['security']['AdminIP'].'<br>';
+                            echo $ini_array['security']['Badloginlimit'].'<br>';
+                            echo $ini_array['security']['Turnstile'].'<br>';
+                            echo $ini_array['security']['Turnstile_site_key'].'<br>';
+                            echo 'See ini file';
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>FX settings</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            Freecurrency API<br>
+                            Freecurrency URL<br>
+                            Local currency<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $ini_array['fx']['FreecurrencyAPI'].'<br>';
+                            echo $ini_array['fx']['FreecurrencyURL'].'<br>';
+                            echo $ini_array['fx']['TargetCurrency'].'<br>';
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>Email settings</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            Server email<br>
+                            Admin email<br>
+                            SMTP host<br>
+                            SMTP port<br>
+                            SMTP auth<br>
+                            SMTP username<br>
+                            SMTP password<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $serveremail.'<br>';
+                            echo $adminemail.'<br>';
+                            echo $smtpParameters['SMTPHost'].'<br>';
+                            echo $smtpParameters['SMTPPort'].'<br>';
+                            echo $smtpParameters['SMTPAuth'].'<br>';
+                            echo $smtpParameters['SMTPUsername'].'<br>';
+                            echo 'See ini file';
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left" colspan="2">
+                            <h4>Disqus settings</h4>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="options_left">
+                            Status<br>
+                            Dev URL<br>
+                            Prod URL<br>
+                        </td>
+                        <td>
+                            <?php 
+                            echo $ini_array['comments']['Disqus'].'<br>';
+                            echo $ini_array['comments']['DisqusDevURL'].'<br>';
+                            echo $ini_array['comments']['DisqusProdURL'].'<br>';
+                            ?>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>            
             
-            <h4>Migration cards (Scryfall corrections)</h4> <?php
+            <h3>Migration cards (Scryfall corrections)</h3> <?php
             $stmt = $db->execute_query('SELECT old_scryfall_id,object,performed_at,migration_strategy,note,metadata_name,metadata_set_code,metadata_collector_number,new_scryfall_id FROM migrations WHERE db_match = 1');
             if($stmt != TRUE):
                 trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $db->error, E_USER_ERROR);
@@ -448,8 +632,7 @@ require('../includes/menu.php');
                     endwhile; ?>
                     </tr>
                 </table>
-            
-                <?php
+                &nbsp; <?php
                 else:
                     $msg->logMessage('[DEBUG]',"No rows");
                     echo "No cards needing action <br>";

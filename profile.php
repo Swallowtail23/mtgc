@@ -201,8 +201,8 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php 
-                $msg->logMessage('[ERROR]',"delcollresult is '$delcollresult'");
                 if (!empty($delcollresult)):
+                    $msg->logMessage('[DEBUG]',"delcollresult is '$delcollresult'");
                     echo "<script>alert('$delcollresult');</script>";
                     echo "<meta http-equiv='refresh' content='0; url=profile.php'>";
                 endif;
