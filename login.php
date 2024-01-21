@@ -83,7 +83,7 @@ $msg = new Message($logfile);
 ?>
 <!DOCTYPE html>
 <head>
-    <title> MTG collection </title>
+    <title><?php echo $siteTitle;?></title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
     <?php include('includes/googlefonts.php'); ?>
@@ -138,7 +138,7 @@ $msg = new Message($logfile);
                         $badlog = new UserStatus($db,$logfile,$email);
                         $badlog_result = $badlog->GetBadLogin();
                         if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
-                            $pwval = new PasswordCheck($db, $logfile);
+                            $pwval = new PasswordCheck($db, $logfile, $siteTitle);
                             $pwval_result = $pwval->PWValidate($email,$password);
                             if ($pwval_result === 10):
                                 // username and password checks out OK - carry on!

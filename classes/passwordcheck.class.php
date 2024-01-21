@@ -27,14 +27,16 @@ class PasswordCheck
     private $db;
     private $logfile;
     private $message;
+    private $siteTitle;
 
     public $passwordvalidate;
 
-    public function __construct($db, $logfile)
+    public function __construct($db, $logfile, $siteTitle = null)
     {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
+        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
     public function PWValidate($email, $password) 
@@ -231,7 +233,7 @@ class PasswordCheck
         
         if($usersuccess === 1 && $noSuppliedPW === TRUE):
             $from = "From: $serveremail\r\nReturn-path: $serveremail"; 
-            $subject = "New account at MtG Collection"; 
+            $subject = "New account at $this->siteTitle"; 
             $message = "Your new password is $password";
             mail($postemail, $subject, $message, $from); 
         endif;

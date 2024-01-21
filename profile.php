@@ -67,7 +67,7 @@ endif;
 
 if ($deletecollection === 'DELETE'):    
     $msg->logMessage('[DEBUG]',"Called to delete collection '$mytable'");
-    $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+    $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
     $msg->logMessage('[DEBUG]',"Exporting collection to email...");
     $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     $msg->logMessage('[DEBUG]',"Truncating collection table...");
@@ -623,7 +623,7 @@ endif;
                                         <br>
                                         <b>CSV format:</b><br>
                                         <select class="dropdown" name='format' id='formatSelect'>
-                                            <option value='mtgc'>MtG Collection &nbsp;&nbsp;</option>
+                                            <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
                                             <option value='delverlens'>Delver Lens</option>
                                         </select>
                                     </form>
@@ -694,7 +694,7 @@ endif;
                                 exit;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
-                            $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+                            $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
                             $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
                             if ($importcards === 'incorrect format'):
                                 echo "<h4>Incorrect file format</h4>";
