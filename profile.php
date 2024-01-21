@@ -98,18 +98,28 @@ endif;
             document.addEventListener('DOMContentLoaded', function() {
                 var csvSuccess = "<?php echo $csvsuccess; ?>";
                 if (csvSuccess === 'true') {
-                    alert("CSV email send was successful.");
-                    window.location.href = "<?php echo $myURL; ?>/profile.php";
+                    document.getElementById('csvsuccess').style.display = 'block';
                 }
                 else if (csvSuccess === 'false') {
-                    alert("ERROR: CSV email send was NOT successful.");
-                    window.location.href = "<?php echo $myURL; ?>/profile.php";
+                    document.getElementById('csvfailure').style.display = 'block';
+                }
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                var delcollresult = "<?php echo isset($delcollresult) ? $delcollresult : ''; ?>";
+                if (delcollresult !== '') {
+                    document.getElementById('delcollresult').style.display = 'block';
                 }
             });
             // Function to toggle the visibility of the info box
             function toggleInfoBox() {
                 var infoBox = document.getElementById("infoBox");
                 infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
+            };
+            
+            function CloseMe( obj )
+            {
+                obj.style.display = 'none';
+                window.location.href = "<?php echo $myURL; ?>/profile.php";
             }
         </script>
     </head>
@@ -121,6 +131,18 @@ endif;
         require('includes/menu.php'); ?>
 
         <!-- Info box -->
+        <div id="csvsuccess" class="msg-new" onclick='CloseMe(this)' style="display: none;"><span>CSV email send was successful</span>
+            <br>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+        </div>
+        <div id="csvfailure" class="msg-new error-new" onclick='CloseMe(this)' style="display: none;"><span>CSV email send was NOT successful</span>
+            <br>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+        </div>
+        <div id="delcollresult" class="msg-new" onclick='CloseMe(this)' style="display: none;"><span><?php echo $delcollresult; ?></span>
+            <br>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+        </div>
         <div class="info-box" id="infoBox" style="display:none">
             <span class="close-button-profile material-symbols-outlined" onclick="toggleInfoBox()">close</span>
             <div class="info-box-inner">
@@ -202,11 +224,6 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php 
-                if (!empty($delcollresult)):
-                    $msg->logMessage('[DEBUG]',"delcollresult is '$delcollresult'");
-                    echo "<script>alert('$delcollresult');</script>";
-                    echo "<meta http-equiv='refresh' content='0; url=profile.php'>";
-                endif;
                 //Page PHP processing
 
                 //2. Has a password reset been called? Needs to be in DIV for error display
