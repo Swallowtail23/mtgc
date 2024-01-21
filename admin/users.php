@@ -20,8 +20,8 @@
  *  5.1         20/01/24
  *              Move to include sessionname and logMessage
 */
-if (file_exists('../includes/sessionname.php')):
-    require('../includes/sessionname.php');
+if (file_exists('../includes/sessionname.local.php')):
+    require('../includes/sessionname.local.php');
 else:
     require('../includes/sessionname_template.php');
 endif;
@@ -64,7 +64,7 @@ endif;
 
 <!DOCTYPE html>
 <head>
-    <title>MtG collection - admin (users)</title>
+    <title><?php echo $siteTitle;?> - admin (users)</title>
     <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,7 +94,7 @@ require('../includes/menu.php');
         <?php 
         // Generate new account or do password reset
         if ((isset($newuser)) AND ($newuser === "yes")):
-            $obj = new PasswordCheck($db, $logfile);
+            $obj = new PasswordCheck($db, $logfile, $siteTitle);
             $newuserstatus = $obj->newUser($username_raw, $postemail_raw, $password, $dbname); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
             if ($newuserstatus === 2):
                 echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, password successfully recorded and checked.</div>";    
@@ -192,7 +192,7 @@ require('../includes/menu.php');
                     endif;
                 elseif (($updatearray[0]['actions'][$i]) == 'resetpassword'):
                     $msg->logMessage('[ERROR]',"Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}");
-                    $obj = new PasswordCheck ($db, $logfile);
+                    $obj = new PasswordCheck ($db, $logfile, $siteTitle);
                     $reset = $obj->passwordReset ($sql_eml, $admin, $dbname);
                     if ($reset === 2):
                         echo "<div class='alert-box success'><span>success: </span>User $username / $sql_eml created, password successfully recorded and checked.</div>";    
@@ -341,6 +341,7 @@ require('../includes/menu.php');
                 ?>
                 </select>
                 <br><br>
+                <input type='hidden' name='type' value='echo'>
                 <input class="profilebutton" type="submit" value="EXPORT CSV">
             </form>
         </div>

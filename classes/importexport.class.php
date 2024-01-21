@@ -33,14 +33,16 @@ class ImportExport
     private $useremail;
     private $serveremail;
     private $message;
+    private $siteTitle;
     
-    public function __construct($db, $logfile, $useremail, $serveremail)
+    public function __construct($db, $logfile, $useremail, $serveremail, $siteTitle = null)
     {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->useremail = $useremail;
         $this->serveremail = $serveremail;
         $this->message = new Message($this->logfile);
+        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
     public function exportCollectionToCsv($table, $myURL, $smtpParameters, $format = 'echo', $filename = 'export.csv', $username = '', $useremail = '')
@@ -107,8 +109,8 @@ class ImportExport
                 file_put_contents($tempFile, $out);
 
                 $subject = "Collection export";
-                $emailbody = "Your MtG collection export is attached. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your MtG Collection profile page</a>";
-                $emailaltbody = "Your MtG collection export is attached. \r\n\r\n Opt out of automated emails in your profile at your MtG Collection profile page ($myURL/profile.php) \r\n\r\n";
+                $emailbody = "Your $this->siteTitle export is attached. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                $emailaltbody = "Your $this->siteTitle export is attached. \r\n\r\n Opt out of automated emails in your profile at your $this->siteTitle profile page ($myURL/profile.php) \r\n\r\n";
                 $mailresult = $mail->sendEmail($this->useremail, TRUE, $subject, $emailbody, $emailaltbody, $tempFile, $filename);
                 if (isset($tempFile)):
                     unlink($tempFile);
@@ -124,9 +126,9 @@ class ImportExport
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
 
-                $subject = "MtG Collection weekly export";
-                $emailbody = "Hi $username, please see attached your weekly collection export from MtG Collection. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your MtG Collection profile page</a>";
-                $emailaltbody = "Hi $username, please see attached your weekly collection export from MtG Collection. \r\n\r\n Opt out of automated emails in your profile at your MtG Collection profile page ($myURL/profile.php) \r\n\r\n";
+                $subject = "$this->siteTitle weekly export";
+                $emailbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                $emailaltbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle. \r\n\r\n Opt out of automated emails in your profile at your $this->siteTitle profile page ($myURL/profile.php) \r\n\r\n";
                 $mailresult = $mail->sendEmail($useremail, TRUE, $subject, $emailbody, $emailaltbody, $tempFile, $filename);
                 if (isset($tempFile)):
                     unlink($tempFile);

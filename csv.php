@@ -25,6 +25,12 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
+else:
+    require('includes/sessionname_template.php');
+endif;
+startCustomSession();
 require ('includes/ini.php');                //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');          //Includes basic functions for non-secure pages
@@ -36,7 +42,7 @@ if(isset($_GET['table'])):
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     $msg->logMessage('[NOTICE]',"csv.php running for '$table'");
     
-    $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+    $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
     
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

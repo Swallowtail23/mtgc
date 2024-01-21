@@ -22,8 +22,8 @@
  *  5.2         20/01/24
  *              Move to include sessionname and logMessage
 */
-if (file_exists('../includes/sessionname.php')):
-    require('../includes/sessionname.php');
+if (file_exists('../includes/sessionname.local.php')):
+    require('../includes/sessionname.local.php');
 else:
     require('../includes/sessionname_template.php');
 endif;
@@ -175,7 +175,7 @@ endif;
 
 <!DOCTYPE html>
 <head>
-    <title>MtG collection - admin (cards)</title>
+    <title><?php echo $siteTitle;?> - admin (cards)</title>
     <link rel="manifest" href="manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

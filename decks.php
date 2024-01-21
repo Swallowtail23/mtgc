@@ -23,8 +23,8 @@
  *              Move to logMessage
 */
 
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -47,7 +47,7 @@ $decktodelete   = isset($_POST['decktodelete']) ? filter_input(INPUT_POST, 'deck
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title> MtG collection - decks</title>
+    <title> <?php echo $siteTitle;?> - decks</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

@@ -1,8 +1,12 @@
 # README # (v 20/01/24)
 
+![screenshot](images/home.png)
+
+![mobile screenshot](images/mobile.png)
+
 ## What is this? ##
 
-This is a 'host your own' MtG site, designed for personal hosting.
+This is a 'host your own' MtG collection-tracking website application for personal hosting. It is fully mobile-responsive.
 
 NOTE: It is a work in progress, with varying levels of maturity of code in PHP, HTML, CSS, Javascript and MySQL reflecting my development journey across several years.
 
@@ -28,13 +32,14 @@ Thanks to:
 
 ## WORK IN PROGRESS ##
 - Lots to be done to automate and simplify
--- Groups admininstration
--- Site admin in admin pages, including email parameters
--- Ongoing tidy-up and code improvement
--- Some MTG-related tweaks, like Planes and Phenomena in decks
--- Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
+    - Groups admininstration
+    - Site admin in admin pages, including email parameters
+    - Ongoing tidy-up and code improvement
+    - Some MTG-related tweaks, like Planes and Phenomena in decks
+    - Setup script to automate first install as much as possible (initial setup is pretty much all manual at the moment)
 
-## How do I get set up? ## 
+## How do I get set up? ##
+
 ### Web server ###
 Install under a full-function web server (e.g. Apache)
 
@@ -52,7 +57,7 @@ On RHEL using php-fpm check the php-fpm config in /etc/php-fpm.d/www.conf
     php_admin_value[session.cookie_secure] = 1
     php_admin_value[session.cookie_samesite] = Strict
 
-If you want to, set a custom session.name in a copy of includes/sessionname_template.php named sessionname.php
+If you want to, set a custom session.name in a copy of includes/sessionname_template.php named sessionname.local.php
 
 Check web security settings etc. carefully and at your own risk. The settings are suggested only.
 
@@ -107,11 +112,10 @@ To setup Turnstile
     - enable/disable (anything other than Turnstile = "enabled" will disable Turnstile functionality)
     - if enabled, you must set keys
 
-#### JQuery and IAS ####
-Works with JQuery 3.7.1:  ```<script src="/js/jquery.js"></script>``` where required
+#### JQuery ####
+- Currently uses JQuery 3.7.1
 
-IAS:
-
+#### Infinite Ajax Scroll ####
 - See https://infiniteajaxscroll.com/
 - Used in index.php
 - Installed locally in /js folder
@@ -134,6 +138,12 @@ Run composer from mtg directory on server
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
+
+#### Disqus ####
+The site can integrate Disqus commenting into card detail pages.
+You will need to setup comments sites through https://www.disqus.com, 
+set Disqus to enabled in your localised ini file (likely in /opt/mtg)
+and add relevant Disqus site URLs.
 
 ### File locations ###
 The app/site uses three filesystem locations:
@@ -161,32 +171,33 @@ Setup:
 Ini file content:
 
     [general]
-    tier = "prod"                           //either 'dev' or 'prod' to set Header colour
-    ImgLocation = "/mnt/data/cardimg/"      //ensure web server can write here
-    Logfile = "/var/log/mtg/mtgapp.log"     //ensure web server can write here
-    Loglevel = 2                            //see admin pages
-    Timezone = "Australia/Brisbane"
-    Locale = "en_US" 
-    Copyright = "Simon Wilson - 2024"
-    URL = "https://your-mtg-site-url.com"   //update to your actual URL
+    title       = "MtG collection"
+    tier        = "prod"                            //either 'dev' or 'prod' to set Header colour
+    ImgLocation = "/mnt/data/cardimg/"              //ensure web server can write here
+    Logfile     = "/var/log/mtg/mtgapp.log"         //ensure web server can write here
+    Loglevel    = 2                                 //see admin pages
+    Timezone    = "Australia/Brisbane"
+    Locale      = "en_US" 
+    Copyright   = "Simon Wilson - 2024"
+    URL         = "https://your-mtg-site-url.com"   //update to your actual URL
     
     [database]
-    DBServer = "********"
-    DBUser = "********"
-    DBPass = "********"
-    DBName = "********"
+    DBServer    = "********"
+    DBUser      = "********"
+    DBPass      = "********"
+    DBName      = "********"
     
     [security]
-    AdminIP = ""
-    Badloginlimit = x
-    Turnstile = "enabled"
-    Turnstile_site_key = "xxxxxx"
+    AdminIP              = ""
+    Badloginlimit        = x
+    Turnstile            = "disabled"
+    Turnstile_site_key   = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
     
     [fx]
     FreecurrencyAPI = "YOUR-APIKEY"
     FreecurrencyURL = "https://api.freecurrencyapi.com/v1/latest?apikey="
-    TargetCurrency = "aud"
+    TargetCurrency  = "aud"
     
     [email]
     ServerEmail    = "no_reply@your-mtg-site-url.com"
@@ -198,6 +209,12 @@ Ini file content:
     Password       = '';
     SMTPSecure     = PHPMailer::ENCRYPTION_SMTPS;
     Port           = 25;
+
+    [comments]
+    Disqus         = "disabled"
+    DisqusDevURL   = "https://dev-url-here.disqus.com"
+    DisqusDevURL   = "https://prod-url-here.disqus.com"
+
 
 Before using:
 
@@ -253,6 +270,9 @@ On the server's console, from the 'bulk' folder, run:
 
 Note, the first bulk all load can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
 
+- It is important for the first bulk run to include 'all', otherwise the bulk script will attempt to download 80,000+ images in its first default run (Scryfall.com will likely have concerns about that)
+- See also notes below on card images
+
 ### Initial user ###
 On the server command line, run:
 
@@ -303,6 +323,25 @@ Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (
 6. Load page and framework (header, page content, overlays, menu, footer)
 
 ### Notes on card images ###
-The initial database population with the 'all' parameter will NOT download any card images. 
-Subsequent 'default' (by default nightly) runs will download images for cards added.
-Sets can have card image downloads triggered on the sets page by admin users.
+- The initial database population with the 'all' parameter will NOT download any card images. 
+- Subsequent 'default' (by default nightly) runs will download images for cards added.
+- Sets can have card image downloads triggered on the sets page by admin users.
+- Otherwise, each card image will be downloaded when required by the site
+
+### Notes on data management ###
+- All cards, all languages are pulled down and imported
+- The primary language is English and by default searching will search these cards
+- Cards where the primary language is not English will be included in default searches
+- Non-primary language cards can be included by main page drop-down selection
+- Bulk import can be set to exclude anguages in bulk/bulk_ini.php
+- By default cards which have either a paper version or an Arena version are imported
+- Scryfall corrections (e.g. deletions) are implemented unless those cards are in someone's collection or decks
+    - If in collections or decks, a report will be sent to the site admin email, and will be visible on the site admin page
+
+### Notes on currency FX ###
+- USD will always be shown as the primary currency
+- The default currency for the site can be set in the ini file
+- If it's set to usd, conversion is not enabled
+- FX conversion can be set to specific currencies per user in user profile settings
+
+© Simon Wilson, 2024

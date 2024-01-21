@@ -25,8 +25,8 @@
  *  6.1         20/01/24
  *              Move to logMessage
 */
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -46,14 +46,14 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
     ?>
     <!DOCTYPE html>
         <head>
-        <title> MtG collection - login</title>
+        <title> <?php echo $siteTitle;?> - login</title>
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
         <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
         </head>
         <body id="loginbody" class="body">
         <div id="loginheader">    
-            <h2 id='h2'> MtG collection</h2>
+            <h2 id='h2'><?php echo $siteTitle;?></h2>
             You are already logged in!
         </div>
         </body>
@@ -83,7 +83,7 @@ $msg = new Message($logfile);
 ?>
 <!DOCTYPE html>
 <head>
-    <title> MTG collection </title>
+    <title><?php echo $siteTitle;?></title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
     <?php include('includes/googlefonts.php'); ?>
@@ -93,7 +93,7 @@ $msg = new Message($logfile);
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
     <div id="loginheader">    
-        <h2 id='h2'> MtG collection</h2>
+        <h2 id='h2'><?php echo $siteTitle;?></h2>
         <?php
         // Cloudflare Turnstile
         use andkab\Turnstile\Turnstile;
@@ -138,7 +138,7 @@ $msg = new Message($logfile);
                         $badlog = new UserStatus($db,$logfile,$email);
                         $badlog_result = $badlog->GetBadLogin();
                         if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
-                            $pwval = new PasswordCheck($db, $logfile);
+                            $pwval = new PasswordCheck($db, $logfile, $siteTitle);
                             $pwval_result = $pwval->PWValidate($email,$password);
                             if ($pwval_result === 10):
                                 // username and password checks out OK - carry on!

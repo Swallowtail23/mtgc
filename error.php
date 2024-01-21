@@ -19,6 +19,7 @@ if($ini_array['tier'] === 'dev'):
 else:
     $tier = 'prod';
 endif;
+$siteTitle = $ini_array['title'];
 $cssver = "";
 ?> 
 
@@ -26,7 +27,7 @@ $cssver = "";
 <html>
 <head>
     <meta charset="UTF-8">
-    <title> MtG collection error page</title>
+    <title> <?php echo $siteTitle;?> error page</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

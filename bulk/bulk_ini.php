@@ -88,8 +88,9 @@ elseif($loglevelini === '3' AND ($fd = fopen($logfile, "a")) !== false):
     fclose($fd); 
 endif;
 
-//Web root URL
+//Web root URL and site title
 $myURL = $ini_array['general']['URL'];
+$siteTitle = $ini_array['general']['title'];
 
 //DB connect
 define('DB_HOST', $ini_array['database']['DBServer']);  //host

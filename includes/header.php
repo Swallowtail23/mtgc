@@ -170,7 +170,7 @@ endif;
 </div>
 
 <div id="title">
-    <a class="headername" href="/index.php">MtG collection </a>
+    <a class="headername" href="/index.php"><?php echo $siteTitle;?> </a>
 </div> 
 <div <?php 
     if ($tier == 'dev'):

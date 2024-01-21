@@ -38,8 +38,8 @@
 */
 
 //Call script initiation mechs
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -328,7 +328,7 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="initial-scale=1">
-        <title> MtG collection </title>
+        <title> <?php echo $siteTitle;?> </title>
         <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
@@ -516,7 +516,7 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
         ?>
         <div id='page'> 
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png">MtG collection
+                <img src="images/white_m.png"><?php echo $siteTitle;?>
             </span>
             <?php
             if ((isset($qtyresults)) AND ( $qtyresults != 0)):

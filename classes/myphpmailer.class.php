@@ -38,8 +38,9 @@ class myPHPMailer extends PHPMailer
     private $serveremail;
     private $logfile;
     private $message;
+    private $siteTitle;
     
-    public function __construct($exceptions, $smtpParameters, $serveremail, $logfile)
+    public function __construct($exceptions, $smtpParameters, $serveremail, $logfile, $siteTitle = null)
     {
         //Don't forget to do this or other things may not be set correctly!
         parent::__construct($exceptions);
@@ -48,10 +49,11 @@ class myPHPMailer extends PHPMailer
         $this->serveremail = $serveremail;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
+        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
         
         // Set defaults for PHPMailer from ini.file
-        $this->setFrom($this->serveremail, 'MtG Collection');
-        $this->addReplyTo($this->serveremail, 'MtG Collection');
+        $this->setFrom($this->serveremail, $this->siteTitle);
+        $this->addReplyTo($this->serveremail, $this->siteTitle);
         $this->isSMTP();
         $this->Host       = $smtpParameters['SMTPHost'];
         $this->Port       = $smtpParameters['SMTPPort'];

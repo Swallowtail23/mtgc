@@ -63,8 +63,8 @@
  *              Move session.name to include and use logMessage
 */
 
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -108,7 +108,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title>MtG collection - card details</title>
+    <title><?php echo $siteTitle;?> - card details</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -292,7 +292,7 @@ require('includes/menu.php'); //mobile menu
             exit;
         endif; ?>
         <div id="printtitle" class="headername">
-            <img src="images/white_m.png">MtG collection
+            <img src="images/white_m.png"><?php echo $siteTitle;?>
         </div>
     <?php
     // Does the user have a collection table?
@@ -2178,11 +2178,15 @@ require('includes/menu.php'); //mobile menu
                 ?>
         <!-- Disqus -->
         <?php
+                if($disqus === 1):
+                    $msg->logMessage('[DEBUG]',"Disqus enabled");
                     $page_url = strtok(get_full_url(),'?')."?id=".$cardid;
-                    if (strpos($page_url,'obelix') !== false):
-                        $disqus_site = 'https://mtgdev.disqus.com/embed.js';
+                    if ($tier === 'dev'):
+                        $msg->logMessage('[DEBUG]',"Disqus site is '$disqusDev'");
+                        $disqus_site = "$disqusDev/embed.js";
                     else:
-                        $disqus_site = 'https://mtgcollection.disqus.com/embed.js';
+                        $msg->logMessage('[DEBUG]',"Disqus site is '$disqusProd'");
+                        $disqus_site = "$disqusProd/embed.js";
                     endif;
                     ?>
                     <div id="disqus_thread"></div>
@@ -2201,6 +2205,9 @@ require('includes/menu.php'); //mobile menu
                         </script>
                         <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
             <?php
+                else:
+                    $msg->logMessage('[DEBUG]',"Disqus not enabled, skipping");
+                endif;
         else :
             echo 'No such card, check the details.';
         endif;

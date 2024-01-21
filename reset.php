@@ -11,8 +11,9 @@
  *  2.0 
  *              Removed hard-coded email address, now uses ini.php
 */
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -26,7 +27,7 @@ $cssver = cssver();
 ?>
 <!DOCTYPE html>
 <head>
-    <title> MTG collection - reset</title>
+    <title><?php echo $siteTitle;?> - reset</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
@@ -34,7 +35,7 @@ $cssver = cssver();
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">    
-    <h2 id='h2'> MtG collection</h2>
+    <h2 id='h2'><?php echo $siteTitle;?></h2>
 <?php 
     if(isset($_REQUEST['action'])):
         $action=$_REQUEST['action']; 

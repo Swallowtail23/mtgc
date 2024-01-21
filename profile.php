@@ -40,8 +40,8 @@
  *              Move to logMessage
  */
 
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -67,7 +67,7 @@ endif;
 
 if ($deletecollection === 'DELETE'):    
     $msg->logMessage('[DEBUG]',"Called to delete collection '$mytable'");
-    $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+    $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
     $msg->logMessage('[DEBUG]',"Exporting collection to email...");
     $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     $msg->logMessage('[DEBUG]',"Truncating collection table...");
@@ -89,7 +89,7 @@ endif;
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="initial-scale=1">
-        <title>MtG collection - profile</title>
+        <title><?php echo $siteTitle;?> - profile</title>
         <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css"> 
         <?php include('includes/googlefonts.php');?>
@@ -201,8 +201,8 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php 
-                $msg->logMessage('[ERROR]',"delcollresult is '$delcollresult'");
                 if (!empty($delcollresult)):
+                    $msg->logMessage('[DEBUG]',"delcollresult is '$delcollresult'");
                     echo "<script>alert('$delcollresult');</script>";
                     echo "<meta http-equiv='refresh' content='0; url=profile.php'>";
                 endif;
@@ -623,7 +623,7 @@ endif;
                                         <br>
                                         <b>CSV format:</b><br>
                                         <select class="dropdown" name='format' id='formatSelect'>
-                                            <option value='mtgc'>MtG Collection &nbsp;&nbsp;</option>
+                                            <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
                                             <option value='delverlens'>Delver Lens</option>
                                         </select>
                                     </form>
@@ -694,7 +694,7 @@ endif;
                                 exit;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
-                            $obj = new ImportExport($db,$logfile,$useremail,$serveremail);
+                            $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
                             $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
                             if ($importcards === 'incorrect format'):
                                 echo "<h4>Incorrect file format</h4>";

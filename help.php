@@ -12,8 +12,9 @@
     2.0         
                 Removed database call (secpagesetup provides all the info needed)
 */
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -29,7 +30,7 @@ forcechgpwd();                              //Check if user is disabled or needs
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title>MtG collection - help</title>
+    <title><?php echo $siteTitle;?> - help</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
@@ -47,7 +48,7 @@ $name = ucfirst($username);
 <div id='page'>
     <div class='staticpagecontent'>
             <div id="printtitle" class="headername">
-                <img src="images/white_m.png">MtG collection
+                <img src="images/white_m.png"><?php echo $siteTitle;?>
             </div>       
             <h2 class='h2pad'>Contact or report an issue</h2>
             <?php 
@@ -57,6 +58,10 @@ $name = ucfirst($username);
             if ((!isset($action)) OR ($action=="")):
                 if (isset($_SERVER['HTTP_REFERER'])):
                     $referpage = $_SESSION["referpage"] = $_SERVER['HTTP_REFERER'];
+                else:
+                    $host = $_SERVER['HTTP_HOST'];
+                    $uri = $_SERVER['REQUEST_URI'];
+                    $referpage = "https://" . $host . $uri;
                 endif;
                 ?> 
                 <form  action="#" method="POST" enctype="multipart/form-data"> 

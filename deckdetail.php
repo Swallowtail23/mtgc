@@ -62,8 +62,9 @@
  *  19.3        20/01/24
  *              Move to logMessage
 */
-if (file_exists('includes/sessionname.php')):
-    require('includes/sessionname.php');
+
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
     require('includes/sessionname_template.php');
 endif;
@@ -82,7 +83,7 @@ $msg = new Message($logfile);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title> MtG collection - deck detail</title>
+    <title> <?php echo $siteTitle;?> - deck detail</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -619,7 +620,7 @@ endif;
     <div class="staticpagecontent">
         <div id="decklist">
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png"> MtG collection
+                <img src="images/white_m.png"> <?php echo $siteTitle;?>
             </span>
             <form id="deletedeck" action="decks.php" method="POST">
                 <input type='hidden' name="deletedeck" value="yes">

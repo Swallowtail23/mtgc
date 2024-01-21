@@ -2726,6 +2726,7 @@ td.columnhide
         'wght' 300,
         'GRAD' -50;
     font-size: 28px;
+    cursor: pointer;
 }
 
 .info-box {

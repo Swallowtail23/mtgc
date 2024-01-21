@@ -18,7 +18,7 @@ endif;
     <head>
         <meta charset='UTF-8'>
         <meta name='viewport' content='initial-scale=1'>
-        <?php echo "<title> MtG collection </title><link rel='stylesheet' type='text/css' href='/style$cssver.css'>"; ?>
+        <?php echo "<title>$siteTitle</title><link rel='stylesheet' type='text/css' href='/style$cssver.css'>"; ?>
         <?php include('includes/googlefonts.php');?>
     </head>
     <body>

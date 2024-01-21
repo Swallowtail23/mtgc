@@ -59,6 +59,7 @@ spl_autoload_register('autoLoader');
 $ini = new INI("/opt/mtg/mtg_new.ini");
 $ini_array = $ini->data;
 $myURL = $ini_array['general']['URL'];
+$siteTitle = $ini_array['general']['title'];
 $fxAPI = $ini_array['fx']['FreecurrencyAPI'];
 $fxLocal = $ini_array['fx']['TargetCurrency'];
 if($ini_array['general']['tier'] === 'dev'):
@@ -96,6 +97,17 @@ if($ini_array['security']['Turnstile'] !== 'enabled'):
     $turnstile = 0;
 else:
     $turnstile = 1;
+endif;
+
+// Enable Disqus card commenting
+if($ini_array['comments']['Disqus'] !== 'enabled'):
+    $disqus = 0;
+    $disqusDev = '';
+    $disqusProd = '';
+else:
+    $disqus = 1;
+    $disqusDev = $ini_array['comments']['DisqusDevURL'];
+    $disqusProd = $ini_array['comments']['DisqusProdURL'];
 endif;
 
 //Admin IP
