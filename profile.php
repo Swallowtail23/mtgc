@@ -126,7 +126,7 @@ endif;
             <div class="info-box-inner">
                 <h2 class="h2-no-top-margin">Import help</h2>
                 <ul>
-                    <li>Select 'Add to existing cards' or 'Replace existing cards' to either add imports to existing quantities or  overwrite existing quantities</li>
+                    <li>Select 'Add to collection', 'Replace in collection' or 'Remove from collection' to add to existing, replace existing, or remove cards</li>
                     <li>Import file must be a comma-delimited file (csv); e.g.:</li>
                 </ul>
                 <pre>
@@ -140,20 +140,21 @@ endif;
           'Edition code','Collector's number','Name','Non-foil quantity'
           'Foil quantity','Scryfall ID'</pre>
                 <ul>
-                    <li><u>Do not import etched files with Delver Lens</u>, it flags etched foils as separate cards instead of variations of a card</li>
+                    <li><u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards instead of variations of a card</li>
+                    <li><u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate (e.g. Planeswalker-stamped promos, The List, Pre-release stamped cards</li>
                     <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
-                    <li>If a Scryfall UUID cannot be matched, import will try and match on setcode, name and collector number. If this fails the row will be skipped</li>
-                    <li>Set codes and collector numbers MUST be as on this site (see <a href='sets.php'> for Set codes </a>) for successful import</li>
-                    <li>For an example of the right format export first and use that file as a template</li>
+                    <li>If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number match or skip the row</li>
+                    <li>Set codes and collector numbers must be as on this site (see <a href='sets.php'> for Set codes </a>) for success</li>
+                    <li>For a format example export first, use that file as a template</li>
                     <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
-                    <li>You will be sent a list of the failures and warnings at the end of the import</li>
+                    <li>You will be emailed a list of import failures/warnings</li>
                 </ul>
             </div>
         </div> <?php
 
         $import = isset($_POST['import']) ? 'yes' : '';
 
-        $valid_importType = ['add','replace'];
+        $valid_importType = ['add','replace','subtract'];
         $importType = isset($_POST['importscope']) ? "{$_POST['importscope']}" : '';
         if (!in_array($importType,$valid_importType)):
             $importType = '';
@@ -615,10 +616,11 @@ endif;
                                             </label>
                                             <br>
                                         </span>
-                                        <b>Add/replace:</b><br>
+                                        <b>Add/replace/remove:</b><br>
                                         <select class="dropdown" name='importscope' id='importScopeSelect'>
-                                            <option value='add'>Add to existing</option>
-                                            <option value='replace'>Replace existing</option>
+                                            <option value='add'>Add to collection</option>
+                                            <option value='replace'>Replace in collection</option>
+                                            <option value='subtract'>Remove from collection</option>
                                         </select>
                                         <br>
                                         <b>CSV format:</b><br>
