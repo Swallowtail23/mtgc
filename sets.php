@@ -158,7 +158,7 @@ $msg = new Message($logfile);
                         document.getElementById('noResults').style = "display: block";
                         console.log("Set search: No results");
                     } else if (response.numPages === 1) {
-                        document.getElementById('setlist').style = "display: block";
+                        document.getElementById('setlist').style = "display: table";
                         updateTable(response.filteredSets);
                         window.scrollTo(0,0);
                         document.getElementById('paginationTop').style = "display: none";
@@ -166,7 +166,7 @@ $msg = new Message($logfile);
                         document.getElementById('noResults').style = "display: none";
                         console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
                     } else {
-                        document.getElementById('setlist').style = "display: block";
+                        document.getElementById('setlist').style = "display: table";
                         updateTable(response.filteredSets);
                         window.scrollTo(0,0);
                         document.getElementById('paginationTop').style = "display: block";
