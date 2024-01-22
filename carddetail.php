@@ -828,7 +828,10 @@ require('includes/menu.php'); //mobile menu
                         endif; 
                         // Find the prev number card's ID
                         $msg->logMessage('[DEBUG]',"Finding previous and next cards");
+                        
                         // Using the current card's language and primary_card status, and the setcode, build the correct sort order and card list
+                        // Searches here should align with search ordering in criteria.php's AUTO option
+                        
                         if($row['cs_setcode'] === 'plst'):  // Unique sorting for The List cards, matching order as sorted under "Auto" on index search
                             $query = "SELECT id FROM cards_scry
                                     WHERE setcode = ? 
@@ -852,7 +855,7 @@ require('includes/menu.php'); //mobile menu
                                     WHERE setcode = ? 
                                     AND lang = ? 
                                     AND primary_card = ?
-                                    ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
+                                    ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, number_import ASC, id ASC";
                         endif;
                         $stmt = $db->prepare($query);
                         $stmt->bind_param('ssi', $row['cs_setcode'], $card_lang, $card_primary);
