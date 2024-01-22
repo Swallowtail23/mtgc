@@ -576,10 +576,12 @@ else:
         // Sort order
         if (!empty($sortBy)):
             if ($sortBy == "auto"):  // Pick default search for most; special search orders for SLD and PLST sets
-                // Three search types to catch:
+                // Three search types to catch, so three sets of OR in each if evaluation:
                 /// 1. setcode box ticked, setcode in 'name' field
                 /// 2. name box ticked, [setcode] in name field
                 /// 3. selection in drop-down list including a special search order set (currently PLST and SLD)
+                //
+                // Note search order for default needs to align with carddetail.php (for prev/next)
                 if(($searchsetcode === 'yes' && (str_contains($name,'plst'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'plst')) || (isset($selectedSets) && in_array('plst',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
                     (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
@@ -591,24 +593,28 @@ else:
                 elseif(($searchsetcode === 'yes' && (str_contains($name,'sld'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'sld')) || (isset($selectedSets) && in_array('sld',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
                 else:
-                    $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+                    // This should be the same as 'DEFAULT' below
+                    $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import ASC, cs_id ASC ";
                 endif;
             elseif ($sortBy == "name"):
                 $order = "ORDER BY COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "price" AND $scope === "mycollection"):
                 $order = "ORDER BY $mytable.topvalue DESC, COALESCE(cards_scry.flavor_name, cards_scry.name), set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "price"):
-                $order = "ORDER BY cards_scry.price_sort DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
+                $order = "ORDER BY cards_scry.price_sort DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, number_import ASC, cs_id ASC ";
             elseif ($sortBy == "cmc"):
                 $order = "ORDER BY cards_scry.cmc ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "cmcdown"):
                 $order = "ORDER BY cards_scry.cmc DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "set"):
                 $order = "ORDER BY set_date ASC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC ";
-            elseif ($sortBy == "setdown"):  // Set down number up - DEFAULT
-                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+            
+            // DEFAULT
+            elseif ($sortBy == "setdown"):  // Set down number up
+                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import ASC, cs_id ASC ";
+            
             elseif ($sortBy == "setnumberdown"): // Set down number down
-                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import DESC, cs_id ASC ";
             elseif ($sortBy == "powerup"):
                 $order = "ORDER BY cards_scry.maxpower * 1 ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "powerdown"):
