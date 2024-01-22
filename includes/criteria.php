@@ -39,6 +39,7 @@ if (empty($_GET)):
 else:
     $params = [];
     if ($adv != "yes") :
+        $msg->logMessage('[DEBUG]',"Not advanced search called");
         // Not an advanced search called
         if (strlen($name) > 2): // Needs to have more than 2 characters to search
             if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
@@ -70,7 +71,13 @@ else:
                 $params[] = $setcoderegexsearch;
             endif;
 
-            $order = "ORDER BY cards_scry.name ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
+            $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, 
+                        primary_card DESC, number ASC, 
+                        cards_scry.release_date ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
             $query = $selectAll.$criteria.$order.$sorting;
             $validsearch = "true";
         else: 
@@ -79,6 +86,7 @@ else:
             $validsearch = "false";
         endif;
     elseif ($adv == "yes" ):
+        $msg->logMessage('[DEBUG]',"Advanced search called");
         // An advanced search called
         $criteriaNTA = "";
         if ($searchnotes === "yes"):
