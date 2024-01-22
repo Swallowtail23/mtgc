@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.1
-    Date:       20/01/24
+/* Version:     7.2
+    Date:       22/01/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -21,8 +21,12 @@
  * 
  *  7.0         02/01/24
  *              Add language search capability
+
  *  7.1         20/01/24
  *              Move to logMessage
+ * 
+ *  7.2         22/01/24
+ *              Add Automatic search order, with variation for PLST and SLD
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -60,9 +64,9 @@ else:
                     $criteria .= "AND primary_card = 1 ";
                 endif;
             endif;
-            if (!empty($setcodesearch)):
+            if (!empty($setcoderegexsearch)):  // setcode has been regex-extracted from string
                 $criteria .= "AND setcode LIKE ? ";
-                $params[] = $setcodesearch;
+                $params[] = $setcoderegexsearch;
             endif;
 
             $order = "ORDER BY cards_scry.name ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
@@ -305,7 +309,6 @@ else:
 
         // Then game type
         $criteriaGameType = "";
-        $msg->logMessage('[DEBUG]',"$gametypeOp");
         if ($paper === "yes"):
             $criteriaGameType = "cards_scry.game_types LIKE '%paper%'";
         endif;
@@ -558,11 +561,10 @@ else:
         if ($foilonly === 'yes'):
             $criteria .= "AND ($mytable.foil > 0) AND ($mytable.normal = 0) "; 
         endif;
-        if (!empty($setcodesearch)):
+        if (!empty($setcoderegexsearch)):
             $criteria .= "AND setcode LIKE ? ";
-            $params[] = $setcodesearch;
+            $params[] = $setcoderegexsearch;
         endif;
-        $msg->logMessage('[DEBUG]',"$searchLang");
         if (!empty($searchLang) && $searchLang === 'all'):
             // get all
         elseif (!empty($searchLang)):
@@ -573,7 +575,25 @@ else:
         endif;
         // Sort order
         if (!empty($sortBy)):
-            if ($sortBy == "name"):
+            if ($sortBy == "auto"):  // Pick default search for most; special search orders for SLD and PLST sets
+                // Three search types to catch:
+                /// 1. setcode box ticked, setcode in 'name' field
+                /// 2. name box ticked, [setcode] in name field
+                /// 3. selection in drop-down list including a special search order set (currently PLST and SLD)
+                if(($searchsetcode === 'yes' && (str_contains($name,'plst'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'plst')) || (isset($selectedSets) && in_array('plst',$selectedSets))):
+                    $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                    (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
+                    SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC, 
+                    CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
+                    primary_card DESC, cards_scry.number ASC, 
+                    COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                    cs_id ASC ";
+                elseif(($searchsetcode === 'yes' && (str_contains($name,'sld'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'sld')) || (isset($selectedSets) && in_array('sld',$selectedSets))):
+                    $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+                else:
+                    $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+                endif;
+            elseif ($sortBy == "name"):
                 $order = "ORDER BY COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "price" AND $scope === "mycollection"):
                 $order = "ORDER BY $mytable.topvalue DESC, COALESCE(cards_scry.flavor_name, cards_scry.name), set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
@@ -597,8 +617,6 @@ else:
                 $order = "ORDER BY cards_scry.maxtoughness * 1 ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "toughdown"):
                 $order = "ORDER BY cards_scry.mintoughness * 1 DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
-            elseif ($sortBy == "sldplst"): // For SLD and PLST type collation sets
-                $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
             else:
                 $order = "ORDER BY COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             endif;

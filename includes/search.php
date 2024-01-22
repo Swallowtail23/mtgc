@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.0
-    Date:       02/01/24
+/* Version:     5.1
+    Date:       22/01/24
     Name:       search.php
     Purpose:    Layout for search on index.php
     Notes:      
@@ -17,6 +17,9 @@
  * 
  *  5.0         02/01/24
  *              Add language search capability             
+ *
+ *  5.1         22/01/24
+ *              Add Automatic search order, with variation for PLST and SLD
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -161,10 +164,10 @@ endif;
             <br><br>
             
             <h4 class="h4Sortby">Sort by</h4>
+            <label class="radio"><input type="radio" name="sortBy" value="auto" checked="checked"><span class="outer"><span class="inner"></span></span>Automatic</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="set"><span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="setdown" checked="checked"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
+            <label class="radio"><input type="radio" name="sortBy" value="setdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="setnumberdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="sldplst"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Date &#x25BC; / Number &#x25B2;</label><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="price"><span class="outer"><span class="inner"></span></span>Price &#x25BC;</label><br>
             <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>Mana value &#x25B2;</label>
