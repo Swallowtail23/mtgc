@@ -27,6 +27,7 @@
  * 
  *  7.2         22/01/24
  *              Add Automatic search order, with variation for PLST and SLD
+ *              Move to use booleans for card game types
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -310,19 +311,19 @@ else:
         // Then game type
         $criteriaGameType = "";
         if ($paper === "yes"):
-            $criteriaGameType = "cards_scry.game_types LIKE '%paper%'";
+            $criteriaGameType = "cards_scry.is_paper = TRUE";
         endif;
         if ($arena === "yes"):
             if (!empty($criteriaGameType)) :
                 $criteriaGameType .= $gametypeOp." ";
             endif;
-            $criteriaGameType .= "cards_scry.game_types LIKE '%arena%'";
+            $criteriaGameType .= "cards_scry.is_arena = TRUE";
         endif;
         if ($online === "yes"):
             if (!empty($criteriaGameType)) :
                 $criteriaGameType .= $gametypeOp." ";
             endif;
-            $criteriaGameType .= "cards_scry.game_types LIKE '%mtgo%'";
+            $criteriaGameType .= "cards_scry.is_mtgo = TRUE";
         endif;
         if (!empty($criteriaGameType)) :
             $criteria .= "AND (".$criteriaGameType.") ";
@@ -330,13 +331,13 @@ else:
         // Game type exclusivity?
         if ($gametypeExcl == "ONLY"):
             if (empty($paper)):
-                $criteria .= "AND cards_scry.game_types NOT LIKE '%paper%' ";
+                $criteria .= "AND cards_scry.is_paper = FALSE ";
             endif;
             if (empty($arena)):
-                $criteria .= "AND cards_scry.game_types NOT LIKE '%arena%' ";
+                $criteria .= "AND cards_scry.is_arena = FALSE ";
             endif;
             if (empty($online)):
-                $criteria .= "AND cards_scry.game_types NOT LIKE '%mtgo%' ";
+                $criteria .= "AND cards_scry.is_mtgo = FALSE ";
             endif;
         endif;
 
@@ -575,26 +576,47 @@ else:
         endif;
         // Sort order
         if (!empty($sortBy)):
-            if ($sortBy == "auto"):  // Pick default search for most; special search orders for SLD and PLST sets
+            if ($sortBy == "auto"):     // "Automatic" sorting selected - pick search suitable for most queries; 
+                                        // special search orders for SLD and PLST sets
+
+                // Initially intercepting SLD and PLST searches for special sorting
+ 
                 // Three search types to catch, so three sets of OR in each if evaluation:
                 /// 1. setcode box ticked, setcode in 'name' field
                 /// 2. name box ticked, [setcode] in name field
                 /// 3. selection in drop-down list including a special search order set (currently PLST and SLD)
                 //
                 // Note search order for default needs to align with carddetail.php (for prev/next)
+
+                // Auto / The List
                 if(($searchsetcode === 'yes' && (str_contains($name,'plst'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'plst')) || (isset($selectedSets) && in_array('plst',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
-                    (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
-                    SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC, 
-                    CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
-                    primary_card DESC, cards_scry.number ASC, 
-                    COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
-                    cs_id ASC ";
+                        (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
+                        SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC, 
+                        CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
+                        primary_card DESC, cards_scry.number ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
+                
+                // Auto / Secret Lair
                 elseif(($searchsetcode === 'yes' && (str_contains($name,'sld'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'sld')) || (isset($selectedSets) && in_array('sld',$selectedSets))):
-                    $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, cs_id ASC ";
+                    $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                        cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
+                
+                // Auto / Everything else
                 else:
                     // This should be the same as 'DEFAULT' below
-                    $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import ASC, cs_id ASC ";
+                    $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, 
+                        primary_card DESC, number ASC, 
+                        cards_scry.release_date ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
                 endif;
             elseif ($sortBy == "name"):
                 $order = "ORDER BY COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
@@ -611,10 +633,19 @@ else:
             
             // DEFAULT
             elseif ($sortBy == "setdown"):  // Set down number up
-                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import ASC, cs_id ASC ";
+                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, 
+                        primary_card DESC, number ASC, 
+                        cards_scry.release_date ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
             
             elseif ($sortBy == "setnumberdown"): // Set down number down
-                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, number_import DESC, cs_id ASC ";
+                $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, primary_card DESC, number DESC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                            CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                            number_import ASC,  cs_id ASC ";
+            
             elseif ($sortBy == "powerup"):
                 $order = "ORDER BY cards_scry.maxpower * 1 ASC, COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, set_date DESC, primary_card DESC, number ASC, cs_id ASC ";
             elseif ($sortBy == "powerdown"):
