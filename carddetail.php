@@ -1,6 +1,6 @@
 <?php 
-/* Version:     19.1
-    Date:       20/01/24
+/* Version:     19.2
+    Date:       22/01/24
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -61,6 +61,9 @@
  *
  * 19.1         20/01/24
  *              Move session.name to include and use logMessage
+ * 
+ * 19.2         22/01/24
+ *              Add revised sorting for PLST and SLD cards, per criteria.php
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -825,12 +828,32 @@ require('includes/menu.php'); //mobile menu
                         endif; 
                         // Find the prev number card's ID
                         $msg->logMessage('[DEBUG]',"Finding previous and next cards");
-                        // Get the current card's language and primary_card status
-                        $query = "SELECT id FROM cards_scry
+                        // Using the current card's language and primary_card status, and the setcode, build the correct sort order and card list
+                        if($row['cs_setcode'] === 'plst'):  // Unique sorting for The List cards, matching order as sorted under "Auto" on index search
+                            $query = "SELECT id FROM cards_scry
+                                    WHERE setcode = ? 
+                                    AND lang = ? 
+                                    AND primary_card = ?
+                                    ORDER BY cards_scry.release_date DESC, 
+                                        (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
+                                        SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC, 
+                                        CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
+                                        primary_card DESC, number ASC, 
+                                        COALESCE(flavor_name, name) ASC, 
+                                    id ASC ";
+                        elseif($row['cs_setcode'] === 'sld'):  // Unique sorting for Secret Lair cards, matching order as sorted under "Auto" on index search
+                            $query = "SELECT id FROM cards_scry
+                                    WHERE setcode = ? 
+                                    AND lang = ? 
+                                    AND primary_card = ?
+                                    ORDER BY release_date DESC, number ASC, COALESCE(flavor_name, name) ASC, id ASC";
+                        else:
+                            $query = "SELECT id FROM cards_scry
                                     WHERE setcode = ? 
                                     AND lang = ? 
                                     AND primary_card = ?
                                     ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, id ASC";
+                        endif;
                         $stmt = $db->prepare($query);
                         $stmt->bind_param('ssi', $row['cs_setcode'], $card_lang, $card_primary);
                         $stmt->execute();

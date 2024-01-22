@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.1
-    Date:       20/01/24
+/* Version:     11.2
+    Date:       22/01/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -35,6 +35,9 @@
  * 
  * 11.1         20/01/24
  *              Move to logMessage
+ * 
+ * 11.2         22/01/24
+ *              Increased $maxresults to 3,500 to cope with The List
 */
 
 //Call script initiation mechs
@@ -55,7 +58,7 @@ $msg = new Message($logfile);
 $listperpage = 30;
 $gridperpage = 30;
 $bulkperpage = 1000;
-$maxresults = 2500;
+$maxresults = 3500;
 $time = time();
 
 // Is admin running the page
@@ -100,12 +103,13 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]',"Name after URL removal is $name");
-    // Remove any embedded setcodes in [] into a variable
+    // Remove any embedded setcodes in [] into a variable for a setcode regex-based search
     preg_match('/\[(.*?)\]/', $name, $matches);
-    $setcodesearch = isset($matches[1]) ? $matches[1] : '';
+    $setcoderegexsearch = isset($matches[1]) ? $matches[1] : '';
     $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
 else:
     $name = '';
+    $setcoderegexsearch = '';
 endif;
 $searchname = isset($_GET['searchname']) ? 'yes' : '';
 $searchtype = isset($_GET['searchtype']) ? 'yes' : '';
@@ -163,7 +167,7 @@ $allprintings = isset($_GET['allprintings']) ? 'yes' : '';
 if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
     $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
 endif;
-$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown","sldplst");
+$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown","auto");
 $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
 if (!in_array($sortBy,$valid_sortBy)):
     $sortBy = '';
