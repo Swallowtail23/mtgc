@@ -830,9 +830,9 @@ require('includes/menu.php'); //mobile menu
                         $msg->logMessage('[DEBUG]',"Finding previous and next cards");
                         
                         // Using the current card's language and primary_card status, and the setcode, build the correct sort order and card list
-                        // Searches here should align with search ordering in criteria.php's AUTO option
+                        // Searches here should align with search ordering in criteria.php's AUTO option, as these are 'default' set order listings
                         
-                        if($row['cs_setcode'] === 'plst'):  // Unique sorting for The List cards, matching order as sorted under "Auto" on index search
+                        if($row['cs_setcode'] === 'plst'):  // Unique sorting for The List cards, matching order as sorted under "Auto / The List" on index search
                             $query = "SELECT id FROM cards_scry
                                     WHERE setcode = ? 
                                     AND lang = ? 
@@ -843,19 +843,30 @@ require('includes/menu.php'); //mobile menu
                                         CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
                                         primary_card DESC, number ASC, 
                                         COALESCE(flavor_name, name) ASC, 
-                                    id ASC ";
+                                        id ASC ";
                         elseif($row['cs_setcode'] === 'sld'):  // Unique sorting for Secret Lair cards, matching order as sorted under "Auto" on index search
                             $query = "SELECT id FROM cards_scry
                                     WHERE setcode = ? 
                                     AND lang = ? 
                                     AND primary_card = ?
-                                    ORDER BY release_date DESC, number ASC, COALESCE(flavor_name, name) ASC, id ASC";
+                                    ORDER BY release_date DESC, 
+                                        number ASC, 
+                                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                                        number_import ASC, 
+                                        COALESCE(flavor_name, name) ASC, 
+                                        id ASC";
                         else:
                             $query = "SELECT id FROM cards_scry
                                     WHERE setcode = ? 
                                     AND lang = ? 
                                     AND primary_card = ?
-                                    ORDER BY number ASC, release_date ASC, COALESCE(flavor_name, name) ASC, number_import ASC, id ASC";
+                                    ORDER BY 
+                                        number ASC, 
+                                        release_date ASC, 
+                                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                                        number_import ASC, 
+                                        COALESCE(flavor_name, name) ASC, 
+                                        id ASC";
                         endif;
                         $stmt = $db->prepare($query);
                         $stmt->bind_param('ssi', $row['cs_setcode'], $card_lang, $card_primary);

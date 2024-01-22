@@ -194,6 +194,9 @@ CREATE TABLE `cards_scry` (
   `price_etched` decimal(8,2) DEFAULT NULL,
   `price_sort` decimal(8,2) DEFAULT NULL,
   `date_added` date DEFAULT NULL,
+  `is_paper` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"paper"')) VIRTUAL,
+  `is_mtgo` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"mtgo"')) VIRTUAL,
+  `is_arena` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"arena"')) VIRTUAL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   KEY `oracle_id` (`oracle_id`),
@@ -203,7 +206,11 @@ CREATE TABLE `cards_scry` (
   KEY `set_name` (`set_name`),
   KEY `lang` (`lang`),
   KEY `type_2` (`type`),
-  KEY `number` (`number`)
+  KEY `number` (`number`),
+  KEY `primary_card_2` (`primary_card`),
+  KEY `idx_is_paper` (`is_paper`),
+  KEY `idx_is_mtgo` (`is_mtgo`),
+  KEY `idx_is_arena` (`is_arena`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -405,7 +412,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `admin` tinyint(1) DEFAULT NULL,
   `badlogins` smallint DEFAULT NULL,
-  `groupid` int NOT NULL,
+  `groupid` int NOT NULL DEFAULT '0',
   `grpinout` tinyint(1) NOT NULL DEFAULT '0',
   `lastlogin_date` date DEFAULT NULL,
   `collection_view` tinyint NOT NULL DEFAULT '0',
