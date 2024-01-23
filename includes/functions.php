@@ -1401,3 +1401,13 @@ function valid_tablename($input)
         return false;
     endif;
 }
+
+function in_array_case_insensitive($needle, $haystack) 
+{
+    foreach ($haystack as $item):
+        if (strtolower($needle) == strtolower($item)):
+            return true;
+        endif;
+    endforeach;
+    return false;
+}

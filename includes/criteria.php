@@ -597,8 +597,9 @@ else:
                 // Note search order for default needs to align with carddetail.php (for prev/next)
 
                 // Auto / The List
-                if(($searchsetcode === 'yes' && (str_contains($name,'plst'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'plst')) || (isset($selectedSets) && in_array('plst',$selectedSets))):
-                    $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                if(($searchsetcode === 'yes' && (str_contains(strtolower($name),'plst'))) || (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch),'plst')) || (isset($selectedSets) && in_array_case_insensitive('plst',$selectedSets))):
+                    // $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                    $order = "ORDER BY set_date DESC,
                         (SELECT sets.release_date FROM sets WHERE sets.code = SUBSTRING(cards_scry.number_import, 1, LOCATE('-', cards_scry.number_import) - 1)) DESC,
                         SUBSTRING(number_import, 1, LOCATE('-', number_import) - 1) ASC, 
                         CAST(SUBSTRING(number_import FROM LOCATE('-', number_import) + 1) AS UNSIGNED) ASC, 
@@ -607,7 +608,7 @@ else:
                         cs_id ASC ";
                 
                 // Auto / Secret Lair
-                elseif(($searchsetcode === 'yes' && (str_contains($name,'sld'))) || (isset($setcoderegexsearch) && str_contains($setcoderegexsearch,'sld')) || (isset($selectedSets) && in_array('sld',$selectedSets))):
+                elseif(($searchsetcode === 'yes' && (str_contains(strtolower($name),'sld'))) || (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch),'sld')) || (isset($selectedSets) && in_array_case_insensitive('sld',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
                         cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
                         CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
