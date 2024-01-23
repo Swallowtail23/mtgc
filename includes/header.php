@@ -51,9 +51,9 @@ endif;
 
         $("#searchid").on("input keyup", function() {
             var searchid = $(this).val();
-            if(searchid !== '') {
+            if(searchid.length >= 3) {
                 ajaxCall(searchid);
-            } else {
+            } else if (searchid.length === 0) {
                 $("#ajaxresult").html('').hide(); // Hide and clear results if search is empty
             }
             return false;
