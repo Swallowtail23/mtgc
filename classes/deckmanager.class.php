@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.2
-    Date:       20/01/24
+/* Version:     1.3
+    Date:       15/02/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -22,6 +22,9 @@
  *  
     1.2         20/01/24
  *              Move to logMessage
+ * 
+ *  1.3         15/02/24
+ *              Empty 'type' breaks decks - cater for this (REX, SLD)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -319,8 +322,8 @@ class DeckManager
         global $commander_decktypes, $commander_multiples, $any_quantity;
         $this->message->logMessage('[NOTICE]',"Add card called: '$quantity' x '$card' to '$deck' ($section)");
 
-        // Get card name of addition
-        $cardnamequery = "SELECT name,type,ability FROM cards_scry WHERE id = ? LIMIT 1";
+        // Get card name and other key details of card to add
+        $cardnamequery = "SELECT name,type,f1_type,ability FROM cards_scry WHERE id = ? LIMIT 1";
         $result = $this->db->execute_query($cardnamequery, [$card]);
         $cardname = $result->fetch_assoc();
         if($result === FALSE):
@@ -329,10 +332,22 @@ class DeckManager
             $cardnametext = $cardname['name'];
             $i = 0;
             $cdr_1_plus = FALSE;
+            
+            // Cater for cards with NULL type (REX and SLD double-sided cards with dual art but functionally same card
+            if($cardname['type'] !== NULL):
+                $card_type = $cardname['type'];
+            elseif ($cardname['type'] === NULL AND isset($cardname['f1_type'])):
+                $card_type = $cardname['f1_type'];
+            elseif ($cardname['type'] === NULL AND isset($cardname['f2_type'])):
+                $card_type = $cardname['f2_type'];
+            else:
+                $card_type = 'None';
+            endif;
+            
             while($i < count($commander_multiples)):
                 $while_result = FALSE;
                 $this->message->logMessage('[DEBUG]',"Checking type for: {$commander_multiples[$i]}");
-                if(str_contains($cardname['type'],$commander_multiples[$i]) == TRUE):
+                if(str_contains($card_type,$commander_multiples[$i]) == TRUE):
                     $while_result = TRUE;
                     $cdr_1_plus = TRUE;
                 endif;
