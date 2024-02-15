@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.3
-    Date:       20/01/24
+/* Version:     19.4
+    Date:       15/02/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -61,6 +61,9 @@
  * 
  *  19.3        20/01/24
  *              Move to logMessage
+ * 
+ *  19.4        15/02/24
+ *              Empty 'type' breaks decks - cater for this (REX, SLD)
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -536,17 +539,27 @@ while ($row = $result->fetch_assoc()):
         $i = $i + 1;
     endif;
     $cardset = strtolower($row['setcode']);
-    if (strpos($row['type'],' //') !== false):
-        $len = strpos($row['type'], ' //');
-        $row['type'] = substr($row['type'], 0, $len);
+    
+    // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+    if ($row['type'] !== NULL):
+        $card_type = $row['type'];
+        $cardcmc = $row['cmc'];
+    elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+        $card_type = $row['f1_type'];
+        $cardcmc = $row['f1_cmc'];
     endif;
-    if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] == 0)):
+    
+    if (strpos($card_type,' //') !== false):
+        $len = strpos($card_type, ' //');
+        $card_type = substr($card_type, 0, $len);
+    endif;
+    if ((strpos($card_type,'Creature') !== false) AND ($row['commander'] == 0)):
         $creatures = $creatures + $row['cardqty'];
-    elseif ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):  
+    elseif ((strpos($card_type,'Sorcery') !== false) OR (strpos($card_type,'Instant') !== false)):  
         $instantsorcery = $instantsorcery + $row['cardqty'];
-    elseif ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] == 0)):
+    elseif ((strpos($card_type,'Sorcery') === false) AND (strpos($card_type,'Instant') === false) AND (strpos($card_type,'Creature') === false) AND (strpos($card_type,'Land') === false) AND ($row['commander'] == 0)):
         $other = $other + $row['cardqty'];
-    elseif (strpos($row['type'],'Land') !== false):
+    elseif (strpos($card_type,'Land') !== false):
         $lands = $lands + $row['cardqty'];
     endif;
     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
@@ -760,6 +773,16 @@ endif;
                             if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
                                 $row['name'] = $row['flavor_name'];
                             endif;
+                            
+                            // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                            if ($row['type'] !== NULL):
+                                $card_type = $row['type'];
+                                $cardcmc = $row['cmc'];
+                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                                $card_type = $row['f1_type'];
+                                $cardcmc = $row['f1_cmc'];
+                            endif;
+                            
                             if ($row['commander'] == 1):
                                 $cardname = $row["name"];
                                 $rarity = $row["rarity"];
@@ -786,7 +809,7 @@ endif;
                                     $illegal_tag = '';
                                 endif;
                                 
-                                $cardcmc = round($row["cmc"]);
+                                $cardcmc = round($cardcmc);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                 if ($cardcmc > 5):
                                     $cardcmc = 6;
@@ -893,6 +916,16 @@ endif;
                                 if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
                                     $row['name'] = $row['flavor_name'];
                                 endif;
+                                
+                                // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                                if ($row['type'] !== NULL):
+                                    $card_type = $row['type'];
+                                    $cardcmc = $row['cmc'];
+                                elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                                    $card_type = $row['f1_type'];
+                                    $cardcmc = $row['f1_cmc'];
+                                endif;
+                        
                                 if ($row['commander'] == 2):
                                     $cardname = $row["name"];
                                     $rarity = $row["rarity"];
@@ -918,7 +951,7 @@ endif;
                                     else:
                                         $illegal_tag = '';
                                     endif;
-                                    $cardcmc = round($row["cmc"]);
+                                    $cardcmc = round($cardcmc);
                                     $cmctotal = $cmctotal + ($cardcmc * $quantity);
                                     if ($cardcmc > 5):
                                         $cardcmc = 6;
@@ -1032,11 +1065,21 @@ endif;
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        if (strpos($row['type'],' //') !== false):
-                            $len = strpos($row['type'], ' //');
-                            $row['type'] = substr($row['type'], 0, $len);
+
+                        // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                        if ($row['type'] !== NULL):
+                            $card_type = $row['type'];
+                            $cardcmc = $row['cmc'];
+                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            $card_type = $row['f1_type'];
+                            $cardcmc = $row['f1_cmc'];
                         endif;
-                        if ((strpos($row['type'],'Creature') !== false) AND ($row['commander'] < 1)):
+
+                        if (strpos($card_type,' //') !== false):
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if ((strpos($card_type,'Creature') !== false) AND ($row['commander'] < 1)):
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -1089,8 +1132,8 @@ endif;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
                             endif;
-                            $cardcmc = round($row["cmc"]);
-                            $cardlegendary = $row["type"];
+                            $cardcmc = round($cardcmc);
+                            $cardlegendary = $card_type;
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
                                 $cardcmc = 6;
@@ -1102,7 +1145,7 @@ endif;
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
                                 while($i < count($commander_multiples)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
                                         $cdr_1_plus = TRUE;
                                     endif;
                                     $i++;
@@ -1243,11 +1286,21 @@ endif;
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        if (strpos($row['type'],' //') !== false):
-                            $len = strpos($row['type'], ' //');
-                            $row['type'] = substr($row['type'], 0, $len);
+                        
+                        // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                        if ($row['type'] !== NULL):
+                            $card_type = $row['type'];
+                            $cardcmc = $row['cmc'];
+                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            $card_type = $row['f1_type'];
+                            $cardcmc = $row['f1_cmc'];
                         endif;
-                        if ((strpos($row['type'],'Sorcery') !== false) OR (strpos($row['type'],'Instant') !== false)):
+                        
+                        if (strpos($card_type,' //') !== false):
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if ((strpos($card_type,'Sorcery') !== false) OR (strpos($card_type,'Instant') !== false)):
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -1300,7 +1353,7 @@ endif;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
                             endif;
-                            $cardcmc = round($row["cmc"]);
+                            $cardcmc = round($cardcmc);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
                                 $cardcmc = 6;
@@ -1312,7 +1365,7 @@ endif;
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
                                 while($i < count($commander_multiples)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
                                         $cdr_1_plus = TRUE;
                                     endif;
                                     $i++;
@@ -1429,11 +1482,21 @@ endif;
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        if (strpos($row['type'],' //') !== false):
-                            $len = strpos($row['type'], ' //');
-                            $row['type'] = substr($row['type'], 0, $len);
+                        
+                        // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                        if ($row['type'] !== NULL):
+                            $card_type = $row['type'];
+                            $cardcmc = $row['cmc'];
+                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            $card_type = $row['f1_type'];
+                            $cardcmc = $row['f1_cmc'];
                         endif;
-                        if ((strpos($row['type'],'Sorcery') === false) AND (strpos($row['type'],'Instant') === false) AND (strpos($row['type'],'Creature') === false) AND (strpos($row['type'],'Land') === false) AND ($row['commander'] < 1)):
+                        
+                        if (strpos($card_type,' //') !== false):
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if ((strpos($card_type,'Sorcery') === false) AND (strpos($card_type,'Instant') === false) AND (strpos($card_type,'Creature') === false) AND (strpos($card_type,'Land') === false) AND ($row['commander'] < 1)):
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -1486,7 +1549,7 @@ endif;
                                     $deck_colour_mismatch = $card_colour_mismatch = TRUE;
                                 endif;
                             endif;
-                            $cardcmc = round($row["cmc"]);
+                            $cardcmc = round($cardcmc);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
                             if ($cardcmc > 5):
                                 $cardcmc = 6;
@@ -1498,7 +1561,7 @@ endif;
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
                                 while($i < count($commander_multiples)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
                                         $cdr_1_plus = TRUE;
                                     endif;
                                     $i++;
@@ -1551,7 +1614,7 @@ endif;
                                 $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only");
                                 $i = 0;
                                 while($i < count($second_commander_only_type)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$second_commander_only_type[$i]) == TRUE):
+                                    if(isset($card_type) AND str_contains($card_type,$second_commander_only_type[$i]) == TRUE):
                                         $secondcommanderonly = TRUE;
                                     endif;
                                     $i++;
@@ -1666,12 +1729,22 @@ endif;
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
-                        if (strpos($row['type'],' //') !== false):
-                            $len = strpos($row['type'], ' //');
-                            $row['type'] = substr($row['type'], 0, $len);
+                        
+                        // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                        if ($row['type'] !== NULL):
+                            $card_type = $row['type'];
+                            $cardcmc = $row['cmc'];
+                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            $card_type = $row['f1_type'];
+                            $cardcmc = $row['f1_cmc'];
                         endif;
-                        if ((strpos($row['type'],'Land') !== false) AND (strpos($row['type'],'Land Creature') === false)):
+                        
+                        // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
+                        if (strpos($card_type,' //') !== false):
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if ((strpos($card_type,'Land') !== false) AND (strpos($card_type,'Land Creature') === false)):
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -1730,7 +1803,7 @@ endif;
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
                                 while($i < count($commander_multiples)):
-                                    if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
                                         $cdr_1_plus = TRUE;
                                     endif;
                                     $i++;
@@ -1926,14 +1999,24 @@ endif;
                                 endif;
                             endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
-                            $cardid = $row['cardsid']; ?>
+                            $cardid = $row['cardsid']; 
+                            
+                            // For SLD cards and REX cards with empty "Type", use the f1 definition instead
+                            if ($row['type'] !== NULL):
+                                $card_type = $row['type'];
+                                $cardcmc = $row['cmc'];
+                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                                $card_type = $row['f1_type'];
+                                $cardcmc = $row['f1_cmc'];
+                            endif;?>
+                    
                             <tr class='deckrow'>
                                 <td class="deckcardname">
                                     <?php 
                                     $i = 0;
                                     $cdr_1_plus = FALSE;
                                     while($i < count($commander_multiples)):
-                                        if(isset($row['type']) AND str_contains($row['type'],$commander_multiples[$i]) == TRUE):
+                                        if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
                                             $cdr_1_plus = TRUE;
                                         endif;
                                         $i++;
