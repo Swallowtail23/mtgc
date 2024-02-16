@@ -584,8 +584,10 @@ else:
         endif;
         // Sort order
         if (!empty($sortBy)):
-            if ($sortBy == "auto"):     // "Automatic" sorting selected - pick search suitable for most queries; 
-                                        // special search orders for SLD and PLST sets
+            if ($sortBy == "auto"):     
+                
+                // "Automatic" sorting selected - pick search suitable for most queries; 
+                // special search orders for SLD and PLST sets
 
                 // Initially intercepting SLD and PLST searches for special sorting
  
@@ -610,6 +612,14 @@ else:
                 // Auto / Secret Lair
                 elseif(($searchsetcode === 'yes' && (str_contains(strtolower($name),'sld'))) || (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch),'sld')) || (isset($selectedSets) && in_array_case_insensitive('sld',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                        cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
+                
+                elseif ($new === "yes"):
+                    $order = "ORDER BY date_added DESC, cards_scry.release_date DESC, 
                         cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
                         CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
                         number_import ASC, 
