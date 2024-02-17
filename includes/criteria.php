@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.2
-    Date:       22/01/24
+/* Version:     7.3
+    Date:       17/02/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -28,6 +28,9 @@
  *  7.2         22/01/24
  *              Add Automatic search order, with variation for PLST and SLD
  *              Move to use booleans for card game types
+ * 
+ *  7.3         17/02/24
+ *              Fix sort order for "New" searches
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -584,12 +587,17 @@ else:
         endif;
         // Sort order
         if (!empty($sortBy)):
-            if ($sortBy == "auto"):     // "Automatic" sorting selected - pick search suitable for most queries; 
-                                        // special search orders for SLD and PLST sets
+            if ($sortBy == "auto"):     
+                
+                // "Automatic" sorting selected - pick search suitable for most queries; 
+                // special search orders for SLD and PLST sets
 
-                // Initially intercepting SLD and PLST searches for special sorting
+                // Initially caters for:
+                //      SLD and PLST searches for special sorting
+                //      "New" searches
+                //      Else default
  
-                // Three search types to catch, so three sets of OR in each if evaluation:
+                // Three search types to catch for special sorting, so three sets of OR in each if evaluation:
                 /// 1. setcode box ticked, setcode in 'name' field
                 /// 2. name box ticked, [setcode] in name field
                 /// 3. selection in drop-down list including a special search order set (currently PLST and SLD)
@@ -610,6 +618,14 @@ else:
                 // Auto / Secret Lair
                 elseif(($searchsetcode === 'yes' && (str_contains(strtolower($name),'sld'))) || (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch),'sld')) || (isset($selectedSets) && in_array_case_insensitive('sld',$selectedSets))):
                     $order = "ORDER BY set_date DESC, cards_scry.release_date DESC, 
+                        cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
+                        CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
+                        number_import ASC, 
+                        COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                        cs_id ASC ";
+                
+                elseif ($new === "yes"):
+                    $order = "ORDER BY date_added DESC, cards_scry.release_date DESC, 
                         cards_scry.set_name ASC, primary_card DESC, cards_scry.number ASC, 
                         CAST(REGEXP_REPLACE(number_import, '[[:alpha:]]', '') AS UNSIGNED) ASC, 
                         number_import ASC, 
