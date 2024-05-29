@@ -12,6 +12,9 @@
  
     1.1         20/01/24
  *              Include sessionname.php and move to logMessage
+ *
+ *  1.2         29/05/24
+ *              Fix incorrect set ordering
 */
 if (file_exists('../includes/sessionname.local.php')):
     require('../includes/sessionname.local.php');
@@ -152,7 +155,7 @@ if ($isValidReferrer):
                                 GROUP BY 
                                     name
                                 ORDER BY 
-                                    setdate DESC, parent_set_code DESC 
+                                    setdate DESC, length(setcode) ASC, length(parent_set_code) ASC, parent_set_code DESC, setcode ASC
                                 LIMIT ? OFFSET ?");
 
             $stmt->bind_param("ssssii", $filter, $filter, $filter, $filter, $setsPerPage, $offset);
