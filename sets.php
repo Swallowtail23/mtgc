@@ -1,5 +1,5 @@
 <?php 
-/* Version:     4.1
+/* Version:     4.2
     Date:       20/01/24
     Name:       sets.php
     Purpose:    Lists all setcodes and sets in the database
@@ -20,6 +20,9 @@
  * 
  *  4.1         20/01/24
  *              Move to logMessage
+ * 
+ *  4.2         29/05/24
+ *              Fix incorrect set ordering
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -142,7 +145,7 @@ $msg = new Message($logfile);
         };
 
         function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
-            var offset = (pageNumber * setsPerPage) - (setsPerPage + 1);
+            var offset = (pageNumber * setsPerPage) - (setsPerPage);
             offset = Math.max(0, offset);
 
             $.ajax({
@@ -316,22 +319,24 @@ require('includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <?php
-        $stmt = $db->prepare("SELECT 
-                                name as set_name,
-                                code as setcode,
-                                parent_set_code,
-                                set_type,
-                                card_count,
-                                nonfoil_only,
-                                foil_only,
-                                min(release_date) as date,
-                                release_date as setdate
-                            FROM sets 
-                            GROUP BY 
-                                name
-                            ORDER BY 
-                                setdate DESC, parent_set_code DESC 
-                            LIMIT ?");
+        $sql = "SELECT 
+                    name as set_name,
+                    code as setcode,
+                    parent_set_code,
+                    set_type,
+                    card_count,
+                    nonfoil_only,
+                    foil_only,
+                    min(release_date) as date,
+                    release_date as setdate
+                FROM sets 
+                GROUP BY 
+                    name
+                ORDER BY 
+                    setdate DESC, length(setcode) ASC, length(parent_set_code) ASC, parent_set_code DESC, setcode ASC
+                LIMIT ?";
+        $stmt = $db->prepare($sql);
+        $msg->logMessage('[DEBUG]',"Query is: $sql");
         $stmt->bind_param("i", $setsPerPage);
         if ($stmt === false):
             trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Preparing SQL: " . $db->error, E_USER_ERROR);
