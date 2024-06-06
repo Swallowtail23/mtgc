@@ -73,6 +73,10 @@ else:
                 $criteria .= "AND setcode LIKE ? ";
                 $params[] = $setcoderegexsearch;
             endif;
+            if (!empty($numberregexsearch)):  // collector number has been regex-extracted from string
+                $criteria .= "AND number LIKE ? ";
+                $params[] = $numberregexsearch;
+            endif;
 
             $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, 
                         primary_card DESC, number ASC, 
@@ -576,6 +580,10 @@ else:
         if (!empty($setcoderegexsearch)):
             $criteria .= "AND setcode LIKE ? ";
             $params[] = $setcoderegexsearch;
+        endif;
+        if (!empty($numberregexsearch)):  // collector number has been regex-extracted from string
+            $criteria .= "AND number LIKE ? ";
+            $params[] = $numberregexsearch;
         endif;
         if (!empty($searchLang) && $searchLang === 'all'):
             // get all

@@ -1411,3 +1411,50 @@ function in_array_case_insensitive($needle, $haystack)
     endforeach;
     return false;
 }
+
+function input_interpreter($input_string)
+// This function takes an input string, either from deck quick add or search strings, and strips it into components:
+// - qty (not applicable for searches)
+// - cardname
+// - set
+// - collector number
+{
+    global $db, $logfile;
+    $msg = new Message($logfile); 
+    
+    $msg->logMessage('[DEBUG]',"Input interpreter called with '$input_string'");
+    $sanitised_string = htmlspecialchars($input_string,ENT_NOQUOTES);
+    preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
+    if (isset($matches[1]) AND $matches[1] !== ''):
+        $qty = $matches[1];
+    else:
+        $qty = '';
+    endif;
+    // Name
+    if (isset($matches[2])):
+        $card = trim($matches[2]);
+    else:
+        $card = '';
+    endif;
+    // Set
+    if (isset($matches[3])):
+        $set = strtoupper($matches[3]);
+    else:
+        $set = '';
+    endif;
+    // Collector number
+    if (isset($matches[4])):
+        $number = $matches[4];
+    else:
+        $number = '';
+    endif;
+    $card = htmlspecialchars_decode($card,ENT_QUOTES);
+    $msg->logMessage('[DEBUG]',"Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$card] Set: [$set] Collector number: [$number]");
+    $output = [
+        'qty' => $qty,
+        'card' => $card,
+        'set' => $set,
+        'number' => $number
+    ];
+    return $output;
+}

@@ -75,28 +75,28 @@ class DeckManager
         
         $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)");
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
-        preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $quickaddstring, $matches);
+        $interpreted_string = input_interpreter($quickaddstring);
         // Quantity
-        if (isset($matches[1]) AND $matches[1] !== ''):
-            $quickaddqty = $matches[1];
+        if (isset($interpreted_string['qty']) AND $interpreted_string['qty'] !== ''):
+            $quickaddqty = $interpreted_string['qty'];
         else:
             $quickaddqty = 1;
         endif;
         // Name
-        if (isset($matches[2])):
-            $quickaddcard = trim($matches[2]);
+        if (isset($interpreted_string['card']) AND $interpreted_string['card'] !== ''):
+            $quickaddcard = $interpreted_string['card'];
         else:
             $quickaddcard = '';
         endif;
         // Set
-        if (isset($matches[3])):
-            $quickaddset = strtoupper($matches[3]);
+        if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
+            $quickaddset = strtoupper($interpreted_string['set']);
         else:
             $quickaddset = '';
         endif;
         // Collector number
-        if (isset($matches[4])):
-            $quickaddNumber = $matches[4];
+        if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
+            $quickaddNumber = $interpreted_string['number'];
         else:
             $quickaddNumber = '';
         endif;
