@@ -1,6 +1,6 @@
 <?php
-/* Version:     21.0
-    Date:       20/01/24
+/* Version:     22.0
+    Date:       06/06/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -67,6 +67,11 @@
  * 
  * 21.0         20/01/24
  *              Move to logMessage method
+ * 
+ * 22.0         06/06/24
+ *              Move search interpreter to global function instead of individually 
+ *              on each page and deck add. 
+ *              Also aligns process with deck add interptation
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
