@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.2
-    Date:       22/01/24
+/* Version:     11.3
+    Date:       06/06/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -38,6 +38,10 @@
  * 
  * 11.2         22/01/24
  *              Increased $maxresults to 3,500 to cope with The List
+ * 
+ * 11.3         06/06/24
+ *              Move interpretation of input field to global function
+ *              This allows interpretation of e.g. "Farfinder [IKO 2]"
 */
 
 //Call script initiation mechs
