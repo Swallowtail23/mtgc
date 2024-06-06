@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.2
-    Date:       22/01/24
+/* Version:     11.3
+    Date:       06/06/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -38,6 +38,10 @@
  * 
  * 11.2         22/01/24
  *              Increased $maxresults to 3,500 to cope with The List
+ * 
+ * 11.3         06/06/24
+ *              Move interpretation of input field to global function
+ *              This allows interpretation of e.g. "Farfinder [IKO 2]"
 */
 
 //Call script initiation mechs
@@ -103,13 +107,30 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]',"Name after URL removal is $name");
-    // Remove any embedded setcodes in [] into a variable for a setcode regex-based search
-    preg_match('/\[(.*?)\]/', $name, $matches);
-    $setcoderegexsearch = isset($matches[1]) ? $matches[1] : '';
+    $interpreted_string = input_interpreter($name);
+    if (isset($interpreted_string['card']) AND $interpreted_string['card'] !== ''):
+        $name = $interpreted_string['card'];
+    else:
+        $name = '';
+    endif;
+    // Set
+    if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
+        $setcoderegexsearch = strtoupper($interpreted_string['set']);
+    else:
+        $setcoderegexsearch = '';
+    endif;
+    // Collector number
+    if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
+        $numberregexsearch = $interpreted_string['number'];
+    else:
+        $numberregexsearch = '';
+    endif;
+    $card = htmlspecialchars_decode($name,ENT_QUOTES);
     $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
 else:
     $name = '';
     $setcoderegexsearch = '';
+    $numberregexsearch = '';
 endif;
 $searchname = isset($_GET['searchname']) ? 'yes' : '';
 $searchtype = isset($_GET['searchtype']) ? 'yes' : '';

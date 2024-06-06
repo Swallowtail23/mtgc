@@ -205,7 +205,7 @@ endif;
             elseif (empty($validsearch)) :
                 echo "<span id='searchnametip'>&nbsp;</span>";
             else:
-                echo "<span id='searchnametip'>Search for 4 characters or more</span>";
+                echo "<span id='searchnametip'>Search for 3 characters or more</span>";
             endif; ?>
             <span id="resultscount">
             <?php

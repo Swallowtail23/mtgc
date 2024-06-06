@@ -1,6 +1,6 @@
 <?php
-/* Version:     21.0
-    Date:       20/01/24
+/* Version:     22.0
+    Date:       06/06/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -67,6 +67,11 @@
  * 
  * 21.0         20/01/24
  *              Move to logMessage method
+ * 
+ * 22.0         06/06/24
+ *              Move search interpreter to global function instead of individually 
+ *              on each page and deck add. 
+ *              Also aligns process with deck add interptation
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1410,4 +1415,51 @@ function in_array_case_insensitive($needle, $haystack)
         endif;
     endforeach;
     return false;
+}
+
+function input_interpreter($input_string)
+// This function takes an input string, either from deck quick add or search strings, and strips it into components:
+// - qty (not applicable for searches)
+// - cardname
+// - set
+// - collector number
+{
+    global $db, $logfile;
+    $msg = new Message($logfile); 
+    
+    $msg->logMessage('[DEBUG]',"Input interpreter called with '$input_string'");
+    $sanitised_string = htmlspecialchars($input_string,ENT_NOQUOTES);
+    preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
+    if (isset($matches[1]) AND $matches[1] !== ''):
+        $qty = $matches[1];
+    else:
+        $qty = '';
+    endif;
+    // Name
+    if (isset($matches[2])):
+        $card = trim($matches[2]);
+    else:
+        $card = '';
+    endif;
+    // Set
+    if (isset($matches[3])):
+        $set = strtoupper($matches[3]);
+    else:
+        $set = '';
+    endif;
+    // Collector number
+    if (isset($matches[4])):
+        $number = $matches[4];
+    else:
+        $number = '';
+    endif;
+    $card = htmlspecialchars_decode($card,ENT_QUOTES);
+    $msg->logMessage('[DEBUG]',"Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$card] Set: [$set] Collector number: [$number]");
+    $output = [
+        'qty' => $qty,
+        'card' => $card,
+        'set' => $set,
+        'number' => $number
+    ];
+    return $output;
 }

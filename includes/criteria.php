@@ -1,5 +1,5 @@
 <?php
-/* Version:     7.3
+/* Version:     7.4
     Date:       17/02/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
@@ -31,6 +31,10 @@
  * 
  *  7.3         17/02/24
  *              Fix sort order for "New" searches
+ * 
+ *  7.4         06/06/24
+ *              Move interpretation of input field to global function
+ *              This allows interpretation of e.g. "Farfinder [IKO 2]"
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -44,7 +48,7 @@ else:
     if ($adv != "yes") :
         $msg->logMessage('[DEBUG]',"Not advanced search called");
         // Not an advanced search called
-        if (strlen($name) > 2): // Needs to have more than 2 characters to search
+        if (strlen($name) > 2 || !empty($setcoderegexsearch)): // Needs to have more than 2 characters to search
             if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
@@ -72,6 +76,10 @@ else:
             if (!empty($setcoderegexsearch)):  // setcode has been regex-extracted from string
                 $criteria .= "AND setcode LIKE ? ";
                 $params[] = $setcoderegexsearch;
+            endif;
+            if (!empty($numberregexsearch)):  // collector number has been regex-extracted from string
+                $criteria .= "AND number LIKE ? ";
+                $params[] = $numberregexsearch;
             endif;
 
             $order = "ORDER BY set_date DESC, cards_scry.set_name ASC, 
@@ -576,6 +584,10 @@ else:
         if (!empty($setcoderegexsearch)):
             $criteria .= "AND setcode LIKE ? ";
             $params[] = $setcoderegexsearch;
+        endif;
+        if (!empty($numberregexsearch)):  // collector number has been regex-extracted from string
+            $criteria .= "AND number LIKE ? ";
+            $params[] = $numberregexsearch;
         endif;
         if (!empty($searchLang) && $searchLang === 'all'):
             // get all

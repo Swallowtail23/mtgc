@@ -455,6 +455,10 @@ $promos_to_show = array(
                             'display' => 'Oil slick foil'
                             ),
                         array(
+                            'promotype' => 'ripplefoil',
+                            'display' => 'Ripple foil'
+                            ),
+                        array(
                             'promotype' => 'surgefoil',
                             'display' => 'Surge foil'
                             ),
