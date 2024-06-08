@@ -52,7 +52,7 @@ class ImportExport
         $csv_enclosed = '"';
         $csv_escaped = "\\";
         $table = $this->db->real_escape_string($table);
-        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
+        $sql = "SELECT setcode,number_import,name,normal,$table.foil,$table.etched,$table.id as scryfall_id,lang FROM $table JOIN cards_scry ON $table.id = cards_scry.id WHERE (($table.normal > 0) OR ($table.foil > 0) OR ($table.etched > 0))";
         $this->message->logMessage('[NOTICE]',"Running Export Collection to CSV: $sql");
 
         // Gets the data from the database
