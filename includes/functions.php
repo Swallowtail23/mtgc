@@ -1,6 +1,6 @@
 <?php
-/* Version:     22.0
-    Date:       06/06/24
+/* Version:     23.0
+    Date:       09/06/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -72,6 +72,9 @@
  *              Move search interpreter to global function instead of individually 
  *              on each page and deck add. 
  *              Also aligns process with deck add interptation
+ * 
+ * 23.0         09/06/24
+ *              Add CSV functions for deck/card add interpretation
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1419,6 +1422,7 @@ function in_array_case_insensitive($needle, $haystack)
 
 function input_interpreter($input_string)
 // This function takes an input string, either from deck quick add or search strings, and strips it into components:
+// - UUID
 // - qty (not applicable for searches)
 // - cardname
 // - set
@@ -1429,37 +1433,101 @@ function input_interpreter($input_string)
     
     $msg->logMessage('[DEBUG]',"Input interpreter called with '$input_string'");
     $sanitised_string = htmlspecialchars($input_string,ENT_NOQUOTES);
-    preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
-    if (isset($matches[1]) AND $matches[1] !== ''):
-        $qty = $matches[1];
-    else:
-        $qty = '';
+    
+    // Is the line CSV?
+    if(is_csv($sanitised_string) !== false):
+        // The line is in CSV format
+        //Does it have a UUID?
+        $result = extract_and_process_csv($sanitised_string);
+    
+        return [
+            'set' => $result['set'],
+            'number' => $result['number'],
+            'name' => $result['name'],
+            'lang' => $result['lang'],
+            'qty' => $result['qty'],
+            'uuid' => $result['uuid']
+        ];
+        
+    else: // Not a CSV, interpret as a quick add text line
+        preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
+        if (isset($matches[1]) AND $matches[1] !== ''):
+            $qty = $matches[1];
+        else:
+            $qty = '';
+        endif;
+        // Name
+        if (isset($matches[2])):
+            $name = trim($matches[2]);
+        else:
+            $name = '';
+        endif;
+        // Set
+        if (isset($matches[3])):
+            $set = strtoupper($matches[3]);
+        else:
+            $set = '';
+        endif;
+        // Collector number
+        if (isset($matches[4])):
+            $number = $matches[4];
+        else:
+            $number = '';
+        endif;
+        $name = htmlspecialchars_decode($name,ENT_QUOTES);
+        $msg->logMessage('[DEBUG]',"Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
+        $output = [
+            'set' => $set,
+            'number' => $number,
+            'name' => $name,
+            'lang' => '',
+            'qty' => $qty,
+            'uuid' => ''
+        ];
+        return $output;
     endif;
-    // Name
-    if (isset($matches[2])):
-        $card = trim($matches[2]);
-    else:
-        $card = '';
+}
+
+function is_csv($string) 
+{
+    // Check if the string contains at least 3 commas
+    $comma_count = substr_count($string, ',');
+    if ($comma_count < 4):
+        return false;
     endif;
-    // Set
-    if (isset($matches[3])):
-        $set = strtoupper($matches[3]);
-    else:
-        $set = '';
-    endif;
-    // Collector number
-    if (isset($matches[4])):
-        $number = $matches[4];
-    else:
-        $number = '';
-    endif;
-    $card = htmlspecialchars_decode($card,ENT_QUOTES);
-    $msg->logMessage('[DEBUG]',"Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$card] Set: [$set] Collector number: [$number]");
-    $output = [
-        'qty' => $qty,
-        'card' => $card,
+    
+    // Check if the string can be parsed into fields
+    $fields = str_getcsv($string);
+    
+    // If str_getcsv returns an array with more than one element, it's likely a CSV
+    return count($fields) > 1;
+}
+
+function extract_and_process_csv($line) 
+{
+    // Define the regex pattern to match the CSV line according to the requirements
+    // Parse the CSV row
+    $fields = str_getcsv($line);
+
+    // Extracting the fields
+    $set    = $fields[0];
+    $number = $fields[1];
+    $name   = $fields[2];
+    $lang   = $fields[3];
+    $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
+    $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
+    $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
+    $uuid   = $fields[7];
+
+    // Sum the values of parameters 5, 6, and 7
+    $qty = $param5 + $param6 + $param7;
+
+    return [
         'set' => $set,
-        'number' => $number
+        'number' => $number,
+        'name' => $name,
+        'lang' => $lang,
+        'qty' => $qty,
+        'uuid' => $uuid
     ];
-    return $output;
 }
