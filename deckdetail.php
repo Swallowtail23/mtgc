@@ -67,6 +67,7 @@
  * 
  *  19.5        09/06/24
  *              Add local currency for deck value
+ *              Update help text for quick add and import
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -2340,6 +2341,8 @@ endif;
             Note, adds primary language cards only.<br>
             Format: <i>"qty {optional} name {optional if set and number included} [set {optional unless number included} number {optional}]" </i><br>E.g.: 
             "Madame Vastra", "Madame Vastra [WHO]", "Madame Vastra [WHO 425]", "4 Madame Vastra [WHO]", "2 [WHO 425]"
+            Also will accept MTGC collection export format, e.g.: 
+            <pre>'otc,23,"Card name",en,1,0,0,{uuid}</pre>
             <br><br>
             <form action="deckdetail.php"  method="GET">
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
@@ -2348,7 +2351,9 @@ endif;
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
             <h4>Import</h4>
-            Text file needs to be formatted as Quick add (adds primary language cards only). 
+            Text file formatted as Quick add above (adds primary language 
+            cards only), or csv file (as MTGC collection export format), which 
+            allows specific UUID imports.
             Decks may take several minutes to import and fetch data. 
             Cards already in the deck will have quantity updated.
             <script type="text/javascript">

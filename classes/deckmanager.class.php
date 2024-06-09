@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.3
-    Date:       15/02/24
+/* Version:     2.0
+    Date:       09/06/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -25,6 +25,10 @@
  * 
  *  1.3         15/02/24
  *              Empty 'type' breaks decks - cater for this (REX, SLD)
+ * 
+ *  2.0         09/06/2024
+ *              Improve deck import capability to cater with MTGC import format 
+ *              as well as quick add format
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -49,14 +53,24 @@ class DeckManager
         $this->message->logMessage('[DEBUG]',"ProcessInput called for deck $decknumber with '$input'");
         // Check if input is multiline
         $lines = explode("\n", $input);
-        if (count($lines) > 1):
-            $this->message->logMessage('[DEBUG]',"Multi-line input, calling quickadd in batch mode");
+        $inputType = '';
+        $qtyLines = count($lines);
+        if ($qtyLines > 1):
+            $this->message->logMessage('[DEBUG]',"Multi-line input ($qtyLines lines), calling quickadd in batch mode");
+            $row = 1;
             foreach ($lines as $line):
                 $line = trim($line);
-                $this->quickadd($decknumber, $line, true); // Set third parameter to true for batching
+                if(substr($line, 0, 14) !== '"setcode","num' && substr($line, 0, 14) !== 'setcode,number'):
+                    $this->message->logMessage('[DEBUG]',"Row $row: Data row: '$line'");
+                    $this->quickadd($decknumber, $line, true); // Set fourth parameter to true for batching
+                else:
+                    $this->message->logMessage('[DEBUG]',"Row $row: Header row: '$line'");
+                endif;
+                $row = $row + 1;
             endforeach;
         else:
             $this->message->logMessage('[DEBUG]',"Single-line input, calling quickadd in single-line mode");
+            $inputType = 'SingleText';
             $quickaddresult = $this->quickadd($decknumber, $input);
             $this->message->logMessage('[DEBUG]',"Result: $quickaddresult");
             return $quickaddresult;
@@ -73,9 +87,16 @@ class DeckManager
     {
         global $noQuickAddLayouts;
         
-        $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode = $batch)");
+        $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')");
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         $interpreted_string = input_interpreter($quickaddstring);
+        $this->message->logMessage('[DEBUG]',"Quick add called with string '$quickaddstring'");
+        // UUID
+        if (isset($interpreted_string['uuid']) AND $interpreted_string['uuid'] !== ''):
+            $quickaddUUID = $interpreted_string['uuid'];
+        else:
+            $quickaddUUID = '';
+        endif;
         // Quantity
         if (isset($interpreted_string['qty']) AND $interpreted_string['qty'] !== ''):
             $quickaddqty = $interpreted_string['qty'];
@@ -83,8 +104,8 @@ class DeckManager
             $quickaddqty = 1;
         endif;
         // Name
-        if (isset($interpreted_string['card']) AND $interpreted_string['card'] !== ''):
-            $quickaddcard = $interpreted_string['card'];
+        if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
+            $quickaddcard = $interpreted_string['name'];
         else:
             $quickaddcard = '';
         endif;
@@ -94,6 +115,12 @@ class DeckManager
         else:
             $quickaddset = '';
         endif;
+        // Lang
+        if (isset($interpreted_string['lang']) AND $interpreted_string['lang'] !== ''):
+            $quickaddlang = strtoupper($interpreted_string['lang']);
+        else:
+            $quickaddlang = '';
+        endif;
         // Collector number
         if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
             $quickaddNumber = $interpreted_string['number'];
@@ -101,14 +128,22 @@ class DeckManager
             $quickaddNumber = '';
         endif;
         $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-        $this->message->logMessage('[DEBUG]',"Quick add called with string '$quickaddstring', interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber]");
+        $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] UUID: [$quickaddUUID]");
         $stmt = null;
         
         // Get card layouts to not include in quick add
         $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
         $placeholdersString = implode(',', $placeholders);
         
-        if ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+        if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false):
+            // Card UUID provided and valid UUID
+            $this->message->logMessage('[DEBUG]',"Quick add proceeidng with provided UUID: [$quickaddUUID]");
+            $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $params = [$quickaddUUID];
+            $stmt->bind_param('s', $params[0]);
+            
+        elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
             // Card name, setcode, and collector number provided
             $query = "SELECT id FROM cards_scry WHERE (name = ? OR
                                                        f1_name = ? OR 
@@ -195,7 +230,7 @@ class DeckManager
                 $row = $result->fetch_assoc();
                 $stmt->close();
                 $cardtoadd = $row['id'];
-                $this->message->logMessage('[DEBUG]',"Quick add result: $cardtoadd");
+                $this->message->logMessage('[DEBUG]',"Quick add result: UUID result is '$cardtoadd'");
                 if (!$batch):
                     // Call addDeckCard only if not in batch mode
                     $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
@@ -235,7 +270,6 @@ class DeckManager
             $valuesString = implode(', ', $values);
             $placeholdersString = implode(', ', $placeholders);
 
-            // Assuming you have a method for executing SQL queries, prepare the INSERT query
             $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty) VALUES $placeholdersString 
                         ON DUPLICATE KEY UPDATE cardqty = VALUES(cardqty)";
 
