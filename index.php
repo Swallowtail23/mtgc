@@ -108,8 +108,8 @@ if (isset($_GET['name']) AND $_GET['name'] !== ""):
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]',"Name after URL removal is $name");
     $interpreted_string = input_interpreter($name);
-    if (isset($interpreted_string['card']) AND $interpreted_string['card'] !== ''):
-        $name = $interpreted_string['card'];
+    if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
+        $name = $interpreted_string['name'];
     else:
         $name = '';
     endif;

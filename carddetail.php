@@ -1885,7 +1885,7 @@ require('includes/menu.php'); //mobile menu
                                         // If the deck is new, is the new name unique? If yes, create it.
                                         if($decktoaddto == "newdeck"):
                                             $msg->logMessage('[NOTICE]',"Calling Deckmanager->addDeck: '$user/$newdeckname'");
-                                            $obj = new DeckManager($db, $logfile);
+                                            $obj = new DeckManager($db, $logfile, $useremail, $serveremail);
                                             $decksuccess = $obj->addDeck($user,$newdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                                             if($decksuccess['flag'] === 1):
                                                 $decktoaddto = $decksuccess['decknumber'];
@@ -1894,7 +1894,7 @@ require('includes/menu.php'); //mobile menu
                                             endif;
                                         else:
                                             // Check that the proposed deck exists and belongs to owner.
-                                            $obj = new DeckManager($db, $logfile);
+                                            $obj = new DeckManager($db, $logfile, $useremail, $serveremail);
                                             if($obj->deckOwnerCheck($decktoaddto,$user) == FALSE): ?>
                                                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>You don't have that deck</span>
                                                     <br>
@@ -1945,7 +1945,7 @@ require('includes/menu.php'); //mobile menu
                                                 $deckqty = (int)$deckqty;
                                             
                                                 //Call add card function
-                                                $obj = new DeckManager($db,$logfile);
+                                                $obj = new DeckManager($db,$logfile, $useremail, $serveremail);
                                                 $obj->addDeckCard($decktoaddto,$cardid,'main',$deckqty);
                                                 
                                                 //Check it's added
@@ -1984,7 +1984,7 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                     endif; 
                                     $msg->logMessage('[NOTICE]',"Checking to see if $cardid is in any owned decks");
-                                    $obj = new DeckManager($db,$logfile);
+                                    $obj = new DeckManager($db,$logfile, $useremail, $serveremail);
                                     $inmydecks = $obj->deckCardCheck($cardid,$user);
                                     echo "<b>Decks</b><br>";
                                     if (!empty($inmydecks)):
@@ -2003,7 +2003,7 @@ require('includes/menu.php'); //mobile menu
                                             $grpuserid = $grpuser[$t]['id'];
                                             $grpusername = ucfirst($grpuser[$t]['name']);
                                             $msg->logMessage('[DEBUG]',"Checking user $grpusername for $cardid");
-                                            $obj = new DeckManager($db,$logfile);
+                                            $obj = new DeckManager($db,$logfile, $useremail, $serveremail);
                                             $ingrpdecks = $obj->deckCardCheck($cardid,$grpuserid);
                                             $t = $t + 1;
                                             if (!empty($ingrpdecks)):

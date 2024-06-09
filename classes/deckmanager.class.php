@@ -29,6 +29,7 @@
  *  2.0         09/06/2024
  *              Improve deck import capability to cater with MTGC import format 
  *              as well as quick add format
+ *              Send email if multi input errors
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -41,16 +42,20 @@ class DeckManager
     private $logfile;
     private $batchedCardIds = []; // Array to store batched cards to add
     private $message;
+    private $useremail;
+    private $serveremail;
     
-    public function __construct($db, $logfile) {
+    public function __construct($db, $logfile, $useremail, $serveremail) {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
+        $this->useremail = $useremail;
+        $this->serveremail = $serveremail;
     }
     
     public function processInput($decknumber, $input) {
-    // processInput can handle either single-line or multi-line inputs, 
-    // using quickadd to process. 
+    // processInput can handle either single-line or multi-line 'add card' 
+    // inputs, using quickadd method to process
     // Multi-line inputs are batched for combined data write by addDeckCardsBatch
     // Called from deckdetail.php
         
@@ -62,6 +67,8 @@ class DeckManager
         if ($qtyLines > 1):
             $this->message->logMessage('[DEBUG]',"Multi-line input ($qtyLines lines), calling quickadd in batch mode");
             $row = 1;
+            $warningsummary = '';
+            $warningheading = 'Warning type, Row number, Input line';
             foreach ($lines as $line):
                 $line = trim($line);
                 $start = substr($line, 0, 8);
@@ -72,12 +79,22 @@ class DeckManager
                     $quickaddresult = $this->quickadd($decknumber, $line, true); // Set fourth parameter to true for batching
                     if($quickaddresult === false || $quickaddresult === 'cardnotfound'):
                         $this->message->logMessage('[DEBUG]',"Row $row: Result: fail");
+                        $newwarning = "ERROR - Row $row, Line: '$line'"."\n";
+                        $warningsummary = $warningsummary.$newwarning;
                     else:
                         $this->message->logMessage('[DEBUG]',"Row $row: Result: success");
                     endif;
                 endif;
                 $row = $row + 1;
             endforeach;
+            if ($warningsummary !== ''):
+                $from = "From: $this->serveremail\r\nReturn-path: $this->serveremail"; 
+                $subject = "Deck Import failures / warnings"; 
+                $message = "$warningheading \n \n $warningsummary \n";
+                mail($this->useremail, $subject, $message, $from); 
+                $this->message->logMessage('[DEBUG]',"Deck import warnings: '$warningsummary'");
+                $quickaddresult = 'multierror';
+            endif;
         else:
             $this->message->logMessage('[DEBUG]',"Single-line input, calling quickadd in single-line mode");
             $inputType = 'SingleText';
@@ -90,6 +107,9 @@ class DeckManager
             $this->addDeckCardsBatch($decknumber, $this->batchedCardIds);
             // Clear array after batch insert
             $this->batchedCardIds = [];
+            if(isset($quickaddresult) && $quickaddresult === 'multierror'):
+                return $quickaddresult;
+            endif;
         endif;
     }
     
@@ -139,7 +159,7 @@ class DeckManager
                 $quickaddNumber = '';
             endif;
             $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] UUID: [$quickaddUUID]");
+            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] UUID: [$quickaddUUID]");
             $stmt = null;
 
             // Get card layouts to not include in quick add
@@ -148,14 +168,37 @@ class DeckManager
 
             if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false):
                 // Card UUID provided and valid UUID
-                $this->message->logMessage('[DEBUG]',"Quick add proceeidng with provided UUID: [$quickaddUUID]");
+                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided UUID: [$quickaddUUID]");
                 $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = [$quickaddUUID];
                 $stmt->bind_param('s', $params[0]);
-
+                
+            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== '' AND $quickaddlang !== ''):
+                // Card name, setcode, and collector number provided
+                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided name, set, number and specified language");
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                           f1_name = ? OR 
+                                                           f2_name = ? OR 
+                                                           printed_name = ? OR 
+                                                           f1_printed_name = ? OR 
+                                                           f2_printed_name = ? OR 
+                                                           flavor_name = ? OR
+                                                           f1_flavor_name = ? OR 
+                                                           f2_flavor_name = ?) AND 
+                                                           setcode = ? AND number_import = ? AND 
+                                                           lang LIKE ? AND 
+                                                           layout NOT IN ($placeholdersString)
+                                                           ORDER BY release_date DESC LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = array_fill(0, 9, $quickaddcard);
+                array_push($params, $quickaddset, $quickaddNumber, $quickaddlang);
+                $params = array_merge($params, $noQuickAddLayouts);
+                $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+                
             elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
                 // Card name, setcode, and collector number provided
+                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided name, set, number and primary language");
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR
                                                            f1_name = ? OR 
                                                            f2_name = ? OR 

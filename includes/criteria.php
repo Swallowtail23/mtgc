@@ -97,7 +97,7 @@ else:
             $validsearch = "false";
         endif;
     elseif ($adv == "yes" ):
-        $msg->logMessage('[DEBUG]',"Advanced search called");
+        $msg->logMessage('[DEBUG]',"Advanced search called ($name)");
         // An advanced search called
         $criteriaNTA = "";
         if ($searchnotes === "yes"):
