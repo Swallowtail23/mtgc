@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.4
-    Date:       15/02/24
+/* Version:     19.5
+    Date:       09/06/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -64,7 +64,10 @@
  * 
  *  19.4        15/02/24
  *              Empty 'type' breaks decks - cater for this (REX, SLD)
-*/
+ * 
+ *  19.5        09/06/24
+ *              Add local currency for deck value
+ */
 
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -2250,7 +2253,18 @@ endif;
                 else:
                     echo "<br>Average mana value = N/A";
                 endif;
-                echo "<br>Total deck value (TCGplayer) = $".$deckvalue;
+                $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                $formattedDeckValue = $a->format($deckvalue);
+                $msg->logMessage('[DEBUG]',"Formatted value = $formattedDeckValue");
+                if(isset($rate) AND $rate > 0):
+                    $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                    $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
+                    $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+                    $localvalue = $b->format($deckvalue * $rate);
+                    echo "<br>Total deck value (TCGplayer) = ".$formattedDeckValue." ($localvalue)";
+                else:
+                    echo "<br>Total deck value (TCGplayer) = ".$formattedDeckValue;
+                endif;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
                 <h4>Random draw</h4><?php 
