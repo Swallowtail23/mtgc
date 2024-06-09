@@ -48,8 +48,12 @@ class DeckManager
         $this->message = new Message($this->logfile);
     }
     
-    // processInput can handle either single-line or multi-line inputs, using quickadd to process. Multi-line inputs are batched for combined data write by addDeckCardsBatch
     public function processInput($decknumber, $input) {
+    // processInput can handle either single-line or multi-line inputs, 
+    // using quickadd to process. 
+    // Multi-line inputs are batched for combined data write by addDeckCardsBatch
+    // Called from deckdetail.php
+        
         $this->message->logMessage('[DEBUG]',"ProcessInput called for deck $decknumber with '$input'");
         // Check if input is multiline
         $lines = explode("\n", $input);
@@ -60,11 +64,17 @@ class DeckManager
             $row = 1;
             foreach ($lines as $line):
                 $line = trim($line);
-                if(substr($line, 0, 14) !== '"setcode","num' && substr($line, 0, 14) !== 'setcode,number'):
-                    $this->message->logMessage('[DEBUG]',"Row $row: Data row: '$line'");
-                    $this->quickadd($decknumber, $line, true); // Set fourth parameter to true for batching
-                else:
+                $start = substr($line, 0, 8);
+                if(strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false):
                     $this->message->logMessage('[DEBUG]',"Row $row: Header row: '$line'");
+                else:
+                    $this->message->logMessage('[DEBUG]',"Row $row: Data row: '$line'");
+                    $quickaddresult = $this->quickadd($decknumber, $line, true); // Set fourth parameter to true for batching
+                    if($quickaddresult === false || $quickaddresult === 'cardnotfound'):
+                        $this->message->logMessage('[DEBUG]',"Row $row: Result: fail");
+                    else:
+                        $this->message->logMessage('[DEBUG]',"Row $row: Result: success");
+                    endif;
                 endif;
                 $row = $row + 1;
             endforeach;
@@ -84,172 +94,177 @@ class DeckManager
     }
     
     public function quickadd($decknumber,$get_string,$batch = false)
+    // Called from processInput()
     {
         global $noQuickAddLayouts;
         
         $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')");
         $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
         $interpreted_string = input_interpreter($quickaddstring);
-        $this->message->logMessage('[DEBUG]',"Quick add called with string '$quickaddstring'");
-        // UUID
-        if (isset($interpreted_string['uuid']) AND $interpreted_string['uuid'] !== ''):
-            $quickaddUUID = $interpreted_string['uuid'];
-        else:
-            $quickaddUUID = '';
-        endif;
-        // Quantity
-        if (isset($interpreted_string['qty']) AND $interpreted_string['qty'] !== ''):
-            $quickaddqty = $interpreted_string['qty'];
-        else:
-            $quickaddqty = 1;
-        endif;
-        // Name
-        if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
-            $quickaddcard = $interpreted_string['name'];
-        else:
-            $quickaddcard = '';
-        endif;
-        // Set
-        if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
-            $quickaddset = strtoupper($interpreted_string['set']);
-        else:
-            $quickaddset = '';
-        endif;
-        // Lang
-        if (isset($interpreted_string['lang']) AND $interpreted_string['lang'] !== ''):
-            $quickaddlang = strtoupper($interpreted_string['lang']);
-        else:
-            $quickaddlang = '';
-        endif;
-        // Collector number
-        if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
-            $quickaddNumber = $interpreted_string['number'];
-        else:
-            $quickaddNumber = '';
-        endif;
-        $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-        $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] UUID: [$quickaddUUID]");
-        $stmt = null;
-        
-        // Get card layouts to not include in quick add
-        $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
-        $placeholdersString = implode(',', $placeholders);
-        
-        if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false):
-            // Card UUID provided and valid UUID
-            $this->message->logMessage('[DEBUG]',"Quick add proceeidng with provided UUID: [$quickaddUUID]");
-            $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
-            $stmt = $this->db->prepare($query);
-            $params = [$quickaddUUID];
-            $stmt->bind_param('s', $params[0]);
-            
-        elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
-            // Card name, setcode, and collector number provided
-            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                       f1_name = ? OR 
-                                                       f2_name = ? OR 
-                                                       printed_name = ? OR 
-                                                       f1_printed_name = ? OR 
-                                                       f2_printed_name = ? OR 
-                                                       flavor_name = ? OR
-                                                       f1_flavor_name = ? OR 
-                                                       f2_flavor_name = ?) AND 
-                                                       setcode = ? AND number_import = ? AND 
-                                                       `layout` NOT IN ($placeholdersString) AND
-                                                       primary_card = 1
-                                                       ORDER BY release_date DESC LIMIT 1";
-            $stmt = $this->db->prepare($query);
-            $params = array_fill(0, 9, $quickaddcard);
-            array_push($params, $quickaddset, $quickaddNumber);
-            $params = array_merge($params, $noQuickAddLayouts);
-            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            
-        elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
-            // Card name and setcode provided
-            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                       f1_name = ? OR 
-                                                       f2_name = ? OR 
-                                                       printed_name = ? OR 
-                                                       f1_printed_name = ? OR 
-                                                       f2_printed_name = ? OR 
-                                                       flavor_name = ? OR
-                                                       f1_flavor_name = ? OR 
-                                                       f2_flavor_name = ?) AND 
-                                                       setcode = ? AND 
-                                                       `layout` NOT IN ($placeholdersString)  AND
-                                                       primary_card = 1
-                                                       ORDER BY release_date DESC, number ASC LIMIT 1";
-            $stmt = $this->db->prepare($query);
-            $params = array_fill(0, 9, $quickaddcard);
-            array_push($params, $quickaddset);
-            $params = array_merge($params, $noQuickAddLayouts);
-            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+        if($interpreted_string !== false):
+            // UUID
+            if (isset($interpreted_string['uuid']) AND $interpreted_string['uuid'] !== ''):
+                $quickaddUUID = $interpreted_string['uuid'];
+            else:
+                $quickaddUUID = '';
+            endif;
+            // Quantity
+            if (isset($interpreted_string['qty']) AND $interpreted_string['qty'] !== ''):
+                $quickaddqty = $interpreted_string['qty'];
+            else:
+                $quickaddqty = 1;
+            endif;
+            // Name
+            if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
+                $quickaddcard = $interpreted_string['name'];
+            else:
+                $quickaddcard = '';
+            endif;
+            // Set
+            if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
+                $quickaddset = strtoupper($interpreted_string['set']);
+            else:
+                $quickaddset = '';
+            endif;
+            // Lang
+            if (isset($interpreted_string['lang']) AND $interpreted_string['lang'] !== ''):
+                $quickaddlang = strtoupper($interpreted_string['lang']);
+            else:
+                $quickaddlang = '';
+            endif;
+            // Collector number
+            if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
+                $quickaddNumber = $interpreted_string['number'];
+            else:
+                $quickaddNumber = '';
+            endif;
+            $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
+            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] UUID: [$quickaddUUID]");
+            $stmt = null;
 
-        elseif ($quickaddcard !== '' AND $quickaddset === ''):
-            // Card name only provided, or with a number (but useless without setcode) - just grab a name match
-            $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                       f1_name = ? OR 
-                                                       f2_name = ? OR 
-                                                       printed_name = ? OR 
-                                                       f1_printed_name = ? OR 
-                                                       f2_printed_name = ? OR 
-                                                       flavor_name = ? OR
-                                                       f1_flavor_name = ? OR 
-                                                       f2_flavor_name = ?) AND 
-                                                       `layout` NOT IN ($placeholdersString) AND
-                                                       primary_card = 1
-                                                       ORDER BY release_date DESC, number ASC LIMIT 1";
-            $stmt = $this->db->prepare($query);
-            $params = array_fill(0, 9, $quickaddcard);
-            $params = array_merge($params, $noQuickAddLayouts);
-            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            
-        elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
-            // Card name not provided, setcode, and collector number provided
-            $query = "SELECT id FROM cards_scry WHERE
-                                                    setcode = ? AND 
-                                                    number_import = ? AND 
-                                                    `layout` NOT IN ($placeholdersString) AND
-                                                    primary_card = 1
-                                                    ORDER BY release_date DESC LIMIT 1";
-            $stmt = $this->db->prepare($query);
-            $params = [$quickaddset, $quickaddNumber];
-            $params = array_merge($params, $noQuickAddLayouts);
-            $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            
-        else:
-            // Not enough info, cannot add
-            $this->message->logMessage('[NOTICE]',"Quick add - Not enough info to identify a card to add");
-            $cardtoadd = 'cardnotfound';
-            return $cardtoadd;
-        endif;
+            // Get card layouts to not include in quick add
+            $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
+            $placeholdersString = implode(',', $placeholders);
 
-        if ($stmt !== null AND $stmt->execute()):
-            $result = $stmt->get_result();
-            if ($result->num_rows > 0):
-                $row = $result->fetch_assoc();
-                $stmt->close();
-                $cardtoadd = $row['id'];
-                $this->message->logMessage('[DEBUG]',"Quick add result: UUID result is '$cardtoadd'");
-                if (!$batch):
-                    // Call addDeckCard only if not in batch mode
-                    $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
-                    return $addresult;
+            if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false):
+                // Card UUID provided and valid UUID
+                $this->message->logMessage('[DEBUG]',"Quick add proceeidng with provided UUID: [$quickaddUUID]");
+                $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = [$quickaddUUID];
+                $stmt->bind_param('s', $params[0]);
+
+            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+                // Card name, setcode, and collector number provided
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                           f1_name = ? OR 
+                                                           f2_name = ? OR 
+                                                           printed_name = ? OR 
+                                                           f1_printed_name = ? OR 
+                                                           f2_printed_name = ? OR 
+                                                           flavor_name = ? OR
+                                                           f1_flavor_name = ? OR 
+                                                           f2_flavor_name = ?) AND 
+                                                           setcode = ? AND number_import = ? AND 
+                                                           `layout` NOT IN ($placeholdersString) AND
+                                                           primary_card = 1
+                                                           ORDER BY release_date DESC LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = array_fill(0, 9, $quickaddcard);
+                array_push($params, $quickaddset, $quickaddNumber);
+                $params = array_merge($params, $noQuickAddLayouts);
+                $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
+                // Card name and setcode provided
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                           f1_name = ? OR 
+                                                           f2_name = ? OR 
+                                                           printed_name = ? OR 
+                                                           f1_printed_name = ? OR 
+                                                           f2_printed_name = ? OR 
+                                                           flavor_name = ? OR
+                                                           f1_flavor_name = ? OR 
+                                                           f2_flavor_name = ?) AND 
+                                                           setcode = ? AND 
+                                                           `layout` NOT IN ($placeholdersString)  AND
+                                                           primary_card = 1
+                                                           ORDER BY release_date DESC, number ASC LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = array_fill(0, 9, $quickaddcard);
+                array_push($params, $quickaddset);
+                $params = array_merge($params, $noQuickAddLayouts);
+                $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+            elseif ($quickaddcard !== '' AND $quickaddset === ''):
+                // Card name only provided, or with a number (but useless without setcode) - just grab a name match
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
+                                                           f1_name = ? OR 
+                                                           f2_name = ? OR 
+                                                           printed_name = ? OR 
+                                                           f1_printed_name = ? OR 
+                                                           f2_printed_name = ? OR 
+                                                           flavor_name = ? OR
+                                                           f1_flavor_name = ? OR 
+                                                           f2_flavor_name = ?) AND 
+                                                           `layout` NOT IN ($placeholdersString) AND
+                                                           primary_card = 1
+                                                           ORDER BY release_date DESC, number ASC LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = array_fill(0, 9, $quickaddcard);
+                $params = array_merge($params, $noQuickAddLayouts);
+                $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+            elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+                // Card name not provided, setcode, and collector number provided
+                $query = "SELECT id FROM cards_scry WHERE
+                                                        setcode = ? AND 
+                                                        number_import = ? AND 
+                                                        `layout` NOT IN ($placeholdersString) AND
+                                                        primary_card = 1
+                                                        ORDER BY release_date DESC LIMIT 1";
+                $stmt = $this->db->prepare($query);
+                $params = [$quickaddset, $quickaddNumber];
+                $params = array_merge($params, $noQuickAddLayouts);
+                $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+
+            else:
+                // Not enough info, cannot add
+                $this->message->logMessage('[NOTICE]',"Quick add - Not enough info to identify a card to add");
+                $cardtoadd = 'cardnotfound';
+                return $cardtoadd;
+            endif;
+
+            if ($stmt !== null AND $stmt->execute()):
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0):
+                    $row = $result->fetch_assoc();
+                    $stmt->close();
+                    $cardtoadd = $row['id'];
+                    $this->message->logMessage('[DEBUG]',"Quick add result: UUID result is '$cardtoadd'");
+                    if (!$batch):
+                        // Call addDeckCard only if not in batch mode
+                        $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
+                        return $addresult;
+                    else:
+                        // In batch mode, store the card ID and quantity in the batchedCardIds array
+                        $this->batchedCardIds[] = ['id' => $cardtoadd, 'qty' => $quickaddqty];
+                    endif;
                 else:
-                    // In batch mode, store the card ID and quantity in the batchedCardIds array
-                    $this->batchedCardIds[] = ['id' => $cardtoadd, 'qty' => $quickaddqty];
+                    $stmt->close();
+                    $this->message->logMessage('[NOTICE]',"Quick add - Card not found");
+                    $cardtoadd = 'cardnotfound';
+                    return $cardtoadd;
                 endif;
             else:
                 $stmt->close();
-                $this->message->logMessage('[NOTICE]',"Quick add - Card not found");
+                $this->message->logMessage('[ERROR]',"Quick add - SQL error: " . $stmt->error);
                 $cardtoadd = 'cardnotfound';
                 return $cardtoadd;
             endif;
         else:
-            $stmt->close();
-            $this->message->logMessage('[NOTICE]',"Quick add - SQL error: " . $stmt->error);
-            $cardtoadd = 'cardnotfound';
-            return $cardtoadd;
+            $this->message->logMessage('[ERROR]',"Quick add interpreter failed");
+            return false;
         endif;
     }
 

@@ -1421,6 +1421,8 @@ function in_array_case_insensitive($needle, $haystack)
 }
 
 function input_interpreter($input_string)
+// Called by quickAdd in deckmanager class, and by index.php search inputs
+
 // This function takes an input string, either from deck quick add or search strings, and strips it into components:
 // - UUID
 // - qty (not applicable for searches)
@@ -1431,51 +1433,122 @@ function input_interpreter($input_string)
     global $db, $logfile;
     $msg = new Message($logfile); 
     
-    $msg->logMessage('[DEBUG]',"Input interpreter called with '$input_string'");
-    $sanitised_string = htmlspecialchars($input_string,ENT_NOQUOTES);
+    $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
+    $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES);
     
-    // Is the line CSV?
-    if(is_csv($sanitised_string) !== false):
-        // The line is in CSV format
-        //Does it have a UUID?
-        $result = extract_and_process_csv($sanitised_string);
-    
-        return [
-            'set' => $result['set'],
-            'number' => $result['number'],
-            'name' => $result['name'],
-            'lang' => $result['lang'],
-            'qty' => $result['qty'],
-            'uuid' => $result['uuid']
-        ];
+    // Define is_csv as a closure
+    $is_csv = function($string) {
+        // Check if the string contains at least 4 commas
+        $comma_count = substr_count($string, ',');
+        if ($comma_count < 4) {
+            return false;
+        }
         
-    else: // Not a CSV, interpret as a quick add text line
+        // Check if the string can be parsed into fields
+        $fields = str_getcsv($string);
+        
+        // If str_getcsv returns an array with more than one element, it's likely a CSV
+        return count($fields) > 1;
+    };
+    
+    // Define extract_and_process_csv as a closure
+    $extract_and_process_csv = function($line) use ($logfile) {
+        $msg = new Message($logfile);
+        
+        // Parse the CSV row
+        $fields = str_getcsv($line);
+        $qtyFields = count($fields);
+        if ($qtyFields === 6) {
+            $csvFormat = 'delver';
+        } elseif ($qtyFields === 8) {
+            $csvFormat = 'mtgc';
+        } else {
+            $csvFormat = 'invalid';
+        }
+        $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is $csvFormat");
+        
+        // Extracting common fields
+        $set    = $fields[0];
+        $number = $fields[1];
+        $name   = $fields[2];
+        
+        // Extracting different fields
+        if ($csvFormat === 'mtgc') {
+            $lang   = $fields[3];
+            $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
+            $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
+            $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
+            $uuid   = isset($fields[7]) ? $fields[7] : '';
+        } elseif ($csvFormat === 'delver') { // No etched in Delver Lens files
+            $lang   = 'unspecified';
+            $param5 = isset($fields[3]) ? (int)$fields[3] : 0;
+            $param6 = isset($fields[4]) ? (int)$fields[4] : 0;
+            $param7 = 0;
+            $uuid   = isset($fields[5]) ? $fields[5] : '';
+        } else {
+            return false;
+        }
+        
+        // Sum the values of parameters 5, 6, and 7
+        $qty = $param5 + $param6 + $param7;
+
+        return [
+            'set' => $set,
+            'number' => $number,
+            'name' => $name,
+            'lang' => $lang,
+            'qty' => $qty,
+            'uuid' => $uuid
+        ];
+    };
+    
+    // MAIN PROCESSING //
+    
+    // Is the line CSV with at least 4 fields?
+    if ($is_csv($sanitised_string)) {
+        // The line is in CSV format
+        $result = $extract_and_process_csv($sanitised_string);
+    
+        if ($result !== false) {
+            return [
+                'set' => $result['set'],
+                'number' => $result['number'],
+                'name' => $result['name'],
+                'lang' => $result['lang'],
+                'qty' => $result['qty'],
+                'uuid' => $result['uuid']
+            ];
+        } else {
+            return false;
+        }
+        
+    } else { // Not a CSV, interpret as a quick add text line
         preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
-        if (isset($matches[1]) AND $matches[1] !== ''):
+        if (isset($matches[1]) && $matches[1] !== '') {
             $qty = $matches[1];
-        else:
+        } else {
             $qty = '';
-        endif;
+        }
         // Name
-        if (isset($matches[2])):
+        if (isset($matches[2])) {
             $name = trim($matches[2]);
-        else:
+        } else {
             $name = '';
-        endif;
+        }
         // Set
-        if (isset($matches[3])):
+        if (isset($matches[3])) {
             $set = strtoupper($matches[3]);
-        else:
+        } else {
             $set = '';
-        endif;
+        }
         // Collector number
-        if (isset($matches[4])):
+        if (isset($matches[4])) {
             $number = $matches[4];
-        else:
+        } else {
             $number = '';
-        endif;
-        $name = htmlspecialchars_decode($name,ENT_QUOTES);
-        $msg->logMessage('[DEBUG]',"Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
+        }
+        $name = htmlspecialchars_decode($name, ENT_QUOTES);
+        $msg->logMessage('[DEBUG]', "Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
         $output = [
             'set' => $set,
             'number' => $number,
@@ -1485,49 +1558,5 @@ function input_interpreter($input_string)
             'uuid' => ''
         ];
         return $output;
-    endif;
-}
-
-function is_csv($string) 
-{
-    // Check if the string contains at least 3 commas
-    $comma_count = substr_count($string, ',');
-    if ($comma_count < 4):
-        return false;
-    endif;
-    
-    // Check if the string can be parsed into fields
-    $fields = str_getcsv($string);
-    
-    // If str_getcsv returns an array with more than one element, it's likely a CSV
-    return count($fields) > 1;
-}
-
-function extract_and_process_csv($line) 
-{
-    // Define the regex pattern to match the CSV line according to the requirements
-    // Parse the CSV row
-    $fields = str_getcsv($line);
-
-    // Extracting the fields
-    $set    = $fields[0];
-    $number = $fields[1];
-    $name   = $fields[2];
-    $lang   = $fields[3];
-    $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
-    $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
-    $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
-    $uuid   = $fields[7];
-
-    // Sum the values of parameters 5, 6, and 7
-    $qty = $param5 + $param6 + $param7;
-
-    return [
-        'set' => $set,
-        'number' => $number,
-        'name' => $name,
-        'lang' => $lang,
-        'qty' => $qty,
-        'uuid' => $uuid
-    ];
+    }
 }
