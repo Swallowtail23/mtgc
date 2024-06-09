@@ -175,14 +175,14 @@ class ImportExport
                     (strpos(strtolower($d5),'id') === FALSE)
                 ):
                 $this->message->logMessage('[ERROR]',"Import file {$_FILES['filename']['name']} does not contain correct '$format' header row");
-                $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'");
+                $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5'");
                 return "incorrect format";
             else:
                 return "ok header";
             endif;
         else:
             $this->message->logMessage('[ERROR]',"Import file {$_FILES['filename']['name']} does not contain valid header row");
-            $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6'");
+            $this->message->logMessage('[DEBUG]',"Import file header row: '$d0', '$d1', '$d2', '$d3', '$d4', '$d5', '$d6', '$d7'");
             return "incorrect format";
         endif;
     }
@@ -223,25 +223,25 @@ class ImportExport
             $data[0] = $d0;
             $data[1] = $d1;
             $data[2] = stripslashes($d2);
-
+            $data[3] = 'unspecified'; // Language
             if (!empty($d3)): // normal qty
-                $data[3] = $d3;
-            else:
-                $data[3] = 0;
-            endif;
-
-            if (!empty($d4)): // foil qty
-                $data[4] = $d4;
+                $data[4] = $d3;
             else:
                 $data[4] = 0;
             endif;
 
-            $data[5] = 0; // Always set etched to 0 for Delver Lens, as it does not correctly support it
+            if (!empty($d4)): // foil qty
+                $data[5] = $d4;
+            else:
+                $data[5] = 0;
+            endif;
+
+            $data[6] = 0; // Always set etched to 0 for Delver Lens, as it does not correctly support it
 
             if (!empty($d5)): // ID
-                $data[6] = $d5;
+                $data[7] = $d5;
             else:
-                $data[6] = null;
+                $data[7] = null;
             endif;
         else:
             return "error";
@@ -297,24 +297,25 @@ class ImportExport
             $delimiter = ',';
         elseif ($importFormat === 'delverlens'):
             $delimiter = $this->guessCsvDelimiter($filename);
+            $delverLang = 'unspecified';
         else:
             $delimiter = ',';
         endif;
-        $this->message->logMessage('[DEBUG]',"Import file delimiter is '$delimiter'");
+        $this->message->logMessage('[DEBUG]',"Import format '$importFormat', delimiter '$delimiter'");
         while (($data = fgetcsv ($handle, 100000, $delimiter)) !== FALSE):
             $idimport = 0;
             $excessNormal = $excessFoil = $excessEtched = 0;
             $row_no = $i + 1;
             if ($i === 0): // It's the header row, check to see if it matches the stated format
-                $this->message->logMessage('[DEBUG]',"Import file header row: " . implode($delimiter, $data));
-                $validHeader = $this->checkFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],$data[6],isset($data[7]) ? $data[7] : '');
+                $this->message->logMessage('[DEBUG]',"Import format: $importFormat; Import file header row: " . implode($delimiter, $data));
+                $validHeader = $this->checkFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5], isset($data[6]) ? $data[6] : '', isset($data[7]) ? $data[7] : '');
                 if ($validHeader !== "ok header"):
                     return "incorrect format";
                 else:
 
-                endif;
+                endif;                
             elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):  // We have bare minimum info - a setcode, a number and a name
-                $dataMap = $this->mapFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],$data[6],isset($data[7]) ? $data[7] : '');
+                $dataMap = $this->mapFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],$data[6],$data[7]);
                 $data0 = $dataMap[0];
                 $data1 = $dataMap[1];
                 $data2 = $dataMap[2];

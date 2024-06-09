@@ -156,14 +156,14 @@ endif;
                     <li>Import file must be a comma-delimited file (csv); e.g.:</li>
                 </ul>
                 <pre>
-          setcode,number,name,normal,foil,etched,id
-          LTR,3,Bill the Pony,5,0,0,9ac68519-ed7f-4f38-9549-c02975f88eed
-          LTR,4,"Card, name",2,0,0,f6bc3720-2892-4dda-8f30-079a1ac8e1e2</pre>
+          setcode,number,name,lang,normal,foil,etched,id
+          LTR,3,Bill the Pony,en,5,0,0,{Scryfall id}
+          LTR,4,"Card, name",en,2,0,0,{Scryfall id}</pre>
                 <ul>
                     <li>Delver Lens lists can be imported in the CSV export format of</li>
                 </ul>
                 <pre>
-          'Edition code','Collector's number','Name','Language',
+          'Edition code','Collector's number','Name',
           'Non-foil quantity','Foil quantity','Scryfall ID'</pre>
                 <ul>
                     <li><u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards instead of variations of a card</li>
@@ -171,7 +171,7 @@ endif;
                     <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
                     <li>If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number/language match or skip the row</li>
                     <li>If language is unspecified, the primary version is imported (usually English)</li>
-                    <li>Set codes and collector numbers must be as on this site (see <a href='sets.php'> for Set codes </a>) for success</li>
+                    <li>Set codes and collector numbers must be as <a href='sets.php'> here </a>for success</li>
                     <li>For a format example export first, use that file as a template</li>
                     <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
                     <li>You will be emailed a list of import failures/warnings</li>
