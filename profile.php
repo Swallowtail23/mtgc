@@ -1,5 +1,5 @@
 <?php 
-/* Version:     11.1
+/* Version:     11.2
     Date:       20/01/24
     Name:       profile.php
     Purpose:    User profile page
@@ -38,6 +38,10 @@
  * 
  * 11.1         20/01/24
  *              Move to logMessage
+ * 
+ * 11.2         09/06/24
+ *              Update help wording for export and import with languages
+ *              MTGC-87 and MTGC-89
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -159,13 +163,14 @@ endif;
                     <li>Delver Lens lists can be imported in the CSV export format of</li>
                 </ul>
                 <pre>
-          'Edition code','Collector's number','Name','Non-foil quantity'
-          'Foil quantity','Scryfall ID'</pre>
+          'Edition code','Collector's number','Name','Language',
+          'Non-foil quantity','Foil quantity','Scryfall ID'</pre>
                 <ul>
                     <li><u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards instead of variations of a card</li>
-                    <li><u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate (e.g. Planeswalker-stamped promos, The List, Pre-release stamped cards</li>
+                    <li><u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate (e.g. Planeswalker-stamped promos, The List, etc.</li>
                     <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
-                    <li>If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number match or skip the row</li>
+                    <li>If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number/language match or skip the row</li>
+                    <li>If language is unspecified, the primary version is imported (usually English)</li>
                     <li>Set codes and collector numbers must be as on this site (see <a href='sets.php'> for Set codes </a>) for success</li>
                     <li>For a format example export first, use that file as a template</li>
                     <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
