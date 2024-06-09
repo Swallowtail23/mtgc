@@ -315,7 +315,7 @@ class ImportExport
 
                 endif;                
             elseif(isset($data[0]) AND isset($data[1]) AND isset($data[2])):  // We have bare minimum info - a setcode, a number and a name
-                $dataMap = $this->mapFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],$data[6],$data[7]);
+                $dataMap = $this->mapFormat($importFormat,$data[0],$data[1],$data[2],$data[3],$data[4],$data[5],isset($data[6]) ? $data[6] : '',isset($data[7]) ? $data[7] : '');
                 $data0 = $dataMap[0];
                 $data1 = $dataMap[1];
                 $data2 = $dataMap[2];
