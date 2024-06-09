@@ -1437,17 +1437,20 @@ function input_interpreter($input_string)
     $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES);
     
     // Define is_csv as a closure
-    $is_csv = function($string) {
+    $is_csv = function($string) use ($logfile) {
+        $msg = new Message($logfile);
         // Check if the string contains at least 4 commas
         $comma_count = substr_count($string, ',');
-        if ($comma_count < 4) {
+        if ($comma_count < 4):
+            $msg->logMessage('[DEBUG]', "Input is not CSV");
             return false;
-        }
+        endif;
         
         // Check if the string can be parsed into fields
         $fields = str_getcsv($string);
         
         // If str_getcsv returns an array with more than one element, it's likely a CSV
+        $msg->logMessage('[DEBUG]', "Input is CSV, returning field count");
         return count($fields) > 1;
     };
     

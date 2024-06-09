@@ -68,6 +68,7 @@
  *  19.5        09/06/24
  *              Add local currency for deck value
  *              Update help text for quick add and import
+ *              Send email if multi input errors
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -225,7 +226,7 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]',"Checking deck $decknumber");
-$obj = new DeckManager($db, $logfile);
+$obj = new DeckManager($db, $logfile, $useremail, $serveremail);
 if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -249,7 +250,7 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
     $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
-    $obj = new DeckManager($db,$logfile);
+    $obj = new DeckManager($db,$logfile, $useremail, $serveremail);
     $renameresult = $obj->renameDeck($decknumber,$newname,$user);
     $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
     if($renameresult == 2):
@@ -324,7 +325,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $deckManager = new DeckManager($db, $logfile);
+    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail);
     $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
 endif;
 
@@ -334,7 +335,7 @@ if (isset($_POST['import'])):
     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
         $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager($db, $logfile);
+        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail);
         // Read the entire file content into a variable
         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
@@ -374,7 +375,7 @@ else:
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db,$logfile);
+$obj = new DeckManager($db,$logfile, $useremail, $serveremail);
 
 if($deletemain == 'yes'):
     $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");
@@ -626,6 +627,12 @@ endwhile;
 <?php
 if(isset($cardtoadd) AND ($cardtoadd == 'cardnotfound' OR $cardtoadd == 'cardnotadded')): ?>
     <div class="msg-new error-new" onclick='CloseMe(this)'><span>That didn't work... check card name</span>
+        <br>
+        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+    </div>
+<?php
+elseif(isset($cardtoadd) AND ($cardtoadd == 'multierror')): ?>
+    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Multi input errors<br>&nbsp;Details sent by email</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
@@ -2338,12 +2345,13 @@ endif;
             endif;
             ?>
             <h4>Quick add</h4>
-            Note, adds primary language cards only.<br>
-            Format: <i>"qty {optional} name {optional if set and number included} [set {optional unless number included} number {optional}]" </i><br>E.g.: 
-            "Madame Vastra", "Madame Vastra [WHO]", "Madame Vastra [WHO 425]", "4 Madame Vastra [WHO]", "2 [WHO 425]"
-            Also will accept MTGC collection export format, e.g.: 
-            <pre>'otc,23,"Card name",en,1,0,0,{uuid}</pre>
-            <br><br>
+            Examples of format (card types merged): 
+            <pre>Madame Vastra
+Madame Vastra [WHO]
+4 Madame Vastra [WHO]
+2 [WHO 425]
+c20,105,"Together Forever",en,1,0,0,{uuid}
+"C20","105","Together Forever","1","0","{uuid}"</pre>
             <form action="deckdetail.php"  method="GET">
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
                 <br>
@@ -2351,11 +2359,8 @@ endif;
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
             <h4>Import</h4>
-            Text file formatted as Quick add above (adds primary language 
-            cards only), or csv file (as MTGC collection export format), which 
-            allows specific UUID imports.
-            Decks may take several minutes to import and fetch data. 
-            Cards already in the deck will have quantity updated.
+            Text or csv file, formatted as Quick add above.
+            May take several minutes to complete. 
             <script type="text/javascript">
                 $(document).ready(function(){
                     $("#importsubmit").attr('disabled',true);
