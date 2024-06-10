@@ -193,7 +193,7 @@ class ImportExport
         if ($format === 'mtgc'):
             $data[0] = $d0;
             $data[1] = $d1;
-            $data[2] = stripslashes($d2);
+            $data[2] = trim(stripslashes($d2));
             if (!empty($d3)): // language
                 $data[3] = $d3;
             else:
@@ -222,7 +222,7 @@ class ImportExport
         elseif ($format === 'delverlens'):
             $data[0] = $d0;
             $data[1] = $d1;
-            $data[2] = stripslashes($d2);
+            $data[2] = trim(stripslashes($d2));
             $data[3] = 'unspecified'; // Language
             if (!empty($d3)): // normal qty
                 $data[4] = $d3;

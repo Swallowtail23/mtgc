@@ -20,6 +20,9 @@
  *
  *  5.1         22/01/24
  *              Add Automatic search order, with variation for PLST and SLD
+ * 
+ *  5.2         10/06/24
+ *              Add AND / OR to type searches
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -43,33 +46,33 @@ endif;
             <input title="Leave empty for broad search" id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
             <span title="Search card names" class="parametersmall checkbox-group">
-                <input id='cb1' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchname" value="yes" checked="checked">
+                <input id='cb1' type="checkbox" class="scopecheckbox checkbox notnotes notability notsetcode notpromo" name="searchname" value="yes" checked="checked">
                 <label for='cb1'>
                     <span class="check"></span>
                     <span class="box"></span>Name
                 </label>
             </span>
             <span title="Search card types" class="parametersmall checkbox-group">
-                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchtype" value="yes">
+                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notnotes notability notsetcode notpromo" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
             <span title="Search my notes" class="parametersmall checkbox-group">
-                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notsetcode notpromo" name="searchnotes" value="yes">
+                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notability notsetcode notpromo" name="searchnotes" value="yes">
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
             </span><br>
             <span title="Search setcodes (e.g. 'SOI'")" class="parametersmall checkbox-group">
-                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notnotes notpromo" name="searchsetcode" value="yes">
+                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notnotes notability notpromo" name="searchsetcode" value="yes">
                 <label for='searchsetcode'><span class="check"></span>
                     <span class="box"></span>Setcode
                 </label>
             </span>
             <span title="Search promo types, e.g. 'surgefoil'" class="parametersmall checkbox-group">
-                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchpromo" value="yes">
+                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notnotes notability" name="searchpromo" value="yes">
                 <label for='searchpromo'><span class="check"></span>
                     <span class="box"></span>Promo
                 </label>
@@ -174,8 +177,8 @@ endif;
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="cmcdown"><span class="outer"><span class="inner"></span></span>Mana value &#x25BC; </label></span><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="powerup"><span class="outer"><span class="inner"></span></span>Power &#x25B2;</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="powerdown"><span class="outer"><span class="inner"></span></span>Power &#x25BC;</label><br>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Tough &#x25B2;</label></span>
-            <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Tough &#x25BC;</label>
+            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Toughness &#x25B2;</label></span>
+            <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Toughness &#x25BC;</label>
             
             <h4 class="h4">Game type</h4>
             <span class="parametersmall">
@@ -192,21 +195,21 @@ endif;
                 </label>
             </span><br>
             <span class="parametermed checkbox-group">
-                <input id='cb27' type="checkbox" class="checkbox" name="paper" value="yes" checked>
+                <input id='cb27' type="checkbox" class="gametypebox checkbox" name="paper" value="yes" checked>
                 <label for='cb27'>
                     <span class="check"></span>
                     <span class="box"></span>Paper
                 </label>
             </span>
             <span class="parametermed checkbox-group">
-                <input id='cb28' type="checkbox" class="checkbox" name="arena" value="yes">
+                <input id='cb28' type="checkbox" class="gametypebox checkbox" name="arena" value="yes">
                 <label for='cb28'>
                     <span class="check"></span>
                     <span class="box"></span>MtG Arena
                 </label>
             </span><br>
             <span class="parametermed checkbox-group">
-                <input id='cb29' type="checkbox" class="checkbox" name="online" value="yes">
+                <input id='cb29' type="checkbox" class="gametypebox checkbox" name="online" value="yes">
                 <label for='cb29'>
                     <span class="check"></span>
                     <span class="box"></span>MtG Online
@@ -226,7 +229,7 @@ endif;
                 <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
                 <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
 
-                <h4 class="h4">Colour search criteria</h4>
+                <h4 class="h4">Colour</h4>
                 <span class="parametersmall">
                     <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
                 </span>
@@ -312,6 +315,12 @@ endif;
                     </label>
                 </span><br>
                 <h4 class="h4">Type</h4>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="typeOp" value="AND"><span class="outer"><span class="inner"></span></span>AND</label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="typeOp" value="OR" checked="checked"><span class="outer"><span class="inner"></span></span>OR</label>
+                </span><br>
                 <span class="parametermed checkbox-group">
                     <input id='cb15' type="checkbox" class="checkbox" name="instant" value="yes">
                     <label for='cb15'>

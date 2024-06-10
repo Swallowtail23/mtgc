@@ -1470,13 +1470,13 @@ function input_interpreter($input_string)
         // Parse the CSV row
         $fields = str_getcsv($line);
         $qtyFields = count($fields);
-        if ($qtyFields === 6) {
+        if ($qtyFields === 6):
             $csvFormat = 'delver';
-        } elseif ($qtyFields === 8) {
+        elseif ($qtyFields === 8):
             $csvFormat = 'mtgc';
-        } else {
+        else:
             $csvFormat = 'invalid';
-        }
+        endif;
         $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is $csvFormat");
         
         // Extracting common fields
@@ -1485,21 +1485,21 @@ function input_interpreter($input_string)
         $name   = $fields[2];
         
         // Extracting different fields
-        if ($csvFormat === 'mtgc') {
+        if ($csvFormat === 'mtgc'):
             $lang   = $fields[3];
             $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
             $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
             $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
             $uuid   = isset($fields[7]) ? $fields[7] : '';
-        } elseif ($csvFormat === 'delver') { // No etched in Delver Lens files
+        elseif ($csvFormat === 'delver'): // No etched in Delver Lens files
             $lang   = 'unspecified';
             $param5 = isset($fields[3]) ? (int)$fields[3] : 0;
             $param6 = isset($fields[4]) ? (int)$fields[4] : 0;
             $param7 = 0;
             $uuid   = isset($fields[5]) ? $fields[5] : '';
-        } else {
+        else:
             return false;
-        }
+        endif;
         
         // Sum the values of parameters 5, 6, and 7
         $qty = $param5 + $param6 + $param7;
@@ -1517,11 +1517,11 @@ function input_interpreter($input_string)
     // MAIN PROCESSING //
     
     // Is the line CSV with at least 4 fields?
-    if ($is_csv($sanitised_string)) {
+    if ($is_csv($sanitised_string)):
         // The line is in CSV format
         $result = $extract_and_process_csv($sanitised_string);
     
-        if ($result !== false) {
+        if ($result !== false):
             return [
                 'set' => $result['set'],
                 'number' => $result['number'],
@@ -1530,35 +1530,35 @@ function input_interpreter($input_string)
                 'qty' => $result['qty'],
                 'uuid' => $result['uuid']
             ];
-        } else {
+        else:
             return false;
-        }
+        endif;
         
-    } else { // Not a CSV, interpret as a quick add text line
+    else: // Not a CSV, interpret as a quick add text line
         preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
-        if (isset($matches[1]) && $matches[1] !== '') {
+        if (isset($matches[1]) && $matches[1] !== ''):
             $qty = $matches[1];
-        } else {
+        else:
             $qty = '';
-        }
+        endif;
         // Name
-        if (isset($matches[2])) {
+        if (isset($matches[2])):
             $name = trim($matches[2]);
-        } else {
+        else:
             $name = '';
-        }
+        endif;
         // Set
-        if (isset($matches[3])) {
+        if (isset($matches[3])):
             $set = strtoupper($matches[3]);
-        } else {
+        else:
             $set = '';
-        }
+        endif;
         // Collector number
-        if (isset($matches[4])) {
+        if (isset($matches[4])):
             $number = $matches[4];
-        } else {
+        else:
             $number = '';
-        }
+        endif;
         $name = htmlspecialchars_decode($name, ENT_QUOTES);
         $msg->logMessage('[DEBUG]', "Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
         $output = [
@@ -1570,5 +1570,5 @@ function input_interpreter($input_string)
             'uuid' => ''
         ];
         return $output;
-    }
+    endif;
 }

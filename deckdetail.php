@@ -2275,15 +2275,31 @@ endif;
                 endif;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
-                <h4>Random draw</h4><?php 
-                $a = array_rand($uniquecard_ref,7);
-                echo "1: ".$uniquecard_ref[$a[0]]['name'].'<br>';
-                echo "2: ".$uniquecard_ref[$a[1]]['name'].'<br>';
-                echo "3: ".$uniquecard_ref[$a[2]]['name'].'<br>';
-                echo "4: ".$uniquecard_ref[$a[3]]['name'].'<br>';
-                echo "5: ".$uniquecard_ref[$a[4]]['name'].'<br>';
-                echo "6: ".$uniquecard_ref[$a[5]]['name'].'<br>';
-                echo "7: ".$uniquecard_ref[$a[6]]['name'];
+                <script>
+                    function refreshTable() {
+                        var xhr = new XMLHttpRequest();
+                        var data = JSON.stringify({
+                            uniquecard_ref: <?php echo json_encode($uniquecard_ref); ?>,
+                            include_check: true
+                        });
+                        xhr.open('POST', 'ajax/ajaxrandomdraw.php', true);
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState == 4 && xhr.status == 200) {
+                                document.getElementById('table-container').innerHTML = xhr.responseText;
+                            }
+                        };
+                        xhr.send(data);
+                    }
+                </script>
+                <h4>Random draw</h4>
+                <button class='profilebutton' onclick="refreshTable()">NEW DRAW</button>
+                <div id="table-container">
+                    <?php 
+                    define('INCLUDE_CHECK', true);
+                    include 'ajax/ajaxrandomdraw.php'; ?>
+                </div>
+            <?php 
             endif;
             ?>
         </div>

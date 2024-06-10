@@ -8,6 +8,10 @@
     
     1.0
                 Initial version
+ * 
+ *  1.1         10/06/24
+ *              Added AND / OR to type searches, so removed issue referring to
+ *              this limitation.
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -50,7 +54,6 @@ require('includes/menu.php');
         <h2 class='h2pad'>Known issues and bugs</h2>
     <ul>
         <li><b>Images are slow to load.</b> Images for new cards are fetched when they are added to the database, but for older cards the images are fetched the first time they are needed. This can take a while - be patient.</li>
-        <li><b>The type search does an OR search.</b> Correct, workaround for now is to use fuzzy type search. AND / OR is on the list.</li>
     </ul>
 &nbsp;
 </div>

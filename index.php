@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.3
-    Date:       06/06/24
+/* Version:     11.4
+    Date:       10/06/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -42,6 +42,9 @@
  * 11.3         06/06/24
  *              Move interpretation of input field to global function
  *              This allows interpretation of e.g. "Farfinder [IKO 2]"
+ * 
+ * 11.4         10/06/24
+ *              Add AND / OR to type searches
 */
 
 //Call script initiation mechs
@@ -155,6 +158,11 @@ if (!in_array($colourOp,$valid_colourOp)):
     $colourOp = '';
 endif;
 $colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
+$valid_typeOp = array("AND","OR","");
+$typeOp = isset($_GET['typeOp']) ? "{$_GET['typeOp']}" : '';
+if (!in_array($typeOp,$valid_typeOp)):
+    $typeOp = '';
+endif;
 $common = isset($_GET['common']) ? 'yes' : '';
 $uncommon = isset($_GET['uncommon']) ? 'yes' : '';
 $rare = isset($_GET['rare']) ? 'yes' : '';
@@ -377,10 +385,19 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 setupMutualExclusion('.notpromo', '#searchpromo');
                 setupMutualExclusion('#abilityall', '#abilityexact');
                 setupMutualExclusion('#abilityexact', '#abilityall');
+                setupMutualExclusion('#abilityexact', '.notability');
+                setupMutualExclusion('.notability', '#abilityexact');
+                setupMutualExclusion('#abilityall', '.notability');
+                setupMutualExclusion('.notability', '#abilityall');
 
                 $('.scopecheckbox').click(function () {
                     if ($('.scopecheckbox:checked').length === 0) {
                         $('#cb1').prop('checked', true);
+                    }
+                });
+                $('.gametypebox ').click(function () {
+                    if ($('.gametypebox:checked').length === 0) {
+                        $('#cb27').prop('checked', true);
                     }
                 });
             });
@@ -515,17 +532,19 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 <div class="info-box-inner">
                     <h2 class="h2-no-top-margin">Search help</h2>
                     <br><b>Header search</b><br>
-                    The header search will respond with live results to text input.<br>
-                    Add a setcode in square brackets to restrict the search to a specific set, e.g.:<br>
+                    Header search will update live results as text is input.<br>
+                    Use square brackets to shortcut to a specific set or card, e.g.:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Goblin [m13]</i>
+                    or
+                    <i>[m13 215]</i>
                     <br><br>
                     <b>Languages</b><br>
-                    By default, all primary language cards will be found, that is the main language for each printing.<br>
+                    By default, the primary language printing for each card will be returned.<br>
                     Use the language drop-down to search for other languages.
                     <br>
                     <br><b>Advanced search</b><br>
-                    The same [setcode] pattern will work in the main search to search with a name, or ability, etc., e.g. 
+                    [ ] shortcut patterns will work in the main search to search with a name, or ability, etc., e.g. 
                     selecting Ability search and:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Haste [m13]</i>

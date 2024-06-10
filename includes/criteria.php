@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.4
-    Date:       17/02/24
+/* Version:     7.5
+    Date:       10/06/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -35,6 +35,9 @@
  *  7.4         06/06/24
  *              Move interpretation of input field to global function
  *              This allows interpretation of e.g. "Farfinder [IKO 2]"
+ * 
+ *  7.5         10/06/24
+ *              Add AND / OR to type searches
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -265,61 +268,61 @@ else:
         endif;
         if ($instant === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%instant%' ";
         endif;
         if ($sorcery === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%sorcery%' ";
         endif;
         if ($enchantment === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%enchantment%' ";
         endif;
         if ($planeswalker === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%planeswalker%' ";
         endif;
         if ($tribal === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "(cards_scry.type LIKE '%tribal%' OR cards_scry.type LIKE '%kindred%') ";
         endif;    
         if ($legendary === "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%legendary%' ";
         endif;
         if ($artifact == "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%artifact%' ";
         endif;
         if ($land == "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%land%' ";
         endif;
         if ($battle == "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "cards_scry.type LIKE '%battle%' ";
         endif;
         if ($token == "yes"):
             if (!empty($criteriaType)) :
-                $criteriaType .= "OR ";
+                $criteriaType .= $typeOp." ";
             endif;
             $criteriaType .= "(cards_scry.layout LIKE '%token%' OR cards_scry.layout LIKE '%emblem%') ";
         endif;
