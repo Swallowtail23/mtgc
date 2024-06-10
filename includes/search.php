@@ -177,8 +177,8 @@ endif;
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="cmcdown"><span class="outer"><span class="inner"></span></span>Mana value &#x25BC; </label></span><br>
             <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="powerup"><span class="outer"><span class="inner"></span></span>Power &#x25B2;</label></span>
             <label class="radio"><input type="radio" name="sortBy" value="powerdown"><span class="outer"><span class="inner"></span></span>Power &#x25BC;</label><br>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Tough &#x25B2;</label></span>
-            <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Tough &#x25BC;</label>
+            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Toughness &#x25B2;</label></span>
+            <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Toughness &#x25BC;</label>
             
             <h4 class="h4">Game type</h4>
             <span class="parametersmall">

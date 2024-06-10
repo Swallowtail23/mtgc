@@ -523,17 +523,19 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 <div class="info-box-inner">
                     <h2 class="h2-no-top-margin">Search help</h2>
                     <br><b>Header search</b><br>
-                    The header search will respond with live results to text input.<br>
-                    Add a setcode in square brackets to restrict the search to a specific set, e.g.:<br>
+                    Header search will update live results as text is input.<br>
+                    Use square brackets to shortcut to a specific set or card, e.g.:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Goblin [m13]</i>
+                    or
+                    <i>[m13 215]</i>
                     <br><br>
                     <b>Languages</b><br>
-                    By default, all primary language cards will be found, that is the main language for each printing.<br>
+                    By default, the primary language printing for each card will be returned.<br>
                     Use the language drop-down to search for other languages.
                     <br>
                     <br><b>Advanced search</b><br>
-                    The same [setcode] pattern will work in the main search to search with a name, or ability, etc., e.g. 
+                    [ ] shortcut patterns will work in the main search to search with a name, or ability, etc., e.g. 
                     selecting Ability search and:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Haste [m13]</i>
