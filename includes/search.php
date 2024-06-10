@@ -195,21 +195,21 @@ endif;
                 </label>
             </span><br>
             <span class="parametermed checkbox-group">
-                <input id='cb27' type="checkbox" class="checkbox" name="paper" value="yes" checked>
+                <input id='cb27' type="checkbox" class="gametypebox checkbox" name="paper" value="yes" checked>
                 <label for='cb27'>
                     <span class="check"></span>
                     <span class="box"></span>Paper
                 </label>
             </span>
             <span class="parametermed checkbox-group">
-                <input id='cb28' type="checkbox" class="checkbox" name="arena" value="yes">
+                <input id='cb28' type="checkbox" class="gametypebox checkbox" name="arena" value="yes">
                 <label for='cb28'>
                     <span class="check"></span>
                     <span class="box"></span>MtG Arena
                 </label>
             </span><br>
             <span class="parametermed checkbox-group">
-                <input id='cb29' type="checkbox" class="checkbox" name="online" value="yes">
+                <input id='cb29' type="checkbox" class="gametypebox checkbox" name="online" value="yes">
                 <label for='cb29'>
                     <span class="check"></span>
                     <span class="box"></span>MtG Online

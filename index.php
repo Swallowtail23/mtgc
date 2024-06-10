@@ -395,6 +395,11 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                         $('#cb1').prop('checked', true);
                     }
                 });
+                $('.gametypebox ').click(function () {
+                    if ($('.gametypebox:checked').length === 0) {
+                        $('#cb27').prop('checked', true);
+                    }
+                });
             });
         </script>
 
