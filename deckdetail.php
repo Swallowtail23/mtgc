@@ -501,29 +501,46 @@ if($uniquecardscount > 0):
     endwhile;
 
     if($missing == 'yes'):
-        $shortqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
-        foreach($resultnames as $key=>$value):
-            // $searchname = $db->real_escape_string($value);
-            $searchname = $value;
-            $msg->logMessage('[DEBUG]',"Missing check on card '$searchname'");
-            $query = "SELECT SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies from cards_scry LEFT JOIN $mytable ON cards_scry.id = $mytable.id WHERE name = ?";
-            if ($totalresult = $db->execute_query($query,[$searchname])):
-                $totalrow = $totalresult->fetch_assoc();
-                $total = $totalrow['allcopies'];
+        $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
+        $searchnames = array_map(fn($name) => $db->escape_string($name), $resultnames); // escape names to prevent SQL injection
+        $placeholders = implode(',', array_fill(0, count($searchnames), '?')); // create placeholders for prepared statement
+
+        $msg->logMessage('[DEBUG]',"Missing check on cards: ".implode(', ', $resultnames));
+
+        $query = "
+            SELECT name, 
+                   SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies 
+            FROM cards_scry 
+            LEFT JOIN $mytable 
+            ON cards_scry.id = $mytable.id 
+            WHERE name IN ($placeholders) 
+            GROUP BY name
+        ";
+
+        if ($totalresult = $db->execute_query($query, $searchnames)):
+            $cardCopies = [];
+            while ($totalrow = $totalresult->fetch_assoc()):
+                $cardCopies[$totalrow['name']] = $totalrow['allcopies'];
+            endwhile;
+
+            foreach ($resultnames as $key => $value):
+                $total = $cardCopies[$value] ?? 0;
                 $shortqty[$key] = $resultqty[$key] - $total;
-                if($shortqty[$key] < 1):
+                if ($shortqty[$key] < 1):
                     $shortqty[$key] = 0;
                 else:
-                    $requiredlist = $requiredlist.$shortqty[$key]." x ".$value."\r\n";
-                    $requiredbuy = $requiredbuy.$shortqty[$key]." ".$value."||";
+                    $requiredlist .= $shortqty[$key] . " x " . $value . "\r\n";
+                    $requiredbuy .= $shortqty[$key] . " " . $value . "||";
                 endif;
-            else:
-                //
-            endif;
-        endforeach;
-        $msg->logMessage('[DEBUG]',"Cards required list: $requiredlist");
-        $msg->logMessage('[DEBUG]',"Cards required buy: $requiredbuy");
+            endforeach;
+
+            $msg->logMessage('[DEBUG]',"Cards required list: $requiredlist");
+            $msg->logMessage('[DEBUG]',"Cards required buy: $requiredbuy");
+        else:
+            $msg->logMessage('[ERROR]',"Database query failed");
+        endif;
     endif;
+
 endif;
 
 //This section builds hidden divs for each card with the image and a link,
