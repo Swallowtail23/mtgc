@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.5
-    Date:       09/06/24
+/* Version:     20.0
+    Date:       10/06/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -69,6 +69,9 @@
  *              Add local currency for deck value
  *              Update help text for quick add and import
  *              Send email if multi input errors
+ * 
+ *  20.0        10/06/24
+ *              Optimise missing queries, and run each time because it's faster
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -168,7 +171,7 @@ require('includes/header.php');
 require('includes/menu.php'); //mobile menu
 
 $redirect = false;
-//
+
 // Don't need to hide missing behind button with single SQL query, as it is much faster
 //
 // if (isset($_GET["missing"])):
@@ -2369,19 +2372,22 @@ endif;
                         </tr>
                         <?php
                     elseif($missing == 'yes' AND $requiredlist == ''): ?>
-                        <tr style="height:36px;">
-                            <td colspan="2">All cards in deck are in collection</td>
+                        <tr style="height:48px;">
+                            <td colspan="2">(No cards missing from My Collection)</td>
                         </tr>
                         <?php
                     else: //This section not used, as $missing is always yes
                         ?> 
-                        <h4>Compare to collection for missing cards</h4>
-                        <form action="deckdetail.php" method="GET">
-                        <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
-                        <input type='hidden' name='missing' value='yes'>
-                        <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
-                        </form>
-                    <?php
+                        <tr style="height:36px;">
+                            <td>Compare to collection for missing cards:</td>
+                            <td><form action="deckdetail.php" method="GET">
+                                    <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
+                                    <input type='hidden' name='missing' value='yes'>
+                                    <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php
                     endif; ?>
                 </table> <?php
             endif;
