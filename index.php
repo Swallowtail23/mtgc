@@ -385,6 +385,10 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 setupMutualExclusion('.notpromo', '#searchpromo');
                 setupMutualExclusion('#abilityall', '#abilityexact');
                 setupMutualExclusion('#abilityexact', '#abilityall');
+                setupMutualExclusion('#abilityexact', '.notability');
+                setupMutualExclusion('.notability', '#abilityexact');
+                setupMutualExclusion('#abilityall', '.notability');
+                setupMutualExclusion('.notability', '#abilityall');
 
                 $('.scopecheckbox').click(function () {
                     if ($('.scopecheckbox:checked').length === 0) {
