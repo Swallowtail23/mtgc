@@ -226,7 +226,7 @@ endif;
                 <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
                 <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
 
-                <h4 class="h4">Colour search criteria</h4>
+                <h4 class="h4">Colour</h4>
                 <span class="parametersmall">
                     <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
                 </span>
@@ -312,6 +312,12 @@ endif;
                     </label>
                 </span><br>
                 <h4 class="h4">Type</h4>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="typeOp" value="AND"><span class="outer"><span class="inner"></span></span>AND</label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio"><input type="radio" name="typeOp" value="OR" checked="checked"><span class="outer"><span class="inner"></span></span>OR</label>
+                </span><br>
                 <span class="parametermed checkbox-group">
                     <input id='cb15' type="checkbox" class="checkbox" name="instant" value="yes">
                     <label for='cb15'>

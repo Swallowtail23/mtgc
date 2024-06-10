@@ -155,6 +155,11 @@ if (!in_array($colourOp,$valid_colourOp)):
     $colourOp = '';
 endif;
 $colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
+$valid_typeOp = array("AND","OR","");
+$typeOp = isset($_GET['typeOp']) ? "{$_GET['typeOp']}" : '';
+if (!in_array($typeOp,$valid_typeOp)):
+    $typeOp = '';
+endif;
 $common = isset($_GET['common']) ? 'yes' : '';
 $uncommon = isset($_GET['uncommon']) ? 'yes' : '';
 $rare = isset($_GET['rare']) ? 'yes' : '';
