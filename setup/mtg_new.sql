@@ -449,6 +449,7 @@ ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_flavor_name` (`f1_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_printed_name` (`f2_printed_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_flavor_name` (`f2_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_name_index` (`name`,`f1_name`,`f2_name`,`printed_name`,`f1_printed_name`,`f2_printed_name`,`flavor_name`,`f1_flavor_name`,`f2_flavor_name`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`f1_ability`,`f2_ability`);
 
 --
 -- Indexes for table `sets`
