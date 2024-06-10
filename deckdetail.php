@@ -525,7 +525,7 @@ if($uniquecardscount > 0):
             GROUP BY name
         ";
 
-        if ($totalresult = $db->execute_query($query, $searchnames)):
+        if ($totalresult = $db->execute_query($query, $resultnames)):
             $cardCopies = [];
             while ($totalrow = $totalresult->fetch_assoc()):
                 $cardCopies[$totalrow['name']] = $totalrow['allcopies'];
