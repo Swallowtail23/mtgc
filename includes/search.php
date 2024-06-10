@@ -20,6 +20,9 @@
  *
  *  5.1         22/01/24
  *              Add Automatic search order, with variation for PLST and SLD
+ * 
+ *  5.2         10/06/24
+ *              Add AND / OR to type searches
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');

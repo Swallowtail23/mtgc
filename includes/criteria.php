@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.4
-    Date:       17/02/24
+/* Version:     7.5
+    Date:       10/06/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -35,6 +35,9 @@
  *  7.4         06/06/24
  *              Move interpretation of input field to global function
  *              This allows interpretation of e.g. "Farfinder [IKO 2]"
+ * 
+ *  7.5         10/06/24
+ *              Add AND / OR to type searches
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

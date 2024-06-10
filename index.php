@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.3
-    Date:       06/06/24
+/* Version:     11.4
+    Date:       10/06/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -42,6 +42,9 @@
  * 11.3         06/06/24
  *              Move interpretation of input field to global function
  *              This allows interpretation of e.g. "Farfinder [IKO 2]"
+ * 
+ * 11.4         10/06/24
+ *              Add AND / OR to type searches
 */
 
 //Call script initiation mechs
