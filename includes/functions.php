@@ -250,6 +250,12 @@ function symbolreplace($str)
     $str = str_replace('{GU}','<img src="images/gu.png" alt="{GU}" class="manaimg">',$str);
     $str = str_replace('{G/U}','<img src="images/gu.png" alt="{GU}" class="manaimg">',$str);
     
+    $str = str_replace('{C/W}','<img src="images/cw.png" alt="{GU}" class="manaimg">',$str);
+    $str = str_replace('{C/U}','<img src="images/cu.png" alt="{GU}" class="manaimg">',$str);
+    $str = str_replace('{C/B}','<img src="images/cb.png" alt="{GU}" class="manaimg">',$str);
+    $str = str_replace('{C/R}','<img src="images/cr.png" alt="{GU}" class="manaimg">',$str);
+    $str = str_replace('{C/G}','<img src="images/cg.png" alt="{GU}" class="manaimg">',$str);
+        
     $str = str_replace('{2W}','<img src="images/2w.png" alt="{2W}" class="manaimg">',$str);
     $str = str_replace('{2U}','<img src="images/2u.png" alt="{2U}" class="manaimg">',$str);
     $str = str_replace('{2B}','<img src="images/2b.png" alt="{2B}" class="manaimg">',$str);
