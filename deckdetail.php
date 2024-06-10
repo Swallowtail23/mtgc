@@ -1,6 +1,6 @@
 <?php
-/* Version:     19.5
-    Date:       09/06/24
+/* Version:     20.0
+    Date:       10/06/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -69,6 +69,9 @@
  *              Add local currency for deck value
  *              Update help text for quick add and import
  *              Send email if multi input errors
+ * 
+ *  20.0        10/06/24
+ *              Optimise missing queries, and run each time because it's faster
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -168,11 +171,15 @@ require('includes/header.php');
 require('includes/menu.php'); //mobile menu
 
 $redirect = false;
-if (isset($_GET["missing"])):
-    $missing = 'yes';
-else:
-    $missing = 'no';
-endif;
+
+// Don't need to hide missing behind button with single SQL query, as it is much faster
+//
+// if (isset($_GET["missing"])):
+//     $missing = 'yes';
+// else:
+//     $missing = 'no';
+// endif;
+$missing = 'yes';
 
 if (isset($_GET["deck"])):
     $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
@@ -500,6 +507,8 @@ if($uniquecardscount > 0):
         $resultqty[$key] = $resultqty[$key] + $qty;
     endwhile;
 
+    // $missing default now, see comments at top
+    
     if($missing == 'yes'):
         $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
         $searchnames = array_map(fn($name) => $db->escape_string($name), $resultnames); // escape names to prevent SQL injection
@@ -2323,58 +2332,64 @@ endif;
         <div id='deckfunctions'> 
             <?php
             if($total + $sidetotal > 0): ?>
-                <h4>Export decklist</h4>
+                <h4>Deck lists</h4>
                 <?php
                 $textfile = $textfile."\r\n\r\nNotes\r\n\r\n$notes\r\n";
                 $textfile = $textfile."\r\n\r\nSideboard notes\r\n\r\n$sidenotes";
                 $textfile = htmlspecialchars($textfile,ENT_QUOTES);
                 $filename = preg_replace('/[^\w]/', '', $deckname);
                 ?>
-                <form action="dltext.php" method="POST">
-                    <input class='profilebutton' type="submit" value="EXPORT">
-                    <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
-                    <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
-                </form>
-                <?php
-                if($missing == 'yes' AND $requiredlist != ''):
-                    $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
-                    $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
-                    $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
-                    <script type="text/javascript">
-                        document.body.style.cursor='default';
-                    </script>
-                    <h4>Export missing cards list</h4>
-                    <form action="dltext.php" method="POST">
-                        <input class='profilebutton' type="submit" value="EXPORT">
-                        <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
-                        <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
-                    </form> 
-                    <br>
-                    TCGPlayer: <a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank'>BUY</a>
+                <table style="width:100%;">
+                    <tr style="height:36px;">
+                        <td>Export formatted card list:</td>
+                        <td><form action="dltext.php" method="POST">
+                                <input class='profilebutton' type="submit" value="DECKLIST">
+                                <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
+                                <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
+                            </form>
+                        </td>
+                    </tr>
                     <?php
-                elseif($missing == 'yes' AND $requiredlist == ''): ?>
-                    <h4>All cards in deck are in collection</h4>
-                    <br>
-                    <?php
-                else:?>
-                    <h4>Compare to collection for missing cards</h4>
-                    This will check against all cards in your collection for a name match, so can take a considerable time for large collections. 
-                    When it is complete, you will be returned to this page with two options:
-                    <ol>
-                        <li>
-                            "EXPORT" to download a text file with missing cards
-                        </li>
-                        <li>
-                            "TCGPlayer BUY" to link to TCGPlayer for the missing cards
-                        </li>
-                    </ol>
-                    <form action="deckdetail.php" method="GET">
-                    <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
-                    <input type='hidden' name='missing' value='yes'>
-                    <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
-                    </form>
-                <?php
-                endif;
+                    if($missing == 'yes' AND $requiredlist != ''):
+                        $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
+                        $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
+                        $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
+                        <script type="text/javascript">
+                            document.body.style.cursor='default';
+                        </script>
+                        <tr style="height:36px;">
+                            <td>Missing from My Collection:</td>
+                            <td><form action="dltext.php" method="POST">
+                                    <input class='profilebutton' type="submit" value="MISSING">
+                                    <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
+                                    <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
+                                </form> 
+                            </td>
+                        </tr>
+                        <tr style="height:36px;">
+                            <td>Buy missing:</td>
+                            <td><a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank' class='profilebutton tcgbuybutton'>TCGPLAYER</a></td>
+                        </tr>
+                        <?php
+                    elseif($missing == 'yes' AND $requiredlist == ''): ?>
+                        <tr style="height:48px;">
+                            <td colspan="2">(No cards missing from My Collection)</td>
+                        </tr>
+                        <?php
+                    else: //This section not used, as $missing is always yes
+                        ?> 
+                        <tr style="height:36px;">
+                            <td>Compare to collection for missing cards:</td>
+                            <td><form action="deckdetail.php" method="GET">
+                                    <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
+                                    <input type='hidden' name='missing' value='yes'>
+                                    <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
+                                </form>
+                            </td>
+                        </tr>
+                        <?php
+                    endif; ?>
+                </table> <?php
             endif;
             ?>
             <h4>Quick add</h4>
