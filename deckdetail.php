@@ -511,8 +511,7 @@ if($uniquecardscount > 0):
     
     if($missing == 'yes'):
         $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
-        $searchnames = array_map(fn($name) => $db->escape_string($name), $resultnames); // escape names to prevent SQL injection
-        $placeholders = implode(',', array_fill(0, count($searchnames), '?')); // create placeholders for prepared statement
+        $placeholders = implode(',', array_fill(0, count($resultnames), '?')); // create placeholders for prepared statement
 
         $msg->logMessage('[DEBUG]',"Missing check on cards: ".implode(', ', $resultnames));
 
@@ -526,7 +525,7 @@ if($uniquecardscount > 0):
             GROUP BY name
         ";
 
-        if ($totalresult = $db->execute_query($query, $searchnames)):
+        if ($totalresult = $db->execute_query($query, $resultnames)):
             $cardCopies = [];
             while ($totalrow = $totalresult->fetch_assoc()):
                 $cardCopies[$totalrow['name']] = $totalrow['allcopies'];
