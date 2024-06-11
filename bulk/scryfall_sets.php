@@ -12,6 +12,9 @@
  *  
  *  2.1         20/01/24
  *              Move to logMessage
+ * 
+ *  2.2         11/06/24
+ *              Re-download set icons once a week
 */
 
 require ('bulk_ini.php');
@@ -34,8 +37,26 @@ $file_location = $ImgLocation.'json/sets.json';
 
 //Check image location
 if (!file_exists($ImgLocation."seticons")):
-    $msg->logMessage('[DEBUG]',"Creating new directory {$ImgLocation}/seticons");
+    $msg->logMessage('[NOTICE]',"Creating new directory {$ImgLocation}/seticons");
     mkdir($ImgLocation."seticons");
+endif;
+
+// Delete all set icons once a week to force redownload (to make sure current)
+if (date('N') == 6): // 'N' format in date() returns 1 for Monday to 7 for Sunday
+    $msg->logMessage('[NOTICE]', "Today is Saturday, deleting all files in {$ImgLocation}/seticons");
+
+    // Get all files in the seticons directory
+    $files = glob($ImgLocation."seticons/*"); // Use a wildcard to get all files
+
+    // Iterate over the files and delete each one
+    foreach ($files as $file):
+        if (is_file($file)):
+            unlink($file); // Delete the file
+            $msg->logMessage('[DEBUG]', "Deleted file: {$file}");
+        endif;
+    endforeach;
+
+    $msg->logMessage('[NOTICE]', "All files in {$ImgLocation}/seticons have been deleted");
 endif;
 
 // Set counts
