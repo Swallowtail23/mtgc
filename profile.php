@@ -637,7 +637,6 @@ endif;
                                                 <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT CSV' onclick='ImportPrep()';>
                                             </label>
                                             <br>
-                                        </span>
                                         <b>Add/replace/remove:</b><br>
                                         <select class="dropdown" name='importscope' id='importScopeSelect'>
                                             <option value='add'>Add to collection</option>
@@ -650,6 +649,7 @@ endif;
                                             <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
                                             <option value='delverlens'>Delver Lens</option>
                                         </select>
+                                        </span>
                                     </form>
                                 </td>
                             </tr>
