@@ -616,12 +616,26 @@ endif;
                                     </form>
                                 </td>
                             </tr>
+                            <script>
+                                function displayFileName() {
+                                    var input = document.getElementById('importfile');
+                                    var fileNameSpan = document.getElementById('fileNameSpan');
+                                    if (input.files.length > 0) {
+                                        var fileName = input.files[0].name;
+                                        fileNameSpan.textContent = 'Selected file: ' + fileName;
+                                        document.getElementById('submitfile').style.display = 'block';
+                                    } else {
+                                        fileNameSpan.textContent = '';
+                                        document.getElementById('submitfile').style.display = 'none';
+                                    }
+                                }
+                            </script>
                             <tr>
-                                <td class="options_left">
+                                <td class="options_left" style="padding-top: 10px;">
                                     <b>Import: </b> 
                                 </td>
                                 <td class="options_centre">
-                                    Import cards to your collection<br>
+                                    Import cards to your collection&nbsp;
                                     <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">
                                         help
                                     </span>
@@ -629,7 +643,7 @@ endif;
                                 <td class="options_right">
                                     <form enctype='multipart/form-data' action='?' method='post'>
                                         <label class='profilelabel'>
-                                            <input id='importfile' type='file' name='filename'>
+                                            <input id='importfile' type='file' name='filename' onchange='displayFileName()'>
                                             <span>SELECT CSV</span>
                                         </label><br>
                                         <span id='submitfile' style="display: none;">
@@ -637,6 +651,7 @@ endif;
                                                 <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT CSV' onclick='ImportPrep()';>
                                             </label>
                                             <br>
+                                            <span id='fileNameSpan'></span>
                                         <b>Add/replace/remove:</b><br>
                                         <select class="dropdown" name='importscope' id='importScopeSelect'>
                                             <option value='add'>Add to collection</option>
