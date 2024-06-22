@@ -56,14 +56,36 @@ else:
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
                                 cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
-                                AGAINST(? IN BOOLEAN MODE) AND primary_card = 1 ";
-                $params = array_fill(0, 1, '"'.$name.'"');
+                                AGAINST(? IN BOOLEAN MODE) AND primary_card = 1 
+                                AND (
+                                cards_scry.name = ? OR
+                                cards_scry.f1_name = ? OR
+                                cards_scry.f2_name = ? OR
+                                cards_scry.printed_name = ? OR
+                                cards_scry.f1_printed_name = ? OR
+                                cards_scry.f2_printed_name = ? OR
+                                cards_scry.flavor_name = ? OR
+                                cards_scry.f1_flavor_name = ? OR
+                                cards_scry.f2_flavor_name = ?
+                                )";
+                $params = array_fill(0, 10, $name);
             elseif ($allprintings === "yes"):  // Used in 'All Printings' search from card_detail page
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
                                 cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
-                                AGAINST(? IN BOOLEAN MODE) ";
-                $params = array_fill(0, 1, '"'.$name.'"');
+                                AGAINST(? IN BOOLEAN MODE)
+                                AND (
+                                cards_scry.name = ? OR
+                                cards_scry.f1_name = ? OR
+                                cards_scry.f2_name = ? OR
+                                cards_scry.printed_name = ? OR
+                                cards_scry.f1_printed_name = ? OR
+                                cards_scry.f2_printed_name = ? OR
+                                cards_scry.flavor_name = ? OR
+                                cards_scry.f1_flavor_name = ? OR
+                                cards_scry.f2_flavor_name = ?
+                                )";
+                $params = array_fill(0, 10, $name);
             else:
                 $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
                             OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
