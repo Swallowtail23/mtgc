@@ -763,9 +763,9 @@ require('includes/menu.php'); //mobile menu
                             <td id="carddetailset">
                                 <?php
                                 if ($card_primary === 1):
-                                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
+                                    echo "<a href='index.php?complex=yes&amp;sortBy=auto&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
                                 else:
-                                    echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>&nbsp;";
+                                    echo "<a href='index.php?complex=yes&amp;sortBy=auto&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>&nbsp;";
                                 endif; ?>
                             </td>
                             <td id="carddetaillogo">
@@ -810,9 +810,9 @@ require('includes/menu.php'); //mobile menu
                     endif;
                     echo "</h2>";
                     if ($card_primary === 1):
-                        echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
+                        echo "<a href='index.php?complex=yes&amp;sortBy=auto&amp;set%5B%5D=$setcode'>$setname</a>&nbsp;";
                     else:
-                        echo "<a href='index.php?complex=yes&amp;sortBy=setdown&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>";
+                        echo "<a href='index.php?complex=yes&amp;sortBy=auto&amp;set%5B%5D=$setcode&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>";
                     endif; ?>
                 </div> 
                 <div id="carddetailmain">
