@@ -69,6 +69,25 @@ else:
     $csvsuccess = '';
 endif;
 
+if(isset($_GET['deckcreated'])):
+    $newdecksuccess = htmlspecialchars($_GET['deckcreated'], ENT_QUOTES, 'UTF-8');
+    $msg->logMessage('[DEBUG]',"New deck name $newdecksuccess");
+else:
+    $newdecksuccess = '';
+endif;
+if(isset($_GET['decknumber'])):
+    $newdecknumber = filter_input(INPUT_GET, 'decknumber', FILTER_VALIDATE_INT);
+    $msg->logMessage('[DEBUG]',"New deck number $newdecknumber");
+    if ($newdecknumber === false):
+        $newdecknumber = ''; // If not a valid integer, reset to empty string
+    endif;
+else:
+    $newdecknumber = '';
+endif;
+if($newdecksuccess === '' OR $newdecknumber === ''):
+    $newdecksuccess = $newdecknumber = '';
+endif;
+
 if ($deletecollection === 'DELETE'):    
     $msg->logMessage('[DEBUG]',"Called to delete collection '$mytable'");
     $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
@@ -114,6 +133,22 @@ endif;
                     document.getElementById('delcollresult').style.display = 'block';
                 }
             });
+            document.addEventListener('DOMContentLoaded', function() {
+                var newdecksuccess = "<?php echo isset($newdecksuccess) ? $newdecksuccess : ''; ?>";
+                if (newdecksuccess !== '') {
+                    document.getElementById('newdecksuccess').style.display = 'block';
+                }
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('importScopeSelect').addEventListener('change', function() {
+                    var addDeckRow = document.getElementById('addDeckRow');
+                    if (this.value === 'replace' || this.value === 'subtract') {
+                        addDeckRow.style.display = 'none';
+                    } else {
+                        addDeckRow.style.display = '';
+                    }
+                });
+            });
             // Function to toggle the visibility of the info box
             function toggleInfoBox() {
                 var infoBox = document.getElementById("infoBox");
@@ -147,12 +182,17 @@ endif;
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
+        <div id="newdecksuccess" class="msg-new" onclick='CloseMe(this)' style="display: none;"><span>Deck <i><a href='deckdetail.php?deck=<?php echo $newdecknumber ?>'>"<?php echo $newdecksuccess; ?>"</a></i> created</span>
+            <br>
+            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+        </div>
         <div class="info-box" id="infoBox" style="display:none">
             <span class="close-button-profile material-symbols-outlined" onclick="toggleInfoBox()">close</span>
             <div class="info-box-inner">
                 <h2 class="h2-no-top-margin">Import help</h2>
                 <ul>
-                    <li>Select 'Add to collection', 'Replace in collection' or 'Remove from collection' to add to existing, replace existing, or remove cards</li>
+                    <li>Select 'Add a deck' to create a deck with cards in this import</li>
+                    <li>Select Import type 'Add', 'Replace' or 'Remove' to add to existing, replace existing, or remove cards</li>
                     <li>Import file must be a comma-delimited file (csv); e.g.:</li>
                 </ul>
                 <pre>
@@ -180,7 +220,8 @@ endif;
         </div> <?php
 
         $import = isset($_POST['import']) ? 'yes' : '';
-
+        $adddeck = isset($_POST['adddeck']) ? 'yes' : '';
+        
         $valid_importType = ['add','replace','subtract'];
         $importType = isset($_POST['importscope']) ? "{$_POST['importscope']}" : '';
         if (!in_array($importType,$valid_importType)):
@@ -622,7 +663,7 @@ endif;
                                     var fileNameSpan = document.getElementById('fileNameSpan');
                                     if (input.files.length > 0) {
                                         var fileName = input.files[0].name;
-                                        fileNameSpan.textContent = 'Selected file: ' + fileName;
+                                        fileNameSpan.textContent = fileName;
                                         document.getElementById('submitfile').style.display = 'block';
                                     } else {
                                         fileNameSpan.textContent = '';
@@ -646,25 +687,58 @@ endif;
                                             <input id='importfile' type='file' name='filename' onchange='displayFileName()'>
                                             <span>SELECT CSV</span>
                                         </label><br>
-                                        <span id='submitfile' style="display: none;">
+                                        <div id='submitfile' style="display: none;">
                                             <label class='profilelabel'>
                                                 <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT CSV' onclick='ImportPrep()';>
                                             </label>
-                                            <br>
-                                            <span id='fileNameSpan'></span>
-                                        <b>Add/replace/remove:</b><br>
-                                        <select class="dropdown" name='importscope' id='importScopeSelect'>
-                                            <option value='add'>Add to collection</option>
-                                            <option value='replace'>Replace in collection</option>
-                                            <option value='subtract'>Remove from collection</option>
-                                        </select>
-                                        <br>
-                                        <b>CSV format:</b><br>
-                                        <select class="dropdown" name='format' id='formatSelect'>
-                                            <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
-                                            <option value='delverlens'>Delver Lens</option>
-                                        </select>
-                                        </span>
+                                            <table>
+                                                <tr>
+                                                    <td style='text-align: left'>
+                                                        <b>Selected file:</b>
+                                                    </td>
+                                                    <td>
+                                                        <span id='fileNameSpan'></span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style='text-align: left'>
+                                                        <b>CSV format:</b>
+                                                    </td>
+                                                    <td>
+                                                        <select class="dropdown" name='format' id='formatSelect'>
+                                                            <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
+                                                            <option value='delverlens'>Delver Lens</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style='text-align: left'>
+                                                        <b>Import type:</b>
+                                                    </td>
+                                                    <td>
+                                                        <select class="dropdown" name='importscope' id='importScopeSelect'>
+                                                            <option value='add'>Add</option>
+                                                            <option value='replace'>Replace</option>
+                                                            <option value='subtract'>Remove</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr id='addDeckRow'>
+                                                    <td style='text-align: left'>
+                                                        <b>Add a deck:</b>
+                                                    </td>
+                                                    <td>
+                                                        <span title="AddDeck" class="checkbox-group">
+                                                            <input id = "adddeck" type="checkbox" class="checkbox" name="adddeck" value="yes">
+                                                            <label for='adddeck'>
+                                                                <span class="check"></span>
+                                                                <span class="box"></span>
+                                                            </label>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
                                     </form>
                                 </td>
                             </tr>
@@ -739,7 +813,33 @@ endif;
                                 echo "<h4>Incorrect file format</h4>";
                                 exit;
                             else:
-                                echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
+                                if ($adddeck === 'yes'):
+                                    $currentDateTime = date("j F Y, g:i:sa");
+                                    $tmpdeckname = $currentDateTime;
+                                    $obj = new DeckManager($db, $logfile, $useremail, $serveremail);
+                                    $msg->logMessage('[DEBUG]',"Import called with 'add deck' option, $tmpdeckname to be created...");
+                                    $decksuccess = $obj->addDeck($user,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
+                                    if($decksuccess['flag'] === 1):
+                                        $decknumber = $decksuccess['decknumber'];
+                                        $msg->logMessage('[DEBUG]',"Deck created, $tmpdeckname created, deck number is $decknumber");
+                                        echo "<script>var deckNumber = '$decknumber'; var deckName = '$tmpdeckname'; var deckCreated = true;</script>";
+                                        $file = fopen($_FILES['filename']['tmp_name'], 'r');
+                                        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail);
+                                        // Read the entire file content into a variable
+                                        $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
+                                        fclose($file);
+
+                                        // Call the processInput method with the decknumber and file content
+                                        $deckManager->processInput($decknumber, $fileContent);
+                                    else:
+                                        $msg->logMessage('[ERROR]',"Deck NOT created");
+                                    endif;
+                                    $msg->logMessage('[DEBUG]',"redirecting to profile.php?deckcreated=$tmpdeckname&decknumber=$decknumber");
+                                    echo "<meta http-equiv='refresh' content='0;url=profile.php?deckcreated=$tmpdeckname&decknumber=$decknumber'>";
+                                else:
+                                    $msg->logMessage('[DEBUG]',"adddeck is not 'yes', skipping deck creation.");
+                                    echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
+                                endif;
                             endif;
                         elseif ($import === 'yes' && ($importType === '' OR $importFormat === '')):
                             $msg->logMessage('[ERROR]',"Import called without valid importType");
