@@ -669,6 +669,12 @@ else:
                         COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
                         cs_id ASC ";
                 
+                // Auto price sort for an empty name Collection search
+                elseif ($scope === "mycollection" AND $searchname === "yes" and (isset($name) AND empty($name)) ):
+                    $order = "ORDER BY cards_scry.price_sort DESC,
+                              COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
+                              set_date DESC, primary_card DESC, number ASC, 
+                              number_import ASC, cs_id ASC ";
                 // Auto / Everything else
                 else:
                     // This should be the same as 'DEFAULT' below
