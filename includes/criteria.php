@@ -671,7 +671,7 @@ else:
                 
                 // Auto price sort for an empty name Collection search
                 elseif ($scope === "mycollection" AND $searchname === "yes" and (isset($name) AND empty($name)) ):
-                    $order = "ORDER BY cards_scry.price_sort DESC,
+                    $order = "ORDER BY $mytable.topvalue DESC DESC,
                               COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
                               set_date DESC, primary_card DESC, number ASC, 
                               number_import ASC, cs_id ASC ";
