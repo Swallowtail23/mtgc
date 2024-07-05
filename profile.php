@@ -193,12 +193,11 @@ endif;
                 <ul>
                     <li>Select 'Add a deck' to create a deck with cards in this import</li>
                     <li>Select Import type 'Add', 'Replace' or 'Remove' to add to existing, replace existing, or remove cards</li>
-                    <li>Import file must be a comma-delimited file (csv); e.g.:</li>
+                    <li>Import file can be a MTGC CSV, e.g.:</li>
                 </ul>
                 <pre>
           setcode,number,name,lang,normal,foil,etched,id
-          LTR,3,Bill the Pony,en,5,0,0,{Scryfall id}
-          LTR,4,"Card, name",en,2,0,0,{Scryfall id}</pre>
+          LTR,3,Bill the Pony,en,5,0,0,{Scryfall id}</pre>
                 <ul>
                     <li>Delver Lens lists can be imported in the CSV export format of</li>
                 </ul>
@@ -208,11 +207,12 @@ endif;
                 <ul>
                     <li><u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards instead of variations of a card</li>
                     <li><u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate (e.g. Planeswalker-stamped promos, The List, etc.</li>
+                    <li>Files can also be decklists (MTGC or Moxfield)</li>
                     <li>If "id" is a valid Scryfall UUID value, the line will be imported as that id <i>without checking anything else</i></li>
                     <li>If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number/language match or skip the row</li>
                     <li>If language is unspecified, the primary version is imported (usually English)</li>
                     <li>Set codes and collector numbers must be as <a href='sets.php'> here </a>for success</li>
-                    <li>For a format example export first, use that file as a template</li>
+                    <li>For a format example: export first, use that file as a template</li>
                     <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
                     <li>You will be emailed a list of import failures/warnings</li>
                 </ul>
@@ -228,7 +228,7 @@ endif;
             $importType = '';
         endif;
 
-        $valid_format = ['mtgc','delverlens'];
+        $valid_format = ['mtgc','delverlens','regex'];
         $importFormat = isset($_POST['format']) ? $_POST['format'] : '';
         if (!in_array($importFormat,$valid_format)):
             $importFormat = '';
@@ -685,11 +685,12 @@ endif;
                                     <form enctype='multipart/form-data' action='?' method='post'>
                                         <label class='profilelabel'>
                                             <input id='importfile' type='file' name='filename' onchange='displayFileName()'>
-                                            <span>SELECT CSV</span>
+                                            <span>SELECT FILE</span>
                                         </label><br>
                                         <div id='submitfile' style="display: none;">
                                             <label class='profilelabel'>
-                                                <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT CSV' onclick='ImportPrep()';>
+                                                <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT FILE' onclick='ImportPrep()';>
+                                                <input type="hidden" name="format" value="regex">
                                             </label>
                                             <table>
                                                 <tr>
@@ -698,17 +699,6 @@ endif;
                                                     </td>
                                                     <td>
                                                         <span id='fileNameSpan'></span>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td style='text-align: left'>
-                                                        <b>CSV format:</b>
-                                                    </td>
-                                                    <td>
-                                                        <select class="dropdown" name='format' id='formatSelect'>
-                                                            <option value='mtgc'><?php echo $siteTitle;?> &nbsp;&nbsp;</option>
-                                                            <option value='delverlens'>Delver Lens</option>
-                                                        </select>
                                                     </td>
                                                 </tr>
                                                 <tr>
@@ -808,9 +798,18 @@ endif;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
                             $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
-                            $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
+                            if ($importFormat === 'mtgc' || $importFormat === 'delver'):
+                                $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
+                            elseif ($importFormat === 'regex'):
+                                $importcards = $obj->importCollectionRegex($importfile, $mytable, $importType, $useremail, $serveremail);
+                            else:
+                                $importcards = 'incorrect format';
+                            endif;
                             if ($importcards === 'incorrect format'):
                                 echo "<h4>Incorrect file format</h4>";
+                                exit;
+                            elseif ($importcards === 'emptyfile'):
+                                echo "<h4>File contains no card data</h4>";
                                 exit;
                             else:
                                 if ($adddeck === 'yes'):

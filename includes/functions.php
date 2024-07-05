@@ -1430,7 +1430,7 @@ function in_array_case_insensitive($needle, $haystack)
 }
 
 function input_interpreter($input_string)
-// Called by quickAdd in deckmanager class, and by index.php search inputs
+// Called by quickAdd in deckmanager class, index.php search inputs and profile.php collection imports
 
 // This function takes an input string, either from deck quick add or search strings, and strips it into components:
 // - UUID
@@ -1459,8 +1459,9 @@ function input_interpreter($input_string)
         $fields = str_getcsv($string);
         
         // If str_getcsv returns an array with more than one element, it's likely a CSV
-        $msg->logMessage('[DEBUG]', "Input is CSV, returning field count");
-        return count($fields) > 1;
+        $fieldcount = count($fields);
+        $msg->logMessage('[DEBUG]', "Input is CSV, returning field count $fieldcount");
+        return $fieldcount > 1;
     };
     
     // Define extract_and_process_csv as a closure
@@ -1484,7 +1485,13 @@ function input_interpreter($input_string)
         $number = $fields[1];
         $name   = $fields[2];
         
-        // Extracting different fields
+        if ((strpos(strtolower($set),'code') !== FALSE) &&
+            (strpos(strtolower($number),'number') !== FALSE) &&
+            (strpos(strtolower($name),'name') !== FALSE)):
+            return 'header';
+        endif;
+        
+        // Extracting other fields
         if ($csvFormat === 'mtgc'):
             $lang   = $fields[3];
             $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
@@ -1501,7 +1508,7 @@ function input_interpreter($input_string)
             return false;
         endif;
         
-        // Sum the values of parameters 5, 6, and 7
+        // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
         $qty = $param5 + $param6 + $param7;
 
         return [
@@ -1510,7 +1517,10 @@ function input_interpreter($input_string)
             'name' => $name,
             'lang' => $lang,
             'qty' => $qty,
-            'uuid' => $uuid
+            'uuid' => $uuid,
+            'normal' => $param5,
+            'foil' => $param6,
+            'etched' => $param7
         ];
     };
     
@@ -1521,20 +1531,34 @@ function input_interpreter($input_string)
         // The line is in CSV format
         $result = $extract_and_process_csv($sanitised_string);
     
-        if ($result !== false):
+        if ($result === 'header'):
+            return 'header';
+        elseif ($result !== false):
+            if(($result['normal'] + $result['foil'] + $result['etched'] === 0) && $result['qty'] > 0):
+                $result['normal'] = $result['qty'];
+            endif;
+            $msg->logMessage('[DEBUG]', "Input interpreter result (CSV): Qty: "
+                    . "[{$result['qty']} (N: {$result['normal']},"
+                    . " F: {$result['foil']}, E: {$result['etched']})] x Card: [{$result['name']}] "
+                    . "Set: [{$result['set']}] Collector number: [{$result['number']}] "
+                    . "UUID: [{$result['uuid']}]");
             return [
                 'set' => $result['set'],
                 'number' => $result['number'],
                 'name' => $result['name'],
                 'lang' => $result['lang'],
                 'qty' => $result['qty'],
-                'uuid' => $result['uuid']
+                'uuid' => $result['uuid'],
+                'normal' => $result['normal'],
+                'foil' => $result['foil'],
+                'etched' => $result['etched']
             ];
         else:
             return false;
         endif;
-        
-    else: // Not a CSV, interpret as a quick add text line
+    elseif(trim($sanitised_string) === ''):
+        return 'empty line';
+    else: // Not a CSV, interpret as a quick add text line (so no info on normal/foil/etched)
         preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
         if (isset($matches[1]) && $matches[1] !== ''):
             $qty = $matches[1];
@@ -1560,14 +1584,17 @@ function input_interpreter($input_string)
             $number = '';
         endif;
         $name = htmlspecialchars_decode($name, ENT_QUOTES);
-        $msg->logMessage('[DEBUG]', "Input interpreter result '$input_string', interpreted as: Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
+        $msg->logMessage('[DEBUG]', "Input interpreter result (QuickAdd): Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
         $output = [
             'set' => $set,
             'number' => $number,
             'name' => $name,
             'lang' => '',
             'qty' => $qty,
-            'uuid' => ''
+            'uuid' => '',
+            'normal' => $qty,
+            'foil' => 0,
+            'etched' => 0
         ];
         return $output;
     endif;
