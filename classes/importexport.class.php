@@ -171,7 +171,7 @@ class ImportExport
 
         foreach ($lines as $line):
             $row_no = $i + 1;
-            $this->message->logMessage('[DEBUG]',"Reviewing line $row_no");
+            $this->message->logMessage('[DEBUG]',"Row: $row_no: Reviewing line");
             $linestring = htmlspecialchars($line,ENT_NOQUOTES);
             $interpreted_string = input_interpreter($linestring);
             if($interpreted_string === 'header'):
