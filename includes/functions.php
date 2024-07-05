@@ -1,6 +1,6 @@
 <?php
-/* Version:     23.0
-    Date:       09/06/24
+/* Version:     24.0
+    Date:       05/07/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -75,6 +75,10 @@
  * 
  * 23.0         09/06/24
  *              Add CSV functions for deck/card add interpretation
+ * 
+ * 24.0         05/07/24
+ *              Changes to input_interpreter to cater for import rewrite
+ *              MTGC-100
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

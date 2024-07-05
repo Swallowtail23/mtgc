@@ -1,6 +1,6 @@
 <?php 
-/* Version:     11.2
-    Date:       20/01/24
+/* Version:     12.0
+    Date:       05/07/24
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -42,6 +42,10 @@
  * 11.2         09/06/24
  *              Update help wording for export and import with languages
  *              MTGC-87 and MTGC-89
+ * 
+ * 12.0         05/07/24
+ *              Major import rewrite
+ *              MTGC-100
  */
 
 if (file_exists('includes/sessionname.local.php')):
