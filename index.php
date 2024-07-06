@@ -533,11 +533,15 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                     <h2 class="h2-no-top-margin">Search help</h2>
                     <br><b>Header search</b><br>
                     Header search will update live results as text is input.<br>
-                    Use square brackets to shortcut to a specific set or card, e.g.:<br>
+                    Use square brackets or parentheses to shortcut to a specific set or card, e.g.:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Goblin [m13]</i>
                     or
                     <i>[m13 215]</i>
+                    or
+                    <i>(m13 215)</i>
+                    or
+                    <i>(m13) 215</i>
                     <br><br>
                     <b>Languages</b><br>
                     By default, the primary language printing for each card will be returned.<br>
