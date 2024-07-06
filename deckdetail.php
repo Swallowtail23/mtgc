@@ -75,6 +75,7 @@
  * 
  *  20.1        06/07/24
  *              Add card collector numbers to deck exports
+ *              Don't cut basic lands down to 1 when changing to commander deck
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -301,7 +302,7 @@ if (isset($updatetype)):
     
     // Set quantities to 1 for commander decks
     if(in_array($updatetype,$commander_decktypes)):
-        $query = 'UPDATE deckcards SET cardqty=? WHERE (decknumber = ? AND (sideqty IS NULL or sideqty = 0) )';
+        $query = "UPDATE deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id SET cardqty=? WHERE deckcards.decknumber = ? AND (deckcards.sideqty IS NULL or sideqty = 0) AND cards_scry.type NOT LIKE 'Basic Land%'";
         $msg->logMessage('[DEBUG]',"Updating deck type to a Commander type, setting quantities to 1");
         if ($db->execute_query($query, [1,$decknumber]) != TRUE):
             trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
