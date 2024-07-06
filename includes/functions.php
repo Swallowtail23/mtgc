@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.0
-    Date:       05/07/24
+/* Version:     24.1
+    Date:       06/07/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -78,6 +78,10 @@
  * 
  * 24.0         05/07/24
  *              Changes to input_interpreter to cater for import rewrite
+ *              MTGC-100
+ * 
+ * 24.1         06/07/24
+ *              Add moxfield decklist interpreter
  *              MTGC-100
 */
 
@@ -1562,44 +1566,97 @@ function input_interpreter($input_string)
         endif;
     elseif(trim($sanitised_string) === ''):
         return 'empty line';
-    else: // Not a CSV, interpret as a quick add text line (so no info on normal/foil/etched)
-        preg_match("~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~", $sanitised_string, $matches);
-        if (isset($matches[1]) && $matches[1] !== ''):
-            $qty = $matches[1];
-        else:
-            $qty = '';
+    else: // Not a CSV, interpret as either a moxfield decklist line or a MTGC quick add text line (MTGC has no info on normal/foil/etched)
+        
+        $pattern_moxfield = '/^(\d+)\s+(.+?)\s+\(([^)]+)\)\s+(\d+\S*?)(\s\*F\*)?$/';
+        $pattern_mtgc = "~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~";
+        if (preg_match($pattern_moxfield, trim($sanitised_string), $matches)):
+            $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is moxfield");
+            $format = 'mox';
+            if (isset($matches[1]) && $matches[1] !== ''):
+                $qty = $matches[1];
+            else:
+                $qty = 0;
+            endif;
+            $isFoil = isset($matches[5]) ? true : false;
+            if($isFoil):
+                $normal = 0;
+                $foil = $qty;
+            else:
+                 $normal = $qty;
+                 $foil = 0;
+            endif;
+            // Name
+            if (isset($matches[2])):
+                $name = trim($matches[2]);
+            else:
+                $name = '';
+            endif;
+            // Set
+            if (isset($matches[3])):
+                $set = strtoupper($matches[3]);
+            else:
+                $set = '';
+            endif;
+            // Collector number
+            if (isset($matches[4])):
+                $number = $matches[4];
+            else:
+                $number = '';
+            endif;
+            $name = htmlspecialchars_decode($name, ENT_QUOTES);
+            $msg->logMessage('[DEBUG]', "Input interpreter result (Moxfield): Qty: [$qty (N:$normal / F:$foil)] x Card: [$name] Set: [$set] Collector number: [$number]");
+            $output = [
+                'set' => $set,
+                'number' => $number,
+                'name' => $name,
+                'lang' => '',
+                'qty' => $qty,
+                'uuid' => '',
+                'normal' => $normal,
+                'foil' => $foil,
+                'etched' => 0
+            ];
+        elseif(preg_match($pattern_mtgc, trim($sanitised_string), $matches)):
+            $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is mtgc");
+            $format = 'mtgc';
+            if (isset($matches[1]) && $matches[1] !== ''):
+                $qty = $matches[1];
+            else:
+                $qty = '';
+            endif;
+            // Name
+            if (isset($matches[2])):
+                $name = trim($matches[2]);
+            else:
+                $name = '';
+            endif;
+            // Set
+            if (isset($matches[3])):
+                $set = strtoupper($matches[3]);
+            else:
+                $set = '';
+            endif;
+            // Collector number
+            if (isset($matches[4])):
+                $number = $matches[4];
+            else:
+                $number = '';
+            endif;
+            $name = htmlspecialchars_decode($name, ENT_QUOTES);
+            $msg->logMessage('[DEBUG]', "Input interpreter result (MTGC Quick add): Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
+            $output = [
+                'set' => $set,
+                'number' => $number,
+                'name' => $name,
+                'lang' => '',
+                'qty' => $qty,
+                'uuid' => '',
+                'normal' => $qty,
+                'foil' => 0,
+                'etched' => 0
+            ];
         endif;
-        // Name
-        if (isset($matches[2])):
-            $name = trim($matches[2]);
-        else:
-            $name = '';
-        endif;
-        // Set
-        if (isset($matches[3])):
-            $set = strtoupper($matches[3]);
-        else:
-            $set = '';
-        endif;
-        // Collector number
-        if (isset($matches[4])):
-            $number = $matches[4];
-        else:
-            $number = '';
-        endif;
-        $name = htmlspecialchars_decode($name, ENT_QUOTES);
-        $msg->logMessage('[DEBUG]', "Input interpreter result (QuickAdd): Qty: [$qty] x Card: [$name] Set: [$set] Collector number: [$number]");
-        $output = [
-            'set' => $set,
-            'number' => $number,
-            'name' => $name,
-            'lang' => '',
-            'qty' => $qty,
-            'uuid' => '',
-            'normal' => $qty,
-            'foil' => 0,
-            'etched' => 0
-        ];
         return $output;
     endif;
 }

@@ -208,6 +208,7 @@ CREATE TABLE `cards_scry` (
   KEY `type_2` (`type`),
   KEY `number` (`number`),
   KEY `primary_card_2` (`primary_card`),
+  KEY `number_import` (`number_import`),
   KEY `idx_is_paper` (`is_paper`),
   KEY `idx_is_mtgo` (`is_mtgo`),
   KEY `idx_is_arena` (`is_arena`)

@@ -1,6 +1,6 @@
 <?php 
-/* Version:     12.0
-    Date:       05/07/24
+/* Version:     12.1
+    Date:       06/07/24
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -46,6 +46,9 @@
  * 12.0         05/07/24
  *              Major import rewrite
  *              MTGC-100
+ * 
+ * 12.1         06/07/24
+ *              Tweaks for new import rewrite
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -555,7 +558,7 @@ endif;
                             });
 
                             function ImportPrep() {
-                                alert('Import can take several minutes, please be patient...');
+                                // alert('Import can take several minutes, please be patient...');
                                 document.body.style.cursor='wait';
                             };
                             function confirmDelete() {
@@ -697,17 +700,17 @@ endif;
                                                 <input type="hidden" name="format" value="regex">
                                             </label>
                                             <table>
-                                                <tr>
+                                                <tr title='Selected file name'>
                                                     <td style='text-align: left'>
-                                                        <b>Selected file:</b>
+                                                        <b>Selected:&nbsp;</b>
                                                     </td>
                                                     <td>
                                                         <span id='fileNameSpan'></span>
                                                     </td>
                                                 </tr>
-                                                <tr>
+                                                <tr title='Add cards, replace card quantities, or remove these cards from your collection' >
                                                     <td style='text-align: left'>
-                                                        <b>Import type:</b>
+                                                        <b>Action:</b>
                                                     </td>
                                                     <td>
                                                         <select class="dropdown" name='importscope' id='importScopeSelect'>
@@ -717,12 +720,12 @@ endif;
                                                         </select>
                                                     </td>
                                                 </tr>
-                                                <tr id='addDeckRow'>
+                                                <tr title='Add a new deck with these imported cards' id='addDeckRow'>
                                                     <td style='text-align: left'>
-                                                        <b>Add a deck:</b>
+                                                        <b>Deck:</b>
                                                     </td>
                                                     <td>
-                                                        <span title="AddDeck" class="checkbox-group">
+                                                        <span class="checkbox-group">
                                                             <input id = "adddeck" type="checkbox" class="checkbox" name="adddeck" value="yes">
                                                             <label for='adddeck'>
                                                                 <span class="check"></span>
@@ -802,17 +805,8 @@ endif;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
                             $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
-                            if ($importFormat === 'mtgc' || $importFormat === 'delver'):
-                                $importcards = $obj->importCollection($importfile, $mytable, $importType, $useremail, $serveremail, $importFormat);
-                            elseif ($importFormat === 'regex'):
-                                $importcards = $obj->importCollectionRegex($importfile, $mytable, $importType, $useremail, $serveremail);
-                            else:
-                                $importcards = 'incorrect format';
-                            endif;
-                            if ($importcards === 'incorrect format'):
-                                echo "<h4>Incorrect file format</h4>";
-                                exit;
-                            elseif ($importcards === 'emptyfile'):
+                            $importcards = $obj->importCollectionRegex($importfile, $mytable, $importType, $useremail, $serveremail);
+                            if ($importcards === 'emptyfile'):
                                 echo "<h4>File contains no card data</h4>";
                                 exit;
                             else:

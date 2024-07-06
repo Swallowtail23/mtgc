@@ -28,6 +28,9 @@
  *  5.0         05/07/24
  *              Major import routine rewrite
  *              MTGC-100
+ * 
+ *  5.1         06/07/24
+ *              Catch fringe import cases, and improve return notices
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -366,6 +369,10 @@ class ImportExport
         if($count === 0):
             $this->message->logMessage('[DEBUG]',"No cards in the file to import");
             fclose($handle);
+            ?>
+            <script type="text/javascript">
+                alert('WARNING\n\nNo cards in the file to import');
+            </script> <?php
             return 'emptyfile';
         endif;
         
@@ -384,7 +391,8 @@ class ImportExport
             else:
                 //
             endif;
-            $total = $batchOutput['total'];
+            $actionedCards = $batchOutput['total'];
+            $actionedRows = $batchOutput['batchRows'];
             // Clear array after batch insert
             $this->batchedCardIds = [];
         endif;
@@ -398,15 +406,32 @@ class ImportExport
         $subject = "Import failures / warnings"; 
         $message = "$warningsummary \n \n$summary";
         mail($useremail, $subject, $message, $from); 
-        $this->message->logMessage('[NOTICE]',"Import process called with '$importType' ($count unique cards, $total total cards)"); ?>
-        <script type="text/javascript">
-            (function() {
-                fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
-            })();
+        $this->message->logMessage('[NOTICE]',"Import process run with '$importType' ($actionedRows of $count card rows actioned, $actionedCards of $total cards actioned)"); 
+        if($actionedCards === 0):?>
+            <script type="text/javascript">
+                alert('WARNING\n\nNo actions were taken, check your file\n\nEmail has been sent to you with warnings/error details');
+                window.onload=function(){document.body.style.cursor='wait';}
+            </script> <?php
+        elseif($count === $actionedRows && $total === $actionedCards): ?>
+            <script type="text/javascript">
+                (function() {
+                    fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
+                })();
 
-            alert('Import completed - a full collection value resync is being run, and can also take several minutes. Accessing your Profile page while this is running will take longer than usual.');
-            window.onload=function(){document.body.style.cursor='wait';}
-        </script> <?php
+                alert('Import type: <?php echo $importType;?>\n<?php echo $count;?> card rows found in file with <?php echo $total;?> cards\nAll card rows and cards actioned\n\nCollection value is now being resynced, this can take some time for large collections, please wait');
+                window.onload=function(){document.body.style.cursor='wait';}
+            </script> <?php
+        else: ?>
+            <script type="text/javascript">
+                (function() {
+                    fetch('/valueupdate.php?table=<?php echo("$mytable"); ?>');
+                })();
+
+                alert('Import type: <?php echo $importType;?>\n<?php echo $count;?> card rows found in file with <?php echo $total;?> cards\n<?php echo $actionedRows;?> card rows actioned with <?php echo $actionedCards;?> cards\n\nDetails have been emailed to you with warnings/error details\n\nCollection value is now being resynced, this can take some time for large collections, please wait');
+                window.onload=function(){document.body.style.cursor='wait';}
+            </script> <?php
+        endif;
+
     }
 
     public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds) {
@@ -414,8 +439,8 @@ class ImportExport
         $values = [];
         $placeholders = [];
         $batchWarnings = '';
-
-        foreach ($batchedCardIds as $batchedCard):
+                
+        foreach ($batchedCardIds as $key => $batchedCard):
             $line = $batchedCard['line'];
             $row_no = $batchedCard['row'];
             $id = $batchedCard['id'];
@@ -424,44 +449,45 @@ class ImportExport
             $normal = $batchedCard['normal'];
             $foil = $batchedCard['foil'];
             $etched = $batchedCard['etched'];
+            $qty = $normal + $foil + $etched;
             
-            // Validate card types
+            // Validate card types, 'continue' out of this 'foreach' if there are any issues, logging an error
             if($normal > 0 && !str_contains($cardtype, 'normal')):
-                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (normal)");
-                $newWarning = "$row_no, Normal qty cannot be mapped to card without normal finish (row detail: '$line') \n";
+                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (normal) - skipping row");
+                $newWarning = "$row_no, Normal qty cannot be mapped to card without normal finish - row skipped (row detail: '$line') \n";
                 $batchWarnings = $batchWarnings.$newWarning;
-                $fail = true;
-                $total = $total - $normal;
+                $total = $total - $qty;         // Deduct cards from total card count
+                $count = $count - 1;            // Deduct the entire row from the row count
+                unset($batchedCardIds[$key]);   // Remove this row from the batch
+                continue;
             endif;
             if($foil > 0 && !str_contains($cardtype, 'foil')):
-                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (foil)");
-                $newWarning = "$row_no, Foil qty cannot be mapped to card without foil finish (row detail: '$line') \n";
+                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (foil) - skipping row");
+                $newWarning = "$row_no, Foil qty cannot be mapped to card without foil finish - row skipped (row detail: '$line') \n";
                 $batchWarnings = $batchWarnings.$newWarning;
-                $fail = true;
                 $total = $total - $foil;
+                $count = $count - 1;
+                unset($batchedCardIds[$key]);
+                continue;
             endif;
             if($etched > 0 && !str_contains($cardtype, 'etched')):
-                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (etched)");
-                $newWarning = "$row_no, Etched qty cannot be mapped to card without etched finish (row detail: '$line') \n";
+                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import finish mapping error (etched) - skipping row");
+                $newWarning = "$row_no, Etched qty cannot be mapped to card without etched finish - row skipped (row detail: '$line') \n";
                 $batchWarnings = $batchWarnings.$newWarning;
-                $fail = true;
                 $total = $total - $etched;
-            endif;
-            if(isset($fail) && $fail === true):
-                $this->message->logMessage('[ERROR]',"Row: $row_no: Batch import - No valid finishes to add to batch, skipping ('$line')");
+                $count = $count - 1;
+                unset($batchedCardIds[$key]);
                 continue;
-            else:
-                // Add each card to the batch
-                $this->message->logMessage('[DEBUG]',"Row: $row_no: Batch import - adding to batch ('$line')");
-                $values[] = "($id, $normal, $foil, $etched)";
-                $placeholders[] = '(?, ?, ?, ?)';
             endif;
+            // Add each card to the batch
+            $this->message->logMessage('[DEBUG]',"Row: $row_no: Batch import - adding to batch ('$line')");
+            $values[] = "($id, $normal, $foil, $etched)";
+            $placeholders[] = '(?, ?, ?, ?)';
         endforeach;
         $this->message->logMessage('[DEBUG]',"Batch import warnings: '$batchWarnings'");
         if (!empty($values)):
             $this->message->logMessage('[DEBUG]',"Batch import: Assessing import type variations ($importType)");
             $placeholdersString = implode(', ', $placeholders);
-
             if($importType === 'add'):
                 $query = "INSERT INTO $mytable (id, normal, foil, etched) VALUES $placeholdersString 
                             ON DUPLICATE KEY 
@@ -501,7 +527,6 @@ class ImportExport
 
             // Bind the parameters dynamically
             $stmt->bind_param($typeDefinition, ...$bindValues);
-
             if ($stmt->execute()):
                 $this->message->logMessage('[DEBUG]',"importCollectionRegex batch process completed");
                 $stmt->close();
@@ -510,7 +535,7 @@ class ImportExport
                 else:
                     $batchWarnings = "\nBatch import warnings or errors (Row number, Warning/error)\n\n".$batchWarnings;
                 endif;
-                return array('warnings' => $batchWarnings, 'total' => $total);
+                return array('warnings' => $batchWarnings, 'total' => $total, 'batchRows' => $count);
             else:
                 $this->message->logMessage('[ERROR]',"Error executing batch insert query: ".$stmt->error);
                 $stmt->close();
@@ -524,7 +549,7 @@ class ImportExport
             else:
                 $batchWarnings = "\nBatch import warnings or errors (Row number, Warning/error)\n\n".$batchWarnings;
             endif;
-            return array('warnings' => $batchWarnings, 'total' => $total);
+            return array('warnings' => $batchWarnings, 'total' => $total, 'batchRows' => $count);
         endif;
     }
     
