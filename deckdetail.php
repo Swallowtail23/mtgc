@@ -1,5 +1,5 @@
 <?php
-/* Version:     20.0
+/* Version:     20.1
     Date:       10/06/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
@@ -72,6 +72,9 @@
  * 
  *  20.0        10/06/24
  *              Optimise missing queries, and run each time because it's faster
+ * 
+ *  20.1        06/07/24
+ *              Add card collector numbers to deck exports
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -936,7 +939,7 @@ endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
                                 $commandercount = $commandercount +1;
-                                $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                                $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
@@ -1056,7 +1059,7 @@ endif;
                                     endif;
                                     echo "</tr>";
                                     $total = $total + $quantity;
-                                    $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                                    $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                                 endif;
                             endwhile; 
                         endif; 
@@ -1298,7 +1301,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity;
-                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1494,7 +1497,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1740,7 +1743,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -1925,7 +1928,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -2143,7 +2146,7 @@ endif;
                             endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
-                            $textfile = $textfile."$quantity $cardname [$cardset]"."\r\n";
+                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                             endwhile; 
                     endif;?>
                     <tr>
