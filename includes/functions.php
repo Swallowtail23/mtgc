@@ -83,6 +83,7 @@
  * 24.1         06/07/24
  *              Add moxfield decklist interpreter
  *              MTGC-100
+ *              Improve shortcut searching
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1568,9 +1569,38 @@ function input_interpreter($input_string)
         return 'empty line';
     else: // Not a CSV, interpret as either a moxfield decklist line or a MTGC quick add text line (MTGC has no info on normal/foil/etched)
         
+        $pattern_shortcut1 = '/\(([^)]+)\)\s+(\d+\S*?)$/';
+        $pattern_shortcut2 = '/\(([^)]+)\s+(\d+\S*?)\)$/';
         $pattern_moxfield = '/^(\d+)\s+(.+?)\s+\(([^)]+)\)\s+(\d+\S*?)(\s\*F\*)?$/';
         $pattern_mtgc = "~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~";
-        if (preg_match($pattern_moxfield, trim($sanitised_string), $matches)):
+        if (preg_match($pattern_shortcut1, trim($sanitised_string), $matches) || preg_match($pattern_shortcut2, trim($sanitised_string), $matches)):
+            $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is shortcut");
+            $format = 'shortcut';
+            // Set
+            if (isset($matches[1])):
+                $set = strtoupper($matches[1]);
+            else:
+                $set = '';
+            endif;
+            // Collector number
+            if (isset($matches[2])):
+                $number = $matches[2];
+            else:
+                $number = '';
+            endif;
+            $msg->logMessage('[DEBUG]', "Input interpreter result (Shortcut): Set: [$set] Collector number: [$number]");
+            $output = [
+                'set' => $set,
+                'number' => $number,
+                'name' => '',
+                'lang' => '',
+                'qty' => '',
+                'uuid' => '',
+                'normal' => 0,
+                'foil' => 0,
+                'etched' => 0
+            ];
+        elseif (preg_match($pattern_moxfield, trim($sanitised_string), $matches)):
             $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is moxfield");
             $format = 'mox';
             if (isset($matches[1]) && $matches[1] !== ''):
