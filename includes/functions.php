@@ -1569,8 +1569,8 @@ function input_interpreter($input_string)
         return 'empty line';
     else: // Not a CSV, interpret as either a moxfield decklist line or a MTGC quick add text line (MTGC has no info on normal/foil/etched)
         
-        $pattern_shortcut1 = '/\(([^)]+)\)\s+(\d+\S*?)$/';
-        $pattern_shortcut2 = '/\(([^)]+)\s+(\d+\S*?)\)$/';
+        $pattern_shortcut1 = '/^\(([^)]+)\)\s+(\d+\S*?)$/';
+        $pattern_shortcut2 = '/^\(([^)]+)\s+(\d+\S*?)\)$/';
         $pattern_moxfield = '/^(\d+)\s+(.+?)\s+\(([^)]+)\)\s+(\d+\S*?)(\s\*F\*)?$/';
         $pattern_mtgc = "~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~";
         if (preg_match($pattern_shortcut1, trim($sanitised_string), $matches) || preg_match($pattern_shortcut2, trim($sanitised_string), $matches)):
