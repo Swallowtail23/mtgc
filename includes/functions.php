@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.1
-    Date:       06/07/24
+/* Version:     24.2
+    Date:       07/07/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -84,6 +84,9 @@
  *              Add moxfield decklist interpreter
  *              MTGC-100
  *              Improve shortcut searching
+ * 
+ * 24.2         07/07/24
+ *              Improve input interpretation rigour and flexibility, including bracketed names
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1448,7 +1451,7 @@ function input_interpreter($input_string)
 // - set
 // - collector number
 {
-    global $db, $logfile;
+    global $db, $logfile, $bracketsInNames;
     $msg = new Message($logfile); 
     
     $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
@@ -1567,13 +1570,45 @@ function input_interpreter($input_string)
         endif;
     elseif(trim($sanitised_string) === ''):
         return 'empty line';
-    else: // Not a CSV, interpret as either a moxfield decklist line or a MTGC quick add text line (MTGC has no info on normal/foil/etched)
+    else: 
+        // Not a CSV
+        // Need to interpret a text line
+        // as either a moxfield decklist line or a MTGC quick add text line (MTGC has no info on normal/foil/etched)
         
-        $pattern_shortcut1 = '/^\(([^)]+)\)\s+(\d+\S*?)$/';
-        $pattern_shortcut2 = '/^\(([^)]+)\s+(\d+\S*?)\)$/';
-        $pattern_moxfield = '/^(\d+)\s+(.+?)\s+\(([^)]+)\)\s+(\d+\S*?)(\s\*F\*)?$/';
-        $pattern_mtgc = "~^(\d*)\s*([^[\]]+)?(?:\[\s*([^\]\s]+)(?:\s*([^\]\s]+(?:\s+[^\]\s]+)*)?)?\s*\])?~";
-        if (preg_match($pattern_shortcut1, trim($sanitised_string), $matches) || preg_match($pattern_shortcut2, trim($sanitised_string), $matches)):
+        // If the string starts with a number < 1000, assume it's a quantity and strip it from the string into a variable, 
+        // leaving the rest of the string to be assessed for name / set / number.
+        // The only card names that start with numbers are Year cards, e.g. 2001 World Championships Ad etc.
+        
+        $patternNumber = '/^(\d{1,3})\s+(.*)/'; // Match numbers up to 3 digits, and remove into $qty
+        $matches = [];
+        if (preg_match($patternNumber, trim($sanitised_string), $matches)):
+            $qty = $matches[1];
+            $sanitised_string = trim($matches[2]);
+        else:
+            $qty = '';
+            $sanitised_string = trim($sanitised_string);
+        endif;
+        
+        // If string contains an opening ( or [ but no closing ) or ], then terminate the string with %] and submit
+        if (strpos($sanitised_string,'(')       !== false && strpos($sanitised_string,']') === false && strpos($sanitised_string,')') === false):
+            $sanitised_string = $sanitised_string."%)";
+        elseif (strpos($sanitised_string,'[')   !== false && strpos($sanitised_string,']') === false && strpos($sanitised_string,')') === false):
+            $sanitised_string = $sanitised_string."%]";
+        endif;
+        
+        // Shortcut matches
+        $pattern_shortcut1  = '/^[[(]([^)\]]+)[\])]\s+(\d+\S*?)$/';                                              // e.g. (mh3) 304 or [mh3] 304
+        $pattern_shortcut2  = '/^[[(]([^)\]]+)\s+(\d+\S*?)[)\]]$/';                                              // e.g. (mh3 304) or [mh3 304]
+        
+        // Full matches
+        $pattern_full_1     = '/^(.+?)\s+[(\[]([^)\]]+)[)\]]\s+(\d+\S*?)(\s\*F\*)?$/';                              // Plains (mh3) 304 or Plains [mh3] 304   Note - quantity already removed
+        $pattern_full_2     = '/^(.+?)\s+[(\[]([^)\]]+)\s+(\d+\S*?)[)\]](\s\*F\*)?$/';                              // Plains (mh3 304) or Plains [mh3 304]   Note - quantity already removed
+        
+        // Legacy match - catches remaining non-specific cases, e.g. "Plains"
+        $pattern_mtgc       = "/^([^()\[\]]+)?(?:[\[\(]\s*([^)\]\s]+)(?:\s*([^)\]\s]+(?:\s+[^)\]\s]+)*)?)?\s*[\)\]])?/";
+                
+        // Shortcut matches (qty irrelevant)
+        if (preg_match($pattern_shortcut1, $sanitised_string, $matches) || preg_match($pattern_shortcut2, $sanitised_string, $matches)):
             $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is shortcut");
             $format = 'shortcut';
             // Set
@@ -1594,21 +1629,21 @@ function input_interpreter($input_string)
                 'number' => $number,
                 'name' => '',
                 'lang' => '',
-                'qty' => '',
+                'qty' => $qty,
                 'uuid' => '',
                 'normal' => 0,
                 'foil' => 0,
                 'etched' => 0
             ];
-        elseif (preg_match($pattern_moxfield, trim($sanitised_string), $matches)):
-            $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is moxfield");
-            $format = 'mox';
-            if (isset($matches[1]) && $matches[1] !== ''):
-                $qty = $matches[1];
-            else:
-                $qty = 0;
+
+        // Full matches
+        elseif (preg_match($pattern_full_1, $sanitised_string, $matches) || preg_match($pattern_full_2, $sanitised_string, $matches)):
+            $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is full string");
+            $format = 'full';
+            if ($qty === ''):
+                $qty = 1;
             endif;
-            $isFoil = isset($matches[5]) ? true : false;
+            $isFoil = isset($matches[4]) ? true : false;
             if($isFoil):
                 $normal = 0;
                 $foil = $qty;
@@ -1617,25 +1652,25 @@ function input_interpreter($input_string)
                  $foil = 0;
             endif;
             // Name
-            if (isset($matches[2])):
-                $name = trim($matches[2]);
+            if (isset($matches[1])):
+                $name = trim($matches[1]);
             else:
                 $name = '';
             endif;
             // Set
-            if (isset($matches[3])):
-                $set = strtoupper($matches[3]);
+            if (isset($matches[2])):
+                $set = strtoupper($matches[2]);
             else:
                 $set = '';
             endif;
             // Collector number
-            if (isset($matches[4])):
-                $number = $matches[4];
+            if (isset($matches[3])):
+                $number = $matches[3];
             else:
                 $number = '';
             endif;
             $name = htmlspecialchars_decode($name, ENT_QUOTES);
-            $msg->logMessage('[DEBUG]', "Input interpreter result (Moxfield): Qty: [$qty (N:$normal / F:$foil)] x Card: [$name] Set: [$set] Collector number: [$number]");
+            $msg->logMessage('[DEBUG]', "Input interpreter result (full): Qty: [$qty (N:$normal / F:$foil)] x Card: [$name] Set: [$set] Collector number: [$number]");
             $output = [
                 'set' => $set,
                 'number' => $number,
@@ -1646,30 +1681,43 @@ function input_interpreter($input_string)
                 'normal' => $normal,
                 'foil' => $foil,
                 'etched' => 0
-            ];
+                ];
         elseif(preg_match($pattern_mtgc, trim($sanitised_string), $matches)):
             $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is mtgc");
             $format = 'mtgc';
-            if (isset($matches[1]) && $matches[1] !== ''):
-                $qty = $matches[1];
-            else:
-                $qty = '';
+            if ($qty === ''):
+                $qty = 1;
             endif;
+            
             // Name
-            if (isset($matches[2])):
-                $name = trim($matches[2]);
+            /// Catch fringe cases where name contains brackets ///
+            if(isset($matches[1]) && isset($matches[2])):
+                if(isset($matches[3])):
+                    $teststring = trim($matches[2])." ".trim($matches[3]);
+                else:
+                    $teststring = trim($matches[2]);
+                endif;
+            endif;
+            if(isset($teststring) && in_array_case_insensitive($teststring, $bracketsInNames)):
+                $msg->logMessage('[DEBUG]', "Bracket contents match a card with brackets in name, resetting name, set to match");
+                $matches[1] = $matches[1]."(".$teststring.")";
+                $matches[2] = $matches[3] = '';
+            endif;
+            
+            if (isset($matches[1])):
+                $name = trim($matches[1]);
             else:
                 $name = '';
             endif;
             // Set
-            if (isset($matches[3])):
-                $set = strtoupper($matches[3]);
+            if (isset($matches[2])):
+                $set = strtoupper($matches[2]);
             else:
                 $set = '';
             endif;
             // Collector number
-            if (isset($matches[4])):
-                $number = $matches[4];
+            if (isset($matches[3])):
+                $number = $matches[3];
             else:
                 $number = '';
             endif;
