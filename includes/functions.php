@@ -1431,6 +1431,23 @@ function valid_tablename($input)
     endif;
 }
 
+function isValidSetcode($setcode) 
+{
+    return preg_match('/^[a-zA-Z0-9]{3,6}$/', $setcode) || empty($setcode);
+}
+
+function isValidCardName($name) 
+// Cannot be only numbers
+{
+    return preg_match('/\D/', $name) || empty($name);
+}
+
+function isValidLanguageCode($lang) 
+// Alpha only
+{
+    return preg_match('/^[a-zA-Z]*$/', $lang) || empty($lang);
+}
+
 function in_array_case_insensitive($needle, $haystack) 
 {
     foreach ($haystack as $item):
@@ -1480,60 +1497,105 @@ function input_interpreter($input_string)
     $extract_and_process_csv = function($line) use ($logfile) {
         $msg = new Message($logfile);
         
-        // Parse the CSV row
+        // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
         $fields = str_getcsv($line);
         $qtyFields = count($fields);
-        if ($qtyFields === 6):
-            $csvFormat = 'delver';
-        elseif ($qtyFields === 8):
-            $csvFormat = 'mtgc';
+        
+        if ($qtyFields === 6 || $qtyFields === 8): // Only check if it has 6 or 8 fields, otherwise don't bother
+            // Header check
+            $headerKeywords  = ['set', 'number', 'name'];
+            $isHeader = true;
+            foreach ($headerKeywords as $keyword):
+                $found = false;
+                foreach ($fields as $field):
+                    if (stripos($field, $keyword) !== false):
+                        $found = true;
+                        break;
+                    endif;
+                endforeach;
+                if (!$found):
+                    $isHeader = false;
+                    break;
+                endif;
+            endforeach;
+            if ($isHeader):
+                return 'header';
+            endif;
+            
+            // Validate and determine CSV format
+            if ($qtyFields === 6):
+                if( !isValidSetcode($fields[0]) ||
+                    !isValidCardName($fields[2]) ||
+                    !(is_numeric($fields[3]) || empty($fields[3])) ||
+                    !(is_numeric($fields[4]) || empty($fields[4])) ||
+                    !valid_uuid($fields[5]) 
+                    ):
+                    $csvFormat = 'invalid';
+                else:
+                    $csvFormat = 'delver';
+                endif;
+            elseif ($qtyFields === 8):
+                if( !isValidSetcode($fields[0]) ||
+                    !isValidCardName($fields[2]) ||
+                    !isValidLanguageCode($fields[3]) ||
+                    !(is_numeric($fields[4]) || empty($fields[4])) ||
+                    !(is_numeric($fields[5]) || empty($fields[5])) ||
+                    !(is_numeric($fields[6]) || empty($fields[6])) ||
+                    !(valid_uuid($fields[7]) || empty($fields[7])) 
+                    ):
+                    $csvFormat = 'invalid';
+                else:
+                    $csvFormat = 'mtgc';
+                endif;
+            else:
+                $csvFormat = 'invalid';
+            endif;
+            $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is '$csvFormat'");
+
+            if ($csvFormat === 'invalid'):
+                return false;
+            endif;
+
+            // Extracting common fields
+            $set    = $fields[0];
+            $number = $fields[1];
+            $name   = $fields[2];
+
+            // Extracting other fields based on format
+            if ($csvFormat === 'mtgc'):
+                $lang   = $fields[3];
+                $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
+                $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
+                $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
+                $uuid   = isset($fields[7]) ? $fields[7] : '';
+            elseif ($csvFormat === 'delver'): // No etched in Delver Lens files
+                $lang   = 'unspecified';
+                $param5 = isset($fields[3]) ? (int)$fields[3] : 0;
+                $param6 = isset($fields[4]) ? (int)$fields[4] : 0;
+                $param7 = 0;
+                $uuid   = isset($fields[5]) ? $fields[5] : '';
+            else:
+                return false;
+            endif;
+
+            // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
+            $qty = $param5 + $param6 + $param7;
+
+            return [
+                'set' => $set,
+                'number' => $number,
+                'name' => $name,
+                'lang' => $lang,
+                'qty' => $qty,
+                'uuid' => $uuid,
+                'normal' => $param5,
+                'foil' => $param6,
+                'etched' => $param7
+            ];
         else:
-            $csvFormat = 'invalid';
-        endif;
-        $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is $csvFormat");
-        
-        // Extracting common fields
-        $set    = $fields[0];
-        $number = $fields[1];
-        $name   = $fields[2];
-        
-        if ((strpos(strtolower($set),'code') !== FALSE) &&
-            (strpos(strtolower($number),'number') !== FALSE) &&
-            (strpos(strtolower($name),'name') !== FALSE)):
-            return 'header';
-        endif;
-        
-        // Extracting other fields
-        if ($csvFormat === 'mtgc'):
-            $lang   = $fields[3];
-            $param5 = isset($fields[4]) ? (int)$fields[4] : 0;
-            $param6 = isset($fields[5]) ? (int)$fields[5] : 0;
-            $param7 = isset($fields[6]) ? (int)$fields[6] : 0;
-            $uuid   = isset($fields[7]) ? $fields[7] : '';
-        elseif ($csvFormat === 'delver'): // No etched in Delver Lens files
-            $lang   = 'unspecified';
-            $param5 = isset($fields[3]) ? (int)$fields[3] : 0;
-            $param6 = isset($fields[4]) ? (int)$fields[4] : 0;
-            $param7 = 0;
-            $uuid   = isset($fields[5]) ? $fields[5] : '';
-        else:
+            $msg->logMessage('[ERROR]', "Invalid CSV format: $line");
             return false;
         endif;
-        
-        // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
-        $qty = $param5 + $param6 + $param7;
-
-        return [
-            'set' => $set,
-            'number' => $number,
-            'name' => $name,
-            'lang' => $lang,
-            'qty' => $qty,
-            'uuid' => $uuid,
-            'normal' => $param5,
-            'foil' => $param6,
-            'etched' => $param7
-        ];
     };
     
     // MAIN PROCESSING //
