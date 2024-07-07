@@ -106,6 +106,19 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                 $typed = trim($str);
                 $searchString = '%'.trim($str).'%';
                 // Here $typed is the text typed
+                if(isset($setcode)):
+                    if(isset($number)):
+                        $teststring = trim(trim($setcode)." ".trim($number));
+                    else:
+                        $teststring = trim($setcode);
+                    endif;
+                    $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
+                    if(isset($teststring) && in_array_case_insensitive($teststring, $bracketsInNames)):
+                        $msg->logMessage('[DEBUG]', "Bracket contents match a card with brackets in name, resetting name, set to match");
+                        $searchString = $typed = $typed." (".$teststring.")";
+                        $setcode = $number = '';
+                    endif;
+                endif;                
             else:
                 // No brackets in this case
                 $typed = trim($r);
@@ -114,22 +127,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                 $number = '';
             endif;
             $msg->logMessage('[DEBUG]', "Typed: '$typed'; Search: '$searchString'; Setcode: '$setcode'; Number: '$number' ");
-            
-            if(isset($setcode)):
-                if(isset($number)):
-                    $teststring = trim(trim($setcode)." ".trim($number));
-                else:
-                    $teststring = trim($setcode);
-                endif;
-                $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                if(isset($teststring) && in_array_case_insensitive($teststring, $bracketsInNames)):
-                    $msg->logMessage('[DEBUG]', "Bracket contents match a card with brackets in name, resetting name, set to match");
-                    $searchString = $typed = $typed." (".$teststring.")";
-                    $setcode = $number = '';
-                endif;
-            endif;
-            
-            $msg->logMessage('[DEBUG]',"Search string (q) is '$searchString', match string (t) is '$typed', setcode is '$setcode', number is '$number'");
+
             // Header search only searches within primary_card set, not additional languages
             $stmt = $db->prepare("SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date
                           FROM cards_scry
