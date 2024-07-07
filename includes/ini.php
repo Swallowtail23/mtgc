@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.0
-    Date:       13/01/24
+/* Version:     5.1
+    Date:       07/07/24
     Name:       ini.php
     Purpose:    PHP script to manage error routines, logging and setup global variables/arrays
     Notes:      {none}
@@ -21,6 +21,9 @@
  * 
  *  5.0         13/01/24
  *              Add PHPMailer variables
+ * 
+ *  5.1         07/07/24
+ *              Add array for cards witrh brackets in names
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -394,6 +397,21 @@ $noQuickAddLayouts = array(
                     'emblem',
                     'meld',
                     'art_series'); 
+
+// Cards with brackets contents in names (not currently needed or used, see input_interpreter())
+$bracketsInNames = array(
+                    "cont'd",
+                    'Front Card',
+                    '2000',
+                    "Not the Urza's Legacy One",
+                    'minigame',
+                    'Bevy of Beebles',
+                    'Big Furry Monster',
+                    '1999',
+                    '2000',
+                    '2001',
+                    'Used',
+                    'Theme'); 
 
 // Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');
