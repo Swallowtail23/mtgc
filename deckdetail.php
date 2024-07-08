@@ -1,5 +1,5 @@
 <?php
-/* Version:     20.1
+/* Version:     20.2
     Date:       10/06/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
@@ -76,6 +76,10 @@
  *  20.1        06/07/24
  *              Add card collector numbers to deck exports
  *              Don't cut basic lands down to 1 when changing to commander deck
+ * 
+ *  20.2        08/07/24
+ *              Fix incorrect export missing for cards in main and side MTGC103
+ *              Fix missing card numbers on deck exports MTGC104
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -508,9 +512,11 @@ if($uniquecardscount > 0):
         endif;
         $qty = $row['cardqty'] + $row['sideqty'];
         $key = array_search($row['name'], $resultnames);
-        $resultqty[$key] = $resultqty[$key] + $qty;
+        // If the result already has a value that means we've done this already (in main deck) and can skip it 
+        if ($resultqty[$key] === '' || $resultqty[$key] <= 0):
+            $resultqty[$key] += $qty;
+        endif;
     endwhile;
-
     // $missing default now, see comments at top
     
     if($missing == 'yes'):
@@ -832,7 +838,7 @@ endif;
                                 $cardset = strtolower($row["setcode"]);
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
-                                $cardnumber = $row["number"];
+                                $cardnumber = $row["number_import"];
                                 if($deck_legality_list != ''):
                                     $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                     $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -975,7 +981,7 @@ endif;
                                     $cardset = strtolower($row["setcode"]);
                                     $cardref = str_replace('.','-',$row['cardsid']);
                                     $cardid = $row['cardsid'];
-                                    $cardnumber = $row["number"];
+                                    $cardnumber = $row["number_import"];
                                     if($deck_legality_list != ''):
                                         $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                         $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1134,7 +1140,7 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"];
+                            $cardnumber = $row["number_import"];
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1355,7 +1361,8 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"];
+                            $cardnumber = $row["number_import"];
+                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1551,7 +1558,7 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"];
+                            $cardnumber = $row["number_import"];
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1799,7 +1806,7 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"]; 
+                            $cardnumber = $row["number_import"]; 
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1997,7 +2004,7 @@ endif;
                             $quantity = $row["sideqty"];
                             $cardset = strtolower($row["setcode"]);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number"];
+                            $cardnumber = $row["number_import"];
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for sideboard card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
