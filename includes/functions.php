@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.2
-    Date:       07/07/24
+/* Version:     24.3
+    Date:       08/07/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -87,6 +87,9 @@
  * 
  * 24.2         07/07/24
  *              Improve input interpretation rigour and flexibility, including bracketed names
+ * 
+ * 24.3         08/07/24
+ *              Ignore deck import lines with just titles MTGC105
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1468,7 +1471,7 @@ function input_interpreter($input_string)
 // - set
 // - collector number
 {
-    global $db, $logfile, $bracketsInNames;
+    global $db, $logfile, $bracketsInNames, $importLinestoIgnore;
     $msg = new Message($logfile); 
     
     $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
@@ -1630,7 +1633,7 @@ function input_interpreter($input_string)
         else:
             return false;
         endif;
-    elseif(trim($sanitised_string) === ''):
+    elseif(trim($sanitised_string) === '' || in_array_case_insensitive(trim($sanitised_string),$importLinestoIgnore)):
         return 'empty line';
     else: 
         // Not a CSV

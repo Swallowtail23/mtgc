@@ -413,6 +413,16 @@ $bracketsInNames = array(
                     'Used',
                     'Theme'); 
 
+$importLinestoIgnore = array(
+                    "Creatures",
+                    "Instants and Sorceries",
+                    "Other",
+                    "Lands",
+                    "Sideboard",
+                    "Notes",
+                    "Sideboard notes"
+);
+
 // Cards required per deck type for legal play
 $hundredcarddecks = array('Commander');
 
