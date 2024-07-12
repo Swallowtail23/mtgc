@@ -456,7 +456,6 @@ require('includes/menu.php'); //mobile menu
                 LIMIT 1";
         $params = [$cardid];
         
-        $msg->logMessage('[DEBUG]',"SQL query is: $searchqry");
         if($result = $db->execute_query($searchqry, $params)):
             $msg->logMessage('[DEBUG]',"SQL query succeeded");
         else:
