@@ -2418,7 +2418,6 @@ c20,105,"Together Forever",en,1,0,0,{uuid}
             </form>
             <h4>Import</h4>
             Text or csv file, formatted as Quick add above.
-            May take several minutes to complete. 
             <script type="text/javascript">
                 $(document).ready(function(){
                     $("#importsubmit").attr('disabled',true);
@@ -2552,7 +2551,6 @@ c20,105,"Together Forever",en,1,0,0,{uuid}
             </form> 
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
-                Upload deck photo. Large photos will be resized.<br><br>
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
