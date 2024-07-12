@@ -317,8 +317,17 @@ require('includes/menu.php'); //mobile menu
         $msg->logMessage('[DEBUG]', "Collection table exists");
     endif;
     
-    // Check that we have an id before calling SQL query
-    if(isset($_GET["id"]) OR isset($_POST["id"])) :
+    // Check/update/populate JSON data
+    $obj = new PriceManager($db,$logfile,$useremail);
+    $msg->logMessage('[DEBUG]',"Is card ID provided, does card exist? If yes ensure latest price");
+    if((isset($_GET["id"]) OR isset($_POST["id"])) AND ($scryfallresult = $obj->scryfall($cardid))['action'] !== 'nocard'):
+        $msg->logMessage('[DEBUG]',"Scryfall run, returned action '{$scryfallresult["action"]}'");
+        if($scryfallresult["action"] === 'update' || $scryfallresult["action"] === 'get'):
+            // Update topvalue if new data has been obtained
+            $msg->logMessage('[DEBUG]',"Scryfall run returned Get or Update: Updating topvalue");
+            update_topvalue_card($mytable,$cardid);            
+        endif;
+
         $searchqry = 
                "SELECT 
                     cards_scry.id as cs_id,
@@ -552,10 +561,6 @@ require('includes/menu.php'); //mobile menu
                 $price_etched_log = NULL;
             endif;
             $msg->logMessage('[DEBUG]',"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log");
-            //Populate JSON data
-            $obj = new PriceManager($db,$logfile,$useremail);
-            $scryfallresult = $obj->scryfall($id);
-            $msg->logMessage('[DEBUG]',"Scryfall run, returned action '{$scryfallresult["action"]}'");
             $tcg_buy_uri = $scryfallresult["tcg_uri"];
             if(isset($row['layout']) AND $row['layout'] === "normal"):
                 $scryfallimg = $row['image_uri'];
@@ -2249,7 +2254,7 @@ require('includes/menu.php'); //mobile menu
             echo 'No such card, check the details.';
         endif;
     else:
-        echo '<h3>Error</h3>Card ID not supplied';
+        echo '<h3>Error</h3>Valid card ID not supplied';
     endif; 
     ?>
     </div>

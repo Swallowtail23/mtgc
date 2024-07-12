@@ -1262,6 +1262,7 @@ function update_topvalue_card($collection,$scryid)
             $params = [$selectedrate,$cardid,$selectedrate];
             if($updatemax = $db->execute_query($updatemaxqry,$params)):
                 //succeeded
+                $msg->logMessage('[DEBUG]',"SQL update succeeded");
             else:
                 trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $db->error, E_USER_ERROR);
             endif;

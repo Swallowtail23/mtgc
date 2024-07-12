@@ -54,8 +54,9 @@ class PriceManager
 
         if($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?",[$cardid])):
             if ($row->num_rows === 0):
-                $this->message->logMessage('[ERROR]',"Scryfall API by $this->useremail, no card with this id - exiting (2)");
-                exit;
+                $this->message->logMessage('[ERROR]',"Scryfall API by $this->useremail, no card with this id - returning 'nocard'");
+                $returnarray = array("action" => "nocard");
+                return $returnarray;
             elseif ($row->num_rows === 1):
                 $scrymethod = 'id';
             endif;
