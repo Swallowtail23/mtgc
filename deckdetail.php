@@ -1,6 +1,6 @@
 <?php
-/* Version:     20.2
-    Date:       10/06/24
+/* Version:     21.0
+    Date:       13/07/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -80,6 +80,9 @@
  *  20.2        08/07/24
  *              Fix incorrect export missing for cards in main and side MTGC103
  *              Fix missing card numbers on deck exports MTGC104
+ * 
+ *  21.0        13/07/24
+ *              MTGC-107 - correctly interpret sideboard cards on input
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -241,7 +244,7 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]',"Checking deck $decknumber");
-$obj = new DeckManager($db, $logfile, $useremail, $serveremail);
+$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
 if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -265,7 +268,7 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
     $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
-    $obj = new DeckManager($db,$logfile, $useremail, $serveremail);
+    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
     $renameresult = $obj->renameDeck($decknumber,$newname,$user);
     $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
     if($renameresult == 2):
@@ -340,7 +343,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail);
+    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
     $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
 endif;
 
@@ -350,7 +353,7 @@ if (isset($_POST['import'])):
     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
         $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail);
+        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
         // Read the entire file content into a variable
         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
@@ -390,7 +393,7 @@ else:
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db,$logfile, $useremail, $serveremail);
+$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
 
 if($deletemain == 'yes'):
     $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");
@@ -471,87 +474,134 @@ $firebrick_font_tag = "style='color: FireBrick; font-weight: bold'";
 
 //This section works out which cards the user DOES NOT have, for later linking
 // in a text file to download
-$resultnames = array();
+$resultnames = [];
+$rowNumber = 0;        
 while ($row = $result->fetch_assoc()):
-    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
-        $row['name'] = $row['flavor_name'];
-    endif;
-    if(!in_array($row['name'], $resultnames)):
-        $resultnames[] = $row['name'];
+    $rowNumber++;
+    $qty = $row['cardqty'];
+
+    $found = false;
+    foreach ($resultnames as &$entry):
+        if ($entry['name'] === $row['name']):
+            if (isset($entry['qty'])):
+                $entry['qty'] += $qty;
+            else:
+                $entry['qty'] = $qty;
+            endif;
+            $found = true;
+            break;
+        endif;
+    endforeach;
+    unset($entry); // break the reference with the last element
+
+    if (!$found):
+        $resultnames[$rowNumber] = ['name' => $row['name'], 'flavor_name' => $row['flavor_name'], 'qty' => $qty];
     endif;
 endwhile;
+
 while ($row = $sideresult->fetch_assoc()):
-    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
-        $row['name'] = $row['flavor_name'];
-    endif;
-    if(!in_array($row['name'], $resultnames)):
-        $resultnames[] = $row['name'];
+    $qty = $row['sideqty'];
+
+    $found = false;
+    foreach ($resultnames as &$entry):
+        if ($entry['name'] === $row['name']):
+            if (isset($entry['qty'])):
+                $entry['qty'] += $qty;
+            else:
+                $entry['qty'] = $qty;
+            endif;
+            $found = true;
+            break;
+        endif;
+    endforeach;
+    unset($entry); // break the reference with the last element
+
+    if (!$found):
+        $resultnames[] = ['name' => $row['name'], 'flavor_name' => $row['flavor_name'], 'qty' => $qty];
     endif;
 endwhile;
 $uniquecardscount = count($resultnames);
 $msg->logMessage('[DEBUG]',"Cards in deck: $uniquecardscount");
+$msg->logMessage('[DEBUG]',"Cards in deck: ".print_r($resultnames,true));
 $requiredlist = '';
 $requiredbuy = '';
 if($uniquecardscount > 0):
-    //reset the results and get the quantities for each into an array with matching $key
-    mysqli_data_seek($result, 0);
-    mysqli_data_seek($sideresult, 0);
-    $resultqty = array_fill(0,$uniquecardscount,'0'); //create an array the right size, all '0'
-    //write total of each unique name to the results array
-    while ($row = $result->fetch_assoc()):
-        $qty = $row['cardqty'] + $row['sideqty'];
-        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
-            $row['name'] = $row['flavor_name'];
-        endif;
-        $key = array_search($row['name'], $resultnames);
-        $resultqty[$key] = $resultqty[$key] + $qty;
-    endwhile;
-    while ($row = $sideresult->fetch_assoc()):
-        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
-            $row['name'] = $row['flavor_name'];
-        endif;
-        $qty = $row['cardqty'] + $row['sideqty'];
-        $key = array_search($row['name'], $resultnames);
-        // If the result already has a value that means we've done this already (in main deck) and can skip it 
-        if ($resultqty[$key] === '' || $resultqty[$key] <= 0):
-            $resultqty[$key] += $qty;
-        endif;
-    endwhile;
+
     // $missing default now, see comments at top
-    
     if($missing == 'yes'):
         $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
+        $placeholderCount = count($resultnames) * 2; // 2 placeholders per card in the result list
+        // Extract names from the subarrays
+        $names = array_map(function($entry)
+            {
+                return $entry['name'];
+            }, $resultnames);
+        $msg->logMessage('[DEBUG]',"Missing check on ".count($resultnames)." cards");
         $placeholders = implode(',', array_fill(0, count($resultnames), '?')); // create placeholders for prepared statement
 
-        $msg->logMessage('[DEBUG]',"Missing check on cards: ".implode(', ', $resultnames));
+        $msg->logMessage('[DEBUG]',"Missing check on cards: ".implode(', ',$names));
+        
+        // Duplicate the $resultnames array to match the number of placeholders
+        $params = array_merge($names, $names);
 
         $query = "
-            SELECT name, 
+            SELECT name, flavor_name,
                    SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies 
-            FROM cards_scry 
-            LEFT JOIN $mytable 
-            ON cards_scry.id = $mytable.id 
-            WHERE name IN ($placeholders) 
+            FROM $mytable 
+            LEFT JOIN cards_scry
+            ON $mytable.id = cards_scry.id
+            WHERE 
+                cards_scry.name IN ($placeholders) OR
+                cards_scry.flavor_name IN ($placeholders)
             GROUP BY name
         ";
 
-        if ($totalresult = $db->execute_query($query, $resultnames)):
+        if ($totalresult = $db->execute_query($query, $params)): // $totalresult will be an array of qties of cards in collection
             $cardCopies = [];
-            while ($totalrow = $totalresult->fetch_assoc()):
-                $cardCopies[$totalrow['name']] = $totalrow['allcopies'];
-            endwhile;
+            $rowNumber = 0;
 
-            foreach ($resultnames as $key => $value):
-                $total = $cardCopies[$value] ?? 0;
-                $shortqty[$key] = $resultqty[$key] - $total;
-                if ($shortqty[$key] < 1):
-                    $shortqty[$key] = 0;
+            while ($totalrow = $totalresult->fetch_assoc()):
+                $rowNumber++;
+                $msg->logMessage('[DEBUG]',print_r($totalrow['name'],true));
+                
+                if (!isset($cardCopies[$rowNumber])):
+                    $cardCopies[$rowNumber] = [];
+                endif;
+                
+                if (isset($totalrow['name']) && !empty($totalrow['name'])):
+                    $cardCopies[$rowNumber]['name'] = $totalrow['name'];
+                endif;
+                if (isset($totalrow['flavor_name']) && !empty($totalrow['flavor_name'])):
+                    $cardCopies[$rowNumber]['flavor_name'] = $totalrow['flavor_name'];
+                endif;
+                if (isset($totalrow['allcopies']) && !empty($totalrow['allcopies'])):
+                    $cardCopies[$rowNumber]['qty'] = $totalrow['allcopies'];
                 else:
-                    $requiredlist .= $shortqty[$key] . " x " . $value . "\r\n";
-                    $requiredbuy .= $shortqty[$key] . " " . $value . "||";
+                    $cardCopies[$rowNumber]['qty'] = 0;
+                endif;
+            endwhile;
+            $msg->logMessage('[DEBUG]',print_r($cardCopies,true));
+            
+            foreach ($resultnames as $resultEntry):
+                $found = false;
+                foreach ($cardCopies as &$cardEntry):
+                    if ($resultEntry['name'] === $cardEntry['name']): // We have some of this card name
+                        if($resultEntry['qty'] > $cardEntry['qty']): // but not enough
+                            $shortqty = $resultEntry['qty'] - $cardEntry['qty'];
+                            $requiredlist .= $resultEntry['name'] . " x " . $shortqty . "\r\n";
+                            $requiredbuy .= $resultEntry['name'] . " " . $shortqty . "||";
+                        endif;
+                        $found = true;
+                        break;
+                    endif;
+                endforeach;
+                unset($cardEntry); // Break the reference with the last element
+                if($found === false):
+                    $requiredlist .= $resultEntry['name'] . " x " . $resultEntry['qty'] . "\r\n";
+                    $requiredbuy .= $resultEntry['name'] . " " . $resultEntry['qty'] . "||";
                 endif;
             endforeach;
-
+            
             $msg->logMessage('[DEBUG]',"Cards required list: $requiredlist");
             $msg->logMessage('[DEBUG]',"Cards required buy: $requiredbuy");
         else:
@@ -839,6 +889,7 @@ endif;
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
+                                $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                                 if($deck_legality_list != ''):
                                     $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                     $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -982,6 +1033,7 @@ endif;
                                     $cardref = str_replace('.','-',$row['cardsid']);
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
+                                    $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                                     if($deck_legality_list != ''):
                                         $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                         $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1141,6 +1193,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1559,6 +1612,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -1807,6 +1861,7 @@ endif;
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"]; 
+                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
@@ -2005,6 +2060,7 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $msg->logMessage('[DEBUG]',"Sideboard card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for sideboard card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
