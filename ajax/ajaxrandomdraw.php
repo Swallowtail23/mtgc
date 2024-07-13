@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'):
         // Check if the required variables are present
         if (isset($data['uniquecard_ref']) && isset($data['include_check']) && $data['include_check'] === true && $isValidReferrer === true):
             $uniquecard_ref = $data['uniquecard_ref'];
+            $msg->logMessage('[DEBUG]',print_r($uniquecard_ref,true));
         else:
             exit;
         endif;
@@ -67,9 +68,20 @@ else:
 endif;
 
 $a = array_rand($uniquecard_ref, 7);
+$msg->logMessage('[DEBUG]',"Random cards selected: ".print_r($a,true));
 echo "<table>";
 echo "<tr><td>&nbsp;</td></tr>";
 for ($i = 0; $i < 7; $i++) {
-    echo "<tr><td>" . ($i + 1) . ": " . $uniquecard_ref[$a[$i]]['name'] . "</td></tr>";
+    $cardurl = $uniquecard_ref[$a[$i]]['cardurl'];
+    $imgurl = $uniquecard_ref[$a[$i]]['imageurl'];
+    $name = $uniquecard_ref[$a[$i]]['name'];
+    $id = $uniquecard_ref[$a[$i]]['cardid'];
+    $cardref = $uniquecard_ref[$a[$i]]['cardref']; 
+    $randomref = $i + 1; ?>
+    <div class='randomcardimgdiv' id='<?php echo "random-$randomref";?>'>
+        <a href='<?php echo $cardurl;?>'>
+        <img alt='<?php echo $name;?>' class='deckcardimg' src='<?php echo $imgurl;?>'></a>
+    </div> <?php
+    echo "<tr><td>$randomref: <a class='taphover' id='random-$randomref-taphover' href='$cardurl'>$name</a></td></tr>";
 }
 echo "</table>";
