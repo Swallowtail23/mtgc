@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.0
-    Date:       09/06/24
+/* Version:     3.0
+    Date:       13/07/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -30,6 +30,9 @@
  *              Improve deck import capability to cater with MTGC import format 
  *              as well as quick add format
  *              Send email if multi input errors
+ * 
+ *  3.0         13/07/24
+ *              MTGC-107 - correctly interpret sideboard cards on input
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -44,13 +47,15 @@ class DeckManager
     private $message;
     private $useremail;
     private $serveremail;
+    private $importLinestoIgnore;
     
-    public function __construct($db, $logfile, $useremail, $serveremail) {
+    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore) {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
         $this->useremail = $useremail;
         $this->serveremail = $serveremail;
+        $this->importLinestoIgnore = $importLinestoIgnore;
     }
     
     public function processInput($decknumber, $input) {
@@ -67,6 +72,7 @@ class DeckManager
         if ($qtyLines > 1):
             $this->message->logMessage('[DEBUG]',"Multi-line input ($qtyLines lines), calling quickadd in batch mode");
             $row = 1;
+            $sideboardTrigger = false;
             $warningsummary = '';
             $warningheading = 'Warning type, Row number, Input line';
             foreach ($lines as $line):
@@ -74,9 +80,16 @@ class DeckManager
                 $start = substr($line, 0, 8);
                 if(strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false):
                     $this->message->logMessage('[DEBUG]',"Row $row: Header row: '$line'");
+                elseif(trim($line) === '' || in_array_case_insensitive(trim($line),$this->importLinestoIgnore)):
+                    if(trim($line) === 'Sideboard'):
+                        $this->message->logMessage('[DEBUG]',"Row $row: Sideboard header");
+                        $sideboardTrigger = true;
+                    elseif(trim($line) === '' || in_array_case_insensitive(trim($line),$this->importLinestoIgnore)):
+                        $this->message->logMessage('[DEBUG]',"Row $row: Empty row");
+                    endif;
                 else:
                     $this->message->logMessage('[DEBUG]',"Row $row: Data row: '$line'");
-                    $quickaddresult = $this->quickadd($decknumber, $line, true); // Set fourth parameter to true for batching
+                    $quickaddresult = $this->quickadd($decknumber, $line, $sideboardTrigger, true); // Set last parameter to true for batching
                     if($quickaddresult === false || $quickaddresult === 'cardnotfound'):
                         $this->message->logMessage('[DEBUG]',"Row $row: Result: fail");
                         $newwarning = "ERROR - Row $row, Line: '$line'"."\n";
@@ -113,7 +126,7 @@ class DeckManager
         endif;
     }
     
-    public function quickadd($decknumber,$get_string,$batch = false)
+    public function quickadd($decknumber,$get_string,$sideboardTrigger,$batch = false)
     // Called from processInput()
     {
         global $noQuickAddLayouts;
@@ -159,7 +172,14 @@ class DeckManager
                 $quickaddNumber = '';
             endif;
             $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [$quickaddqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] UUID: [$quickaddUUID]");
+            if($sideboardTrigger):
+                $mainqty = 0;
+                $sideqty = $quickaddqty;
+            else:
+                $mainqty = $quickaddqty;
+                $sideqty = 0;
+            endif;
+            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [Main: $mainqty, Side: $sideqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] UUID: [$quickaddUUID]");
             $stmt = null;
 
             // Get card layouts to not include in quick add
@@ -291,7 +311,7 @@ class DeckManager
                         return $addresult;
                     else:
                         // In batch mode, store the card ID and quantity in the batchedCardIds array
-                        $this->batchedCardIds[] = ['id' => $cardtoadd, 'qty' => $quickaddqty];
+                        $this->batchedCardIds[] = ['id' => $cardtoadd, 'mainqty' => $mainqty, 'sideqty' => $sideqty];
                     endif;
                 else:
                     $stmt->close();
@@ -318,31 +338,33 @@ class DeckManager
 
         foreach ($batchedCardIds as $batchedCard):
             $id = $batchedCard['id'];
-            $qty = $batchedCard['qty'];
+            $mainqty = $batchedCard['mainqty'];
+            $sideqty = $batchedCard['sideqty'];
             // Add each card to the batch
-            $values[] = "($decknumber, $id, $qty)";
-            $placeholders[] = '(?, ?, ?)';
+            $values[] = "($decknumber, $id, $mainqty, $sideqty)";
+            $placeholders[] = '(?, ?, ?, ?)';
         endforeach;
 
         if (!empty($values)):
             $valuesString = implode(', ', $values);
             $placeholdersString = implode(', ', $placeholders);
 
-            $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty) VALUES $placeholdersString 
-                        ON DUPLICATE KEY UPDATE cardqty = VALUES(cardqty)";
+            $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty, sideqty) VALUES $placeholdersString 
+                        ON DUPLICATE KEY UPDATE cardqty = cardqty + VALUES(cardqty), sideqty = sideqty + VALUES(sideqty)";
 
             // Bind parameters and execute the query
             $stmt = $this->db->prepare($query);
 
             // Generate the type definition string dynamically based on the number of batched cards
-            $typeDefinition = str_repeat('isi', count($batchedCardIds));
+            $typeDefinition = str_repeat('isii', count($batchedCardIds));
 
             // Prepare an array with the values to be bound
             $bindValues = [];
             foreach ($batchedCardIds as $batchedCard):
                 $bindValues[] = $decknumber;
                 $bindValues[] = $batchedCard['id'];
-                $bindValues[] = $batchedCard['qty'];
+                $bindValues[] = $batchedCard['mainqty'];
+                $bindValues[] = $batchedCard['sideqty'];
             endforeach;
 
             // Bind the parameters dynamically
