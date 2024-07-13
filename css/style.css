@@ -2029,6 +2029,12 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     top: 170px;
     z-index: 100000;
 }
+.randomcardimgdiv
+{
+    display:none;
+    position: absolute;
+    z-index: 100000;
+}
 .splitfloat
 {
     transform: rotate(90deg);

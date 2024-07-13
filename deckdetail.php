@@ -83,6 +83,7 @@
  * 
  *  21.0        13/07/24
  *              MTGC-107 - correctly interpret sideboard cards on input
+ *              MTGC-108 - image hovers on mobile and desktop
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -98,6 +99,8 @@ require ('includes/secpagesetup.php');       //Setup page variables
 require ('includes/colour.php');
 forcechgpwd();                               //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+
+$uniquecard_ref = [];
 ?> 
 
 <!DOCTYPE html>
@@ -105,47 +108,124 @@ $msg = new Message($logfile);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title> <?php echo $siteTitle;?> - deck detail</title>
+    <title><?php echo htmlspecialchars($siteTitle); ?> - deck detail</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver); ?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-    <?php include('includes/googlefonts.php');?>
+    <?php include('includes/googlefonts.php'); ?>
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
             // Update the 'onerror' attribute for all images
-            $("img").attr("onerror", "this.src='/cardimg/back.jpg'");
-
-            // Click event for .deckcardimgdiv elements
-            $('.deckcardimgdiv').click(function (e) {
-                e.stopPropagation();
-                $(this).hide("slow");
+            $('img').on('error', function() {
+                this.src = '/cardimg/back.jpg';
             });
-        });
 
-        // Click event for the document (outside .deckcardimgdiv)
-        $(document).click(function () {
-            $('.deckcardimgdiv').hide("slow");
-        });
+            // Click event for the document (outside .deckcardimgdiv and .randomcardimgdiv)
+            $(document).on('click', function () {
+                $('.deckcardimgdiv').hide("slow");
+                $('.randomcardimgdiv').hide("slow");
+            });
 
-        // Scroll event for the window
-        $(window).scroll(function () {
-            $('.deckcardimgdiv').hide("slow");
-        });
+            // Scroll event for the window
+            $(window).on('scroll', function () {
+                $('.deckcardimgdiv').hide("slow");
+                $('.randomcardimgdiv').hide("slow");
+            });
 
-        // Toggle form visibility using jQuery
-        function toggleForm() {
-            $("#renameForm, #changeType, #currentType").toggle("block");
-        }
+            // Function to bind events for newly loaded content
+            window.bindRandomCardEvents = function() {
+                // Detect if the device is a touch device
+                var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints;
 
-        // Cursor change function using jQuery
-        function ComparePrep() {
-            $('body').css('cursor', 'wait');
-        }
+                // Bind events based on the device type
+                if (isTouchDevice) {
+                    // Click event for touch devices
+                    $('td').on('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        $('.randomcardimgdiv, .deckcardimgdiv').hide("slow");
+                        var $link = $(this).find('a.taphover');
+                        if ($link.length) {
+                            var id = $link.attr('id');
+                            var $div = $('#' + id.replace('-taphover', ''));
+                            var mouseX = e.pageX;
+                            var mouseY = e.pageY;
+                            var leftPosition = mouseX - 250;
+                            var topPosition = mouseY - 300;
+                            // Adjust position to prevent overflow if necessary
+                            if (leftPosition < 190) {
+                                leftPosition = 190;
+                            }
+                            if (topPosition < -20) {
+                                topPosition = mouseY;
+                            }
+                            $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
+                        }
+                    });
+                } else {
+                    // Mouseover event for non-touch devices
+                    let lastHoveredDiv = null;
+                    $('td').on('mouseover', function(e) {
+                        var $link = $(this).find('a.taphover');
+                        if ($link.length) {
+                            var id = $link.attr('id');
+                            var $div = $('#' + id.replace('-taphover', ''));
+                            if (lastHoveredDiv && lastHoveredDiv !== $div) {
+                                clearTimeout(lastHoveredDiv.data('timeoutId'));
+                                lastHoveredDiv.hide();
+                            }
+                            lastHoveredDiv = $div;
+                            var mouseX = e.pageX;
+                            var mouseY = e.pageY;
+                            var leftPosition = mouseX - 250;
+                            var topPosition = mouseY - 430;
+                            // Adjust position to prevent overflow if necessary
+                            if (leftPosition < 190) {
+                                leftPosition = 190;
+                            }
+                            if (topPosition < 50) {
+                                topPosition = mouseY + 10;
+                            }
+                            $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show();
+                            $div.on('mouseenter', function() {
+                                clearTimeout($div.data('timeoutId'));
+                            }).on('mouseleave', function() {
+                                var timeoutId = setTimeout(function() {
+                                    $div.hide("slow");
+                                }, 300); // 300ms delay before hiding the div
+                                $div.data('timeoutId', timeoutId);
+                            });
+                        }
+                    }).on('mouseleave', function(e) {
+                        var $link = $(this).find('a.taphover');
+                        if ($link.length) {
+                            var id = $link.attr('id');
+                            var $div = $('#' + id.replace('-taphover', ''));
+                            var timeoutId = setTimeout(function() {
+                                $div.hide("slow");
+                            }, 300); // 300ms delay before hiding the div
+                            $div.data('timeoutId', timeoutId);
+                        }
+                    });
+                }
+            };
 
-        // Event listener for textareas using jQuery
-        $(document).ready(function () {
+            // Bind events for initially loaded content
+            bindRandomCardEvents();
+
+            // Toggle form visibility using jQuery
+            window.toggleForm = function () {
+                $("#renameForm, #changeType, #currentType").toggle("block");
+            };
+
+            // Cursor change function using jQuery
+            window.ComparePrep = function () {
+                $('body').css('cursor', 'wait');
+            };
+
+            // Event listener for textareas using jQuery
             var notesTextarea = $('#notes');
             var sidenotesTextarea = $('#sidenotes');
             var saveButton = $('.save_icon');
@@ -191,6 +271,8 @@ $redirect = false;
 //     $missing = 'no';
 // endif;
 $missing = 'yes';
+
+$time = time();
 
 if (isset($_GET["deck"])):
     $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
@@ -664,12 +746,6 @@ while ($row = $result->fetch_assoc()):
     $deckcardname = str_replace("'",'&#39;',$row["name"]); 
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
-    ?>
-    <div class='deckcardimgdiv' id='card-<?php echo $cardref;?>'>
-        <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-            <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
-    </div> 
-    <?php
 endwhile;
 
 if(isset($cdrSet) AND $cdrSet === TRUE):
@@ -700,12 +776,6 @@ while ($row = $sideresult->fetch_assoc()):
     endif;
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['sideqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
-    ?>
-    <div class='deckcardimgdiv' id='side-<?php echo $cardref;?>'>
-        <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-            <img alt='<?php echo $row["name"];?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
-    </div>
-    <?php
 endwhile;
 
 // Next the main DIV section ?>
@@ -889,6 +959,14 @@ endif;
                                 $cardref = str_replace('.','-',$row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
+                                $layout = $row['layout'];
+                                $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                                $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                                if($imagefunction['front'] == 'error'):
+                                    $imageurl = '/cardimg/back.jpg';
+                                else:
+                                    $imageurl = $imagefunction['front'];
+                                endif;
                                 $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                                 if($deck_legality_list != ''):
                                     $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -918,53 +996,46 @@ endif;
                                 ?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname">
-                                    <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>"; ?>
-                                <script type="text/javascript">
-                                    $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                        'use strict'; //satisfy code inspectors
-                                        var link = $(this); //preselect the link
-                                        $('.deckcardimgdiv').hide("slow");
-                                        e.preventDefault();
-                                        $("<?php echo "#card-$cardref";?>").show("slow");
-                                        return false; //extra, and to make sure the function has consistent return points
-                                    });
-                                </script>
-                                <?php
-                                echo "<td class='deckcardlistcenter noprint'>";
-                                $validpartner = FALSE;
-                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid partner or background");
-                                $i = 0;
-                                while($i < count($second_commander_text)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
-                                        $validpartner = TRUE;
-                                    endif;
-                                    $i++;
-                                endwhile;
-                                if($validpartner == TRUE):
-                                    ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Move to Partner"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
-                                        class='material-symbols-outlined'>
-                                        south_east
-                                    </span>
-                                    <?php
-                                else:
-                                    ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Move to main deck"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
-                                        class='material-symbols-outlined'>
-                                        arrow_downward
-                                    </span>
-                                    <?php
-                                endif;
-                                echo "</td>";
-                                echo "</td>";
+                                    <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                        $validpartner = FALSE;
+                                        $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid partner or background");
+                                        $i = 0;
+                                        while($i < count($second_commander_text)):
+                                            if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
+                                                $validpartner = TRUE;
+                                            endif;
+                                            $i++;
+                                        endwhile;
+                                        if($validpartner == TRUE):
+                                            ?>
+                                            <span 
+                                                onmouseover="" 
+                                                title="Move to Partner"
+                                                style="cursor: pointer;" 
+                                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                                class='material-symbols-outlined'>
+                                                south_east
+                                            </span>
+                                            <?php
+                                        else:
+                                            ?>
+                                            <span 
+                                                onmouseover="" 
+                                                title="Move to main deck"
+                                                style="cursor: pointer;" 
+                                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
+                                                class='material-symbols-outlined'>
+                                                arrow_downward
+                                            </span>
+                                            <?php
+                                        endif;
+                                    echo "</td>";
+                                echo "</td>"; ?>
+                                <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                    <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                    <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                </div> <?php
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
                                 <span 
@@ -1033,6 +1104,14 @@ endif;
                                     $cardref = str_replace('.','-',$row['cardsid']);
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
+                                    $layout = $row['layout'];
+                                    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                                    $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                                    if($imagefunction['front'] == 'error'):
+                                        $imageurl = '/cardimg/back.jpg';
+                                    else:
+                                        $imageurl = $imagefunction['front'];
+                                    endif;
                                     $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                                     if($deck_legality_list != ''):
                                         $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -1062,18 +1141,7 @@ endif;
                                     ?>
                                     <tr class='deckrow'>
                                     <td class="deckcardname">
-                                        <?php echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; ?>
-                                    <script type="text/javascript">
-                                        $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                            'use strict'; //satisfy code inspectors
-                                            var link = $(this); //preselect the link
-                                            $('.deckcardimgdiv').hide("slow");
-                                            e.preventDefault();
-                                            $("<?php echo "#card-$cardref";?>").show("slow");
-                                            return false; //extra, and to make sure the function has consistent return points
-                                        });
-                                    </script>
-                                    <?php
+                                        <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
                                     <span 
@@ -1085,7 +1153,11 @@ endif;
                                         arrow_downward
                                     </span>
                                     <?php
-                                    echo "</td>";
+                                    echo "</td>";?>
+                                    <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                        <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                        <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                    </div> <?php
                                     echo "</td>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
@@ -1184,15 +1256,27 @@ endif;
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
-                            while ($rowqty < $quantity):
-                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
-                                $deckcard_no = $deckcard_no + 1;
-                                $rowqty = $rowqty + 1;
-                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $layout = $row['layout'];
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -1259,51 +1343,43 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
-                                ?>
-                            <script type="text/javascript">
-                                $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                    'use strict'; //satisfy code inspectors
-                                    var link = $(this); //preselect the link
-                                    $('.deckcardimgdiv').hide("slow");
-                                    e.preventDefault();
-                                    $("<?php echo "#card-$cardref";?>").show("slow");
-                                    return false; //extra, and to make sure the function has consistent return points
-                                });
-                            </script>
-                            <?php
-                            if(in_array($decktype,$commander_decktypes)):
-                                $validcommander = FALSE;
-                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid commander");
-                                if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
-                                    $validcommander = TRUE;
-                                endif;
-                                $i = 0;
-                                while($i < count($valid_commander_text)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                if(in_array($decktype,$commander_decktypes)):
+                                    $validcommander = FALSE;
+                                    $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid commander");
+                                    if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
                                         $validcommander = TRUE;
                                     endif;
-                                    $i++;
-                                endwhile;
-                                echo "<td class='deckcardlistcenter noprint'>";
-                                if($validcommander == TRUE):
-                                    ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Move to Commander"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
-                                        class='material-symbols-outlined'>
-                                        person
-                                    </span>
-                                    <?php
+                                    $i = 0;
+                                    while($i < count($valid_commander_text)):
+                                        if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
+                                            $validcommander = TRUE;
+                                        endif;
+                                        $i++;
+                                    endwhile;
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                    if($validcommander == TRUE):
+                                        ?>
+                                        <span 
+                                            onmouseover="" 
+                                            title="Move to Commander"
+                                            style="cursor: pointer;" 
+                                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
+                                            class='material-symbols-outlined'>
+                                            person
+                                        </span>
+                                        <?php
+                                    endif;
+                                    echo "</td>";
                                 endif;
-                                echo "</td>";
-                            endif;
-                            echo "</td>";
+                            echo "</td>";?>
+                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                            </div> <?php
                             echo "<td class='deckcardlistcenter noprint'>";
                             ?>
                             <span 
@@ -1406,15 +1482,27 @@ endif;
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
-                            while ($rowqty < $quantity):
-                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
-                                $deckcard_no = $deckcard_no + 1;
-                                $rowqty = $rowqty + 1;
-                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $layout = $row['layout'];
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -1480,23 +1568,15 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
-                                ?>
-                            <script type="text/javascript">
-                                $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                    'use strict'; //satisfy code inspectors
-                                    var link = $(this); //preselect the link
-                                    $('.deckcardimgdiv').hide("slow");
-                                    e.preventDefault();
-                                    $("<?php echo "#card-$cardref";?>").show("slow");
-                                    return false; //extra, and to make sure the function has consistent return points
-                                });
-                            </script>
-                            <?php
-                            echo "</td>";
+                            echo "</td>";?>
+                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                            </div> <?php
                             if(in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
@@ -1603,15 +1683,27 @@ endif;
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
-                            while ($rowqty < $quantity):
-                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
-                                $deckcard_no = $deckcard_no + 1;
-                                $rowqty = $rowqty + 1;
-                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $layout = $row['layout'];
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -1677,23 +1769,15 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
-                                ?>
-                            <script type="text/javascript">
-                                $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                    'use strict'; //satisfy code inspectors
-                                    var link = $(this); //preselect the link
-                                    $('.deckcardimgdiv').hide("slow");
-                                    e.preventDefault();
-                                    $("<?php echo "#card-$cardref";?>").show("slow");
-                                    return false; //extra, and to make sure the function has consistent return points
-                                });
-                            </script>
-                            <?php
-                            echo "</td>";
+                            echo "</td>";?>
+                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                            </div> <?php
                             if(in_array($decktype,$commander_decktypes)):
                                 $validcommander = FALSE;
                                 $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a commander");
@@ -1852,15 +1936,27 @@ endif;
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
-                            while ($rowqty < $quantity):
-                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
-                                $deckcard_no = $deckcard_no + 1;
-                                $rowqty = $rowqty + 1;
-                            endwhile;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.','-',$row['cardsid']);
                             $cardid = $row['cardsid'];
-                            $cardnumber = $row["number_import"]; 
+                            $cardnumber = $row["number_import"];
+                            $layout = $row['layout'];
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
+                            while ($rowqty < $quantity):
+                                $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
+                                $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $deckcard_no = $deckcard_no + 1;
+                                $rowqty = $rowqty + 1;
+                            endwhile;
                             $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
@@ -1913,23 +2009,15 @@ endif;
                                     $i++;
                                 endwhile;
                                 if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 else:
-                                    echo "<a class='taphover' $illegal_tag id='$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                 endif;
-                                ?>
-                            <script type="text/javascript">
-                                $('#<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                    'use strict'; //satisfy code inspectors
-                                    var link = $(this); //preselect the link
-                                    $('.deckcardimgdiv').hide("slow");
-                                    e.preventDefault();
-                                    $("<?php echo "#card-$cardref";?>").show("slow");
-                                    return false; //extra, and to make sure the function has consistent return points
-                                });
-                            </script>
-                            <?php
-                            echo "</td>";
+                            echo "</td>";?>
+                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                            </div> <?php
                             if(in_array($decktype,$commander_decktypes)):
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
@@ -2060,6 +2148,14 @@ endif;
                             $cardset = strtolower($row["setcode"]);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
+                            $layout = $row['layout'];
+                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
+                            if($imagefunction['front'] == 'error'):
+                                $imageurl = '/cardimg/back.jpg';
+                            else:
+                                $imageurl = $imagefunction['front'];
+                            endif;
                             $msg->logMessage('[DEBUG]',"Sideboard card '$cardname ($cardset $cardnumber)'");
                             if($deck_legality_list != ''):
                                 $msg->logMessage('[DEBUG]',"Checking legality for sideboard card '$cardname'");
@@ -2134,80 +2230,72 @@ endif;
                                         $i++;
                                     endwhile;
                                     if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     else:
-                                        echo "<a class='taphover' $illegal_tag id='side-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                        echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
                                     endif;
-                                    ?>
-                                <script type="text/javascript">
-                                    $('#side-<?php echo $cardref;?>-taphover').on('click',function(e) {
-                                        'use strict'; //satisfy code inspectors
-                                        var link = $(this); //preselect the link
-                                        $('.deckcardimgdiv').hide("slow");
-                                        e.preventDefault();
-                                        $("<?php echo "#side-$cardref";?>").show("slow");
-                                        return false; //extra, and to make sure the function has consistent return points
-                                    });
-                                </script>
-                                <?php
-                                echo "</td>";
-                            if(in_array($decktype,$commander_decktypes)):
+                                echo "</td>";?>
+                                <div class='deckcardimgdiv' id='<?php echo "listside-$cardref";?>'>
+                                    <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                    <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                </div> <?php
+                                if(in_array($decktype,$commander_decktypes)):
+                                    echo "<td class='deckcardlistcenter noprint'>";
+                                    echo "</td>";
+                                endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                echo "</td>";
-                            endif;
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Delete"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
-                                class='material-symbols-outlined'>
-                                delete_forever
-                            </span>
-                            <?php
-                            echo "</td>";
-                            echo "<td class='deckcardlistcenter noprint'>";
-                            ?>
-                            <span 
-                                onmouseover="" 
-                                title="Move to main deck"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
-                                class='material-symbols-outlined'>
-                                arrow_upward
-                            </span>
-                            <?php
-                            echo "</td>";
-                            if(!in_array($decktype,$commander_decktypes)):
-                                echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span 
                                     onmouseover="" 
-                                    title="Remove one"
+                                    title="Delete"
                                     style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
                                     class='material-symbols-outlined'>
-                                    remove
+                                    delete_forever
                                 </span>
                                 <?php
                                 echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
-                                echo $quantity;
-                                echo "</td>";
-                                echo "<td class='deckcardlistleft noprint'>";
+                                echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
                                 <span 
                                     onmouseover="" 
-                                    title="Add one"
+                                    title="Move to main deck"
                                     style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
+                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
                                     class='material-symbols-outlined'>
-                                    add
+                                    arrow_upward
                                 </span>
                                 <?php
                                 echo "</td>";
-                            endif;
+                                if(!in_array($decktype,$commander_decktypes)):
+                                    echo "<td class='deckcardlistright noprint'>";
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Remove one"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                        class='material-symbols-outlined'>
+                                        remove
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistcenter'>";
+                                    echo $quantity;
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistleft noprint'>";
+                                    ?>
+                                    <span 
+                                        onmouseover="" 
+                                        title="Add one"
+                                        style="cursor: pointer;" 
+                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
+                                        class='material-symbols-outlined'>
+                                        add
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
                             $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
@@ -2367,7 +2455,8 @@ endif;
                 endif;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
-                <script>
+                <script type="text/javascript">
+                    // AJAX call to refresh the table and rebind events
                     function refreshTable() {
                         var xhr = new XMLHttpRequest();
                         var data = JSON.stringify({
@@ -2379,10 +2468,17 @@ endif;
                         xhr.onreadystatechange = function () {
                             if (xhr.readyState == 4 && xhr.status == 200) {
                                 document.getElementById('table-container').innerHTML = xhr.responseText;
+                                // Rebind events for newly loaded content
+                                bindRandomCardEvents();
                             }
                         };
                         xhr.send(data);
                     }
+
+                    // Attach the refreshTable function to the button click event
+                    jQuery(document).ready(function ($) {
+                        $('button.profilebutton').on('click', refreshTable);
+                    });
                 </script>
                 <h4>Random draw</h4>
                 <button class='profilebutton' onclick="refreshTable()">NEW DRAW</button>
