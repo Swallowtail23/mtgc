@@ -996,7 +996,7 @@ endif;
                                 ?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname">
-                                    <?php echo "<a class='taphover' $illegal_tag id='list-$list-cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
+                                    <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                         $validpartner = FALSE;
                                         $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid partner or background");
