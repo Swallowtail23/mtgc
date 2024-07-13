@@ -126,7 +126,7 @@ class DeckManager
         endif;
     }
     
-    public function quickadd($decknumber,$get_string,$sideboardTrigger,$batch = false)
+    public function quickadd($decknumber,$get_string,$sideboardTrigger = false,$batch = false)
     // Called from processInput()
     {
         global $noQuickAddLayouts;
