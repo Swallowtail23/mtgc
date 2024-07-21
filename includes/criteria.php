@@ -355,19 +355,19 @@ else:
         // Then game type
         $criteriaGameType = "";
         if ($paper === "yes"):
-            $criteriaGameType = "cards_scry.is_paper = TRUE";
+            $criteriaGameType = "cards_scry.is_paper = TRUE ";
         endif;
         if ($arena === "yes"):
             if (!empty($criteriaGameType)) :
                 $criteriaGameType .= $gametypeOp." ";
             endif;
-            $criteriaGameType .= "cards_scry.is_arena = TRUE";
+            $criteriaGameType .= "cards_scry.is_arena = TRUE ";
         endif;
         if ($online === "yes"):
             if (!empty($criteriaGameType)) :
                 $criteriaGameType .= $gametypeOp." ";
             endif;
-            $criteriaGameType .= "cards_scry.is_mtgo = TRUE";
+            $criteriaGameType .= "cards_scry.is_mtgo = TRUE ";
         endif;
         if (!empty($criteriaGameType)) :
             $criteria .= "AND (".$criteriaGameType.") ";
