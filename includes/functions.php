@@ -230,12 +230,8 @@ function symbolreplace($str)
     $str = str_replace('{E}','<img src="images/e.png" alt="{E}" class="manaimg">',$str);
     $str = str_replace('{T}','<img src="images/t.png" alt="{T}" class="manaimg">',$str);
     $str = str_replace('{Q}','<img src="images/q.png" alt="{Q}" class="manaimg">',$str);
-    
-    // When Scryfall move from {J} to {P}, alter the below accordingly
-    $str = str_replace('{J}','<img src="images/paw.png" alt="{Q}" class="manaimg" title="pawprint">',$str);
-    $str = str_replace('{P}','Phyrexian mana ',$str);
-    // $str = str_replace('{P}','<img src="images/paw.png" alt="{Q}" class="manaimg" title="pawprint">',$str);
-    // $str = str_replace('{H}','Phyrexian mana ',$str);
+    $str = str_replace('{P}','<img src="images/paw.png" alt="{Q}" class="manaimg" title="pawprint">',$str);
+    $str = str_replace('{H}','Phyrexian mana ',$str);
     
     $str = str_replace('{W}','<img src="images/w.png" alt="{W}" class="manaimg">',$str);
     $str = str_replace('{U}','<img src="images/u.png" alt="{U}" class="manaimg">',$str);
