@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.0
-    Date:       10/06/24
+/* Version:     1.1
+    Date:       28/07/24
     Name:       ajaxrandomdraw.php
     Purpose:    PHP script to generate random hand draws for decks
     Notes:      The page does not run standard secpagesetup as it breaks 
@@ -9,6 +9,9 @@
 
     1.0         10/06/24
                 Initial version
+ * 
+ *  1.1         28/07/24
+ *              MTGC-112 - fix mobile 'missing' buttons not working on mobile
 */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'):
@@ -82,6 +85,6 @@ for ($i = 0; $i < 7; $i++) {
         <a href='<?php echo $cardurl;?>'>
         <img alt='<?php echo $name;?>' class='deckcardimg' src='<?php echo $imgurl;?>'></a>
     </div> <?php
-    echo "<tr><td>$randomref: <a class='taphover' id='random-$randomref-taphover' href='$cardurl'>$name</a></td></tr>";
+    echo "<tr><td class='hoverTD'>$randomref: <a class='taphover' id='random-$randomref-taphover' href='$cardurl'>$name</a></td></tr>";
 }
 echo "</table>";

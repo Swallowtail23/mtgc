@@ -1,6 +1,6 @@
 <?php
-/* Version:     21.0
-    Date:       13/07/24
+/* Version:     21.1
+    Date:       28/07/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -85,6 +85,9 @@
  *              MTGC-107 - correctly interpret sideboard cards on input
  *              MTGC-108 - image hovers on mobile and desktop
  *              MTGC-27  - handle planes and phenomena
+ * 
+ *  21.1        28/07/24
+ *              MTGC-112 - fix mobile 'missing' buttons not working on mobile
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -143,7 +146,7 @@ $uniquecard_ref = [];
                 // Bind events based on the device type
                 if (isTouchDevice) {
                     // Click event for touch devices
-                    $('td').on('click', function(e) {
+                    $('td.hoverTD').on('click', function(e) {
                         e.stopPropagation();
                         e.preventDefault();
                         $('.randomcardimgdiv, .deckcardimgdiv').hide("slow");
@@ -999,7 +1002,7 @@ endif;
                                 $commandername = $cardname;
                                 ?>
                                 <tr class='deckrow'>
-                                <td class="deckcardname">
+                                <td class="deckcardname hoverTD">
                                     <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                         $validpartner = FALSE;
@@ -1144,7 +1147,7 @@ endif;
                                     $warnings = TRUE;
                                     ?>
                                     <tr class='deckrow'>
-                                    <td class="deckcardname">
+                                    <td class="deckcardname hoverTD">
                                         <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
@@ -1329,7 +1332,7 @@ endif;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
-                            <td class="deckcardname">
+                            <td class="deckcardname hoverTD">
                                 <?php 
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
@@ -1554,7 +1557,7 @@ endif;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
-                            <td class="deckcardname">
+                            <td class="deckcardname hoverTD">
                                 <?php 
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
@@ -1755,7 +1758,7 @@ endif;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
-                            <td class="deckcardname">
+                            <td class="deckcardname hoverTD">
                                 <?php 
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
@@ -2002,7 +2005,7 @@ endif;
                                 endif;
                             endif; ?>
                             <tr class='deckrow'>
-                            <td class="deckcardname">
+                            <td class="deckcardname hoverTD">
                                 <?php 
                                 $i = 0;
                                 $cdr_1_plus = FALSE;
@@ -2154,7 +2157,7 @@ endif;
                                 endif;
                                 $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");?>
                                 <tr class='deckrow'>
-                                <td class="deckcardname">
+                                <td class="deckcardname hoverTD">
                                     <?php 
                                     $i = 0;
                                     $cdr_1_plus = FALSE;
@@ -2345,7 +2348,7 @@ endif;
                             endif;?>
                     
                             <tr class='deckrow'>
-                                <td class="deckcardname">
+                                <td class="deckcardname hoverTD">
                                     <?php 
                                     $i = 0;
                                     $cdr_1_plus = FALSE;
