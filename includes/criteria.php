@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.5
-    Date:       10/06/24
+/* Version:     7.6
+    Date:       01/08/24
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -38,6 +38,9 @@
  * 
  *  7.5         10/06/24
  *              Add AND / OR to type searches
+ * 
+ *  7.6         01/08/24
+ *              MTGC-114 - fix match card searches failing if card names have hyphen
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -69,6 +72,8 @@ else:
                                 cards_scry.f2_flavor_name = ?
                                 )";
                 $params = array_fill(0, 10, $name);
+                // The first parameter for the full-text search should be quoted
+                $params[0] = '"' . $name . '"';
             elseif ($allprintings === "yes"):  // Used in 'All Printings' search from card_detail page
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
@@ -86,6 +91,8 @@ else:
                                 cards_scry.f2_flavor_name = ?
                                 )";
                 $params = array_fill(0, 10, $name);
+                // The first parameter for the full-text search should be quoted
+                $params[0] = '"' . $name . '"';
             else:
                 $criteria = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?
                             OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
