@@ -2021,7 +2021,7 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     border: 1px solid rgba(0,0,0,0.44);
 }
 
-.deckcardimgdiv, .imgfloat, .backimgfloat
+.imgfloat, .backimgfloat
 {
     display:none;
     position: fixed;
@@ -2029,6 +2029,14 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     top: 170px;
     z-index: 100000;
 }
+
+.deckcardimgdiv
+{
+    display:none;
+    position: fixed;
+    z-index: 100000;
+}
+
 .randomcardimgdiv
 {
     display:none;
