@@ -93,6 +93,7 @@
  *              MTGC-115 - fix mouse and touch modes (JS changes)
  *              MTGC-116 - remove unneeded parts on WIshlist decks (mana, draw)
  *                       - Tidy up text and layout, add help popup
+ *              MTGC-113 - Add mana colour pip qty to decks
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -172,14 +173,14 @@ $uniquecard_ref = [];
 
                             hoverTimeout = setTimeout(function() {
                                 showHoverDiv($link, e);
-                            }, 300); // 300ms delay before showing the hover image
+                            }, 200); // 200ms delay before showing the hover image
 
                             $div.on('mouseenter', function() {
                                 clearTimeout($div.data('timeoutId'));
                             }).on('mouseleave', function() {
                                 var timeoutId = setTimeout(function() {
                                     $div.hide("slow");
-                                }, 300); // 300ms delay before hiding the div
+                                }, 200); // 200ms delay before hiding the div
                                 $div.data('timeoutId', timeoutId);
                             });
                         }
@@ -194,7 +195,7 @@ $uniquecard_ref = [];
                             var $div = $('#' + id.replace('-taphover', ''));
                             var timeoutId = setTimeout(function() {
                                 $div.hide("slow");
-                            }, 300); // 300ms delay before hiding the div
+                            }, 200); // 200ms delay before hiding the div
                             $div.data('timeoutId', timeoutId);
                         }
                     });
@@ -204,72 +205,72 @@ $uniquecard_ref = [];
                     $('td').off('mouseenter mouseleave');
                 }
 
-            function setupTouchEvents() {
-                let touchStartTime = 0;
-                let touchStartX = 0;
-                let touchStartY = 0;
-                let isScrolling = false;
-                let shouldTriggerLink = false;
+                function setupTouchEvents() {
+                    let touchStartTime = 0;
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    let isScrolling = false;
+                    let shouldTriggerLink = false;
 
-                // Touch start event
-                $('td.hoverTD').on('touchstart', function(e) {
-                    touchStartTime = Date.now();
-                    isScrolling = false;
-                    shouldTriggerLink = false;
-
-                    const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
-                    touchStartX = touch.pageX;
-                    touchStartY = touch.pageY;
-
-                    // Add touch-active and no-hover classes
-                    $('tr.deckrow').addClass('no-hover');
-                });
-
-                // Touch move event
-                $('td.hoverTD').on('touchmove', function(e) {
-                    const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
-                    const moveX = touch.pageX;
-                    const moveY = touch.pageY;
-
-                    if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
-                        isScrolling = true;
-                    }
-                });
-
-                // Touch end event
-                $('td.hoverTD').on('touchend', function(e) {
-                    const touchDuration = Date.now() - touchStartTime;
-
-                    if (!isScrolling && touchDuration < 300) { // 300ms threshold to distinguish between tap and scroll
-                        var $link = $(this).find('a.taphover');
-                        if ($link.length) {
-                            e.preventDefault();
-                            shouldTriggerLink = true;
-                            if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
-                                lastHoveredDiv.hide();
-                            }
-
-                            // Ensure event contains touches or changedTouches directly
-                            const touch = e.originalEvent.changedTouches[0] || e.originalEvent.touches[0];
-                            const customEvent = {
-                                pageX: touch.pageX,
-                                pageY: touch.pageY
-                            };
-                            showHoverDiv($link, customEvent); // Custom event with correct coordinates passed here
-                            lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
-                        }
-                    } else {
+                    // Touch start event
+                    $('td.hoverTD').on('touchstart', function(e) {
+                        touchStartTime = Date.now();
+                        isScrolling = false;
                         shouldTriggerLink = false;
-                    }
-                });
 
-                // Click event to prevent link following
-                $('td.hoverTD a.taphover').on('click', function(e) {
-                    if (!shouldTriggerLink) {
-                        e.preventDefault();
-                    }
-                });
-            }
+                        const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+                        touchStartX = touch.pageX;
+                        touchStartY = touch.pageY;
+
+                        // Add touch-active and no-hover classes
+                        $('tr.deckrow').addClass('no-hover');
+                    });
+
+                    // Touch move event
+                    $('td.hoverTD').on('touchmove', function(e) {
+                        const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+                        const moveX = touch.pageX;
+                        const moveY = touch.pageY;
+
+                        if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                            isScrolling = true;
+                        }
+                    });
+
+                    // Touch end event
+                    $('td.hoverTD').on('touchend', function(e) {
+                        const touchDuration = Date.now() - touchStartTime;
+
+                        if (!isScrolling && touchDuration < 300) { // 300ms threshold to distinguish between tap and scroll
+                            var $link = $(this).find('a.taphover');
+                            if ($link.length) {
+                                e.preventDefault();
+                                shouldTriggerLink = true;
+                                if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
+                                    lastHoveredDiv.hide();
+                                }
+
+                                // Ensure event contains touches or changedTouches directly
+                                const touch = e.originalEvent.changedTouches[0] || e.originalEvent.touches[0];
+                                const customEvent = {
+                                    pageX: touch.pageX,
+                                    pageY: touch.pageY
+                                };
+                                showHoverDiv($link, customEvent); // Custom event with correct coordinates passed here
+                                lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
+                            }
+                        } else {
+                            shouldTriggerLink = false;
+                        }
+                    });
+
+                    // Click event to prevent link following
+                    $('td.hoverTD a.taphover').on('click', function(e) {
+                        if (!shouldTriggerLink) {
+                            e.preventDefault();
+                        }
+                    });
+                }
 
                 function getMenuWidth() {
                     const menu = document.getElementById('menu');
@@ -313,6 +314,20 @@ $uniquecard_ref = [];
                         mouseY = touch.pageY;
                     }
 
+                    // Force reflow to ensure dimensions are calculated
+                    $div.css('display', 'block');
+                    var divWidth = $div.outerWidth();
+                    var divHeight = $div.outerHeight();
+                    $div.css('display', 'none');
+                    
+                    // Set fallback value for divHeight if it's 0
+                    if (divWidth === 0) {
+                        divWidth = 180; // Assuming 180 as the default width
+                    }
+                    if (divHeight === 0) {
+                        divHeight = 258; // Assuming 258 as the default height
+                    }
+                    
                     // Get the width of the menu if it's active
                     var menuWidth = getMenuWidth();
                     // Get the height of the header
@@ -325,9 +340,12 @@ $uniquecard_ref = [];
                     var viewportWidth = $(window).width();
                     var viewportHeight = $(window).height();
                     var bottomViewable = viewportHeight + window.scrollY;
-                    var divWidth = $div.outerWidth();
-                    var divHeight = $div.outerHeight();
                     var realImgBottom = mouseY + 80 + divHeight;
+                    console.log({
+                        mouseX, mouseY, menuWidth, headerHeight,
+                        leftPosition, topPosition, viewportWidth, viewportHeight,
+                        bottomViewable, divWidth, divHeight, realImgBottom
+                    });
 
                     // TopPosition is the distance from the top even if that is scrolled off the top of the view - it positions the top of the image below the header
                     //      It is relative to bottom of header
@@ -343,7 +361,9 @@ $uniquecard_ref = [];
                     if (realImgBottom + 10 > bottomViewable) { // the image won't fit in view
                         topPosition = Math.max(mouseY - divHeight - headerHeight - 80, window.scrollY + 10); // 80px above mouse, unless < 10px from header
                     }
-
+                    
+                    console.log({ leftPosition, topPosition }); // Log the final positions
+                    
                     $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
                 }
 
@@ -872,6 +892,12 @@ endif;
 mysqli_data_seek($result, 0);
 $cdrSet = FALSE;
 $cdr_colours = array();
+$w = 0;
+$u = 0;
+$b = 0;
+$r = 0;
+$g = 0;
+$c = 0;
 $i = 0;
 while ($row = $result->fetch_assoc()):
     if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
@@ -885,6 +911,12 @@ while ($row = $result->fetch_assoc()):
         $i = $i + 1;
     endif;
     $cardset = strtolower($row['setcode']);
+    $w = $w + substr_count($row['manacost'],"W");
+    $u = $u + substr_count($row['manacost'],"U");
+    $b = $b + substr_count($row['manacost'],"B");
+    $r = $r + substr_count($row['manacost'],"R");
+    $g = $g + substr_count($row['manacost'],"G");
+    $c = $c + substr_count($row['manacost'],"C");
     
     // For SLD cards and REX cards with empty "Type", use the f1 definition instead
     if ($row['type'] !== NULL):
@@ -921,6 +953,7 @@ while ($row = $result->fetch_assoc()):
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
     $cardref = str_replace('.','-',$row['cardsid']);
 endwhile;
+$msg->logMessage('[DEBUG]',"Colours: W: $w, U: $u, B: $b, R: $r, G: $g, C: $c");
 
 if(isset($cdrSet) AND $cdrSet === TRUE):
     // Finalise allowable colour identity for Commander decks
@@ -2771,6 +2804,33 @@ m13,12,"Fog",en,1,0,0,{id}
                 else:
                     echo "<br>Average mana value = N/A";
                 endif;
+                if($w + $u + $b + $r + $g + $c > 0):
+                    $totalpips = $w + $u + $b + $r + $g + $c;
+                    if ($w > 0):
+                        $w_percent = number_format($w / $totalpips * 100,0);
+                        echo "<br>".symbolreplace("{W}").": $w ($w_percent%) ";
+                    endif;
+                    if ($u > 0):
+                        $u_percent = number_format($u / $totalpips * 100,0);
+                        echo "<br>". symbolreplace("{U}").": $u ($u_percent%) ";
+                    endif;
+                    if ($b > 0):
+                        $b_percent = number_format($b / $totalpips * 100,0);
+                        echo "<br>". symbolreplace("{B}").": $b ($b_percent%) ";
+                    endif;
+                    if ($r > 0):
+                        $r_percent = number_format($r / $totalpips * 100,0);
+                        echo "<br>". symbolreplace("{R}").": $r ($r_percent%) ";
+                    endif;
+                    if ($g > 0):
+                        $g_percent = number_format($g / $totalpips * 100,0);
+                        echo "<br>". symbolreplace("{G}").": $g ($g_percent%) ";
+                    endif;                    
+                    if ($c > 0):
+                        $c_percent = number_format($c / $totalpips * 100,0);
+                        echo "<br>". symbolreplace("{C}").": $c ($c_percent%) ";
+                    endif;
+                endif;
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $formattedDeckValue = $a->format($deckvalue);
                 $msg->logMessage('[DEBUG]',"Formatted value = $formattedDeckValue");
@@ -2799,7 +2859,9 @@ m13,12,"Fog",en,1,0,0,{id}
                             if (xhr.readyState == 4 && xhr.status == 200) {
                                 document.getElementById('table-container').innerHTML = xhr.responseText;
                                 // Rebind events for newly loaded content
-                                bindRandomCardEvents();
+                                window.bindRandomCardEvents();
+                                // Ensure layout recalculations
+                                window.dispatchEvent(new Event('resize'));
                             }
                         };
                         xhr.send(data);
