@@ -91,6 +91,8 @@
  * 
  *  22.0        02/08/24
  *              MTGC-115 - fix mouse and touch modes (JS changes)
+ *              MTGC-116 - remove unneeded parts on WIshlist decks (mana, draw)
+ *                       - Tidy up text and layout, add help popup
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -970,6 +972,32 @@ elseif(isset($cardtoadd)): ?>
     exit();
 endif;
 ?>
+<script>
+    // Function to toggle the visibility of the info box
+    function toggleInfoBox() {
+        var infoBox = document.getElementById("infoBox");
+        infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
+    }
+</script>
+<!-- Info box -->
+<div class="info-box" id="infoBox" style="display:none">
+    <span class="close-button material-symbols-outlined" onclick="toggleInfoBox()">close</span>
+    <div class="info-box-inner">
+        <h2 class="h2-no-top-margin">Adding cards</h2>
+        Cards can be added singly, with multiple rows, or via a text/csv file.
+        To directly add cards, the line can be formatted in several ways:
+        Some examples:
+        <pre>Madame Vastra
+Madame Vastra [WHO]
+4 Madame Vastra [WHO]
+2 (WHO) 425
+2 [WHO 425]
+m13,12,"Fog",en,1,0,0,{id}
+"m13","12","Fog","1","0","{id}"</pre>
+        Text or CSV files should be formatted the same, but can vary line to line.
+        If a line in an imported file reads "Sideboard", subsequent lines will be imported into the sideboard.
+    </div>
+</div> 
 <div id="page">
     <div class="staticpagecontent">
         <div id="decklist">
@@ -2692,7 +2720,7 @@ endif;
             </script>
             <hr id='deckline' class='hr324'>
             <?php
-            if($total + $sidetotal > 0):
+            if($total + $sidetotal > 0 AND $decktype != 'Wishlist'):
                 ?>
                 <h4>&nbsp;Mana value</h4>
                 <script type="text/javascript">
@@ -2756,7 +2784,7 @@ endif;
                     echo "<br>Total deck value (TCGplayer) = ".$formattedDeckValue;
                 endif;
             endif; 
-            if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6): ?>
+            if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6 AND $decktype != 'Wishlist'): ?>
                 <script type="text/javascript">
                     // AJAX call to refresh the table and rebind events
                     function refreshTable() {
@@ -2791,10 +2819,12 @@ endif;
                 </div>
             <?php 
             endif;
+            if($decktype != 'Wishlist'): // Condense to 2 columns for wishlists
             ?>
         </div>
         <div id='deckfunctions'> 
             <?php
+            endif;
             if($total + $sidetotal > 0): ?>
                 <h4>Deck lists</h4>
                 <?php
@@ -2856,22 +2886,17 @@ endif;
                 </table> <?php
             endif;
             ?>
-            <h4>Quick add</h4>
-            Examples of format (card types merged): 
-            <pre>Madame Vastra
-Madame Vastra [WHO]
-4 Madame Vastra [WHO]
-2 [WHO 425]
-c20,105,"Together Forever",en,1,0,0,{uuid}
-"C20","105","Together Forever","1","0","{uuid}"</pre>
+            <h4>Add cards</h4>
             <form action="deckdetail.php"  method="GET">
+                <!-- Hovering help button -->
+                <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">help</span>
+                
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
                 <br>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
                 <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
             </form>
-            <h4>Import</h4>
-            Text or csv file, formatted as Quick add above.
+            <h4>Text or csv file</h4>
             <script type="text/javascript">
                 $(document).ready(function(){
                     $("#importsubmit").attr('disabled',true);
@@ -2994,7 +3019,6 @@ c20,105,"Together Forever",en,1,0,0,{uuid}
                         document.body.style.cursor='wait';
                     }
             </script> 
-            <br><br>
             <form enctype='multipart/form-data' action='?' method='post'>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
