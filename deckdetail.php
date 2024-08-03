@@ -2827,61 +2827,100 @@ m13,12,"Fog",en,1,0,0,{id}
                 else:
                     echo "<br>Average mana value = N/A";
                 endif;
-                if($w + $u + $b + $r + $g + $c > 0):
-                    echo "<br><b>Total mana costs</b>" ;
+                if($w + $u + $b + $r + $g + $c + $gw + $gu + $gb + $gr + $gg + $gc > 0): 
                     $totalpips = $w + $u + $b + $r + $g + $c;
+                    $totalmana = $gw + $gu + $gb + $gr + $gg + $gc;
+                    $w_percent = $u_percent = $b_percent = $r_percent = $g_percent = $gw_percent = $gu_percent = $gb_percent = $gr_percent = $gg_percent = $c_percent = $gc_percent = 0;
                     if ($w > 0):
                         $w_percent = number_format($w / $totalpips * 100,0);
-                        echo "<br>".symbolreplace("{W}")." $w ($w_percent%) ";
                     endif;
                     if ($u > 0):
                         $u_percent = number_format($u / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{U}")." $u ($u_percent%) ";
                     endif;
                     if ($b > 0):
                         $b_percent = number_format($b / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{B}")." $b ($b_percent%) ";
                     endif;
                     if ($r > 0):
                         $r_percent = number_format($r / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{R}")." $r ($r_percent%) ";
                     endif;
                     if ($g > 0):
                         $g_percent = number_format($g / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{G}")." $g ($g_percent%) ";
                     endif;                    
                     if ($c > 0):
                         $c_percent = number_format($c / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{C}")." $c ($c_percent%) ";
                     endif;
                 endif;
                 if($gw + $gu + $gb + $gr + $gg + $gc > 0):
-                    echo "<br><b>Number of mana sources</b>" ;
                     $totalmana = $gw + $gu + $gb + $gr + $gg + $gc;
                     if ($gw > 0):
                         $gw_percent = number_format($gw / $totalmana * 100,0);
-                        echo "<br>".symbolreplace("{W}")." $gw ($gw_percent%) ";
                     endif;
                     if ($gu > 0):
                         $gu_percent = number_format($gu / $totalmana * 100,0);
-                        echo "<br>". symbolreplace("{U}")." $gu ($gu_percent%) ";
                     endif;
                     if ($gb > 0):
                         $gb_percent = number_format($gb / $totalmana * 100,0);
-                        echo "<br>". symbolreplace("{B}")." $gb ($gb_percent%) ";
                     endif;
                     if ($gr > 0):
                         $gr_percent = number_format($gr / $totalmana * 100,0);
-                        echo "<br>". symbolreplace("{R}")." $gr ($gr_percent%) ";
                     endif;
                     if ($gg > 0):
                         $gg_percent = number_format($gg / $totalmana * 100,0);
-                        echo "<br>". symbolreplace("{G}")." $gg ($gg_percent%) ";
                     endif;                    
                     if ($gc > 0):
                         $gc_percent = number_format($gc / $totalmana * 100,0);
-                        echo "<br>". symbolreplace("{C}")." $gc ($gc_percent%) ";
                     endif;
+                endif;
+                if($decktype != 'Wishlist'):?>
+                    <table style="width: 95%;">
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><b>Mana:</b></td>
+                            <td style="text-align: center;"><b>Costs</b></td>
+                            <td style="text-align: center;"><b>Sources</b></td>
+                        </tr><?php
+                        if($w + $gw > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{W}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $w === 0 ? '-' : "$w ($w_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gw === 0 ? '-' : "$gw ($gw_percent%)"; ?> </td>
+                        </tr><?php
+                        endif;
+                        if($u + $gu > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{U}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $u === 0 ? '-' : "$u ($u_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gu === 0 ? '-' : "$gu ($gu_percent%)"; ?> </td>
+                        </tr><?php
+                        endif;
+                        if($b + $gb > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{B}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $b === 0 ? '-' : "$b ($b_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gb === 0 ? '-' : "$gb ($gb_percent%)"; ?> </td>
+                        </tr><?php
+                        endif;
+                        if($r + $gr > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{R}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $r === 0 ? '-' : "$r ($r_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gr === 0 ? '-' : "$gr ($gr_percent%)"; ?> </td>
+                        </tr><?php
+                        endif;
+                        if($g + $gg > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{G}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $g === 0 ? '-' : "$g ($g_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gg === 0 ? '-' : "$gg ($gg_percent%)"; ?> </td>
+                        </tr><?php
+                        endif;
+                        if($c + $gc > 0): ?>
+                        <tr>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{C}"); ?> </td>
+                            <td style="text-align: center;"><?php echo $c === 0 ? '-' : "$c ($c_percent%)"; ?> </td>
+                            <td style="text-align: center;"><?php echo $gc === 0 ? '-' : "$gc ($gc_percent%)"; ?> </td>
+                        </tr><?php
+                        endif; ?>
+                    </table> <?php
                 endif;
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $formattedDeckValue = $a->format($deckvalue);
@@ -2891,9 +2930,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
                     $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
                     $localvalue = $b->format($deckvalue * $rate);
-                    echo "<br>Deck value (TCGplayer) = ".$formattedDeckValue." ($localvalue)";
+                    echo "<b>Deck value</b><br>(TCGplayer) = ".$formattedDeckValue." ($localvalue)";
                 else:
-                    echo "<br>Deck value (TCGplayer) = ".$formattedDeckValue;
+                    echo "<b>Deck value</b><br>(TCGplayer) = ".$formattedDeckValue;
                 endif;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6 AND $decktype != 'Wishlist'): ?>
