@@ -898,6 +898,12 @@ $b = 0;
 $r = 0;
 $g = 0;
 $c = 0;
+$gw = 0;
+$gu = 0;
+$gb = 0;
+$gr = 0;
+$gg = 0;
+$gc = 0;
 $i = 0;
 while ($row = $result->fetch_assoc()):
     if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
@@ -921,6 +927,18 @@ while ($row = $result->fetch_assoc()):
         $c = $c + (substr_count($row['manacost'],"C") * $row['cardqty']);
     else:
         $msg->logMessage('[DEBUG]',"Manacost not a string");
+    endif;
+    $msg->logMessage('[DEBUG]',"Checking for generated mana");
+    if (isset($row['generatedmana']) && is_string($row['generatedmana']) && isset($row['cardqty']) && $row['cardqty'] !== NULL):
+        $msg->logMessage('[DEBUG]',"Generated mana ({$row['name']}) is {$row['generatedmana']}");
+        $gw = $gw + (substr_count($row['generatedmana'],"W") * $row['cardqty']);
+        $gu = $gu + (substr_count($row['generatedmana'],"U") * $row['cardqty']);
+        $gb = $gb + (substr_count($row['generatedmana'],"B") * $row['cardqty']);
+        $gr = $gr + (substr_count($row['generatedmana'],"R") * $row['cardqty']);
+        $gg = $gg + (substr_count($row['generatedmana'],"G") * $row['cardqty']);
+        $gc = $gc + (substr_count($row['generatedmana'],"C") * $row['cardqty']);
+    else:
+        $msg->logMessage('[DEBUG]',"Generated mana not a string");
     endif;
     // For SLD cards and REX cards with empty "Type", use the f1 definition instead
     if ($row['type'] !== NULL):
@@ -958,6 +976,7 @@ while ($row = $result->fetch_assoc()):
     $cardref = str_replace('.','-',$row['cardsid']);
 endwhile;
 $msg->logMessage('[DEBUG]',"Colours: W: $w, U: $u, B: $b, R: $r, G: $g, C: $c");
+$msg->logMessage('[DEBUG]',"Gen mana: W: $gw, U: $gu, B: $gb, R: $gr, G: $gg, C: $gc");
 
 if(isset($cdrSet) AND $cdrSet === TRUE):
     // Finalise allowable colour identity for Commander decks
@@ -2809,6 +2828,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     echo "<br>Average mana value = N/A";
                 endif;
                 if($w + $u + $b + $r + $g + $c > 0):
+                    echo "<br><b>Total mana costs</b>" ;
                     $totalpips = $w + $u + $b + $r + $g + $c;
                     if ($w > 0):
                         $w_percent = number_format($w / $totalpips * 100,0);
@@ -2833,6 +2853,34 @@ m13,12,"Fog",en,1,0,0,{id}
                     if ($c > 0):
                         $c_percent = number_format($c / $totalpips * 100,0);
                         echo "<br>". symbolreplace("{C}")." $c ($c_percent%) ";
+                    endif;
+                endif;
+                if($gw + $gu + $gb + $gr + $gg + $gc > 0):
+                    echo "<br><b>Number of mana sources</b>" ;
+                    $totalmana = $gw + $gu + $gb + $gr + $gg + $gc;
+                    if ($gw > 0):
+                        $gw_percent = number_format($gw / $totalmana * 100,0);
+                        echo "<br>".symbolreplace("{W}")." $gw ($gw_percent%) ";
+                    endif;
+                    if ($gu > 0):
+                        $gu_percent = number_format($gu / $totalmana * 100,0);
+                        echo "<br>". symbolreplace("{U}")." $gu ($gu_percent%) ";
+                    endif;
+                    if ($gb > 0):
+                        $gb_percent = number_format($gb / $totalmana * 100,0);
+                        echo "<br>". symbolreplace("{B}")." $gb ($gb_percent%) ";
+                    endif;
+                    if ($gr > 0):
+                        $gr_percent = number_format($gr / $totalmana * 100,0);
+                        echo "<br>". symbolreplace("{R}")." $gr ($gr_percent%) ";
+                    endif;
+                    if ($gg > 0):
+                        $gg_percent = number_format($gg / $totalmana * 100,0);
+                        echo "<br>". symbolreplace("{G}")." $gg ($gg_percent%) ";
+                    endif;                    
+                    if ($gc > 0):
+                        $gc_percent = number_format($gc / $totalmana * 100,0);
+                        echo "<br>". symbolreplace("{C}")." $gc ($gc_percent%) ";
                     endif;
                 endif;
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
