@@ -2057,10 +2057,30 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     font-style: italic;
     color: #dc143c !important;
 }
-.deckrow:hover
+.deckrow td 
+{
+    -webkit-touch-callout: none; /* Disable the callout */
+    -webkit-tap-highlight-color: transparent; /* Disable the tap highlight color */
+    user-select: none; /* Disable text selection */
+    outline: none; /* Disable outline */
+}
+
+/* Prevent text selection */
+.deckrow::selection 
+{
+    background: none;
+}
+
+.deckrow.no-hover:hover 
+{
+    background: none !important; /* Override hover background */
+}
+
+.deckrow:hover 
 {
     background: rgba(128,128,192,0.5);
 }
+
 .deckrow a
 {
     display: block;

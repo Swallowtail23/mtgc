@@ -1,6 +1,6 @@
 <?php
 /* Version:     22.0
-    Date:       02/08/24
+    Date:       03/08/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -134,7 +134,12 @@ $uniquecard_ref = [];
                 $('.deckcardimgdiv').hide("slow");
                 $('.randomcardimgdiv').hide("slow");
             });
-
+            
+            $('#menubuttondiv, .searchicon').on('click', function () {
+                $('.deckcardimgdiv').hide("slow");
+                $('.randomcardimgdiv').hide("slow");
+            });
+            
             // Scroll event for the window
             $(window).on('scroll', function () {
                 $('.deckcardimgdiv').hide("slow");
@@ -146,83 +151,6 @@ $uniquecard_ref = [];
                 let touchDetected = false;
                 let hoverTimeout;
                 let lastHoveredDiv = null;
-
-                function getMenuWidth() {
-                    const menu = document.getElementById('menu');
-                    if (menu) {
-                        const computedStyle = window.getComputedStyle(menu);
-                        const left = parseInt(computedStyle.left, 10);
-
-                        // If the menu is off-screen (negative left position), consider it inactive
-                        if (left < 0) {
-                            return 0;
-                        }
-
-                        return menu.offsetWidth;
-                    }
-                    return 0;
-                }
-
-                function getHeaderHeight() {
-                    const header = document.getElementById('header');
-                    if (header) {
-                        const computedStyle = window.getComputedStyle(header);
-                        const height = parseInt(computedStyle.height, 10);
-
-                        return height;
-                    }
-                    return 0;
-                }
-
-                function showHoverDiv($link, e) {
-                    var id = $link.attr('id');
-                    var $div = $('#' + id.replace('-taphover', ''));
-                    var mouseX, mouseY;
-
-                    if (e.type.startsWith('touch') && e.originalEvent) {
-                        var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
-                        if (touch) {
-                            mouseX = touch.pageX;
-                            mouseY = touch.pageY;
-                        }
-                    } else {
-                        mouseX = e.pageX;
-                        mouseY = e.pageY;
-                    }
-                    
-                    // Get the width of the menu if it's active
-                    var menuWidth = getMenuWidth();
-                    // Get the height of the header
-                    var headerHeight = getHeaderHeight();
-                    // Adjust position to prevent overflow if necessary
-                    var leftPosition = mouseX - 150;
-                    var topPosition = mouseY - headerHeight + 80; // Always show the image 80px below mouse click, even when scrolled
-
-                    // Ensure the div stays within the viewport and does not overlap the menu
-                    var viewportWidth = $(window).width();
-                    var viewportHeight = $(window).height();
-                    var bottomViewable = viewportHeight + window.scrollY;
-                    var divWidth = $div.outerWidth();
-                    var divHeight = $div.outerHeight();
-                    var realImgBottom = mouseY + 80 + divHeight;
-                    
-                    // TopPosition is the distance from the top even if that is scrolled off the top of the view - it positions the top of the image below the header
-                    //      It is relative to bottom of header
-                    // viewportHeight is what can be seen
-                    // window.scrollY is what is off the top
-                    
-                    if (leftPosition + divWidth > viewportWidth) {
-                        leftPosition = viewportWidth - divWidth - 10; // 10px padding from the edge
-                    }
-                    if (leftPosition < menuWidth) {
-                        leftPosition = menuWidth + 100; // 10px padding from the menu
-                    }
-                    if (realImgBottom + 10 > bottomViewable) { // the image won't fit in view
-                        topPosition = Math.max(mouseY - divHeight - headerHeight - 80, window.scrollY + 10); // 80px above mouse, unless < 10px from header
-                    }
-                    
-                    $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
-                }
 
                 function setupNonTouchEvents() {
                     $('td').on('mouseenter', function(e) {
@@ -274,52 +202,164 @@ $uniquecard_ref = [];
                     $('td').off('mouseenter mouseleave');
                 }
 
-                function setupTouchEvents() {
-                    // Touch event for touch devices
-                    $('td.hoverTD').on('touchstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+            function setupTouchEvents() {
+                let touchStartTime = 0;
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let isScrolling = false;
+                let shouldTriggerLink = false;
 
-                        if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
-                            lastHoveredDiv.hide();
-                        }
+                // Touch start event
+                $('td.hoverTD').on('touchstart', function(e) {
+                    touchStartTime = Date.now();
+                    isScrolling = false;
+                    shouldTriggerLink = false;
 
+                    const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+                    touchStartX = touch.pageX;
+                    touchStartY = touch.pageY;
+
+                    // Add touch-active and no-hover classes
+                    $('tr.deckrow').addClass('no-hover');
+                });
+
+                // Touch move event
+                $('td.hoverTD').on('touchmove', function(e) {
+                    const touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+                    const moveX = touch.pageX;
+                    const moveY = touch.pageY;
+
+                    if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                        isScrolling = true;
+                    }
+                });
+
+                // Touch end event
+                $('td.hoverTD').on('touchend', function(e) {
+                    const touchDuration = Date.now() - touchStartTime;
+
+                    if (!isScrolling && touchDuration < 300) { // 300ms threshold to distinguish between tap and scroll
                         var $link = $(this).find('a.taphover');
                         if ($link.length) {
-                            showHoverDiv($link, e);
+                            e.preventDefault();
+                            shouldTriggerLink = true;
+                            if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
+                                lastHoveredDiv.hide();
+                            }
+
+                            // Ensure event contains touches or changedTouches directly
+                            const touch = e.originalEvent.changedTouches[0] || e.originalEvent.touches[0];
+                            const customEvent = {
+                                pageX: touch.pageX,
+                                pageY: touch.pageY
+                            };
+                            showHoverDiv($link, customEvent); // Custom event with correct coordinates passed here
                             lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
                         }
-                    });
+                    } else {
+                        shouldTriggerLink = false;
+                    }
+                });
 
-                    // Prevent 'mouseleave' from hiding the div on touch devices
-                    $('td.hoverTD').off('mouseleave');
+                // Click event to prevent link following
+                $('td.hoverTD a.taphover').on('click', function(e) {
+                    if (!shouldTriggerLink) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+                function getMenuWidth() {
+                    const menu = document.getElementById('menu');
+                    if (menu) {
+                        const computedStyle = window.getComputedStyle(menu);
+                        const left = parseInt(computedStyle.left, 10);
+
+                        // If the menu is off-screen (negative left position), consider it inactive
+                        if (left < 0) {
+                            return 0;
+                        }
+
+                        return menu.offsetWidth;
+                    }
+                    return 0;
+                }
+
+                function getHeaderHeight() {
+                    const header = document.getElementById('header');
+                    if (header) {
+                        const computedStyle = window.getComputedStyle(header);
+                        const height = parseInt(computedStyle.height, 10);
+
+                        return height;
+                    }
+                    return 0;
+                }
+
+                function showHoverDiv($link, e) {
+                    var id = $link.attr('id');
+                    var $div = $('#' + id.replace('-taphover', ''));
+                    var mouseX, mouseY;
+
+                    if (e.pageX && e.pageY) {
+                        mouseX = e.pageX;
+                        mouseY = e.pageY;
+                    } else {
+                        // Handle cases where pageX and pageY are not directly available
+                        const touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
+                        mouseX = touch.pageX;
+                        mouseY = touch.pageY;
+                    }
+
+                    // Get the width of the menu if it's active
+                    var menuWidth = getMenuWidth();
+                    // Get the height of the header
+                    var headerHeight = getHeaderHeight();
+                    // Adjust position to prevent overflow if necessary
+                    var leftPosition = mouseX - 150;
+                    var topPosition = mouseY - headerHeight + 80; // Always show the image 80px below mouse click, even when scrolled
+
+                    // Ensure the div stays within the viewport and does not overlap the menu
+                    var viewportWidth = $(window).width();
+                    var viewportHeight = $(window).height();
+                    var bottomViewable = viewportHeight + window.scrollY;
+                    var divWidth = $div.outerWidth();
+                    var divHeight = $div.outerHeight();
+                    var realImgBottom = mouseY + 80 + divHeight;
+
+                    // TopPosition is the distance from the top even if that is scrolled off the top of the view - it positions the top of the image below the header
+                    //      It is relative to bottom of header
+                    // viewportHeight is what can be seen
+                    // window.scrollY is what is off the top
+
+                    if (leftPosition + divWidth > viewportWidth) {
+                        leftPosition = viewportWidth - divWidth - 10; // 10px padding from the edge
+                    }
+                    if (leftPosition < menuWidth) {
+                        leftPosition = menuWidth + 100; // 10px padding from the menu
+                    }
+                    if (realImgBottom + 10 > bottomViewable) { // the image won't fit in view
+                        topPosition = Math.max(mouseY - divHeight - headerHeight - 80, window.scrollY + 10); // 80px above mouse, unless < 10px from header
+                    }
+
+                    $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
                 }
 
                 // Default to non-touch hover solution
                 setupNonTouchEvents();
 
-                // Switch to touch-specific behavior on touchstart event
+                // Global touchstart listener to detect touch events on td.hoverTD
                 window.addEventListener('touchstart', function(e) {
                     if (touchDetected) return;
+
+                    if (!$(e.target).closest('td.hoverTD').length) {
+                        return;
+                    }
 
                     touchDetected = true;
 
                     // Remove existing non-touch event handlers
                     removeNonTouchEvents();
-
-                    // Handle the first touch to ensure consistent positioning
-                    var $target = $(e.target).closest('td.hoverTD');
-                    if ($target.length > 0) {
-                        if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
-                            lastHoveredDiv.hide();
-                        }
-
-                        var $link = $target.find('a.taphover');
-                        if ($link.length) {
-                            showHoverDiv($link, e);
-                            lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
-                        }
-                    }
 
                     // Set up touch-specific events
                     setupTouchEvents();
@@ -332,7 +372,10 @@ $uniquecard_ref = [];
                     touchDetected = false;
 
                     // Remove touch-specific event handlers
-                    $('td.hoverTD').off('touchstart');
+                    $('td.hoverTD').off('touchstart touchmove touchend');
+
+                    // Remove no-hover class on mouse events
+                    $('tr.deckrow').removeClass('no-hover');
 
                     // Set up non-touch events again
                     setupNonTouchEvents();
