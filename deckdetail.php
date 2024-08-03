@@ -911,13 +911,17 @@ while ($row = $result->fetch_assoc()):
         $i = $i + 1;
     endif;
     $cardset = strtolower($row['setcode']);
-    $w = $w + substr_count($row['manacost'],"W");
-    $u = $u + substr_count($row['manacost'],"U");
-    $b = $b + substr_count($row['manacost'],"B");
-    $r = $r + substr_count($row['manacost'],"R");
-    $g = $g + substr_count($row['manacost'],"G");
-    $c = $c + substr_count($row['manacost'],"C");
-    
+    $msg->logMessage('[DEBUG]',"Checking manacost for colour quantities");
+    if (isset($row['manacost']) && is_string($row['manacost'])):
+        $w = $w + substr_count($row['manacost'],"W");
+        $u = $u + substr_count($row['manacost'],"U");
+        $b = $b + substr_count($row['manacost'],"B");
+        $r = $r + substr_count($row['manacost'],"R");
+        $g = $g + substr_count($row['manacost'],"G");
+        $c = $c + substr_count($row['manacost'],"C");
+    else:
+        $msg->logMessage('[DEBUG]',"Manacost not a string");
+    endif;
     // For SLD cards and REX cards with empty "Type", use the f1 definition instead
     if ($row['type'] !== NULL):
         $card_type = $row['type'];
