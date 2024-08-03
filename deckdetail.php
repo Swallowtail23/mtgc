@@ -912,13 +912,13 @@ while ($row = $result->fetch_assoc()):
     endif;
     $cardset = strtolower($row['setcode']);
     $msg->logMessage('[DEBUG]',"Checking manacost for colour quantities");
-    if (isset($row['manacost']) && is_string($row['manacost'])):
-        $w = $w + substr_count($row['manacost'],"W");
-        $u = $u + substr_count($row['manacost'],"U");
-        $b = $b + substr_count($row['manacost'],"B");
-        $r = $r + substr_count($row['manacost'],"R");
-        $g = $g + substr_count($row['manacost'],"G");
-        $c = $c + substr_count($row['manacost'],"C");
+    if (isset($row['manacost']) && is_string($row['manacost']) && isset($row['cardqty']) && $row['cardqty'] !== NULL):
+        $w = $w + (substr_count($row['manacost'],"W") * $row['cardqty']);
+        $u = $u + (substr_count($row['manacost'],"U") * $row['cardqty']);
+        $b = $b + (substr_count($row['manacost'],"B") * $row['cardqty']);
+        $r = $r + (substr_count($row['manacost'],"R") * $row['cardqty']);
+        $g = $g + (substr_count($row['manacost'],"G") * $row['cardqty']);
+        $c = $c + (substr_count($row['manacost'],"C") * $row['cardqty']);
     else:
         $msg->logMessage('[DEBUG]',"Manacost not a string");
     endif;
@@ -2812,27 +2812,27 @@ m13,12,"Fog",en,1,0,0,{id}
                     $totalpips = $w + $u + $b + $r + $g + $c;
                     if ($w > 0):
                         $w_percent = number_format($w / $totalpips * 100,0);
-                        echo "<br>".symbolreplace("{W}").": $w ($w_percent%) ";
+                        echo "<br>".symbolreplace("{W}")." $w ($w_percent%) ";
                     endif;
                     if ($u > 0):
                         $u_percent = number_format($u / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{U}").": $u ($u_percent%) ";
+                        echo "<br>". symbolreplace("{U}")." $u ($u_percent%) ";
                     endif;
                     if ($b > 0):
                         $b_percent = number_format($b / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{B}").": $b ($b_percent%) ";
+                        echo "<br>". symbolreplace("{B}")." $b ($b_percent%) ";
                     endif;
                     if ($r > 0):
                         $r_percent = number_format($r / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{R}").": $r ($r_percent%) ";
+                        echo "<br>". symbolreplace("{R}")." $r ($r_percent%) ";
                     endif;
                     if ($g > 0):
                         $g_percent = number_format($g / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{G}").": $g ($g_percent%) ";
+                        echo "<br>". symbolreplace("{G}")." $g ($g_percent%) ";
                     endif;                    
                     if ($c > 0):
                         $c_percent = number_format($c / $totalpips * 100,0);
-                        echo "<br>". symbolreplace("{C}").": $c ($c_percent%) ";
+                        echo "<br>". symbolreplace("{C}")." $c ($c_percent%) ";
                     endif;
                 endif;
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
@@ -2843,9 +2843,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
                     $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
                     $localvalue = $b->format($deckvalue * $rate);
-                    echo "<br>Total deck value (TCGplayer) = ".$formattedDeckValue." ($localvalue)";
+                    echo "<br>Deck value (TCGplayer) = ".$formattedDeckValue." ($localvalue)";
                 else:
-                    echo "<br>Total deck value (TCGplayer) = ".$formattedDeckValue;
+                    echo "<br>Deck value (TCGplayer) = ".$formattedDeckValue;
                 endif;
             endif; 
             if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6 AND $decktype != 'Wishlist'): ?>
