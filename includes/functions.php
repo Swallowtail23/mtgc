@@ -804,6 +804,7 @@ function scryfallImport($file_location,$type)
                         endif;
                         $face_loop = $face_loop + 1;
                     endforeach;
+                    $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count - point 7, finished face loops");
                 endif;
                 if($key2 == 'all_parts'):
                     $all_parts_loop = 1;
@@ -953,12 +954,16 @@ function scryfallImport($file_location,$type)
                 $coll_no = str_replace('U', '', $coll_no);
                 if(substr($coll_no, strlen($coll_no)-1) === 's'):
                     $coll_no = str_replace('s', '', $coll_no);
-                    $coll_no = $coll_no + 2000;
+                    if(is_int($coll_no)):
+                        $coll_no = $coll_no + 2000;
+                    endif;
                 endif;
                 if(substr($coll_no, strlen($coll_no)-1) === 'p'):
                     $coll_no = str_replace('p', '', $coll_no);
                 endif;
+                $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count - $coll_no");
                 $number_int = (int) $coll_no;
+                $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count - $number_int");
             endif;
             $stmt = $db->prepare("INSERT INTO 
                                     `cards_scry`
