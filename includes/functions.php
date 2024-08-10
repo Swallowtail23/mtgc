@@ -961,9 +961,7 @@ function scryfallImport($file_location,$type)
                 if(substr($coll_no, strlen($coll_no)-1) === 'p'):
                     $coll_no = str_replace('p', '', $coll_no);
                 endif;
-                $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count - $coll_no");
                 $number_int = (int) $coll_no;
-                $msg->logMessage('[DEBUG]',"Scryfall bulk API ($type), Record $id: $total_count - $number_int");
             endif;
             $stmt = $db->prepare("INSERT INTO 
                                     `cards_scry`
