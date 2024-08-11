@@ -66,7 +66,7 @@
  *              Add revised sorting for PLST and SLD cards, per criteria.php
  * 
  * 19.3         11/08/24
- *              Update notes via AJAX
+ *              Update notes and refresh image via AJAX
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -1066,9 +1066,9 @@ require('includes/menu.php'); //mobile menu
                                                     if ($('.mainimg').length) {
                                                         const currentSrc = $('.mainimg').attr('src');
                                                         const newSrcMain = updateUrlWithTimestamp(currentSrc);
-                                                        $('.mainimg').fadeOut(300, function() {
+                                                        $('.mainimg').fadeOut(100, function() {
                                                             console.log('New mainimg src:', newSrcMain);
-                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                            $(this).attr('src', newSrcMain).fadeIn(100, function() {
                                                                 // Force repaint by briefly removing the element and re-adding it
                                                                 $(this).hide().show(0);
                                                             });
@@ -1078,9 +1078,9 @@ require('includes/menu.php'); //mobile menu
                                                     if ($('.backimg').length) {
                                                         const currentSrc = $('.backimg').attr('src');
                                                         const newSrcBack = updateUrlWithTimestamp(currentSrc);
-                                                        $('.backimg').fadeOut(300, function() {
+                                                        $('.backimg').fadeOut(100, function() {
                                                             console.log('New backimg src:', newSrcBack);
-                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                            $(this).attr('src', newSrcBack).fadeIn(100, function() {
                                                                 // Force repaint by briefly removing the element and re-adding it
                                                                 $(this).hide().show(0);
                                                             });
