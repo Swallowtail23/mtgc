@@ -1,6 +1,6 @@
 <?php 
-/* Version:     19.2
-    Date:       22/01/24
+/* Version:     19.3
+    Date:       11/08/24
     Name:       carddetail.php
     Purpose:    Card detail page
     Notes:       
@@ -64,6 +64,9 @@
  * 
  * 19.2         22/01/24
  *              Add revised sorting for PLST and SLD cards, per criteria.php
+ * 
+ * 19.3         11/08/24
+ *              Update notes via AJAX
 */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -230,6 +233,11 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
             var initialValue = textarea.val();
             textarea.on('input', function() {
                 saveButton.prop('disabled', textarea.val() === initialValue);
+            });
+            
+            $('#refreshsubmit').on('click', function() {
+                console.log('Refresh button clicked'); // Debugging line
+                refreshImage();
             });
         });
 
@@ -605,86 +613,11 @@ require('includes/menu.php'); //mobile menu
                 $myetch = $row['etched'];
             endif;
             if (empty($row['notes'])):
-                $oldnotes = '';
+                $notes = '';
             else:
-                $oldnotes = $row['notes'];
+                $notes = $row['notes'];
             endif;
 
-            if (isset($_POST['update']) && isset($_POST['notes'])) :  
-                
-                //New notes are to be:
-                $newnotes = filter_input(INPUT_POST, 'notes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
-                if ($newnotes === ''):
-                    $newnotes = null;
-                endif;
-                
-                //Get 'Before' notes for comparison
-                $sqlbeforeqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
-                $beforeparams = [$id];
-                if($sqlbefore = $db->execute_query($sqlbeforeqry,$beforeparams)):
-                    $msg->logMessage('[DEBUG]',"Before SQL query succeeded ");
-                else:
-                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                endif;
-                $beforeresult = $sqlbefore->fetch_array(MYSQLI_ASSOC);
-                $writerowforlog = "";
-                foreach((array)$beforeresult as $key => $value): 
-                    if (!is_int($key)):
-                        $writerowforlog .= "index: '$key', value: '$value' "; 
-                    endif;
-                endforeach;
-                $msg->logMessage('[DEBUG]',"User $useremail({$_SERVER['REMOTE_ADDR']}) Before values: $writerowforlog");
-                
-                //Write new notes
-                $updatequery = "
-                        INSERT INTO `$mytable` (notes,id)
-                        VALUES (?,?)
-                        ON DUPLICATE KEY UPDATE notes = ? ";
-                $updateparams = [$newnotes,$id,$newnotes];
-                $msg->logMessage('[NOTICE]',"User $useremail({$_SERVER['REMOTE_ADDR']}) running update query: $updatequery");
-                if($sqlupdate = $db->execute_query($updatequery,$updateparams)):
-                    $msg->logMessage('[DEBUG]',"SQL update query succeeded");
-                else:
-                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL update failure: " . $db->error, E_USER_ERROR);
-                endif;
-                
-                // Retrieve new record to display
-                $sqlafterqry = "SELECT id,notes FROM `$mytable` WHERE id = ? LIMIT 1";
-                $afterparams = [$id];
-                if($sqlafter = $db->execute_query($sqlafterqry,$afterparams)):
-                    $msg->logMessage('[DEBUG]',"After SQL query succeeded ");
-                else:
-                    trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
-                endif;
-                $afterresult = $sqlafter->fetch_array(MYSQLI_ASSOC);
-                $writerowforlog = "";
-                foreach((array)$afterresult as $key => $value): 
-                    if (!is_int($key)):
-                        $writerowforlog .= "index: '$key', value: '$value' "; 
-                    endif;
-                endforeach;
-                $msg->logMessage('[DEBUG]',"User $useremail({$_SERVER['REMOTE_ADDR']}) After values: $writerowforlog");
-                
-                //Compare 
-                $afternotes = $afterresult['notes'];
-                if ($newnotes === $afternotes):
-                    $msg->logMessage('[DEBUG]',"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record matches input"); ?>
-                    <div class="msg-new success-new" onclick='CloseMe(this)'><span>Notes updated</span>
-                        <br>
-                        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                    </div>
-                <?php else: 
-                    $msg->logMessage('[DEBUG]',"User $useremail({$_SERVER['REMOTE_ADDR']}) New notes record does not match input"); ?>?>
-                    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Update failed</span>
-                        <br>
-                        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-                    </div>
-                <?php endif;
-            else:
-                $afternotes = '';
-                $newnotes = '';
-            endif; 
-            
             //Process image change if it's been called by an admin.
             if (isset($_POST['import']) AND $admin == 1):
                 $msg->logMessage('[NOTICE]',"Image upload called by $useremail");
@@ -713,13 +646,7 @@ require('includes/menu.php'); //mobile menu
                     endif;
                 endif;
             endif;
-            if (isset($refreshimage) AND $refreshimage === 'REFRESH'):
-                $msg->logMessage('[NOTICE]',"Image refresh called for $cardid by $useremail");
-                $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                $obj->refreshImage($cardid);
-                echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
-                exit;
-            endif;
+            
             $setcode = htmlentities($setcode,ENT_QUOTES,"UTF-8");
             $setname = htmlentities($setname,ENT_QUOTES,"UTF-8");
             $namehtml = $row['name'];
@@ -924,7 +851,7 @@ require('includes/menu.php'); //mobile menu
                                         $hoverclass = 'imgfloat';
                                     endif; ?>
                                         <div class='<?php echo $hoverclass; ?>' id='image-<?php echo $row['cs_id'];?>'>
-                                            <img alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
+                                            <img class='mainimg' alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
                                         </div> <?php
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
@@ -1104,7 +1031,7 @@ require('includes/menu.php'); //mobile menu
                                                         </button>
                                                     </td>
                                                     <td class="imgreplace">
-                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>
+                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='button' value='REFRESH'>
                                                             <span
                                                                 title="Refresh image"
                                                                 onmouseover=""
@@ -1113,12 +1040,76 @@ require('includes/menu.php'); //mobile menu
                                                                 refresh
                                                             </span>
                                                         </button>
+                                                        <input type='hidden' id='refreshid' value="<?php echo $row[0]; ?>">
                                                     </td>
                                                 </tr>
                                             </table>
                                         </form>
                                     </td>
-                                </tr> <?php
+                                </tr>
+                                <script>                    
+                                    function refreshImage() {
+                                        const cardId = $('#refreshid').val();
+                                        console.log(cardId); 
+
+                                        $.ajax({
+                                            url: 'ajax/ajaxcardrefreshimg.php',
+                                            type: 'POST',
+                                            data: { cardid: cardId },
+                                            dataType: 'json', 
+                                            success: function(response) {
+                                                console.log('AJAX response:', response);
+                                                console.log('Type of response.success:', typeof response.success); 
+                                                if (response.success) {
+                                                    console.log('Success response detected');
+                                                    // Check if #mainimg exists before trying to update it
+                                                    if ($('.mainimg').length) {
+                                                        const currentSrc = $('.mainimg').attr('src');
+                                                        const newSrcMain = updateUrlWithTimestamp(currentSrc);
+                                                        $('.mainimg').fadeOut(300, function() {
+                                                            console.log('New mainimg src:', newSrcMain);
+                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                                // Force repaint by briefly removing the element and re-adding it
+                                                                $(this).hide().show(0);
+                                                            });
+                                                        });
+                                                    }
+
+                                                    if ($('.backimg').length) {
+                                                        const currentSrc = $('.backimg').attr('src');
+                                                        const newSrcBack = updateUrlWithTimestamp(currentSrc);
+                                                        $('.backimg').fadeOut(300, function() {
+                                                            console.log('New backimg src:', newSrcBack);
+                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                                // Force repaint by briefly removing the element and re-adding it
+                                                                $(this).hide().show(0);
+                                                            });
+                                                        });
+                                                    }
+                                                    function updateUrlWithTimestamp(url) {
+                                                        const timestamp = new Date().getTime();
+
+                                                        // Check if the URL already has a query string
+                                                        if (url.indexOf('?') !== -1) {
+                                                            // If it already has parameters, append with &
+                                                            return url.replace(/(\&|\?)timestamp=\d*/, '') + '&timestamp=' + timestamp;
+                                                        } else {
+                                                            // If no parameters, add one with ?
+                                                            return url + '?timestamp=' + timestamp;
+                                                        }
+                                                    }
+                                                } else {
+                                                    console.log('Error response detected');
+                                                    alert('Error refreshing image: ' + response.message);
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('AJAZ error:', error);
+                                                alert('An error occurred while refreshing the image.');
+                                            }
+                                        });
+                                    }; 
+                                </script> <?php
                             //else just show control to refresh the image(s) for the card
                             else: ?>
                                 <tr>
@@ -1489,7 +1480,6 @@ require('includes/menu.php'); //mobile menu
                     </div><?php 
                     if(($meld !== 'meld_result') AND ($not_paper !== true ) AND ($cardtypes != 'none' )): ?>
                         <div id="carddetailupdate">
-                            <form id="updatenotesform" action="?" method="POST">
                             <h3 class="shallowh3">My collection</h3>
                             <?php
                             $msg->logMessage('[DEBUG]',"Card types: $cardtypes");
@@ -1554,23 +1544,51 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                             </table>
-                            <table style="margin-top:10px"><?php
-                                if ($afternotes === ''):
-                                    $displaynotes = $oldnotes;
-                                else:
-                                    $displaynotes = $afternotes;
-                                endif;
-                                echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40' placeholder='My notes'>$displaynotes</textarea></td></tr>"; ?>
-                            </table> <?php
-                            echo "<input type='hidden' name='id' value=".$lookupid.">";
-                            echo "<input type='hidden' name='update' value='yes'>";?>
-                            <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
-                            <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled><span class="material-symbols-outlined">save</span></button>
+                            <form id="updatenotesform" action="?" method="POST">
+                                <table style="margin-top:10px"><?php
+                                    echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' cols='40' placeholder='My notes'>$notes</textarea></td></tr>"; ?>
+                                </table> <?php
+                                echo "<input type='hidden' name='id' value=".$lookupid.">"; ?>
+                                <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
+                                <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled><span class="material-symbols-outlined">save</span></button>
                             </form>
                             <script>
                                 function submitForm() {
-                                    document.getElementById('hiddenSubmitValue').value = 'UPDATE NOTES';
-                                    document.getElementById('updatenotesform').submit();
+                                    var notesTextarea = $('#cardnotes');
+                                    var saveButton = $('.save_icon');
+
+                                    const notes = notesTextarea.val();
+                                    const card = $('#updatenotesform').find('input[name="id"]').val();
+
+                                    const data = new URLSearchParams();
+                                    data.append('newnotes', notes);
+                                    data.append('cardid', card);
+
+                                    fetch('ajax/ajaxcardnotes.php', {
+                                        method: 'POST',
+                                        body: data,
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                        }
+                                    })
+                                    .then(response => response.json())
+                                    .then(result => {
+                                        if (result.success) {
+                                            // alert('Notes updated successfully');
+
+                                            // Reset the initial values to the newly saved content
+                                            initialNotesValue = notesTextarea.val();
+                                            
+                                            // Disable the save button again
+                                            saveButton.prop('disabled', true);
+                                        } else {
+                                            alert('Error updating notes: ' + result.error);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        alert('An error occurred while updating the notes.');
+                                    });
                                 }
                             </script>
                             <script>
@@ -2140,7 +2158,7 @@ require('includes/menu.php'); //mobile menu
                                         $msg->logMessage('[DEBUG]',"Image location is ".$imagelocationback);
                                         ?>
                                             <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
-                                                <img alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
+                                                <img class='backimg' alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
                                             </div>
                                         <?php
                                         if(isset($row['multiverse2'])):

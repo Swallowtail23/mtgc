@@ -476,9 +476,6 @@ if (isset($_GET["deck"])):
     endif;
 elseif (isset($_POST["deck"])):
     $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
-    $updatenotes    = isset($_POST['updatenotes']) ? 'yes' : '';
-    $newnotes       = filter_input(INPUT_POST, 'newnotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
-    $newsidenotes   = filter_input(INPUT_POST, 'newsidenotes', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     $renamedeck     = isset($_POST['renamedeck']) ? 'yes' : '';
     $newname        = isset($_POST['newname']) ? filter_input(INPUT_POST, 'newname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES): '';
 else: ?>
@@ -531,15 +528,6 @@ if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     </div> <?php
     require('includes/footer.php');
     exit();
-endif;
-
-// Update notes if called before reading info
-if ((isset($updatenotes)) AND ($updatenotes == 'yes')):
-    if ($db->execute_query("UPDATE decks SET notes = ?, sidenotes = ? WHERE decknumber = ?",[$newnotes,$newsidenotes,$decknumber]) === FALSE):
-        trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
-    else:
-        $redirect = true;
-    endif;
 endif;
 
 // Update name if called before reading info (we've already checked ownership)
