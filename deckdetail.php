@@ -1,6 +1,6 @@
 <?php
-/* Version:     22.0
-    Date:       03/08/24
+/* Version:     22.1
+    Date:       11/08/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -94,6 +94,9 @@
  *              MTGC-116 - remove unneeded parts on WIshlist decks (mana, draw)
  *                       - Tidy up text and layout, add help popup
  *              MTGC-113 - Add mana colour pip qty to decks
+ * 
+ *  22.1        11/08/24
+ *              MTGC-119 - save notes with Ajax instead of full page submit/reload
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -2763,15 +2766,52 @@ m13,12,"Fog",en,1,0,0,{id}
                     <h4>&nbsp;Sideboard notes</h4>
                     <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
                 <?php endif;  ?>
-                <input type='hidden' name='updatenotes' value='yes'>
                 <input type='hidden' name='deck' value='<?php echo $decknumber?>'>
-                <input class='inline_button stdwidthbutton updatebutton' style="cursor: pointer;" type="hidden" id="hiddenSubmitValue" value="UPDATE NOTES">
-                <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled><span class="material-symbols-outlined">save</span></button>
+                <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled>
+                    <span class="material-symbols-outlined">save</span>
+                </button>
             </form>
             <script>
                 function submitForm() {
-                    document.getElementById('hiddenSubmitValue').value = 'UPDATE NOTES';
-                    document.getElementById('updatenotesform').submit();
+                    var notesTextarea = $('#notes');
+                    var sidenotesTextarea = $('#sidenotes');
+                    var saveButton = $('.save_icon');
+                    
+                    const notes = notesTextarea.val();
+                    const sidenotes = sidenotesTextarea.length ? sidenotesTextarea.val() : '';
+                    const deck = $('#updatenotesform').find('input[name="deck"]').val();
+
+                    const data = new URLSearchParams();
+                    data.append('newnotes', notes);
+                    data.append('newsidenotes', sidenotes);
+                    data.append('decknumber', deck);
+
+                    fetch('ajax/ajaxdecknotes.php', {
+                        method: 'POST',
+                        body: data,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            // alert('Notes updated successfully');
+
+                            // Reset the initial values to the newly saved content
+                            initialNotesValue = notesTextarea.val();
+                            initialSidenotesValue = sidenotesTextarea.val();
+
+                            // Disable the save button again
+                            saveButton.prop('disabled', true);
+                        } else {
+                            alert('Error updating notes: ' + result.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating the notes.');
+                    });
                 }
             </script>
             <hr id='deckline' class='hr324'>
