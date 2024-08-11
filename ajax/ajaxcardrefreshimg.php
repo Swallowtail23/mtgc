@@ -68,10 +68,8 @@ if ($isValidReferrer):
         try {
             $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
             $newImage = $obj->refreshImage($cardUUID);
-            $msg->logMessage('[DEBUG]',"Result: $newImage");
             
             if ($newImage === 'success'):
-                $msg->logMessage('[DEBUG]',"Success, returning true");
                 echo json_encode(['success' => true]);
             else:
                 http_response_code(400);
