@@ -561,6 +561,7 @@ require('includes/menu.php'); //mobile menu
             endif;
             $msg->logMessage('[DEBUG]',"Recorded price from database is: $price_log/$price_foil_log/$price_etched_log");
             $tcg_buy_uri = $scryfallresult["tcg_uri"];
+            $msg->logMessage('[DEBUG]',"TCGPlayer buy URI from Scryfall: $tcg_buy_uri");
             if(isset($row['layout']) AND $row['layout'] === "normal"):
                 $scryfallimg = $row['image_uri'];
             else:

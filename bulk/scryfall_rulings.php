@@ -32,9 +32,15 @@ $file_location = $ImgLocation.'json/rulings.json';
 $total_count = 0;
 
 $msg->logMessage('[NOTICE]',"Scryfall Rulings API: fetching $url");
+$options = array(
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
+    CURLOPT_USERAGENT => "MtGCollection/1.0",
+    CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
+    );
 $ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+curl_setopt_array($ch, $options);
 $curlresult = curl_exec($ch);
 curl_close($ch);
 $scryfall_rulings = json_decode($curlresult,true);
