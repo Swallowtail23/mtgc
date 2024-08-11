@@ -378,6 +378,7 @@ function checkRemoteFile($url)
     curl_setopt($ch, CURLOPT_FAILONERROR, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch,CURLOPT_USERAGENT,'MtGCollection/1.0');
+    curl_setopt($ch,CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
     curl_setopt($ch, CURLOPT_AUTOREFERER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     $curlresult = curl_exec($ch);
@@ -557,6 +558,7 @@ function getBulkInfo($type)
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
         $curlresult = curl_exec($ch);
         curl_close($ch);
         $scryfall_bulk = json_decode($curlresult,true);
@@ -566,6 +568,7 @@ function getBulkInfo($type)
         $ch = curl_init($url_default);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
         $curlresult = curl_exec($ch);
         curl_close($ch);
         $scryfall_bulk_default = json_decode($curlresult,true);
@@ -574,6 +577,7 @@ function getBulkInfo($type)
         $ch = curl_init($url_all);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
         $curlresult = curl_exec($ch);
         curl_close($ch);
         $scryfall_bulk_all = json_decode($curlresult,true);

@@ -99,8 +99,15 @@ class PriceManager
         // UPDATE
         if($scryaction === 'update'):
             $this->message->logMessage('[DEBUG]',"Scryfall API by $this->useremail with 'update' result: fetching $url");
+            $options = array(
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
+                CURLOPT_USERAGENT => "MtGCollection/1.0",
+                CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
+                );
             $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt_array($ch, $options);
             $curlresult = curl_exec($ch);
             $this->message->logMessage('[DEBUG]',"Scryfall API by $this->useremail with update: $curlresult");
             curl_close($ch);
@@ -226,8 +233,15 @@ class PriceManager
         // GET
         elseif($scryaction === 'get'):
             $this->message->logMessage('[DEBUG]',"Scryfall API by $this->useremail with 'get' result: fetching $url");
+            $options = array(
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
+                CURLOPT_USERAGENT => "MtGCollection/1.0",
+                CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
+                );
             $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt_array($ch, $options);
             $curlresult = curl_exec($ch);
             $this->message->logMessage('[DEBUG]',"Scryfall API by $this->useremail with get: $curlresult");
             curl_close($ch);
