@@ -234,6 +234,11 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
             textarea.on('input', function() {
                 saveButton.prop('disabled', textarea.val() === initialValue);
             });
+            
+            $('#refreshsubmit').on('click', function() {
+                console.log('Refresh button clicked'); // Debugging line
+                refreshImage();
+            });
         });
 
         // Other js functions
@@ -641,13 +646,7 @@ require('includes/menu.php'); //mobile menu
                     endif;
                 endif;
             endif;
-            if (isset($refreshimage) AND $refreshimage === 'REFRESH'):
-                $msg->logMessage('[NOTICE]',"Image refresh called for $cardid by $useremail");
-                $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                $obj->refreshImage($cardid);
-                echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
-                exit;
-            endif;
+            
             $setcode = htmlentities($setcode,ENT_QUOTES,"UTF-8");
             $setname = htmlentities($setname,ENT_QUOTES,"UTF-8");
             $namehtml = $row['name'];
@@ -852,7 +851,7 @@ require('includes/menu.php'); //mobile menu
                                         $hoverclass = 'imgfloat';
                                     endif; ?>
                                         <div class='<?php echo $hoverclass; ?>' id='image-<?php echo $row['cs_id'];?>'>
-                                            <img alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
+                                            <img class='mainimg' alt='<?php echo $imagelocation;?>' src='<?php echo $imagelocation;?>'>
                                         </div> <?php
                                     if(isset($row['multiverse'])):
                                         $multiverse_id = $row['multiverse'];
@@ -1032,7 +1031,7 @@ require('includes/menu.php'); //mobile menu
                                                         </button>
                                                     </td>
                                                     <td class="imgreplace">
-                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='submit' name='refreshimage' value='REFRESH'>
+                                                        <button class='importlabel' style="cursor: pointer;" id='refreshsubmit' type='button' value='REFRESH'>
                                                             <span
                                                                 title="Refresh image"
                                                                 onmouseover=""
@@ -1041,12 +1040,76 @@ require('includes/menu.php'); //mobile menu
                                                                 refresh
                                                             </span>
                                                         </button>
+                                                        <input type='hidden' id='refreshid' value="<?php echo $row[0]; ?>">
                                                     </td>
                                                 </tr>
                                             </table>
                                         </form>
                                     </td>
-                                </tr> <?php
+                                </tr>
+                                <script>                    
+                                    function refreshImage() {
+                                        const cardId = $('#refreshid').val();
+                                        console.log(cardId); 
+
+                                        $.ajax({
+                                            url: 'ajax/ajaxcardrefreshimg.php',
+                                            type: 'POST',
+                                            data: { cardid: cardId },
+                                            dataType: 'json', 
+                                            success: function(response) {
+                                                console.log('AJAX response:', response);
+                                                console.log('Type of response.success:', typeof response.success); 
+                                                if (response.success) {
+                                                    console.log('Success response detected');
+                                                    // Check if #mainimg exists before trying to update it
+                                                    if ($('.mainimg').length) {
+                                                        const currentSrc = $('.mainimg').attr('src');
+                                                        const newSrcMain = updateUrlWithTimestamp(currentSrc);
+                                                        $('.mainimg').fadeOut(300, function() {
+                                                            console.log('New mainimg src:', newSrcMain);
+                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                                // Force repaint by briefly removing the element and re-adding it
+                                                                $(this).hide().show(0);
+                                                            });
+                                                        });
+                                                    }
+
+                                                    if ($('.backimg').length) {
+                                                        const currentSrc = $('.backimg').attr('src');
+                                                        const newSrcBack = updateUrlWithTimestamp(currentSrc);
+                                                        $('.backimg').fadeOut(300, function() {
+                                                            console.log('New backimg src:', newSrcBack);
+                                                            $(this).attr('src', newSrcMain).fadeIn(300, function() {
+                                                                // Force repaint by briefly removing the element and re-adding it
+                                                                $(this).hide().show(0);
+                                                            });
+                                                        });
+                                                    }
+                                                    function updateUrlWithTimestamp(url) {
+                                                        const timestamp = new Date().getTime();
+
+                                                        // Check if the URL already has a query string
+                                                        if (url.indexOf('?') !== -1) {
+                                                            // If it already has parameters, append with &
+                                                            return url.replace(/(\&|\?)timestamp=\d*/, '') + '&timestamp=' + timestamp;
+                                                        } else {
+                                                            // If no parameters, add one with ?
+                                                            return url + '?timestamp=' + timestamp;
+                                                        }
+                                                    }
+                                                } else {
+                                                    console.log('Error response detected');
+                                                    alert('Error refreshing image: ' + response.message);
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('AJAZ error:', error);
+                                                alert('An error occurred while refreshing the image.');
+                                            }
+                                        });
+                                    }; 
+                                </script> <?php
                             //else just show control to refresh the image(s) for the card
                             else: ?>
                                 <tr>
@@ -2095,7 +2158,7 @@ require('includes/menu.php'); //mobile menu
                                         $msg->logMessage('[DEBUG]',"Image location is ".$imagelocationback);
                                         ?>
                                             <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
-                                                <img alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
+                                                <img class='backimg' alt='<?php echo $imagelocationback;?>' src='<?php echo $imagelocationback;?>'>
                                             </div>
                                         <?php
                                         if(isset($row['multiverse2'])):
