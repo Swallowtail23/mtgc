@@ -1070,7 +1070,7 @@ require('includes/menu.php'); //mobile menu
                                                             console.log('New mainimg src:', newSrcMain);
                                                             $(this).attr('src', newSrcMain).fadeIn(100, function() {
                                                                 // Force repaint by briefly removing the element and re-adding it
-                                                                $(this).hide().show(0);
+                                                                // $(this).hide().show(0);
                                                             });
                                                         });
                                                     }
@@ -1082,7 +1082,7 @@ require('includes/menu.php'); //mobile menu
                                                             console.log('New backimg src:', newSrcBack);
                                                             $(this).attr('src', newSrcBack).fadeIn(100, function() {
                                                                 // Force repaint by briefly removing the element and re-adding it
-                                                                $(this).hide().show(0);
+                                                                // $(this).hide().show(0);
                                                             });
                                                         });
                                                     }
