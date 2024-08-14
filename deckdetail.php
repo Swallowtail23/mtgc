@@ -2764,41 +2764,36 @@ m13,12,"Fog",en,1,0,0,{id}
                     var notesTextarea = $('#notes');
                     var sidenotesTextarea = $('#sidenotes');
                     var saveButton = $('.save_icon');
-                    
-                    const notes = notesTextarea.val();
-                    const sidenotes = sidenotesTextarea.length ? sidenotesTextarea.val() : '';
-                    const deck = $('#updatenotesform').find('input[name="deck"]').val();
 
-                    const data = new URLSearchParams();
-                    data.append('newnotes', notes);
-                    data.append('newsidenotes', sidenotes);
-                    data.append('decknumber', deck);
+                    var notes = notesTextarea.val();
+                    var sidenotes = sidenotesTextarea.length ? sidenotesTextarea.val() : '';
+                    var deck = $('#updatenotesform').find('input[name="deck"]').val();
 
-                    fetch('ajax/ajaxdecknotes.php', {
-                        method: 'POST',
-                        body: data,
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
+                    $.ajax({
+                        url: 'ajax/ajaxdecknotes.php',
+                        type: 'POST',
+                        data: {
+                            newnotes: notes,
+                            newsidenotes: sidenotes,
+                            decknumber: deck
+                        },
+                        dataType: 'json',
+                        success: function(result) {
+                            if (result.success) {
+                                // Reset the initial values to the newly saved content
+                                initialNotesValue = notesTextarea.val();
+                                initialSidenotesValue = sidenotesTextarea.val();
+
+                                // Disable the save button again
+                                saveButton.prop('disabled', true);
+                            } else {
+                                alert('Error updating notes: ' + result.error);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            alert('An error occurred while updating the notes.');
                         }
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.success) {
-                            // alert('Notes updated successfully');
-
-                            // Reset the initial values to the newly saved content
-                            initialNotesValue = notesTextarea.val();
-                            initialSidenotesValue = sidenotesTextarea.val();
-
-                            // Disable the save button again
-                            saveButton.prop('disabled', true);
-                        } else {
-                            alert('Error updating notes: ' + result.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while updating the notes.');
                     });
                 }
             </script>
