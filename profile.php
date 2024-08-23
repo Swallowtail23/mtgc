@@ -1,6 +1,6 @@
 <?php 
-/* Version:     12.1
-    Date:       06/07/24
+/* Version:     12.2
+    Date:       23/08/24
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -49,6 +49,10 @@
  * 
  * 12.1         06/07/24
  *              Tweaks for new import rewrite
+ * 
+ * 12.2         23/08/24
+ *              MTGC-123 - Use normal price for total value if foil or etched prices 
+ *              are not available but normal price is (and we have foil or etched)
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -403,10 +407,20 @@ endif;
                 $sqlvalue = "SELECT (
                                 COALESCE(SUM(`$mytable`.normal * price),0)
                                 + 
-                                COALESCE(SUM(`$mytable`.foil * price_foil),0)
+                                COALESCE(SUM(`$mytable`.foil * 
+                                    CASE 
+                                        WHEN price_foil IS NOT NULL AND price_foil > 0 THEN price_foil
+                                        WHEN price IS NOT NULL AND price > 0 THEN price
+                                        ELSE 0
+                                    END), 0)
                                 +
-                                COALESCE(SUM(`$mytable`.etched * price_etched),0)
-                                    ) 
+                                COALESCE(SUM(`$mytable`.etched * 
+                                    CASE 
+                                        WHEN price_etched IS NOT NULL AND price_etched > 0 THEN price_etched
+                                        WHEN price IS NOT NULL AND price > 0 THEN price
+                                        ELSE 0
+                                    END), 0)
+                                ) 
                                 as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
                 if($totalvalue = $db->query($sqlvalue)):
                     $rowvalue = $totalvalue->fetch_assoc();
