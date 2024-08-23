@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.1
-    Date:       20/01/24
+/* Version:     1.2
+    Date:       23/08/24
     Name:       pricemanager.class.php
     Purpose:    Price management class
     Notes:      - 
@@ -14,6 +14,9 @@
   
     1.1         20/01/24
  *              Move to logMessage
+ * 
+ *  1.2         23/08/24
+ *              MTGC-123 - Use normal value if needed for Top Value
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -367,8 +370,16 @@ class PriceManager
                                 IFNULL(`$collection`.etched, 0) AS myetch,
                                 topvalue,
                                 IFNULL(price, 0) AS normalprice,
-                                IFNULL(price_foil, 0) AS foilprice,
-                                IFNULL(price_etched, 0) AS etchedprice
+                                CASE 
+                                    WHEN price_foil IS NOT NULL THEN price_foil
+                                    WHEN price_foil IS NULL AND cards_scry.foil = 1 AND `$collection`.foil IS NOT NULL AND `$collection`.foil > 0 THEN IFNULL(price, 0)
+                                    ELSE 0
+                                END AS foilprice,
+                                CASE 
+                                    WHEN price_etched IS NOT NULL THEN price_etched
+                                    WHEN price_etched IS NULL AND `$collection`.etched IS NOT NULL AND `$collection`.etched > 0 THEN IFNULL(price, 0)
+                                    ELSE 0
+                                END AS etchedprice
                                 FROM `$collection` LEFT JOIN `cards_scry` 
                                 ON `$collection`.id = `cards_scry`.id
                                 WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):

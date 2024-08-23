@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.3
-    Date:       08/07/24
+/* Version:     24.4
+    Date:       23/08/24
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -90,6 +90,9 @@
  * 
  * 24.3         08/07/24
  *              Ignore deck import lines with just titles MTGC105
+ * 
+ * 24.4         23/08/24
+ *              MTGC-123 Use normal price for topvalue if needed
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1234,8 +1237,16 @@ function update_topvalue_card($collection,$scryid)
                             notes,
                             topvalue,
                             IFNULL(price, 0) AS normalprice,
-                            IFNULL(price_foil, 0) AS foilprice,
-                            IFNULL(price_etched, 0) AS etchedprice
+                            CASE 
+                                WHEN price_foil IS NOT NULL THEN price_foil
+                                WHEN price_foil IS NULL AND cards_scry.foil = 1 AND `$collection`.foil IS NOT NULL AND `$collection`.foil > 0 THEN IFNULL(price, 0)
+                                ELSE 0
+                            END AS foilprice,
+                            CASE 
+                                WHEN price_etched IS NOT NULL THEN price_etched
+                                WHEN price_etched IS NULL AND `$collection`.etched IS NOT NULL AND `$collection`.etched > 0 THEN IFNULL(price, 0)
+                                ELSE 0
+                            END AS etchedprice
                             FROM `$collection` LEFT JOIN `cards_scry` 
                             ON `$collection`.id = `cards_scry`.id
                             WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
