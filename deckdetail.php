@@ -1,6 +1,6 @@
 <?php
-/* Version:     22.1
-    Date:       11/08/24
+/* Version:     23.0
+    Date:       08/09/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -97,6 +97,10 @@
  * 
  *  22.1        11/08/24
  *              MTGC-119 - save notes with Ajax instead of full page submit/reload
+ * 
+ *  23.0        08/09/24
+ *              MTGC-125 - move deck export to deckmanager class, in preparation for 
+ *                         automated deck exports
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -1171,8 +1175,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             <i><b>Commander</b></i>
                         </td>    
                     </tr>
-                    <?php 
-                    $textfile = "Commander\r\n\r\n";
+                    <?php
                     $total    = 0;
                     $cmc[0]   = 0;
                     $cmc[1]   = 0;
@@ -1316,7 +1319,6 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</tr>";
                                 $total = $total + $quantity;
                                 $commandercount = $commandercount +1;
-                                $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                             endif;
                         endwhile; 
                     endif; 
@@ -1438,7 +1440,6 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     echo "</tr>";
                                     $total = $total + $quantity;
-                                    $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                                 endif;
                             endwhile; 
                         endif; 
@@ -1449,7 +1450,6 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>    
                     </tr>
                     <?php 
-                    $textfile = $textfile."\r\n\r\nCreatures\r\n\r\n";
                 else:
                     ?>
                     <tr>
@@ -1465,7 +1465,6 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>    
                     </tr>
                     <?php 
-                    $textfile = "Creatures\r\n\r\n";
                     $total    = 0;
                     $cmc[0]   = 0;
                     $cmc[1]   = 0;
@@ -1685,7 +1684,6 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity;
-                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1702,7 +1700,6 @@ m13,12,"Fog",en,1,0,0,{id}
                     </td>    
                 </tr>
                 <?php 
-                $textfile = $textfile."\r\n\r\nInstants and Sorceries\r\n\r\n";
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
@@ -1886,7 +1883,6 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif; ?>
@@ -1903,7 +1899,6 @@ m13,12,"Fog",en,1,0,0,{id}
                     </td>    
                 </tr>
                 <?php 
-                $textfile = $textfile."\r\n\r\nOther\r\n\r\n";
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
@@ -2137,7 +2132,6 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -2155,7 +2149,6 @@ m13,12,"Fog",en,1,0,0,{id}
                     </td>    
                 </tr>
                 <?php 
-                $textfile = $textfile."\r\n\r\nLands\r\n\r\n";
                 if (mysqli_num_rows($result) > 0):
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()):
@@ -2327,7 +2320,6 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                             echo "</tr>";
                             $total = $total + $quantity; 
-                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                         endif;
                     endwhile; 
                 endif;
@@ -2362,7 +2354,6 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>    
                     </tr>
                     <?php 
-                    $textfile = $textfile."\r\n\r\nPlanes and Phenomena\r\n\r\n";
                     if (mysqli_num_rows($result) > 0):
                         mysqli_data_seek($result, 0);
                         while ($row = $result->fetch_assoc()):
@@ -2478,8 +2469,6 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
-                                // $total = $total + $quantity; 
-                                $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                             endif;
                         endwhile; 
                     endif;
@@ -2503,7 +2492,6 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>    
                     </tr>
                     <?php 
-                    $textfile = $textfile."\r\n\r\nSideboard\r\n\r\n";
                     $sidetotal = 0;
                     if (mysqli_num_rows($sideresult) > 0):
                         mysqli_data_seek($sideresult, 0);
@@ -2675,7 +2663,6 @@ m13,12,"Fog",en,1,0,0,{id}
                                 endif;
                             echo "</tr>";
                             $sidetotal = $sidetotal + $quantity;
-                            $textfile = $textfile."$quantity $cardname [$cardset $cardnumber]"."\r\n";
                             endwhile; 
                     endif;?>
                     <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;">
@@ -3004,9 +2991,6 @@ m13,12,"Fog",en,1,0,0,{id}
             if($total + $sidetotal > 0): ?>
                 <h4>Deck lists</h4>
                 <?php
-                $textfile = $textfile."\r\n\r\nNotes\r\n\r\n$notes\r\n";
-                $textfile = $textfile."\r\n\r\nSideboard notes\r\n\r\n$sidenotes";
-                $textfile = htmlspecialchars($textfile,ENT_QUOTES);
                 $filename = preg_replace('/[^\w]/', '', $deckname);
                 ?>
                 <table style="width:100%;">
@@ -3014,8 +2998,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         <td>Export formatted card list:</td>
                         <td><form action="dltext.php" method="POST">
                                 <input class='profilebutton' type="submit" value="DECKLIST">
-                                <?php echo "<input type='hidden' name='text' value='$textfile'>"; ?>
-                                <?php echo "<input type='hidden' name='filename' value='$filename'>"; ?>
+                                <?php echo "<input type='hidden' name='decknumber' value='$decknumber'>"; ?>
                             </form>
                         </td>
                     </tr>

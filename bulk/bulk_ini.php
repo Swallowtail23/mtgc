@@ -157,3 +157,17 @@ $games_to_include = ['paper','arena'];
 // Where to get URL of latest bulk downloads
 $default_cards_url = "https://api.scryfall.com/bulk-data/default-cards";
 $all_cards_url = "https://api.scryfall.com/bulk-data/all-cards";
+
+$importLinestoIgnore = array(
+                    "Creatures",
+                    "Instants and Sorceries",
+                    "Other",
+                    "Lands",
+                    "Sideboard",
+                    "Notes",
+                    "Sideboard notes",
+                    "Planes and Phenomena"
+);
+
+$commander_decktypes = array('Commander',
+                             'Tiny Leader');

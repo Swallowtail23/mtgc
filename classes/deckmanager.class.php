@@ -1,6 +1,6 @@
 <?php
-/* Version:     3.0
-    Date:       13/07/24
+/* Version:     4.0
+    Date:       08/09/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -33,6 +33,9 @@
  * 
  *  3.0         13/07/24
  *              MTGC-107 - correctly interpret sideboard cards on input
+ * 
+ *  4.0         08/09/24
+ *              MTGC-125 - adding deck export code
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -48,14 +51,16 @@ class DeckManager
     private $useremail;
     private $serveremail;
     private $importLinestoIgnore;
+    private $siteTitle;
     
-    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore) {
+    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $siteTitle = null) {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
         $this->useremail = $useremail;
         $this->serveremail = $serveremail;
         $this->importLinestoIgnore = $importLinestoIgnore;
+        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
     
     public function processInput($decknumber, $input) {
@@ -914,6 +919,165 @@ class DeckManager
             $this->message->logMessage('[DEBUG]',"...result: {$this->db->affected_rows} row affected ");
         endif;
         return($newnamereturn);
+    }
+
+    public function exportDeck($decknumber,$format,$zipFilePath = NULL) {
+        global $commander_decktypes, $smtpParameters;
+        $this->message->logMessage('[NOTICE]',"Deck export called for deck $decknumber");
+        
+        $query = 'SELECT * FROM decks WHERE decknumber=?';
+        $stmt = $this->db->execute_query($query, [$decknumber]);
+        if ($stmt === FALSE):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+        elseif ($stmt->num_rows < 1):
+            $this->message->logMessage('[ERROR]',"There is no deck $decknumber");
+            return FALSE;
+        else:
+            $deckrow = $stmt->fetch_assoc();
+            $deckname = $deckrow['deckname'];
+            $decktype = $deckrow['type'];
+            $this->message->logMessage('[DEBUG]',"Deck name is '$deckname' and type '$decktype' for deck $decknumber");
+            $detailquery = 'SELECT decknumber,cardnumber,cardqty,sideqty,commander,name,printed_name,f1_name,f1_printed_name,f2_name,f2_printed_name,type,setcode,number,number_import FROM deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id WHERE decknumber=?';
+            $detailstmt = $this->db->execute_query($detailquery, [$decknumber]);
+            $emptyDeck = FALSE;
+            if ($detailstmt === FALSE):
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+            elseif ($detailstmt->num_rows < 1):
+                $this->message->logMessage('[ERROR]',"There are no cards in deck $decknumber");
+                $emptyDeck = TRUE;
+            else:
+                $allRows = [];
+                while ($detailrow = $detailstmt->fetch_assoc()):
+                    $allRows[] = $detailrow;
+                endwhile;
+                usort($allRows, function($a, $b) {
+                    // Handle NULL values in 'type'
+                    $typeA = $a['type'] ?? '';  // If NULL, use an empty string
+                    $typeB = $b['type'] ?? '';  // If NULL, use an empty string
+
+                    // First compare by 'type'
+                    $typeComparison = strcmp($typeA, $typeB);
+
+                    // If 'type' is the same, compare by 'name'
+                    if ($typeComparison === 0):
+                        // Handle NULL values in 'name'
+                        $nameA = $a['name'] ?? '';  // If NULL, use an empty string
+                        $nameB = $b['name'] ?? '';  // If NULL, use an empty string
+                        return strcmp($nameA, $nameB);
+                    endif;
+                    // Otherwise, return the result of the 'type' comparison
+                    return $typeComparison;
+                });
+                if(is_null($decktype) || $decktype === ""):
+                    $textfile = "{$deckrow['deckname']}\r\n\r\n";
+                else:
+                    $textfile = "$deckname ($decktype)\r\n\r\n";
+                endif;
+                $sidefile = "";
+                if(in_array($decktype, $commander_decktypes)):
+                    $cdrDeck = 1;
+                    foreach ($allRows as $row):
+                        if ($row['commander'] === 1):
+                            $this->message->logMessage('[DEBUG]',"Commander found: {$row['name']}");
+                            $textfile = $textfile."Commander\r\n{$row['cardqty']} {$row['name']} ({$row['setcode']} {$row['number_import']})\r\n\r\n";
+                        endif;
+                    endforeach;
+                    foreach ($allRows as $row):
+                        if ($row['commander'] === 2):
+                            $this->message->logMessage('[DEBUG]',"Second commander found: {$row['name']}");
+                            $textfile = $textfile."Partner/Background\r\n{$row['cardqty']} {$row['name']} ({$row['setcode']} {$row['number_import']})\r\n\r\n";
+                        endif;
+                    endforeach;
+                else:                    
+                    $cdrDeck = 0;
+                endif;
+                foreach ($allRows as $detailrow):
+                    if($detailrow['cardqty'] >= 1 && ($cdrDeck !== 1 || ($cdrDeck === 1 && ($detailrow['commander'] !== 1 && $detailrow['commander'] !== 2)))):
+                        $textfile = $textfile."{$detailrow['cardqty']} {$detailrow['name']} ({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                    endif;
+                    if($detailrow['sideqty'] >= 1):
+                        $sidefile = $sidefile."{$detailrow['sideqty']} {$detailrow['name']} ({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                    endif;
+                endforeach;
+                if($sidefile !== ""):
+                    $textfile = $textfile."\r\nSideboard\r\n\r\n".$sidefile;
+                endif;
+            endif;
+            $detailstmt->close();
+        endif;
+        $stmt->close();
+
+        if($emptyDeck !== TRUE):
+            $filename = 'deck_'.$decknumber.'.txt';
+            $tmpName = tempnam(sys_get_temp_dir(), 'deck_'.$decknumber);
+            file_put_contents($tmpName, $textfile);
+
+            if($format === "download"):
+                header('Content-Description: File Transfer');
+                header('Content-Type: text/txt');
+                header("Content-Disposition: attachment; filename=$filename");
+                header('Content-Transfer-Encoding: binary');
+                header('Expires: 0');
+                header('Cache-Control: must-revalidate');
+                header('Pragma: public');
+                header('Content-Length: ' . filesize($tmpName));
+
+                ob_clean();
+                flush();
+                readfile($tmpName);
+                if (isset($tmpName)):
+                    unlink($tmpName);
+                endif;
+            elseif($format === "email"):
+                $mail = new myPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
+
+                $subject = "Deck export";
+                $emailbody = "Your deck export ($deckname) is attached.";
+                $emailaltbody = "Your deck export ($deckname) is attached.";
+                $mailresult = $mail->sendEmail($this->useremail, TRUE, $subject, $emailbody, $emailaltbody, $tmpName, $filename);
+                if (isset($tmpName)):
+                    unlink($tmpName);
+                endif;
+                if($mailresult === TRUE):
+                    return TRUE;
+                else:
+                    return FALSE;
+                endif;
+            elseif($format === "bulk"):
+                // Generate a unique name for the zip file in the temp directory
+                $sanitizedEmail = str_replace('@', '_', $this->useremail);
+                $currentDate = date('d-M-Y');
+                if ($zipFilePath === NULL):
+                    $zipFilename = "Decks-{$sanitizedEmail}-{$currentDate}.zip";
+                    $zipFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $zipFilename;
+                endif;
+                $zip = new ZipArchive();
+
+                // Open the zip archive
+                if ($zip->open($zipFilePath, ZipArchive::CREATE) !== TRUE) {
+                    $this->message->logMessage('[ERROR]', "Cannot create or open ZIP file $zipFilePath");
+                    return FALSE;
+                }
+
+                // Add the deck text file to the zip
+                $zip->addFile($tmpName, $filename);
+
+                // Close the zip archive
+                $zip->close();
+
+                // Clean up the temporary text file
+                if (file_exists($tmpName)) {
+                    unlink($tmpName);
+                }
+
+                // Return the zip file name to the caller
+                return $zipFilePath;
+            else:
+
+            endif;
+        else:
+
+        endif;
     }
 
     public function __toString() {

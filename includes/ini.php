@@ -363,7 +363,7 @@ $image90rotate = array('split',
                        'planar',
                        'Battle — Siege');
 
-// Commander deck types
+// Commander deck types (also in bulk_ini)
 $commander_decktypes = array('Commander',
                              'Tiny Leader');
 
@@ -413,6 +413,7 @@ $bracketsInNames = array(
                     'Used',
                     'Theme'); 
 
+// This def also in bulk_ini
 $importLinestoIgnore = array(
                     "Creatures",
                     "Instants and Sorceries",
