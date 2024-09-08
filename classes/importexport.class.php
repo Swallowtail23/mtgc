@@ -138,7 +138,7 @@ class ImportExport
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
 
-                $subject = "$this->siteTitle weekly export";
+                $subject = "$this->siteTitle weekly collection export";
                 $emailbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle. <br><br> Opt out of automated emails in your profile at <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
                 $emailaltbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle. \r\n\r\n Opt out of automated emails in your profile at your $this->siteTitle profile page ($myURL/profile.php) \r\n\r\n";
                 $mailresult = $mail->sendEmail($useremail, TRUE, $subject, $emailbody, $emailaltbody, $tempFile, $filename);
