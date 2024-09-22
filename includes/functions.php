@@ -784,6 +784,8 @@ function scryfallImport($file_location,$type)
                         endif;
                         if(isset($value3["toughness"])):
                             ${'toughness_'.$face_loop} = $value3["toughness"];
+                        elseif(isset($value3["defense"])):
+                            ${'toughness_'.$face_loop} = $value3["defense"];
                         endif;
                         if(isset($value3["loyalty"])):
                             ${'loyalty_'.$face_loop} = $value3["loyalty"];
