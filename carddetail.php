@@ -1248,6 +1248,9 @@ require('includes/menu.php'); //mobile menu
                             elseif (strpos($row['f1_type'],'laneswalker') !== false):
                                 echo "<b>Loyalty: </b>".$row['f1_loyalty'];
                                 echo "<br>";
+                            elseif (strpos($row['f1_type'],'attle') !== false):
+                                echo "<b>Defense: </b>".$row['f1_toughness'];
+                                echo "<br>";
                             endif;
                         else:
                             $manacost = symbolreplace($row['manacost']);
@@ -1264,6 +1267,9 @@ require('includes/menu.php'); //mobile menu
                                 echo "<br>";
                             elseif (strpos($row['type'],'laneswalker') !== false):
                                 echo "<b>Loyalty: </b>".$row['loyalty']; 
+                                echo "<br>";
+                            elseif (strpos($row['type'],'attle') !== false):
+                                echo "<b>Defense: </b>".$row['toughness'];
                                 echo "<br>";
                             endif;
                         endif;
