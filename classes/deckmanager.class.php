@@ -1,6 +1,6 @@
 <?php
-/* Version:     4.0
-    Date:       08/09/24
+/* Version:     4.1
+    Date:       05/10/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -36,6 +36,9 @@
  * 
  *  4.0         08/09/24
  *              MTGC-125 - adding deck export code
+ * 
+ *  4.1         05/10/24
+ *              MTGC-127 - Fix broken Deck missing export, and add public function to call from dltext.php
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1015,7 +1018,7 @@ class DeckManager
             if($format === "download"):
                 header('Content-Description: File Transfer');
                 header('Content-Type: text/txt');
-                header("Content-Disposition: attachment; filename=$filename");
+                header('Content-Disposition: attachment; filename="'.rawurlencode($filename).'"');
                 header('Content-Transfer-Encoding: binary');
                 header('Expires: 0');
                 header('Cache-Control: must-revalidate');
@@ -1078,6 +1081,42 @@ class DeckManager
         else:
 
         endif;
+    }
+    
+    public function exportMissing($textdata, $filename) {
+
+        // Create a temporary file
+        $tmpName = tempnam(sys_get_temp_dir(), 'data');
+        if ($tmpName === false):
+            $this->message->logMessage('[ERROR]', 'Failed to create temporary file');
+            return false;
+        endif;
+
+        // Write text data to the file
+        if (file_put_contents($tmpName, $textdata) === false):
+            $this->message->logMessage('[ERROR]', 'Failed to write to temporary file');
+            unlink($tmpName);
+            return false;
+        endif;
+
+        // Send headers for file download
+        header('Content-Description: File Transfer');
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="'.rawurlencode($filename).'"');
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($tmpName));
+
+        // Clean output buffer and read the file
+        ob_clean();
+        flush();
+        readfile($tmpName);
+
+        // Remove the temporary file
+        unlink($tmpName);
+        return true;
     }
 
     public function __toString() {
