@@ -39,6 +39,7 @@
  * 
  *  4.1         05/10/24
  *              MTGC-127 - Fix broken Deck missing export, and add public function to call from dltext.php
+ *              MTGC-128 - Add Deck type change function, and add 'variable' method to deck export, used in deck duplicate
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -924,7 +925,35 @@ class DeckManager
         return($newnamereturn);
     }
 
+    public function setDeckType($deck,$decktype)
+    {
+        $this->message->logMessage('[NOTICE]',"Set deck type called: deck $deck to '$decktype'");
+
+        //RENAME
+        $query = 'UPDATE decks set type = ? WHERE decknumber = ?';
+        $stmt = $this->db->execute_query($query, [$decktype,$deck]);
+        if ($stmt === FALSE):
+            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+        else:
+            $decktypereturn = 0;
+            $this->message->logMessage('[DEBUG]',"Deck type '$decktype' query run");
+            if ($this->db->affected_rows !== 1):
+                $decktypereturn = 1; //Error
+                $this->message->logMessage('[DEBUG]',"...result: Unknown error: {$this->db->affected_rows} row(s) affected");
+            endif;
+            $this->message->logMessage('[DEBUG]',"...result: {$this->db->affected_rows} row affected ");
+        endif;
+        return($decktypereturn);
+    }
+    
     public function exportDeck($decknumber,$format,$zipFilePath = NULL) {
+        //Format options:
+        //
+        // - Download
+        // - Email
+        // - Bulk
+        // - Variable (returns the decklist from the function, used in duplicate deck function)
+        
         global $commander_decktypes, $smtpParameters;
         $this->message->logMessage('[NOTICE]',"Deck export called for deck $decknumber");
         
@@ -1011,9 +1040,11 @@ class DeckManager
         $stmt->close();
 
         if($emptyDeck !== TRUE):
-            $filename = 'deck_'.$decknumber.'.txt';
-            $tmpName = tempnam(sys_get_temp_dir(), 'deck_'.$decknumber);
-            file_put_contents($tmpName, $textfile);
+            if($format !== "variable"):
+                $filename = 'deck_'.$decknumber.'.txt';
+                $tmpName = tempnam(sys_get_temp_dir(), 'deck_'.$decknumber);
+                file_put_contents($tmpName, $textfile);
+            endif;
 
             if($format === "download"):
                 header('Content-Description: File Transfer');
@@ -1075,6 +1106,9 @@ class DeckManager
 
                 // Return the zip file name to the caller
                 return $zipFilePath;
+            elseif($format === "variable"):
+                $this->message->logMessage('[DEBUG]',"Variable return called for deck '$decknumber', returning $textfile");
+                return $textfile;
             else:
 
             endif;

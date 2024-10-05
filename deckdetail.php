@@ -1,6 +1,6 @@
 <?php
-/* Version:     23.0
-    Date:       08/09/24
+/* Version:     24.0
+    Date:       05/10/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -101,6 +101,9 @@
  *  23.0        08/09/24
  *              MTGC-125 - move deck export to deckmanager class, in preparation for 
  *                         automated deck exports
+ * 
+ *  24.0        05/10/24
+ *              MTGC-128 - Deck duplication code
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -449,6 +452,43 @@ $uniquecard_ref = [];
                     saveButton.prop('disabled', true);
                 }
             }
+            window.duplicateDeck = function(user, deckname, decknumber, decktype) {
+                // Create a FormData object to send user and deckname to PHP
+                let formData = new FormData();
+                formData.append('user', user);
+                formData.append('deckname', deckname);
+                formData.append('decknumber', decknumber);
+                formData.append('decktype', decktype);
+
+                // Make an AJAX request to the PHP script
+                fetch('ajax/ajaxduplicatedeck.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json()) // Parse JSON response
+                .then(data => {
+                    if (data.success) {
+                        if (data.decknumber) {
+                            alert('Deck duplicated successfully!');
+                            window.location.href = 'deckdetail.php?deck=' + data.decknumber; // Redirect to the deck detail page with the deck number
+                        } else {
+                            alert('Deck duplicated successfully, but no deck number returned.');
+                            window.location.href = 'decks.php';
+                        }
+                    } else {
+                        if (data.error === 'User not logged in') {
+                            // Redirect to the login page
+                            window.location.href = '/login.php';
+                        } else {
+                            alert('Error duplicating deck: ' + data.error);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an issue duplicating the deck.');
+                });
+            };            
         });
     </script>
 </head>
@@ -563,8 +603,9 @@ endif;
 if (isset($updatetype)):
     if(in_array($updatetype,$validtypes)):
         $msg->logMessage('[DEBUG]',"Updating deck type to '$updatetype'");
-        if ($db->execute_query("UPDATE decks set type = ? WHERE decknumber = ?",[$updatetype,$decknumber]) === FALSE):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
+        $setdecktype = $obj->setDeckType($decknumber,$updatetype);
+        if ($setdecktype !== 0):
+            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": Deck type change failed ", E_USER_ERROR);
         else:
             if(!in_array($updatetype,$commander_decktypes)):
                 if ($db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$decknumber]) === FALSE):    
@@ -1076,6 +1117,18 @@ m13,12,"Fog",en,1,0,0,{id}
                     style="cursor: pointer;"
                     class='material-symbols-outlined'>
                     edit
+                </span>
+                &nbsp;
+                <span
+                    title="Duplicate"
+                    onclick="duplicateDeck( '<?php echo htmlspecialchars($user, ENT_QUOTES); ?>', 
+                                            '<?php echo htmlspecialchars($deckname, ENT_QUOTES); ?>', 
+                                            '<?php echo htmlspecialchars($decknumber, ENT_QUOTES); ?>',
+                                            '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES) : ''; ?>')"
+                    onmouseover=""
+                    style="cursor: pointer;"
+                    class='material-symbols-outlined'>
+                    content_copy
                 </span>
             </h2>
                 <form id="renameForm" style="display: none;" action="?" method="POST">
