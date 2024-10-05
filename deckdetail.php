@@ -3006,7 +3006,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     if($missing == 'yes' AND $requiredlist != ''):
                         $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
                         $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
-                        $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');?>
+                        $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');
+                        $msg->logMessage('[DEBUG]',"Required list = $requiredlist");
+                        $msg->logMessage('[DEBUG]',"Missing filename = $filename_missing");?>
                         <script type="text/javascript">
                             document.body.style.cursor='default';
                         </script>
