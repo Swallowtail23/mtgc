@@ -32,8 +32,10 @@ $msg->logMessage('[DEBUG]',"Called to generate jpg...");
 // Check if the request is coming from deckdetail.php
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $expectedReferringPage = $myURL.'/deckdetail.php';
-if (strpos($referringPage, $expectedReferringPage) !== false):
-    
+$referringPagePath = parse_url($referringPage, PHP_URL_PATH);
+$expectedReferringPagePath = parse_url($expectedReferringPage, PHP_URL_PATH);
+
+if ($referringPagePath === $expectedReferringPagePath):
     // Access is OK
     $msg->logMessage('[DEBUG]',"Called from deckdetail.php");
 
@@ -56,7 +58,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
 
 else:
     //Otherwise forbid access
-    $msg->logMessage('[ERROR]',"Not called from deckdetail.php ($referringPage)");
+    $msg->logMessage('[ERROR]',"Not called from deckdetail.php (referring page is $referringPage, expectedreferringpage is $expectedReferringPage, referringpagepath is $referringPagePath, expectedreferringpagepath is $expectedReferringPagePath)");
     http_response_code(403);
     echo 'Access forbidden';
 endif;
