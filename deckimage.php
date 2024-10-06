@@ -1,6 +1,6 @@
 <?php 
-/* Version:     1.2
-    Date:       20/01/24
+/* Version:     1.3
+    Date:       06/10/24
     Name:       deckimage.php
     Purpose:    PHP script to get and output raw jpg
     Notes:      -
