@@ -13,6 +13,9 @@
  * 
  *  1.2         20/01/24
  *              Move to logMessage
+ * 
+ *  1.3         06/10/24
+ *              MTGC-131 - fix path comparison to work with URL parameters
  */
 
 if (file_exists('includes/sessionname.local.php')):
