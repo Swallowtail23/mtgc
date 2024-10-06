@@ -56,7 +56,7 @@ if (strpos($referringPage, $expectedReferringPage) !== false):
 
 else:
     //Otherwise forbid access
-    $msg->logMessage('[ERROR]',"Not called from deckdetail.php");
+    $msg->logMessage('[ERROR]',"Not called from deckdetail.php ($referringPage)");
     http_response_code(403);
     echo 'Access forbidden';
 endif;
