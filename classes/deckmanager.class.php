@@ -280,8 +280,9 @@ class DeckManager
                                                            f1_flavor_name = ? OR 
                                                            f2_flavor_name = ?) AND 
                                                            `layout` NOT IN ($placeholdersString) AND
-                                                           primary_card = 1
-                                                           ORDER BY release_date DESC, number ASC LIMIT 1";
+                                                           primary_card = 1 AND 
+                                                           setcode != 'plst'
+                                                           ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickaddcard);
                 $params = array_merge($params, $noQuickAddLayouts);
