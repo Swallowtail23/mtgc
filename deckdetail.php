@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.0
-    Date:       05/10/24
+/* Version:     24.1
+    Date:       13/10/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -104,6 +104,9 @@
  * 
  *  24.0        05/10/24
  *              MTGC-128 - Deck duplication code
+ * 
+ *  24.1        13/10/24
+ *              MTGC-136 - Code tidy and optimisation
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -2376,7 +2379,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         endif;
                     endwhile; 
                 endif;
-                $msg->logMessage('[DEBUG]',"$decktype");
+                $msg->logMessage('[DEBUG]',"Decktype: $decktype");
                 if($decktype !== 'Wishlist'):
                     $msg->logMessage('[DEBUG]',"Not wishlist, adding a total row");?>
                     <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;"> <?php 
@@ -3246,7 +3249,12 @@ m13,12,"Fog",en,1,0,0,{id}
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
-                $msg->logMessage('[DEBUG]',"Imagefilepath $imageFilePath, existingImage $existingImage"); ?>
+                // Check if the file exists and log appropriate messages
+                if (file_exists($imageFilePath)):
+                    $msg->logMessage('[DEBUG]', "Image exists at: $imageFilePath, existingImage: $existingImage");
+                else:
+                    $msg->logMessage('[DEBUG]', "No current image at: $imageFilePath, existingImage: $existingImage");
+                endif; ?>
                 <form id="uploadForm">
                     <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
                     <label class='importlabel'>
