@@ -33,7 +33,7 @@ forcechgpwd();                              //Check if user is disabled or needs
 if (isset($_POST['decknumber'])):
     $decknumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
     $decknumber = htmlspecialchars_decode($decknumber, ENT_QUOTES);
-    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $obj->exportDeck($decknumber, "download");
 elseif (isset($_POST['text'])):
     $textdata = filter_input(INPUT_POST, 'text', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
@@ -45,7 +45,7 @@ elseif (isset($_POST['text'])):
                 : 'dltext.txt';
 
     // Instantiate DeckManager and use the exportMissing function to handle the export
-    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $obj->exportMissing($textdata, $filename);
 else:
     trigger_error('[ERROR] dltext.php: Error, no POST data', E_USER_WARNING);

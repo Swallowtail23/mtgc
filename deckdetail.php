@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.0
-    Date:       05/10/24
+/* Version:     24.1
+    Date:       13/10/24
     Name:       deckdetail.php
     Purpose:    Deck detail page
     Notes:      {none}
@@ -104,6 +104,9 @@
  * 
  *  24.0        05/10/24
  *              MTGC-128 - Deck duplication code
+ * 
+ *  24.1        13/10/24
+ *              MTGC-136 - Code tidy and optimisation
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -562,7 +565,7 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]',"Checking deck $decknumber");
-$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
 if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -577,7 +580,7 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
     $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
-    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $renameresult = $obj->renameDeck($decknumber,$newname,$user);
     $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
     if($renameresult == 2):
@@ -653,7 +656,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
 endif;
 
@@ -663,7 +666,7 @@ if (isset($_POST['import'])):
     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
         $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
         // Read the entire file content into a variable
         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
@@ -703,7 +706,7 @@ else:
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
+$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
 
 if($deletemain == 'yes'):
     $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");
@@ -2376,7 +2379,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         endif;
                     endwhile; 
                 endif;
-                $msg->logMessage('[DEBUG]',"$decktype");
+                $msg->logMessage('[DEBUG]',"Decktype: $decktype");
                 if($decktype !== 'Wishlist'):
                     $msg->logMessage('[DEBUG]',"Not wishlist, adding a total row");?>
                     <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;"> <?php 
@@ -3246,7 +3249,12 @@ m13,12,"Fog",en,1,0,0,{id}
                 <?php
                 $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
                 $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
-                $msg->logMessage('[DEBUG]',"Imagefilepath $imageFilePath, existingImage $existingImage"); ?>
+                // Check if the file exists and log appropriate messages
+                if (file_exists($imageFilePath)):
+                    $msg->logMessage('[DEBUG]', "Image exists at: $imageFilePath, existingImage: $existingImage");
+                else:
+                    $msg->logMessage('[DEBUG]', "No current image at: $imageFilePath, existingImage: $existingImage");
+                endif; ?>
                 <form id="uploadForm">
                     <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
                     <label class='importlabel'>

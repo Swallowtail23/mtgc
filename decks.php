@@ -123,7 +123,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
             else:
                 $msg->logMessage('[NOTICE]',"Calling Deckmanager->addDeck: '$user/$deckname'");
-                $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+                $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
                 $decksuccess = $obj->addDeck($user,$deckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
             endif;
         endif;
@@ -131,7 +131,7 @@ require('includes/menu.php'); //mobile menu
         // Delete a deck
         if($deletedeck == "yes"):
             $msg->logMessage('[NOTICE]',"Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
-            $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
+            $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
             $obj->delDeck($decktodelete);
         endif;
         // List decks

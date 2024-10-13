@@ -434,6 +434,9 @@ $sixtycarddecks = array('Casual',
 
 $fiftycarddecks = array('Tiny Leader');
 
+// Setcodes to not include by default when card-adding (i.e. excluding plst in favour of originals)
+$nonPreferredSetCodes = array('plst','sld','spg');
+
 // Which database field holds information about card legality in the deck types
 $deck_legality_map = array(
                         array(
