@@ -827,7 +827,7 @@ endif;
                                 if ($adddeck === 'yes'):
                                     $currentDateTime = date("j F Y, g:i:sa");
                                     $tmpdeckname = $currentDateTime;
-                                    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+                                    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
                                     $msg->logMessage('[DEBUG]',"Import called with 'add deck' option, $tmpdeckname to be created...");
                                     $decksuccess = $obj->addDeck($user,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                                     if($decksuccess['flag'] === 1):
@@ -835,7 +835,7 @@ endif;
                                         $msg->logMessage('[DEBUG]',"Deck created, $tmpdeckname created, deck number is $decknumber");
                                         echo "<script>var deckNumber = '$decknumber'; var deckName = '$tmpdeckname'; var deckCreated = true;</script>";
                                         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-                                        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+                                        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
                                         // Read the entire file content into a variable
                                         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
                                         fclose($file);

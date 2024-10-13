@@ -28,7 +28,7 @@ while ($user = $usersExport->fetch_assoc()):
     $usernumber = $user['usernumber'];
     $usertable = $usernumber."collection";
     $useremail = $user['email'];
-    $decks = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $decks = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     // Decks
     $query = 'SELECT decknumber FROM decks WHERE owner=?';
     $stmt = $db->execute_query($query, [$usernumber]);

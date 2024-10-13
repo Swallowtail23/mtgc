@@ -1,6 +1,6 @@
 <?php
-/* Version:     4.1
-    Date:       05/10/24
+/* Version:     4.2
+    Date:       13/10/24
     Name:       deckManager.class.php
     Purpose:    Class for quickAdd and deck import
     Notes:      ProcessInput() called with deck number and input string
@@ -40,6 +40,9 @@
  *  4.1         05/10/24
  *              MTGC-127 - Fix broken Deck missing export, and add public function to call from dltext.php
  *              MTGC-128 - Add Deck type change function, and add 'variable' method to deck export, used in deck duplicate
+ * 
+ *  4.2         13/10/24
+ *              MTGC-133 - Prefer non-promo cards when adding Quick Add without specified setcode
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -56,15 +59,18 @@ class DeckManager
     private $serveremail;
     private $importLinestoIgnore;
     private $siteTitle;
+    private $nonPreferredSetCodes;
     
-    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $siteTitle = null) {
+    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes, $siteTitle = null) {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
         $this->useremail = $useremail;
         $this->serveremail = $serveremail;
         $this->importLinestoIgnore = $importLinestoIgnore;
+        $this->nonPreferredSetCodes = $nonPreferredSetCodes;
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
+        
     }
     
     public function processInput($decknumber, $input) {
@@ -270,6 +276,7 @@ class DeckManager
 
             elseif ($quickaddcard !== '' AND $quickaddset === ''):
                 // Card name only provided, or with a number (but useless without setcode) - just grab a name match
+                $setcodePlaceholders = implode(',', array_fill(0, count($this->nonPreferredSetCodes), '?'));
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR
                                                            f1_name = ? OR 
                                                            f2_name = ? OR 
@@ -281,11 +288,12 @@ class DeckManager
                                                            f2_flavor_name = ?) AND 
                                                            `layout` NOT IN ($placeholdersString) AND
                                                            primary_card = 1 AND 
-                                                           setcode != 'plst'
+                                                           setcode NOT IN ($setcodePlaceholders)
                                                            ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
+                $params = array_fill(0, 9, $quickaddcard); // First 9 are for the name variations
+                $params = array_merge($params, $noQuickAddLayouts); // Add layout exclusions
+                $params = array_merge($params, $this->nonPreferredSetCodes); // Add non-preferred set codes
                 $stmt = $this->db->prepare($query);
-                $params = array_fill(0, 9, $quickaddcard);
-                $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
 
             elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):

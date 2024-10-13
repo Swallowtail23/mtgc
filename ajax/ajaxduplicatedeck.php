@@ -76,7 +76,7 @@ if ($isValidReferrer):
             } while ($result !== false && $result->num_rows > 0);
 
             // Instantiate the DeckManager
-            $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+            $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
             
             //Create the new deck shell
             $decksuccess = $obj->addDeck($user, $newdeckname);

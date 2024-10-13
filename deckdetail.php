@@ -562,7 +562,7 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]',"Checking deck $decknumber");
-$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
 if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -577,7 +577,7 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if(isset($_POST['newname'])):
     $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
-    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $renameresult = $obj->renameDeck($decknumber,$newname,$user);
     $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
     if($renameresult == 2):
@@ -653,7 +653,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])):
-    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
     $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
 endif;
 
@@ -663,7 +663,7 @@ if (isset($_POST['import'])):
     if (is_uploaded_file($_FILES['filename']['tmp_name'])):
         $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore);
+        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
         // Read the entire file content into a variable
         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
@@ -703,7 +703,7 @@ else:
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore);
+$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
 
 if($deletemain == 'yes'):
     $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");

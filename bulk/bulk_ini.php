@@ -171,3 +171,6 @@ $importLinestoIgnore = array(
 
 $commander_decktypes = array('Commander',
                              'Tiny Leader');
+
+// Setcodes to not include by default when card-adding (i.e. excluding plst in favour of originals)
+$nonPreferredSetCodes = array('plst','sld','spg');
