@@ -22,13 +22,12 @@ require ('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new Message($logfile);
 
-// Check if the request is coming from a valid page
-$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+// Valid pages to call this (array)
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
 
-// Normalize the referring page URL
+// Standard check code
+$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $normalizedReferringPage = str_replace('www.', '', $referringPage);
-
 $isValidReferrer = false;
 foreach ($expectedReferringPages as $page):
     // Normalize each expected referring page URL
