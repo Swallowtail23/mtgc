@@ -107,6 +107,7 @@
  * 
  *  24.1        13/10/24
  *              MTGC-136 - Code tidy and optimisation
+ *              MTGC-130 - Break icons to new line for long deck names
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -1103,7 +1104,13 @@ m13,12,"Fog",en,1,0,0,{id}
                 <input type='hidden' name="deletedeck" value="yes">
                 <input type='hidden' name="decktodelete" value="<?php echo $decknumber; ?>">
             </form>
-            <h2 class='h2pad'><?php echo $deckname; ?> &nbsp; 
+            <h2 class='h2pad'><?php 
+                    if (strlen($deckname) > 17):
+                        echo $deckname . '<br><br>';
+                    else:
+                        echo $deckname;
+                    endif; ?> 
+                &nbsp; 
                 <span 
                     title="Delete"
                     onmouseover="" 
