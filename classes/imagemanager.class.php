@@ -78,7 +78,7 @@ class ImageManager
                 endif;
 
                 if (strpos($imageurl, '.jpg?') !== false):
-                    $imageurl = substr($imageurl, 0, (strpos($imageurl, ".jpg?") + 5)) . "1";
+                    $imageurl = substr($imageurl, 0, (strpos($imageurl, ".jpg?") + 5)) . "?t=" . time();
                     $this->message->logMessage('[DEBUG]',"Imageurl is $imageurl");
                 endif;
 
@@ -139,7 +139,7 @@ class ImageManager
                     $this->message->logMessage('[DEBUG]',"Looking on scryfall.com ($cardid) for image to use as $localfile_b");
 
                     if (strpos($imageurl_2, '.jpg?') !== false):
-                        $imageurl_2 = substr($imageurl_2, 0, (strpos($imageurl_2, ".jpg?") + 5)) . "1";
+                        $imageurl_2 = substr($imageurl_2, 0, (strpos($imageurl_2, ".jpg?") + 5)) . "?t=" . time();
                         $this->message->logMessage('[DEBUG]',"Imageurl_2 is $imageurl_2");
                     endif;
 
