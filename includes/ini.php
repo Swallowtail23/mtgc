@@ -1,6 +1,6 @@
 <?php
-/* Version:     5.1
-    Date:       07/07/24
+/* Version:     5.2
+    Date:       09/12/24
     Name:       ini.php
     Purpose:    PHP script to manage error routines, logging and setup global variables/arrays
     Notes:      {none}
@@ -24,6 +24,9 @@
  * 
  *  5.1         07/07/24
  *              Add array for cards witrh brackets in names
+ * 
+ *  5.2         09/12/24
+ *              Move tribal here from index page
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -214,6 +217,19 @@ $seconds_in_hour = 3600;
 $max_card_data_age = $seconds_in_hour * $max_data_age_in_hours;
 
 /** Define card types and variables which require special treatment **/
+
+// Valid tribes
+$valid_tribe = array(
+    "merfolk",
+    "spider",
+    "goblin",
+    "treefolk",
+    "sliver",
+    "human",
+    "zombie",
+    "vampire",
+    "elf"
+                    );
 
 // Valid search languages
 $search_langs = array(
