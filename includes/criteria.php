@@ -394,6 +394,7 @@ else:
 
         // Tribal 
         $criteriaTribe = "";
+        $msg->logMessage('[DEBUG]',"Tribe = '$tribe'");
         if ($tribe === "merfolk"):
             if (!empty($criteriaTribe)) :
                 $criteriaTribe .= "OR ";

@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.4
-    Date:       10/06/24
+/* Version:     11.5
+    Date:       09/12/24
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -45,6 +45,9 @@
  * 
  * 11.4         10/06/24
  *              Add AND / OR to type searches
+ * 
+ * 11.5         09/12/24
+ *              Move tribal valid list to ini.php
 */
 
 //Call script initiation mechs
@@ -183,7 +186,6 @@ $sorcery = isset($_GET['sorcery']) ? 'yes' : '';
 $enchantment = isset($_GET['enchantment']) ? 'yes' : '';
 $planeswalker = isset($_GET['planeswalker']) ? 'yes' : '';
 $tribal = isset($_GET['tribal']) ? 'yes' : '';
-$valid_tribe = array("merfolk","goblin","treefolk","centaur","sliver","human","zombie","vampire");
 $tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
 if (!in_array($tribe,$valid_tribe)):
     $tribe = '';
