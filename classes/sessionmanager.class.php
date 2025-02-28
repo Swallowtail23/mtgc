@@ -262,40 +262,19 @@ class SessionManager {
             return null;
         endif;
     }
-
-    private function updateFxRateIfNeeded($currencies)
-    {
-        // Check the timestamp in the 'fx' table
-        $lastUpdateTime = $this->getLastUpdateTime($currencies);
-
-        // If the timestamp is more than an hour old, proceed with the update
-        if ($lastUpdateTime === null || (time() - $lastUpdateTime) > 3600) {
-            return $this->updateFxRate($currencies);
-        }
-
-        return null; // Return null if no update needed
-    }
-
-    private function getLastUpdateTime($currencies)
-    {
-        $query = "SELECT updatetime FROM fx WHERE currencies = ? ORDER BY updatetime DESC LIMIT 1";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param("s", $currencies);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows === 0) {
-            $stmt->close();
-            return null; // Return null if no records found
-        }
-
-        $stmt->bind_result($lastUpdateTime);
-        $stmt->fetch();
-        $stmt->close();
-
-        return strtotime($lastUpdateTime);
-    }
+    
+    /**
+     * Regenerate session ID to help prevent session fixation attacks
+     * 
+     * This method should be called after authentication events such as:
+     * - Successful login
+     * - Password changes
+     * - Email changes
+     * - Privilege/role changes
+     * 
+     * @param bool $deleteOldSession Whether to delete data from old session
+     * @return bool Success of operation
+     */
 
     public function __toString() {
         $this->message->logMessage("[ERROR]","Called as string");

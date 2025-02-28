@@ -1,6 +1,6 @@
 <?php
-/* Version:     2.2
-    Date:       20/01/24
+/* Version:     2.3
+    Date:       28/02/25
     Name:       error_handling.php
     Purpose:    PHP script to process page initiation and setup
     Notes:      {none}
@@ -14,6 +14,9 @@
  * 
  *  2.2         20/01/24
  *              Move to logMessage
+ * 
+ *  2.3         28/02/25
+ *              Removed writelog() to message class file
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
@@ -96,44 +99,3 @@ function mtg_exception($err) {  //Don't rely on writelog function being availabl
 //Set error handlers to be the functions just defined
 set_error_handler('mtg_error');
 set_exception_handler('mtg_exception');
-
-function writelog($msg,$log = '') 
-    //slowly replacing direct calls with Message 
-    //Class for later class rewrite to remove this function
-{
-    global $logfile;
-    if ($log == ''):
-        $log = $logfile;
-    endif;
-    // Assess level of message
-    if (strpos($msg,"[DEBUG]") === 0):
-        $msglevel = 3;
-    elseif (strpos($msg,"[NOTICE]") === 0):
-        $msglevel = 2;
-    elseif (strpos($msg,"[ERROR]") === 0):
-        $msglevel = 1;
-    else: //catch any unassigned messages to '1' until all code checked
-        $msglevel = 1;
-    endif;
-    
-    // Find out currently set log level
-    global $loglevelini;
-    if(isset($loglevelini)):
-        $loglevel = $loglevelini;
-    else:
-        $loglevel = 3; //If we can't get the log level, assume DEBUG
-    endif;
-    // Write message to log
-    if ($msglevel < ($loglevel + 1)):
-        if (($fd = fopen($log, "a")) !== false):
-            $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
-            fwrite($fd, $str . "\n");
-            fclose($fd); 
-        else:
-            openlog("MTG", LOG_NDELAY, LOG_USER);
-            syslog(LOG_ERR, "Can't write to MTG log file $log - check path and permissions. Falling back to syslog.");
-            syslog(LOG_NOTICE, $str);
-            closelog();
-        endif;
-    endif;
-}

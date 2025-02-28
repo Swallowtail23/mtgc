@@ -1,11 +1,14 @@
 <?php 
-/* Version:     6.1
-    Date:       20/01/24
+/* Version:     7.0
+    Date:       28/02/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
     To do:      
     
+    @author     Simon Wilson <simon@simonandkate.net>
+    @copyright  2025 Simon Wilson
+
     1.0
                 Initial version
  *  2.0 
@@ -24,6 +27,9 @@
  * 
  *  6.1         20/01/24
  *              Move to logMessage
+ * 
+ *  7.0         28/02/25
+ *              Trusted devices capability
 */
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -32,13 +38,91 @@ else:
 endif;
 startCustomSession();
 
+// Load required files for database access
+require_once('includes/ini.php');               //Initialise and load ini file
+require_once('includes/error_handling.php');
+require_once('includes/functions.php');         //Includes basic functions for non-secure pages
+
+// Initialize message object for logging
+$msg = new Message($logfile);
+
+// Find CSS Version
+$cssver = cssver();
+
 // Temporary variable to store a redirection URL
 $redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : null;
+/*
+ *  Check for trusted device token before checking regular login
+ */
+$trusted_login = false;
+$trusted_device_user = false;
+
+// Debug log beginning of execution
+$msg->logMessage('[DEBUG]', "Starting login.php execution. Checking for trusted device.");
+
+if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
+    // Not already logged in, check for trusted device token
+    require_once('classes/trusteddevicemanager.class.php');
+    
+    // Database connection should be available from ini.php
+    $msg->logMessage('[DEBUG]', "Checking for trusted device cookie with db connection: " . (isset($db) ? "valid" : "missing"));
+    $deviceManager = new TrustedDeviceManager($db, $logfile);
+    // Try to validate trusted device token
+    $trusted_device_user = $deviceManager->validateTrustedDevice();
+    
+    if ($trusted_device_user !== false):
+        // Token is valid, auto-login the user
+        $user_query = "SELECT usernumber, username, email, admin FROM users WHERE usernumber = ? AND status = 'active'";
+        $stmt = $db->prepare($user_query);
+        
+        if ($stmt):
+            $stmt->bind_param("i", $trusted_device_user);
+            $stmt->execute();
+            $stmt->store_result();
+            
+            if ($stmt->num_rows === 1):
+                $stmt->bind_result($usernumber, $username, $useremail, $admin);
+                $stmt->fetch();
+                
+                // Set up session for auto-login
+                $_SESSION["logged"] = TRUE;
+                $_SESSION["user"] = $usernumber;
+                $_SESSION["useremail"] = $useremail;
+                if ($admin):
+                    $_SESSION['admin'] = TRUE;
+                else:
+                    $_SESSION['admin'] = FALSE;
+                endif;
+                
+                $msg = new Message($logfile);
+                $msg->logMessage('[NOTICE]', "Auto-login via trusted device for user $useremail");
+                
+                // Update last login timestamp
+                loginstamp($useremail);
+                
+                $trusted_login = true;
+            endif;
+            
+            $stmt->close();
+        endif;
+    endif; // End of if trusted_device_user check
+endif;
+
 /*
  *  check if user is already logged in. If yes, display error and redirect to
  *  index.php. If no - session destroy and display login page.
  */
-if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :   
+// Flag for trust device handling
+$process_trust_device = (isset($_POST['trust_device']) && isset($_SESSION["logged"]) && $_SESSION["logged"] == TRUE);
+$trust_choice = isset($_POST['trust_device']) ? $_POST['trust_device'] : 'none';
+$has_redirect = isset($_POST['redirect_to']) ? 'yes' : 'no';
+
+// Normal login flow check
+if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
+    // After initialize message object and functions
+    if (isset($msg)) {
+        $msg->logMessage('[DEBUG]', "User already logged in, showing already logged in page");
+    }
     echo "<meta http-equiv='refresh' content='2;url=index.php'>";
     /*
      *  Stub HTML for error display.
@@ -54,7 +138,11 @@ if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
         <body id="loginbody" class="body">
         <div id="loginheader">    
             <h2 id='h2'><?php echo $siteTitle;?></h2>
-            You are already logged in!
+            <?php if ($trusted_login): ?>
+                Welcome back! You've been automatically signed in using a trusted device.
+            <?php else: ?>
+                You are already logged in!
+            <?php endif; ?>
         </div>
         </body>
     </html>
@@ -73,12 +161,58 @@ endif;
  *  Continuing to load login page.
  */
 header ("Cache-Control: max-age=0");
-require ('includes/ini.php');               //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-// Find CSS Version
-$cssver = cssver();
-$msg = new Message($logfile);
+// Files already loaded above
+
+// Message object already initialized above
+$msg->logMessage('[DEBUG]', "Mid-load check: db=" . (isset($db) ? "valid" : "null"));
+
+// Log key variables for debugging
+$msg->logMessage('[DEBUG]', "Login.php loaded. POST vars: " . 
+    "trust_device=" . (isset($_POST['trust_device']) ? $_POST['trust_device'] : 'not set') . ", " .
+    "redirect_to=" . (isset($_POST['redirect_to']) ? $_POST['redirect_to'] : 'not set'));
+$msg->logMessage('[DEBUG]', "Session vars: " . 
+    "logged=" . (isset($_SESSION["logged"]) ? $_SESSION["logged"] : 'not set') . ", " .
+    "user=" . (isset($_SESSION["user"]) ? $_SESSION["user"] : 'not set') . ", " .
+    "useremail=" . (isset($_SESSION["useremail"]) ? $_SESSION["useremail"] : 'not set'));
+$msg->logMessage('[DEBUG]', "Process flags: " . 
+    "process_trust_device=$process_trust_device, " .
+    "trust_choice=$trust_choice, " .
+    "has_redirect=$has_redirect");
+
+// Now process trust device if flagged - this happens after database and other resources are loaded
+if ($process_trust_device):
+    $msg->logMessage('[DEBUG]', "Processing trust device request...");
+    if ($trust_choice === 'yes'):
+        // User wants to trust this device
+        $msg->logMessage('[DEBUG]', "User chose to trust this device");
+        require_once('classes/trusteddevicemanager.class.php');
+        
+        // PHP doesn't have try/catch with colon syntax, revert to braces for this part
+        try {
+            $msg->logMessage('[DEBUG]', "Creating TrustedDeviceManager with db=" . (isset($db) ? "valid" : "null"));
+            $deviceManager = new TrustedDeviceManager($db, $logfile);
+            $result = $deviceManager->createTrustedDevice($_SESSION["user"], 7); // Trust for 7 days
+            $msg->logMessage('[NOTICE]', "User {$_SESSION["useremail"]} trusted this device, result=" . ($result ? 'success' : 'failed'));
+        } catch (Exception $e) {
+            // If an error occurs, log it but continue
+            $msg->logMessage('[ERROR]', "Exception creating trusted device: " . $e->getMessage());
+        }
+    else:
+        $msg->logMessage('[DEBUG]', "User chose NOT to trust this device");
+    endif;
+    
+    // Redirect based on where they were going
+    if (isset($_POST['redirect_to']) && !empty($_POST['redirect_to'])):
+        $redirect = $_POST['redirect_to'];
+        $msg->logMessage('[DEBUG]', "Redirecting to: $redirect");
+        header("Location: $redirect");
+    else:
+        $msg->logMessage('[DEBUG]', "Redirecting to index.php (default)");
+        header("Location: index.php");
+    endif;
+    exit();
+endif;
+// Message object already initialized above
 
 ?>
 <!DOCTYPE html>
@@ -149,6 +283,7 @@ $msg = new Message($logfile);
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
                                 elseif ($userstat_result['code'] === 1): //pwdchg required
                                     $msg->logMessage('[DEBUG]',"UserStatus for $email is ok, but password change required");
+                                    session_regenerate_id();
                                     $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
                                     $_SESSION["useremail"] = $email;
@@ -168,6 +303,7 @@ $msg = new Message($logfile);
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
                                 elseif ($userstat_result['code'] === 10): //active
+                                    $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                     session_regenerate_id();
                                     $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
@@ -250,20 +386,44 @@ $msg = new Message($logfile);
                 echo "You are logged in";   //normal user login notice
                 $_SESSION['admin'] = FALSE;
             endif;
+            
             // Check for chgpwd, or if there is a redirect URL set in the session
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
                 echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
                 exit();
-            elseif (isset($_SESSION['redirect_url'])) :
-                $redirectUrl = $_SESSION['redirect_url'];
-                $msg->logMessage('[DEBUG]',"User $email being redirected to requested URL: '$redirectUrl'");
-                unset($_SESSION['redirect_url']); // Clear the redirect URL from the session
-                echo "<meta http-equiv='refresh' content='0;url=$redirectUrl'>";
-                exit();
-            else: // go to index.php
-                $msg->logMessage('[DEBUG]',"User $email being redirected to index.php");
-                echo "<meta http-equiv='refresh' content='2;url=index.php'>";
+            else:
+                // Show the trust device prompt
+                ?>
+                <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt"); ?>
+                <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
+                    <form action="trust_device.php" method="post">
+                        <p>Would you like to stay logged in on this device?</p>
+                        <p><small>This will keep you signed in for 7 days</small></p>
+                        
+                        <input type="hidden" name="trust_device" value="yes">
+                        <?php if (isset($_SESSION['redirect_url'])): ?>
+                            <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($_SESSION['redirect_url']); ?>">
+                        <?php else: ?>
+                            <input type="hidden" name="redirect_to" value="index.php">
+                        <?php endif; ?>
+                        
+                        <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">Trust device</button>
+                    </form>
+                    
+                    <form action="trust_device.php" method="post" style="margin-top: 10px;">
+                        <input type="hidden" name="trust_device" value="no">
+                        <?php if (isset($_SESSION['redirect_url'])): ?>
+                            <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($_SESSION['redirect_url']); ?>">
+                        <?php else: ?>
+                            <input type="hidden" name="redirect_to" value="index.php">
+                        <?php endif; ?>
+                        
+                        <button type="submit" class="profilebutton" style="margin-right: 10px;">Not now</button>
+                    </form>
+                </div>
+                <?php
+                // Don't auto-redirect, wait for user choice
             endif;
         else:
             echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 

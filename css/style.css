@@ -1777,25 +1777,38 @@ table
 {
     text-align: right;
 }
-#userdetails
-{
-    float: left;
-    min-width: 260px;
-    padding-bottom: 15px;
+
+.profile-container {
+    display: flex;
+    flex-wrap: wrap;      /* Allows items to wrap onto new rows */
+    gap: 20px;            /* Optional: spacing between panels */
+    margin-bottom: 15px;  /* Optional: spacing below the container */
+    padding: 0 20px;
 }
-#mycollection
+
+.profile-container > div {
+    flex: 1 1 280px;
+    box-sizing: border-box;
+}
+
+#userdetails,
+#mycollection,
+#changepassword,
+#trusteddevices
 {
-    float: left;
-    width: 280px;
-    padding-right: 20px;
     padding-bottom: 15px;
 }
 
+#userdetails,
+#mycollection,
 #changepassword
 {
-    float: left;
-    max-width: 350px;
-    padding-bottom: 15px;
+    max-width: 330px; 
+}
+
+#trusteddevices
+{
+    max-width: 650px; 
 }
 
 #importexport, #profilebuttons
