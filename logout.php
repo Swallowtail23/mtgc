@@ -25,7 +25,7 @@ startCustomSession();
 session_regenerate_id();
 $userEmail = isset($_SESSION['useremail']) ? $_SESSION['useremail'] : 'Unknown User';
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
-$removeTrusted === 0;
+$removeTrusted = 0;
 
 require_once('includes/ini.php');
 require_once('includes/error_handling.php');
