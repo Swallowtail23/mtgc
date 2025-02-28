@@ -66,6 +66,7 @@ require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
 $msg = new Message($logfile);
+$userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 
 // Has DELETE collection been called? 
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
@@ -314,7 +315,9 @@ endif;
                                             $pwdvalidate = $pwdvalidateqry->fetch_assoc();
                                             if ($pwdvalidate['password'] == $new_password):
                                                 $msg->logMessage('[NOTICE]',"Confirmed new password written to database for $useremail from {$_SERVER['REMOTE_ADDR']}");
-                                                echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password successfully changed, please log in again</div>";
+                                                // Removing all trusted devices
+                                                (new TrustedDeviceManager($db, $logfile))->removeAllUserDevices($userId);
+                                                echo "<div class='alert-box success' id='pwdchange'><span>success: </span>Password changed and trusted devices cleared - log in again</div>";
                                                 // Clear the force password flag and session variable
                                                 $chgflagclear = $db->execute_query("UPDATE users SET status = 'active' WHERE email = ?",[$useremail]);
                                                 if ($chgflagclear === false):

@@ -399,7 +399,7 @@ endif;
                 <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
                     <form action="trust_device.php" method="post">
                         <p>Would you like to stay logged in on this device?</p>
-                        <p><small>This will keep you signed in for 7 days.</small></p>
+                        <p><small>This will keep you signed in for 7 days</small></p>
                         
                         <input type="hidden" name="trust_device" value="yes">
                         <?php if (isset($_SESSION['redirect_url'])): ?>
@@ -408,7 +408,7 @@ endif;
                             <input type="hidden" name="redirect_to" value="index.php">
                         <?php endif; ?>
                         
-                        <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">Yes, Trust This Device</button>
+                        <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">Trust device</button>
                     </form>
                     
                     <form action="trust_device.php" method="post" style="margin-top: 10px;">
@@ -419,7 +419,7 @@ endif;
                             <input type="hidden" name="redirect_to" value="index.php">
                         <?php endif; ?>
                         
-                        <button type="submit" class="profilebutton">No, Not Now</button>
+                        <button type="submit" class="profilebutton" style="margin-right: 10px;">Not now</button>
                     </form>
                 </div>
                 <?php
