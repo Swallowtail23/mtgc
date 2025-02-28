@@ -1,6 +1,6 @@
 <?php 
-/* Version:     6.1
-    Date:       20/01/24
+/* Version:     7.0
+    Date:       28/02/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -24,6 +24,9 @@
  * 
  *  6.1         20/01/24
  *              Move to logMessage
+ * 
+ *  7.0         28/02/25
+ *              Trusted devices capability
 */
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -39,6 +42,9 @@ require_once('includes/functions.php');         //Includes basic functions for n
 
 // Initialize message object for logging
 $msg = new Message($logfile);
+
+// Find CSS Version
+$cssver = cssver();
 
 // Temporary variable to store a redirection URL
 $redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : null;
@@ -103,13 +109,10 @@ endif;
  *  check if user is already logged in. If yes, display error and redirect to
  *  index.php. If no - session destroy and display login page.
  */
-// Flag for trust device handling - will be processed after ini.php is loaded
+// Flag for trust device handling
 $process_trust_device = (isset($_POST['trust_device']) && isset($_SESSION["logged"]) && $_SESSION["logged"] == TRUE);
 $trust_choice = isset($_POST['trust_device']) ? $_POST['trust_device'] : 'none';
 $has_redirect = isset($_POST['redirect_to']) ? 'yes' : 'no';
-
-// Find CSS Version
-$cssver = cssver();
 
 // Normal login flow check
 if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
@@ -156,9 +159,6 @@ endif;
  */
 header ("Cache-Control: max-age=0");
 // Files already loaded above
-
-// Find CSS Version
-$cssver = cssver();
 
 // Message object already initialized above
 $msg->logMessage('[DEBUG]', "Mid-load check: db=" . (isset($db) ? "valid" : "null"));
