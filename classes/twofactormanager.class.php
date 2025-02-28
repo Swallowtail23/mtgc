@@ -287,7 +287,7 @@ class TwoFactorManager {
             return '';
         }
         
-        $query = "SELECT tfa_method FROM users WHERE user_id = ?";
+        $query = "SELECT tfa_method FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -365,7 +365,7 @@ class TwoFactorManager {
             return false;
         }
         
-        $query = "SELECT tfa_backup_codes FROM users WHERE user_id = ?";
+        $query = "SELECT tfa_backup_codes FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -389,7 +389,7 @@ class TwoFactorManager {
                 
                 // Update database
                 $backup_json = json_encode($backup_codes);
-                $query = "UPDATE users SET tfa_backup_codes = ? WHERE user_id = ?";
+                $query = "UPDATE users SET tfa_backup_codes = ? WHERE usernumber = ?";
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param("si", $backup_json, $user_id);
                 $stmt->execute();
