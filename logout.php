@@ -28,7 +28,7 @@ $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 
 require_once('includes/ini.php');
 require_once('includes/error_handling.php');
-require_once('classes/trusteddevicemanager.class.php');
+// require_once('classes/trusteddevicemanager.class.php');
 
 $msg = new Message($logfile);
 $msg->logMessage('[NOTICE]', "User $userEmail logging out from ".$_SERVER['REMOTE_ADDR']."");
