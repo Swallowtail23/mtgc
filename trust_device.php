@@ -81,16 +81,15 @@ else:
 </head>
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
-    <div id="loginheader">    
+    <div id="loginheader">
         <h2 id='h2'><?php echo $siteTitle;?></h2>
-        <div style="text-align: center; margin-bottom: 20px;">
             <p>You are logged in!</p>
-        </div>
         
         <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
             <form action="trust_device.php" method="post">
                 <p>Would you like to stay logged in on this device?</p>
-                <p><small>This will keep you signed in for 7 days</small></p>
+                <p><small>This will keep you signed in on this device for 7 days</small></p>
+                <p><small>Clicking the site's logout button will remove device trust</small></p>
                 
                 <input type="hidden" name="trust_device" value="yes">
                 <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirect_to); ?>">
