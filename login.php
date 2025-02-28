@@ -149,6 +149,7 @@ $msg = new Message($logfile);
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
                                 elseif ($userstat_result['code'] === 1): //pwdchg required
                                     $msg->logMessage('[DEBUG]',"UserStatus for $email is ok, but password change required");
+                                    session_regenerate_id();
                                     $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
                                     $_SESSION["useremail"] = $email;

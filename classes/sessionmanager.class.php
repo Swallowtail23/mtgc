@@ -262,6 +262,24 @@ class SessionManager {
             return null;
         endif;
     }
+    
+    /**
+     * Regenerate session ID to help prevent session fixation attacks
+     * 
+     * This method should be called after authentication events such as:
+     * - Successful login
+     * - Password changes
+     * - Email changes
+     * - Privilege/role changes
+     * 
+     * @param bool $deleteOldSession Whether to delete data from old session
+     * @return bool Success of operation
+     */
+    public function regenerateSession(bool $deleteOldSession = true): bool
+    {
+        $this->message->logMessage('[NOTICE]',"Regenerating session ID for security");
+        return session_regenerate_id($deleteOldSession);
+    }
 
 
     public function __toString() {
