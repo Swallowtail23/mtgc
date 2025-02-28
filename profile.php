@@ -562,18 +562,18 @@ endif;
                         <?php
                         // Get 2FA status for this user
                         $tfaManager = new TwoFactorManager($db, $logfile);
-                        $tfa_enabled = $tfaManager->isEnabled($user);
+                        $tfa_enabled = $tfaManager->isEnabled($userId);
                         
                         // Check if we should enable or disable 2FA
                         if (isset($_POST['enable_2fa'])):
                             $tfa_method = $_POST['tfa_method'] ?? 'email';
-                            $enabled = $tfaManager->enable($user, $tfa_method);
+                            $enabled = $tfaManager->enable($userId, $tfa_method);
                             if ($enabled):
                                 $tfa_enabled = true;
                                 echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication enabled successfully.</div>";
                                 
                                 // Show backup codes
-                                $backup_codes = $tfaManager->getBackupCodes($user);
+                                $backup_codes = $tfaManager->getBackupCodes($userId);
                                 if (!empty($backup_codes)):
                                     echo "<div class='alert-box notice' id='backup_codes'>";
                                     echo "<span>important: </span>Save these backup codes in case you lose access to your authentication method:<br><br>";
@@ -590,7 +590,7 @@ endif;
                                 echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
                             endif;
                         elseif (isset($_POST['disable_2fa'])):
-                            $disabled = $tfaManager->disable($user);
+                            $disabled = $tfaManager->disable($userId);
                             if ($disabled):
                                 $tfa_enabled = false;
                                 echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication disabled successfully.</div>";
@@ -598,7 +598,7 @@ endif;
                                 echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to disable two-factor authentication.</div>";
                             endif;
                         elseif (isset($_POST['regenerate_backup_codes'])):
-                            $new_codes = $tfaManager->regenerateBackupCodes($user);
+                            $new_codes = $tfaManager->regenerateBackupCodes($userId);
                             if (!empty($new_codes)):
                                 echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Backup codes regenerated successfully.</div>";
                                 
@@ -619,7 +619,7 @@ endif;
                         
                         // Show 2FA status and options
                         if ($tfa_enabled):
-                            $tfa_method = $tfaManager->getMethod($user);
+                            $tfa_method = $tfaManager->getMethod($userId);
                         ?>
                             <p>Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.</p>
                             

@@ -19,7 +19,6 @@ startCustomSession();
 require_once('includes/ini.php');               // Initialise and load ini file
 require_once('includes/error_handling.php');
 require_once('includes/functions.php');         // Includes basic functions for non-secure pages
-require_once('classes/twofactormanager.class.php');
 
 // Initialize message object for logging
 $msg = new Message($logfile);
