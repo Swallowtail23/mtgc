@@ -25,16 +25,16 @@ startCustomSession();
 session_regenerate_id();
 $userEmail = isset($_SESSION['useremail']) ? $_SESSION['useremail'] : 'Unknown User';
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
+$removeTrusted === 0;
 
 require_once('includes/ini.php');
 require_once('includes/error_handling.php');
-// require_once('classes/trusteddevicemanager.class.php');
 
 $msg = new Message($logfile);
 $msg->logMessage('[NOTICE]', "User $userEmail logging out from ".$_SERVER['REMOTE_ADDR']."");
 
 // Remove trusted device token
-if ($db && $userId > 0):
+if ($db && $userId > 0 && $removeTrusted === 1):
     try {
         $deviceManager = new TrustedDeviceManager($db, $logfile);
         
