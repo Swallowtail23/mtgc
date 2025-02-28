@@ -37,7 +37,7 @@ class TwoFactorManager {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->smtp_parameters = $smtpParameters;
-        $this->server_email = $serveremail;
+        $this->serveremail = $serveremail;
         
         // Try to use Message class for logging if available
         if(class_exists('Message')) {
@@ -321,7 +321,7 @@ class TwoFactorManager {
         }
         
         try {
-            $mail = new myPHPMailer(true, $this->smtp_parameters, $this->server_email, $this->logfile);
+            $mail = new myPHPMailer(true, $this->smtp_parameters, $this->serveremail, $this->logfile);
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.";
             
