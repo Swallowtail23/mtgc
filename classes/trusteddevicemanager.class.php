@@ -28,7 +28,31 @@ class TrustedDeviceManager {
     public function __construct($db, $logfile) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        
+        // Check if Message class exists and include it if needed
+        if (!class_exists('Message')) {
+            require_once(__DIR__ . '/../classes/message.class.php');
+        }
+        
+        // Handle case where Message class still can't be loaded by using direct file logging
+        try {
+            $this->message = new Message($this->logfile);
+        } catch (Error $e) {
+            // Fall back to direct file logging
+            $this->directLog('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');
+        }
+    }
+    
+    /**
+     * Direct file logging when Message class is unavailable
+     */
+    private function directLog($level, $text) {
+        if (($fd = fopen($this->logfile, "a")) !== false) {
+            $timestamp = date("[d/m/Y:H:i:s]");
+            $str = "$timestamp $level TrustedDeviceManager: $text";
+            fwrite($fd, $str . "\n");
+            fclose($fd);
+        }
     }
     
     /**
@@ -75,14 +99,24 @@ class TrustedDeviceManager {
         $stmt = $this->db->prepare($query);
         
         if ($stmt === false) {
-            $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+            // Use direct logging if message object isn't available
+            if (isset($this->message)) {
+                $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+            } else {
+                $this->directLog('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+            }
             return false;
         }
         
         $stmt->bind_param("isssss", $user_id, $token_hash, $device_name, $ip_address, $user_agent, $expires_formatted);
         
         if (!$stmt->execute()) {
-            $this->message->logMessage('[ERROR]', "Failed to store trusted device: " . $stmt->error);
+            // Use direct logging if message object isn't available
+            if (isset($this->message)) {
+                $this->message->logMessage('[ERROR]', "Failed to store trusted device: " . $stmt->error);
+            } else {
+                $this->directLog('[ERROR]', "Failed to store trusted device: " . $stmt->error);
+            }
             $stmt->close();
             return false;
         }
@@ -107,7 +141,12 @@ class TrustedDeviceManager {
             ]
         );
         
-        $this->message->logMessage('[NOTICE]', "Created trusted device for user $user_id");
+        // Use direct logging if message object isn't available
+        if (isset($this->message)) {
+            $this->message->logMessage('[NOTICE]', "Created trusted device for user $user_id");
+        } else {
+            $this->directLog('[NOTICE]', "Created trusted device for user $user_id");
+        }
         return true;
     }
     
@@ -129,7 +168,12 @@ class TrustedDeviceManager {
         $result = $this->db->query($query);
         
         if ($result === false) {
-            $this->message->logMessage('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
+            // Use direct logging if message object isn't available
+            if (isset($this->message)) {
+                $this->message->logMessage('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
+            } else {
+                $this->directLog('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
+            }
             return false;
         }
         
@@ -146,7 +190,12 @@ class TrustedDeviceManager {
                     $stmt->close();
                 }
                 
-                $this->message->logMessage('[NOTICE]', "Valid trusted device found for user " . $row['user_id']);
+                // Use direct logging if message object isn't available
+                if (isset($this->message)) {
+                    $this->message->logMessage('[NOTICE]', "Valid trusted device found for user " . $row['user_id']);
+                } else {
+                    $this->directLog('[NOTICE]', "Valid trusted device found for user " . $row['user_id']);
+                }
                 return $row['user_id'];
             }
         }

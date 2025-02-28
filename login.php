@@ -43,12 +43,14 @@ $trusted_device_user = false;
 if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
     // Not already logged in, check for trusted device token
     require_once('classes/trusteddevicemanager.class.php');
-    $deviceManager = new TrustedDeviceManager($db, $logfile);
     
-    // Try to validate trusted device token
-    $trusted_device_user = $deviceManager->validateTrustedDevice();
-    
-    if ($trusted_device_user !== false) {
+    // Only check trusted device if we have all required components
+    if (isset($db) && isset($logfile)) {
+        $deviceManager = new TrustedDeviceManager($db, $logfile);
+        // Try to validate trusted device token
+        $trusted_device_user = $deviceManager->validateTrustedDevice();
+        
+        if ($trusted_device_user !== false) {
         // Token is valid, auto-login the user
         $user_query = "SELECT usernumber, username, email, admin FROM users WHERE usernumber = ? AND status = 'active'";
         $stmt = $db->prepare($user_query);
@@ -83,14 +85,25 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
             
             $stmt->close();
         }
-    }
+    } // End of if trusted_device_user check
+    } // End of if isset($db) check
 }
 
 /*
  *  check if user is already logged in. If yes, display error and redirect to
  *  index.php. If no - session destroy and display login page.
  */
-if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :   
+// Flag for trust device handling - will be processed after ini.php is loaded
+$process_trust_device = (isset($_POST['trust_device']) && isset($_SESSION["logged"]) && $_SESSION["logged"] == TRUE);
+$trust_choice = isset($_POST['trust_device']) ? $_POST['trust_device'] : 'none';
+$has_redirect = isset($_POST['redirect_to']) ? 'yes' : 'no';
+
+// Normal login flow check
+if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
+    // After initialize message object and functions
+    if (isset($msg)) {
+        $msg->logMessage('[DEBUG]', "User already logged in, showing already logged in page");
+    }
     echo "<meta http-equiv='refresh' content='2;url=index.php'>";
     /*
      *  Stub HTML for error display.
@@ -134,7 +147,56 @@ require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 // Find CSS Version
 $cssver = cssver();
+
+// Initialize the message object immediately
 $msg = new Message($logfile);
+
+// Log key variables for debugging
+$msg->logMessage('[DEBUG]', "Login.php loaded. POST vars: " . 
+    "trust_device=" . (isset($_POST['trust_device']) ? $_POST['trust_device'] : 'not set') . ", " .
+    "redirect_to=" . (isset($_POST['redirect_to']) ? $_POST['redirect_to'] : 'not set'));
+$msg->logMessage('[DEBUG]', "Session vars: " . 
+    "logged=" . (isset($_SESSION["logged"]) ? $_SESSION["logged"] : 'not set') . ", " .
+    "user=" . (isset($_SESSION["user"]) ? $_SESSION["user"] : 'not set') . ", " .
+    "useremail=" . (isset($_SESSION["useremail"]) ? $_SESSION["useremail"] : 'not set'));
+$msg->logMessage('[DEBUG]', "Process flags: " . 
+    "process_trust_device=$process_trust_device, " .
+    "trust_choice=$trust_choice, " .
+    "has_redirect=$has_redirect");
+
+// Now process trust device if flagged - this happens after database and other resources are loaded
+if ($process_trust_device):
+    $msg->logMessage('[DEBUG]', "Processing trust device request...");
+    if ($trust_choice === 'yes'):
+        // User wants to trust this device
+        $msg->logMessage('[DEBUG]', "User chose to trust this device");
+        require_once('classes/trusteddevicemanager.class.php');
+        
+        try {
+            $msg->logMessage('[DEBUG]', "Creating TrustedDeviceManager with db=" . (isset($db) ? "valid" : "null"));
+            $deviceManager = new TrustedDeviceManager($db, $logfile);
+            $result = $deviceManager->createTrustedDevice($_SESSION["user"], 7); // Trust for 7 days
+            $msg->logMessage('[NOTICE]', "User {$_SESSION["useremail"]} trusted this device, result=" . ($result ? 'success' : 'failed'));
+        } catch (Exception $e) {
+            // If an error occurs, log it but continue
+            $msg->logMessage('[ERROR]', "Exception creating trusted device: " . $e->getMessage());
+        }
+    else:
+        $msg->logMessage('[DEBUG]', "User chose NOT to trust this device");
+    endif;
+    
+    // Redirect based on where they were going
+    if (isset($_POST['redirect_to']) && !empty($_POST['redirect_to'])):
+        $redirect = $_POST['redirect_to'];
+        $msg->logMessage('[DEBUG]', "Redirecting to: $redirect");
+        header("Location: $redirect");
+    else:
+        $msg->logMessage('[DEBUG]', "Redirecting to index.php (default)");
+        header("Location: index.php");
+    endif;
+    exit();
+endif;
+// Message object already initialized above
 
 ?>
 <!DOCTYPE html>
@@ -308,27 +370,6 @@ $msg = new Message($logfile);
                 echo "You are logged in";   //normal user login notice
                 $_SESSION['admin'] = FALSE;
             endif;
-            // Check if this is a response to the trust device prompt
-            if (isset($_POST['trust_device'])):
-                $trust_choice = $_POST['trust_device'];
-                if ($trust_choice === 'yes'):
-                    // User wants to trust this device
-                    require_once('classes/trusteddevicemanager.class.php');
-                    $deviceManager = new TrustedDeviceManager($db, $logfile);
-                    $deviceManager->createTrustedDevice($user, 7); // Trust for 7 days
-                    $msg->logMessage('[NOTICE]',"User $email trusted this device");
-                endif;
-                
-                // Redirect based on where they were going
-                if (isset($_POST['redirect_to']) && !empty($_POST['redirect_to'])):
-                    $redirect = $_POST['redirect_to'];
-                    echo "<meta http-equiv='refresh' content='0;url=$redirect'>";
-                    exit();
-                else:
-                    echo "<meta http-equiv='refresh' content='0;url=index.php'>";
-                    exit();
-                endif;
-            endif;
             
             // Check for chgpwd, or if there is a redirect URL set in the session
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
@@ -338,8 +379,9 @@ $msg = new Message($logfile);
             else:
                 // Show the trust device prompt
                 ?>
+                <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt"); ?>
                 <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
-                    <form action="login.php" method="post">
+                    <form action="trust_device.php" method="post">
                         <p>Would you like to stay logged in on this device?</p>
                         <p><small>This will keep you signed in for 7 days.</small></p>
                         
@@ -353,7 +395,7 @@ $msg = new Message($logfile);
                         <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">Yes, Trust This Device</button>
                     </form>
                     
-                    <form action="login.php" method="post" style="margin-top: 10px;">
+                    <form action="trust_device.php" method="post" style="margin-top: 10px;">
                         <input type="hidden" name="trust_device" value="no">
                         <?php if (isset($_SESSION['redirect_url'])): ?>
                             <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($_SESSION['redirect_url']); ?>">
