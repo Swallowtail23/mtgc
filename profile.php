@@ -434,125 +434,128 @@ endif;
                 endif;
 
                 //Page display content ?>
-                <div id="userdetails">
-                    <h2 class='h2pad'>User details</h2>
-                    <b>Email: </b><?php echo $row['email']; ?> <br>
-                    <b>Account status: </b> <?php echo $row['status']; ?> <br>
-                    <b>Registered date: </b> <?php echo $row['reg_date']; ?>
+                <div class="profile-container">
+                    <div id="userdetails">
+                        <h2 class='h2pad'>User details</h2>
+                        <b>Email: </b><?php echo $row['email']; ?> <br>
+                        <b>Account status: </b> <?php echo $row['status']; ?> <br>
+                        <b>Registered date: </b> <?php echo $row['reg_date']; ?>
+                    </div>
+                    <div id="mycollection">
+                        <h2 class='h2pad'>My Collection</h2>
+                        <?php
+                            $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                            $collectionmoney = $a->format($unformatted_value);
+                            $msg->logMessage('[DEBUG]',"Formatted value = $collectionmoney");
+                            $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
+                            $rowcounttotal = number_format($totalcardcount);
+                            $totalmrcardcount = number_format($totalmrcardcount);
+                            if(isset($rate) AND $rate > 0):
+                                $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                                $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
+                                $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+                                $localvalue = $b->format($unformatted_value * $rate);
+                                echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards ($totalmrcardcount M/R).<br>";
+                            else:
+                                echo "$collectionvalue over $rowcounttotal cards.<br>";
+                            endif;
+
+                            echo "This is based on pricing from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com 'market price'.<br>";
+                            $rowcounttotal = number_format($totalcardcount);
+                        ?>
+                    </div>
                 </div>
-                <div id="mycollection">
-                    <h2 class='h2pad'>My Collection</h2>
-                    <?php
-                        $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                        $collectionmoney = $a->format($unformatted_value);
-                        $msg->logMessage('[DEBUG]',"Formatted value = $collectionmoney");
-                        $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
-                        $rowcounttotal = number_format($totalcardcount);
-                        $totalmrcardcount = number_format($totalmrcardcount);
-                        if(isset($rate) AND $rate > 0):
-                            $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                            $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
-                            $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
-                            $localvalue = $b->format($unformatted_value * $rate);
-                            echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards ($totalmrcardcount M/R).<br>";
-                        else:
-                            echo "$collectionvalue over $rowcounttotal cards.<br>";
+                <div class="profile-container">
+                    <div id="changepassword">
+                        <h2 class='h2pad'>Change my password</h2>
+                        Minimum 8 characters with uppercase, lowercase, and a number.
+                        <br>
+                        <form action='/profile.php' method='POST'>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td style="min-width:190px">
+                                            <input class='profilepassword textinput' tabindex='1' type='password' name='curPass' placeholder="CURRENT">
+                                            <span class="error2">*</span>
+                                        </td>
+                                        <td rowspan='3'>
+                                            <input class='inline_button stdwidthbutton' tabindex='4' id='chgpwdsubmit' type='submit' value='UPDATE' name='changePass' />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input class='profilepassword textinput' tabindex='2' type='password' name='newPass' placeholder="NEW">
+                                            <span class="error2">*</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <input class='profilepassword textinput' tabindex='3' type='password' name='newPass2' placeholder="REPEAT NEW">
+                                            <span class="error2">*</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </form>
+                    </div>                
+                    <div id='trusteddevices'>
+                        <h2 class='h2pad'>Trusted Devices</h2>
+                        <?php
+                        // Get trusted devices for this user
+                        require_once('classes/trusteddevicemanager.class.php');
+                        $deviceManager = new TrustedDeviceManager($db, $logfile);
+
+                        // Check if we should remove a device
+                        if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
+                            $device_id = intval($_GET['remove_device']);
+                            $removed = $deviceManager->removeDeviceById($device_id, $user);
+                            if ($removed):
+                                echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
+                            else:
+                                echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
+                            endif;
+                        elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
+                            $removed = $deviceManager->removeAllUserDevices($user);
+                            if ($removed):
+                                echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
+                            else:
+                                echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
+                            endif;
                         endif;
 
-                        echo "This is based on pricing from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com 'market price'.<br>";
-                        $rowcounttotal = number_format($totalcardcount);
-                    ?>
-                </div>
-                
-                <div id='trusteddevices'>
-                    <h2 class='h2pad'>Trusted Devices</h2>
-                    <?php
-                    // Get trusted devices for this user
-                    require_once('classes/trusteddevicemanager.class.php');
-                    $deviceManager = new TrustedDeviceManager($db, $logfile);
-                    
-                    // Check if we should remove a device
-                    if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
-                        $device_id = intval($_GET['remove_device']);
-                        $removed = $deviceManager->removeDeviceById($device_id, $user);
-                        if ($removed):
-                            echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
-                        else:
-                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
-                        endif;
-                    elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
-                        $removed = $deviceManager->removeAllUserDevices($user);
-                        if ($removed):
-                            echo "<div class='alert-box success' id='device_message'><span>success: </span>All devices removed successfully.</div>";
-                        else:
-                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
-                        endif;
-                    endif;
-                    
-                    // Display trusted devices
-                    $devices = $deviceManager->getUserDevices($user);
-                    if (count($devices) > 0):
-                    ?>
-                    <table class="profile_options">
-                        <tr>
-                            <th>Device</th>
-                            <th>Last Used</th>
-                            <th>Expires</th>
-                            <th>Actions</th>
-                        </tr>
-                        <?php foreach ($devices as $device): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($device['device_name']); ?></td>
-                            <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
-                            <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
-                            <td>
-                                <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
-                                   onclick="return confirm('Are you sure you want to remove this device?');"
-                                   class="profilebutton" style="padding: 3px 8px;">Remove</a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </table>
-                    <p style="margin-top: 10px;">
-                        <a href="profile.php?remove_all_devices=1" 
-                           onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                           class="profilebutton">Remove All Devices</a>
-                    </p>
-                    <?php else: ?>
-                    <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
-                    <?php endif; ?>
-                </div>
-                <div id="changepassword">
-                    <h2 class='h2pad'>Change my password</h2>
-                    Minimum 8 characters with uppercase, lowercase, and a number.
-                    <br>
-                    <form action='/profile.php' method='POST'>
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <td style="min-width:190px">
-                                        <input class='profilepassword textinput' tabindex='1' type='password' name='curPass' placeholder="CURRENT">
-                                        <span class="error2">*</span>
-                                    </td>
-                                    <td rowspan='3'>
-                                        <input class='inline_button stdwidthbutton' tabindex='4' id='chgpwdsubmit' type='submit' value='UPDATE' name='changePass' />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input class='profilepassword textinput' tabindex='2' type='password' name='newPass' placeholder="NEW">
-                                        <span class="error2">*</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <input class='profilepassword textinput' tabindex='3' type='password' name='newPass2' placeholder="REPEAT NEW">
-                                        <span class="error2">*</span>
-                                    </td>
-                                </tr>
-                            </tbody>
+                        // Display trusted devices
+                        $devices = $deviceManager->getUserDevices($user);
+                        if (count($devices) > 0):
+                        ?>
+                        <table class="profile_options">
+                            <tr>
+                                <th>Device</th>
+                                <th>Last Used</th>
+                                <th>Expires</th>
+                                <th>Actions</th>
+                            </tr>
+                            <?php foreach ($devices as $device): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($device['device_name']); ?></td>
+                                <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
+                                <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
+                                <td>
+                                    <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
+                                       onclick="return confirm('Are you sure you want to remove this device?');"
+                                       class="profilebutton" style="padding: 3px 8px;">Remove</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
                         </table>
-                    </form>
+                        <p style="margin-top: 10px;">
+                            <a href="profile.php?remove_all_devices=1" 
+                               onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
+                               class="profilebutton" style="padding: 3px 8px;">Remove All Devices</a>
+                        </p>
+                        <?php else: ?>
+                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php 
                 if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
