@@ -322,14 +322,6 @@ endif;
                                                 else:
                                                     $_SESSION['chgpwd'] = '';
                                                 endif;
-                                                
-                                                // Create a session manager instance to regenerate the session ID before destroying
-                                                // This is a security best practice to ensure any session fixation attempts are invalidated
-                                                $sessMgr = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
-                                                $sessMgr->regenerateSession(true);
-                                                $msg->logMessage('[NOTICE]',"Session regenerated after password change for $useremail");
-                                                
-                                                // Now destroy the session for the logout
                                                 session_destroy();
                                                 echo "<meta http-equiv='refresh' content='4;url=login.php'>";
                                                 exit();
