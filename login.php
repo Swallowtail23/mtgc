@@ -295,7 +295,7 @@ endif;
                                     exit();
                                 elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
                                     // Check for 2FA requirement
-                                    $tfaManager = new TwoFactorManager($db, $logfile);
+                                    $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
                                     
                                     if ($tfaManager->isEnabled($userstat_result['number'])):
                                         // 2FA is enabled, store credentials for verification page

@@ -562,7 +562,7 @@ endif;
                         <h2 class='h2pad'>Two-Factor Authentication</h2>
                         <?php
                         // Get 2FA status for this user
-                        $tfaManager = new TwoFactorManager($db, $logfile);
+                        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
                         $tfa_enabled = $tfaManager->isEnabled($userId);
                         
                         // Check if we should enable or disable 2FA
@@ -1591,7 +1591,7 @@ endif;
                         <h2 class='h2pad'>Two-Factor Authentication</h2>
                         <?php
                         // Get 2FA status for this user
-                        $tfaManager = new TwoFactorManager($db, $logfile);
+                        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
                         $tfa_enabled = $tfaManager->isEnabled($userId);
                         
                         // Check if we should enable or disable 2FA
