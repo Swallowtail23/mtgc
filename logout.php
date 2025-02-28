@@ -1,13 +1,15 @@
 <?php
-/* Version:     1.0
-    Date:       17/10/16
+/* Version:     2.0
+    Date:       28/02/2025
     Name:       logout.php
     Purpose:    Destroy the session, log it, and head to login.php
     Notes:      {none}
-    To do:      -
+    To do:      Clean up messaging added by Claude - feels clunky
     
     1.0
                 Initial version
+ *  2.0
+ *              Add trusted device handling
 */
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
