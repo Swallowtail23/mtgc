@@ -456,6 +456,30 @@ ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`f
 -- Indexes for table `sets`
 --
 ALTER TABLE `sets` ADD FULLTEXT KEY `code` (`code`);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `trusted_devices`
+--
+
+DROP TABLE IF EXISTS `trusted_devices`;
+CREATE TABLE IF NOT EXISTS `trusted_devices` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `token_hash` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `device_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_used` datetime DEFAULT NULL,
+  `created` datetime NOT NULL,
+  `expires` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `token_hash` (`token_hash`),
+  KEY `expires` (`expires`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

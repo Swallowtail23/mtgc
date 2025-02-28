@@ -460,6 +460,65 @@ endif;
                         $rowcounttotal = number_format($totalcardcount);
                     ?>
                 </div>
+                
+                <div id='trusteddevices'>
+                    <h2 class='h2pad'>Trusted Devices</h2>
+                    <?php
+                    // Get trusted devices for this user
+                    require_once('classes/trusteddevicemanager.class.php');
+                    $deviceManager = new TrustedDeviceManager($db, $logfile);
+                    
+                    // Check if we should remove a device
+                    if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
+                        $device_id = intval($_GET['remove_device']);
+                        $removed = $deviceManager->removeDeviceById($device_id, $user);
+                        if ($removed):
+                            echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
+                        else:
+                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
+                        endif;
+                    elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
+                        $removed = $deviceManager->removeAllUserDevices($user);
+                        if ($removed):
+                            echo "<div class='alert-box success' id='device_message'><span>success: </span>All devices removed successfully.</div>";
+                        else:
+                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
+                        endif;
+                    endif;
+                    
+                    // Display trusted devices
+                    $devices = $deviceManager->getUserDevices($user);
+                    if (count($devices) > 0):
+                    ?>
+                    <table class="profile_options">
+                        <tr>
+                            <th>Device</th>
+                            <th>Last Used</th>
+                            <th>Expires</th>
+                            <th>Actions</th>
+                        </tr>
+                        <?php foreach ($devices as $device): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($device['device_name']); ?></td>
+                            <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
+                            <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
+                            <td>
+                                <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
+                                   onclick="return confirm('Are you sure you want to remove this device?');"
+                                   class="profilebutton" style="padding: 3px 8px;">Remove</a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
+                    <p style="margin-top: 10px;">
+                        <a href="profile.php?remove_all_devices=1" 
+                           onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
+                           class="profilebutton">Remove All Devices</a>
+                    </p>
+                    <?php else: ?>
+                    <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
+                    <?php endif; ?>
+                </div>
                 <div id="changepassword">
                     <h2 class='h2pad'>Change my password</h2>
                     Minimum 8 characters with uppercase, lowercase, and a number.
