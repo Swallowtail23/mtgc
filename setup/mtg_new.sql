@@ -419,6 +419,9 @@ CREATE TABLE IF NOT EXISTS `users` (
   `collection_view` tinyint NOT NULL DEFAULT '0',
   `currency` varchar(3) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `weeklyexport` tinyint NOT NULL DEFAULT '0',
+  `tfa_enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `tfa_method` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tfa_backup_codes` text COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`usernumber`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
@@ -478,6 +481,23 @@ CREATE TABLE IF NOT EXISTS `trusted_devices` (
   KEY `user_id` (`user_id`),
   KEY `token_hash` (`token_hash`),
   KEY `expires` (`expires`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tfa_codes`
+--
+
+DROP TABLE IF EXISTS `tfa_codes`;
+CREATE TABLE IF NOT EXISTS `tfa_codes` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` int NOT NULL,
+  `code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
+  `expiry` int NOT NULL,
+  `attempts` int NOT NULL DEFAULT 0,
+  UNIQUE KEY(user_id),
+  KEY `idx_tfa_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 COMMIT;

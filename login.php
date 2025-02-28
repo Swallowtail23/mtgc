@@ -281,15 +281,6 @@ endif;
                                 $msg->logMessage('[DEBUG]',"UserStatus for $email is {$userstat_result['code']}");
                                 if ($userstat_result['code'] === 0):
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
-                                elseif ($userstat_result['code'] === 1): //pwdchg required
-                                    $msg->logMessage('[DEBUG]',"UserStatus for $email is ok, but password change required");
-                                    session_regenerate_id();
-                                    $_SESSION["logged"] = TRUE;
-                                    $user = $_SESSION["user"] = $userstat_result['number'];
-                                    $_SESSION["useremail"] = $email;
-                                    $_SESSION["chgpwd"] = TRUE;
-                                    $_SESSION['just_logged_in'] = TRUE; // Set a flag indicating a fresh login to prevent redirect loops on chgpwd
-                                    $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
                                 elseif ($userstat_result['code'] === 2): //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
@@ -302,17 +293,56 @@ endif;
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                elseif ($userstat_result['code'] === 10): //active
-                                    $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
-                                    session_regenerate_id();
-                                    $_SESSION["logged"] = TRUE;
-                                    $user = $_SESSION["user"] = $userstat_result['number'];
-                                    $_SESSION["useremail"] = $email;
-                                    $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
-                                    if($badlog_result['count'] != 0):
-                                        $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
-                                        $zerobadlog = new UserStatus($db,$logfile,$email);
-                                        $zerobadlog->ZeroBadLogin();
+                                elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
+                                    // Check for 2FA requirement
+                                    require_once('classes/twofactormanager.class.php');
+                                    $tfaManager = new TwoFactorManager($db, $logfile);
+                                    
+                                    if ($tfaManager->isEnabled($userstat_result['number'])):
+                                        // 2FA is enabled, store credentials for verification page
+                                        session_regenerate_id();
+                                        $_SESSION["user_pending_2fa"] = $userstat_result['number'];
+                                        $_SESSION["useremail_pending_2fa"] = $email;
+                                        $_SESSION["admin_pending_2fa"] = $userstat_result['admin'] == 1;
+                                        $_SESSION["chgpwd_pending_2fa"] = $userstat_result['code'] === 1;
+                                        
+                                        // Clear bad login count if user entered correct password
+                                        if($badlog_result['count'] != 0):
+                                            $msg->logMessage('[NOTICE]',"Logon (first factor) ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
+                                            $zerobadlog = new UserStatus($db,$logfile,$email);
+                                            $zerobadlog->ZeroBadLogin();
+                                        endif;
+                                        
+                                        // If there was a redirect URL, preserve it
+                                        if (isset($_SESSION['redirect_url'])):
+                                            $_SESSION['redirect_url_after_2fa'] = $_SESSION['redirect_url'];
+                                        endif;
+                                        
+                                        // Start 2FA verification process and redirect
+                                        $tfaManager->startVerification($userstat_result['number'], $email);
+                                        $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
+                                        header("Location: verify_2fa.php");
+                                        exit();
+                                    else:
+                                        // No 2FA required, proceed with normal login
+                                        $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
+                                        session_regenerate_id();
+                                        $_SESSION["logged"] = TRUE;
+                                        $user = $_SESSION["user"] = $userstat_result['number'];
+                                        $_SESSION["useremail"] = $email;
+                                        
+                                        // If password change required, set flag
+                                        if ($userstat_result['code'] === 1):
+                                            $_SESSION["chgpwd"] = TRUE;
+                                            $_SESSION['just_logged_in'] = TRUE; // Set flag to prevent redirect loops
+                                        endif;
+                                        
+                                        $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
+                                        if($badlog_result['count'] != 0):
+                                            $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
+                                            $zerobadlog = new UserStatus($db,$logfile,$email);
+                                            $zerobadlog->ZeroBadLogin();
+                                        endif;
                                     endif;
                                 else:
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';

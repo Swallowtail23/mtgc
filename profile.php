@@ -556,6 +556,101 @@ endif;
                         <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
                         <?php endif; ?>
                     </div>
+                    
+                    <div id='twofactor'>
+                        <h2 class='h2pad'>Two-Factor Authentication</h2>
+                        <?php
+                        // Get 2FA status for this user
+                        require_once('classes/twofactormanager.class.php');
+                        $tfaManager = new TwoFactorManager($db, $logfile);
+                        $tfa_enabled = $tfaManager->isEnabled($user);
+                        
+                        // Check if we should enable or disable 2FA
+                        if (isset($_POST['enable_2fa'])):
+                            $tfa_method = $_POST['tfa_method'] ?? 'email';
+                            $enabled = $tfaManager->enable($user, $tfa_method);
+                            if ($enabled):
+                                $tfa_enabled = true;
+                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication enabled successfully.</div>";
+                                
+                                // Show backup codes
+                                $backup_codes = $tfaManager->getBackupCodes($user);
+                                if (!empty($backup_codes)):
+                                    echo "<div class='alert-box notice' id='backup_codes'>";
+                                    echo "<span>important: </span>Save these backup codes in case you lose access to your authentication method:<br><br>";
+                                    echo "<div style='font-family: monospace; margin-left: 20px;'>";
+                                    foreach ($backup_codes as $code):
+                                        echo htmlspecialchars($code) . "<br>";
+                                    endforeach;
+                                    echo "</div><br>";
+                                    echo "<strong>Keep these codes safe and private!</strong>";
+                                    echo "</div>";
+                                endif;
+                                
+                            else:
+                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
+                            endif;
+                        elseif (isset($_POST['disable_2fa'])):
+                            $disabled = $tfaManager->disable($user);
+                            if ($disabled):
+                                $tfa_enabled = false;
+                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication disabled successfully.</div>";
+                            else:
+                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to disable two-factor authentication.</div>";
+                            endif;
+                        elseif (isset($_POST['regenerate_backup_codes'])):
+                            $new_codes = $tfaManager->regenerateBackupCodes($user);
+                            if (!empty($new_codes)):
+                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Backup codes regenerated successfully.</div>";
+                                
+                                // Show new backup codes
+                                echo "<div class='alert-box notice' id='backup_codes'>";
+                                echo "<span>important: </span>Save these new backup codes:<br><br>";
+                                echo "<div style='font-family: monospace; margin-left: 20px;'>";
+                                foreach ($new_codes as $code):
+                                    echo htmlspecialchars($code) . "<br>";
+                                endforeach;
+                                echo "</div><br>";
+                                echo "<strong>Keep these codes safe and private!</strong>";
+                                echo "</div>";
+                            else:
+                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to regenerate backup codes.</div>";
+                            endif;
+                        endif;
+                        
+                        // Show 2FA status and options
+                        if ($tfa_enabled):
+                            $tfa_method = $tfaManager->getMethod($user);
+                        ?>
+                            <p>Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.</p>
+                            
+                            <div style="display: flex; margin-top: 15px;">
+                                <form action="profile.php" method="post" style="margin-right: 10px;">
+                                    <input type="submit" name="disable_2fa" class="profilebutton" value="Disable 2FA" 
+                                           onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.');" />
+                                </form>
+                                
+                                <form action="profile.php" method="post">
+                                    <input type="submit" name="regenerate_backup_codes" class="profilebutton" value="Regenerate Backup Codes" 
+                                           onclick="return confirm('Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.');" />
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <p>Two-factor authentication is currently <strong>disabled</strong>.</p>
+                            <p>Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.</p>
+                            
+                            <form action="profile.php" method="post" style="margin-top: 15px;">
+                                <div style="margin-bottom: 10px;">
+                                    <label for="tfa_method">Authentication method:</label>
+                                    <select class="dropdown" name="tfa_method" id="tfa_method">
+                                        <option value="email">Email</option>
+                                    </select>
+                                </div>
+                                
+                                <input type="submit" name="enable_2fa" class="profilebutton" value="Enable 2FA" />
+                            </form>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php 
                 if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
