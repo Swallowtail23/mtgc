@@ -85,14 +85,17 @@ if (isset($_POST['verify']) && isset($_POST['code'])):
             unset($_SESSION['chgpwd_pending_2fa']);
             
             // Handle redirects
-            if (isset($_SESSION['redirect_url_after_2fa'])):
-                $redirect_url = $_SESSION['redirect_url_after_2fa'];
-                unset($_SESSION['redirect_url_after_2fa']);
-                header("Location: $redirect_url");
-            elseif ($pwd_change_required):
+            if ($pwd_change_required):
                 header("Location: profile.php");
             else:
-                header("Location: index.php");
+                // Redirect to trust_device.php with optional redirect URL
+                if (isset($_SESSION['redirect_url_after_2fa'])):
+                    $redirect = $_SESSION['redirect_url_after_2fa'];
+                    unset($_SESSION['redirect_url_after_2fa']);
+                    header("Location: trust_device.php?redirect_to=" . urlencode($redirect));
+                else:
+                    header("Location: trust_device.php");
+                endif;
             endif;
             exit();
         else:
