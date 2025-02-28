@@ -6,6 +6,9 @@
     Notes:      {none}
     To do:      
     
+    @author     Simon Wilson <simon@simonandkate.net>
+    @copyright  2025 Simon Wilson
+
     1.0
                 Initial version
  *  2.0 

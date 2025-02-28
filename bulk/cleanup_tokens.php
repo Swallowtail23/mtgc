@@ -5,7 +5,7 @@
     Purpose:    Cleanup expired trusted device tokens
     Notes:      To be run via cron, e.g. daily
                 
-    @author     Claude with Simon Wilson <simon@simonandkate.net>
+    @author     Simon Wilson <simon@simonandkate.net>
     @copyright  2025 Simon Wilson
     
  *  1.0
