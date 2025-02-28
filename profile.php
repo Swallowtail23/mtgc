@@ -272,7 +272,7 @@ endif;
                                             FROM users 
                                             LEFT JOIN `groups` 
                                             ON users.groupid = groups.groupnumber 
-                                            WHERE usernumber = ? LIMIT 1",[$user])):
+                                            WHERE usernumber = ? LIMIT 1",[$userId])):
             $msg->logMessage('[DEBUG]',"SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
         else:
@@ -508,14 +508,14 @@ endif;
                         // Check if we should remove a device
                         if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
                             $device_id = intval($_GET['remove_device']);
-                            $removed = $deviceManager->removeDeviceById($device_id, $user);
+                            $removed = $deviceManager->removeDeviceById($device_id, $userId);
                             if ($removed):
                                 echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
                             else:
                                 echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
                             endif;
                         elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
-                            $removed = $deviceManager->removeAllUserDevices($user);
+                            $removed = $deviceManager->removeAllUserDevices($userId);
                             if ($removed):
                                 echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
                             else:
@@ -524,7 +524,7 @@ endif;
                         endif;
 
                         // Display trusted devices
-                        $devices = $deviceManager->getUserDevices($user);
+                        $devices = $deviceManager->getUserDevices($userId);
                         if (count($devices) > 0):
                         ?>
                         <table class="profile_options">
@@ -988,7 +988,7 @@ endif;
                                     $tmpdeckname = $currentDateTime;
                                     $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
                                     $msg->logMessage('[DEBUG]',"Import called with 'add deck' option, $tmpdeckname to be created...");
-                                    $decksuccess = $obj->addDeck($user,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
+                                    $decksuccess = $obj->addDeck($userId,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                                     if($decksuccess['flag'] === 1):
                                         $decknumber = $decksuccess['decknumber'];
                                         $msg->logMessage('[DEBUG]',"Deck created, $tmpdeckname created, deck number is $decknumber");

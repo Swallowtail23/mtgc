@@ -421,7 +421,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `weeklyexport` tinyint NOT NULL DEFAULT '0',
   `tfa_enabled` tinyint(1) NOT NULL DEFAULT '0',
   `tfa_method` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tfa_backup_codes` text COLLATE utf8mb4_general_ci,
+  `tfa_backup_codes` text COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`usernumber`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
