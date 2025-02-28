@@ -275,12 +275,6 @@ class SessionManager {
      * @param bool $deleteOldSession Whether to delete data from old session
      * @return bool Success of operation
      */
-    public function regenerateSession(bool $deleteOldSession = true): bool
-    {
-        $this->message->logMessage('[NOTICE]',"Regenerating session ID for security");
-        return session_regenerate_id($deleteOldSession);
-    }
-
 
     public function __toString() {
         $this->message->logMessage("[ERROR]","Called as string");
