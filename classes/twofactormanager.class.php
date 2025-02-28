@@ -248,7 +248,7 @@ class TwoFactorManager {
         
         // Update attempts
         $new_attempts = $row['attempts'] + 1;
-        $query = "UPDATE tfa_codes SET attempts = ? WHERE usernumber = ?";
+        $query = "UPDATE tfa_codes SET attempts = ? WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("ii", $new_attempts, $row['id']);
         $stmt->execute();
@@ -262,7 +262,7 @@ class TwoFactorManager {
         // Verify code
         if($code === $row['code']) {
             // Delete used code
-            $query = "DELETE FROM tfa_codes WHERE usernumber = ?";
+            $query = "DELETE FROM tfa_codes WHERE user_id = ?";
             $stmt = $this->db->prepare($query);
             $stmt->bind_param("i", $row['id']);
             $stmt->execute();
@@ -287,7 +287,7 @@ class TwoFactorManager {
             return '';
         }
         
-        $query = "SELECT tfa_method FROM users WHERE usernumber = ?";
+        $query = "SELECT tfa_method FROM users WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -365,7 +365,7 @@ class TwoFactorManager {
             return false;
         }
         
-        $query = "SELECT tfa_backup_codes FROM users WHERE usernumber = ?";
+        $query = "SELECT tfa_backup_codes FROM users WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -389,7 +389,7 @@ class TwoFactorManager {
                 
                 // Update database
                 $backup_json = json_encode($backup_codes);
-                $query = "UPDATE users SET tfa_backup_codes = ? WHERE usernumber = ?";
+                $query = "UPDATE users SET tfa_backup_codes = ? WHERE user_id = ?";
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param("si", $backup_json, $user_id);
                 $stmt->execute();

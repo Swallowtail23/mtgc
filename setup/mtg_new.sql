@@ -1000,7 +1000,7 @@ CREATE TABLE IF NOT EXISTS `trusted_devices` (
 
 DROP TABLE IF EXISTS `tfa_codes`;
 CREATE TABLE IF NOT EXISTS `tfa_codes` (
-  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `usernumber` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_id` int NOT NULL,
   `code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
   `expiry` int NOT NULL,
