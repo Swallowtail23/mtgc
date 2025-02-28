@@ -32,6 +32,14 @@ else:
 endif;
 startCustomSession();
 
+// Load required files for database access
+require_once('includes/ini.php');               //Initialise and load ini file
+require_once('includes/error_handling.php');
+require_once('includes/functions.php');         //Includes basic functions for non-secure pages
+
+// Initialize message object for logging
+$msg = new Message($logfile);
+
 // Temporary variable to store a redirection URL
 $redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : null;
 /*
@@ -40,27 +48,30 @@ $redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : nu
 $trusted_login = false;
 $trusted_device_user = false;
 
-if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
+// Debug log beginning of execution
+$msg->logMessage('[DEBUG]', "Starting login.php execution. Checking for trusted device.");
+
+if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
     // Not already logged in, check for trusted device token
     require_once('classes/trusteddevicemanager.class.php');
     
-    // Only check trusted device if we have all required components
-    if (isset($db) && isset($logfile)) {
-        $deviceManager = new TrustedDeviceManager($db, $logfile);
-        // Try to validate trusted device token
-        $trusted_device_user = $deviceManager->validateTrustedDevice();
-        
-        if ($trusted_device_user !== false) {
+    // Database connection should be available from ini.php
+    $msg->logMessage('[DEBUG]', "Checking for trusted device cookie with db connection: " . (isset($db) ? "valid" : "missing"));
+    $deviceManager = new TrustedDeviceManager($db, $logfile);
+    // Try to validate trusted device token
+    $trusted_device_user = $deviceManager->validateTrustedDevice();
+    
+    if ($trusted_device_user !== false):
         // Token is valid, auto-login the user
         $user_query = "SELECT usernumber, username, email, admin FROM users WHERE usernumber = ? AND status = 'active'";
         $stmt = $db->prepare($user_query);
         
-        if ($stmt) {
+        if ($stmt):
             $stmt->bind_param("i", $trusted_device_user);
             $stmt->execute();
             $stmt->store_result();
             
-            if ($stmt->num_rows === 1) {
+            if ($stmt->num_rows === 1):
                 $stmt->bind_result($usernumber, $username, $useremail, $admin);
                 $stmt->fetch();
                 
@@ -68,11 +79,11 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
                 $_SESSION["logged"] = TRUE;
                 $_SESSION["user"] = $usernumber;
                 $_SESSION["useremail"] = $useremail;
-                if ($admin) {
+                if ($admin):
                     $_SESSION['admin'] = TRUE;
-                } else {
+                else:
                     $_SESSION['admin'] = FALSE;
-                }
+                endif;
                 
                 $msg = new Message($logfile);
                 $msg->logMessage('[NOTICE]', "Auto-login via trusted device for user $useremail");
@@ -81,13 +92,12 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
                 loginstamp($useremail);
                 
                 $trusted_login = true;
-            }
+            endif;
             
             $stmt->close();
-        }
-    } // End of if trusted_device_user check
-    } // End of if isset($db) check
-}
+        endif;
+    endif; // End of if trusted_device_user check
+endif;
 
 /*
  *  check if user is already logged in. If yes, display error and redirect to
@@ -97,6 +107,9 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
 $process_trust_device = (isset($_POST['trust_device']) && isset($_SESSION["logged"]) && $_SESSION["logged"] == TRUE);
 $trust_choice = isset($_POST['trust_device']) ? $_POST['trust_device'] : 'none';
 $has_redirect = isset($_POST['redirect_to']) ? 'yes' : 'no';
+
+// Find CSS Version
+$cssver = cssver();
 
 // Normal login flow check
 if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
@@ -142,14 +155,13 @@ endif;
  *  Continuing to load login page.
  */
 header ("Cache-Control: max-age=0");
-require ('includes/ini.php');               //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
+// Files already loaded above
+
 // Find CSS Version
 $cssver = cssver();
 
-// Initialize the message object immediately
-$msg = new Message($logfile);
+// Message object already initialized above
+$msg->logMessage('[DEBUG]', "Mid-load check: db=" . (isset($db) ? "valid" : "null"));
 
 // Log key variables for debugging
 $msg->logMessage('[DEBUG]', "Login.php loaded. POST vars: " . 
@@ -172,6 +184,7 @@ if ($process_trust_device):
         $msg->logMessage('[DEBUG]', "User chose to trust this device");
         require_once('classes/trusteddevicemanager.class.php');
         
+        // PHP doesn't have try/catch with colon syntax, revert to braces for this part
         try {
             $msg->logMessage('[DEBUG]', "Creating TrustedDeviceManager with db=" . (isset($db) ? "valid" : "null"));
             $deviceManager = new TrustedDeviceManager($db, $logfile);
