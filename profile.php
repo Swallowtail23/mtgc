@@ -561,7 +561,6 @@ endif;
                         <h2 class='h2pad'>Two-Factor Authentication</h2>
                         <?php
                         // Get 2FA status for this user
-                        require_once('classes/twofactormanager.class.php');
                         $tfaManager = new TwoFactorManager($db, $logfile);
                         $tfa_enabled = $tfaManager->isEnabled($user);
                         

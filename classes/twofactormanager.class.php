@@ -13,9 +13,9 @@
  */
 
 // Prevent direct access
-if(!defined("ALLOW_ACCESS")) {
-    die("Direct access to this file is not permitted");
-}
+if (__FILE__ == $_SERVER['PHP_SELF']) :
+    die('Direct access prohibited');
+endif;
 
 class TwoFactorManager {
     private $db;
@@ -24,6 +24,7 @@ class TwoFactorManager {
     private $code_length = 6;
     private $code_expiry = 600; // 10 minutes in seconds
     private $max_attempts = 3;
+    private $smtp_parameters;
     
     /**
      * Constructor
@@ -31,9 +32,10 @@ class TwoFactorManager {
      * @param object $db Database connection
      * @param string $logfile Log file path
      */
-    public function __construct($db, $logfile = "") {
+    public function __construct($db, $smtpParameters, $logfile = "") {
         $this->db = $db;
         $this->logfile = $logfile;
+        $this->smtp_parameters = $smtpParameters;
         
         // Try to use Message class for logging if available
         if(class_exists('Message')) {
@@ -79,7 +81,7 @@ class TwoFactorManager {
             return false;
         }
         
-        $query = "SELECT tfa_enabled FROM users WHERE id = ?";
+        $query = "SELECT tfa_enabled FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -116,7 +118,7 @@ class TwoFactorManager {
         $backup_json = json_encode($backup_codes);
         
         // Set 2FA as enabled
-        $query = "UPDATE users SET tfa_enabled = 1, tfa_method = ?, tfa_backup_codes = ? WHERE id = ?";
+        $query = "UPDATE users SET tfa_enabled = 1, tfa_method = ?, tfa_backup_codes = ? WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("ssi", $method, $backup_json, $user_id);
         $success = $stmt->execute();
@@ -142,7 +144,7 @@ class TwoFactorManager {
             return false;
         }
         
-        $query = "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL WHERE id = ?";
+        $query = "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $success = $stmt->execute();
@@ -244,7 +246,7 @@ class TwoFactorManager {
         
         // Update attempts
         $new_attempts = $row['attempts'] + 1;
-        $query = "UPDATE tfa_codes SET attempts = ? WHERE id = ?";
+        $query = "UPDATE tfa_codes SET attempts = ? WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("ii", $new_attempts, $row['id']);
         $stmt->execute();
@@ -258,7 +260,7 @@ class TwoFactorManager {
         // Verify code
         if($code === $row['code']) {
             // Delete used code
-            $query = "DELETE FROM tfa_codes WHERE id = ?";
+            $query = "DELETE FROM tfa_codes WHERE usernumber = ?";
             $stmt = $this->db->prepare($query);
             $stmt->bind_param("i", $row['id']);
             $stmt->execute();
@@ -283,7 +285,7 @@ class TwoFactorManager {
             return '';
         }
         
-        $query = "SELECT tfa_method FROM users WHERE id = ?";
+        $query = "SELECT tfa_method FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -317,12 +319,11 @@ class TwoFactorManager {
         }
         
         try {
-            $mail = new MyPHPMailer($this->logfile);
-            $mail->addAddress($email);
-            $mail->Subject = "Your verification code";
-            $mail->Body = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.";
+            $mail = new myPHPMailer(true, $this->smtp_parameters, $this->serveremail, $this->logfile);
+            $subject = "Your verification code";
+            $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.";
             
-            if($mail->send()) {
+            if($mail->sendEmail($email, TRUE, $subject, $emailbody)) {
                 $this->logIt("TwoFactorManager::sendVerificationEmail - Verification email sent to: $email", 3);
                 return true;
             }
@@ -362,7 +363,7 @@ class TwoFactorManager {
             return false;
         }
         
-        $query = "SELECT tfa_backup_codes FROM users WHERE id = ?";
+        $query = "SELECT tfa_backup_codes FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -386,7 +387,7 @@ class TwoFactorManager {
                 
                 // Update database
                 $backup_json = json_encode($backup_codes);
-                $query = "UPDATE users SET tfa_backup_codes = ? WHERE id = ?";
+                $query = "UPDATE users SET tfa_backup_codes = ? WHERE usernumber = ?";
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param("si", $backup_json, $user_id);
                 $stmt->execute();
@@ -409,7 +410,7 @@ class TwoFactorManager {
             return [];
         }
         
-        $query = "SELECT tfa_backup_codes FROM users WHERE id = ?";
+        $query = "SELECT tfa_backup_codes FROM users WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
@@ -451,7 +452,7 @@ class TwoFactorManager {
         $backup_codes = $this->generateBackupCodes();
         $backup_json = json_encode($backup_codes);
         
-        $query = "UPDATE users SET tfa_backup_codes = ? WHERE id = ?";
+        $query = "UPDATE users SET tfa_backup_codes = ? WHERE usernumber = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param("si", $backup_json, $user_id);
         $success = $stmt->execute();

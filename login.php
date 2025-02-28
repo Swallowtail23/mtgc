@@ -295,7 +295,6 @@ endif;
                                     exit();
                                 elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
                                     // Check for 2FA requirement
-                                    require_once('classes/twofactormanager.class.php');
                                     $tfaManager = new TwoFactorManager($db, $logfile);
                                     
                                     if ($tfaManager->isEnabled($userstat_result['number'])):
