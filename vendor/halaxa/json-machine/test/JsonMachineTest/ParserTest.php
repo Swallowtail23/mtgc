@@ -13,6 +13,8 @@ use JsonMachine\Parser;
 use JsonMachine\StringChunks;
 use JsonMachine\Tokens;
 use JsonMachine\TokensWithDebugging;
+use LogicException;
+use Traversable;
 
 /**
  * @covers \JsonMachine\Parser
@@ -48,6 +50,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
             ['', '[{"c":1},"string",{"d":2},false]', [[0 => ['c' => 1]], [1 => 'string'], [2 => ['d' => 2]], [3 => false]]],
             ['', '[false,{"c":1},"string",{"d":2}]', [[0 => false], [1 => ['c' => 1]], [2 => 'string'], [3 => ['d' => 2]]]],
             ['', '[{"c":1,"d":2}]', [[['c' => 1, 'd' => 2]]]],
+            'ISSUE-108' => [
+                '',
+                '["https://click.justwatch.com/a?cx=eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6W3sic2NoZW1hIjoiaWdsdTpjb20uanVzdHdhdGNoL2NsaWNrb3V0X2NvbnRleHQvanNvbnNjaGVtYS8xLTItMCIsImRhdGEiOnsicHJvdmlkZXIiOiJBcHBsZSBUViIsIm1vbmV0aXphdGlvblR5cGUiOiJidXkiLCJwcmVzZW50YXRpb25UeXBlIjoiaGQiLCJjdXJyZW5jeSI6IlVTRCIsInByaWNlIjo1MTkuNzQsIm9yaWdpbmFsUHJpY2UiOjAsImF1ZGlvTGFuZ3VhZ2UiOiIiLCJzdWJ0aXRsZUxhbmd1YWdlIjoiIiwiY2luZW1hSWQiOjAsInNob3d0aW1lIjoiIiwiaXNGYXZvcml0ZUNpbmVtYSI6ZmFsc2UsInBhcnRuZXJJZCI6MTI3MCwicHJvdmlkZXJJZCI6MiwiY2xpY2tvdXRUeXBlIjoianctY29udGVudC1wYXJ0bmVyLWFwaSJ9fSx7InNjaGVtYSI6ImlnbHU6Y29tLmp1c3R3YXRjaC90aXRsZV9jb250ZXh0L2pzb25zY2hlbWEvMS0wLTAiLCJkYXRhIjp7InRpdGxlSWQiOjIwOTgxLCJvYmplY3RUeXBlIjoic2hvdyIsImp3RW50aXR5SWQiOiJ0czIwOTgxIn19XX0\u0026r=https%3A%2F%2Ftv.apple.com%2Fus%2Fshow%2Fsurvivor%2Fumc.cmc.6ozd0mt09a86bpa19l885jv4z\u0026uct_country=us"]',
+                [['https://click.justwatch.com/a?cx=eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6W3sic2NoZW1hIjoiaWdsdTpjb20uanVzdHdhdGNoL2NsaWNrb3V0X2NvbnRleHQvanNvbnNjaGVtYS8xLTItMCIsImRhdGEiOnsicHJvdmlkZXIiOiJBcHBsZSBUViIsIm1vbmV0aXphdGlvblR5cGUiOiJidXkiLCJwcmVzZW50YXRpb25UeXBlIjoiaGQiLCJjdXJyZW5jeSI6IlVTRCIsInByaWNlIjo1MTkuNzQsIm9yaWdpbmFsUHJpY2UiOjAsImF1ZGlvTGFuZ3VhZ2UiOiIiLCJzdWJ0aXRsZUxhbmd1YWdlIjoiIiwiY2luZW1hSWQiOjAsInNob3d0aW1lIjoiIiwiaXNGYXZvcml0ZUNpbmVtYSI6ZmFsc2UsInBhcnRuZXJJZCI6MTI3MCwicHJvdmlkZXJJZCI6MiwiY2xpY2tvdXRUeXBlIjoianctY29udGVudC1wYXJ0bmVyLWFwaSJ9fSx7InNjaGVtYSI6ImlnbHU6Y29tLmp1c3R3YXRjaC90aXRsZV9jb250ZXh0L2pzb25zY2hlbWEvMS0wLTAiLCJkYXRhIjp7InRpdGxlSWQiOjIwOTgxLCJvYmplY3RUeXBlIjoic2hvdyIsImp3RW50aXR5SWQiOiJ0czIwOTgxIn19XX0&r=https%3A%2F%2Ftv.apple.com%2Fus%2Fshow%2Fsurvivor%2Fumc.cmc.6ozd0mt09a86bpa19l885jv4z&uct_country=us']],
+            ],
             ['/', '{"":{"c":1,"d":2}}', [['c' => 1], ['d' => 2]]],
             ['/~0', '{"~":{"c":1,"d":2}}', [['c' => 1], ['d' => 2]]],
             ['/~1', '{"/":{"c":1,"d":2}}', [['c' => 1], ['d' => 2]]],
@@ -100,6 +107,44 @@ class ParserTest extends \PHPUnit_Framework_TestCase
                     ['id' => '1'],
                     ['company' => 'Company 1'],
                     ['id' => '2'],
+                ],
+            ],
+            'ISSUE-110-vector-first' => [
+                ['/items', '/total'],
+                '{
+                    "items": [
+                        ["test1"],
+                        ["test2"]
+                    ],
+                    "total": 2
+                }',
+                [
+                    [0 => ['test1']],
+                    [1 => ['test2']],
+                    ['total' => 2],
+                ],
+            ],
+            'ISSUE-110-scalar-first' => [
+                ['/items', '/total'],
+                '{
+                    "total": 2,
+                    "items": [
+                        ["test1"],
+                        ["test2"]
+                    ]
+                }',
+                [
+                    ['total' => 2],
+                    [0 => ['test1']],
+                    [1 => ['test2']],
+                ],
+            ],
+            'ISSUE-100' => [
+                ['/results/-/color'],
+                '{"results":[{"name":"apple","color":"red"},{"name":"pear","color":"yellow"}]}',
+                [
+                    ['color' => 'red'],
+                    ['color' => 'yellow'],
                 ],
             ],
         ];
@@ -513,7 +558,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     {
         $parser = new Parser(new \ArrayObject());
 
-        $this->expectException(JsonMachineException::class);
+        $this->expectException(LogicException::class);
         $parser->getPosition();
     }
 
@@ -524,6 +569,91 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $this->expectException(SyntaxErrorException::class);
 
         foreach ($parser as $index => $item) {
+        }
+    }
+
+    public function testRecursiveIteration()
+    {
+        $array = new Parser(new Tokens(['[{"numbers": [42]}]']), '', null, true);
+
+        foreach ($array as $object) {
+            $this->assertInstanceOf(Traversable::class, $object);
+            foreach ($object as $key => $values) {
+                $this->assertInstanceOf(Traversable::class, $values);
+                $this->assertSame('numbers', $key);
+                foreach ($values as $fortyTwo) {
+                    $this->assertSame(42, $fortyTwo);
+                }
+            }
+        }
+    }
+
+    public function testZigZagRecursiveIteration()
+    {
+        $objectKeysToVisit = ['numbers', 'string', 'more numbers'];
+        $objectKeysVisited = [];
+        $valuesToVisit = [41, 42, 'text', 43];
+        $valuesVisited = [];
+
+        $array = new Parser(new Tokens(['[{"numbers": [41, 42], "string": ["text"], "more numbers": [43]}]']), '', null, true);
+
+        foreach ($array as $object) {
+            $this->assertInstanceOf(Traversable::class, $object);
+            foreach ($object as $key => $values) {
+                $objectKeysVisited[] = $key;
+                $this->assertInstanceOf(Traversable::class, $values);
+                foreach ($values as $value) {
+                    $valuesVisited[] = $value;
+                }
+            }
+        }
+
+        $this->assertSame($objectKeysToVisit, $objectKeysVisited);
+        $this->assertSame($valuesToVisit, $valuesVisited);
+    }
+
+    /**
+     * @dataProvider data_testRecursiveParserDoesNotRequireChildParserToBeIteratedToTheEndByUser
+     */
+    public function testRecursiveParserDoesNotRequireChildParserToBeIteratedToTheEndByUser(string $json)
+    {
+        $iterator = new Parser(new Tokens([$json]), '', null, true);
+        $array = [];
+
+        foreach ($iterator as $item) {
+            $array[] = $item;
+        }
+
+        $this->assertSame(1, $array[0]);
+        $this->assertInstanceOf(Traversable::class, $array[1]);
+        $this->assertSame(4, $array[2]);
+
+        $this->expectExceptionMessage('generator');
+        iterator_to_array($array[1]);
+    }
+
+    public function data_testRecursiveParserDoesNotRequireChildParserToBeIteratedToTheEndByUser()
+    {
+        return [
+            ['[1,[{},2,3],4]'],
+            ['[1,[[],2,3],4]'],
+            ['[1,[{"key": "value"},2,3],4]'],
+            ['[1,[[null, true, "string"],2,3],4]'],
+        ];
+    }
+
+    public function testGetPositionWorksInsideRecursion()
+    {
+        $parser = new Parser(
+            new Tokens(new \ArrayIterator(['[[11,12]]'])),
+            '',
+            null,
+            true
+        );
+
+        foreach ($parser as $item) {
+            /* @var $item Parser */
+            $this->assertSame(0, $item->getPosition());
         }
     }
 }

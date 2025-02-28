@@ -25,6 +25,7 @@ class TwoFactorManager {
     private $code_expiry = 600; // 10 minutes in seconds
     private $max_attempts = 3;
     private $smtp_parameters;
+    private $serveremail;
     
     /**
      * Constructor
@@ -32,10 +33,11 @@ class TwoFactorManager {
      * @param object $db Database connection
      * @param string $logfile Log file path
      */
-    public function __construct($db, $smtpParameters, $logfile = "") {
+    public function __construct($db, $smtpParameters, $serveremail, $logfile = "") {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->smtp_parameters = $smtpParameters;
+        $this->server_email = $serveremail;
         
         // Try to use Message class for logging if available
         if(class_exists('Message')) {
@@ -319,7 +321,7 @@ class TwoFactorManager {
         }
         
         try {
-            $mail = new myPHPMailer(true, $this->smtp_parameters, $this->serveremail, $this->logfile);
+            $mail = new myPHPMailer(true, $this->smtp_parameters, $this->server_email, $this->logfile);
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.";
             
