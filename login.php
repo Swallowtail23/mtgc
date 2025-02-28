@@ -169,6 +169,7 @@ $msg = new Message($logfile);
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
                                 elseif ($userstat_result['code'] === 10): //active
+                                    $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                     session_regenerate_id();
                                     $_SESSION["logged"] = TRUE;
                                     $user = $_SESSION["user"] = $userstat_result['number'];
