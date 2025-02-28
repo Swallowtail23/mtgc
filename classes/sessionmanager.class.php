@@ -263,39 +263,6 @@ class SessionManager {
         endif;
     }
 
-    private function updateFxRateIfNeeded($currencies)
-    {
-        // Check the timestamp in the 'fx' table
-        $lastUpdateTime = $this->getLastUpdateTime($currencies);
-
-        // If the timestamp is more than an hour old, proceed with the update
-        if ($lastUpdateTime === null || (time() - $lastUpdateTime) > 3600) {
-            return $this->updateFxRate($currencies);
-        }
-
-        return null; // Return null if no update needed
-    }
-
-    private function getLastUpdateTime($currencies)
-    {
-        $query = "SELECT updatetime FROM fx WHERE currencies = ? ORDER BY updatetime DESC LIMIT 1";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param("s", $currencies);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows === 0) {
-            $stmt->close();
-            return null; // Return null if no records found
-        }
-
-        $stmt->bind_result($lastUpdateTime);
-        $stmt->fetch();
-        $stmt->close();
-
-        return strtotime($lastUpdateTime);
-    }
 
     public function __toString() {
         $this->message->logMessage("[ERROR]","Called as string");
