@@ -361,30 +361,68 @@ class PriceManager
     }
 
 
-    public function updateCollectionValues($collection)
+    public function updateCollectionValues($collection,$cardid = "")
     {
-        if($findcards = $this->db->query("SELECT
-                                `$collection`.id AS id,
-                                IFNULL(`$collection`.normal,0) AS mynormal,
-                                IFNULL(`$collection`.foil, 0) AS myfoil,
-                                IFNULL(`$collection`.etched, 0) AS myetch,
-                                topvalue,
-                                IFNULL(price, 0) AS normalprice,
-                                CASE 
-                                    WHEN price_foil IS NOT NULL THEN price_foil
-                                    WHEN price_foil IS NULL AND cards_scry.foil = 1 AND `$collection`.foil IS NOT NULL AND `$collection`.foil > 0 THEN IFNULL(price, 0)
-                                    ELSE 0
-                                END AS foilprice,
-                                CASE 
-                                    WHEN price_etched IS NOT NULL THEN price_etched
-                                    WHEN price_etched IS NULL AND `$collection`.etched IS NOT NULL AND `$collection`.etched > 0 THEN IFNULL(price, 0)
-                                    ELSE 0
-                                END AS etchedprice
-                                FROM `$collection` LEFT JOIN `cards_scry` 
-                                ON `$collection`.id = `cards_scry`.id
-                                WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0")):
+        $i = 0; // Counter for updated rows
+        $findcards = false; // Will store our result set
+        
+        if($cardid === ""): //Full collection value update
+            $query = "SELECT
+                        `$collection`.id AS id,
+                        IFNULL(`$collection`.normal,0) AS mynormal,
+                        IFNULL(`$collection`.foil, 0) AS myfoil,
+                        IFNULL(`$collection`.etched, 0) AS myetch,
+                        topvalue,
+                        IFNULL(price, 0) AS normalprice,
+                        CASE 
+                            WHEN price_foil IS NOT NULL THEN price_foil
+                            WHEN price_foil IS NULL AND cards_scry.foil = 1 AND `$collection`.foil IS NOT NULL AND `$collection`.foil > 0 THEN IFNULL(price, 0)
+                            ELSE 0
+                        END AS foilprice,
+                        CASE 
+                            WHEN price_etched IS NOT NULL THEN price_etched
+                            WHEN price_etched IS NULL AND `$collection`.etched IS NOT NULL AND `$collection`.etched > 0 THEN IFNULL(price, 0)
+                            ELSE 0
+                        END AS etchedprice
+                        FROM `$collection` LEFT JOIN `cards_scry` 
+                        ON `$collection`.id = `cards_scry`.id
+                        WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0";
+            $findcards = $this->db->query($query); // Simple query execution
+        else:              // Single card value update
+            $query = "SELECT
+                        `$collection`.id AS id,
+                        IFNULL(`$collection`.normal,0) AS mynormal,
+                        IFNULL(`$collection`.foil, 0) AS myfoil,
+                        IFNULL(`$collection`.etched, 0) AS myetch,
+                        notes,
+                        topvalue,
+                        IFNULL(price, 0) AS normalprice,
+                        CASE 
+                            WHEN price_foil IS NOT NULL THEN price_foil
+                            WHEN price_foil IS NULL AND cards_scry.foil = 1 AND `$collection`.foil IS NOT NULL AND `$collection`.foil > 0 THEN IFNULL(price, 0)
+                            ELSE 0
+                        END AS foilprice,
+                        CASE 
+                            WHEN price_etched IS NOT NULL THEN price_etched
+                            WHEN price_etched IS NULL AND `$collection`.etched IS NOT NULL AND `$collection`.etched > 0 THEN IFNULL(price, 0)
+                            ELSE 0
+                        END AS etchedprice
+                        FROM `$collection` LEFT JOIN `cards_scry` 
+                        ON `$collection`.id = `cards_scry`.id
+                        WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) + IFNULL(`$collection`.etched,0) > 0
+                        AND `$collection`.id = ?";
+                    $stmt = $this->db->prepare($query);
+            if ($stmt):
+                $stmt->bind_param("s", $cardid);
+                $stmt->execute();
+                $findcards = $stmt->get_result();
+                $stmt->close();
+            else:
+                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $this->db->error, E_USER_ERROR);
+            endif;
+        endif;
+        if($findcards):
             $this->message->logMessage('[DEBUG]',"SQL query succeeded");
-            $i = 0;
             while($row = $findcards->fetch_array(MYSQLI_ASSOC)):
                 $normalqty = $row['mynormal'];
                 $normalprice = $row['normalprice'];
@@ -418,9 +456,9 @@ class PriceManager
                 else:
                     trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $this->db->error, E_USER_ERROR);
                 endif;
-                $i = $i + 1;
+                $i++;
             endwhile;
-            $this->message->logMessage('[NOTICE]',"Collection value update completed");
+            $this->message->logMessage('[NOTICE]',"Value update completed (row count: $i)");
         else: 
             trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL: ". $this->db->error, E_USER_ERROR);
         endif;
