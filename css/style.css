@@ -2782,7 +2782,8 @@ td.columnhide
     cursor: pointer;
 }
 
-.info-box {
+.info-box, .qr-box
+{
     display: none;
     position: fixed;
     top: 25%;
@@ -2814,10 +2815,20 @@ td.columnhide
     left: 100%;
 }
 
-.info-box-inner
+.info-box-inner, qr-box-inner
 {
     padding-right: 20px;
 /*    -webkit-mask-image: linear-gradient(180deg, #000 90%, transparent);*/
+}
+
+.secret-key {
+    font-size: 18px;
+    font-weight: bold;
+    color: #d9534f;
+    word-break: break-word;
+    white-space: normal; /* Allow wrapping */
+    user-select: none; /* Prevent accidental selection of spaces */
+    cursor: pointer;
 }
 
 .material-symbols-outlined.refresh

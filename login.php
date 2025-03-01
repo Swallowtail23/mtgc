@@ -285,7 +285,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                         session_regenerate_id(true);
                                         $_SESSION["logged"] = TRUE;
-                                        $_SESSION["user"] = $userstat_result['number'];
+                                        $_SESSION["user"] = $usernumber = $userstat_result['number'];
                                         $_SESSION["useremail"] = $email;
 
                                         // If password change required, set flag
@@ -358,11 +358,11 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
         if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
             $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}");
             //Write user's login date to the user table in the database (help track inactive users)
-            if (!loginstamp($useremail)) {
-                $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $useremail");
+            if (!loginstamp($email)) {
+                $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
             }
             //Is maintenance mode enabled?
-            $mtcestatus = mtcemode($user);
+            $mtcestatus = mtcemode($usernumber);
             if ($mtcestatus == 1):
                 echo "<br>Site is undergoing maintenance, please try again later...";
                 session_destroy();

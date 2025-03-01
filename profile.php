@@ -63,13 +63,24 @@ if (file_exists('includes/sessionname.local.php')):
 else:
     require('includes/sessionname_template.php');
 endif;
-
+startCustomSession();
 require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
+
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Label\LabelAlignment;
+use Endroid\QrCode\Label\Font\OpenSans;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\PngWriter;
+
+
 $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
+$msg->logMessage('[DEBUG]',"Page load");
 
 // Has DELETE collection been called? 
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
@@ -169,6 +180,19 @@ endif;
                 var infoBox = document.getElementById("infoBox");
                 infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
             };
+            function toggleQRBox() {
+                var infoBox = document.getElementById("qrBox");
+                infoBox.style.display = (qrBox.style.display === "none" || qrBox.style.display === "") ? "block" : "none";
+            };
+
+            function copySecretKey() {
+                let hiddenInput = document.getElementById("hiddenSecretKey");
+                hiddenInput.select();
+                hiddenInput.setSelectionRange(0, 99999); // For mobile compatibility
+                document.execCommand("copy");
+                alert("Secret key copied to clipboard");
+            };
+
             
             function CloseMe( obj )
             {
@@ -231,6 +255,10 @@ endif;
                     <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
                     <li>You will be emailed a list of import failures/warnings</li>
                 </ul>
+            </div>
+        </div>
+        <div class="qr-box" id="qrBox" style="display:none">
+            <div class="qr-box-inner">
             </div>
         </div> <?php
 
@@ -573,23 +601,93 @@ endif;
                             $enabled = $tfaManager->enable($userId, $tfa_method);
                             if ($enabled):
                                 $tfa_enabled = true;
-                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication enabled successfully.</div>";
-                                
-                                // Show backup codes
+                                // Set backup codes
                                 $backup_codes = $tfaManager->getBackupCodes($userId);
+                                // Build the backup codes HTML outside the JavaScript block:
+                                $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
                                 if (!empty($backup_codes)):
-                                    echo "<div class='alert-box notice' id='backup_codes'>";
-                                    echo "<span>important: </span>These backup codes can be used if you lose access to your authentication method.";
-                                    echo "<br>Save them, as you will not get access to them again.<br><br>";
-                                    echo "<div style='font-family: monospace; margin-left: 20px;'>";
                                     foreach ($backup_codes as $code):
-                                        echo htmlspecialchars($code) . "<br>";
+                                        $backupHtml .= htmlspecialchars($code) . "<br>";
                                     endforeach;
-                                    echo "</div><br>";
-                                    echo "<strong>Keep these codes safe and private!</strong>";
-                                    echo "</div>";
+                                    $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                                else:
+                                    $backupHtml .= "Error generating backup codes<br>";
                                 endif;
-                                
+                                if ($tfa_method === "app" && isset($_SESSION['tfa_provisioning_uri'])):
+                                    $provisioningUri = $_SESSION['tfa_provisioning_uri'];
+
+                                    // Extract the secret key from provisioning URI
+                                    parse_str(parse_url($provisioningUri, PHP_URL_QUERY), $queryParams);
+                                    $secretKey = $queryParams['secret'] ?? 'N/A';
+
+                                    // Generate QR Code
+                                    $builder = new Builder(
+                                        writer: new PngWriter(),
+                                        writerOptions: [],
+                                        validateResult: false,
+                                        data: $provisioningUri,
+                                        encoding: new Encoding('UTF-8'),
+                                        errorCorrectionLevel: ErrorCorrectionLevel::High,
+                                        size: 200,
+                                        margin: 10,
+                                        roundBlockSizeMode: RoundBlockSizeMode::Margin
+                                    );
+
+                                    // Build the QR Code
+                                    $result = $builder->build();
+
+                                    // Convert QR Code to Data URI
+                                    $qrDataUri = $result->getDataUri();
+                                    $encodedSecretKey = htmlspecialchars($secretKey, ENT_QUOTES, 'UTF-8');
+                                    
+                                    // Format for display (line break every 16 characters)
+                                    $formattedSecretKey = implode('<wbr>', str_split($encodedSecretKey, 16)); // <wbr> allows line breaks without adding spaces
+
+                                    // Inject JavaScript to update the div dynamically
+                                    echo "<script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            let qrBox = document.getElementById('qrBox');
+                                            let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                            // Inject QR Code and secret key into the div
+                                            qrInner.innerHTML = `
+                                                <h2>Two-factor authentication enabled successfully</h2>
+                                                <h3>Scan QR Code using your authentication app</h3>
+                                                <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
+                                                <h3>...or manually enter this code:</h3>
+                                                <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
+                                                <input type=\"text\" id=\"hiddenSecretKey\" value=\"${encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
+                                                <br>
+                                                <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                                " . $backupHtml . "
+                                                <br>
+                                                <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                            `;
+
+                                            // Show the div
+                                            qrBox.style.display = 'block';
+                                        });
+                                    </script>";
+                                elseif ($tfa_method === "email"):
+                                    // Inject JavaScript to update the div dynamically
+                                    echo "<script>
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            let qrBox = document.getElementById('qrBox');
+                                            let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                            // Inject content into the div
+                                            qrInner.innerHTML = `
+                                                <h2>Two-factor authentication enabled successfully</h2>
+                                                <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                                " . $backupHtml . "
+                                                <br>
+                                                <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                            `;
+                                            // Show the div
+                                            qrBox.style.display = 'block';
+                                        });
+                                    </script>";
+                                endif;
                             else:
                                 echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
                             endif;
@@ -603,19 +701,31 @@ endif;
                             endif;
                         elseif (isset($_POST['regenerate_backup_codes'])):
                             $new_codes = $tfaManager->regenerateBackupCodes($userId);
+                            $newCodesHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
                             if (!empty($new_codes)):
-                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Backup codes regenerated successfully.</div>";
-                                
-                                // Show new backup codes
-                                echo "<div class='alert-box notice' id='backup_codes'>";
-                                echo "<span>important: </span>Save these new backup codes:<br><br>";
-                                echo "<div style='font-family: monospace; margin-left: 20px;'>";
-                                foreach ($new_codes as $code):
-                                    echo htmlspecialchars($code) . "<br>";
+                                // Build the backup codes HTML outside the JavaScript block:
+                                foreach ($new_codes as $new_code):
+                                    $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
                                 endforeach;
-                                echo "</div><br>";
-                                echo "<strong>Keep these codes safe and private!</strong>";
-                                echo "</div>";
+                                $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                                // Inject JavaScript to update the div dynamically
+                                echo "<script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        let qrBox = document.getElementById('qrBox');
+                                        let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                        // Inject content into the div
+                                        qrInner.innerHTML = `
+                                            <h2>New backup codes generated successfully</h2>
+                                            <b>Important:</b> The codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                            " . $newCodesHtml . "
+                                            <br>
+                                            <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                        `;
+                                        // Show the div
+                                        qrBox.style.display = 'block';
+                                    });
+                                </script>";
                             else:
                                 echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to regenerate backup codes.</div>";
                             endif;
