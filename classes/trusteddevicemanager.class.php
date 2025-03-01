@@ -118,7 +118,7 @@ class TrustedDeviceManager {
             'path' => '/',
             'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
             'httponly' => true,
-            'samesite' => 'Strict'
+            'samesite' => 'Lax'
         ]);
 
         $this->log('[NOTICE]', "Created trusted device for user $user_id");
