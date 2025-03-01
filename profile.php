@@ -76,7 +76,7 @@ use Endroid\QrCode\Label\LabelAlignment;
 use Endroid\QrCode\Label\Font\OpenSans;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
-
+use OTPHP\TOTP;
 
 $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
@@ -192,7 +192,6 @@ endif;
                 document.execCommand("copy");
                 alert("Secret key copied to clipboard");
             };
-
             
             function CloseMe( obj )
             {
@@ -257,10 +256,12 @@ endif;
                 </ul>
             </div>
         </div>
+        <!-- QR / 2FA box -->
         <div class="qr-box" id="qrBox" style="display:none">
             <div class="qr-box-inner">
             </div>
-        </div> <?php
+        </div> 
+        <?php
 
         $import = isset($_POST['import']) ? 'yes' : '';
         $adddeck = isset($_POST['adddeck']) ? 'yes' : '';
@@ -464,6 +465,170 @@ endif;
                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                 endif;
 
+            //9. 2FA Section
+                // Get 2FA status for this user
+                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+                $tfa_enabled = $tfaManager->isEnabled($userId);
+
+                // Check if we should enable or disable 2FA
+                if (isset($_POST['enable_2fa'])):
+                    $tfa_method = $_POST['tfa_method'] ?? 'email';
+                    $enabled = $tfaManager->enable($userId, $tfa_method);
+                    if ($enabled):
+                        $tfa_enabled = true;
+                        // Set backup codes
+                        $backup_codes = $tfaManager->getBackupCodes($userId);
+                        // Build the backup codes HTML outside the JavaScript block:
+                        $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
+                        if (!empty($backup_codes)):
+                            foreach ($backup_codes as $code):
+                                $backupHtml .= htmlspecialchars($code) . "<br>";
+                            endforeach;
+                            $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                        else:
+                            $backupHtml .= "Error generating backup codes<br>";
+                        endif;
+                        if ($tfa_method === "app" && isset($_SESSION['tfa_provisioning_uri'])):
+                            $provisioningUri = $_SESSION['tfa_provisioning_uri'];
+
+                            // Extract the secret key from provisioning URI
+                            parse_str(parse_url($provisioningUri, PHP_URL_QUERY), $queryParams);
+                            $secretKey = $queryParams['secret'] ?? 'N/A';
+
+                            // Generate QR Code
+                            $builder = new Builder(
+                                writer: new PngWriter(),
+                                writerOptions: [],
+                                validateResult: false,
+                                data: $provisioningUri,
+                                encoding: new Encoding('UTF-8'),
+                                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                                size: 200,
+                                margin: 10,
+                                roundBlockSizeMode: RoundBlockSizeMode::Margin
+                            );
+
+                            // Build the QR Code
+                            $result = $builder->build();
+
+                            // Convert QR Code to Data URI
+                            $qrDataUri = $result->getDataUri();
+                            $encodedSecretKey = htmlspecialchars($secretKey, ENT_QUOTES, 'UTF-8');
+
+                            // Format for display (line break every 16 characters)
+                            $formattedSecretKey = implode('<wbr>', str_split($encodedSecretKey, 16)); // <wbr> allows line breaks without adding spaces
+
+                            // Inject JavaScript to update the div dynamically
+                            echo "<script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let qrBox = document.getElementById('qrBox');
+                                    let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                    // Inject QR Code and secret key into the div
+                                    qrInner.innerHTML = `
+                                        <h2>Two-factor authentication enabled successfully</h2>
+                                        <h3>Scan QR Code using your authentication app</h3>
+                                        <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
+                                        <h3>...or manually enter this code:</h3>
+                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
+                                        <input type=\"text\" id=\"hiddenSecretKey\" value=\"${encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
+                                        <h3>Verify your 6-digit code:</h3>
+                                        <form id='verify2FAForm' method='post' action='profile.php'>
+                                            <input type='text' name='tfa_code' id='tfa_code' maxlength='6' pattern='[0-9]{6}' required placeholder='Enter 6-digit code' style='font-size: 18px; text-align: center; width: 120px;'>
+                                            <input type='hidden' name='tfa_secret' value='${encodedSecretKey}'>
+                                            <button type='submit' name='verify_2fa' class='ok-button profilebutton'>VERIFY</button>
+                                        </form>
+                                        <br>
+                                        <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                        " . $backupHtml . "
+                                        <br>
+                                        <form method='post' action='profile.php' onsubmit='return'>
+                                            <input type='hidden' name='disable_2fa' value='1'>
+                                            <button type='submit' class='ok-button profilebutton'>CANCEL</button>
+                                        </form>
+                                    `;
+
+                                    // Show the div
+                                    qrBox.style.display = 'block';
+                                });
+                            </script>";
+                        elseif ($tfa_method === "email"):
+                            // Inject JavaScript to update the div dynamically
+                            echo "<script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let qrBox = document.getElementById('qrBox');
+                                    let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                    // Inject content into the div
+                                    qrInner.innerHTML = `
+                                        <h2>Two-factor authentication enabled successfully</h2>
+                                        <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                        " . $backupHtml . "
+                                        <br>
+                                        <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                    `;
+                                    // Show the div
+                                    qrBox.style.display = 'block';
+                                });
+                            </script>";
+                        endif;
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
+                    endif;
+                elseif (isset($_POST['disable_2fa'])):
+                    $disabled = $tfaManager->disable($userId);
+                    if ($disabled):
+                        $tfa_enabled = false;
+                        echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication disabled successfully.</div>";
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to disable two-factor authentication.</div>";
+                    endif;
+                elseif (isset($_POST['regenerate_backup_codes'])):
+                    $new_codes = $tfaManager->regenerateBackupCodes($userId);
+                    $newCodesHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
+                    if (!empty($new_codes)):
+                        // Build the backup codes HTML outside the JavaScript block:
+                        foreach ($new_codes as $new_code):
+                            $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
+                        endforeach;
+                        $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                        // Inject JavaScript to update the div dynamically
+                        echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                let qrBox = document.getElementById('qrBox');
+                                let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                // Inject content into the div
+                                qrInner.innerHTML = `
+                                    <h2>New backup codes generated successfully</h2>
+                                    <b>Important:</b> The codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                    " . $newCodesHtml . "
+                                    <br>
+                                    <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                `;
+                                // Show the div
+                                qrBox.style.display = 'block';
+                            });
+                        </script>";
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to regenerate backup codes.</div>";
+                    endif;
+                elseif (isset($_POST['verify_2fa'])):
+                    $userCode = $_POST['tfa_code'] ?? '';
+                    $userSecret = $_POST['tfa_secret'] ?? '';
+
+                    // Verify TOTP code
+                    $totp = TOTP::create($userSecret);
+                    if ($totp->verify($userCode)):
+                        // Store that 2FA is fully verified
+                        $_SESSION['2fa_verified'] = true;
+                        echo "<div class='alert-box success'><span>success: </span>Two-factor authentication successfully enabled and verified.</div>";
+                    else:
+                        // Disable 2FA since the verification failed
+                        $tfaManager->disable($userId);
+                        echo "<div class='alert-box error'><span>error: </span>Invalid 6-digit code. Two-factor authentication was not enabled.</div>";
+                    endif;
+                endif;
                 //Page display content ?>
                 <div class="profile-container">
                     <div id="userdetails">
@@ -587,183 +752,6 @@ endif;
                         <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
                         <?php endif; ?>
                     </div>
-                    
-                    <div id='twofactor'>
-                        <h2 class='h2pad'>Two-Factor Authentication</h2>
-                        <?php
-                        // Get 2FA status for this user
-                        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
-                        $tfa_enabled = $tfaManager->isEnabled($userId);
-                        
-                        // Check if we should enable or disable 2FA
-                        if (isset($_POST['enable_2fa'])):
-                            $tfa_method = $_POST['tfa_method'] ?? 'email';
-                            $enabled = $tfaManager->enable($userId, $tfa_method);
-                            if ($enabled):
-                                $tfa_enabled = true;
-                                // Set backup codes
-                                $backup_codes = $tfaManager->getBackupCodes($userId);
-                                // Build the backup codes HTML outside the JavaScript block:
-                                $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
-                                if (!empty($backup_codes)):
-                                    foreach ($backup_codes as $code):
-                                        $backupHtml .= htmlspecialchars($code) . "<br>";
-                                    endforeach;
-                                    $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
-                                else:
-                                    $backupHtml .= "Error generating backup codes<br>";
-                                endif;
-                                if ($tfa_method === "app" && isset($_SESSION['tfa_provisioning_uri'])):
-                                    $provisioningUri = $_SESSION['tfa_provisioning_uri'];
-
-                                    // Extract the secret key from provisioning URI
-                                    parse_str(parse_url($provisioningUri, PHP_URL_QUERY), $queryParams);
-                                    $secretKey = $queryParams['secret'] ?? 'N/A';
-
-                                    // Generate QR Code
-                                    $builder = new Builder(
-                                        writer: new PngWriter(),
-                                        writerOptions: [],
-                                        validateResult: false,
-                                        data: $provisioningUri,
-                                        encoding: new Encoding('UTF-8'),
-                                        errorCorrectionLevel: ErrorCorrectionLevel::High,
-                                        size: 200,
-                                        margin: 10,
-                                        roundBlockSizeMode: RoundBlockSizeMode::Margin
-                                    );
-
-                                    // Build the QR Code
-                                    $result = $builder->build();
-
-                                    // Convert QR Code to Data URI
-                                    $qrDataUri = $result->getDataUri();
-                                    $encodedSecretKey = htmlspecialchars($secretKey, ENT_QUOTES, 'UTF-8');
-                                    
-                                    // Format for display (line break every 16 characters)
-                                    $formattedSecretKey = implode('<wbr>', str_split($encodedSecretKey, 16)); // <wbr> allows line breaks without adding spaces
-
-                                    // Inject JavaScript to update the div dynamically
-                                    echo "<script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            let qrBox = document.getElementById('qrBox');
-                                            let qrInner = qrBox.querySelector('.qr-box-inner');
-
-                                            // Inject QR Code and secret key into the div
-                                            qrInner.innerHTML = `
-                                                <h2>Two-factor authentication enabled successfully</h2>
-                                                <h3>Scan QR Code using your authentication app</h3>
-                                                <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
-                                                <h3>...or manually enter this code:</h3>
-                                                <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
-                                                <input type=\"text\" id=\"hiddenSecretKey\" value=\"${encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
-                                                <br>
-                                                <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
-                                                " . $backupHtml . "
-                                                <br>
-                                                <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
-                                            `;
-
-                                            // Show the div
-                                            qrBox.style.display = 'block';
-                                        });
-                                    </script>";
-                                elseif ($tfa_method === "email"):
-                                    // Inject JavaScript to update the div dynamically
-                                    echo "<script>
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            let qrBox = document.getElementById('qrBox');
-                                            let qrInner = qrBox.querySelector('.qr-box-inner');
-
-                                            // Inject content into the div
-                                            qrInner.innerHTML = `
-                                                <h2>Two-factor authentication enabled successfully</h2>
-                                                <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
-                                                " . $backupHtml . "
-                                                <br>
-                                                <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
-                                            `;
-                                            // Show the div
-                                            qrBox.style.display = 'block';
-                                        });
-                                    </script>";
-                                endif;
-                            else:
-                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
-                            endif;
-                        elseif (isset($_POST['disable_2fa'])):
-                            $disabled = $tfaManager->disable($userId);
-                            if ($disabled):
-                                $tfa_enabled = false;
-                                echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication disabled successfully.</div>";
-                            else:
-                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to disable two-factor authentication.</div>";
-                            endif;
-                        elseif (isset($_POST['regenerate_backup_codes'])):
-                            $new_codes = $tfaManager->regenerateBackupCodes($userId);
-                            $newCodesHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
-                            if (!empty($new_codes)):
-                                // Build the backup codes HTML outside the JavaScript block:
-                                foreach ($new_codes as $new_code):
-                                    $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
-                                endforeach;
-                                $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
-                                // Inject JavaScript to update the div dynamically
-                                echo "<script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        let qrBox = document.getElementById('qrBox');
-                                        let qrInner = qrBox.querySelector('.qr-box-inner');
-
-                                        // Inject content into the div
-                                        qrInner.innerHTML = `
-                                            <h2>New backup codes generated successfully</h2>
-                                            <b>Important:</b> The codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
-                                            " . $newCodesHtml . "
-                                            <br>
-                                            <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
-                                        `;
-                                        // Show the div
-                                        qrBox.style.display = 'block';
-                                    });
-                                </script>";
-                            else:
-                                echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to regenerate backup codes.</div>";
-                            endif;
-                        endif;
-                        
-                        // Show 2FA status and options
-                        if ($tfa_enabled):
-                            $tfa_method = $tfaManager->getMethod($userId);
-                        ?>
-                            <p>Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.</p>
-                            
-                            <div style="display: flex; margin-top: 15px;">
-                                <form action="profile.php" method="post" style="margin-right: 10px;">
-                                    <input type="submit" name="disable_2fa" class="profilebutton" value="DISABLE 2FA" 
-                                           onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.');" />
-                                </form>
-                                
-                                <form action="profile.php" method="post">
-                                    <input type="submit" name="regenerate_backup_codes" class="profilebutton" style="width: 160px;" value="NEW BACKUP CODES" 
-                                           onclick="return confirm('Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.');" />
-                                </form>
-                            </div>
-                        <?php else: ?>
-                            <p>Two-factor authentication is currently <strong>disabled</strong>. Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.</p>
-                            
-                            <form action="profile.php" method="post" style="margin-top: 15px;">
-                                <div style="margin-bottom: 10px;">
-                                    <label for="tfa_method">Authentication method:</label>
-                                    <select class="dropdown" name="tfa_method" id="tfa_method">
-                                        <option value="email">Email</option>
-                                        <option value="app">App</option>
-                                    </select>
-                                </div>
-                                
-                                <input type="submit" name="enable_2fa" class="profilebutton" value="ENABLE 2FA" />
-                            </form>
-                        <?php endif; ?>
-                    </div>
                 </div>
                 <?php 
                 if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
@@ -864,6 +852,44 @@ endif;
                             <tr>
                                 <td colspan="3">
                                     <h2 class='h2pad'>Options</h2>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="options_left">
+                                    <b>Two-Factor<br>Authentication: &nbsp;</b>
+                                </td>
+                                <td class="options_centre"> <?php
+                                    // Show 2FA status and options
+                                    if ($tfa_enabled):
+                                        $tfa_method = $tfaManager->getMethod($userId);?>
+                                        Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
+                                        <br>Click "NEW CODES" to generate new backup codes.<?php 
+                                    else: ?>
+                                        Two-factor authentication is currently <strong>disabled</strong>. <br>Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.<?php 
+                                    endif; ?>
+                                </td>
+                                <td class="options_right"><?php
+                                    // Show 2FA status and options
+                                    if ($tfa_enabled): ?>
+                                        <form action="profile.php" method="post">
+                                            <input type="submit" name="disable_2fa" class="profilebutton" value="DISABLE 2FA" 
+                                                onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.');" />
+                                        </form>
+                                    <br>
+                                        <form action="profile.php" method="post">
+                                            <input type="submit" name="regenerate_backup_codes" class="profilebutton" value="NEW CODES" 
+                                                onclick="return confirm('Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.');" />
+                                        </form> <?php
+                                    else: ?>
+                                        <form method="post" action="profile.php">
+                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()">
+                                                <option value="disabled" selected>Disabled</option>
+                                                <option value="email">Enable: Email</option>
+                                                <option value="app">Enable: App</option>
+                                            </select>
+                                            <input type="hidden" name="enable_2fa" value="1">
+                                        </form><?php
+                                    endif; ?>
                                 </td>
                             </tr>
                             <tr>
