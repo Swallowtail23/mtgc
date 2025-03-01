@@ -105,6 +105,9 @@ else:
     $turnstile = 1;
 endif;
 
+// How long to trust trusted devices (in days)
+$trustDuration = $ini_array['security']['TrustDuration'];
+
 // Enable Disqus card commenting
 if($ini_array['comments']['Disqus'] !== 'enabled'):
     $disqus = 0;

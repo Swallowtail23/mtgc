@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 <?php 
-/* Version:     12.2
-    Date:       23/08/24
+/* Version:     13
+    Date:       01/03/25
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -54,6 +54,9 @@
  * 12.2         23/08/24
  *              MTGC-123 - Use normal price for total value if foil or etched prices 
  *              are not available but normal price is (and we have foil or etched)
+ * 
+ * 13.0         01/03/25
+ *              Alterations for display of additional security options
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -465,8 +468,6 @@ endif;
                             $rowcounttotal = number_format($totalcardcount);
                         ?>
                     </div>
-                </div>
-                <div class="profile-container">
                     <div id="changepassword">
                         <h2 class='h2pad'>Change my password</h2>
                         Minimum 8 characters with uppercase, lowercase, and a number.
@@ -499,6 +500,8 @@ endif;
                             </table>
                         </form>
                     </div>                
+                </div>
+                <div class="profile-container">
                     <div id='trusteddevices'>
                         <h2 class='h2pad'>Trusted Devices</h2>
                         <?php
@@ -543,7 +546,7 @@ endif;
                                 <td>
                                     <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
                                        onclick="return confirm('Are you sure you want to remove this device?');"
-                                       class="profilebutton" style="padding: 3px 8px;">Remove</a>
+                                       class="profilebutton" style="padding: 3px 8px;">REMOVE</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -551,10 +554,10 @@ endif;
                         <p style="margin-top: 10px;">
                             <a href="profile.php?remove_all_devices=1" 
                                onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                               class="profilebutton" style="padding: 3px 8px;">Remove All Devices</a>
+                               class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
                         </p>
                         <?php else: ?>
-                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
+                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
                         <?php endif; ?>
                     </div>
                     
@@ -577,7 +580,8 @@ endif;
                                 $backup_codes = $tfaManager->getBackupCodes($userId);
                                 if (!empty($backup_codes)):
                                     echo "<div class='alert-box notice' id='backup_codes'>";
-                                    echo "<span>important: </span>Save these backup codes in case you lose access to your authentication method:<br><br>";
+                                    echo "<span>important: </span>These backup codes can be used if you lose access to your authentication method.";
+                                    echo "<br>Save them, as you will not get access to them again.<br><br>";
                                     echo "<div style='font-family: monospace; margin-left: 20px;'>";
                                     foreach ($backup_codes as $code):
                                         echo htmlspecialchars($code) . "<br>";
@@ -626,18 +630,17 @@ endif;
                             
                             <div style="display: flex; margin-top: 15px;">
                                 <form action="profile.php" method="post" style="margin-right: 10px;">
-                                    <input type="submit" name="disable_2fa" class="profilebutton" value="Disable 2FA" 
+                                    <input type="submit" name="disable_2fa" class="profilebutton" value="DISABLE 2FA" 
                                            onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.');" />
                                 </form>
                                 
                                 <form action="profile.php" method="post">
-                                    <input type="submit" name="regenerate_backup_codes" class="profilebutton" value="Regenerate Backup Codes" 
+                                    <input type="submit" name="regenerate_backup_codes" class="profilebutton" style="width: 160px;" value="NEW BACKUP CODES" 
                                            onclick="return confirm('Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.');" />
                                 </form>
                             </div>
                         <?php else: ?>
-                            <p>Two-factor authentication is currently <strong>disabled</strong>.</p>
-                            <p>Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.</p>
+                            <p>Two-factor authentication is currently <strong>disabled</strong>. Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.</p>
                             
                             <form action="profile.php" method="post" style="margin-top: 15px;">
                                 <div style="margin-bottom: 10px;">
@@ -647,7 +650,7 @@ endif;
                                     </select>
                                 </div>
                                 
-                                <input type="submit" name="enable_2fa" class="profilebutton" value="Enable 2FA" />
+                                <input type="submit" name="enable_2fa" class="profilebutton" value="ENABLE 2FA" />
                             </form>
                         <?php endif; ?>
                     </div>

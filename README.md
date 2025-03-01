@@ -193,6 +193,7 @@ Ini file content:
     Turnstile            = "disabled"
     Turnstile_site_key   = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
+    TrustDuration        = 7
     
     [fx]
     FreecurrencyAPI = "YOUR-APIKEY"
