@@ -1,6 +1,6 @@
 <?php
-/* Version:     7.6
-    Date:       01/08/24
+/* Version:     8.0
+    Date:       01/03/25
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -41,6 +41,9 @@
  * 
  *  7.6         01/08/24
  *              MTGC-114 - fix match card searches failing if card names have hyphen
+ * 
+ *  8.0         01/03/25
+ *              Add Name exact
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -55,7 +58,7 @@ else:
         $msg->logMessage('[DEBUG]',"Not advanced search called");
         // Not an advanced search called
         if (strlen($name) > 2 || !empty($setcoderegexsearch)): // Needs to have more than 2 characters to search
-            if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
+            if ($exact === "yes" || $nameexact === "yes"):  // Used in 'Primary Printings' search from card_detail page
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
                                 cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
@@ -151,10 +154,10 @@ else:
             $params[] = "%$name%";
         else:
             if ($searchname === "yes"):
-                if ($exact === "yes"):
-                    $criteriaNTA = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ? 
-                            OR cards_scry.printed_name LIKE ? OR cards_scry.f1_printed_name LIKE ? OR cards_scry.f2_printed_name LIKE ?
-                            OR cards_scry.flavor_name LIKE ? OR cards_scry.f1_flavor_name LIKE ? OR cards_scry.f2_flavor_name LIKE ?) ";
+                if ($exact === "yes" || $nameexact === "yes"):
+                    $criteriaNTA = "(cards_scry.name = ? OR cards_scry.f1_name = ? OR cards_scry.f2_name = ? 
+                            OR cards_scry.printed_name = ? OR cards_scry.f1_printed_name = ? OR cards_scry.f2_printed_name = ?
+                            OR cards_scry.flavor_name = ? OR cards_scry.f1_flavor_name = ? OR cards_scry.f2_flavor_name = ?) ";
                     $params = array_fill(0, 9, $name);
                 else:
                     $criteriaNTA = "(cards_scry.name LIKE ? OR cards_scry.f1_name LIKE ? OR cards_scry.f2_name LIKE ?

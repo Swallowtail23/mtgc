@@ -1,6 +1,6 @@
 <?php
-/* Version:     11.5
-    Date:       09/12/24
+/* Version:     12.0
+    Date:       01/03/25
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -48,6 +48,9 @@
  * 
  * 11.5         09/12/24
  *              Move tribal valid list to ini.php
+ * 
+ * 12.0         01/03/25
+ *              Add Name exact
 */
 
 //Call script initiation mechs
@@ -143,6 +146,7 @@ $searchtype = isset($_GET['searchtype']) ? 'yes' : '';
 $searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
 $searchability = isset($_GET['searchability']) ? 'yes' : '';
 $searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
+$nameexact = isset($_GET['nameexact']) ? 'yes' : '';
 $searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
 $searchpromo = isset($_GET['searchpromo']) ? 'yes' : '';
 $new = isset($_GET['searchnew']) ? 'yes' : '';
@@ -374,12 +378,15 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 function setupMutualExclusion(selectorA, selectorB) {
                     $(selectorA).click(function () {
                         if ($(this).is(':checked')) {
-                            $(selectorB).prop('checked', false);
+                            $(selectorB).prop('checked', false).trigger('change');
                         }
                     });
                 }
 
                 setupMutualExclusion('#searchsetcode', '.notsetcode');
+                setupMutualExclusion('#cb1', '.notname');
+                setupMutualExclusion('#cb2', '#cb1');
+                setupMutualExclusion('#abilitymain', '.notability');
                 setupMutualExclusion('#yesnotes', '.notnotes');
                 setupMutualExclusion('#searchpromo', '.notpromo');
                 setupMutualExclusion('.notnotes', '#yesnotes');
@@ -394,12 +401,12 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
 
                 $('.scopecheckbox').click(function () {
                     if ($('.scopecheckbox:checked').length === 0) {
-                        $('#cb1').prop('checked', true);
+                        $('#cb1').prop('checked', true).trigger('change');
                     }
                 });
                 $('.gametypebox ').click(function () {
                     if ($('.gametypebox:checked').length === 0) {
-                        $('#cb27').prop('checked', true);
+                        $('#cb27').prop('checked', true).trigger('change');
                     }
                 });
             });
@@ -1022,7 +1029,64 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                     console.log('ServiceWorker registration failed: ', err);
                   });
               });
+            };
+
+$(document).ready(function() {
+
+    // Show/hide relevant fields based on main checkboxes
+    function updateVisibility() {
+        // If "Name" (#cb1) is checked => show the Name exact box
+        if ($('#cb1').is(':checked')) {
+            $('#nameexactbox').show();
+        } else {
+            $('#nameexactbox').hide();
+            $('#nameexact').prop('checked', false);
+        }
+
+        // If "Ability" (#abilitymain) is checked => show ability fuzzy + exact
+        if ($('#abilitymain').is(':checked')) {
+            $('#abilityfuzzybox').show();
+            $('#abilityexactbox').show();
+
+            // If neither fuzzy nor exact is checked, default to fuzzy
+            if (!$('#abilityexact').is(':checked') && !$('#abilityfuzzy').is(':checked')) {
+                $('#abilityfuzzy').prop('checked', true);
             }
+        } else {
+            // Hide them all, uncheck them
+            $('#abilityfuzzybox').hide();
+            $('#abilityexactbox').hide();
+            $('#abilityfuzzy, #abilityexact').prop('checked', false);
+        }
+    }
+
+    // Enforce mutual exclusion for ability sub-options
+    function enforceAbilitySubOptions() {
+        // If #abilityfuzzy is checked, uncheck #abilityexact
+        if ($(this).attr('id') === 'abilityfuzzy' && $(this).is(':checked')) {
+            $('#abilityexact').prop('checked', false);
+        }
+        // If #abilityexact is checked, uncheck #abilityfuzzy
+        if ($(this).attr('id') === 'abilityexact' && $(this).is(':checked')) {
+            $('#abilityfuzzy').prop('checked', false);
+        }
+
+        // If both are off (and ability is on), default to #abilityexact
+        if ($('#abilitymain').is(':checked') &&
+            !$('#abilityfuzzy').is(':checked') &&
+            !$('#abilityexact').is(':checked')) {
+            $('#abilityexact').prop('checked', true);
+        }
+    }
+
+    // Hook up event handlers
+    $('#cb1, #abilitymain').change(updateVisibility);
+    $('#abilityfuzzy, #abilityexact').change(enforceAbilitySubOptions);
+
+    // Initialize visibility on page load
+    updateVisibility();
+});
+
         </script>
     </body>
 </html>
