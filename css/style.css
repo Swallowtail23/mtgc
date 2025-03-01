@@ -1806,10 +1806,10 @@ table
     max-width: 330px; 
 }
 
-#trusteddevices
+/*#trusteddevices
 {
     max-width: 650px; 
-}
+}*/
 
 #importexport, #profilebuttons
 {
@@ -1817,6 +1817,64 @@ table
     padding-top: 5px;
     clear: both;
 }
+
+.tooltip-icon {
+  position: relative;
+  display: inline-block;
+  background-color: #666;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+/* Hide the tooltip by default */
+.tooltip-icon .tooltip-text {
+  display: none;
+  position: absolute;
+  top: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  border-radius: 4px;
+  padding: 6px 10px;
+  width: 220px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
+/* Show the tooltip on hover/focus */
+.tooltip-icon:hover .tooltip-text,
+.tooltip-icon:focus .tooltip-text {
+  display: block;
+}
+
+/* Show the tooltip text when hovering over the icon */
+.tooltip-icon:hover + .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+table.profile_options {
+    width: 100%;
+    border-collapse: collapse; /* merges cell borders for a cleaner look */
+}
+
+table.profile_options th,
+table.profile_options td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+/* Optional hover effect */
+table.profile_options tr:hover {
+    background-color: #f1f1f1;
+}
+
 .shallowh3
 {
     margin-top: 5px;
