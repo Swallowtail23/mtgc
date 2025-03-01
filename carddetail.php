@@ -333,7 +333,7 @@ require('includes/menu.php'); //mobile menu
         if($scryfallresult["action"] === 'update' || $scryfallresult["action"] === 'get'):
             // Update topvalue if new data has been obtained
             $msg->logMessage('[DEBUG]',"Scryfall run returned Get or Update: Updating topvalue");
-            update_topvalue_card($mytable,$cardid);            
+            $obj->updateCollectionValues($mytable,$cardid);
         endif;
 
         $searchqry = 

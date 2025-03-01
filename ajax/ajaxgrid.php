@@ -37,6 +37,7 @@ require ('../includes/functions.php');      //Includes basic functions for non-s
 require ('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
 $msg = new Message($logfile);
+$priceMgr = new PriceManager($db, $logfile, $useremail);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -209,7 +210,7 @@ if ($isValidReferrer):
         endif;
         // Update topvalue
         $msg->logMessage('[DEBUG]',"Updating topvalue based on new quantities");
-        update_topvalue_card($mytable,$sqlid);
+        $priceMgr->updateCollectionValues($mytable,$sqlid);
 
         // Retrieve new record to display
         $response = [];
