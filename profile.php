@@ -643,7 +643,7 @@ endif;
                             $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                             $collectionmoney = $a->format($unformatted_value);
                             $msg->logMessage('[DEBUG]',"Formatted value = $collectionmoney");
-                            $collectionvalue = "Total value approximately <br>US ".$collectionmoney;
+                            $collectionvalue = "Collection tcgplayer market value <br>US ".$collectionmoney;
                             $rowcounttotal = number_format($totalcardcount);
                             $totalmrcardcount = number_format($totalmrcardcount);
                             if(isset($rate) AND $rate > 0):
@@ -656,35 +656,42 @@ endif;
                                 echo "$collectionvalue over $rowcounttotal cards.<br>";
                             endif;
 
-                            echo "This is based on pricing from <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>, obtained from tcgplayer.com 'market price'.<br>";
+                            echo "(Pricing via <a href='https://www.scryfall.com/' target='_blank'>scryfall.com</a>.)<br>";
                             $rowcounttotal = number_format($totalcardcount);
                         ?>
                     </div>
                     <div id="changepassword">
-                        <h2 class='h2pad'>Change my password</h2>
-                        Minimum 8 characters with uppercase, lowercase, and a number.
-                        <br>
-                        <form action='/profile.php' method='POST'>
+                        <h2 class="h2pad">
+                          Change my password
+                          <span class="tooltip-icon" tabindex="0">
+                          ?
+                          <span class="tooltip-text">
+                            Minimum 8 characters, including uppercase, lowercase, and at least one number.
+                          </span>
+                        </span>
+                        </h2>
+
+                        <form action="/profile.php" method="POST">
                             <table>
                                 <tbody>
                                     <tr>
                                         <td style="min-width:190px">
-                                            <input class='profilepassword textinput' tabindex='1' type='password' name='curPass' placeholder="CURRENT">
+                                            <input class="profilepassword textinput" tabindex="1" type="password" name="curPass" placeholder="CURRENT">
                                             <span class="error2">*</span>
                                         </td>
-                                        <td rowspan='3'>
-                                            <input class='inline_button stdwidthbutton' tabindex='4' id='chgpwdsubmit' type='submit' value='UPDATE' name='changePass' />
+                                        <td rowspan="3">
+                                            <input class="inline_button stdwidthbutton" tabindex="4" id="chgpwdsubmit" type="submit" value="UPDATE" name="changePass" />
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
-                                            <input class='profilepassword textinput' tabindex='2' type='password' name='newPass' placeholder="NEW">
+                                            <input class="profilepassword textinput" tabindex="2" type="password" name="newPass" placeholder="NEW">
                                             <span class="error2">*</span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
-                                            <input class='profilepassword textinput' tabindex='3' type='password' name='newPass2' placeholder="REPEAT NEW">
+                                            <input class="profilepassword textinput" tabindex="3" type="password" name="newPass2" placeholder="REPEAT NEW">
                                             <span class="error2">*</span>
                                         </td>
                                     </tr>
@@ -693,74 +700,72 @@ endif;
                         </form>
                     </div>                
                 </div>
-                <div class="profile-container">
-                    <div id='trusteddevices'>
-                        <h2 class='h2pad'>Trusted Devices</h2>
-                        <?php
-                        // Get trusted devices for this user
-                        require_once('classes/trusteddevicemanager.class.php');
-                        $deviceManager = new TrustedDeviceManager($db, $logfile);
-                        // Get the current device's token hash, if the cookie is set.
-                        $currentDeviceHash = null;
-                        if (isset($_COOKIE[$deviceManager->getCookieName()])):
-                            $token = $_COOKIE[$deviceManager->getCookieName()];
-                            $currentDeviceHash = $deviceManager->getTokenHash($token);
+                <div id='trusteddevices'>
+                    <h2 class='h2pad'>Trusted Devices</h2>
+                    <?php
+                    // Get trusted devices for this user
+                    require_once('classes/trusteddevicemanager.class.php');
+                    $deviceManager = new TrustedDeviceManager($db, $logfile);
+                    // Get the current device's token hash, if the cookie is set.
+                    $currentDeviceHash = null;
+                    if (isset($_COOKIE[$deviceManager->getCookieName()])):
+                        $token = $_COOKIE[$deviceManager->getCookieName()];
+                        $currentDeviceHash = $deviceManager->getTokenHash($token);
+                    endif;
+                    // Check if we should remove a device
+                    if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
+                        $device_id = intval($_GET['remove_device']);
+                        $removed = $deviceManager->removeDeviceById($device_id, $userId);
+                        if ($removed):
+                            echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
+                        else:
+                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
                         endif;
-                        // Check if we should remove a device
-                        if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
-                            $device_id = intval($_GET['remove_device']);
-                            $removed = $deviceManager->removeDeviceById($device_id, $userId);
-                            if ($removed):
-                                echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
-                            else:
-                                echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
-                            endif;
-                        elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
-                            $removed = $deviceManager->removeAllUserDevices($userId);
-                            if ($removed):
-                                echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
-                            else:
-                                echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
-                            endif;
+                    elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
+                        $removed = $deviceManager->removeAllUserDevices($userId);
+                        if ($removed):
+                            echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
+                        else:
+                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
                         endif;
+                    endif;
 
-                        // Display trusted devices
-                        $devices = $deviceManager->getUserDevices($userId);
-                        if (count($devices) > 0):
-                        ?>
-                        <table class="profile_options">
-                            <tr>
-                                <th>Device</th>
-                                <th>Last Used</th>
-                                <th>Expires</th>
-                                <th>Actions</th>
-                            </tr>
-                            <?php foreach ($devices as $device): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($device['device_name']);
-                                // If the current device hash matches the device token hash, flag it.
-                                    if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']):
-                                        echo " <strong>(This device)</strong>";
-                                    endif;?></td>
-                                <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
-                                <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
-                                <td>
-                                    <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
-                                       onclick="return confirm('Are you sure you want to remove this device?');"
-                                       class="profilebutton" style="padding: 3px 8px;">REMOVE</a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </table>
-                        <p style="margin-top: 10px;">
-                            <a href="profile.php?remove_all_devices=1" 
-                               onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                               class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
-                        </p>
-                        <?php else: ?>
-                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
-                        <?php endif; ?>
-                    </div>
+                    // Display trusted devices
+                    $devices = $deviceManager->getUserDevices($userId);
+                    if (count($devices) > 0):
+                    ?>
+                    <table class="profile_options">
+                        <tr>
+                            <th>Device</th>
+                            <th>Last Used</th>
+                            <th>Expires</th>
+                            <th>Actions</th>
+                        </tr>
+                        <?php foreach ($devices as $device): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($device['device_name']);
+                            // If the current device hash matches the device token hash, flag it.
+                                if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']):
+                                    echo " <strong>(This device)</strong>";
+                                endif;?></td>
+                            <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
+                            <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
+                            <td>
+                                <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
+                                   onclick="return confirm('Are you sure you want to remove this device?');"
+                                   class="profilebutton" style="padding: 3px 8px;">REMOVE</a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
+                    <p style="margin-top: 10px;">
+                        <a href="profile.php?remove_all_devices=1" 
+                           onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
+                           class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
+                    </p>
+                    <?php else: ?>
+                    <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
+                    <?php endif; ?>
                 </div>
                 <?php 
                 if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
@@ -874,7 +879,7 @@ endif;
                                         Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
                                         <br>Click "NEW CODES" to generate new backup codes.<?php 
                                     else: ?>
-                                        Two-factor authentication is currently <strong>disabled</strong>. <br>Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.<?php 
+                                        Require a verification code when you log in<?php 
                                     endif; ?>
                                 </td>
                                 <td class="options_right"><?php
