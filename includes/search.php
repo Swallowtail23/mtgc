@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.1
-    Date:       22/01/24
+/* Version:     6.0
+    Date:       01/03/25
     Name:       search.php
     Purpose:    Layout for search on index.php
     Notes:      
@@ -23,6 +23,9 @@
  * 
  *  5.2         10/06/24
  *              Add AND / OR to type searches
+ * 
+ *  6.0         01/03/25
+ *              Add Name exact
 */
 if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
@@ -53,26 +56,26 @@ endif;
                 </label>
             </span>
             <span title="Search card types" class="parametersmall checkbox-group">
-                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notnotes notability notsetcode notpromo" name="searchtype" value="yes">
+                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notname notnotes notability notsetcode notpromo" name="searchtype" value="yes">
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
             <span title="Search my notes" class="parametersmall checkbox-group">
-                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notability notsetcode notpromo" name="searchnotes" value="yes">
+                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notname notability notsetcode notpromo" name="searchnotes" value="yes">
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
             </span><br>
             <span title="Search setcodes (e.g. 'SOI'")" class="parametersmall checkbox-group">
-                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notnotes notability notpromo" name="searchsetcode" value="yes">
+                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notname notnotes notability notpromo" name="searchsetcode" value="yes">
                 <label for='searchsetcode'><span class="check"></span>
                     <span class="box"></span>Setcode
                 </label>
             </span>
             <span title="Search promo types, e.g. 'surgefoil'" class="parametersmall checkbox-group">
-                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notnotes notability" name="searchpromo" value="yes">
+                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notname notnotes notability" name="searchpromo" value="yes">
                 <label for='searchpromo'><span class="check"></span>
                     <span class="box"></span>Promo
                 </label>
@@ -83,23 +86,40 @@ endif;
                     <span class="box"></span>New (7d)
                 </label>
             </span>
-            <br>Abilities:<br>
-            <span class="parametermed checkbox-group">
-                <input id='abilityall' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchability" value="yes">
-                <label for='abilityall'>
-                    <span class="check"></span>
-                    <span class="box"></span>fuzzy 
-                </label>
-            </span>
-            <span class="parametersmall checkbox-group">
-                <input id='abilityexact' type="checkbox" class="scopecheckbox checkbox notnotes notsetcode notpromo" name="searchabilityexact" value="yes">
-                <label for='abilityexact'>
-                    <span class="check"></span>
-                    <span class="box"></span>exact 
-                </label>
-            </span>
+            <!-- Row 2: Ability main checkbox -->
             <br>
-            <h4 class="h4">Search scope:</h4>
+            <span title="Search card abilities" class="parametersmall checkbox-group">
+                <input id="abilitymain" type="checkbox" class="scopecheckbox checkbox notname">
+                <label for="abilitymain">
+                    <span class="check"></span>
+                    <span class="box"></span>Ability
+                </label>
+            </span>
+
+            <!-- Row 3: Additional checkboxes for Name Exact, Ability Exact, Ability Fuzzy -->
+            <br>
+            <!-- Name exact -->
+            <span title="Name exact" class="parametersmall checkbox-group" id="nameexactbox" style="display:none;">
+                <input id="nameexact" type="checkbox" class="checkbox" name="nameexact" value="yes">
+                <label for="nameexact"><span class="check"></span>
+                    <span class="box"></span>Exact
+                </label>
+            </span>
+            <!-- Ability exact -->
+            <span title="Ability exact" class="parametersmall checkbox-group" id="abilityexactbox" style="display:none;">
+                <input id="abilityexact" type="checkbox" class="checkbox" name="searchabilityexact" value="yes">
+                <label for="abilityexact"><span class="check"></span>
+                    <span class="box"></span>Exact
+                </label>
+            </span>
+            <!-- Ability fuzzy -->
+            <span title="Ability fuzzy" class="parametersmall checkbox-group" id="abilityfuzzybox" style="display:none;">
+                <input id="abilityfuzzy" type="checkbox" class="checkbox" name="searchability" value="yes">
+                <label for="abilityfuzzy"><span class="check"></span>
+                    <span class="box"></span>Fuzzy
+                </label>
+            </span>
+            <h4 class="h4" style="margin-top:30px;">Search scope:</h4>
             <span class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
             </span>
