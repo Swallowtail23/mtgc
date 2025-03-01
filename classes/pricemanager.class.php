@@ -1,13 +1,13 @@
 <?php
-/* Version:     1.2
-    Date:       23/08/24
+/* Version:     1.3
+    Date:       01/03/25
     Name:       pricemanager.class.php
     Purpose:    Price management class
     Notes:      - 
     To do:      -
     
     @author     Simon Wilson <simon@simonandkate.net>
-    @copyright  2023 Simon Wilson
+    @copyright  2025 Simon Wilson
     
  *  1.0
                 Initial version
@@ -17,6 +17,9 @@
  * 
  *  1.2         23/08/24
  *              MTGC-123 - Use normal value if needed for Top Value
+ * 
+ *  1.3         01/03/25
+ *              MTGC-124 - Move last price calc function here from functions file
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
