@@ -1,6 +1,6 @@
 <?php 
-/* Version:     12.2
-    Date:       23/08/24
+/* Version:     13
+    Date:       01/03/25
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -53,6 +53,9 @@
  * 12.2         23/08/24
  *              MTGC-123 - Use normal price for total value if foil or etched prices 
  *              are not available but normal price is (and we have foil or etched)
+ * 
+ * 13.0         01/03/25
+ *              Alterations for display of additional security options
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -65,8 +68,19 @@ require ('includes/ini.php');               //Initialise and load ini file
 require ('includes/error_handling.php');
 require ('includes/functions.php');     //Includes basic functions for non-secure pages
 require ('includes/secpagesetup.php');      //Setup page variables
+
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Label\LabelAlignment;
+use Endroid\QrCode\Label\Font\OpenSans;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\PngWriter;
+use OTPHP\TOTP;
+
 $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
+$msg->logMessage('[DEBUG]',"Page load");
 
 // Has DELETE collection been called? 
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
@@ -166,6 +180,18 @@ endif;
                 var infoBox = document.getElementById("infoBox");
                 infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
             };
+            function toggleQRBox() {
+                var infoBox = document.getElementById("qrBox");
+                infoBox.style.display = (qrBox.style.display === "none" || qrBox.style.display === "") ? "block" : "none";
+            };
+
+            function copySecretKey() {
+                let hiddenInput = document.getElementById("hiddenSecretKey");
+                hiddenInput.select();
+                hiddenInput.setSelectionRange(0, 99999); // For mobile compatibility
+                document.execCommand("copy");
+                alert("Secret key copied to clipboard");
+            };
             
             function CloseMe( obj )
             {
@@ -229,7 +255,13 @@ endif;
                     <li>You will be emailed a list of import failures/warnings</li>
                 </ul>
             </div>
-        </div> <?php
+        </div>
+        <!-- QR / 2FA box -->
+        <div class="qr-box" id="qrBox" style="display:none">
+            <div class="qr-box-inner">
+            </div>
+        </div> 
+        <?php
 
         $import = isset($_POST['import']) ? 'yes' : '';
         $adddeck = isset($_POST['adddeck']) ? 'yes' : '';
@@ -272,7 +304,7 @@ endif;
                                             FROM users 
                                             LEFT JOIN `groups` 
                                             ON users.groupid = groups.groupnumber 
-                                            WHERE usernumber = ? LIMIT 1",[$user])):
+                                            WHERE usernumber = ? LIMIT 1",[$userId])):
             $msg->logMessage('[DEBUG]',"SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
         else:
@@ -433,6 +465,170 @@ endif;
                     trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
                 endif;
 
+            //9. 2FA Section
+                // Get 2FA status for this user
+                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+                $tfa_enabled = $tfaManager->isEnabled($userId);
+
+                // Check if we should enable or disable 2FA
+                if (isset($_POST['enable_2fa'])):
+                    $tfa_method = $_POST['tfa_method'] ?? 'email';
+                    $enabled = $tfaManager->enable($userId, $tfa_method);
+                    if ($enabled):
+                        $tfa_enabled = true;
+                        // Set backup codes
+                        $backup_codes = $tfaManager->getBackupCodes($userId);
+                        // Build the backup codes HTML outside the JavaScript block:
+                        $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
+                        if (!empty($backup_codes)):
+                            foreach ($backup_codes as $code):
+                                $backupHtml .= htmlspecialchars($code) . "<br>";
+                            endforeach;
+                            $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                        else:
+                            $backupHtml .= "Error generating backup codes<br>";
+                        endif;
+                        if ($tfa_method === "app" && isset($_SESSION['tfa_provisioning_uri'])):
+                            $provisioningUri = $_SESSION['tfa_provisioning_uri'];
+
+                            // Extract the secret key from provisioning URI
+                            parse_str(parse_url($provisioningUri, PHP_URL_QUERY), $queryParams);
+                            $secretKey = $queryParams['secret'] ?? 'N/A';
+
+                            // Generate QR Code
+                            $builder = new Builder(
+                                writer: new PngWriter(),
+                                writerOptions: [],
+                                validateResult: false,
+                                data: $provisioningUri,
+                                encoding: new Encoding('UTF-8'),
+                                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                                size: 200,
+                                margin: 10,
+                                roundBlockSizeMode: RoundBlockSizeMode::Margin
+                            );
+
+                            // Build the QR Code
+                            $result = $builder->build();
+
+                            // Convert QR Code to Data URI
+                            $qrDataUri = $result->getDataUri();
+                            $encodedSecretKey = htmlspecialchars($secretKey, ENT_QUOTES, 'UTF-8');
+
+                            // Format for display (line break every 16 characters)
+                            $formattedSecretKey = implode('<wbr>', str_split($encodedSecretKey, 16)); // <wbr> allows line breaks without adding spaces
+
+                            // Inject JavaScript to update the div dynamically
+                            echo "<script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let qrBox = document.getElementById('qrBox');
+                                    let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                    // Inject QR Code and secret key into the div
+                                    qrInner.innerHTML = `
+                                        <h2>Two-factor authentication enabled successfully</h2>
+                                        <h3>Scan QR Code using your authentication app</h3>
+                                        <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
+                                        <h3>...or manually enter this code:</h3>
+                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
+                                        <input type=\"text\" id=\"hiddenSecretKey\" value=\"${encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
+                                        <h3>Verify your 6-digit code:</h3>
+                                        <form id='verify2FAForm' method='post' action='profile.php'>
+                                            <input type='text' name='tfa_code' id='tfa_code' maxlength='6' pattern='[0-9]{6}' required placeholder='Enter 6-digit code' style='font-size: 18px; text-align: center; width: 120px;'>
+                                            <input type='hidden' name='tfa_secret' value='${encodedSecretKey}'>
+                                            <button type='submit' name='verify_2fa' class='ok-button profilebutton'>VERIFY</button>
+                                        </form>
+                                        <br>
+                                        <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                        " . $backupHtml . "
+                                        <br>
+                                        <form method='post' action='profile.php' onsubmit='return'>
+                                            <input type='hidden' name='disable_2fa' value='1'>
+                                            <button type='submit' class='ok-button profilebutton'>CANCEL</button>
+                                        </form>
+                                    `;
+
+                                    // Show the div
+                                    qrBox.style.display = 'block';
+                                });
+                            </script>";
+                        elseif ($tfa_method === "email"):
+                            // Inject JavaScript to update the div dynamically
+                            echo "<script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let qrBox = document.getElementById('qrBox');
+                                    let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                    // Inject content into the div
+                                    qrInner.innerHTML = `
+                                        <h2>Two-factor authentication enabled successfully</h2>
+                                        <b>Important:</b> The backup codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                        " . $backupHtml . "
+                                        <br>
+                                        <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                    `;
+                                    // Show the div
+                                    qrBox.style.display = 'block';
+                                });
+                            </script>";
+                        endif;
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to enable two-factor authentication.</div>";
+                    endif;
+                elseif (isset($_POST['disable_2fa'])):
+                    $disabled = $tfaManager->disable($userId);
+                    if ($disabled):
+                        $tfa_enabled = false;
+                        echo "<div class='alert-box success' id='tfa_message'><span>success: </span>Two-factor authentication disabled successfully.</div>";
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to disable two-factor authentication.</div>";
+                    endif;
+                elseif (isset($_POST['regenerate_backup_codes'])):
+                    $new_codes = $tfaManager->regenerateBackupCodes($userId);
+                    $newCodesHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
+                    if (!empty($new_codes)):
+                        // Build the backup codes HTML outside the JavaScript block:
+                        foreach ($new_codes as $new_code):
+                            $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
+                        endforeach;
+                        $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
+                        // Inject JavaScript to update the div dynamically
+                        echo "<script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                let qrBox = document.getElementById('qrBox');
+                                let qrInner = qrBox.querySelector('.qr-box-inner');
+
+                                // Inject content into the div
+                                qrInner.innerHTML = `
+                                    <h2>New backup codes generated successfully</h2>
+                                    <b>Important:</b> The codes below can be used if you lose access to your authentication method. Save them, as you will not get access to them again.<br>
+                                    " . $newCodesHtml . "
+                                    <br>
+                                    <button onclick=\"toggleQRBox()\" class=\"ok-button, profilebutton\">OK</button>
+                                `;
+                                // Show the div
+                                qrBox.style.display = 'block';
+                            });
+                        </script>";
+                    else:
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>Failed to regenerate backup codes.</div>";
+                    endif;
+                elseif (isset($_POST['verify_2fa'])):
+                    $userCode = $_POST['tfa_code'] ?? '';
+                    $userSecret = $_POST['tfa_secret'] ?? '';
+
+                    // Verify TOTP code
+                    $totp = TOTP::create($userSecret);
+                    if ($totp->verify($userCode)):
+                        // Store that 2FA is fully verified
+                        $_SESSION['2fa_verified'] = true;
+                        echo "<div class='alert-box success'><span>success: </span>Two-factor authentication successfully enabled and verified.</div>";
+                    else:
+                        // Disable 2FA since the verification failed
+                        $tfaManager->disable($userId);
+                        echo "<div class='alert-box error'><span>error: </span>Invalid 6-digit code. Two-factor authentication was not enabled.</div>";
+                    endif;
+                endif;
                 //Page display content ?>
                 <div class="profile-container">
                     <div id="userdetails">
@@ -464,8 +660,6 @@ endif;
                             $rowcounttotal = number_format($totalcardcount);
                         ?>
                     </div>
-                </div>
-                <div class="profile-container">
                     <div id="changepassword">
                         <h2 class='h2pad'>Change my password</h2>
                         Minimum 8 characters with uppercase, lowercase, and a number.
@@ -498,6 +692,8 @@ endif;
                             </table>
                         </form>
                     </div>                
+                </div>
+                <div class="profile-container">
                     <div id='trusteddevices'>
                         <h2 class='h2pad'>Trusted Devices</h2>
                         <?php
@@ -508,14 +704,14 @@ endif;
                         // Check if we should remove a device
                         if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
                             $device_id = intval($_GET['remove_device']);
-                            $removed = $deviceManager->removeDeviceById($device_id, $user);
+                            $removed = $deviceManager->removeDeviceById($device_id, $userId);
                             if ($removed):
                                 echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
                             else:
                                 echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
                             endif;
                         elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
-                            $removed = $deviceManager->removeAllUserDevices($user);
+                            $removed = $deviceManager->removeAllUserDevices($userId);
                             if ($removed):
                                 echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
                             else:
@@ -524,7 +720,7 @@ endif;
                         endif;
 
                         // Display trusted devices
-                        $devices = $deviceManager->getUserDevices($user);
+                        $devices = $deviceManager->getUserDevices($userId);
                         if (count($devices) > 0):
                         ?>
                         <table class="profile_options">
@@ -542,7 +738,7 @@ endif;
                                 <td>
                                     <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
                                        onclick="return confirm('Are you sure you want to remove this device?');"
-                                       class="profilebutton" style="padding: 3px 8px;">Remove</a>
+                                       class="profilebutton" style="padding: 3px 8px;">REMOVE</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -550,10 +746,10 @@ endif;
                         <p style="margin-top: 10px;">
                             <a href="profile.php?remove_all_devices=1" 
                                onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                               class="profilebutton" style="padding: 3px 8px;">Remove All Devices</a>
+                               class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
                         </p>
                         <?php else: ?>
-                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to 7 days.</p>
+                        <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -656,6 +852,44 @@ endif;
                             <tr>
                                 <td colspan="3">
                                     <h2 class='h2pad'>Options</h2>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="options_left">
+                                    <b>Two-Factor<br>Authentication: &nbsp;</b>
+                                </td>
+                                <td class="options_centre"> <?php
+                                    // Show 2FA status and options
+                                    if ($tfa_enabled):
+                                        $tfa_method = $tfaManager->getMethod($userId);?>
+                                        Two-factor authentication is currently <strong>enabled</strong> using <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
+                                        <br>Click "NEW CODES" to generate new backup codes.<?php 
+                                    else: ?>
+                                        Two-factor authentication is currently <strong>disabled</strong>. <br>Enabling 2FA adds an extra layer of security to your account by requiring a verification code when you log in.<?php 
+                                    endif; ?>
+                                </td>
+                                <td class="options_right"><?php
+                                    // Show 2FA status and options
+                                    if ($tfa_enabled): ?>
+                                        <form action="profile.php" method="post">
+                                            <input type="submit" name="disable_2fa" class="profilebutton" value="DISABLE 2FA" 
+                                                onclick="return confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.');" />
+                                        </form>
+                                    <br>
+                                        <form action="profile.php" method="post">
+                                            <input type="submit" name="regenerate_backup_codes" class="profilebutton" value="NEW CODES" 
+                                                onclick="return confirm('Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.');" />
+                                        </form> <?php
+                                    else: ?>
+                                        <form method="post" action="profile.php">
+                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()">
+                                                <option value="disabled" selected>Disabled</option>
+                                                <option value="email">Enable: Email</option>
+                                                <option value="app">Enable: App</option>
+                                            </select>
+                                            <input type="hidden" name="enable_2fa" value="1">
+                                        </form><?php
+                                    endif; ?>
                                 </td>
                             </tr>
                             <tr>
@@ -894,7 +1128,7 @@ endif;
                                     $tmpdeckname = $currentDateTime;
                                     $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
                                     $msg->logMessage('[DEBUG]',"Import called with 'add deck' option, $tmpdeckname to be created...");
-                                    $decksuccess = $obj->addDeck($user,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
+                                    $decksuccess = $obj->addDeck($userId,$tmpdeckname); //returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                                     if($decksuccess['flag'] === 1):
                                         $decknumber = $decksuccess['decknumber'];
                                         $msg->logMessage('[DEBUG]',"Deck created, $tmpdeckname created, deck number is $decknumber");

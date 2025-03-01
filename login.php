@@ -43,6 +43,11 @@ require_once('includes/ini.php');               //Initialise and load ini file
 require_once('includes/error_handling.php');
 require_once('includes/functions.php');         //Includes basic functions for non-secure pages
 
+if (!isset($db) || !$db instanceof mysqli) {
+    $msg->logMessage('[ERROR]', "Database connection is null or invalid in login.php");
+    die("A database error occurred. Please try again later.");
+}
+
 // Initialize message object for logging
 $msg = new Message($logfile);
 
@@ -69,6 +74,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
     $deviceManager = new TrustedDeviceManager($db, $logfile);
     // Try to validate trusted device token
     $trusted_device_user = $deviceManager->validateTrustedDevice();
+    $trusted_device_user = (int) $trusted_device_user;
     
     if ($trusted_device_user !== false):
         // Token is valid, auto-login the user
@@ -88,17 +94,14 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
                 $_SESSION["logged"] = TRUE;
                 $_SESSION["user"] = $usernumber;
                 $_SESSION["useremail"] = $useremail;
-                if ($admin):
-                    $_SESSION['admin'] = TRUE;
-                else:
-                    $_SESSION['admin'] = FALSE;
-                endif;
+                $_SESSION['admin'] = (bool) $admin;
                 
-                $msg = new Message($logfile);
                 $msg->logMessage('[NOTICE]', "Auto-login via trusted device for user $useremail");
                 
                 // Update last login timestamp
-                loginstamp($useremail);
+                if (!loginstamp($useremail)) {
+                    $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $useremail");
+                }
                 
                 $trusted_login = true;
             endif;
@@ -112,10 +115,6 @@ endif;
  *  check if user is already logged in. If yes, display error and redirect to
  *  index.php. If no - session destroy and display login page.
  */
-// Flag for trust device handling
-$process_trust_device = (isset($_POST['trust_device']) && isset($_SESSION["logged"]) && $_SESSION["logged"] == TRUE);
-$trust_choice = isset($_POST['trust_device']) ? $_POST['trust_device'] : 'none';
-$has_redirect = isset($_POST['redirect_to']) ? 'yes' : 'no';
 
 // Normal login flow check
 if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
@@ -174,45 +173,6 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
     "logged=" . (isset($_SESSION["logged"]) ? $_SESSION["logged"] : 'not set') . ", " .
     "user=" . (isset($_SESSION["user"]) ? $_SESSION["user"] : 'not set') . ", " .
     "useremail=" . (isset($_SESSION["useremail"]) ? $_SESSION["useremail"] : 'not set'));
-$msg->logMessage('[DEBUG]', "Process flags: " . 
-    "process_trust_device=$process_trust_device, " .
-    "trust_choice=$trust_choice, " .
-    "has_redirect=$has_redirect");
-
-// Now process trust device if flagged - this happens after database and other resources are loaded
-if ($process_trust_device):
-    $msg->logMessage('[DEBUG]', "Processing trust device request...");
-    if ($trust_choice === 'yes'):
-        // User wants to trust this device
-        $msg->logMessage('[DEBUG]', "User chose to trust this device");
-        require_once('classes/trusteddevicemanager.class.php');
-        
-        // PHP doesn't have try/catch with colon syntax, revert to braces for this part
-        try {
-            $msg->logMessage('[DEBUG]', "Creating TrustedDeviceManager with db=" . (isset($db) ? "valid" : "null"));
-            $deviceManager = new TrustedDeviceManager($db, $logfile);
-            $result = $deviceManager->createTrustedDevice($_SESSION["user"], 7); // Trust for 7 days
-            $msg->logMessage('[NOTICE]', "User {$_SESSION["useremail"]} trusted this device, result=" . ($result ? 'success' : 'failed'));
-        } catch (Exception $e) {
-            // If an error occurs, log it but continue
-            $msg->logMessage('[ERROR]', "Exception creating trusted device: " . $e->getMessage());
-        }
-    else:
-        $msg->logMessage('[DEBUG]', "User chose NOT to trust this device");
-    endif;
-    
-    // Redirect based on where they were going
-    if (isset($_POST['redirect_to']) && !empty($_POST['redirect_to'])):
-        $redirect = $_POST['redirect_to'];
-        $msg->logMessage('[DEBUG]', "Redirecting to: $redirect");
-        header("Location: $redirect");
-    else:
-        $msg->logMessage('[DEBUG]', "Redirecting to index.php (default)");
-        header("Location: index.php");
-    endif;
-    exit();
-endif;
-// Message object already initialized above
 
 ?>
 <!DOCTYPE html>
@@ -262,11 +222,9 @@ endif;
                 
                 $rawemail = $_POST['email'];
                 $password = $_POST['password'];
-                
-                $msg->logMessage('[NOTICE]',"Logon called for '$rawemail' from {$_SERVER['REMOTE_ADDR']}");
-                
-                $email = trim($rawemail);
-                $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+
+                $email = filter_var((trim($rawemail)), FILTER_SANITIZE_EMAIL);
+                $msg->logMessage('[NOTICE]',"Logon called for '$email' from {$_SERVER['REMOTE_ADDR']}");
                 if (!empty($email) && !empty($password)):
                     if (filter_var($email, FILTER_VALIDATE_EMAIL)):
                         $badlog = new UserStatus($db,$logfile,$email);
@@ -281,15 +239,6 @@ endif;
                                 $msg->logMessage('[DEBUG]',"UserStatus for $email is {$userstat_result['code']}");
                                 if ($userstat_result['code'] === 0):
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
-                                elseif ($userstat_result['code'] === 1): //pwdchg required
-                                    $msg->logMessage('[DEBUG]',"UserStatus for $email is ok, but password change required");
-                                    session_regenerate_id();
-                                    $_SESSION["logged"] = TRUE;
-                                    $user = $_SESSION["user"] = $userstat_result['number'];
-                                    $_SESSION["useremail"] = $email;
-                                    $_SESSION["chgpwd"] = TRUE;
-                                    $_SESSION['just_logged_in'] = TRUE; // Set a flag indicating a fresh login to prevent redirect loops on chgpwd
-                                    $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
                                 elseif ($userstat_result['code'] === 2): //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
@@ -302,17 +251,55 @@ endif;
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                elseif ($userstat_result['code'] === 10): //active
-                                    $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
-                                    session_regenerate_id();
-                                    $_SESSION["logged"] = TRUE;
-                                    $user = $_SESSION["user"] = $userstat_result['number'];
-                                    $_SESSION["useremail"] = $email;
-                                    $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
-                                    if($badlog_result['count'] != 0):
-                                        $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
-                                        $zerobadlog = new UserStatus($db,$logfile,$email);
-                                        $zerobadlog->ZeroBadLogin();
+                                elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
+                                    // Check for 2FA requirement
+                                    $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+                                    
+                                    if ($tfaManager->isEnabled($userstat_result['number'])):
+                                        // 2FA is enabled, store credentials for verification page
+                                        session_regenerate_id(true);
+                                        $_SESSION["user_pending_2fa"] = $userstat_result['number'];
+                                        $_SESSION["useremail_pending_2fa"] = $email;
+                                        $_SESSION["admin_pending_2fa"] = $userstat_result['admin'] == 1;
+                                        $_SESSION["chgpwd_pending_2fa"] = $userstat_result['code'] === 1;
+                                        
+                                        // Clear bad login count if user entered correct password
+                                        if($badlog_result['count'] != 0):
+                                            $msg->logMessage('[NOTICE]',"Logon (first factor) ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
+                                            $zerobadlog = new UserStatus($db,$logfile,$email);
+                                            $zerobadlog->ZeroBadLogin();
+                                        endif;
+                                        
+                                        // If there was a redirect URL, preserve it
+                                        if (isset($_SESSION['redirect_url'])):
+                                            $_SESSION['redirect_url_after_2fa'] = $_SESSION['redirect_url'];
+                                        endif;
+                                        
+                                        // Start 2FA verification process and redirect
+                                        $tfaManager->startVerification($userstat_result['number'], $email);
+                                        $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
+                                        header("Location: verify_2fa.php");
+                                        exit();
+                                    else:
+                                        // No 2FA required, proceed with normal login
+                                        $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
+                                        session_regenerate_id(true);
+                                        $_SESSION["logged"] = TRUE;
+                                        $_SESSION["user"] = $usernumber = $userstat_result['number'];
+                                        $_SESSION["useremail"] = $email;
+
+                                        // If password change required, set flag
+                                        if ($userstat_result['code'] === 1):
+                                            $_SESSION["chgpwd"] = TRUE;
+                                            $_SESSION['just_logged_in'] = TRUE; // Set flag to prevent redirect loops
+                                        endif;
+                                        
+                                        $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
+                                        if($badlog_result['count'] != 0):
+                                            $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
+                                            $zerobadlog = new UserStatus($db,$logfile,$email);
+                                            $zerobadlog->ZeroBadLogin();
+                                        endif;
                                     endif;
                                 else:
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
@@ -368,12 +355,14 @@ endif;
             endif;
         endif;
         //Check if login has been successful
-        if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) : 
+        if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
             $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}");
             //Write user's login date to the user table in the database (help track inactive users)
-            loginstamp($email);
+            if (!loginstamp($email)) {
+                $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
+            }
             //Is maintenance mode enabled?
-            $mtcestatus = mtcemode($user);
+            $mtcestatus = mtcemode($usernumber);
             if ($mtcestatus == 1):
                 echo "<br>Site is undergoing maintenance, please try again later...";
                 session_destroy();
@@ -395,35 +384,9 @@ endif;
             else:
                 // Show the trust device prompt
                 ?>
-                <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt"); ?>
-                <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
-                    <form action="trust_device.php" method="post">
-                        <p>Would you like to stay logged in on this device?</p>
-                        <p><small>This will keep you signed in for 7 days</small></p>
-                        
-                        <input type="hidden" name="trust_device" value="yes">
-                        <?php if (isset($_SESSION['redirect_url'])): ?>
-                            <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($_SESSION['redirect_url']); ?>">
-                        <?php else: ?>
-                            <input type="hidden" name="redirect_to" value="index.php">
-                        <?php endif; ?>
-                        
-                        <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">Trust device</button>
-                    </form>
-                    
-                    <form action="trust_device.php" method="post" style="margin-top: 10px;">
-                        <input type="hidden" name="trust_device" value="no">
-                        <?php if (isset($_SESSION['redirect_url'])): ?>
-                            <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($_SESSION['redirect_url']); ?>">
-                        <?php else: ?>
-                            <input type="hidden" name="redirect_to" value="index.php">
-                        <?php endif; ?>
-                        
-                        <button type="submit" class="profilebutton" style="margin-right: 10px;">Not now</button>
-                    </form>
-                </div>
-                <?php
-                // Don't auto-redirect, wait for user choice
+                <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt");
+                header("Location: trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php'));
+                exit();
             endif;
         else:
             echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 

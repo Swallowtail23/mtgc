@@ -1,312 +1,230 @@
 <?php
-/* Version:     1.0
+/* Version:     1.1
     Date:       28/02/25
     Name:       trusteddevicemanager.class.php
     Purpose:    Manage trusted device tokens for extended session handling
-    Notes:      - 
-    To do:      -
     
-    @author     Claude with Simon Wilson <simon@simonandkate.net>
+    @author     Simon Wilson
     @copyright  2025 Simon Wilson
     
- *  1.0
-                Initial version
+ *  1.0         Initial version
+ *  1.1         Security fixes:
+ *              - Replaced password_hash() with HMAC-SHA256
+ *              - Fixed SQL injection risk
+ *              - Improved cookie security & expiry consistency
+ *              - Added flock() for safe file logging
+ *              - Improved IP address detection
 */
 
-if (__FILE__ == $_SERVER['PHP_SELF']) :
+if (__FILE__ == $_SERVER['PHP_SELF']):
     die('Direct access prohibited');
 endif;
 
 class TrustedDeviceManager {
     private $db;
     private $logfile;
-    private $message;
-    private $token_length = 64; // Length of random token
+    private $msg;
+    private $token_length = 64; 
     private $cookie_name = 'mtgc_trusted_device';
-    private $cookie_lifetime = 604800; // Default 7 days in seconds
-    
+    private $cookie_lifetime = 604800; // 7 days in seconds
+    private $hmac_secret;
+
     public function __construct($db, $logfile) {
         $this->db = $db;
         $this->logfile = $logfile;
-        
-        // Check if Message class exists and include it if needed
-        if (!class_exists('Message')) {
+
+        // Load HMAC secret from environment variable
+        $this->hmac_secret = getenv('HMAC_SECRET');
+
+        if (!class_exists('Message')):
             require_once(__DIR__ . '/../classes/message.class.php');
-        }
-        
-        // Handle case where Message class still can't be loaded by using direct file logging
+        endif;
+
         try {
-            $this->message = new Message($this->logfile);
+            $this->msg = new Message($this->logfile);
         } catch (Error $e) {
-            // Fall back to direct file logging
-            $this->directLog('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');
+            $this->msg = null; // Ensure it's null if instantiation fails
+            $this->log('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');
         }
     }
-    
-    /**
-     * Direct file logging when Message class is unavailable
-     */
-    private function directLog($level, $text) {
-        if (($fd = fopen($this->logfile, "a")) !== false) {
-            $timestamp = date("[d/m/Y:H:i:s]");
-            $str = "$timestamp $level TrustedDeviceManager: $text";
-            fwrite($fd, $str . "\n");
+
+    private function log($level, $text) {
+        if ($this->msg !== null):
+            $this->msg->logMessage($level, $text);
+            return;
+        endif;
+
+        // Fallback to direct file logging
+        if (($fd = fopen($this->logfile, "a")) !== false):
+            if (flock($fd, LOCK_EX)):
+                $timestamp = date("[d/m/Y:H:i:s]");
+                fwrite($fd, "$timestamp $level TrustedDeviceManager: $text\n");
+                flock($fd, LOCK_UN);
+            endif;
             fclose($fd);
-        }
+        endif;
     }
-    
-    /**
-     * Generate a secure random token
-     * 
-     * @return string The generated token
-     */
+
     private function generateToken() {
-        // Generate cryptographically secure pseudo-random bytes
-        $randomBytes = random_bytes($this->token_length);
-        // Convert to hex for storage in cookie
-        return bin2hex($randomBytes);
+        return bin2hex(random_bytes($this->token_length));
     }
-    
-    /**
-     * Create a new trusted device token for a user
-     * 
-     * @param int $user_id The user's ID
-     * @param int $days_valid How many days the token should be valid (default 7)
-     * @return bool Success of operation
-     */
-    public function createTrustedDevice($user_id, $days_valid = 7) {
-        // Generate a new random token
+
+    private function hashToken($token) {
+        return hash_hmac('sha256', $token, $this->hmac_secret);
+    }
+
+    private function getClientIP() {
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])):
+            return $_SERVER['HTTP_CF_CONNECTING_IP'];
+        elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])):
+            return explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
+        else:
+            return $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+        endif;
+    }
+
+    public function createTrustedDevice($user_id, $days_valid = 7) { //Default to 7 days
         $token = $this->generateToken();
-        
-        // Hash the token for storage in the database
-        $token_hash = password_hash($token, PASSWORD_DEFAULT);
-        
-        // Calculate expiration date
-        $expires = new DateTime();
-        $expires->modify("+$days_valid days");
-        $expires_formatted = $expires->format('Y-m-d H:i:s');
-        
-        // Get device information
+        $token_hash = $this->hashToken($token);
+
+        $expires_timestamp = time() + ($days_valid * 86400);
+        $expires_formatted = date('Y-m-d H:i:s', $expires_timestamp);
+
         $device_name = isset($_SERVER['HTTP_USER_AGENT']) ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255) : 'Unknown';
-        $ip_address = $_SERVER['REMOTE_ADDR'];
-        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Unknown';
-        
-        // Store token in database
-        $query = "INSERT INTO trusted_devices 
-                 (user_id, token_hash, device_name, ip_address, user_agent, created, expires) 
-                 VALUES (?, ?, ?, ?, ?, NOW(), ?)";
+        $ip_address = $this->getClientIP();
+        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+
+        $query = "INSERT INTO trusted_devices (user_id, token_hash, device_name, ip_address, user_agent, created, expires) 
+                  VALUES (?, ?, ?, ?, ?, NOW(), ?)";
         
         $stmt = $this->db->prepare($query);
-        
-        if ($stmt === false) {
-            // Use direct logging if message object isn't available
-            if (isset($this->message)) {
-                $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
-            } else {
-                $this->directLog('[ERROR]', "Failed to prepare statement: " . $this->db->error);
-            }
+        if ($stmt === false):
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return false;
-        }
-        
+        endif;
+
         $stmt->bind_param("isssss", $user_id, $token_hash, $device_name, $ip_address, $user_agent, $expires_formatted);
         
-        if (!$stmt->execute()) {
-            // Use direct logging if message object isn't available
-            if (isset($this->message)) {
-                $this->message->logMessage('[ERROR]', "Failed to store trusted device: " . $stmt->error);
-            } else {
-                $this->directLog('[ERROR]', "Failed to store trusted device: " . $stmt->error);
-            }
+        if (!$stmt->execute()):
+            $this->log('[ERROR]', "Failed to store trusted device: " . $stmt->error);
             $stmt->close();
             return false;
-        }
-        
+        endif;
+
         $stmt->close();
-        
-        // Set the cookie with the token
-        $cookie_lifetime = time() + ($days_valid * 86400); // days to seconds
-        $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        $path = '/';
-        
-        setcookie(
-            $this->cookie_name,
-            $token,
-            [
-                'expires' => $cookie_lifetime,
-                'path' => $path,
-                'domain' => '',
-                'secure' => $secure,
-                'httponly' => true,
-                'samesite' => 'Strict'
-            ]
-        );
-        
-        // Use direct logging if message object isn't available
-        if (isset($this->message)) {
-            $this->message->logMessage('[NOTICE]', "Created trusted device for user $user_id");
-        } else {
-            $this->directLog('[NOTICE]', "Created trusted device for user $user_id");
-        }
+
+        setcookie($this->cookie_name, $token, [
+            'expires' => $expires_timestamp,
+            'path' => '/',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+            'httponly' => true,
+            'samesite' => 'Strict'
+        ]);
+
+        $this->log('[NOTICE]', "Created trusted device for user $user_id");
         return true;
     }
-    
-    /**
-     * Validate a trusted device token
-     * 
-     * @return int|false User ID if valid, false if invalid
-     */
+
     public function validateTrustedDevice() {
-        // Check if trusted device cookie exists
-        if (!isset($_COOKIE[$this->cookie_name])) {
+        if (!isset($_COOKIE[$this->cookie_name])):
             return false;
-        }
-        
+        endif;
+
         $token = $_COOKIE[$this->cookie_name];
-        
-        // Look up all non-expired tokens
-        $query = "SELECT id, user_id, token_hash FROM trusted_devices WHERE expires > NOW()";
-        $result = $this->db->query($query);
-        
-        if ($result === false) {
-            // Use direct logging if message object isn't available
-            if (isset($this->message)) {
-                $this->message->logMessage('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
-            } else {
-                $this->directLog('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
-            }
+        $hashed_token = $this->hashToken($token);
+
+        $query = "SELECT id, user_id FROM trusted_devices WHERE token_hash = ? AND expires > NOW()";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false):
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return false;
-        }
-        
-        // Check each token until we find a match
-        while ($row = $result->fetch_assoc()) {
-            if (password_verify($token, $row['token_hash'])) {
-                // Token is valid, update last_used
-                $update = "UPDATE trusted_devices SET last_used = NOW() WHERE id = ?";
-                $stmt = $this->db->prepare($update);
-                
-                if ($stmt !== false) {
-                    $stmt->bind_param("i", $row['id']);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Use direct logging if message object isn't available
-                if (isset($this->message)) {
-                    $this->message->logMessage('[NOTICE]', "Valid trusted device found for user " . $row['user_id']);
-                } else {
-                    $this->directLog('[NOTICE]', "Valid trusted device found for user " . $row['user_id']);
-                }
-                return $row['user_id'];
-            }
-        }
-        
-        // No valid token found
+        endif;
+
+        $stmt->bind_param("s", $hashed_token);
+        $stmt->execute();
+        $stmt->store_result();
+
+        if ($stmt->num_rows === 1):
+            $stmt->bind_result($device_id, $user_id);
+            $stmt->fetch();
+
+            $update = "UPDATE trusted_devices SET last_used = NOW() WHERE id = ?";
+            $upd_stmt = $this->db->prepare($update);
+            if ($upd_stmt !== false):
+                $upd_stmt->bind_param("i", $device_id);
+                $upd_stmt->execute();
+                $upd_stmt->close();
+            endif;
+
+            $stmt->close();
+            $this->log('[NOTICE]', "Valid trusted device found for user $user_id");
+            return $user_id;
+        endif;
+
+        $stmt->close();
         return false;
     }
-    
-    /**
-     * Remove a trusted device token (logout from trusted device)
-     * 
-     * @return bool Success of operation
-     */
+
     public function removeTrustedDevice() {
-        // Check if trusted device cookie exists
-        if (!isset($_COOKIE[$this->cookie_name])) {
+        if (!isset($_COOKIE[$this->cookie_name])):
             return false;
-        }
-        
+        endif;
+
         $token = $_COOKIE[$this->cookie_name];
-        
-        // Look up all tokens
-        $query = "SELECT id, token_hash FROM trusted_devices";
-        $result = $this->db->query($query);
-        
-        if ($result === false) {
-            $this->message->logMessage('[ERROR]', "Failed to query trusted devices: " . $this->db->error);
+        $hashed_token = $this->hashToken($token);
+
+        $query = "DELETE FROM trusted_devices WHERE token_hash = ?";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false):
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return false;
-        }
-        
-        // Check each token to find a match
-        while ($row = $result->fetch_assoc()) {
-            if (password_verify($token, $row['token_hash'])) {
-                // Token found, delete it
-                $delete = "DELETE FROM trusted_devices WHERE id = ?";
-                $stmt = $this->db->prepare($delete);
-                
-                if ($stmt === false) {
-                    $this->message->logMessage('[ERROR]', "Failed to prepare delete statement: " . $this->db->error);
-                    return false;
-                }
-                
-                $stmt->bind_param("i", $row['id']);
-                $success = $stmt->execute();
-                $stmt->close();
-                
-                // Expire the cookie
-                setcookie($this->cookie_name, '', time() - 3600, '/');
-                
-                if ($success) {
-                    $this->message->logMessage('[NOTICE]', "Removed trusted device");
-                    return true;
-                } else {
-                    $this->message->logMessage('[ERROR]', "Failed to remove trusted device");
-                    return false;
-                }
-            }
-        }
-        
-        // No matching token found, still expire the cookie
+        endif;
+
+        $stmt->bind_param("s", $hashed_token);
+        $stmt->execute();
+        $stmt->close();
+
         setcookie($this->cookie_name, '', time() - 3600, '/');
-        return false;
+        $this->log('[NOTICE]', "Removed trusted device");
+        return true;
     }
-    
-    /**
-     * Remove all trusted devices for a specific user
-     * 
-     * @param int $user_id The user's ID
-     * @return bool Success of operation
-     */
+
     public function removeAllUserDevices($user_id) {
         $query = "DELETE FROM trusted_devices WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
-        
-        if ($stmt === false) {
-            $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+
+        if ($stmt === false):
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return false;
-        }
-        
+        endif;
+
         $stmt->bind_param("i", $user_id);
         $success = $stmt->execute();
         $stmt->close();
-        
-        if ($success) {
-            $this->message->logMessage('[NOTICE]', "Removed all trusted devices for user $user_id");
+
+        if ($success):
+            $this->log('[NOTICE]', "Removed all trusted devices for user $user_id");
             return true;
-        } else {
-            $this->message->logMessage('[ERROR]', "Failed to remove trusted devices for user $user_id");
+        else:
+            $this->log('[ERROR]', "Failed to remove trusted devices for user $user_id");
             return false;
-        }
+        endif;
     }
-    
-    /**
-     * Clean up expired trusted device tokens
-     * 
-     * @return int Number of expired tokens removed
-     */
+
     public function cleanupExpiredTokens() {
         $query = "DELETE FROM trusted_devices WHERE expires < NOW()";
         $result = $this->db->query($query);
-        
-        if ($result === false) {
-            $this->message->logMessage('[ERROR]', "Failed to clean up expired tokens: " . $this->db->error);
+
+        if ($result === false):
+            $this->log('[ERROR]', "Failed to clean up expired tokens: " . $this->db->error);
             return 0;
-        }
-        
+        endif;
+
         $affected = $this->db->affected_rows;
-        $this->message->logMessage('[NOTICE]', "Cleaned up $affected expired trusted device tokens");
+        $this->log('[NOTICE]', "Cleaned up $affected expired trusted device tokens");
         return $affected;
     }
-    
+
     /**
      * Get all trusted devices for a user
      * 
@@ -318,29 +236,29 @@ class TrustedDeviceManager {
                  FROM trusted_devices 
                  WHERE user_id = ? 
                  ORDER BY last_used DESC, created DESC";
-        
+
         $stmt = $this->db->prepare($query);
-        
-        if ($stmt === false) {
-            $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+
+        if ($stmt === false) :
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return [];
-        }
-        
+        endif;
+
         $stmt->bind_param("i", $user_id);
-        
-        if (!$stmt->execute()) {
-            $this->message->logMessage('[ERROR]', "Failed to execute query: " . $stmt->error);
+
+        if (!$stmt->execute()) :
+            $this->log('[ERROR]', "Failed to execute query: " . $stmt->error);
             $stmt->close();
             return [];
-        }
-        
+        endif;
+
         $result = $stmt->get_result();
         $devices = [];
-        
-        while ($row = $result->fetch_assoc()) {
+
+        while ($row = $result->fetch_assoc()) :
             $devices[] = $row;
-        }
-        
+        endwhile;
+
         $stmt->close();
         return $devices;
     }
@@ -355,35 +273,35 @@ class TrustedDeviceManager {
     public function removeDeviceById($device_id, $user_id) {
         $query = "DELETE FROM trusted_devices WHERE id = ? AND user_id = ?";
         $stmt = $this->db->prepare($query);
-        
-        if ($stmt === false) {
-            $this->message->logMessage('[ERROR]', "Failed to prepare statement: " . $this->db->error);
+
+        if ($stmt === false) :
+            $this->log('[ERROR]', "Failed to prepare statement: " . $this->db->error);
             return false;
-        }
-        
+        endif;
+
         $stmt->bind_param("ii", $device_id, $user_id);
         $success = $stmt->execute();
-        
-        if (!$success) {
-            $this->message->logMessage('[ERROR]', "Failed to remove device: " . $stmt->error);
+
+        if (!$success) :
+            $this->log('[ERROR]', "Failed to remove device: " . $stmt->error);
             $stmt->close();
             return false;
-        }
-        
+        endif;
+
         $affected = $stmt->affected_rows;
         $stmt->close();
-        
-        if ($affected > 0) {
-            $this->message->logMessage('[NOTICE]', "Removed device ID $device_id for user $user_id");
+
+        if ($affected > 0) :
+            $this->log('[NOTICE]', "Removed device ID $device_id for user $user_id");
             return true;
-        } else {
-            $this->message->logMessage('[NOTICE]', "No device found with ID $device_id for user $user_id");
+        else :
+            $this->log('[NOTICE]', "No device found with ID $device_id for user $user_id");
             return false;
-        }
+        endif;
     }
     
     public function __toString() {
-        $this->message->logMessage("[ERROR]","Called as string");
+        $this->log("[ERROR]","Called as string");
         return "Called as a string";
     }
 }

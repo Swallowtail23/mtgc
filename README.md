@@ -128,6 +128,12 @@ To setup Turnstile
 - See https://packagist.org/packages/everapi/freecurrencyapi-php Composer package
 - The rate is updated at most every 60 minutes on demand, with the default currency set in ini file. Set to usd to disable conversion.
 
+#### 2FA OTPHP ####
+- Composer install (see below section)
+- Provides QR-code and app-based 2FA management
+- uses spomky-labs/otphp
+- uses endroid/qr-code
+
 #### Composer apps ####
 Run composer from mtg directory on server
 
@@ -135,6 +141,8 @@ Run composer from mtg directory on server
 - composer require everapi/freecurrencyapi-php:dev-master
 - composer require halaxa/json-machine
 - composer require phpmailer/phpmailer
+- composer require spomky-labs/otphp
+- composer require endroid/qr-code
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
@@ -193,6 +201,7 @@ Ini file content:
     Turnstile            = "disabled"
     Turnstile_site_key   = "xxxxxx"
     Turnstile_secret_key = "xxxxxx"
+    TrustDuration        = 7
     
     [fx]
     FreecurrencyAPI = "YOUR-APIKEY"
