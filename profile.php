@@ -1076,7 +1076,7 @@ endif;
                                 </td>
                                 <td class="options_right">
                                     <form action="csv.php"  method="GET">
-                                        <input id='exportsubmit' class='profilebutton' type="submit" value="EMAIL CSV">
+                                        <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL CSV">
                                         <input type='hidden' name='type' value='email'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>

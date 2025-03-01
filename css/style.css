@@ -1854,7 +1854,7 @@ table
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-.stdsubmit:hover, #importsubmit:hover, #exportsubmit:hover, #photosubmit:hover
+.stdsubmit:hover, #importsubmit:hover, #exportsubmit:hover, #emailsubmit:hover, #photosubmit:hover
 {
     color: #c5cae9;
 }
