@@ -131,6 +131,8 @@ To setup Turnstile
 #### 2FA OTPHP ####
 - Composer install (see below section)
 - Provides QR-code and app-based 2FA management
+- uses spomky-labs/otphp
+- uses endroid/qr-code
 
 #### Composer apps ####
 Run composer from mtg directory on server
@@ -140,6 +142,7 @@ Run composer from mtg directory on server
 - composer require halaxa/json-machine
 - composer require phpmailer/phpmailer
 - composer require spomky-labs/otphp
+- composer require endroid/qr-code
 
 To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
 To install all required: ```sudo -Hu apache composer update```
