@@ -64,6 +64,9 @@ class TrustedDeviceManager {
             fclose($fd);
         endif;
     }
+    public function getCookieName() {
+        return $this->cookie_name;
+    }
 
     private function generateToken() {
         return bin2hex(random_bytes($this->token_length));
@@ -71,6 +74,10 @@ class TrustedDeviceManager {
 
     private function hashToken($token) {
         return hash_hmac('sha256', $token, $this->hmac_secret);
+    }
+
+    public function getTokenHash($token) {
+        return $this->hashToken($token);
     }
 
     private function getClientIP() {
@@ -236,7 +243,7 @@ class TrustedDeviceManager {
      * @return array Array of device information
      */
     public function getUserDevices($user_id) {
-        $query = "SELECT id, device_name, ip_address, user_agent, last_used, created, expires 
+        $query = "SELECT id, device_name, token_hash, ip_address, user_agent, last_used, created, expires 
                  FROM trusted_devices 
                  WHERE user_id = ? 
                  ORDER BY last_used DESC, created DESC";

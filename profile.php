@@ -700,7 +700,12 @@ endif;
                         // Get trusted devices for this user
                         require_once('classes/trusteddevicemanager.class.php');
                         $deviceManager = new TrustedDeviceManager($db, $logfile);
-
+                        // Get the current device's token hash, if the cookie is set.
+                        $currentDeviceHash = null;
+                        if (isset($_COOKIE[$deviceManager->getCookieName()])):
+                            $token = $_COOKIE[$deviceManager->getCookieName()];
+                            $currentDeviceHash = $deviceManager->getTokenHash($token);
+                        endif;
                         // Check if we should remove a device
                         if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
                             $device_id = intval($_GET['remove_device']);
@@ -732,7 +737,11 @@ endif;
                             </tr>
                             <?php foreach ($devices as $device): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($device['device_name']); ?></td>
+                                <td><?php echo htmlspecialchars($device['device_name']);
+                                // If the current device hash matches the device token hash, flag it.
+                                    if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']):
+                                        echo " <strong>(This device)</strong>";
+                                    endif;?></td>
                                 <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
                                 <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
                                 <td>
