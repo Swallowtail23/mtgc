@@ -127,6 +127,7 @@ class TrustedDeviceManager {
 
     public function validateTrustedDevice() {
         if (!isset($_COOKIE[$this->cookie_name])):
+            $this->log('[DEBUG]', "Cookie not set");
             return false;
         endif;
 
@@ -159,9 +160,12 @@ class TrustedDeviceManager {
             $stmt->close();
             $this->log('[NOTICE]', "Valid trusted device found for user $user_id");
             return $user_id;
+        else:
+            $this->log('[DEBUG]', "No record found");
         endif;
 
         $stmt->close();
+        $this->log('[DEBUG]', "Other issue");
         return false;
     }
 
