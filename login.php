@@ -104,6 +104,10 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
                 }
                 
                 $trusted_login = true;
+                // Immediately redirect, skipping the login form
+                $redirectTarget = $_SESSION['redirect_url'] ?? 'index.php';
+                header("Location: $redirectTarget");
+                exit();                
             endif;
             
             $stmt->close();
