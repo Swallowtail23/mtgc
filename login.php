@@ -75,6 +75,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
     // Try to validate trusted device token
     $trusted_device_user = $deviceManager->validateTrustedDevice();
     $trusted_device_user = (int) $trusted_device_user;
+    $msg->logMessage('[DEBUG]', "Output from Trusted device user check: $trusted_device_user");
     
     if ($trusted_device_user !== false):
         // Token is valid, auto-login the user
