@@ -1,6 +1,6 @@
 <?php
-/* Version:     8.0
-    Date:       01/03/25
+/* Version:     8.1
+    Date:       02/03/25
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -44,6 +44,9 @@
  * 
  *  8.0         01/03/25
  *              Add Name exact
+ * 
+ *  8.1         02/03/25
+ *              Catch empty ability search
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -135,23 +138,32 @@ else:
         $msg->logMessage('[DEBUG]',"Advanced search called ($name)");
         // An advanced search called
         $criteriaNTA = "";
-        if ($searchnotes === "yes"):
+        if ($searchability === "yes" && $name === ""):
+            $msg->logMessage('[DEBUG]',"Ability search called with no text");
+            $qtyresults = 0;
+            $validsearch = "false";
+        elseif ($searchnotes === "yes"):
             if($name === ''):
                 $criteriaNTA = "$mytable.notes IS NOT NULL AND $mytable.notes NOT LIKE ''";
             else:
                 $criteriaNTA = "$mytable.notes LIKE ? ";
                 $params[] = "%$name%";
             endif;
+            $validsearch = "true";
         elseif (empty($name) AND (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact))):
             $criteriaNTA .= "cards_scry.name LIKE '%%' ";
+            $validsearch = "true";
         elseif (empty($searchname) AND empty($searchtype) AND empty($searchsetcode) AND empty($searchpromo) AND empty($searchability) AND empty($searchabilityexact)):
             $criteriaNTA .= "cards_scry.name LIKE ? ";
             $params[] = "%$name%";
+            $validsearch = "true";
         elseif (!empty($searchpromo) AND empty($name)):
             $criteriaNTA .= "cards_scry.promo_types IS NOT NULL ";
+            $validsearch = "true";
         elseif (!empty($searchpromo) AND !empty($name)):
             $criteriaNTA .= "cards_scry.promo_types LIKE ? ";
             $params[] = "%$name%";
+            $validsearch = "true";
         else:
             if ($searchname === "yes"):
                 if ($exact === "yes" || $nameexact === "yes"):
@@ -199,6 +211,7 @@ else:
                 $criteriaNTA .= "(cards_scry.ability LIKE ? OR cards_scry.f1_ability LIKE ? OR cards_scry.f1_ability LIKE ?) ";
                 $params = array_fill(0, 3, "%{$name}%");
             endif;
+            $validsearch = "true";
         endif;
         $criteria = "(".$criteriaNTA.") ";
         
@@ -738,7 +751,13 @@ else:
             endif;
         endif;
 
-        $query = $selectAll.$criteria.$order.$sorting;
-        $validsearch = "true";
+        $msg->logMessage('[DEBUG]', "Valid search = $validsearch");
+        if($validsearch === "false"):
+            $query = "";
+            $msg->logMessage('[DEBUG]', "Query cleared");
+        else:
+            $query = $selectAll.$criteria.$order.$sorting;
+            $msg->logMessage('[DEBUG]', "Query = $query");
+        endif;
     endif;
 endif;

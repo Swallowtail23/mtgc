@@ -1,6 +1,6 @@
 <?php
-/* Version:     12.0
-    Date:       01/03/25
+/* Version:     12.1
+    Date:       02/03/25
     Name:       index.php
     Purpose:    Main site page
     Notes:       
@@ -51,6 +51,9 @@
  * 
  * 12.0         01/03/25
  *              Add Name exact
+ * 
+ * 12.1         02/03/25
+ *              Catch and evade empty ability search
 */
 
 //Call script initiation mechs
@@ -78,6 +81,13 @@ $time = time();
 $msg->logMessage('[DEBUG]',"Admin is $admin");
 
 // Define layout and results per page for each layout type
+if (!empty($_GET)):
+    $fullQueryString = $_SERVER['QUERY_STRING'];
+    $msg->logMessage('[DEBUG]',"Query string: " . $fullQueryString);
+else:
+    $msg->logMessage('[DEBUG]',"Query string: none");
+endif;
+
 if (isset($_GET['layout'])):
     $valid_layout = array("grid","list","bulk");
     $layout = $_GET['layout'];
@@ -341,6 +351,8 @@ if ($validsearch === "true"):
             trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
         endif;
     endif;
+else:
+    $msg->logMessage('[DEBUG]', "Not a valid search");
 endif;
 # query for page navigation
 if (isset($qtyresults)):
