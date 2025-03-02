@@ -10,3 +10,4 @@ cardimg/
 /.well-known/
 /vendor
 /includes/sessionname.local.php
+vendor/
