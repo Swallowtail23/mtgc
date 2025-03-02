@@ -137,7 +137,7 @@ endif;
 <html>
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title><?php echo $siteTitle;?> - profile</title>
         <link rel="manifest" href="manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css"> 
@@ -676,7 +676,7 @@ endif;
                                 <tbody>
                                     <tr>
                                         <td style="min-width:190px">
-                                            <input class="profilepassword textinput" tabindex="1" type="password" name="curPass" placeholder="CURRENT">
+                                            <input style="font-size: 16px;" class="profilepassword textinput" tabindex="1" type="password" name="curPass" placeholder="CURRENT">
                                             <span class="error2">*</span>
                                         </td>
                                         <td rowspan="3">
@@ -685,13 +685,13 @@ endif;
                                     </tr>
                                     <tr>
                                         <td>
-                                            <input class="profilepassword textinput" tabindex="2" type="password" name="newPass" placeholder="NEW">
+                                            <input style="font-size: 16px;" class="profilepassword textinput" tabindex="2" type="password" name="newPass" placeholder="NEW">
                                             <span class="error2">*</span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
-                                            <input class="profilepassword textinput" tabindex="3" type="password" name="newPass2" placeholder="REPEAT NEW">
+                                            <input style="font-size: 16px;" class="profilepassword textinput" tabindex="3" type="password" name="newPass2" placeholder="REPEAT NEW">
                                             <span class="error2">*</span>
                                         </td>
                                     </tr>

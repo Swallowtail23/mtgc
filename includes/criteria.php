@@ -166,7 +166,7 @@ else:
             $validsearch = "true";
         else:
             if ($searchname === "yes"):
-                if ($exact === "yes" || $nameexact === "yes"):
+                if ($exact === "yes"):
                     $criteriaNTA = "(cards_scry.name = ? OR cards_scry.f1_name = ? OR cards_scry.f2_name = ? 
                             OR cards_scry.printed_name = ? OR cards_scry.f1_printed_name = ? OR cards_scry.f2_printed_name = ?
                             OR cards_scry.flavor_name = ? OR cards_scry.f1_flavor_name = ? OR cards_scry.f2_flavor_name = ?) ";
@@ -192,7 +192,7 @@ else:
                 $criteriaNTA .= "cards_scry.setcode LIKE ? ";
                 $params[] = $name;
             endif;
-            if ($searchability === "yes"):
+            if ($searchability === "yes" && $exact === ""):
                 $abilitytext = "";
                 $parts = explode(" ",trim($name));
                 foreach ($parts as $part):
@@ -204,7 +204,7 @@ else:
                 endif;
                 $criteriaNTA .= "MATCH (cards_scry.ability,cards_scry.f1_ability,cards_scry.f2_ability) AGAINST (? IN BOOLEAN MODE) ";
                 $params[] = $abilitytext;
-            elseif ($searchabilityexact === "yes"):
+            elseif ($searchability === "yes" && $exact === "yes"):
                 if (!empty($criteriaNTA)) :
                     $criteriaNTA .= "OR ";
                 endif;
