@@ -107,13 +107,29 @@ endif;
                 <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
             </span>
             <span title="Only show my cards" class="parametersmall">
-                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>Collection</label>
+                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>My cards</label>
             </span>
             <span title="Only show cards I don't have" class="parametersmall">
                 <label class="radio"><input type="radio" name="scope" value="notcollection"><span class="outer"><span class="inner"></span></span>Missing</label>
             </span>
             <br>
-            <h4 class="h4">Set:</h4> Ctrl+click to select multiple sets:<br>
+            <span id="collqtyspan">My cards qty:&nbsp;
+            <select class="dropdown" name="collQtyOp">
+                <option disabled selected style='display:none;'>&nbsp;</option>
+                <option value="ltn">Less than</option>
+                <option value="eq">Exactly</option>
+                <option value="gtr">More than</option>
+            </select>
+            <select class="dropdown" name="collQtyValue">
+                <option disabled selected style='display:none;'>&nbsp;</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+            </span>
+            <h4 class="h4" style="margin-top:15px;">Set:</h4> Ctrl+click to select multiple sets:<br>
             <select class='setselect' size="15" multiple name="set[]">
                 <?php 
                 $result = $db->query(
