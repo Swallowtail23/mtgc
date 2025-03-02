@@ -1811,10 +1811,12 @@ table
     max-width: 330px; 
 }
 
-/*#trusteddevices
+#trusteddevices, #profilebuttons
 {
-    max-width: 650px; 
-}*/
+    overflow-x: auto;
+    max-width: 100%;
+    padding-right: 5px;
+}
 
 #importexport, #profilebuttons
 {
@@ -1866,18 +1868,30 @@ table
 
 table.profile_options {
     width: 100%;
-    border-collapse: collapse; /* merges cell borders for a cleaner look */
+    max-width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Forces equal column widths */
 }
 
 table.profile_options th,
 table.profile_options td {
+    word-break: break-word;
+    overflow-wrap: break-word;
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 6px;
 }
 
 /* Optional hover effect */
 table.profile_options tr:hover {
     background-color: #f1f1f1;
+}
+
+.profile_options td a {
+    display: block;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .shallowh3
@@ -1924,13 +1938,14 @@ table.profile_options tr:hover {
 
 .profilebutton
 {
-    width: 100px;
+    width: 85px;
     height: 26px;
     background: #3f51b5;
     border: 0px;
     color: #fff;
     font-size: 14px;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    padding: 3px;
 }
 
 .tcgbuybutton
@@ -1957,7 +1972,7 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
 }
 .importlabel {
     padding: 1px;
-    width: 90px;
+    width: 85px;
     height: 24px;
     background: #3f51b5;
     border: 0px;
@@ -1971,7 +1986,7 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     margin-top: 3px;
     margin-bottom: 10px;
     padding: 1px;
-    width: 100px;
+    width: 85px;
     height: 24px;
     background: #3f51b5;
     border: 0px;
@@ -2797,6 +2812,31 @@ input:checked + .slider:before {
 {
     width: 110px;
     box-sizing: border-box;
+}
+#importfileProfile
+{
+    position: absolute;
+    left: -9999px;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+}
+/* Specific formatting for profile.php file import so it does not zoom on page load on mobile  */
+#profilefilelabel
+{
+    display: inline-block;
+    background: #4A90E2;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 5px;
+}
+/* Change hover effect */
+#profilefilelabel:hover {
+    background: #357ABD;
 }
 
 #grpname

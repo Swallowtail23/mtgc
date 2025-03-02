@@ -593,14 +593,14 @@ else:
             endif;
         endif;
 
-        if ($scope === "mycollection" && $collqtyoperator === ""):
+        if ($scope === "mycollection" && empty($collqtyoperator)):
             $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
         elseif ($scope === "mycollection" && !empty($collqtyoperator)):
             if ($collqtyoperator === "ltn"):
                 $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) < ?) ";
             elseif ($collqtyoperator === "gtr"):
                 $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) > ?) ";
-            else:  // ($collqtyoperator === "eq"):
+            else:  // ($collqtyoperator === "eq") - no other option possible here, so just 'else'
                 $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) = ?) ";
             endif;
             $params[] = $collqty;
