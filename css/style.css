@@ -1798,8 +1798,7 @@ table
 
 #userdetails,
 #mycollection,
-#changepassword,
-#trusteddevices
+#changepassword
 {
     padding-bottom: 15px;
 }
@@ -1811,11 +1810,11 @@ table
     max-width: 330px; 
 }
 
-#trusteddevices, #profilebuttons
+#profilebuttons
 {
     overflow-x: auto;
     max-width: 100%;
-    padding-right: 5px;
+    padding-right: 20px;
 }
 
 #importexport, #profilebuttons

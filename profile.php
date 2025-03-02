@@ -1,6 +1,6 @@
 <?php 
-/* Version:     13
-    Date:       01/03/25
+/* Version:     13.1
+    Date:       02/03/25
     Name:       profile.php
     Purpose:    User profile page
     Notes:      This page must not run the forcechgpwd function - this is the page
@@ -56,6 +56,9 @@
  * 
  * 13.0         01/03/25
  *              Alterations for display of additional security options
+ * 
+ * 13.1         02/03/25
+ *              Display fixes, including MTGC-145
  */
 
 if (file_exists('includes/sessionname.local.php')):
@@ -753,19 +756,22 @@ endif;
                                 endif;?></td>
                             <td><?php echo $device['last_used'] ? date('Y-m-d H:i', strtotime($device['last_used'])) : 'Never'; ?></td>
                             <td><?php echo date('Y-m-d H:i', strtotime($device['expires'])); ?></td>
-                            <td>
+                            <td style="text-align: center;">
                                 <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
                                    onclick="return confirm('Are you sure you want to remove this device?');"
-                                   class="profilebutton" style="padding: 3px 8px; width: 56px;">REMOVE</a>
+                                   class="profilebutton" style="padding: 3px 8px; width: 56px; display: inline-block;">REMOVE</a>
                             </td>
                         </tr> <?php 
                         endforeach; ?>
                         <tr>
-                            <td colspan="4">
+                            <td colspan="3">
+                                Clear all trusted device authorisations and force new logins
+                            </td>
+                            <td style="text-align: center;">
                                 <p style="margin-top: 10px;">
                                 <a href="profile.php?remove_all_devices=1" 
                                onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                               class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
+                               class="profilebutton" style="padding: 3px 8px; width: 56px; display: inline-block;">CLEAR</a>
                                 </p> 
                             </td>
                         </tr><?php 
@@ -904,7 +910,7 @@ endif;
                                         </form> <?php
                                     else: ?>
                                         <form method="post" action="profile.php">
-                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()" style="width: 75px;">
+                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()" style="width: 85px;">
                                                 <option value="disabled" selected>Disabled</option>
                                                 <option value="email">Enable: Email</option>
                                                 <option value="app">Enable: App</option>
@@ -943,7 +949,7 @@ endif;
                                     Shows cards in your 'group'. If you 'Opt out' your collection is private<br>
                                     <?php 
                                     if($current_group_status == 1):
-                                        echo "<span id='grpname'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
+                                        echo "<span id='grpname'><b>Group:</b> {$row['groupname']} <br><a href='help.php'>Send me a request</a> to create a new group</span>&nbsp;"; 
                                     else:
                                         echo "<span id='grpname' style='display:none'><b>Group:</b> {$row['groupname']} (<a href='help.php'>Send me a request</a> to create a new group)</span>&nbsp;"; 
                                     endif; ?>
@@ -970,7 +976,7 @@ endif;
                                     Currency to use for localised pricing
                                 </td>
                                 <td class="options_right">  
-                                    <select class="dropdown" name='currency' id='currencySelect' style="width: 75px;">
+                                    <select class="dropdown" name='currency' id='currencySelect' style="width: 85px;">
                                         <?php foreach($currencies as $currency): ?>
                                             <option value='<?php echo $currency['code']; ?>' 
                                                 <?php if($current_currency === $currency['db']): ?>selected<?php endif; ?>>
