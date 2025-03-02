@@ -699,49 +699,52 @@ endif;
                             </table>
                         </form>
                     </div>                
-                </div>
-                <div id='trusteddevices'>
-                    <h2 class='h2pad'>Trusted Devices</h2>
-                    <?php
-                    // Get trusted devices for this user
-                    require_once('classes/trusteddevicemanager.class.php');
-                    $deviceManager = new TrustedDeviceManager($db, $logfile);
-                    // Get the current device's token hash, if the cookie is set.
-                    $currentDeviceHash = null;
-                    if (isset($_COOKIE[$deviceManager->getCookieName()])):
-                        $token = $_COOKIE[$deviceManager->getCookieName()];
-                        $currentDeviceHash = $deviceManager->getTokenHash($token);
+                </div> <?php
+                
+                // Get trusted devices for this user
+                require_once('classes/trusteddevicemanager.class.php');
+                $deviceManager = new TrustedDeviceManager($db, $logfile);
+                // Get the current device's token hash, if the cookie is set.
+                $currentDeviceHash = null;
+                if (isset($_COOKIE[$deviceManager->getCookieName()])):
+                    $token = $_COOKIE[$deviceManager->getCookieName()];
+                    $currentDeviceHash = $deviceManager->getTokenHash($token);
+                endif;
+                // Check if we should remove a device
+                if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
+                    $device_id = intval($_GET['remove_device']);
+                    $removed = $deviceManager->removeDeviceById($device_id, $userId);
+                    if ($removed):
+                        echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
+                    else:
+                        echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
                     endif;
-                    // Check if we should remove a device
-                    if (isset($_GET['remove_device']) && is_numeric($_GET['remove_device'])):
-                        $device_id = intval($_GET['remove_device']);
-                        $removed = $deviceManager->removeDeviceById($device_id, $userId);
-                        if ($removed):
-                            echo "<div class='alert-box success' id='device_message'><span>success: </span>Device removed successfully.</div>";
-                        else:
-                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove device or device not found.</div>";
-                        endif;
-                    elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
-                        $removed = $deviceManager->removeAllUserDevices($userId);
-                        if ($removed):
-                            echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
-                        else:
-                            echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
-                        endif;
+                elseif (isset($_GET['remove_all_devices']) && $_GET['remove_all_devices'] == 1):
+                    $removed = $deviceManager->removeAllUserDevices($userId);
+                    if ($removed):
+                        echo "<div class='alert-box success' id='device_message'><span>success: </span>All trusted devices removed successfully.</div>";
+                    else:
+                        echo "<div class='alert-box error' id='device_message'><span>error: </span>Failed to remove devices.</div>";
                     endif;
+                endif; ?>
+                <div id='profilebuttons'>
+                    <table class="profile_options"><?php                    
 
                     // Display trusted devices
                     $devices = $deviceManager->getUserDevices($userId);
-                    if (count($devices) > 0):
-                    ?>
-                    <table class="profile_options">
+                    if (count($devices) > 0): ?>
+                        <tr>
+                            <td colspan="4">
+                                <h2 class='h2pad'>Trusted Devices</h2>
+                            </td>
+                        </tr>
                         <tr>
                             <th>Device</th>
                             <th>Last Used</th>
                             <th>Expires</th>
                             <th>Actions</th>
-                        </tr>
-                        <?php foreach ($devices as $device): ?>
+                        </tr> <?php 
+                        foreach ($devices as $device): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($device['device_name']);
                             // If the current device hash matches the device token hash, flag it.
@@ -753,126 +756,131 @@ endif;
                             <td>
                                 <a href="profile.php?remove_device=<?php echo $device['id']; ?>" 
                                    onclick="return confirm('Are you sure you want to remove this device?');"
-                                   class="profilebutton" style="padding: 3px 8px;">REMOVE</a>
+                                   class="profilebutton" style="padding: 3px 8px; width: 56px;">REMOVE</a>
                             </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </table>
-                    <p style="margin-top: 10px;">
-                        <a href="profile.php?remove_all_devices=1" 
-                           onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
-                           class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
-                    </p>
-                    <?php else: ?>
-                    <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.</p>
-                    <?php endif; ?>
-                </div>
-                <?php 
+                        </tr> <?php 
+                        endforeach; ?>
+                        <tr>
+                            <td colspan="4">
+                                <p style="margin-top: 10px;">
+                                <a href="profile.php?remove_all_devices=1" 
+                               onclick="return confirm('Are you sure you want to remove ALL trusted devices? You will need to log in again on all devices.');"
+                               class="profilebutton" style="padding: 3px 8px;">REMOVE ALL</a>
+                                </p> 
+                            </td>
+                        </tr><?php 
+                    else: ?>
+                        <tr>
+                            <td colspan="4">
+                                <p>You don't have any trusted devices. When you log in, you can choose to trust a device to stay logged in for up to <?php echo $trustDuration; ?> days.
+                                </p>
+                            </td> 
+                        </tr> <?php 
+                    endif; ?>
+                </div> <?php 
+                
                 if ((!isset($_SESSION["chgpwd"])) OR ($_SESSION["chgpwd"] != TRUE)): ?>
-                    <div id='profilebuttons'>
-                        <script type="text/javascript">
-                            $(document).ready(function () {
-                                document.body.style.cursor='normal';
+                            <script type="text/javascript">
+                                $(document).ready(function () {
+                                    document.body.style.cursor='normal';
 
-                                // Toggle collection view
-                                $('#cview_toggle').on('change', function () {
-                                    var cview = this.checked ? "TURN ON" : "TURN OFF";
-                                    $.ajax({
-                                        url: "/ajax/ajaxcview.php",
-                                        method: "POST",
-                                        data: { "collection_view": cview },
-                                        error: function (jqXHR, textStatus, errorThrown) {
-                                            console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                                    // Toggle collection view
+                                    $('#cview_toggle').on('change', function () {
+                                        var cview = this.checked ? "TURN ON" : "TURN OFF";
+                                        $.ajax({
+                                            url: "/ajax/ajaxcview.php",
+                                            method: "POST",
+                                            data: { "collection_view": cview },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                                            }
+                                        });
+                                    });
+
+                                    // Toggle group
+                                    $('#group_toggle').on('change', function () {
+                                        var group = this.checked ? "OPT IN" : "OPT OUT";
+                                        var display = this.checked ? "" : "none";
+                                        $.ajax({
+                                            url: "/ajax/ajaxgroup.php",
+                                            method: "POST",
+                                            data: { "group": group },
+                                            success: function () {
+                                                document.getElementById("grpname").style.display = display;
+                                            }
+                                        });
+                                    });
+
+                                    // Toggle weekly export
+                                    $('#weekly_toggle').on('change', function () {
+                                        var weekly = this.checked ? "TURN ON" : "TURN OFF";
+                                        $.ajax({
+                                            url: "/ajax/ajaxweekly.php",
+                                            method: "POST",
+                                            data: { "weekly": weekly },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                console.error("AJAX error: " + textStatus + " - " + errorThrown);
+                                            }
+                                        });
+                                    });
+
+                                    // Flash effect for currency select
+                                    $('#currencySelect').on('change', function () {
+                                        var selectedCurrency = $(this).val();
+                                        $.ajax({
+                                            url: "/ajax/ajaxcurrency.php",
+                                            method: "GET",
+                                            data: { "currency": selectedCurrency },
+                                            success: function (data) {
+                                                var response = JSON.parse(data);
+                                                console.log(response);
+                                                $('#currencySelect').addClass('flash-success');
+                                                setTimeout(function () {
+                                                    $('#currencySelect').removeClass('flash-success');
+                                                }, 1000);
+                                            },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                                            }
+                                        });
+                                    });
+
+                                    $("#importfileProfile").change(function() {
+                                        if ($(this).val()){
+                                            $("#submitfile").attr("style", "display: inline");
+                                            $("#importsubmit").attr("style", "box-shadow: none");
+                                        }
+                                        else {
+                                            $("#submitfile").attr("style", "display: none");
                                         }
                                     });
                                 });
 
-                                // Toggle group
-                                $('#group_toggle').on('change', function () {
-                                    var group = this.checked ? "OPT IN" : "OPT OUT";
-                                    var display = this.checked ? "" : "none";
-                                    $.ajax({
-                                        url: "/ajax/ajaxgroup.php",
-                                        method: "POST",
-                                        data: { "group": group },
-                                        success: function () {
-                                            document.getElementById("grpname").style.display = display;
-                                        }
-                                    });
-                                });
+                                function ImportPrep() {
+                                    // alert('Import can take several minutes, please be patient...');
+                                    document.body.style.cursor='wait';
+                                };
+                                function confirmDelete() {
+                                    var firstConfirm = confirm("Delete all cards from your collection? Selecting OK will send a CSV collection export to your registered email address and then delete all cards.");
 
-                                // Toggle weekly export
-                                $('#weekly_toggle').on('change', function () {
-                                    var weekly = this.checked ? "TURN ON" : "TURN OFF";
-                                    $.ajax({
-                                        url: "/ajax/ajaxweekly.php",
-                                        method: "POST",
-                                        data: { "weekly": weekly },
-                                        error: function (jqXHR, textStatus, errorThrown) {
-                                            console.error("AJAX error: " + textStatus + " - " + errorThrown);
-                                        }
-                                    });
-                                });
-
-                                // Flash effect for currency select
-                                $('#currencySelect').on('change', function () {
-                                    var selectedCurrency = $(this).val();
-                                    $.ajax({
-                                        url: "/ajax/ajaxcurrency.php",
-                                        method: "GET",
-                                        data: { "currency": selectedCurrency },
-                                        success: function (data) {
-                                            var response = JSON.parse(data);
-                                            console.log(response);
-                                            $('#currencySelect').addClass('flash-success');
-                                            setTimeout(function () {
-                                                $('#currencySelect').removeClass('flash-success');
-                                            }, 1000);
-                                        },
-                                        error: function (jqXHR, textStatus, errorThrown) {
-                                            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                                        }
-                                    });
-                                });
-
-                                $("#importfile").change(function() {
-                                    if ($(this).val()){
-                                        $("#submitfile").attr("style", "display: inline");
-                                        $("#importsubmit").attr("style", "box-shadow: none");
+                                    if (firstConfirm) {
+                                        var secondConfirm = confirm("This action is irreversible. Are you absolutely sure you want to delete all cards from your collection?");
+                                        return secondConfirm;
                                     }
-                                    else {
-                                        $("#submitfile").attr("style", "display: none");
-                                    }
-                                });
-                            });
 
-                            function ImportPrep() {
-                                // alert('Import can take several minutes, please be patient...');
-                                document.body.style.cursor='wait';
-                            };
-                            function confirmDelete() {
-                                var firstConfirm = confirm("Delete all cards from your collection? Selecting OK will send a CSV collection export to your registered email address and then delete all cards.");
-    
-                                if (firstConfirm) {
-                                    var secondConfirm = confirm("This action is irreversible. Are you absolutely sure you want to delete all cards from your collection?");
-                                    return secondConfirm;
-                                }
-    
-                                return false;
-                            };
-                        </script> 
-
-                        <table class="profile_options">
+                                    return false;
+                                };
+                            </script> 
                             <tr>
-                                <td colspan="3">
+                                <td colspan="4">
                                     <h2 class='h2pad'>Options</h2>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Two-Factor<br>Authentication: &nbsp;</b>
+                                    <b>Two-Factor<br>Authentication</b>
                                 </td>
-                                <td class="options_centre"> <?php
+                                <td class="options_centre" colspan="2"> <?php
                                     // Show 2FA status and options
                                     if ($tfa_enabled):
                                         $tfa_method = $tfaManager->getMethod($userId);?>
@@ -896,7 +904,7 @@ endif;
                                         </form> <?php
                                     else: ?>
                                         <form method="post" action="profile.php">
-                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()">
+                                            <select class="dropdown" name="tfa_method" id="tfa_method" onchange="this.form.submit()" style="width: 75px;">
                                                 <option value="disabled" selected>Disabled</option>
                                                 <option value="email">Enable: Email</option>
                                                 <option value="app">Enable: App</option>
@@ -908,9 +916,9 @@ endif;
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Collection view: &nbsp;</b>
+                                    <b>Collection view</b>
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Cards you do not own show in B&W in grid view
                                 </td>
                                 <td class="options_right"> <?php 
@@ -929,9 +937,9 @@ endif;
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Group cards: &nbsp;</b> 
+                                    <b>Group cards</b> 
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Shows cards in your 'group'. If you 'Opt out' your collection is private<br>
                                     <?php 
                                     if($current_group_status == 1):
@@ -956,13 +964,13 @@ endif;
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Local currency: &nbsp;</b>
+                                    <b>Local currency</b>
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Currency to use for localised pricing
                                 </td>
                                 <td class="options_right">  
-                                    <select class="dropdown" name='currency' id='currencySelect'>
+                                    <select class="dropdown" name='currency' id='currencySelect' style="width: 75px;">
                                         <?php foreach($currencies as $currency): ?>
                                             <option value='<?php echo $currency['code']; ?>' 
                                                 <?php if($current_currency === $currency['db']): ?>selected<?php endif; ?>>
@@ -973,15 +981,15 @@ endif;
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="3">
+                                <td colspan="4">
                                     <h2 class='h2pad'>Collection management</h2>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Delete: &nbsp;</b>
+                                    <b>Delete</b>
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                      Email CSV and delete all cards in your collection
                                 </td>
                                 <td class="options_right">
@@ -993,7 +1001,7 @@ endif;
                             </tr>
                             <script>
                                 function displayFileName() {
-                                    var input = document.getElementById('importfile');
+                                    var input = document.getElementById('importfileProfile');
                                     var fileNameSpan = document.getElementById('fileNameSpan');
                                     if (input.files.length > 0) {
                                         var fileName = input.files[0].name;
@@ -1007,9 +1015,9 @@ endif;
                             </script>
                             <tr>
                                 <td class="options_left" style="padding-top: 10px;">
-                                    <b>Import: </b> 
+                                    <b>Import</b> 
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Import cards to your collection&nbsp;
                                     <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">
                                         help
@@ -1018,12 +1026,12 @@ endif;
                                 <td class="options_right">
                                     <form enctype='multipart/form-data' action='?' method='post'>
                                         <label class='profilelabel'>
-                                            <input id='importfile' type='file' name='filename' onchange='displayFileName()'>
-                                            <span>SELECT FILE</span>
+                                            <input id='importfileProfile' type='file' name='filename' onchange='displayFileName()'>
+                                            <span>SELECT</span>
                                         </label><br>
                                         <div id='submitfile' style="display: none;">
-                                            <label class='profilelabel'>
-                                                <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT FILE' onclick='ImportPrep()';>
+                                            <label id='profilefilelabel'>
+                                                <input id='importsubmit' class='importlabel' type='submit' name='import' value='IMPORT' onclick='ImportPrep()';>
                                                 <input type="hidden" name="format" value="regex">
                                             </label>
                                             <table>
@@ -1068,14 +1076,14 @@ endif;
                             </tr>
                             <tr>
                                 <td class="options_left">
-                                    <b>Export: </b> 
+                                    <b>Export</b> 
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                      Download a CSV file with all cards in your collection
                                 </td>
                                 <td class="options_right">
                                     <form action="csv.php"  method="GET">
-                                        <input id='exportsubmit' class='profilebutton' type="submit" value="EXPORT CSV">
+                                        <input id='exportsubmit' class='profilebutton' type="submit" value="EXPORT">
                                         <input type='hidden' name='type' value='echo'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>
@@ -1085,12 +1093,12 @@ endif;
                                 <td class="options_left">
                                     &nbsp;
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Email a CSV file with all cards in your collection to your email address
                                 </td>
                                 <td class="options_right">
                                     <form action="csv.php"  method="GET">
-                                        <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL CSV">
+                                        <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL">
                                         <input type='hidden' name='type' value='email'>
                                         <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
                                     </form>
@@ -1100,7 +1108,7 @@ endif;
                                 <td class="options_left">
                                     <b>&nbsp;</b>
                                 </td>
-                                <td class="options_centre">
+                                <td class="options_centre" colspan="2">
                                     Weekly email to you with a CSV file of your collection
                                 </td>
                                 <td class="options_right"> <?php 
