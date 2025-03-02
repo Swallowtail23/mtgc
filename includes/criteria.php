@@ -593,8 +593,17 @@ else:
             endif;
         endif;
 
-        if ($scope === "mycollection"):
+        if ($scope === "mycollection" && $collqtyoperator === ""):
             $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
+        elseif ($scope === "mycollection" && !empty($collqtyoperator)):
+            if ($collqtyoperator === "ltn"):
+                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) < ?) ";
+            elseif ($collqtyoperator === "gtr"):
+                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) > ?) ";
+            else:  // ($collqtyoperator === "eq"):
+                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) = ?) ";
+            endif;
+            $params[] = $collqty;
         elseif ($scope === "notcollection"):
             $criteria .= "AND (($mytable.normal = 0 OR $mytable.normal IS NULL) AND ($mytable.foil = 0 OR $mytable.foil IS NULL) AND ($mytable.etched = 0 OR $mytable.etched IS NULL)) ";
         endif;

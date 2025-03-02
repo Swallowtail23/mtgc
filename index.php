@@ -215,27 +215,40 @@ $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
 if (!in_array($sortBy,$valid_sortBy)):
     $sortBy = '';
 endif;
-$valid_operator = array("ltn","gtr","eq");
+$valid_operator = ["ltn", "gtr", "eq"];
 $poweroperator = isset($_GET['poweroperator']) ? "{$_GET['poweroperator']}" : '';
-if (!in_array($poweroperator,$valid_operator)):
+if (!in_array($poweroperator,$valid_operator, true)):
     $poweroperator = '';
 endif;
 $toughoperator = isset($_GET['toughoperator']) ? "{$_GET['toughoperator']}" : '';
-if (!in_array($toughoperator,$valid_operator)):
+if (!in_array($toughoperator,$valid_operator, true)):
     $toughoperator = '';
 endif;
 $loyaltyoperator = isset($_GET['loyaltyoperator']) ? "{$_GET['loyaltyoperator']}" : '';
-if (!in_array($loyaltyoperator,$valid_operator)):
+if (!in_array($loyaltyoperator,$valid_operator, true)):
     $loyaltyoperator = '';
 endif;
 $cmcoperator = isset($_GET['cmcoperator']) ? "{$_GET['cmcoperator']}" : '';
-if (!in_array($cmcoperator,$valid_operator)):
+if (!in_array($cmcoperator,$valid_operator, true)):
     $cmcoperator = '';
 endif;
+$collqtyoperator = $_GET['collQtyOp'] ?? '';
+if (!in_array($collqtyoperator, $valid_operator, true)):
+    $collqtyoperator = '';
+endif;
 $cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT):'';
-$power = isset($_GET['power']) ? filter_input(INPUT_GET, 'power', FILTER_SANITIZE_NUMBER_INT):'';
-$tough = isset($_GET['tough']) ? filter_input(INPUT_GET, 'tough', FILTER_SANITIZE_NUMBER_INT):'';
-$loyalty = isset($_GET['loyalty']) ? filter_input(INPUT_GET, 'loyalty', FILTER_SANITIZE_NUMBER_INT):'';
+$power = filter_input(INPUT_GET, 'power', FILTER_VALIDATE_INT, [
+    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+]);
+$tough = filter_input(INPUT_GET, 'tough', FILTER_VALIDATE_INT, [
+    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+]);
+$loyalty = filter_input(INPUT_GET, 'loyalty', FILTER_VALIDATE_INT, [
+    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+]);
+$collqty = filter_input(INPUT_GET, 'collQtyValue', FILTER_VALIDATE_INT, [
+    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+]);
 $mytable = $user . "collection";
 $adv = isset($_GET['complex']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
@@ -1037,21 +1050,34 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
               });
             };
 
-$(document).ready(function() {
-    function updateVisibility() {
-        if ($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) {
-            $('#exactbox').prop('disabled', false); // Enable checkbox
-        } else {
-            $('#exactbox').prop('checked', false).prop('disabled', true); // Uncheck and disable
-        }
-    }
+            $(document).ready(function() {
+                function updateVisibility() {
+                    if ($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) {
+                        $('#exactbox').prop('disabled', false); // Enable checkbox
+                    } else {
+                        $('#exactbox').prop('checked', false).prop('disabled', true); // Uncheck and disable
+                    }
+                }
 
-    // Trigger when checkboxes change
-    $('#cb1, #abilitymain').change(updateVisibility);
+                // Trigger when checkboxes change
+                $('#cb1, #abilitymain').change(updateVisibility);
 
-    // Initialize on page load
-    updateVisibility();
-});
+                // Initialize on page load
+                updateVisibility();
+                function updateCollQtyState() {
+                    if ($('input[name="scope"]:checked').val() === "mycollection") {
+                        $('#collqtyspan select').prop('disabled', false).removeClass('disabled');
+                    } else {
+                        $('#collqtyspan select').prop('disabled', true).val("").addClass('disabled'); // Clear selection and disable
+                    }
+                }
+
+                // Event listener for radio buttons
+                $('input[name="scope"]').change(updateCollQtyState);
+
+                // Initialize state on page load
+                updateCollQtyState();
+            });
         </script>
     </body>
 </html>
