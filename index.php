@@ -155,8 +155,6 @@ $searchname = isset($_GET['searchname']) ? 'yes' : '';
 $searchtype = isset($_GET['searchtype']) ? 'yes' : '';
 $searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
 $searchability = isset($_GET['searchability']) ? 'yes' : '';
-$searchabilityexact = isset($_GET['searchabilityexact']) ? 'yes' : '';
-$nameexact = isset($_GET['nameexact']) ? 'yes' : '';
 $searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
 $searchpromo = isset($_GET['searchpromo']) ? 'yes' : '';
 $new = isset($_GET['searchnew']) ? 'yes' : '';
@@ -404,10 +402,6 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 setupMutualExclusion('.notnotes', '#yesnotes');
                 setupMutualExclusion('.notsetcode', '#searchsetcode');
                 setupMutualExclusion('.notpromo', '#searchpromo');
-                setupMutualExclusion('#abilityall', '#abilityexact');
-                setupMutualExclusion('#abilityexact', '#abilityall');
-                setupMutualExclusion('#abilityexact', '.notability');
-                setupMutualExclusion('.notability', '#abilityexact');
                 setupMutualExclusion('#abilityall', '.notability');
                 setupMutualExclusion('.notability', '#abilityall');
 
@@ -1044,61 +1038,20 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
             };
 
 $(document).ready(function() {
-
-    // Show/hide relevant fields based on main checkboxes
     function updateVisibility() {
-        // If "Name" (#cb1) is checked => show the Name exact box
-        if ($('#cb1').is(':checked')) {
-            $('#nameexactbox').show();
+        if ($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) {
+            $('#exactbox').prop('disabled', false); // Enable checkbox
         } else {
-            $('#nameexactbox').hide();
-            $('#nameexact').prop('checked', false);
-        }
-
-        // If "Ability" (#abilitymain) is checked => show ability fuzzy + exact
-        if ($('#abilitymain').is(':checked')) {
-            $('#abilityfuzzybox').show();
-            $('#abilityexactbox').show();
-
-            // If neither fuzzy nor exact is checked, default to fuzzy
-            if (!$('#abilityexact').is(':checked') && !$('#abilityfuzzy').is(':checked')) {
-                $('#abilityfuzzy').prop('checked', true);
-            }
-        } else {
-            // Hide them all, uncheck them
-            $('#abilityfuzzybox').hide();
-            $('#abilityexactbox').hide();
-            $('#abilityfuzzy, #abilityexact').prop('checked', false);
+            $('#exactbox').prop('checked', false).prop('disabled', true); // Uncheck and disable
         }
     }
 
-    // Enforce mutual exclusion for ability sub-options
-    function enforceAbilitySubOptions() {
-        // If #abilityfuzzy is checked, uncheck #abilityexact
-        if ($(this).attr('id') === 'abilityfuzzy' && $(this).is(':checked')) {
-            $('#abilityexact').prop('checked', false);
-        }
-        // If #abilityexact is checked, uncheck #abilityfuzzy
-        if ($(this).attr('id') === 'abilityexact' && $(this).is(':checked')) {
-            $('#abilityfuzzy').prop('checked', false);
-        }
-
-        // If both are off (and ability is on), default to #abilityexact
-        if ($('#abilitymain').is(':checked') &&
-            !$('#abilityfuzzy').is(':checked') &&
-            !$('#abilityexact').is(':checked')) {
-            $('#abilityexact').prop('checked', true);
-        }
-    }
-
-    // Hook up event handlers
+    // Trigger when checkboxes change
     $('#cb1, #abilitymain').change(updateVisibility);
-    $('#abilityfuzzy, #abilityexact').change(enforceAbilitySubOptions);
 
-    // Initialize visibility on page load
+    // Initialize on page load
     updateVisibility();
 });
-
         </script>
     </body>
 </html>

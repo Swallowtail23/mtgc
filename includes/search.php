@@ -86,37 +86,20 @@ endif;
                     <span class="box"></span>New (7d)
                 </label>
             </span>
-            <!-- Row 2: Ability main checkbox -->
             <br>
             <span title="Search card abilities" class="parametersmall checkbox-group">
-                <input id="abilitymain" type="checkbox" class="scopecheckbox checkbox notname">
+                <input id="abilitymain" type="checkbox" class="scopecheckbox checkbox notname notsetcode" name="searchability" value="yes">
                 <label for="abilitymain">
                     <span class="check"></span>
                     <span class="box"></span>Ability
                 </label>
             </span>
-
-            <!-- Row 3: Additional checkboxes for Name Exact, Ability Exact, Ability Fuzzy -->
-            <br>
-            <!-- Name exact -->
-            <span title="Name exact" class="parametersmall checkbox-group" id="nameexactbox" style="display:none;">
-                <input id="nameexact" type="checkbox" class="checkbox" name="nameexact" value="yes">
-                <label for="nameexact"><span class="check"></span>
+            <!-- Exact -->
+            <span title="Exact" class="parametersmall checkbox-group">
+                <input id="exactbox" type="checkbox" class="scopecheckbox checkbox" name="exact" value="yes">
+                <label for="exactbox">
+                    <span class="check"></span>
                     <span class="box"></span>Exact
-                </label>
-            </span>
-            <!-- Ability exact -->
-            <span title="Ability exact" class="parametersmall checkbox-group" id="abilityexactbox" style="display:none;">
-                <input id="abilityexact" type="checkbox" class="checkbox" name="searchabilityexact" value="yes">
-                <label for="abilityexact"><span class="check"></span>
-                    <span class="box"></span>Exact
-                </label>
-            </span>
-            <!-- Ability fuzzy -->
-            <span title="Ability fuzzy" class="parametersmall checkbox-group" id="abilityfuzzybox" style="display:none;">
-                <input id="abilityfuzzy" type="checkbox" class="checkbox" name="searchability" value="yes">
-                <label for="abilityfuzzy"><span class="check"></span>
-                    <span class="box"></span>Fuzzy
                 </label>
             </span>
             <h4 class="h4" style="margin-top:30px;">Search scope:</h4>
