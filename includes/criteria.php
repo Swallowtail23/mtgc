@@ -597,15 +597,17 @@ else:
             $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
         elseif ($scope === "mycollection" && !empty($collqtyoperator)):
             if ($collqtyoperator === "ltn"):
-                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) < ?) ";
+                $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) < ?) ";
             elseif ($collqtyoperator === "gtr"):
-                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) > ?) ";
+                $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) > ?) ";
             else:  // ($collqtyoperator === "eq") - no other option possible here, so just 'else'
-                $criteria .= "AND (($mytable.normal + $mytable.foil + $mytable.etched ) = ?) ";
+                $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) = ?) ";
             endif;
             $params[] = $collqty;
         elseif ($scope === "notcollection"):
-            $criteria .= "AND (($mytable.normal = 0 OR $mytable.normal IS NULL) AND ($mytable.foil = 0 OR $mytable.foil IS NULL) AND ($mytable.etched = 0 OR $mytable.etched IS NULL)) ";
+            $criteria .= "AND (COALESCE($mytable.normal, 0) = 0 
+                AND COALESCE($mytable.foil, 0) = 0 
+                AND COALESCE($mytable.etched, 0) = 0)";
         endif;
 
         if ($legal === 'std'):
@@ -702,8 +704,8 @@ else:
                         COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
                         cs_id ASC ";
                 
-                // Auto price sort for an empty name Collection search
-                elseif ($scope === "mycollection" AND $searchname === "yes" and (isset($name) AND empty($name)) ):
+                // Auto price sort for an empty name/empty comparator Collection search
+                elseif ($scope === "mycollection" AND $searchname === "yes" and empty($collqtyoperator) and (isset($name) AND empty($name)) ):
                     $order = "ORDER BY $mytable.topvalue DESC,
                               COALESCE(cards_scry.flavor_name, cards_scry.name) ASC, 
                               set_date DESC, primary_card DESC, number ASC, 
