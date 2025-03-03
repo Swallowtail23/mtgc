@@ -1880,8 +1880,8 @@ table.profile_options td {
     padding: 6px;
 }
 
-/* Optional hover effect */
-table.profile_options tr:hover {
+/* Hover effect applied to some rows*/
+table.profile_options tr.hoverhighlight:hover {
     background-color: #f1f1f1;
 }
 
