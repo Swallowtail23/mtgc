@@ -1050,6 +1050,23 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
               });
             };
 
+            document.getElementById("collQtyOp").addEventListener("change", function() {
+                let qtySelect = document.getElementById("collQtyValue");
+                let selectedOp = this.value;
+
+                // Loop through options in collQtyValue
+                for (let option of qtySelect.options) {
+                    if (option.value === "1") {
+                        option.disabled = (selectedOp === "ltn"); // Disable if "Less than" is selected
+                    }
+                }
+
+                // Reset selection if the currently selected option is now disabled
+                if (qtySelect.value === "1" && selectedOp === "ltn") {
+                    qtySelect.value = ""; // Reset selection
+                }
+            });
+
             $(document).ready(function() {
                 function updateVisibility() {
                     if ($('#cb1').is(':checked') || $('#abilitymain').is(':checked')) {

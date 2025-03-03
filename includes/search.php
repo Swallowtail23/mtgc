@@ -114,15 +114,14 @@ endif;
             </span>
             <br>
             <span id="collqtyspan">My cards qty:&nbsp;
-            <select class="dropdown" name="collQtyOp">
+            <select class="dropdown" name="collQtyOp" id="collQtyOp">
                 <option disabled selected style='display:none;'>&nbsp;</option>
                 <option value="ltn">Less than</option>
                 <option value="eq">Exactly</option>
                 <option value="gtr">More than</option>
             </select>
-            <select class="dropdown" name="collQtyValue">
+            <select class="dropdown" name="collQtyValue" id="collQtyValue">
                 <option disabled selected style='display:none;'>&nbsp;</option>
-                <option value="0">0</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>

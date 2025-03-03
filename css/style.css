@@ -2797,14 +2797,9 @@ input:checked + .slider:before {
    text-align: center;
 }
 
-.profile_options
-{
-    max-width: 1000px;
-}
-
 .profile_button
 {
-    width: 100px;
+    width: 85px;
 }
 
 #importfile
