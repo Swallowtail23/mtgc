@@ -1881,7 +1881,7 @@ table.profile_options td {
 }
 
 /* Optional hover effect */
-table.profile_options tr:hover {
+table.profile_options tr.hoverhighlight:hover {
     background-color: #f1f1f1;
 }
 

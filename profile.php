@@ -737,7 +737,7 @@ endif;
                     $devices = $deviceManager->getUserDevices($userId);
                     if (count($devices) > 0): ?>
                         <tr>
-                            <td colspan="4">
+                            <td colspan="4" style="border-width: 0px 0px 1px;">
                                 <h2 class='h2pad'>Trusted Devices</h2>
                             </td>
                         </tr>
@@ -748,7 +748,7 @@ endif;
                             <th>Actions</th>
                         </tr> <?php 
                         foreach ($devices as $device): ?>
-                        <tr>
+                        <tr class="hoverhighlight">
                             <td><?php echo htmlspecialchars($device['device_name']);
                             // If the current device hash matches the device token hash, flag it.
                                 if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']):
@@ -763,7 +763,7 @@ endif;
                             </td>
                         </tr> <?php 
                         endforeach; ?>
-                        <tr>
+                        <tr class="hoverhighlight">
                             <td colspan="3">
                                 Clear all trusted device authorisations and force new logins
                             </td>
@@ -878,11 +878,11 @@ endif;
                                 };
                             </script> 
                             <tr>
-                                <td colspan="4">
+                                <td colspan="4" style="border-width: 1px 0px;">
                                     <h2 class='h2pad'>Options</h2>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Two-Factor<br>Authentication</b>
                                 </td>
@@ -920,7 +920,7 @@ endif;
                                     endif; ?>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Collection view</b>
                                 </td>
@@ -941,7 +941,7 @@ endif;
                                     endif; ?>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Group cards</b> 
                                 </td>
@@ -968,7 +968,7 @@ endif;
                                     endif; ?>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Local currency</b>
                                 </td>
@@ -987,11 +987,11 @@ endif;
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="4">
+                                <td colspan="4" style="border-width: 1px 0px;">
                                     <h2 class='h2pad'>Collection management</h2>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Delete</b>
                                 </td>
@@ -1019,7 +1019,7 @@ endif;
                                     }
                                 }
                             </script>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left" style="padding-top: 10px;">
                                     <b>Import</b> 
                                 </td>
@@ -1080,7 +1080,7 @@ endif;
                                     </form>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>Export</b> 
                                 </td>
@@ -1095,7 +1095,7 @@ endif;
                                     </form>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     &nbsp;
                                 </td>
@@ -1110,7 +1110,7 @@ endif;
                                     </form>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="hoverhighlight">
                                 <td class="options_left">
                                     <b>&nbsp;</b>
                                 </td>
