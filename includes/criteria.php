@@ -597,7 +597,8 @@ else:
             $criteria .= "AND (($mytable.normal > 0) OR ($mytable.foil > 0) OR ($mytable.etched > 0)) ";
         elseif ($scope === "mycollection" && !empty($collqtyoperator)):
             if ($collqtyoperator === "ltn"):
-                $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) < ?) ";
+                $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) < ?)
+                              AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) > 0) ";
             elseif ($collqtyoperator === "gtr"):
                 $criteria .= "AND ((COALESCE($mytable.normal, 0) + COALESCE($mytable.foil, 0) + COALESCE($mytable.etched, 0)) > ?) ";
             else:  // ($collqtyoperator === "eq") - no other option possible here, so just 'else'
