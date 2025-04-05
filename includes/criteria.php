@@ -1,6 +1,6 @@
 <?php
-/* Version:     8.1
-    Date:       02/03/25
+/* Version:     8.2
+    Date:       05/04/25
     Name:       criteria.php
     Purpose:    PHP script to build search criteria
     Notes:      
@@ -47,6 +47,9 @@
  * 
  *  8.1         02/03/25
  *              Catch empty ability search
+ * 
+ *  8.2         05/04/25
+ *              MTGC-150 remove $nameexact, generating errors in header searches
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -61,7 +64,7 @@ else:
         $msg->logMessage('[DEBUG]',"Not advanced search called");
         // Not an advanced search called
         if (strlen($name) > 2 || !empty($setcoderegexsearch)): // Needs to have more than 2 characters to search
-            if ($exact === "yes" || $nameexact === "yes"):  // Used in 'Primary Printings' search from card_detail page
+            if ($exact === "yes"):  // Used in 'Primary Printings' search from card_detail page
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name, 
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
                                 cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name) 
