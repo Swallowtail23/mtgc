@@ -13,6 +13,7 @@
 */
 
 // Load required files
+$_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__);  // point to web root
 require_once(dirname(__FILE__) . '/../includes/ini.php');
 require_once(dirname(__FILE__) . '/../classes/trusteddevicemanager.class.php');
 
