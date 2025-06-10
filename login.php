@@ -43,13 +43,13 @@ require_once('includes/ini.php');               //Initialise and load ini file
 require_once('includes/error_handling.php');
 require_once('includes/functions.php');         //Includes basic functions for non-secure pages
 
+// Initialize message object for logging
+$msg = new Message($logfile);
+
 if (!isset($db) || !$db instanceof mysqli) {
     $msg->logMessage('[ERROR]', "Database connection is null or invalid in login.php");
     die("A database error occurred. Please try again later.");
 }
-
-// Initialize message object for logging
-$msg = new Message($logfile);
 
 // Find CSS Version
 $cssver = cssver();
