@@ -23,7 +23,7 @@
  *              Add PHPMailer variables
  * 
  *  5.1         07/07/24
- *              Add array for cards witrh brackets in names
+ *              Add array for cards with brackets in names
  * 
  *  5.2         09/12/24
  *              Move tribal here from index page
