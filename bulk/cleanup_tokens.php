@@ -1,6 +1,6 @@
 <?php
-/* Version:     1.0
-    Date:       28/02/25
+/* Version:     1.1
+    Date:       10/06/25
     Name:       cleanup_tokens.php
     Purpose:    Cleanup expired trusted device tokens
     Notes:      To be run via cron, e.g. daily
@@ -10,9 +10,12 @@
     
  *  1.0
                 Initial version
+    1.1         10/06/24
+                Added DOCUMENT_ROOT so can run when called from bulk folder by php-cli
 */
 
 // Load required files
+$_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__);  // point to web root
 require_once(dirname(__FILE__) . '/../includes/ini.php');
 require_once(dirname(__FILE__) . '/../classes/trusteddevicemanager.class.php');
 

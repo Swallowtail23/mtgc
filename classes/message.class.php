@@ -52,6 +52,11 @@ class Message
     {
         $log = $log ?: $this->logfile;
         
+        // Short-circuit if log path is empty or explicitly disabled
+        if (empty($log) || $log === 0):
+            return;
+        endif;
+        
         if (strpos($msg, "[DEBUG]") === 0):
             $msglevel = 3;
         elseif (strpos($msg, "[NOTICE]") === 0):

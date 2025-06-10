@@ -1,0 +1,28 @@
+name: PHPUnit Tests
+
+on:
+  push:
+    branches: [Develop]
+  pull_request:
+    branches: [Develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up PHP 8.2
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.2
+        extensions: mbstring, dom, json
+        coverage: none
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+
+    - name: Run PHPUnit
+      run: vendor/bin/phpunit --configuration phpunit.xml

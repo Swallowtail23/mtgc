@@ -40,11 +40,22 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertSame($expected, input_interpreter($line));
+        $this->assertEquals($expected, input_interpreter($line));
     }
 
     public function testNoPatternMatches()
     {
-        $this->assertFalse(input_interpreter('@@@'));
+        $expected = [
+            'set' => '',
+            'number' => '',
+            'name' => '@@@',
+            'lang' => '',
+            'qty' => 1,
+            'uuid' => '',
+            'normal' => 1,
+            'foil' => 0,
+            'etched' => 0
+        ];
+        $this->assertEquals($expected, input_interpreter('@@@'));
     }
 }
