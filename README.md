@@ -277,7 +277,7 @@ On the server's console, from the 'bulk' folder, run:
 - ```php scryfall_rulings.php```
 - ```php scryfall_migrations.php```
 
-Note, the first bulk all load can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
+Note, the first bulk all load ('php scryfall_bulk.php all') can take a VERY long time. Running with the 'all' parameter will NOT download any card images.
 
 - It is important for the first bulk run to include 'all', otherwise the bulk script will attempt to download 80,000+ images in its first default run (Scryfall.com will likely have concerns about that)
 - See also notes below on card images
@@ -307,7 +307,7 @@ Once database is setup and working, manually check and test-run the bulk scripts
 - cleanup_tokens
 
 Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder - check path and user.
-Schedule `cleanup_tokens.sh` (or call `cleanup_tokens.php`) via cron—run it daily as the web server user (e.g., `apache`) to remove expired trusted-device entries.
+Schedule `cleanup_tokens.sh` to run daily to remove expired trusted-device entries.
 
 ### PAGE LOAD SEQUENCE ###
 
