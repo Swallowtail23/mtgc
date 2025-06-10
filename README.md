@@ -222,7 +222,7 @@ Ini file content:
     [comments]
     Disqus         = "disabled"
     DisqusDevURL   = "https://dev-url-here.disqus.com"
-    DisqusDevURL   = "https://prod-url-here.disqus.com"
+    DisqusProdURL   = "https://prod-url-here.disqus.com"
 
 
 Before using:
