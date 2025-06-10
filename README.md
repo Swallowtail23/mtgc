@@ -135,17 +135,17 @@ To setup Turnstile
 - uses endroid/qr-code
 
 #### Composer apps ####
-Run composer from mtg directory on server
+Installed composer apps:
 
-- composer require andkab/php-turnstile
-- composer require everapi/freecurrencyapi-php:dev-master
-- composer require halaxa/json-machine
-- composer require phpmailer/phpmailer
-- composer require spomky-labs/otphp
-- composer require endroid/qr-code
+- andkab/php-turnstile
+- everapi/freecurrencyapi-php:dev-master
+- halaxa/json-machine
+- phpmailer/phpmailer
+- spomky-labs/otphp
+- endroid/qr-code
+- --dev phpunit/phpunit
 
-To install composer apps as apache: ```sudo -Hu apache composer require halaxa/json-machine```
-To install all required: ```sudo -Hu apache composer update```
+To install composer apps as apache: ```sudo -Hu apache composer install```
 
 #### Disqus ####
 The site can integrate Disqus commenting into card detail pages.
@@ -160,7 +160,7 @@ The app/site uses three filesystem locations:
 - application shell scripts, ini file - default is in /opt/mtg/
 - log location, default is in /var/log/mtg
 
-Setup:
+Post-install setup:
 
 - Create a new folder at /opt/mtg
 - Copy the ini file from /setup (see next section) to /opt/mtg
