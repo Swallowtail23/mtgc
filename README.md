@@ -304,8 +304,10 @@ Once database is setup and working, manually check and test-run the bulk scripts
 - migrations
 - rulings
 - weekly
+- cleanup_tokens
 
 Setup cron jobs to run each bulk file and also weekly email file from /opt/mtg (run as root) and FX update script. Note the sets.sh file ensures that Apache has write access to the cardimg folder - check path and user.
+Schedule `cleanup_tokens.sh` (or call `cleanup_tokens.php`) via cron—run it daily as the web server user (e.g., `apache`) to remove expired trusted-device entries.
 
 ### PAGE LOAD SEQUENCE ###
 
