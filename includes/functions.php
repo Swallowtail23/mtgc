@@ -1754,6 +1754,8 @@ function input_interpreter($input_string)
                 'foil' => 0,
                 'etched' => 0
             ];
+        else:
+            return false;
         endif;
         return $output;
     endif;
