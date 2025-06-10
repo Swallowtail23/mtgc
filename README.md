@@ -170,6 +170,18 @@ Post-install setup:
 - Make sure the ImgLocation folder (see ini file) exists and is web-server-writable, and is presented to be served as 'cardimg' folder in Apache (I use a soft-link from /opt/mtg/cardimg to a drive with sufficient space)
 - Make sure there is a web-server-readable/writeable json folder in the Imglocation folder (used for scryfall json files)
 
+### Docker ###
+A `Dockerfile` and `docker-compose.yml` are provided to run the site in containers. Copy `setup/mtg_new.ini` to a host folder such as `/opt/mtg` and mount it into the `web` service. Ensure `/var/log/mtg` and the mounted `cardimg` directory are writable by Apache.
+
+Run the containers with:
+
+```bash
+docker-compose up --build
+```
+
+See `docker-compose.override.yml.example` for custom paths or credentials.
+
+
 ### Ini file ###
 - The application expects an ini file located at: /opt/mtg/mtg_new.ini (path can be changed in ini.php if required)
 - Your web server must be able to read AND write this file
