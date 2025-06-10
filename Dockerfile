@@ -15,7 +15,7 @@ RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot ${APACHE_DOCUMENT_ROOT}#'
     && sed -ri 's#/var/www/html#${APACHE_DOCUMENT_ROOT}#' /etc/apache2/apache2.conf
 
 # Copy custom Apache configuration and enable required modules
-COPY setup/mtgc.conf /etc/apache2/sites-available/mtgc.conf
+COPY setup/mtgc_ctr.conf /etc/apache2/sites-available/mtgc.conf
 RUN a2dissite 000-default.conf && a2ensite mtgc.conf \
     && a2enmod rewrite expires headers deflate
 

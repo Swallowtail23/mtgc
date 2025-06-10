@@ -44,7 +44,8 @@ Thanks to:
 Install under a full-function web server (e.g. Apache)
 
 - e.g. git clone the master branch into /var/www/mtgc (I regularly break things in dev, and less regularly in master)
-- See setup/mtgc.conf for sample Apache configuration file
+- See setup/mtgc.conf for a full Apache configuration file
+- setup/mtgc_ctr.conf is a simplified variant used by the container setup
 - check and set all paths, names, IP addresses, certificates, etc.
 - IMPORTANT: Sample config restricts bulk and setup folders to localhost access
 
@@ -171,7 +172,7 @@ Post-install setup:
 - Make sure there is a web-server-readable/writeable json folder in the Imglocation folder (used for scryfall json files)
 
 ### Docker ###
-A `Dockerfile` and `docker-compose.yml` are provided to run the site in containers. Copy `setup/mtg_new.ini` to a host folder such as `/opt/mtg` and mount it into the `web` service. Ensure `/var/log/mtg` and the mounted `cardimg` directory are writable by Apache.
+A `Dockerfile` and `docker-compose.yml` are provided to run the site in containers. The image uses `setup/mtgc_ctr.conf` for Apache. Copy `setup/mtg_new.ini` to a host folder such as `/opt/mtg` and mount it into the `web` service. Ensure `/var/log/mtg` and the mounted `cardimg` directory are writable by Apache.
 
 Run the containers with:
 

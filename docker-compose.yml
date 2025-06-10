@@ -7,7 +7,7 @@ services:
     volumes:
       - ./cardimg:/mnt/data/cardimg
       - ./opt/mtg:/opt/mtg:ro
-      - ./setup/mtgc.conf:/etc/apache2/sites-available/mtgc.conf:ro
+      - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
     depends_on:
       - db
   db:
