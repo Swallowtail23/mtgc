@@ -6,6 +6,7 @@ $GLOBALS['loglevelini'] = 0;
 $db = new class {
     public function real_escape_string($str) { return $str; }
 };
+$GLOBALS['db'] = $db;
 
 $bracketsInNames = [];
 $importLinestoIgnore = [];
