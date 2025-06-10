@@ -179,6 +179,10 @@ Run the containers with:
 docker-compose up --build
 ```
 
+The compose file expects `./cardimg` and `./opt/mtg` directories to exist on the
+host. `cardimg` stores downloaded card images and must be writable by Apache,
+while `opt/mtg` should contain `mtg_new.ini` and will be mounted read-only.
+
 See `docker-compose.override.yml.example` for custom paths or credentials.
 
 
@@ -280,7 +284,9 @@ Edit my.cnf and set as follows:
 Note 2G sizing is based on 4G or more server RAM.
 
 #### Initial database population ####
-Check you have required database setup, and that the database user can use the database.
+When using the provided `docker-compose.yml`, `setup/mtg_new.sql` is automatically loaded
+into the MySQL container on first start. When running manually ensure the database user
+has permissions to create tables and that the schema is loaded.
 
 On the server's console, from the 'bulk' folder, run:
 

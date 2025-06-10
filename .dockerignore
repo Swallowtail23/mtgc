@@ -1,33 +1,30 @@
-# Ignore Git repository
+# Ignore version control
 .git
+.github/
 
-# Node modules
-node_modules/
+# Dependency directories
+vendor/
+/node_modules
 
-# Tests
+# Test suites and configs
 /tests
+.phpunit.result.cache
+phpunit.xml
 
-# Build artifacts and IDE files
+# Local overrides and IDE files
+includes/sessionname.local.php
 nbproject/
 build/
 nbbuild/
 dist/
 nbdist/
 .nb-gradle/
-cardimg/
 .idea/
 
-# Well-known directory
-./well-known
-/.well-known/
+# Runtime data that should be mounted separately
+cardimg/
+.well-known/
 
-# Composer vendor directory and local config
-/vendor
-/includes/sessionname.local.php
-vendor/
+# Docker compose overrides
+docker-compose.override.yml*
 
-# PHP unit cache
-.phpunit.result.cache
-
-# GitHub configuration
-.github/
