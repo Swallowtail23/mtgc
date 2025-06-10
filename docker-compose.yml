@@ -7,6 +7,7 @@ services:
     volumes:
       - ./cardimg:/mnt/data/cardimg
       - ./opt/mtg:/opt/mtg:ro
+      - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
     depends_on:
       - db
   db:
@@ -20,5 +21,7 @@ services:
       MYSQL_PASSWORD: mtgpass
     volumes:
       - db-data:/var/lib/mysql
+      - ./setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro
+      - ./setup/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
 volumes:
   db-data:
