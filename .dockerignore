@@ -1,0 +1,33 @@
+# Ignore Git repository
+.git
+
+# Node modules
+node_modules/
+
+# Tests
+/tests
+
+# Build artifacts and IDE files
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+cardimg/
+.idea/
+
+# Well-known directory
+./well-known
+/.well-known/
+
+# Composer vendor directory and local config
+/vendor
+/includes/sessionname.local.php
+vendor/
+
+# PHP unit cache
+.phpunit.result.cache
+
+# GitHub configuration
+.github/
