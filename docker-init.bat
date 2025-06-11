@@ -46,12 +46,16 @@ for /f "tokens=*" %%v in ('docker volume ls --format "{{.Name}}" ^| findstr /i "
 
 :: Wait for MySQL to become available
 echo Waiting for MySQL to be available...
+
 :waitloop
-docker exec mtgc-web-1 mysqladmin ping -h"db" --silent >nul 2>&1
-if errorlevel 1 (
-    timeout /t 2 >nul
+docker exec mtgc-web-1 mysqladmin ping -h"db" --silent
+if %errorlevel% neq 0 (
+    echo MySQL is not available yet. Waiting...
+    timeout /t 2 /nobreak >nul
     goto waitloop
 )
+
+echo MySQL is available.
 
 :: If new DB, do full setup
 if "!DO_DB_SETUP!"=="1" (
