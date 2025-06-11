@@ -1,4 +1,6 @@
 FROM mysql:8
 
+RUN apt-get update && apt-get install -y tzdata
+
 COPY setup/my.cnf /etc/mysql/conf.d/custom.cnf
 RUN chmod 644 /etc/mysql/conf.d/custom.cnf
