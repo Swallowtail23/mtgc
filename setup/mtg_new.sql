@@ -1014,3 +1014,11 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- Set up initial admin row
+INSERT INTO `admin` (`key`, `usemin`, `mtce`) VALUES
+(1, 0, 0);
+
+-- Initial group (for future use)
+INSERT INTO `groups` (`groupnumber`, `groupname`, `owner`) VALUES
+(1, 'Masters', 1);
