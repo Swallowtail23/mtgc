@@ -58,17 +58,15 @@ if %errorlevel% neq 0 (
 echo MySQL is available
 
 REM If new DB, do full setup
-echo 61
 if "!DO_DB_SETUP!"=="1" (
-    echo 63
     echo MySQL is available. Starting initial setup...
 
     REM Put DB into maintenance mode
-    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
+    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (`key`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
     REM Prompt for user info
     set /p email=Enter email address for admin user: 
-    set /p username=Enter desired username (display only): 
+    set /p username=Enter desired username ^(display only^): 
     set /p password=Enter password: 
 
     REM Generate hashed password
@@ -91,7 +89,6 @@ if "!DO_DB_SETUP!"=="1" (
         "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
 
 ) else (
-    echo 94
     echo MySQL is available. Skipping user/admin setup - database volume already exists.
     if not exist "%MARKER_FILE%" (
         echo Existing DB volume but no import marker - assuming import was already run.
