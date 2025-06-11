@@ -83,8 +83,15 @@ if "%DO_DB_SETUP%"=="1" (
         "UPDATE mtg.users SET admin=1 WHERE username='%username%';"
     docker exec mtgc-db-1 mysql -u root -prootpass -e ^
         "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
+
 ) else (
     echo ✅ MySQL is available. Skipping user/admin setup — database volume already exists.
+
+    :: Backfill .scryfall_import_done if missing
+    if not exist "%MARKER_FILE%" (
+        echo ⚠️ Existing DB volume but no import marker — assuming import was already run.
+        echo done > "%MARKER_FILE%"
+    )
 )
 
 :: Run bulk import if not already done
