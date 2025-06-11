@@ -1,13 +1,17 @@
 #!/bin/bash
 
-# Prompt for base directory
-read -p "Enter base directory for data/config/logs (e.g. /opt/mtg): " BASE_DIR
+# Prompt for base directory (parent)
+read -p "Enter base directory for data/config/logs (e.g. /home/username). A \"mtgc\" subfolder will be created: " BASE_PARENT
 
 # Validate input
-if [ -z "$BASE_DIR" ]; then
+if [ -z "$BASE_PARENT" ]; then
     echo "❌ Base directory is required. Aborting."
     exit 1
 fi
+
+# Normalize trailing slash and append 'mtgc'
+BASE_PARENT="${BASE_PARENT%/}"         # Remove trailing slash if present
+BASE_DIR="$BASE_PARENT/mtgc"
 
 # Create required structure
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
