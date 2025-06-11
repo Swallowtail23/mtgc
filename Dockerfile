@@ -24,6 +24,7 @@ COPY . /var/www/mtgnew
 # Copy setup scripts for cron jobs
 RUN mkdir -p /opt/mtg 
 COPY setup/*.sh /opt/mtg/
+RUN chmod +x /opt/mtg/*.sh
 
 WORKDIR /var/www/mtgnew
 
@@ -35,4 +36,4 @@ RUN docker-php-ext-install gd
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["/opt/mtg/wait-for-mysql.sh", "db", "apache2-foreground"]
