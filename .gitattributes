@@ -1,0 +1,42 @@
+# Normalize all text files to LF
+* text=auto eol=lf
+
+# Force LF for shell scripts
+*.sh text eol=lf
+
+# Force LF for Docker-related files
+Dockerfile* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.env text eol=lf
+
+# Force LF for PHP source code
+*.php text eol=lf
+*.phtml text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+
+# SQL files
+*.sql text eol=lf
+
+# INI and config
+*.ini text eol=lf
+*.conf text eol=lf
+
+# Logs (optional — often excluded via .gitignore)
+*.log text eol=lf
+
+# No normalization for binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+
+# Prevent line-ending changes on card images or external data
+/mnt/data/cardimg/** binary
