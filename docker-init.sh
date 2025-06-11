@@ -1,15 +1,32 @@
 #!/bin/bash
 
-# Ensure config directory exists
-mkdir -p ./opt/mtg
+# Prompt for base directory
+read -p "Enter base directory for data/config/logs (e.g. /opt/mtg): " BASE_DIR
 
-# Copy placeholder config file if it doesn't exist
-if [ ! -f ./opt/mtg/mtg_new.ini ]; then
-    echo "Creating editable config file from template..."
-    cp ./setup/mtg_new.ini ./opt/mtg/mtg_new.ini
+# Validate input
+if [ -z "$BASE_DIR" ]; then
+    echo "❌ Base directory is required. Aborting."
+    exit 1
 fi
 
-# Start containers (build if needed)
+# Create required structure
+mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
+
+# Copy .env file
+cat > .env <<EOF
+BASE_DIR=$BASE_DIR
+EOF
+
+# Copy placeholder config file if it doesn't exist
+if [ ! -f "$BASE_DIR/config/mtg_new.ini" ]; then
+    echo "Creating editable config file from template..."
+    cp ./setup/mtg_new.ini "$BASE_DIR/config/mtg_new.ini"
+fi
+
+# Set ownership to ensure container (www-data) can write
+sudo chown -R 33:33 "$BASE_DIR/cardimg" "$BASE_DIR/logs"
+
+# Start containers
 docker-compose up --build -d
 
 echo "⏳ Waiting for MySQL to be available..."
@@ -20,31 +37,28 @@ done
 echo "✅ MySQL is available. Starting initial setup..."
 
 # Put DB in maintenance mode
-docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE `key`=1;"
+docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE \`key\`=1;"
 
-# Load bulk data
-echo Running bulk import scripts...
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+# Run bulk import scripts
+for script in scryfall_bulk.php scryfall_sets.php scryfall_rulings.php scryfall_migrations.php; do
+    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php $script"
+done
 
+# Prompt for user details
 echo ""
 read -p "Enter email address for admin user: " email
 read -p "Enter desired username (display only): " username
 read -sp "Enter password: " password
-echo ""
 
+# Generate hashed password
 hash_output=$(docker exec mtgc-web-1 php /var/www/mtgnew/setup/initial.php "$username" "$password")
 hashed=$(echo "$hash_output" | grep 'Hashed password:' | awk -F': ' '{print $2}')
 
+# Insert user and admin data
 docker exec mtgc-db-1 mysql -u root -prootpass -e \
     "INSERT INTO mtg.users (username, email, password, reg_date, status) VALUES ('$username', '$email', '$hashed', NOW(), 'active');"
-
 docker exec mtgc-db-1 mysql -u root -prootpass -e \
     "UPDATE mtg.users SET admin=1 WHERE username='$username';"
-
-# Finalise admin setup
 docker exec mtgc-db-1 mysql -u root -prootpass -e \
     "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 docker exec mtgc-db-1 mysql -u root -prootpass -e \
