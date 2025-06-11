@@ -32,9 +32,9 @@ if not exist "%BASE_DIR%\config\mtg_new.ini" (
 )
 
 REM Copy placeholder php config if not already present
-if not exist "%BASE_DIR%\config\php-custom.ini" (
+if not exist "%BASE_DIR%\config\php_custom.ini" (
     echo Creating php config file from template...
-    copy "setup\php-custom.ini" "%BASE_DIR%\config\php-custom.ini"
+    copy "setup\php_custom.ini" "%BASE_DIR%\config\php_custom.ini"
 )
 
 REM Set write permissions
