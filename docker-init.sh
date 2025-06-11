@@ -23,10 +23,11 @@ echo "✅ MySQL is available. Starting initial setup..."
 docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE `key`=1;"
 
 # Load bulk data
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_bulk.php all
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_sets.php
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_rulings.php
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_migrations.php
+echo Running bulk import scripts...
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
 
 echo ""
 read -p "Enter email address for admin user: " email
