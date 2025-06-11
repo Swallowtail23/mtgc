@@ -930,7 +930,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `tfa_enabled` tinyint NOT NULL DEFAULT '0',
   `tfa_method` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `tfa_backup_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tfa_app_secret` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `tfa_app_secret` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`usernumber`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
