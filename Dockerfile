@@ -22,7 +22,8 @@ RUN a2dissite 000-default.conf && a2ensite mtgc.conf \
 # Copy source
 COPY . /var/www/mtgnew
 # Copy setup scripts for cron jobs
-RUN mkdir -p /opt/mtg && cp setup/*.sh /opt/mtg/
+RUN mkdir -p /opt/mtg 
+COPY setup/*.sh /opt/mtg/
 
 WORKDIR /var/www/mtgnew
 
