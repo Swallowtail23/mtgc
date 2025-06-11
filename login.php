@@ -289,7 +289,8 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                         if (headers_sent($file, $line)) {
-                                            error_log("⚠️ Headers already sent in $file on line $line");
+                                            $msg->logMessage('[ERROR]',"Headers already sent in $file on line $line");
+                                            die;
                                         }
                                         session_regenerate_id(true);
                                         $_SESSION["logged"] = TRUE;
