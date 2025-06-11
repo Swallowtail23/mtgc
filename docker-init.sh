@@ -24,6 +24,10 @@ if [ ! -f "$BASE_DIR/config/mtg_new.ini" ]; then
     cp ./setup/mtg_new.ini "$BASE_DIR/config/mtg_new.ini"
 fi
 
+# Ensure the config file is writable by www-data inside the container (UID 33)
+sudo chown 33:33 "$BASE_DIR/config/mtg_new.ini"
+chmod 664 "$BASE_DIR/config/mtg_new.ini"
+
 # Set ownership for container (www-data = uid 33)
 sudo chown -R 33:33 "$BASE_DIR/cardimg" "$BASE_DIR/logs"
 
