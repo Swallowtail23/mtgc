@@ -85,25 +85,25 @@ if "!DO_DB_SETUP!"=="1" (
         "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
 
 ) else (
-    echo MySQL is available. Skipping user/admin setup — database volume already exists.
+    echo MySQL is available. Skipping user/admin setup - database volume already exists.
 
     :: Backfill .scryfall_import_done if missing
     if not exist "%MARKER_FILE%" (
-        echo Existing DB volume but no import marker — assuming import was already run.
+        echo Existing DB volume but no import marker - assuming import was already run.
         echo done > "%MARKER_FILE%"
     )
 )
 
 :: Run bulk import if not already done
 if not exist "%MARKER_FILE%" (
-    echo Running bulk Scryfall import — this may take up to 2 hours...
+    echo Running bulk Scryfall import - this may take up to 2 hours...
     docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
     docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
     docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
     docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
     echo done > "%MARKER_FILE%"
 ) else (
-    echo Bulk import already completed previously — skipping.
+    echo Bulk import already completed previously - skipping.
 )
 
 :: Clear DB maintenance mode
