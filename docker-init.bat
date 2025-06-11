@@ -13,6 +13,7 @@ if "%BASE_PARENT%"=="" (
 :: Normalize slashes and append mtgc
 set "BASE_PARENT=%BASE_PARENT:/=\%"
 set "BASE_DIR=%BASE_PARENT%\mtgc"
+set "MARKER_FILE=%BASE_DIR%\logs\.scryfall_import_done"
 
 :: Create required directories
 mkdir "%BASE_DIR%\cardimg"
@@ -30,11 +31,18 @@ if not exist "%BASE_DIR%\config\mtg_new.ini" (
     copy "setup\mtg_new.ini" "%BASE_DIR%\config\mtg_new.ini"
 )
 
-:: Set write permissions (relies on NTFS ACLs being inherited or not restrictive)
+:: Set write permissions
 attrib -R "%BASE_DIR%\config\mtg_new.ini"
 
 :: Start Docker containers
 docker-compose up --build -d
+
+:: Check if db-data volume already exists
+set DO_DB_SETUP=1
+for /f "tokens=*" %%v in ('docker volume ls --format "{{.Name}}" ^| findstr /i "mtgc_db-data"') do (
+    echo 📦 Existing DB volume found: %%v
+    set DO_DB_SETUP=0
+)
 
 :: Wait for MySQL to become available
 echo ⏳ Waiting for MySQL to be available...
@@ -45,46 +53,55 @@ if errorlevel 1 (
     goto waitloop
 )
 
-:: Proceed with setup
-echo ✅ MySQL is available. Starting initial setup...
+:: If new DB, do full setup
+if "%DO_DB_SETUP%"=="1" (
+    echo ✅ MySQL is available. Starting initial setup...
 
-:: Put DB into maintenance mode
-docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE `key`=1;"
+    :: Put DB into maintenance mode
+    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
-:: Prompt for user info
-set /p email=Enter email address for admin user: 
-set /p username=Enter desired username (display only): 
-set /p password=Enter password: 
+    :: Prompt for user info
+    set /p email=Enter email address for admin user: 
+    set /p username=Enter desired username (display only): 
+    set /p password=Enter password: 
 
-:: Generate hashed password
-for /f "tokens=*" %%A in ('docker exec mtgc-web-1 php /var/www/mtgnew/setup/initial.php "%username%" "%password%"') do (
-    echo %%A | findstr "Hashed password:" >nul
-    if not errorlevel 1 (
-        for /f "tokens=2 delims=:" %%H in ("%%A") do set hashed=%%H
+    :: Generate hashed password
+    for /f "tokens=*" %%A in ('docker exec mtgc-web-1 php /var/www/mtgnew/setup/initial.php "%username%" "%password%"') do (
+        echo %%A | findstr "Hashed password:" >nul
+        if not errorlevel 1 (
+            for /f "tokens=2 delims=:" %%H in ("%%A") do set hashed=%%H
+        )
     )
+
+    :: Trim spaces if any
+    set hashed=%hashed: =%
+
+    :: Insert user and admin records
+    docker exec mtgc-db-1 mysql -u root -prootpass -e ^
+        "INSERT INTO mtg.users (username, email, password, reg_date, status) VALUES ('%username%', '%email%', '%hashed%', NOW(), 'active');"
+    docker exec mtgc-db-1 mysql -u root -prootpass -e ^
+        "UPDATE mtg.users SET admin=1 WHERE username='%username%';"
+    docker exec mtgc-db-1 mysql -u root -prootpass -e ^
+        "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
+) else (
+    echo ✅ MySQL is available. Skipping user/admin setup — database volume already exists.
 )
 
-:: Trim spaces if any
-set hashed=%hashed: =%
-
-:: Insert user and admin records
-docker exec mtgc-db-1 mysql -u root -prootpass -e ^
-    "INSERT INTO mtg.users (username, email, password, reg_date, status) VALUES ('%username%', '%email%', '%hashed%', NOW(), 'active');"
-docker exec mtgc-db-1 mysql -u root -prootpass -e ^
-    "UPDATE mtg.users SET admin=1 WHERE username='%username%';"
-docker exec mtgc-db-1 mysql -u root -prootpass -e ^
-    "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
-
-:: Run bulk import scripts
-echo Importing data - first run can take up to 2 hours
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+:: Run bulk import if not already done
+if not exist "%MARKER_FILE%" (
+    echo Running bulk Scryfall import — this may take up to 2 hours...
+    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+    echo done > "%MARKER_FILE%"
+) else (
+    echo 💤 Bulk import already completed previously — skipping.
+)
 
 :: Clear DB maintenance mode
-docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=0 WHERE `key`=1;"
+docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
-echo ✅ Initial setup complete. You can now log in via http://localhost:8080
+echo ✅ Setup complete. You can now log in via http://localhost:8080
 
 endlocal
