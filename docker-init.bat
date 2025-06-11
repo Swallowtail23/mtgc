@@ -62,7 +62,7 @@ if "!DO_DB_SETUP!"=="1" (
     echo MySQL is available. Starting initial setup...
 
     REM Put DB into maintenance mode
-    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (`key`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
+    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
     REM Prompt for user info
     set /p email=Enter email address for admin user: 
@@ -78,7 +78,9 @@ if "!DO_DB_SETUP!"=="1" (
     )
 
     REM Trim spaces if any
-    set hashed=%hashed: =%
+    if defined hashed (
+        set "hashed=%hashed: =%"
+    )
 
     REM Insert user and admin records
     docker exec mtgc-db-1 mysql -u root -prootpass -e ^
