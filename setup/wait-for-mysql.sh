@@ -6,8 +6,8 @@ shift
 cmd="$@"
 
 until mysqladmin ping -h "$host" --silent; do
-  echo "⏳ Waiting for MySQL at $host..."
-  sleep 2
+echo "⏳ Waiting for MySQL at $host..."
+sleep 2
 done
 
 echo "✅ MySQL is up. Executing: $cmd"
