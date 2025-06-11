@@ -54,7 +54,7 @@ if errorlevel 1 (
 )
 
 :: If new DB, do full setup
-if "%DO_DB_SETUP%"=="1" (
+if "!DO_DB_SETUP!"=="1" (
     echo MySQL is available. Starting initial setup...
 
     :: Put DB into maintenance mode
