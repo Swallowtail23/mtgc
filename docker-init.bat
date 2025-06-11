@@ -62,7 +62,7 @@ if "!DO_DB_SETUP!"=="1" (
     echo MySQL is available. Starting initial setup...
 
     REM Put DB into maintenance mode
-    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
+    docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (`key`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
     REM Prompt for user info
     set /p email=Enter email address for admin user: 
@@ -111,7 +111,7 @@ if not exist "%MARKER_FILE%" (
 )
 
 REM Clear DB maintenance mode
-docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
+docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (`key`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
 echo Setup complete. You can now log in via http://localhost:8080
 
