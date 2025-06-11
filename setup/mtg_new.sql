@@ -21,8 +21,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `mtg_new`
 --
-CREATE DATABASE IF NOT EXISTS `mtg_new` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `mtg_new`;
+CREATE DATABASE IF NOT EXISTS `mtg` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `mtg`;
 
 -- --------------------------------------------------------
 
