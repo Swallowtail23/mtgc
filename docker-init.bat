@@ -6,7 +6,7 @@ set /p BASE_PARENT=Enter base directory for data/config/logs (e.g. C:\Users\name
 
 :: Validate input
 if "%BASE_PARENT%"=="" (
-    echo ❌ Base directory is required. Aborting.
+    echo [ERROR] Base directory is required. Aborting.
     exit /b 1
 )
 
@@ -40,12 +40,12 @@ docker-compose up --build -d
 :: Check if db-data volume already exists
 set DO_DB_SETUP=1
 for /f "tokens=*" %%v in ('docker volume ls --format "{{.Name}}" ^| findstr /i "mtgc_db-data"') do (
-    echo 📦 Existing DB volume found: %%v
+    echo Existing DB volume found: %%v
     set DO_DB_SETUP=0
 )
 
 :: Wait for MySQL to become available
-echo ⏳ Waiting for MySQL to be available...
+echo Waiting for MySQL to be available...
 :waitloop
 docker exec mtgc-web-1 mysqladmin ping -h"db" --silent >nul 2>&1
 if errorlevel 1 (
@@ -55,7 +55,7 @@ if errorlevel 1 (
 
 :: If new DB, do full setup
 if "%DO_DB_SETUP%"=="1" (
-    echo ✅ MySQL is available. Starting initial setup...
+    echo MySQL is available. Starting initial setup...
 
     :: Put DB into maintenance mode
     docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
@@ -85,11 +85,11 @@ if "%DO_DB_SETUP%"=="1" (
         "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
 
 ) else (
-    echo ✅ MySQL is available. Skipping user/admin setup — database volume already exists.
+    echo MySQL is available. Skipping user/admin setup — database volume already exists.
 
     :: Backfill .scryfall_import_done if missing
     if not exist "%MARKER_FILE%" (
-        echo ⚠️ Existing DB volume but no import marker — assuming import was already run.
+        echo Existing DB volume but no import marker — assuming import was already run.
         echo done > "%MARKER_FILE%"
     )
 )
@@ -103,12 +103,12 @@ if not exist "%MARKER_FILE%" (
     docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
     echo done > "%MARKER_FILE%"
 ) else (
-    echo 💤 Bulk import already completed previously — skipping.
+    echo Bulk import already completed previously — skipping.
 )
 
 :: Clear DB maintenance mode
 docker exec mtgc-db-1 mysql -u root -prootpass -e "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
-echo ✅ Setup complete. You can now log in via http://localhost:8080
+echo Setup complete. You can now log in via http://localhost:8080
 
 endlocal
