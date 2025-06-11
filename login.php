@@ -109,6 +109,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
                 $trusted_login = true;
                 // Immediately redirect, skipping the login form
                 $redirectTarget = $_SESSION['redirect_url'] ?? 'index.php';
+                ob_end_clean(); // Clean any buffered output before redirect
                 header("Location: $redirectTarget");
                 exit();                
             endif;
@@ -285,6 +286,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         // Start 2FA verification process and redirect
                                         $tfaManager->startVerification($userstat_result['number'], $email);
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
+                                        ob_end_clean();
                                         header("Location: verify_2fa.php");
                                         exit();
                                     else:
@@ -395,6 +397,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 // Show the trust device prompt
                 ?>
                 <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt");
+                ob_end_clean();
                 header("Location: trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php'));
                 exit();
             endif;
