@@ -4,6 +4,7 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
         git unzip \
         libpng-dev \
+        tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
