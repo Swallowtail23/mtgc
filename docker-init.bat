@@ -30,6 +30,9 @@ if not exist "%BASE_DIR%\config\mtg_new.ini" (
     copy "setup\mtg_new.ini" "%BASE_DIR%\config\mtg_new.ini"
 )
 
+:: Set write permissions (relies on NTFS ACLs being inherited or not restrictive)
+attrib -R "%BASE_DIR%\config\mtg_new.ini"
+
 :: Start Docker containers
 docker-compose up --build -d
 
