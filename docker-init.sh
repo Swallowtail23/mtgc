@@ -44,9 +44,10 @@ echo "✅ MySQL is available. Starting initial setup..."
 docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE \`key\`=1;"
 
 # Run bulk import scripts
-for script in scryfall_bulk.php scryfall_sets.php scryfall_rulings.php scryfall_migrations.php; do
-    docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php $script"
-done
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
 
 # Prompt for user details
 echo ""
