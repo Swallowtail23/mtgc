@@ -4,8 +4,9 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./cardimg:/mnt/data/cardimg
-      - ./opt/mtg/mtg_new.ini:/opt/mtg/mtg_new.ini
+      - ${BASE_DIR}/cardimg:/mnt/data/cardimg
+      - ${BASE_DIR}/config/mtg_new.ini:/opt/mtg/mtg_new.ini
+      - ${BASE_DIR}/logs:/var/log/mtg
       - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
     depends_on:
       - db
