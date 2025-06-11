@@ -47,6 +47,8 @@ RUN docker-php-ext-install gd mysqli
 RUN chown -R www-data:www-data /mnt/data/cardimg || true \
  && chown -R www-data:www-data /opt/mtg || true
 
+RUN touch /var/log/mtg/mtgapp.log && chown www-data:www-data /var/log/mtg/mtgapp.log
+
 EXPOSE 80
 
 # Entry point: wait for DB, then launch Apache
