@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
         libpng-dev \
         tzdata \
         default-mysql-client \
+        msmtp \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
