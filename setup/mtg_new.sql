@@ -455,22 +455,19 @@ CREATE TABLE `users` (
 -- Indexes for table `1collection`
 --
 ALTER TABLE `1collection`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `admin`
 --
 ALTER TABLE `admin`
-  ADD PRIMARY KEY (`key`),
-  ADD UNIQUE KEY `key` (`key`);
+  ADD PRIMARY KEY (`key`);
 
 --
 -- Indexes for table `cards_scry`
 --
 ALTER TABLE `cards_scry`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`),
   ADD KEY `oracle_id` (`oracle_id`),
   ADD KEY `release_date` (`release_date`),
   ADD KEY `setcode` (`setcode`),
@@ -506,8 +503,7 @@ ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`f
 -- Indexes for table `collectionTemplate`
 --
 ALTER TABLE `collectionTemplate`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `deckcards`
@@ -520,23 +516,20 @@ ALTER TABLE `deckcards`
 -- Indexes for table `decks`
 --
 ALTER TABLE `decks`
-  ADD PRIMARY KEY (`decknumber`),
-  ADD UNIQUE KEY `decknumber` (`decknumber`);
+  ADD PRIMARY KEY (`decknumber`);
 
 --
 -- Indexes for table `decktypes`
 --
 ALTER TABLE `decktypes`
   ADD PRIMARY KEY (`typenumber`),
-  ADD UNIQUE KEY `typenumber` (`typenumber`),
   ADD KEY `name` (`name`);
 
 --
 -- Indexes for table `fx`
 --
 ALTER TABLE `fx`
-  ADD PRIMARY KEY (`currencies`),
-  ADD UNIQUE KEY `currencies` (`currencies`);
+  ADD PRIMARY KEY (`currencies`);
 
 --
 -- Indexes for table `groups`
@@ -548,8 +541,7 @@ ALTER TABLE `groups`
 -- Indexes for table `migrations`
 --
 ALTER TABLE `migrations`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `rulings_scry`
@@ -562,15 +554,13 @@ ALTER TABLE `rulings_scry`
 -- Indexes for table `scryfalljson`
 --
 ALTER TABLE `scryfalljson`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `sets`
 --
 ALTER TABLE `sets`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id` (`id`),
   ADD UNIQUE KEY `name_3` (`name`,`release_date`,`parent_set_code`) USING BTREE,
   ADD KEY `name_2` (`name`),
   ADD KEY `code_2` (`code`),
@@ -599,8 +589,7 @@ ALTER TABLE `trusted_devices`
 -- Indexes for table `updatenotices`
 --
 ALTER TABLE `updatenotices`
-  ADD PRIMARY KEY (`number`),
-  ADD UNIQUE KEY `number` (`number`);
+  ADD PRIMARY KEY (`number`);
 
 --
 -- Indexes for table `users`
