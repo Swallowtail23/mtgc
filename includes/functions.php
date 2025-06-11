@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.4
-    Date:       23/08/24
+/* Version:     24.5
+    Date:       11/06/25
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -93,6 +93,9 @@
  * 
  * 24.4         23/08/24
  *              MTGC-123 Use normal price for topvalue if needed
+ *
+ * 24.5         11/06/25
+ *              If Json subfolder not exists, create it (downloadBulk)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -501,31 +504,59 @@ function loginstamp($useremail)
 function downloadbulk($url, $dest)
 {
     global $db, $logfile;
+
+    // Ensure destination directory exists
+    $destDir = dirname($dest);
+    if (!is_dir($destDir)) {
+        if (!mkdir($destDir, 0775, true) && !is_dir($destDir)) {
+            // Fallback and log
+            error_log("[ERROR] Could not create directory: $destDir", 3, $logfile);
+            return false;
+        }
+    }
+
+    // Open destination file handle
+    $fp = fopen($dest, 'w');
+    if (!$fp) {
+        error_log("[ERROR] Could not open destination file: $dest", 3, $logfile);
+        return false;
+    }
+
+    // Set CURL options
     $options = array(
-      CURLOPT_FILE => is_resource($dest) ? $dest : fopen($dest, 'w'),
-      CURLOPT_FOLLOWLOCATION => true,
-      CURLOPT_URL => $url,
-      CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
-      CURLOPT_USERAGENT => "MtGCollection/1.0",
-      CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
+        CURLOPT_FILE => $fp,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_URL => $url,
+        CURLOPT_FAILONERROR => true,
+        CURLOPT_USERAGENT => "MtGCollection/1.0",
+        CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
     );
 
     $ch = curl_init();
     curl_setopt_array($ch, $options);
-    
-    # DEBUG
-    curl_setopt($ch, CURLOPT_VERBOSE, 1);
-    $fp = fopen($logfile, 'a');
-    curl_setopt($ch, CURLOPT_STDERR, $fp);
-    # END DEBUG
-    
-    $return = curl_exec($ch);
-    
-    if ($return === false):
+
+    // DEBUG
+    $logHandle = fopen($logfile, 'a');
+    if ($logHandle) {
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_STDERR, $logHandle);
+    }
+
+    $success = curl_exec($ch);
+    fclose($fp);
+
+    if ($logHandle) {
+        fclose($logHandle);
+    }
+
+    if ($success === false) {
+        error_log("[ERROR] CURL failed: " . curl_error($ch), 3, $logfile);
+        curl_close($ch);
         return curl_error($ch);
-    else:
-        return true;
-    endif;
+    }
+
+    curl_close($ch);
+    return true;
 }
 
 function getBulkInfo($type)
