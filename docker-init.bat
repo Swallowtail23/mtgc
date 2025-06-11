@@ -55,10 +55,12 @@ if %errorlevel% neq 0 (
     goto waitloop
 )
 
-echo MySQL is available.
+echo MySQL is available
 
 REM If new DB, do full setup
+echo 61
 if "!DO_DB_SETUP!"=="1" (
+    echo 63
     echo MySQL is available. Starting initial setup...
 
     REM Put DB into maintenance mode
@@ -89,6 +91,7 @@ if "!DO_DB_SETUP!"=="1" (
         "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
 
 ) else (
+    echo 94
     echo MySQL is available. Skipping user/admin setup - database volume already exists.
     if not exist "%MARKER_FILE%" (
         echo Existing DB volume but no import marker - assuming import was already run.
