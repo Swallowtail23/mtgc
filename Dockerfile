@@ -40,7 +40,7 @@ WORKDIR /var/www/mtgnew
 RUN composer install --no-dev --no-interaction --prefer-dist
 
 # Install required PHP extensions
-RUN docker-php-ext-install gd
+RUN docker-php-ext-install gd mysqli
 
 EXPOSE 80
 
