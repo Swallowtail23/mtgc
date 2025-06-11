@@ -15,7 +15,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/mtgnew
 RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot ${APACHE_DOCUMENT_ROOT}#' /etc/apache2/sites-available/000-default.conf \
     && sed -ri 's#/var/www/html#${APACHE_DOCUMENT_ROOT}#' /etc/apache2/apache2.conf
 # Copy the editable .ini template into image
-COPY setup/mtg-new.ini /opt/mtg/mtg-new.ini
+COPY setup/mtg_new.ini /opt/mtg/mtg_new.ini
 
 # Copy custom Apache configuration and enable required modules
 COPY setup/mtgc_ctr.conf /etc/apache2/sites-available/mtgc.conf
