@@ -25,6 +25,6 @@ nbdist/
 cardimg/
 .well-known/
 
-# Docker compose overrides
+# Docker files
 docker-compose.override.yml*
-
+Dockerfile*
