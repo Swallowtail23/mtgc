@@ -5,7 +5,7 @@ services:
       - "8080:80"
     volumes:
       - ./cardimg:/mnt/data/cardimg
-      - ./opt/mtg/mtg-new.ini:/opt/mtg/mtg-new.ini
+      - ./opt/mtg/mtg_new.ini:/opt/mtg/mtg_new.ini
       - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
     depends_on:
       - db
