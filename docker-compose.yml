@@ -23,5 +23,11 @@ services:
     volumes:
       - db-data:/var/lib/mysql
       - ./setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 volumes:
   db-data:
