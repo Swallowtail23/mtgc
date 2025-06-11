@@ -48,12 +48,6 @@ echo ✅ MySQL is available. Starting initial setup...
 :: Put DB into maintenance mode
 docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE `key`=1;"
 
-:: Run bulk import scripts
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
-docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
-
 :: Prompt for user info
 set /p email=Enter email address for admin user: 
 set /p username=Enter desired username (display only): 
@@ -76,9 +70,17 @@ docker exec mtgc-db-1 mysql -u root -prootpass -e ^
 docker exec mtgc-db-1 mysql -u root -prootpass -e ^
     "UPDATE mtg.users SET admin=1 WHERE username='%username%';"
 docker exec mtgc-db-1 mysql -u root -prootpass -e ^
-    "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
-docker exec mtgc-db-1 mysql -u root -prootpass -e ^
     "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
+
+:: Run bulk import scripts
+echo Importing data - first run can take up to 2 hours
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+
+:: Clear DB maintenance mode
+docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=0 WHERE `key`=1;"
 
 echo ✅ Initial setup complete. You can now log in via http://localhost:8080
 
