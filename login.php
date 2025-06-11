@@ -1,6 +1,6 @@
 <?php 
-/* Version:     7.0
-    Date:       28/02/25
+/* Version:     8.0
+    Date:       11/06/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -30,7 +30,11 @@
  * 
  *  7.0         28/02/25
  *              Trusted devices capability
+ * 
+ *  8.0         12/06/25
+ *              Headers and buffer changes
 */
+
 ob_start(); // Start buffering to avoid premature output
 
 if (file_exists('includes/sessionname.local.php')):
@@ -57,7 +61,8 @@ if (!isset($db) || !$db instanceof mysqli) {
 $cssver = cssver();
 
 // Temporary variable to store a redirection URL
-$redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : null;
+$redirectUrl = $_SESSION['redirect_url'] ?? null;
+
 /*
  *  Check for trusted device token before checking regular login
  */
@@ -75,8 +80,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
     $msg->logMessage('[DEBUG]', "Checking for trusted device cookie with db connection: " . (isset($db) ? "valid" : "missing"));
     $deviceManager = new TrustedDeviceManager($db, $logfile);
     // Try to validate trusted device token
-    $trusted_device_user = $deviceManager->validateTrustedDevice();
-    $trusted_device_user = (int) $trusted_device_user;
+    $trusted_device_user = (int) $deviceManager->validateTrustedDevice();
     $msg->logMessage('[DEBUG]', "Output from Trusted device user check: $trusted_device_user");
     
     if ($trusted_device_user !== false):
@@ -109,9 +113,13 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
                 $trusted_login = true;
                 // Immediately redirect, skipping the login form
                 $redirectTarget = $_SESSION['redirect_url'] ?? 'index.php';
-                ob_end_clean(); // Clean any buffered output before redirect
-                header("Location: $redirectTarget");
-                exit();                
+                if (!headers_sent()) {
+                    ob_end_clean();
+                    header("Location: $redirectTarget");
+                    exit();
+                } else {
+                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to $redirectTarget.");
+                }
             endif;
             
             $stmt->close();
@@ -125,15 +133,9 @@ endif;
  */
 
 // Normal login flow check
-if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
-    // After initialize message object and functions
-    if (isset($msg)) {
-        $msg->logMessage('[DEBUG]', "User already logged in, showing already logged in page");
-    }
+if (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE) :
+    $msg->logMessage('[DEBUG]', "User already logged in, showing already logged in page");
     echo "<meta http-equiv='refresh' content='2;url=index.php'>";
-    /*
-     *  Stub HTML for error display.
-     */
     ?>
     <!DOCTYPE html>
         <head>
@@ -160,27 +162,26 @@ else:
     startCustomSession(); // Start a new session after destroying the previous one
 
     // Reassign the redirect URL to the new session
-    if ($redirectUrl) :
+    if ($redirectUrl) {
         $_SESSION['redirect_url'] = $redirectUrl;
-    endif;
+    }
 endif;
+
 /*
  *  Continuing to load login page.
  */
 header ("Cache-Control: max-age=0");
-// Files already loaded above
 
-// Message object already initialized above
 $msg->logMessage('[DEBUG]', "Mid-load check: db=" . (isset($db) ? "valid" : "null"));
 
 // Log key variables for debugging
 $msg->logMessage('[DEBUG]', "Login.php loaded. POST vars: " . 
-    "trust_device=" . (isset($_POST['trust_device']) ? $_POST['trust_device'] : 'not set') . ", " .
-    "redirect_to=" . (isset($_POST['redirect_to']) ? $_POST['redirect_to'] : 'not set'));
+    "trust_device=" . ($_POST['trust_device'] ?? 'not set') . ", " .
+    "redirect_to=" . ($_POST['redirect_to'] ?? 'not set'));
 $msg->logMessage('[DEBUG]', "Session vars: " . 
-    "logged=" . (isset($_SESSION["logged"]) ? $_SESSION["logged"] : 'not set') . ", " .
-    "user=" . (isset($_SESSION["user"]) ? $_SESSION["user"] : 'not set') . ", " .
-    "useremail=" . (isset($_SESSION["useremail"]) ? $_SESSION["useremail"] : 'not set'));
+    "logged=" . ($_SESSION["logged"] ?? 'not set') . ", " .
+    "user=" . ($_SESSION["user"] ?? 'not set') . ", " .
+    "useremail=" . ($_SESSION["useremail"] ?? 'not set'));
 
 ?>
 <!DOCTYPE html>
@@ -199,72 +200,84 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
         <?php
         // Cloudflare Turnstile
         use andkab\Turnstile\Turnstile;
-        if ($turnstile === 1 AND isset($_POST['cf-turnstile-response'])):
+        if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])):
             $turnstile = new Turnstile("$turnstile_secret_key");
             $verifyResponse = $turnstile->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()):
-                // successfully verified captcha resolving
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
             elseif ($verifyResponse->hasErrors()):
                 foreach ($verifyResponse->errorCodes as $errorCode):
                     $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
                 endforeach;
                 session_destroy();
-                echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
-                exit();
+                if (!headers_sent()) {
+                    ob_end_clean();
+                    header("Location: login.php?turnstilefail=yes");
+                    exit();
+                } else {
+                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to login.php?turnstilefail=yes");
+                }
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
                 session_destroy();
-                echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
-                exit();
+                if (!headers_sent()) {
+                    ob_end_clean();
+                    header("Location: login.php?turnstilefail=yes");
+                    exit();
+                } else {
+                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to login.php?turnstilefail=yes");
+                }
             endif;
         endif;
-        if ((isset($_GET['turnstilefail'])) AND ($_GET['turnstilefail']=="yes")): //Turnstile fail
+        if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes") { //Turnstile fail
             echo '"Captcha" fail... Returning to login...';
             session_destroy();
             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
             exit();
-        endif;
-        if ((isset($_POST['ac'])) AND ($_POST['ac']=="log")):           //Login form has been submitted  
-            if (isset($_POST['password'], $_POST['email'])):            //Login form contains data
+        }
+        if (isset($_POST['ac']) && $_POST['ac'] === "log") {          //Login form has been submitted  
+            if (isset($_POST['password'], $_POST['email'])) {           //Login form contains data
                 
                 $rawemail = $_POST['email'];
                 $password = $_POST['password'];
 
-                $email = filter_var((trim($rawemail)), FILTER_SANITIZE_EMAIL);
+                $email = filter_var(trim($rawemail), FILTER_SANITIZE_EMAIL);
                 $msg->logMessage('[NOTICE]',"Logon called for '$email' from {$_SERVER['REMOTE_ADDR']}");
-                if (!empty($email) && !empty($password)):
-                    if (filter_var($email, FILTER_VALIDATE_EMAIL)):
+                if (!empty($email) && !empty($password)) {
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         $badlog = new UserStatus($db,$logfile,$email);
                         $badlog_result = $badlog->GetBadLogin();
-                        if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
+                        if ($badlog_result['count'] !== null && $badlog_result['count'] < $Badloglimit) {
                             $pwval = new PasswordCheck($db, $logfile, $siteTitle);
                             $pwval_result = $pwval->PWValidate($email,$password);
-                            if ($pwval_result === 10):
+                            if ($pwval_result === 10) {
                                 // username and password checks out OK - carry on!
                                 $userstat = new UserStatus($db,$logfile,$email);
                                 $userstat_result = $userstat->GetUserStatus();
                                 $msg->logMessage('[DEBUG]',"UserStatus for $email is {$userstat_result['code']}");
-                                if ($userstat_result['code'] === 0):
+                                if ($userstat_result['code'] === 0) {
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
-                                elseif ($userstat_result['code'] === 2): //locked
+                                } elseif ($userstat_result['code'] === 2) { //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                elseif ($userstat_result === 3): //disabled
+                                } elseif ($userstat_result === 3) { //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
+                                } elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10) { //active or pwdchg required
                                     // Check for 2FA requirement
                                     $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
                                     
-                                    if ($tfaManager->isEnabled($userstat_result['number'])):
+                                    if ($tfaManager->isEnabled($userstat_result['number'])) {
                                         // 2FA is enabled, store credentials for verification page
+                                        if (headers_sent($file, $line)) {
+                                            $msg->logMessage('[ERROR]',"Headers already sent in $file on line $line");
+                                        }
                                         session_regenerate_id(true);
                                         $_SESSION["user_pending_2fa"] = $userstat_result['number'];
                                         $_SESSION["useremail_pending_2fa"] = $email;
@@ -272,24 +285,28 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         $_SESSION["chgpwd_pending_2fa"] = $userstat_result['code'] === 1;
                                         
                                         // Clear bad login count if user entered correct password
-                                        if($badlog_result['count'] != 0):
+                                        if($badlog_result['count'] != 0) {
                                             $msg->logMessage('[NOTICE]',"Logon (first factor) ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
                                             $zerobadlog = new UserStatus($db,$logfile,$email);
                                             $zerobadlog->ZeroBadLogin();
-                                        endif;
+                                        }
                                         
                                         // If there was a redirect URL, preserve it
-                                        if (isset($_SESSION['redirect_url'])):
+                                        if (isset($_SESSION['redirect_url'])) {
                                             $_SESSION['redirect_url_after_2fa'] = $_SESSION['redirect_url'];
-                                        endif;
+                                        }
                                         
                                         // Start 2FA verification process and redirect
                                         $tfaManager->startVerification($userstat_result['number'], $email);
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
-                                        ob_end_clean();
-                                        header("Location: verify_2fa.php");
-                                        exit();
-                                    else:
+                                        if (!headers_sent()) {
+                                            ob_end_clean();
+                                            header("Location: verify_2fa.php");
+                                            exit();
+                                        } else {
+                                            $msg->logMessage('[ERROR]', "Headers already sent before redirect to verify_2fa.php.");
+                                        }
+                                    } else {
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                         if (headers_sent($file, $line)) {
@@ -301,26 +318,26 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         $_SESSION["useremail"] = $email;
 
                                         // If password change required, set flag
-                                        if ($userstat_result['code'] === 1):
+                                        if ($userstat_result['code'] === 1) {
                                             $_SESSION["chgpwd"] = TRUE;
-                                            $_SESSION['just_logged_in'] = TRUE; // Set flag to prevent redirect loops
-                                        endif;
+                                            $_SESSION['just_logged_in'] = TRUE; // Prevent redirect loops
+                                        }
                                         
                                         $msg->logMessage('[NOTICE]',"Logon validated for $email from {$_SERVER['REMOTE_ADDR']}");
-                                        if($badlog_result['count'] != 0):
+                                        if($badlog_result['count'] != 0) {
                                             $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
                                             $zerobadlog = new UserStatus($db,$logfile,$email);
                                             $zerobadlog->ZeroBadLogin();
-                                        endif;
-                                    endif;
-                                else:
+                                        }
+                                    }
+                                } else {
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}");
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                endif;            
-                            elseif ($pwval_result === 2):
+                                }
+                            } elseif ($pwval_result === 2) {
                                 echo 'Incorrect username/password. Please try again.';
                                 $msg->logMessage('[ERROR]',"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}");
                                 $obj = new UserStatus($db,$logfile,$email);
@@ -328,14 +345,14 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 session_destroy();
                                 echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                                 exit();
-                            endif;
-                        elseif($badlog_result['count'] === null):
+                            }
+                        } elseif($badlog_result['count'] === null) {
                             echo 'Incorrect username/password. Please try again.';
                             $msg->logMessage('[ERROR]',"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}");
                             session_destroy();
                             echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                             exit();
-                        else:
+                        } else {
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
                             $obj = new UserStatus($db,$logfile,$email);
@@ -343,31 +360,31 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             session_destroy();
                             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                             exit();
-                        endif;
-                    else:
+                        }
+                    } else {
                         echo 'Incorrect data submitted. Returning to login...';
                         $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)");
                         session_destroy();
                         echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                         exit();
-                    endif;
-                else:
+                    }
+                } else {
                     echo 'Incorrect data submitted. Returning to login...';
                     $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (email or password is empty)");
                     session_destroy();
                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                     exit();
-                endif;
-            else:
+                }
+            } else {
                 echo 'Incorrect data submitted. Returning to login...';
                 $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)");
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
-            endif;
-        endif;
+            }
+        }
         //Check if login has been successful
-        if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
+        if (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE) {
             $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}");
             //Write user's login date to the user table in the database (help track inactive users)
             if (!loginstamp($email)) {
@@ -375,47 +392,49 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             }
             //Is maintenance mode enabled?
             $mtcestatus = mtcemode($usernumber);
-            if ($mtcestatus == 1):
+            if ($mtcestatus == 1) {
                 echo "<br>Site is undergoing maintenance, please try again later...";
                 session_destroy();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
-            elseif ($userstat_result['admin'] == 1):
+            } elseif ($userstat_result['admin'] == 1) {
                 $_SESSION['admin'] = TRUE;
                 echo "You are logged in!";  //admin login notice
-            else:
+            } else {
                 echo "You are logged in";   //normal user login notice
                 $_SESSION['admin'] = FALSE;
-            endif;
+            }
             
             // Check for chgpwd, or if there is a redirect URL set in the session
-            if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
+            if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE) {
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
                 echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
                 exit();
-            else:
+            } else {
                 // Show the trust device prompt
-                ?>
-                <?php $msg->logMessage('[DEBUG]', "Showing trust device prompt");
-                ob_end_clean();
-                header("Location: trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php'));
-                exit();
-            endif;
-        else:
+                $msg->logMessage('[DEBUG]', "Showing trust device prompt");
+                $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
+                if (!headers_sent()) {
+                    ob_end_clean();
+                    header("Location: $redirectTarget");
+                    exit();
+                } else {
+                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to $redirectTarget.");
+                }
+            }
+        } else {
             echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 
             echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>"; 
             echo "<br><br>";
             echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
-            if ($turnstile === 1):
+            if ($turnstile === 1) {
                 echo "<br>";
                 echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>";
-            endif;
+            }
             echo '<input type="submit" id="loginsubmit" value="LOGIN" />'; 
-            echo '</form><br>';?>
-            <div class='loginpagebutton'>
-                <a href='reset.php'>RESET</a>
-            </div> <?php 
-        endif; ?>
+            echo '</form><br>';
+            echo "<div class='loginpagebutton'><a href='reset.php'>RESET</a></div>"; 
+        } ?>
     </div>
 </body>
 </html>
