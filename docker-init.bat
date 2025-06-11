@@ -27,11 +27,12 @@ if errorlevel 1 (
 :: Set DB into mtce mode
 docker exec mtgc-db-1 mysql -u root -prootpass -e "UPDATE mtg.admin SET mtce=1 WHERE `key`=1;"
 
-:: Run setup scripts
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_bulk.php all
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_sets.php
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_rulings.php
-docker exec mtgc-web-1 php /var/www/mtgnew/bulk/scryfall_migrations.php
+:: Run bulk scripts
+echo Running bulk scripts...
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+docker exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
 
 :: Prompt for user creation
 set /p newuser=Enter username (for display/logging only): 
