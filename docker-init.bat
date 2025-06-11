@@ -2,16 +2,17 @@
 setlocal enabledelayedexpansion
 
 :: Prompt for base directory
-set /p BASE_DIR=Enter base directory for data/config/logs (e.g. C:\mtg):
+set /p BASE_PARENT=Enter base directory for data/config/logs (e.g. C:\Users\name). A "mtgc" subfolder will be created: 
 
 :: Validate input
-if "%BASE_DIR%"=="" (
+if "%BASE_PARENT%"=="" (
     echo ❌ Base directory is required. Aborting.
     exit /b 1
 )
 
-:: Normalize slashes
-set "BASE_DIR=%BASE_DIR:/=\%"
+:: Normalize slashes and append mtgc
+set "BASE_PARENT=%BASE_PARENT:/=\%"
+set "BASE_DIR=%BASE_PARENT%\mtgc"
 
 :: Create required directories
 mkdir "%BASE_DIR%\cardimg"
