@@ -47,9 +47,11 @@ RUN docker-php-ext-install gd mysqli
 RUN chown -R www-data:www-data /mnt/data/cardimg || true \
  && chown -R www-data:www-data /opt/mtg || true
 
-RUN touch /var/log/mtg/mtgapp.log && chown www-data:www-data /var/log/mtg/mtgapp.log
-
 EXPOSE 80
 
-# Entry point: wait for DB, then launch Apache
+# Entry point and wait for DB, then launch Apache
+COPY setup/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/opt/mtg/wait-for-mysql.sh", "db", "apache2-foreground"]
