@@ -8,6 +8,7 @@ services:
       - ${BASE_DIR}/config/mtg_new.ini:/opt/mtg/mtg_new.ini
       - ${BASE_DIR}/logs:/var/log/mtg
       - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
+      - ./config/php_custom.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro
     depends_on:
       - db
   db:
