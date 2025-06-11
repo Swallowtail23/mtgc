@@ -25,6 +25,8 @@ COPY . /var/www/mtgnew
 # Copy setup scripts for cron jobs
 RUN mkdir -p /opt/mtg 
 COPY setup/*.sh /opt/mtg/
+# Convert CRLF to LF to ensure scripts run in Linux
+RUN find /opt/mtg -name "*.sh" -exec sed -i 's/\r$//' {} \;
 RUN chmod +x /opt/mtg/*.sh
 
 WORKDIR /var/www/mtgnew
