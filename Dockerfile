@@ -14,6 +14,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 ENV APACHE_DOCUMENT_ROOT=/var/www/mtgnew
 RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot ${APACHE_DOCUMENT_ROOT}#' /etc/apache2/sites-available/000-default.conf \
     && sed -ri 's#/var/www/html#${APACHE_DOCUMENT_ROOT}#' /etc/apache2/apache2.conf
+# Copy the editable .ini template into image
+COPY setup/mtg-new.ini /opt/mtg/mtg-new.ini
 
 # Copy custom Apache configuration and enable required modules
 COPY setup/mtgc_ctr.conf /etc/apache2/sites-available/mtgc.conf
