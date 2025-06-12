@@ -71,7 +71,10 @@ $cssver = cssver();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['redirect_to'])):
     // Only allow relative or internal paths (e.g. “/foo” or “page.php”)
     $raw = $_POST['redirect_to'];
-    if (preg_match('#^[/a-zA-Z0-9_.\-]+$#', $raw)):
+    if (preg_match(
+        '#^[/A-Za-z0-9_.\-]+(?:\?[A-Za-z0-9_.\-=&%]*)?$#',
+        $raw
+    )):
         $redirectUrl = $raw;
     else:
         $redirectUrl = 'index.php';
