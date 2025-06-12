@@ -243,7 +243,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
         endif;
         if (isset($_POST['ac']) && $_POST['ac'] === "log"):             //Login form has been submitted
             if (!empty($_POST['redirect_to'])):
-                $_SESSION['redirect_url'] = $_POST['redirect_to'];
+                $redirectUrl = $_SESSION['redirect_url'] = $_POST['redirect_to'];
             endif;
             if (isset($_POST['password'], $_POST['email'])):           //Login form contains data
                 
