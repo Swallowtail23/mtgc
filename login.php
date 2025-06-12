@@ -256,7 +256,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     session_destroy();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
-                                } elseif ($userstat_result === 3) { //disabled
+                                } elseif ($userstat_result['code'] === 3) { //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
                                     session_destroy();
