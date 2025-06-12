@@ -1,13 +1,28 @@
 FROM php:8.2-apache
 
-# Install packages required for Composer and email
-RUN apt-get update && apt-get install -y \
-        git unzip \
-        libpng-dev \
-        tzdata \
-        default-mysql-client \
-        mailutils \
-    && rm -rf /var/lib/apt/lists/*
+# preseed timezone and suppress prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Australia/Brisbane
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+       git unzip \
+       libpng-dev \
+       tzdata \
+       default-mysql-client \
+       mailutils \
+       libicu-dev \
+       g++ \
+ # ensure /etc/localtime matches TZ, then rebuild the tzdata config
+ && ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
+ && dpkg-reconfigure --frontend noninteractive tzdata \
+ \
+ # build & enable the intl extension
+ && docker-php-ext-configure intl \
+ && docker-php-ext-install intl \
+ \
+ # clean up
+ && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
