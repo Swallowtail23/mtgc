@@ -38,9 +38,11 @@ require ('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
 $msg = new Message($logfile);
 $priceMgr = new PriceManager($db, $logfile, $useremail);
+$msg->logMessage('[DEBUG]',"Ajax grid update called");
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+$msg->logMessage('[DEBUG]',"Referring page is: $referringPage");
 $expectedReferringPages =   [
                                 $myURL . '/index.php',
                                 $myURL . '/carddetail.php'
@@ -60,6 +62,7 @@ foreach ($expectedReferringPages as $page):
 endforeach;
 
 if ($isValidReferrer):
+    $msg->logMessage('[DEBUG]',"Ajax grid update, referrer is valid");
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
         exit(); 
@@ -266,5 +269,17 @@ if ($isValidReferrer):
         header('Content-Type: application/json');
         echo json_encode($response);
     endif;
+else:
+    $msg->logMessage('[ERROR]', "Ajax grid update has failed due to invalid referrer page - check site URL in config");
+    $response = [
+        'status'  => 'error',
+        'message' => 'Ajax grid update has failed due to invalid referrer page - check site URL in config'
+    ];
+
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(400);
+    echo json_encode($response);
+    exit;
 endif;
+
 ?>
