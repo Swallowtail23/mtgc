@@ -41,9 +41,9 @@
  *              Optimisations and simplification
 */
 
+use andkab\Turnstile\Turnstile;
 ob_start(); // Start buffering to avoid premature output
 header ("Cache-Control: max-age=0");
-use andkab\Turnstile\Turnstile;
 
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -194,9 +194,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             echo $trusted_login
             ? "    Welcome back! You've been automatically signed in using a trusted device."
             : "    You are already logged in!"; 
+            echo "</div>";
             // Now close out the page and redirect
             safe_redirect($redirectUrl, 3); 
-            echo </div>;
         endif;
         // Only past here if NOT logged in
 
@@ -436,8 +436,3 @@ HTML;
     </div>
 </body>
 </html>
-<?php
-if (ob_get_level() > 0):
-    ob_end_flush();
-endif;
-?>
