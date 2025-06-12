@@ -198,15 +198,16 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             <script>delayedRedirect(<?= json_encode($redirectUrl) ?>);</script> 
             </div>
             <?php
-            ob_end_clean();
-            exit; 
+            if (ob_get_level() > 0):
+                ob_end_flush();   // flush buffer to client and close it
+            endif;
+            exit;
         endif;
         // Only past here if NOT logged in
 
         // Cloudflare Turnstile
-        use andkab\Turnstile\Turnstile;
         if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])):
-            $ts_obj = new Turnstile("$turnstile_secret_key");
+            $ts_obj = new \andkab\Turnstile\Turnstile($turnstile_secret_key);
             $verifyResponse = $ts_obj->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()):
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
@@ -220,7 +221,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 startCustomSession();
                 echo '"Captcha" fail... Returning to login...';
                 echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
@@ -230,7 +233,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 startCustomSession();
                 echo '"Captcha" fail... Returning to login...';
                 echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             endif;
         endif;
@@ -242,7 +247,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             startCustomSession();
             echo '"Captcha" fail... Returning to login...';
             echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-            ob_end_clean();
+            if (ob_get_level() > 0):
+                ob_end_flush();   // flush buffer to client and close it
+            endif;
             exit;
         endif;
         if (isset($_POST['ac']) && $_POST['ac'] === "log"):             //Login form has been submitted
@@ -278,7 +285,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
                                     echo '<script>delayedRedirect("login.php");</script>';
-                                    ob_end_clean();
+                                    if (ob_get_level() > 0):
+                                        ob_end_flush();   // flush buffer to client and close it
+                                    endif;
                                     exit;
                                 elseif ($userstat_result['code'] === 3): //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
@@ -288,7 +297,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
                                     echo '<script>delayedRedirect("login.php");</script>';
-                                    ob_end_clean();
+                                    if (ob_get_level() > 0):
+                                        ob_end_flush();   // flush buffer to client and close it
+                                    endif;
                                     exit;
                                 elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
                                     // Check for 2FA requirement
@@ -319,9 +330,11 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
                                         echo '<p>Redirecting you…</p>';
                                         echo '<script>delayedRedirect(' . json_encode('verify_2fa.php') . ');</script>';
-                                        ob_end_clean();
+                                        if (ob_get_level() > 0):
+                                            ob_end_flush();   // flush buffer to client and close it
+                                        endif;
                                         exit;
-                                    else:
+                                        else:
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                         session_regenerate_id(true);
@@ -350,7 +363,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
                                     echo '<script>delayedRedirect("login.php");</script>';
-                                    ob_end_clean();
+                                    if (ob_get_level() > 0):
+                                        ob_end_flush();   // flush buffer to client and close it
+                                    endif;
                                     exit;
                                 endif;
                             elseif ($pwval_result === 1 || $pwval_result === 2):
@@ -371,7 +386,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
                                 echo '<script>delayedRedirect("login.php");</script>';
-                                ob_end_clean();
+                                if (ob_get_level() > 0):
+                                    ob_end_flush();   // flush buffer to client and close it
+                                endif;
                                 exit;
                             elseif ($pwval_result === 0):
                                 // ⚠️ Validator internal error or bad call
@@ -382,7 +399,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
                                 echo '<script>delayedRedirect("login.php");</script>';
-                                ob_end_clean();
+                                if (ob_get_level() > 0):
+                                    ob_end_flush();   // flush buffer to client and close it
+                                endif;
                                 exit;
                             else:
                                 // 🚨 Totally unexpected code
@@ -393,7 +412,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
                                 echo '<script>delayedRedirect("login.php");</script>';
-                                ob_end_clean();
+                                if (ob_get_level() > 0):
+                                    ob_end_flush();   // flush buffer to client and close it
+                                endif;
                                 exit;
                             endif;
                         elseif($badlog_result['count'] === null):
@@ -404,7 +425,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
                             echo '<script>delayedRedirect("login.php");</script>';
-                            ob_end_clean();
+                            if (ob_get_level() > 0):
+                                ob_end_flush();   // flush buffer to client and close it
+                            endif;
                             exit;
                         else:
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
@@ -416,7 +439,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
                             echo '<script>delayedRedirect("login.php");</script>';
-                            ob_end_clean();
+                            if (ob_get_level() > 0):
+                                ob_end_flush();   // flush buffer to client and close it
+                            endif;
                             exit;
                         endif;
                     else:
@@ -427,7 +452,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                         setcookie(session_name(), '', time()-3600, '/');
                         startCustomSession();
                         echo '<script>delayedRedirect("login.php");</script>';
-                        ob_end_clean();
+                        if (ob_get_level() > 0):
+                            ob_end_flush();   // flush buffer to client and close it
+                        endif;
                         exit;
                     endif;
                 else:
@@ -438,7 +465,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                     setcookie(session_name(), '', time()-3600, '/');
                     startCustomSession();
                     echo '<script>delayedRedirect("login.php");</script>';
-                    ob_end_clean();
+                    if (ob_get_level() > 0):
+                        ob_end_flush();   // flush buffer to client and close it
+                    endif;
                     exit;
                 endif;
             else:
@@ -449,7 +478,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
                 echo '<script>delayedRedirect("login.php");</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             endif;
         endif;
@@ -469,7 +500,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
                 echo '<script>delayedRedirect("login.php");</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             elseif ($userstat_result['admin'] == 1):
                 $_SESSION['admin'] = TRUE;
@@ -483,14 +516,18 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
                 echo '<script>delayedRedirect("profile.php");</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             else:
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
                 $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
                 echo '<script>delayedRedirect(' . json_encode($redirectTarget) . ');</script>';
-                ob_end_clean();
+                if (ob_get_level() > 0):
+                    ob_end_flush();   // flush buffer to client and close it
+                endif;
                 exit;
             endif;
         else:
