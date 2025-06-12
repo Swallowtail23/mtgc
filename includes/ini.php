@@ -169,6 +169,7 @@ elseif($loglevelini === '3' AND ($fd = fopen($logfile, "a")) !== false):
     $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
     fclose($fd); 
 endif;
+$msg = new Message($logfile);
 
 //Copyright string
 $copyright = $ini_array['general']['Copyright'];
