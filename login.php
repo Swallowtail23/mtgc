@@ -67,7 +67,20 @@ if (!isset($db) || !$db instanceof mysqli) {
 $cssver = cssver();
 
 // Temporary variable to store a redirection URL
-$redirectUrl = $_SESSION['redirect_url'] ?? 'index.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['redirect_to'])):
+    // Only allow relative or internal paths (e.g. “/foo” or “page.php”)
+    $raw = $_POST['redirect_to'];
+    if (preg_match('#^(?:/|[a-zA-Z0-9_\-./])#', $raw)):
+        $redirectUrl = $raw;
+    else:
+        $redirectUrl = 'index.php';
+    endif;
+    // persist into session for subsequent requests
+    $_SESSION['redirect_url'] = $redirectUrl;
+else:
+    // first load or no POST override: grab from session or default
+    $redirectUrl = $_SESSION['redirect_url'] ?? 'index.php';
+endif;
 
 /*
  *  Check for trusted device token before checking regular login
