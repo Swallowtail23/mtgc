@@ -86,7 +86,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
     $msg->logMessage('[DEBUG]', "Checking for trusted device cookie with db connection: " . (isset($db) ? "valid" : "missing"));
     $deviceManager = new TrustedDeviceManager($db, $logfile);
     // Try to validate trusted device token
-    $trusted_device_user = (int) $deviceManager->validateTrustedDevice();
+    $trusted_device_user = $deviceManager->validateTrustedDevice();
     $msg->logMessage('[DEBUG]', "Output from Trusted device user check: $trusted_device_user");
     
     if ($trusted_device_user !== false):
