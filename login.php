@@ -448,11 +448,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 safe_redirect($redirectTarget, 302, $msg);
             }
         } else {
+            $r = htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8');
             $formHtml = <<<HTML
 <br>
 <form action="login.php" method="post">
     <input type="hidden" name="ac" value="log">
-    <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+    <input type="hidden" name="redirect_to" value="{$r}">
     <input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>
     <br><br>
     <input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>
