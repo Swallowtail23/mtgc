@@ -486,18 +486,29 @@ function get_full_url()
     return $myUrl;
 }
 
-function safe_redirect($url, $statusCode = 302, $msg = null)
+function clean_session(): void
 {
-    if (!headers_sent()):
-        if (ob_get_level() > 0):
-            ob_end_clean();
-        endif;
-        header("Location: $url", true, $statusCode);
-        exit();
-    elseif ($msg instanceof Message):
-        $msg->logMessage('[ERROR]', "Headers already sent before redirect to $url.");
+    if (session_status() === PHP_SESSION_ACTIVE):
+        // 1. drop all data in current session
+        session_unset();
+        session_destroy();
     endif;
+
+    // 2. expire the cookie that pointed to the old ID
+    //    – copy the same path/secure/httponly settings you used when starting the session
+    setcookie(
+        session_name(),
+        '',
+        [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+        ]
+    );
+
+    // 3. start a brand-new session with a fresh ID
+    startCustomSession();   // your wrapper that calls session_start() + sets params
 }
+
 
 function loginstamp($useremail)
 {
