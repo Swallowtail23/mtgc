@@ -1,6 +1,6 @@
 <?php 
-/* Version:     5.2
-    Date:       20/01/24
+/* Version:     6.0
+    Date:       12/06/25
     Name:       ajaxgrid.php
     Purpose:    Processes updates from Grid/Bulk views of index.php
     Notes:      {none}
@@ -23,6 +23,9 @@
  *
  *  5.2         20/01/24
  *              Include sessionname.php and move to logMessage
+ *
+ *  6.0         12/06/25
+ *              Ensure that failures to fire due to incorrect URL in site config are passed back
 */
 
 if (file_exists('../includes/sessionname.local.php')):
@@ -268,6 +271,7 @@ if ($isValidReferrer):
         // Send JSON response
         header('Content-Type: application/json');
         echo json_encode($response);
+        exit;
     endif;
 else:
     $msg->logMessage('[ERROR]', "Ajax grid update has failed due to invalid referrer page - check site URL in config");
@@ -275,11 +279,9 @@ else:
         'status'  => 'error',
         'message' => 'Ajax grid update has failed due to invalid referrer page - check site URL in config'
     ];
-
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(400);
     echo json_encode($response);
     exit;
 endif;
-
 ?>
