@@ -42,6 +42,7 @@
 */
 
 ob_start(); // Start buffering to avoid premature output
+header ("Cache-Control: max-age=0");
 
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -70,7 +71,7 @@ $cssver = cssver();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['redirect_to'])):
     // Only allow relative or internal paths (e.g. “/foo” or “page.php”)
     $raw = $_POST['redirect_to'];
-    if (preg_match('#^(?:/|[a-zA-Z0-9_\-./])#', $raw)):
+    if (preg_match('#^[/a-zA-Z0-9_.\-]+$#', $raw)):
         $redirectUrl = $raw;
     else:
         $redirectUrl = 'index.php';
@@ -96,7 +97,7 @@ $msg->logMessage('[DEBUG]', "Starting login.php execution. Checking for trusted 
 $logged_in = !empty($_SESSION["logged"]) && $_SESSION["logged"] === TRUE;
 $msg->logMessage('[DEBUG]', $logged_in ? "User already logged in" : "User not logged in");
 
-if ($logged_in === false): //Not already logged in, check for trusted device status
+if ($logged_in === false):
     // Not already logged in, check for trusted device token
     require_once('classes/trusteddevicemanager.class.php');
     
@@ -107,7 +108,7 @@ if ($logged_in === false): //Not already logged in, check for trusted device sta
     $msg->logMessage('[DEBUG]', "Output from Trusted device user check: $trusted_device_user");
     
     if ($trusted_device_user !== false):
-        // Token is valid, auto-login the user
+        // Not logged-in, but token is valid: auto-login the user
         $user_query = "SELECT usernumber, username, email, admin FROM users WHERE usernumber = ? AND status = 'active'";
         $stmt = $db->prepare($user_query);
         
@@ -138,59 +139,18 @@ if ($logged_in === false): //Not already logged in, check for trusted device sta
             endif;
             $stmt->close();
         endif;
+    else: // Not logged-in, and no valid token: reset session ($trusted_device_user is false)
+        session_unset();
+        session_destroy();
+        setcookie(session_name(), '', time()-3600, '/');
+        startCustomSession(); // Start a new session after destroying the previous one
+
+        // Reassign the redirect URL to the new session
+        if ($redirectUrl) :
+            $_SESSION['redirect_url'] = $redirectUrl;
+        endif;
     endif; // End of trusted_device_user check
 endif;
-
-// At this point, $logged_in is true for logged in or auto-logged in, else false
-if ($logged_in === true): //Already logged in
-    $loggedHtml = <<<HTML
-<!DOCTYPE html>
-<head>
-    <title>{$siteTitle} - login</title>
-    <link rel="stylesheet" type="text/css" href="css/style{$cssver}.css">
-HTML;
-    echo $loggedHtml;
-    include('includes/googlefonts.php');
-    echo <<<HTML
-    <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
-</head>
-<body id="loginbody" class="body">
-<div id="loginheader">
-    <h2 id='h2'>{$siteTitle}</h2>
-HTML;
-    echo $trusted_login
-        ? "    Welcome back! You've been automatically signed in using a trusted device."
-        : "    You are already logged in!";
-    echo <<<HTML
-</div>
-</body>
-</html>
-HTML;
-    if (ob_get_level()):
-        ob_flush();
-        flush();
-    endif;
-    sleep(3);
-    safe_redirect($redirectUrl, 302, $msg);
-endif;
-
-// Only ever through here for not-logged in users!
-session_unset();
-session_destroy();
-setcookie(session_name(), '', time()-3600, '/');
-startCustomSession(); // Start a new session after destroying the previous one
-
-// Reassign the redirect URL to the new session
-if ($redirectUrl) :
-    $_SESSION['redirect_url'] = $redirectUrl;
-endif;
-
-/*
- *  Continuing to load login page.
- */
-header ("Cache-Control: max-age=0");
-
-$msg->logMessage('[DEBUG]', "Mid-load check: db=" . (isset($db) ? "valid" : "null"));
 
 // Log key variables for debugging
 $msg->logMessage('[DEBUG]', "Login.php loaded. POST vars: " . 
@@ -200,9 +160,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
     "logged=" . ($_SESSION["logged"] ?? 'not set') . ", " .
     "user=" . ($_SESSION["user"] ?? 'not set') . ", " .
     "useremail=" . ($_SESSION["useremail"] ?? 'not set'));
-
 ?>
+
 <!DOCTYPE html>
+<html lang="en">
 <head>
     <title><?php echo $siteTitle;?></title>
     <link rel="manifest" href="manifest.json" />
@@ -210,12 +171,38 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
     <?php include('includes/googlefonts.php'); ?>
     <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script>
+        /**
+        * Redirect after a delay (default 3s)
+        * @param {string} url
+        * @param {number} ms
+        */
+        function delayedRedirect(url, ms = 3000) {
+            setTimeout(function(){
+                window.location.replace(url);
+            }, ms);
+        }
+    </script>
 </head>
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
     <div id="loginheader">    
         <h2 id='h2'><?php echo $siteTitle;?></h2>
         <?php
+        if ($logged_in === true): //Already logged in
+            echo $trusted_login
+            ? "    Welcome back! You've been automatically signed in using a trusted device."
+            : "    You are already logged in!"; 
+            // Now close out the page and redirect
+            ?>
+            <script>delayedRedirect(<?= json_encode($redirectUrl) ?>);</script> 
+            </div>
+            <?php
+            ob_end_clean();
+            exit; 
+        endif;
+        // Only past here if NOT logged in
+
         // Cloudflare Turnstile
         use andkab\Turnstile\Turnstile;
         if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])):
@@ -231,14 +218,20 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                safe_redirect('login.php?turnstilefail=yes', 302, $msg);
+                echo '"Captcha" fail... Returning to login...';
+                echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
+                ob_end_clean();
+                exit;
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
                 session_unset();
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                safe_redirect('login.php?turnstilefail=yes', 302, $msg);
+                echo '"Captcha" fail... Returning to login...';
+                echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
+                ob_end_clean();
+                exit;
             endif;
         endif;
         if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes"): //Turnstile fail
@@ -247,12 +240,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             session_destroy();
             setcookie(session_name(), '', time()-3600, '/');
             startCustomSession();
-            if (ob_get_level()):
-                ob_flush();
-                flush();
-            endif;
-            sleep(3);
-            safe_redirect('login.php', 302, $msg);
+            echo '"Captcha" fail... Returning to login...';
+            echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
+            ob_end_clean();
+            exit;
         endif;
         if (isset($_POST['ac']) && $_POST['ac'] === "log"):             //Login form has been submitted
             if (!empty($_POST['redirect_to'])):
@@ -286,12 +277,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     session_destroy();
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
-                                    if (ob_get_level()):
-                                        ob_flush();
-                                        flush();
-                                    endif;
-                                    sleep(3);
-                                    safe_redirect('login.php', 302, $msg);
+                                    echo '<script>delayedRedirect("login.php");</script>';
+                                    ob_end_clean();
+                                    exit;
                                 elseif ($userstat_result['code'] === 3): //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
@@ -299,21 +287,15 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     session_destroy();
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
-                                    if (ob_get_level()):
-                                        ob_flush();
-                                        flush();
-                                    endif;
-                                    sleep(3);
-                                    safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                                    echo '<script>delayedRedirect("login.php");</script>';
+                                    ob_end_clean();
+                                    exit;
                                 elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
                                     // Check for 2FA requirement
                                     $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
                                     
                                     if ($tfaManager->isEnabled($userstat_result['number'])):
                                         // 2FA is enabled, store credentials for verification page
-                                        if (headers_sent($file, $line)):
-                                            $msg->logMessage('[ERROR]',"Headers already sent in $file on line $line");
-                                        endif;
                                         session_regenerate_id(true);
                                         $_SESSION["user_pending_2fa"] = $userstat_result['number'];
                                         $_SESSION["useremail_pending_2fa"] = $email;
@@ -335,13 +317,13 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         // Start 2FA verification process and redirect
                                         $tfaManager->startVerification($userstat_result['number'], $email);
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
-                                        safe_redirect('verify_2fa.php', 302, $msg);
+                                        echo '<p>Redirecting you…</p>';
+                                        echo '<script>delayedRedirect(' . json_encode('verify_2fa.php') . ');</script>';
+                                        ob_end_clean();
+                                        exit;
                                     else:
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
-                                        if (headers_sent($file, $line)):
-                                            $msg->logMessage('[ERROR]',"Headers already sent in $file on line $line");
-                                        endif;
                                         session_regenerate_id(true);
                                         $_SESSION["logged"] = TRUE;
                                         $_SESSION["user"] = $usernumber = $userstat_result['number'];
@@ -367,12 +349,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     session_destroy();
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
-                                    if (ob_get_level()):
-                                        ob_flush();
-                                        flush();
-                                    endif;
-                                    sleep(3);
-                                    safe_redirect('login.php', 302, $msg);
+                                    echo '<script>delayedRedirect("login.php");</script>';
+                                    ob_end_clean();
+                                    exit;
                                 endif;
                             elseif ($pwval_result === 1 || $pwval_result === 2):
                                 // 🔒 Either “email not found” or “wrong password” — but we show one generic message
@@ -391,13 +370,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 session_destroy();
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
-                                if (ob_get_level()):
-                                    ob_flush();
-                                    flush();
-                                endif;
-                                sleep(3);
-                                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
-                                
+                                echo '<script>delayedRedirect("login.php");</script>';
+                                ob_end_clean();
+                                exit;
                             elseif ($pwval_result === 0):
                                 // ⚠️ Validator internal error or bad call
                                 echo '<p>An internal error occurred. Please try again later.</p>';
@@ -406,13 +381,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 session_destroy();
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
-                                if (ob_get_level()):
-                                    ob_flush();
-                                    flush();
-                                endif;
-                                sleep(3);
-                                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
-
+                                echo '<script>delayedRedirect("login.php");</script>';
+                                ob_end_clean();
+                                exit;
                             else:
                                 // 🚨 Totally unexpected code
                                 echo '<p>An unexpected error occurred. Please try again later.</p>';
@@ -421,12 +392,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 session_destroy();
                                 setcookie(session_name(), '', time()-3600, '/');
                                 startCustomSession();
-                                if (ob_get_level()):
-                                    ob_flush();
-                                    flush();
-                                endif;
-                                sleep(3);
-                                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                                echo '<script>delayedRedirect("login.php");</script>';
+                                ob_end_clean();
+                                exit;
                             endif;
                         elseif($badlog_result['count'] === null):
                             echo 'Incorrect username/password. Please try again.';
@@ -435,12 +403,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             session_destroy();
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
-                            if (ob_get_level()):
-                                ob_flush();
-                                flush();
-                            endif;
-                            sleep(3);
-                            safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                            echo '<script>delayedRedirect("login.php");</script>';
+                            ob_end_clean();
+                            exit;
                         else:
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
@@ -450,12 +415,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             session_destroy();
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
-                            if (ob_get_level()):
-                                ob_flush();
-                                flush();
-                            endif;
-                            sleep(3);
-                            safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                            echo '<script>delayedRedirect("login.php");</script>';
+                            ob_end_clean();
+                            exit;
                         endif;
                     else:
                         echo 'Incorrect data submitted. Returning to login...';
@@ -464,12 +426,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                         session_destroy();
                         setcookie(session_name(), '', time()-3600, '/');
                         startCustomSession();
-                        if (ob_get_level()):
-                            ob_flush();
-                            flush();
-                        endif;
-                        sleep(3);
-                        safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                        echo '<script>delayedRedirect("login.php");</script>';
+                        ob_end_clean();
+                        exit;
                     endif;
                 else:
                     echo 'Incorrect data submitted. Returning to login...';
@@ -478,12 +437,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                     session_destroy();
                     setcookie(session_name(), '', time()-3600, '/');
                     startCustomSession();
-                    if (ob_get_level()):
-                        ob_flush();
-                        flush();
-                    endif;
-                    sleep(3);
-                    safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                    echo '<script>delayedRedirect("login.php");</script>';
+                    ob_end_clean();
+                    exit;
                 endif;
             else:
                 echo 'Incorrect data submitted. Returning to login...';
@@ -492,12 +448,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                if (ob_get_level()):
-                    ob_flush();
-                    flush();
-                endif;
-                sleep(3);
-                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                echo '<script>delayedRedirect("login.php");</script>';
+                ob_end_clean();
+                exit;
             endif;
         endif;
         //Check if login has been successful
@@ -515,12 +468,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                if (ob_get_level()):
-                    ob_flush();
-                    flush();
-                endif;
-                sleep(3);
-                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
+                echo '<script>delayedRedirect("login.php");</script>';
+                ob_end_clean();
+                exit;
             elseif ($userstat_result['admin'] == 1):
                 $_SESSION['admin'] = TRUE;
                 echo "You are logged in!";  //admin login notice
@@ -532,12 +482,16 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             // Check for chgpwd, or if there is a redirect URL set in the session
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
-                safe_redirect('profile.php', 302, $msg);
+                echo '<script>delayedRedirect("profile.php");</script>';
+                ob_end_clean();
+                exit;
             else:
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
                 $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
-                safe_redirect($redirectTarget, 302, $msg);
+                echo '<script>delayedRedirect(' . json_encode($redirectTarget) . ');</script>';
+                ob_end_clean();
+                exit;
             endif;
         else:
             $r = htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8');
