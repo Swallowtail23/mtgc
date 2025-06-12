@@ -206,8 +206,8 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
         // Cloudflare Turnstile
         use andkab\Turnstile\Turnstile;
         if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])):
-            $turnstile = new Turnstile("$turnstile_secret_key");
-            $verifyResponse = $turnstile->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
+            $ts_obj = new Turnstile("$turnstile_secret_key");
+            $verifyResponse = $ts_obj->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()):
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
             elseif ($verifyResponse->hasErrors()):
