@@ -36,6 +36,9 @@
  *
  *  8.1         12/06/25
  *              Added safe_redirect() and improved buffer handling
+ *
+ *  8.2         12/06/25
+ *              Optimisations and simplification
 */
 
 ob_start(); // Start buffering to avoid premature output
@@ -130,38 +133,43 @@ endif;
  */
 
 // Normal login flow check
+// if the user is logged in already
 if (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE) :
     $msg->logMessage('[DEBUG]', "User already logged in, showing already logged in page");
-    echo "<meta http-equiv='refresh' content='2;url=index.php'>";
-    ?>
-    <!DOCTYPE html>
-        <head>
-        <title> <?php echo $siteTitle;?> - login</title>
-        <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
-        <?php include('includes/googlefonts.php'); ?>
-        <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
-        </head>
-        <body id="loginbody" class="body">
-        <div id="loginheader">    
-            <h2 id='h2'><?php echo $siteTitle;?></h2>
-            <?php if ($trusted_login): ?>
-                Welcome back! You've been automatically signed in using a trusted device.
-            <?php else: ?>
-                You are already logged in!
-            <?php endif; ?>
-        </div>
-        </body>
-    </html>
-    <?php
+    $loggedHtml = <<<HTML
+<!DOCTYPE html>
+<head>
+    <title>{$siteTitle} - login</title>
+    <meta http-equiv='refresh' content='2;url=index.php'>
+    <link rel="stylesheet" type="text/css" href="css/style{$cssver}.css">
+HTML;
+    echo $loggedHtml;
+    include('includes/googlefonts.php');
+    echo <<<HTML
+    <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
+</head>
+<body id="loginbody" class="body">
+<div id="loginheader">
+    <h2 id='h2'>{$siteTitle}</h2>
+HTML;
+    echo $trusted_login
+        ? "    Welcome back! You've been automatically signed in using a trusted device."
+        : "    You are already logged in!";
+    echo <<<HTML
+</div>
+</body>
+</html>
+HTML;
     exit();
-else:
-    session_destroy();
-    startCustomSession(); // Start a new session after destroying the previous one
+endif;
 
-    // Reassign the redirect URL to the new session
-    if ($redirectUrl) {
-        $_SESSION['redirect_url'] = $redirectUrl;
-    }
+// User not logged in, session can be reset
+session_destroy();
+startCustomSession(); // Start a new session after destroying the previous one
+
+// Reassign the redirect URL to the new session
+if ($redirectUrl) :
+    $_SESSION['redirect_url'] = $redirectUrl;
 endif;
 
 /*
