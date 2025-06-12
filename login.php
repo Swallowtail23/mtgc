@@ -67,7 +67,7 @@ if (!isset($db) || !$db instanceof mysqli) {
 $cssver = cssver();
 
 // Temporary variable to store a redirection URL
-$redirectUrl = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : index.php;
+$redirectUrl = $_SESSION['redirect_url'] ?? 'index.php';
 
 /*
  *  Check for trusted device token before checking regular login
@@ -80,13 +80,8 @@ $trusted_device_user = false;
 $msg->logMessage('[DEBUG]', "Starting login.php execution. Checking for trusted device.");
 
 // Is user logged on?
-if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
-    $logged_in = false;
-    $msg->logMessage('[DEBUG]', "User not already logged in (no logged in details in session)");
-elseif (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE):
-    $logged_in = true;
-    $msg->logMessage('[DEBUG]', "User already logged in (details in session)");
-endif;
+$logged_in = !empty($_SESSION["logged"]) && $_SESSION["logged"] === TRUE;
+$msg->logMessage('[DEBUG]', $logged_in ? "User already logged in" : "User not logged in");
 
 if ($logged_in === false): //Not already logged in, check for trusted device status
     // Not already logged in, check for trusted device token
@@ -130,8 +125,6 @@ if ($logged_in === false): //Not already logged in, check for trusted device sta
             endif;
             $stmt->close();
         endif;
-    else: // Not a trusted device user and user not logged in
-        // $logged_in remains false
     endif; // End of trusted_device_user check
 endif;
 
@@ -141,7 +134,6 @@ if ($logged_in === true): //Already logged in
 <!DOCTYPE html>
 <head>
     <title>{$siteTitle} - login</title>
-    <meta http-equiv='refresh' content='2;url=index.php'>
     <link rel="stylesheet" type="text/css" href="css/style{$cssver}.css">
 HTML;
     echo $loggedHtml;
