@@ -367,8 +367,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     session_destroy();
                                     setcookie(session_name(), '', time()-3600, '/');
                                     startCustomSession();
-                                    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                                    exit();
+                                    if (ob_get_level()):
+                                        ob_flush();
+                                        flush();
+                                    endif;
+                                    sleep(3);
+                                    safe_redirect('login.php', 302, $msg);
                                 endif;
                             elseif ($pwval_result === 1 || $pwval_result === 2):
                                 // 🔒 Either “email not found” or “wrong password” — but we show one generic message
@@ -383,7 +387,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     $baduser = new UserStatus($db, $logfile, $email);
                                     $baduser->IncrementBadLogin();
                                 endif;
-
+                                session_unset();
+                                session_destroy();
+                                setcookie(session_name(), '', time()-3600, '/');
+                                startCustomSession();
                                 if (ob_get_level()):
                                     ob_flush();
                                     flush();
@@ -394,10 +401,11 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             elseif ($pwval_result === 0):
                                 // ⚠️ Validator internal error or bad call
                                 echo '<p>An internal error occurred. Please try again later.</p>';
-                                $msg->logMessage(
-                                    '[ERROR]',
-                                    "PWValidate() returned 0 for ‘{$email}’ — check parameters/DB"
-                                );
+                                $msg->logMessage('[ERROR]',"PWValidate() returned 0 for ‘{$email}’ — check parameters/DB");
+                                session_unset();
+                                session_destroy();
+                                setcookie(session_name(), '', time()-3600, '/');
+                                startCustomSession();
                                 if (ob_get_level()):
                                     ob_flush();
                                     flush();
@@ -408,10 +416,11 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             else:
                                 // 🚨 Totally unexpected code
                                 echo '<p>An unexpected error occurred. Please try again later.</p>';
-                                $msg->logMessage(
-                                    '[ERROR]',
-                                    "PWValidate() returned unknown code {$pwval_result} for ‘{$email}’"
-                                );
+                                $msg->logMessage('[ERROR]',"PWValidate() returned unknown code {$pwval_result} for ‘{$email}’");
+                                session_unset();
+                                session_destroy();
+                                setcookie(session_name(), '', time()-3600, '/');
+                                startCustomSession();
                                 if (ob_get_level()):
                                     ob_flush();
                                     flush();
@@ -426,8 +435,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             session_destroy();
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
-                            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-                            exit();
+                            if (ob_get_level()):
+                                ob_flush();
+                                flush();
+                            endif;
+                            sleep(3);
+                            safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
                         else:
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
@@ -437,8 +450,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             session_destroy();
                             setcookie(session_name(), '', time()-3600, '/');
                             startCustomSession();
-                            echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                            exit();
+                            if (ob_get_level()):
+                                ob_flush();
+                                flush();
+                            endif;
+                            sleep(3);
+                            safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
                         endif;
                     else:
                         echo 'Incorrect data submitted. Returning to login...';
@@ -447,8 +464,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                         session_destroy();
                         setcookie(session_name(), '', time()-3600, '/');
                         startCustomSession();
-                        echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                        exit();
+                        if (ob_get_level()):
+                            ob_flush();
+                            flush();
+                        endif;
+                        sleep(3);
+                        safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
                     endif;
                 else:
                     echo 'Incorrect data submitted. Returning to login...';
@@ -457,8 +478,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                     session_destroy();
                     setcookie(session_name(), '', time()-3600, '/');
                     startCustomSession();
-                    echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                    exit();
+                    if (ob_get_level()):
+                        ob_flush();
+                        flush();
+                    endif;
+                    sleep(3);
+                    safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
                 endif;
             else:
                 echo 'Incorrect data submitted. Returning to login...';
@@ -467,8 +492,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                exit();
+                if (ob_get_level()):
+                    ob_flush();
+                    flush();
+                endif;
+                sleep(3);
+                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
             endif;
         endif;
         //Check if login has been successful
@@ -486,8 +515,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 session_destroy();
                 setcookie(session_name(), '', time()-3600, '/');
                 startCustomSession();
-                echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-                exit();
+                if (ob_get_level()):
+                    ob_flush();
+                    flush();
+                endif;
+                sleep(3);
+                safe_redirect('login.php', 302, $msg);  // buffer is already flushed, so ob_end_clean() affects nothing
             elseif ($userstat_result['admin'] == 1):
                 $_SESSION['admin'] = TRUE;
                 echo "You are logged in!";  //admin login notice
@@ -499,8 +532,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             // Check for chgpwd, or if there is a redirect URL set in the session
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
-                echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
-                exit();
+                safe_redirect('profile.php', 302, $msg);
             else:
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
