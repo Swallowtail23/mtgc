@@ -47,7 +47,7 @@ CREATE TABLE `1collection` (
 
 DROP TABLE IF EXISTS `admin`;
 CREATE TABLE `admin` (
-  `key` int NOT NULL,
+  `key` int unsigned NOT NULL,
   `usemin` tinyint(1) NOT NULL,
   `mtce` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
@@ -231,8 +231,8 @@ CREATE TABLE `collectionTemplate` (
 
 DROP TABLE IF EXISTS `deckcards`;
 CREATE TABLE `deckcards` (
-  `id` int NOT NULL,
-  `decknumber` smallint NOT NULL,
+  `id` int unsigned NOT NULL,
+  `decknumber` int unsigned NOT NULL,
   `cardnumber` varchar(36) NOT NULL,
   `cardqty` tinyint DEFAULT NULL,
   `sideqty` tinyint DEFAULT NULL,
@@ -247,8 +247,8 @@ CREATE TABLE `deckcards` (
 
 DROP TABLE IF EXISTS `decks`;
 CREATE TABLE `decks` (
-  `decknumber` int NOT NULL,
-  `owner` smallint NOT NULL,
+  `decknumber` int unsigned NOT NULL,
+  `owner` smallint unsigned NOT NULL,
   `deckname` text NOT NULL,
   `notes` text DEFAULT NULL,
   `sidenotes` text DEFAULT NULL,
@@ -263,9 +263,9 @@ CREATE TABLE `decks` (
 
 DROP TABLE IF EXISTS `decktypes`;
 CREATE TABLE `decktypes` (
-  `typenumber` smallint NOT NULL,
+  `typenumber` smallint unsigned NOT NULL,
   `type` varchar(64) NOT NULL,
-  `cardcount` int NOT NULL,
+  `cardcount` int unsigned NOT NULL,
   `name` varchar(64) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
@@ -290,9 +290,9 @@ CREATE TABLE `fx` (
 
 DROP TABLE IF EXISTS `groups`;
 CREATE TABLE `groups` (
-  `groupnumber` int NOT NULL,
+  `groupnumber` int unsigned NOT NULL,
   `groupname` varchar(32) NOT NULL,
-  `owner` int NOT NULL
+  `owner` int unsigned NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 -- --------------------------------------------------------
@@ -328,7 +328,7 @@ CREATE TABLE `migrations` (
 
 DROP TABLE IF EXISTS `rulings_scry`;
 CREATE TABLE `rulings_scry` (
-  `id` int NOT NULL,
+  `id` int unsigned NOT NULL,
   `oracle_id` varchar(64) NOT NULL,
   `source` varchar(32) NOT NULL,
   `published_at` date NOT NULL,
@@ -344,7 +344,7 @@ CREATE TABLE `rulings_scry` (
 DROP TABLE IF EXISTS `scryfalljson`;
 CREATE TABLE `scryfalljson` (
   `id` varchar(36) NOT NULL,
-  `jsonupdatetime` int NOT NULL,
+  `jsonupdatetime` int unsigned NOT NULL,
   `tcg_buy_uri` varchar(256) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
@@ -379,11 +379,11 @@ CREATE TABLE `sets` (
 
 DROP TABLE IF EXISTS `tfa_codes`;
 CREATE TABLE `tfa_codes` (
-  `id` int NOT NULL,
-  `user_id` int NOT NULL,
+  `id` int unsigned NOT NULL,
+  `user_id` int unsigned NOT NULL,
   `code` varchar(10) NOT NULL,
-  `expiry` int NOT NULL,
-  `attempts` int NOT NULL DEFAULT '0'
+  `expiry` int unsigned NOT NULL,
+  `attempts` int unsigned NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -394,8 +394,8 @@ CREATE TABLE `tfa_codes` (
 
 DROP TABLE IF EXISTS `trusted_devices`;
 CREATE TABLE `trusted_devices` (
-  `id` int NOT NULL,
-  `user_id` int NOT NULL,
+  `id` int unsigned NOT NULL,
+  `user_id` int unsigned NOT NULL,
   `token_hash` varchar(255) NOT NULL,
   `device_name` varchar(255) DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
@@ -413,7 +413,7 @@ CREATE TABLE `trusted_devices` (
 
 DROP TABLE IF EXISTS `updatenotices`;
 CREATE TABLE `updatenotices` (
-  `number` int NOT NULL,
+  `number` int unsigned NOT NULL,
   `date` date NOT NULL,
   `update` varchar(1024) NOT NULL,
   `author` varchar(30) NOT NULL
@@ -427,15 +427,15 @@ CREATE TABLE `updatenotices` (
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
-  `usernumber` smallint NOT NULL,
+  `usernumber` smallint unsigned NOT NULL,
   `username` varchar(16) NOT NULL,
   `password` varchar(64) NOT NULL,
   `email` varchar(64) NOT NULL,
   `reg_date` date NOT NULL,
   `status` varchar(10) NOT NULL,
   `admin` tinyint(1) DEFAULT NULL,
-  `badlogins` smallint DEFAULT NULL,
-  `groupid` int NOT NULL,
+  `badlogins` smallint unsigned DEFAULT NULL,
+  `groupid` int unsigned NOT NULL,
   `grpinout` tinyint(1) NOT NULL DEFAULT '0',
   `lastlogin_date` date DEFAULT NULL,
   `collection_view` tinyint NOT NULL DEFAULT '0',
@@ -606,61 +606,61 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `admin`
 --
 ALTER TABLE `admin`
-  MODIFY `key` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `key` int unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `deckcards`
 --
 ALTER TABLE `deckcards`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `decks`
 --
 ALTER TABLE `decks`
-  MODIFY `decknumber` int NOT NULL AUTO_INCREMENT;
+  MODIFY `decknumber` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `decktypes`
 --
 ALTER TABLE `decktypes`
-  MODIFY `typenumber` smallint NOT NULL AUTO_INCREMENT;
+  MODIFY `typenumber` smallint unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `groupnumber` int NOT NULL AUTO_INCREMENT;
+  MODIFY `groupnumber` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `rulings_scry`
 --
 ALTER TABLE `rulings_scry`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tfa_codes`
 --
 ALTER TABLE `tfa_codes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `trusted_devices`
 --
 ALTER TABLE `trusted_devices`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `updatenotices`
 --
 ALTER TABLE `updatenotices`
-  MODIFY `number` int NOT NULL AUTO_INCREMENT;
+  MODIFY `number` int unsigned NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `usernumber` smallint NOT NULL AUTO_INCREMENT;
+  MODIFY `usernumber` smallint unsigned NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
