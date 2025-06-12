@@ -531,14 +531,14 @@ endif;
                                     qrInner.innerHTML = `
                                         <h2>Two-factor authentication enabled successfully</h2>
                                         <h3>Scan QR Code using your authentication app</h3>
-                                        <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
+                                        <img src=\"{$qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
                                         <h3>...or manually enter this code:</h3>
-                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
-                                        <input type=\"text\" id=\"hiddenSecretKey\" value=\"${encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
+                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">{$formattedSecretKey}</p>
+                                        <input type=\"text\" id=\"hiddenSecretKey\" value=\"{$encodedSecretKey}\" style=\"position:absolute; left:-9999px;\"> 
                                         <h3>Verify your 6-digit code:</h3>
                                         <form id='verify2FAForm' method='post' action='profile.php'>
                                             <input type='text' name='tfa_code' id='tfa_code' maxlength='6' pattern='[0-9]{6}' required placeholder='Enter 6-digit code' style='font-size: 18px; text-align: center; width: 120px;'>
-                                            <input type='hidden' name='tfa_secret' value='${encodedSecretKey}'>
+                                            <input type='hidden' name='tfa_secret' value='{$encodedSecretKey}'>
                                             <button type='submit' name='verify_2fa' class='ok-button profilebutton'>VERIFY</button>
                                         </form>
                                         <br>
