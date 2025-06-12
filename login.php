@@ -166,7 +166,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title><?php echo $siteTitle;?></title>
+    <title><?= htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
     <?php include('includes/googlefonts.php'); ?>
@@ -188,7 +188,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
 <body id="loginbody" class="body">
     <?php include_once("includes/analyticstracking.php") ?>
     <div id="loginheader">    
-        <h2 id='h2'><?php echo $siteTitle;?></h2>
+        <h2 id='h2'><?= htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8') ?></h2>
         <?php
         if ($logged_in === true): //Already logged in
             echo $trusted_login
