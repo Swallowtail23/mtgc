@@ -573,8 +573,7 @@ ALTER TABLE `sets` ADD FULLTEXT KEY `name` (`name`);
 --
 ALTER TABLE `tfa_codes`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `user_id` (`user_id`),
-  ADD KEY `idx_tfa_user_id` (`user_id`);
+  ADD UNIQUE KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `trusted_devices`
@@ -597,10 +596,7 @@ ALTER TABLE `updatenotices`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`usernumber`),
   ADD UNIQUE KEY `username` (`username`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD KEY `usernumber` (`usernumber`),
-  ADD KEY `username_2` (`username`),
-  ADD KEY `email_2` (`email`);
+  ADD UNIQUE KEY `email` (`email`);
 
 --
 -- AUTO_INCREMENT for dumped tables
