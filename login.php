@@ -496,6 +496,8 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             endif;
             //Is maintenance mode enabled?
             $mtcestatus = mtcemode($usernumber);
+            $userstat = new UserStatus($db,$logfile,$email);
+            $userstat_result = $userstat->GetUserStatus();
             if ($mtcestatus == 1):
                 echo "<br>Site is undergoing maintenance, please try again later...";
                 session_unset();
