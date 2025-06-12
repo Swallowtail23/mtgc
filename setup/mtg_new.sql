@@ -599,6 +599,35 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Constraints for dumped tables
+--
+ALTER TABLE `1collection`
+  ADD CONSTRAINT `1collection_ibfk_1` FOREIGN KEY (`id`) REFERENCES `cards_scry` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `collectionTemplate`
+  ADD CONSTRAINT `collectionTemplate_ibfk_1` FOREIGN KEY (`id`) REFERENCES `cards_scry` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `deckcards`
+  ADD CONSTRAINT `deckcards_ibfk_1` FOREIGN KEY (`decknumber`) REFERENCES `decks` (`decknumber`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `deckcards_ibfk_2` FOREIGN KEY (`cardnumber`) REFERENCES `cards_scry` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `decks`
+  ADD CONSTRAINT `decks_ibfk_1` FOREIGN KEY (`owner`) REFERENCES `users` (`usernumber`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `groups`
+  ADD CONSTRAINT `groups_ibfk_1` FOREIGN KEY (`owner`) REFERENCES `users` (`usernumber`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`groupid`) REFERENCES `groups` (`groupnumber`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `tfa_codes`
+  ADD CONSTRAINT `tfa_codes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`usernumber`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `trusted_devices`
+  ADD CONSTRAINT `trusted_devices_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`usernumber`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `scryfalljson`
+  ADD CONSTRAINT `scryfalljson_ibfk_1` FOREIGN KEY (`id`) REFERENCES `cards_scry` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `rulings_scry`
+  ADD CONSTRAINT `rulings_scry_ibfk_1` FOREIGN KEY (`oracle_id`) REFERENCES `cards_scry` (`oracle_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `cards_scry`
+  ADD CONSTRAINT `cards_scry_ibfk_1` FOREIGN KEY (`setcode`) REFERENCES `sets` (`code`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `sets`
+  ADD CONSTRAINT `sets_ibfk_1` FOREIGN KEY (`parent_set_code`) REFERENCES `sets` (`code`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
