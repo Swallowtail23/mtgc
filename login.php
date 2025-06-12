@@ -44,10 +44,10 @@
 ob_start(); // Start buffering to avoid premature output
 header ("Cache-Control: max-age=0");
 
-if (file_exists('includes/sessionname.local.php')):
-    require('includes/sessionname.local.php');
+if (file_exists('includes/name.local.php')):
+    require('includes/name.local.php');
 else:
-    require('includes/sessionname_template.php');
+    require('includes/name_template.php');
 endif;
 startCustomSession();
 
@@ -143,10 +143,7 @@ if ($logged_in === false):
             $stmt->close();
         endif;
     else: // Not logged-in, and no valid token: reset session ($trusted_device_user is false)
-        session_unset();
-        session_destroy();
-        setcookie(session_name(), '', time()-3600, '/');
-        startCustomSession(); // Start a new session after destroying the previous one
+        clean_session();
 
         // Reassign the redirect URL to the new session
         if ($redirectUrl) :
@@ -218,10 +215,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 foreach ($verifyResponse->errorCodes as $errorCode):
                     $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
                 endforeach;
-                session_unset();
-                session_destroy();
-                setcookie(session_name(), '', time()-3600, '/');
-                startCustomSession();
+                clean_session();
                 echo '"Captcha" fail... Returning to login...';
                 echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
                 if (ob_get_level() > 0):
@@ -230,10 +224,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 exit;
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
-                session_unset();
-                session_destroy();
-                setcookie(session_name(), '', time()-3600, '/');
-                startCustomSession();
+                clean_session();
                 echo '"Captcha" fail... Returning to login...';
                 echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
                 if (ob_get_level() > 0):
@@ -244,10 +235,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
         endif;
         if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes"): //Turnstile fail
             echo '"Captcha" fail... Returning to login...';
-            session_unset();
-            session_destroy();
-            setcookie(session_name(), '', time()-3600, '/');
-            startCustomSession();
+            clean_session();
             echo '"Captcha" fail... Returning to login...';
             echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
             if (ob_get_level() > 0):
@@ -283,10 +271,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 elseif ($userstat_result['code'] === 2):  //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
-                                    session_unset();
-                                    session_destroy();
-                                    setcookie(session_name(), '', time()-3600, '/');
-                                    startCustomSession();
+                                    clean_session();
                                     echo '<script>delayedRedirect("login.php");</script>';
                                     if (ob_get_level() > 0):
                                         ob_end_flush();   // flush buffer to client and close it
@@ -295,10 +280,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 elseif ($userstat_result['code'] === 3): //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
-                                    session_unset();
-                                    session_destroy();
-                                    setcookie(session_name(), '', time()-3600, '/');
-                                    startCustomSession();
+                                    clean_session();
                                     echo '<script>delayedRedirect("login.php");</script>';
                                     if (ob_get_level() > 0):
                                         ob_end_flush();   // flush buffer to client and close it
@@ -361,10 +343,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 else:
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}");
-                                    session_unset();
-                                    session_destroy();
-                                    setcookie(session_name(), '', time()-3600, '/');
-                                    startCustomSession();
+                                    clean_session();
                                     echo '<script>delayedRedirect("login.php");</script>';
                                     if (ob_get_level() > 0):
                                         ob_end_flush();   // flush buffer to client and close it
@@ -384,10 +363,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     $baduser = new UserStatus($db, $logfile, $email);
                                     $baduser->IncrementBadLogin();
                                 endif;
-                                session_unset();
-                                session_destroy();
-                                setcookie(session_name(), '', time()-3600, '/');
-                                startCustomSession();
+                                clean_session();
                                 echo '<script>delayedRedirect("login.php");</script>';
                                 if (ob_get_level() > 0):
                                     ob_end_flush();   // flush buffer to client and close it
@@ -397,10 +373,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 // ⚠️ Validator internal error or bad call
                                 echo '<p>An internal error occurred. Please try again later.</p>';
                                 $msg->logMessage('[ERROR]',"PWValidate() returned 0 for ‘{$email}’ — check parameters/DB");
-                                session_unset();
-                                session_destroy();
-                                setcookie(session_name(), '', time()-3600, '/');
-                                startCustomSession();
+                                clean_session();
                                 echo '<script>delayedRedirect("login.php");</script>';
                                 if (ob_get_level() > 0):
                                     ob_end_flush();   // flush buffer to client and close it
@@ -410,10 +383,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 // 🚨 Totally unexpected code
                                 echo '<p>An unexpected error occurred. Please try again later.</p>';
                                 $msg->logMessage('[ERROR]',"PWValidate() returned unknown code {$pwval_result} for ‘{$email}’");
-                                session_unset();
-                                session_destroy();
-                                setcookie(session_name(), '', time()-3600, '/');
-                                startCustomSession();
+                                clean_session();
                                 echo '<script>delayedRedirect("login.php");</script>';
                                 if (ob_get_level() > 0):
                                     ob_end_flush();   // flush buffer to client and close it
@@ -423,10 +393,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                         elseif($badlog_result['count'] === null):
                             echo 'Incorrect username/password. Please try again.';
                             $msg->logMessage('[ERROR]',"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}");
-                            session_unset();
-                            session_destroy();
-                            setcookie(session_name(), '', time()-3600, '/');
-                            startCustomSession();
+                            clean_session();
                             echo '<script>delayedRedirect("login.php");</script>';
                             if (ob_get_level() > 0):
                                 ob_end_flush();   // flush buffer to client and close it
@@ -437,10 +404,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
                             $obj = new UserStatus($db,$logfile,$email);
                             $obj->TriggerLocked();
-                            session_unset();
-                            session_destroy();
-                            setcookie(session_name(), '', time()-3600, '/');
-                            startCustomSession();
+                            clean_session();
                             echo '<script>delayedRedirect("login.php");</script>';
                             if (ob_get_level() > 0):
                                 ob_end_flush();   // flush buffer to client and close it
@@ -450,10 +414,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                     else:
                         echo 'Incorrect data submitted. Returning to login...';
                         $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)");
-                        session_unset();
-                        session_destroy();
-                        setcookie(session_name(), '', time()-3600, '/');
-                        startCustomSession();
+                        clean_session();
                         echo '<script>delayedRedirect("login.php");</script>';
                         if (ob_get_level() > 0):
                             ob_end_flush();   // flush buffer to client and close it
@@ -463,10 +424,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 else:
                     echo 'Incorrect data submitted. Returning to login...';
                     $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (email or password is empty)");
-                    session_unset();
-                    session_destroy();
-                    setcookie(session_name(), '', time()-3600, '/');
-                    startCustomSession();
+                    clean_session();
                     echo '<script>delayedRedirect("login.php");</script>';
                     if (ob_get_level() > 0):
                         ob_end_flush();   // flush buffer to client and close it
@@ -476,10 +434,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             else:
                 echo 'Incorrect data submitted. Returning to login...';
                 $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)");
-                session_unset();
-                session_destroy();
-                setcookie(session_name(), '', time()-3600, '/');
-                startCustomSession();
+                clean_session();
                 echo '<script>delayedRedirect("login.php");</script>';
                 if (ob_get_level() > 0):
                     ob_end_flush();   // flush buffer to client and close it
@@ -500,10 +455,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             $userstat_result = $userstat->GetUserStatus();
             if ($mtcestatus == 1):
                 echo "<br>Site is undergoing maintenance, please try again later...";
-                session_unset();
-                session_destroy();
-                setcookie(session_name(), '', time()-3600, '/');
-                startCustomSession();
+                clean_session();
                 echo '<script>delayedRedirect("login.php");</script>';
                 if (ob_get_level() > 0):
                     ob_end_flush();   // flush buffer to client and close it
