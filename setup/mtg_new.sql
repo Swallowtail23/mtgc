@@ -439,12 +439,12 @@ CREATE TABLE `users` (
   `grpinout` tinyint(1) NOT NULL DEFAULT '0',
   `lastlogin_date` date DEFAULT NULL,
   `collection_view` tinyint NOT NULL DEFAULT '0',
-  `currency` varchar(3) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `currency` varchar(3) DEFAULT NULL,
   `weeklyexport` tinyint NOT NULL DEFAULT '0',
   `tfa_enabled` tinyint NOT NULL DEFAULT '0',
-  `tfa_method` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tfa_backup_codes` text COLLATE utf8mb4_general_ci,
-  `tfa_app_secret` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL
+  `tfa_method` varchar(20) DEFAULT NULL,
+  `tfa_backup_codes` text DEFAULT NULL,
+  `tfa_app_secret` varchar(128) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 --
