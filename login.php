@@ -195,14 +195,8 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             ? "    Welcome back! You've been automatically signed in using a trusted device."
             : "    You are already logged in!"; 
             // Now close out the page and redirect
-            ?>
-            <script>delayedRedirect(<?= json_encode($redirectUrl) ?>);</script> 
-            </div>
-            <?php
-            if (ob_get_level() > 0):
-                ob_end_flush();   // flush buffer to client and close it
-            endif;
-            exit;
+            safe_redirect($redirectUrl, 3); 
+            echo </div>;
         endif;
         // Only past here if NOT logged in
 
@@ -214,35 +208,23 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
             elseif ($verifyResponse->hasErrors()):
                 foreach ($verifyResponse->errorCodes as $errorCode):
-                    $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
+                    $msg->logMessage('[ERROR]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
                 endforeach;
                 clean_session();
                 echo '"Captcha" fail... Returning to login...';
-                echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                safe_redirect("login.php?turnstilefail=yes", 3); 
             else:
-                $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
+                $msg->logMessage('[ERROR]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
                 clean_session();
                 echo '"Captcha" fail... Returning to login...';
-                echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                safe_redirect("login.php?turnstilefail=yes", 3); 
             endif;
         endif;
         if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes"): //Turnstile fail
-            echo '"Captcha" fail... Returning to login...';
+            $msg->logMessage('[ERROR]',"Cloudflare Turnstile failure from {$_SERVER['REMOTE_ADDR']}");
             clean_session();
             echo '"Captcha" fail... Returning to login...';
-            echo '<script>delayedRedirect("login.php?turnstilefail=yes");</script>';
-            if (ob_get_level() > 0):
-                ob_end_flush();   // flush buffer to client and close it
-            endif;
-            exit;
+            safe_redirect("login.php?turnstilefail=yes", 3); 
         endif;
         if (isset($_POST['ac']) && $_POST['ac'] === "log"):             //Login form has been submitted
             if (!empty($_POST['redirect_to'])):
@@ -270,23 +252,15 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 if ($userstat_result['code'] === 0):
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
                                 elseif ($userstat_result['code'] === 2):  //locked
-                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
                                     clean_session();
-                                    echo '<script>delayedRedirect("login.php");</script>';
-                                    if (ob_get_level() > 0):
-                                        ob_end_flush();   // flush buffer to client and close it
-                                    endif;
-                                    exit;
-                                elseif ($userstat_result['code'] === 3): //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    safe_redirect("login.php", 3); 
+                                elseif ($userstat_result['code'] === 3): //disabled
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
                                     clean_session();
-                                    echo '<script>delayedRedirect("login.php");</script>';
-                                    if (ob_get_level() > 0):
-                                        ob_end_flush();   // flush buffer to client and close it
-                                    endif;
-                                    exit;
+                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    safe_redirect("login.php", 3); 
                                 elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10): //active or pwdchg required
                                     // Check for 2FA requirement
                                     $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
@@ -315,12 +289,8 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         $tfaManager->startVerification($userstat_result['number'], $email);
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
                                         echo '<p>Redirecting you…</p>';
-                                        echo '<script>delayedRedirect(' . json_encode('verify_2fa.php') . ');</script>';
-                                        if (ob_get_level() > 0):
-                                            ob_end_flush();   // flush buffer to client and close it
-                                        endif;
-                                        exit;
-                                        else:
+                                        safe_redirect("verify_2fa.php", 3); 
+                                    else:
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
                                         session_regenerate_id(true);
@@ -342,19 +312,13 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         endif;
                                     endif;
                                 else:
-                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}");
                                     clean_session();
-                                    echo '<script>delayedRedirect("login.php");</script>';
-                                    if (ob_get_level() > 0):
-                                        ob_end_flush();   // flush buffer to client and close it
-                                    endif;
-                                    exit;
+                                    echo 'There is a problem with your account. Contact the administrator. Returning to login...';
+                                    safe_redirect("login.php", 3); 
                                 endif;
                             elseif ($pwval_result === 1 || $pwval_result === 2):
                                 // 🔒 Either “email not found” or “wrong password” — but we show one generic message
-                                echo '<p>Incorrect username or password. Please try again.</p>';
-
                                 // Internally log the real reason:
                                 if ($pwval_result === 1):
                                     $msg->logMessage('[ERROR]', "Login failed: invalid email address ‘{$email}’");
@@ -365,82 +329,51 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                     $baduser->IncrementBadLogin();
                                 endif;
                                 clean_session();
-                                echo '<script>delayedRedirect("login.php");</script>';
-                                if (ob_get_level() > 0):
-                                    ob_end_flush();   // flush buffer to client and close it
-                                endif;
-                                exit;
+                                echo '<p>Incorrect username or password. Please try again.</p>';
+                                safe_redirect("login.php", 3); 
                             elseif ($pwval_result === 0):
                                 // ⚠️ Validator internal error or bad call
-                                echo '<p>An internal error occurred. Please try again later.</p>';
                                 $msg->logMessage('[ERROR]',"PWValidate() returned 0 for ‘{$email}’ — check parameters/DB");
                                 clean_session();
-                                echo '<script>delayedRedirect("login.php");</script>';
-                                if (ob_get_level() > 0):
-                                    ob_end_flush();   // flush buffer to client and close it
-                                endif;
-                                exit;
+                                echo '<p>An internal error occurred. Please try again later.</p>';
+                                safe_redirect("login.php", 3); 
                             else:
                                 // 🚨 Totally unexpected code
                                 echo '<p>An unexpected error occurred. Please try again later.</p>';
                                 $msg->logMessage('[ERROR]',"PWValidate() returned unknown code {$pwval_result} for ‘{$email}’");
                                 clean_session();
-                                echo '<script>delayedRedirect("login.php");</script>';
-                                if (ob_get_level() > 0):
-                                    ob_end_flush();   // flush buffer to client and close it
-                                endif;
-                                exit;
+                                safe_redirect("login.php", 3); 
                             endif;
                         elseif($badlog_result['count'] === null):
                             echo 'Incorrect username/password. Please try again.';
                             $msg->logMessage('[ERROR]',"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}");
                             clean_session();
-                            echo '<script>delayedRedirect("login.php");</script>';
-                            if (ob_get_level() > 0):
-                                ob_end_flush();   // flush buffer to client and close it
-                            endif;
-                            exit;
+                            safe_redirect("login.php", 3); 
                         else:
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
                             $obj = new UserStatus($db,$logfile,$email);
                             $obj->TriggerLocked();
                             clean_session();
-                            echo '<script>delayedRedirect("login.php");</script>';
-                            if (ob_get_level() > 0):
-                                ob_end_flush();   // flush buffer to client and close it
-                            endif;
-                            exit;
+                            safe_redirect("login.php", 3); 
                         endif;
                     else:
                         echo 'Incorrect data submitted. Returning to login...';
                         $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)");
                         clean_session();
-                        echo '<script>delayedRedirect("login.php");</script>';
-                        if (ob_get_level() > 0):
-                            ob_end_flush();   // flush buffer to client and close it
-                        endif;
-                        exit;
+                        safe_redirect("login.php", 3); 
                     endif;
                 else:
                     echo 'Incorrect data submitted. Returning to login...';
                     $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (email or password is empty)");
                     clean_session();
-                    echo '<script>delayedRedirect("login.php");</script>';
-                    if (ob_get_level() > 0):
-                        ob_end_flush();   // flush buffer to client and close it
-                    endif;
-                    exit;
+                    safe_redirect("login.php", 3); 
                 endif;
             else:
                 echo 'Incorrect data submitted. Returning to login...';
                 $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)");
                 clean_session();
-                echo '<script>delayedRedirect("login.php");</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                safe_redirect("login.php", 3); 
             endif;
         endif;
         //Check if login has been successful
@@ -455,13 +388,9 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             $userstat = new UserStatus($db,$logfile,$email);
             $userstat_result = $userstat->GetUserStatus();
             if ($mtcestatus == 1):
-                echo "<br>Site is undergoing maintenance, please try again later...";
                 clean_session();
-                echo '<script>delayedRedirect("login.php");</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                echo "<br>Site is undergoing maintenance, please try again later...";
+                safe_redirect("login.php", 3); 
             elseif ($userstat_result['admin'] == 1):
                 $_SESSION['admin'] = TRUE;
                 echo "You are logged in!";  //admin login notice
@@ -473,20 +402,12 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             // Check for chgpwd, or if there is a redirect URL set in the session
             if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
-                echo '<script>delayedRedirect("profile.php");</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                safe_redirect("profile.php", 0); 
             else:
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
                 $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
-                echo '<script>delayedRedirect(' . json_encode($redirectTarget) . ');</script>';
-                if (ob_get_level() > 0):
-                    ob_end_flush();   // flush buffer to client and close it
-                endif;
-                exit;
+                safe_redirect($redirectTarget, 0); 
             endif;
         else:
             $r = htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8');
