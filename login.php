@@ -45,10 +45,10 @@ ob_start(); // Start buffering to avoid premature output
 header ("Cache-Control: max-age=0");
 use andkab\Turnstile\Turnstile;
 
-if (file_exists('includes/name.local.php')):
-    require('includes/name.local.php');
+if (file_exists('includes/sessionname.local.php')):
+    require('includes/sessionname.local.php');
 else:
-    require('includes/name_template.php');
+    require('includes/sessionname_template.php');
 endif;
 startCustomSession();
 
