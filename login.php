@@ -447,4 +447,8 @@ HTML;
     </div>
 </body>
 </html>
-<?php ob_end_flush(); ?>
+<?php
+if (ob_get_level() > 0) {
+    ob_end_flush();
+}
+?>
