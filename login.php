@@ -472,15 +472,15 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             endif;
         endif;
         //Check if login has been successful
-        if (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE) {
+        if (isset($_SESSION["logged"]) && $_SESSION["logged"] === TRUE):
             $msg->logMessage('[NOTICE]',"User $email logged in from {$_SERVER['REMOTE_ADDR']}");
             //Write user's login date to the user table in the database (help track inactive users)
-            if (!loginstamp($email)) {
+            if (!loginstamp($email)):
                 $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
-            }
+            endif;
             //Is maintenance mode enabled?
             $mtcestatus = mtcemode($usernumber);
-            if ($mtcestatus == 1) {
+            if ($mtcestatus == 1):
                 echo "<br>Site is undergoing maintenance, please try again later...";
                 session_unset();
                 session_destroy();
@@ -488,26 +488,26 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 startCustomSession();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
-            } elseif ($userstat_result['admin'] == 1) {
+            elseif ($userstat_result['admin'] == 1):
                 $_SESSION['admin'] = TRUE;
                 echo "You are logged in!";  //admin login notice
-            } else {
+            else:
                 echo "You are logged in";   //normal user login notice
                 $_SESSION['admin'] = FALSE;
-            }
+            endif;
             
             // Check for chgpwd, or if there is a redirect URL set in the session
-            if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE) {
+            if (isset($_SESSION["chgpwd"]) && $_SESSION["chgpwd"] === TRUE):
                 $msg->logMessage('[DEBUG]',"User $email being redirected to profile.php for password change");
                 echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
                 exit();
-            } else {
+            else:
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
                 $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
                 safe_redirect($redirectTarget, 302, $msg);
-            }
-        } else {
+            endif;
+        else:
             $r = htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8');
             $formHtml = <<<HTML
 <br>
@@ -518,24 +518,24 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
     <br><br>
     <input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>
 HTML;
-            if ($turnstile === 1) {
+            if ($turnstile === 1):
                 $formHtml .= <<<HTML
     <br>
     <div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>
 HTML;
-            }
+            endif;
             $formHtml .= <<<HTML
     <input type="submit" id="loginsubmit" value="LOGIN" />
 </form><br>
 <div class='loginpagebutton'><a href='reset.php'>RESET</a></div>
 HTML;
             echo $formHtml;
-        } ?>
+        endif; ?>
     </div>
 </body>
 </html>
 <?php
-if (ob_get_level() > 0) {
+if (ob_get_level() > 0):
     ob_end_flush();
-}
+endif;
 ?>
