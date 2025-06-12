@@ -228,7 +228,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
             exit();
         }
-        if (isset($_POST['ac']) && $_POST['ac'] === "log") {          //Login form has been submitted  
+        if (isset($_POST['ac']) && $_POST['ac'] === "log") {          //Login form has been submitted
+            if (!empty($_POST['redirect_to'])) {
+                $_SESSION['redirect_url'] = $_POST['redirect_to'];
+            }
             if (isset($_POST['password'], $_POST['email'])) {           //Login form contains data
                 
                 $rawemail = $_POST['email'];
@@ -408,6 +411,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
 <br>
 <form action="login.php" method="post">
     <input type="hidden" name="ac" value="log">
+    <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirectUrl ?? '', ENT_QUOTES, 'UTF-8'); ?>">
     <input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>
     <br><br>
     <input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>
