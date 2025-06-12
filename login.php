@@ -164,7 +164,9 @@ HTML;
 endif;
 
 // User not logged in, session can be reset
+session_unset();
 session_destroy();
+setcookie(session_name(), '', time()-3600, '/');
 startCustomSession(); // Start a new session after destroying the previous one
 
 // Reassign the redirect URL to the new session
@@ -214,17 +216,26 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 foreach ($verifyResponse->errorCodes as $errorCode):
                     $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
                 endforeach;
+                session_unset();
                 session_destroy();
+                setcookie(session_name(), '', time()-3600, '/');
+                startCustomSession();
                 safe_redirect('login.php?turnstilefail=yes', 302, $msg);
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
+                session_unset();
                 session_destroy();
+                setcookie(session_name(), '', time()-3600, '/');
+                startCustomSession();
                 safe_redirect('login.php?turnstilefail=yes', 302, $msg);
             endif;
         endif;
         if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes") { //Turnstile fail
             echo '"Captcha" fail... Returning to login...';
+            session_unset();
             session_destroy();
+            setcookie(session_name(), '', time()-3600, '/');
+            startCustomSession();
             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
             exit();
         }
@@ -256,13 +267,19 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 } elseif ($userstat_result['code'] === 2) { //locked
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}");
+                                    session_unset();
                                     session_destroy();
+                                    setcookie(session_name(), '', time()-3600, '/');
+                                    startCustomSession();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
                                 } elseif ($userstat_result['code'] === 3) { //disabled
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}");
+                                    session_unset();
                                     session_destroy();
+                                    setcookie(session_name(), '', time()-3600, '/');
+                                    startCustomSession();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
                                 } elseif ($userstat_result['code'] === 1 || $userstat_result['code'] === 10) { //active or pwdchg required
@@ -323,7 +340,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 } else {
                                     echo 'There is a problem with your account. Contact the administrator. Returning to login...';
                                     $msg->logMessage('[ERROR]',"Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}");
+                                    session_unset();
                                     session_destroy();
+                                    setcookie(session_name(), '', time()-3600, '/');
+                                    startCustomSession();
                                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                                     exit();
                                 }
@@ -332,14 +352,20 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 $msg->logMessage('[ERROR]',"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}");
                                 $obj = new UserStatus($db,$logfile,$email);
                                 $obj->IncrementBadLogin();
+                                session_unset();
                                 session_destroy();
+                                setcookie(session_name(), '', time()-3600, '/');
+                                startCustomSession();
                                 echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                                 exit();
                             }
                         } elseif($badlog_result['count'] === null) {
                             echo 'Incorrect username/password. Please try again.';
                             $msg->logMessage('[ERROR]',"Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}");
+                            session_unset();
                             session_destroy();
+                            setcookie(session_name(), '', time()-3600, '/');
+                            startCustomSession();
                             echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                             exit();
                         } else {
@@ -347,28 +373,40 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
                             $obj = new UserStatus($db,$logfile,$email);
                             $obj->TriggerLocked();
+                            session_unset();
                             session_destroy();
+                            setcookie(session_name(), '', time()-3600, '/');
+                            startCustomSession();
                             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                             exit();
                         }
                     } else {
                         echo 'Incorrect data submitted. Returning to login...';
                         $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)");
+                        session_unset();
                         session_destroy();
+                        setcookie(session_name(), '', time()-3600, '/');
+                        startCustomSession();
                         echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                         exit();
                     }
                 } else {
                     echo 'Incorrect data submitted. Returning to login...';
                     $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from '$email' from {$_SERVER['REMOTE_ADDR']} (email or password is empty)");
+                    session_unset();
                     session_destroy();
+                    setcookie(session_name(), '', time()-3600, '/');
+                    startCustomSession();
                     echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                     exit();
                 }
             } else {
                 echo 'Incorrect data submitted. Returning to login...';
                 $msg->logMessage('[NOTICE]',"Failed logon attempt: Incorrect data sent from $email from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)");
+                session_unset();
                 session_destroy();
+                setcookie(session_name(), '', time()-3600, '/');
+                startCustomSession();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
             }
@@ -384,7 +422,10 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
             $mtcestatus = mtcemode($usernumber);
             if ($mtcestatus == 1) {
                 echo "<br>Site is undergoing maintenance, please try again later...";
+                session_unset();
                 session_destroy();
+                setcookie(session_name(), '', time()-3600, '/');
+                startCustomSession();
                 echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                 exit();
             } elseif ($userstat_result['admin'] == 1) {
