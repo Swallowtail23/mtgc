@@ -1,6 +1,6 @@
 <?php 
-/* Version:     8.0
-    Date:       11/06/25
+/* Version:     8.1
+    Date:       12/06/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -33,6 +33,8 @@
  * 
  *  8.0         12/06/25
  *              Headers and buffer changes
+ *  8.1         12/06/25
+ *              Added safe_redirect() and improved buffer handling
 */
 
 ob_start(); // Start buffering to avoid premature output
@@ -113,13 +115,7 @@ if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE):
                 $trusted_login = true;
                 // Immediately redirect, skipping the login form
                 $redirectTarget = $_SESSION['redirect_url'] ?? 'index.php';
-                if (!headers_sent()) {
-                    ob_end_clean();
-                    header("Location: $redirectTarget");
-                    exit();
-                } else {
-                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to $redirectTarget.");
-                }
+                safe_redirect($redirectTarget, 302, $msg);
             endif;
             
             $stmt->close();
@@ -210,23 +206,11 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                     $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure $errorCode from {$_SERVER['REMOTE_ADDR']}");
                 endforeach;
                 session_destroy();
-                if (!headers_sent()) {
-                    ob_end_clean();
-                    header("Location: login.php?turnstilefail=yes");
-                    exit();
-                } else {
-                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to login.php?turnstilefail=yes");
-                }
+                safe_redirect('login.php?turnstilefail=yes', 302, $msg);
             else:
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile failure (unknown) from {$_SERVER['REMOTE_ADDR']}");
                 session_destroy();
-                if (!headers_sent()) {
-                    ob_end_clean();
-                    header("Location: login.php?turnstilefail=yes");
-                    exit();
-                } else {
-                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to login.php?turnstilefail=yes");
-                }
+                safe_redirect('login.php?turnstilefail=yes', 302, $msg);
             endif;
         endif;
         if (isset($_GET['turnstilefail']) && $_GET['turnstilefail'] === "yes") { //Turnstile fail
@@ -299,13 +283,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         // Start 2FA verification process and redirect
                                         $tfaManager->startVerification($userstat_result['number'], $email);
                                         $msg->logMessage('[NOTICE]',"Password validated for $email, redirecting to 2FA verification");
-                                        if (!headers_sent()) {
-                                            ob_end_clean();
-                                            header("Location: verify_2fa.php");
-                                            exit();
-                                        } else {
-                                            $msg->logMessage('[ERROR]', "Headers already sent before redirect to verify_2fa.php.");
-                                        }
+                                        safe_redirect('verify_2fa.php', 302, $msg);
                                     } else {
                                         // No 2FA required, proceed with normal login
                                         $msg->logMessage('[NOTICE]',"Regenerating session ID after successful login");
@@ -414,28 +392,35 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 // Show the trust device prompt
                 $msg->logMessage('[DEBUG]', "Showing trust device prompt");
                 $redirectTarget = "trust_device.php?redirect_to=" . urlencode($_SESSION['redirect_url'] ?? 'index.php');
-                if (!headers_sent()) {
-                    ob_end_clean();
-                    header("Location: $redirectTarget");
-                    exit();
-                } else {
-                    $msg->logMessage('[ERROR]', "Headers already sent before redirect to $redirectTarget.");
-                }
+                safe_redirect($redirectTarget, 302, $msg);
             }
         } else {
-            echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 
-            echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>"; 
-            echo "<br><br>";
-            echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
+            $formHtml = <<<HTML
+<br>
+<form action="login.php" method="post">
+    <input type="hidden" name="ac" value="log">
+    <input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>
+    <br><br>
+    <input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>
+HTML;
             if ($turnstile === 1) {
-                echo "<br>";
-                echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>";
+                $formHtml .= <<<HTML
+    <br>
+    <div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>
+HTML;
             }
-            echo '<input type="submit" id="loginsubmit" value="LOGIN" />'; 
-            echo '</form><br>';
-            echo "<div class='loginpagebutton'><a href='reset.php'>RESET</a></div>"; 
+            $formHtml .= <<<HTML
+    <input type="submit" id="loginsubmit" value="LOGIN" />
+</form><br>
+<div class='loginpagebutton'><a href='reset.php'>RESET</a></div>
+HTML;
+            echo $formHtml;
         } ?>
     </div>
 </body>
 </html>
-<?php ob_end_flush(); ?>
+<?php
+if (ob_get_level() > 0) {
+    ob_end_flush();
+}
+?>

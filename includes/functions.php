@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.5
-    Date:       11/06/25
+/* Version:     24.6
+    Date:       12/06/25
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -96,6 +96,8 @@
  *
  * 24.5         11/06/25
  *              If Json subfolder not exists, create it (downloadBulk)
+ * 24.6         12/06/25
+ *              Added safe_redirect() helper for centralized redirects
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -482,6 +484,19 @@ function get_full_url()
     if (!empty($_SERVER['PATH_INFO'])) $myUrl .= $_SERVER['PATH_INFO'];
     
     return $myUrl;
+}
+
+function safe_redirect($url, $statusCode = 302, $msg = null)
+{
+    if (!headers_sent()):
+        if (ob_get_level() > 0):
+            ob_end_clean();
+        endif;
+        header("Location: $url", true, $statusCode);
+        exit();
+    elseif ($msg instanceof Message):
+        $msg->logMessage('[ERROR]', "Headers already sent before redirect to $url.");
+    endif;
 }
 
 function loginstamp($useremail)
