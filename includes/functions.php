@@ -509,6 +509,44 @@ function clean_session(): void
     startCustomSession();   // your wrapper that calls session_start() + sets params
 }
 
+function safe_redirect(string $url, int $delay = 3): void
+{
+    // 1) Flush all output buffers (send everything you’ve echoed so far)
+    while (ob_get_level() > 0) {
+        ob_end_flush();  // flush & turn off this buffer level
+    }
+    // Then force PHP to push to the webserver / client
+    if (function_exists('flush')) {
+        flush();
+    }
+
+    // 2) Sanitize URL & delay
+    $safeUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+    $sec     = (int) $delay;
+    $jsonUrl = json_encode($url);
+
+    // 3) Meta‐refresh (works even if JS is off, and ignores header issues)
+    echo "<meta http-equiv=\"refresh\" content=\"{$sec};url={$safeUrl}\">\n";
+
+    // 4) JS fallback for modern browsers
+    echo <<<HTML
+<script>
+  setTimeout(function(){
+    window.location.replace({$jsonUrl});
+  }, {$sec} * 1000);
+</script>
+HTML;
+
+    // 5) <noscript> manual link for the rare clients that block both
+    echo <<<HTML
+<noscript>
+  <p>Redirecting… If nothing happens, <a href="{$safeUrl}">click here</a>.</p>
+</noscript>
+HTML;
+
+    // 6) Done—stop execution
+    exit;
+}
 
 function loginstamp($useremail)
 {
