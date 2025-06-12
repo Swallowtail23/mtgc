@@ -423,17 +423,26 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 }
             }
         } else {
-            echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> '; 
-            echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>"; 
-            echo "<br><br>";
-            echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
+            $formHtml = <<<HTML
+<br>
+<form action="login.php" method="post">
+    <input type="hidden" name="ac" value="log">
+    <input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>
+    <br><br>
+    <input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>
+HTML;
             if ($turnstile === 1) {
-                echo "<br>";
-                echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>";
+                $formHtml .= <<<HTML
+    <br>
+    <div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>
+HTML;
             }
-            echo '<input type="submit" id="loginsubmit" value="LOGIN" />'; 
-            echo '</form><br>';
-            echo "<div class='loginpagebutton'><a href='reset.php'>RESET</a></div>"; 
+            $formHtml .= <<<HTML
+    <input type="submit" id="loginsubmit" value="LOGIN" />
+</form><br>
+<div class='loginpagebutton'><a href='reset.php'>RESET</a></div>
+HTML;
+            echo $formHtml;
         } ?>
     </div>
 </body>
