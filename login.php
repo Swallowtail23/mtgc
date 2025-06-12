@@ -1,5 +1,5 @@
 <?php 
-/* Version:     8.1
+/* Version:     8.2
     Date:       12/06/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
