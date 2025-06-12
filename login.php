@@ -43,6 +43,7 @@
 
 ob_start(); // Start buffering to avoid premature output
 header ("Cache-Control: max-age=0");
+use andkab\Turnstile\Turnstile;
 
 if (file_exists('includes/name.local.php')):
     require('includes/name.local.php');
@@ -207,7 +208,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
 
         // Cloudflare Turnstile
         if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])):
-            $ts_obj = new \andkab\Turnstile\Turnstile($turnstile_secret_key);
+            $ts_obj = new Turnstile($turnstile_secret_key);
             $verifyResponse = $ts_obj->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()):
                 $msg->logMessage('[NOTICE]',"Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
