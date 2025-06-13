@@ -101,7 +101,7 @@ $defaults = [
     ],
 
     'email' => [
-        'email'          => 'disabled',
+        'Email'          => 'disabled',
         'ServerEmail'    => 'no_reply@your-mtg-site-url.com',
         'AdminEmail'     => 'youremail@youremail.com',
         'SMTPDebug'      => SMTP::DEBUG_OFF,
