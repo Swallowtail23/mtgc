@@ -1,6 +1,6 @@
 <?php
 /* Version:     2.0
-    Date:       17/10/16
+    Date:       13/06/25
     Name:       error.php
     Purpose:    Very basic page with no database connectivity
     Notes:      Ini file is parsed with parse_ini_file, not INI class, as classes
@@ -9,9 +9,31 @@
     
     1.0
                 Initial version
+
+    2.0         13/06/25
+                Use configdefaults file        
 */
 
-$ini_array = parse_ini_file("/opt/mtg/mtg_new.ini");
+require __DIR__ . '/config_defaults.php';
+
+// 1) parse the ini with sections
+$ini_array = parse_ini_file('/opt/mtg/mtg_new.ini', true);
+
+// 2) merge defaults
+foreach ($defaults as $section => $kv) {
+    if (! isset($ini_array[$section])) {
+        $ini_array[$section] = $kv;
+        continue;
+    };
+    foreach ($kv as $key => $val) {
+        if (! isset($ini_array[$section][$key]) 
+            || $ini_array[$section][$key] === ''
+        ) {
+            $ini_array[$section][$key] = $val;
+        };
+    };
+};
+
 //Copyright string
 $copyright = $ini_array['Copyright'];
 if($ini_array['tier'] === 'dev'):
