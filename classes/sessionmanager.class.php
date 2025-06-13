@@ -129,6 +129,7 @@ class SessionManager {
                     $this->message->logMessage('[DEBUG]',"No user currency set, using default: $defaultLocalCurrency");
                     $currencies = "usd_".$defaultLocalCurrency;
                 else:                                                                                       ///... else disable fx 
+                    $this->message->logMessage('[DEBUG]',"FX conversion disabled, no local currency required");
                     $fx = FALSE;
                 endif;
                 list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
@@ -141,6 +142,8 @@ class SessionManager {
             else:
                 $fx = FALSE;
                 $this->message->logMessage('[DEBUG]',"FX conversion disabled (1)");
+                $targetCurrency = "usd";
+                $rate = FALSE;
             endif;
             if(isset($fx) AND $fx === TRUE):
                 $rate = $this->getRateForCurrencyPair($currencies);
@@ -150,9 +153,6 @@ class SessionManager {
                 else:
                     $this->message->logMessage('[DEBUG]',"Conversion rate for $currencies is $rate");
                 endif;
-            else:
-                $this->message->logMessage('[DEBUG]',"FX conversion disabled (3)");
-                $rate = FALSE;
             endif;
             $this->addToSessionArray([
                 'usernumber' => $userNumber,
