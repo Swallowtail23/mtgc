@@ -1,4 +1,5 @@
 # README # (v 20/01/24)
+The ctr_dev branch contains work in progress to containerise the app. Not yet complete.
 
 ![screenshot](images/home.png)
 
