@@ -46,7 +46,10 @@ $defaults = [
         'FreecurrencyURL' => 'https://api.freecurrencyapi.com/v1/latest?apikey=',
         'TargetCurrency'  => 'aud',
     ],
-
+// This file is used in places where classes are not loaded, so SMTPxxxx options need to be spelled out,
+// not use the class definition (e.g. PHPMailer::ENCRYPTION_STARTTLS for tls)
+// See setup/mtg_new.ini for comments on the options here
+    
     'email' => [
         'Enabled'     => false,                        // toggle email on/off
         'ServerEmail' => 'no_reply@…',                 // envelope-from address
