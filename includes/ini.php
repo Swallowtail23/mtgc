@@ -68,7 +68,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\PHPMailer;
 
 // DEFAULT SETTINGS
-require __DIR__ . '/config_defaults.php';
+require __DIR__ . '/configdefaults.php';
 
 //Set error reporting based on ini file's dev setting
 $ini = new INI("/opt/mtg/mtg_new.ini");
