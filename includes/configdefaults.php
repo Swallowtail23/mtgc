@@ -48,16 +48,16 @@ $defaults = [
     ],
 
     'email' => [
-        'Enabled'        => 'false',
-        'ServerEmail'    => 'no_reply@your-mtg-site-url.com',
-        'AdminEmail'     => 'youremail@youremail.com',
-        'SMTPDebug'      => SMTP::DEBUG_OFF,
-        'Host'           => 'localhost',
-        'SMTPAuth'       => false,
-        'Username'       => '',
-        'Password'       => '',
-        'SMTPSecure'     => PHPMailer::ENCRYPTION_SMTPS,
-        'Port'           => 25,
+        'Enabled'     => false,                        // toggle email on/off
+        'ServerEmail' => 'no_reply@…',                 // envelope-from address
+        'AdminEmail'  => 'youremail@…',                // who gets alerts
+        'SMTPDebug'   => 0,                            // PHPMailer debug level (SMTP::DEBUG_OFF)
+        'Host'        => 'localhost',                  // SMTP server host
+        'SMTPAuth'    => false,                        // use SMTP auth?
+        'Username'    => '',                           // SMTP auth user
+        'Password'    => '',                           // SMTP auth pass
+        'SMTPSecure'  => 'ssl',                        // encryption method (PHPMailer::ENCRYPTION_SMTPS)
+        'Port'        => 25,                           // SMTP port
     ],
 
     'comments' => [
