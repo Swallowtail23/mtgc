@@ -64,6 +64,9 @@ function autoLoader($class_name)
 };
 spl_autoload_register('autoLoader');
 
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\PHPMailer;
+
 // DEFAULT SETTINGS
 $defaults = [
     'general' => [
