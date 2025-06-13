@@ -14,7 +14,7 @@
                 Use configdefaults file        
 */
 
-require __DIR__ . '/config_defaults.php';
+require __DIR__ . '/configdefaults.php';
 
 // 1) parse the ini with sections
 $ini_array = parse_ini_file('/opt/mtg/mtg_new.ini', true);
