@@ -34,14 +34,10 @@ foreach ($defaults as $section => $kv) {
     };
 };
 
-//Copyright string
-$copyright = $ini_array['Copyright'];
-if($ini_array['tier'] === 'dev'):
-    $tier = 'dev';
-else:
-    $tier = 'prod';
-endif;
-$siteTitle = $ini_array['title'];
+//Copyright string, tier, title and css
+$copyright = $ini_array['general']['Copyright'];
+$tier      = $ini_array['general']['tier'] === 'dev' ? 'dev' : 'prod';
+$siteTitle = $ini_array['general']['title'];
 $cssver = "";
 ?> 
 
