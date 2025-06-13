@@ -36,6 +36,18 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 die('Direct access prohibited');
 endif;
 
+$isHttps = (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || ($_SERVER['SERVER_PORT'] ?? '') === '443'
+);
+
+// override the default if needed
+if ($isHttps) {
+    ini_set('session.cookie_secure', '1');
+} else {
+    ini_set('session.cookie_secure', '0');
+}
+
 $status = session_status();
 if($status == PHP_SESSION_NONE):
     //There is no active session
