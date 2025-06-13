@@ -129,6 +129,20 @@ if(isset($_GET['loglevel'])):
     //re-read ini file
     $ini = new INI("/opt/mtg/mtg_new.ini");
     $ini_array = $ini->data;
+    // re-inject defaults:
+    foreach ($defaults as $section => $kv) {
+        if (! isset($ini_array[$section])) {
+            $ini_array[$section] = $kv;
+            continue;
+        }
+        foreach ($kv as $key => $val) {
+            if (! isset($ini_array[$section][$key])
+                || $ini_array[$section][$key] === ''
+            ) {
+                $ini_array[$section][$key] = $val;
+            }
+        }
+    }
     $loglevelini = $ini_array['general']['Loglevel'];
     if($loglevelini == $newloglevel):
         $msg->logMessage('[NOTICE]',"Log level change success to $newloglevel");
