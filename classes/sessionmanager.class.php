@@ -118,7 +118,7 @@ class SessionManager {
             endif;
             $mytable = $userNumber . "collection";
 
-            if(isset($this->fxAPI) AND $this->fxAPI !== NULL AND $this->fxAPI !== ""): // fx API key is globally present
+            if(isset($this->fxAPI) AND $this->fxAPI !== NULL AND $this->fxAPI !== "" AND $this->fxAPI !== "disabled"): // fx API key is globally present
                 $fx = TRUE;
                 $defaultLocalCurrency = $this->fxLocal;
                 $userLocalCurrency = $currency;
