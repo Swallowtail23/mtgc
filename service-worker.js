@@ -1,63 +1,62 @@
-const CACHE_NAME = 'mtg-collection-v1';
-const IMAGE_CACHE_NAME = 'mtg-images-v1';
+const CACHE_NAME = 'mtg-collection-v2';
+const IMAGE_CACHE_NAME = 'mtg-images-v2';
 
 const STATIC_ASSETS = [
-    '/', 
-    '/index.php',
-    '/manifest.json',
-    '/css/style.css',
-    '/css/style-min.css',
-    '/js/jquery.js',
-    '/images/w_png.png'
+  '/manifest.json',
+  '/css/style.css',
+  '/css/style-min.css',
+  '/js/jquery.js',
+  '/images/w_png.png'
 ];
 
-// Install event: Cache static assets
-self.addEventListener('install', function(event) {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(function(cache) {
-            return cache.addAll(STATIC_ASSETS);
-        })
-    );
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
+  self.skipWaiting(); // activate new SW ASAP
 });
 
-// Activate event: Cleanup old caches
-self.addEventListener('activate', function(event) {
-    event.waitUntil(
-        caches.keys().then(function(cacheNames) {
-            return Promise.all(
-                cacheNames.map(function(cache) {
-                    if (cache !== CACHE_NAME && cache !== IMAGE_CACHE_NAME) {
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
-    );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((names) =>
+      Promise.all(
+        names.map((n) => (n === CACHE_NAME || n === IMAGE_CACHE_NAME ? undefined : caches.delete(n)))
+      )
+    )
+  );
+  self.clients.claim(); // control pages immediately
 });
 
-// Fetch event: Cache static assets + card images separately
-self.addEventListener('fetch', function(event) {
-    const url = new URL(event.request.url);
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-    // Cache card images separately
-    if (url.pathname.startsWith('/cardimg/')) {
-        event.respondWith(
-            caches.open(IMAGE_CACHE_NAME).then(function(cache) {
-                return cache.match(event.request).then(function(response) {
-                    return response || fetch(event.request).then(function(networkResponse) {
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
-                    });
-                });
-            })
-        );
-        return;
-    }
-
-    // Cache-first for static assets
+  // 1) Navigation requests (HTML) — network-first, fallback to cache if offline
+  if (req.mode === 'navigate') {
     event.respondWith(
-        caches.match(event.request).then(function(response) {
-            return response || fetch(event.request);
-        })
+      fetch(req).then((res) => {
+        // optionally update a small runtime cache of HTML for offline fallback
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      }).catch(async () => {
+        const cached = await caches.match(req);
+        return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
+      })
     );
+    return;
+  }
+
+  // 2) Card images — cache-first (as you had)
+  if (url.pathname.startsWith('/cardimg/')) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE_NAME).then((cache) =>
+        cache.match(req).then((hit) => hit || fetch(req).then((net) => { cache.put(req, net.clone()); return net; }))
+      )
+    );
+    return;
+  }
+
+  // 3) Other static assets — cache-first
+  event.respondWith(
+    caches.match(req).then((hit) => hit || fetch(req))
+  );
 });
