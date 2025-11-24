@@ -210,6 +210,13 @@ if ($isValidReferrer):
                 $response['message'] = 'Image not found';
                 returnResponse();
             endif;
+        else:
+            // Unknown or missing action
+            $msg->logMessage('[ERROR]', "ajaxphoto called with unknown or missing action");
+            http_response_code(400);
+            $response['success'] = false;
+            $response['message'] = 'Invalid action';
+            returnResponse();
         endif;
     endif;
 else:
