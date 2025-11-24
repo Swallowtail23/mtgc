@@ -67,12 +67,14 @@ $msg = new Message($logfile);
     
     ?>
     <script>
+        const csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
+
         function reloadImages(setcode) {
             document.body.style.cursor = "wait";
             $.ajax({
                 type: 'POST',
                 url: 'ajax/ajaxsetimg.php',
-                data: { setcode: setcode },
+                data: { setcode: setcode, csrf_token: csrfToken },
                 success: function(response) {
                     // Parse the JSON response
                     var result = JSON.parse(response);
