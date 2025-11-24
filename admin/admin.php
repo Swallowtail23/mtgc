@@ -1,5 +1,5 @@
 <?php
-/* Version:     4.3
+/* Version:     4.4
     Date:       24/11/25
     Name:       admin/admin.php
     Purpose:    Site control panel
@@ -21,6 +21,9 @@
  *
  *  4.3         24/11/25
  *              Code tidy (phpcs)
+ *
+ *  4.4         24/11/25
+ *              Add bounded log tail reader to avoid loading full log file
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -34,6 +37,49 @@ require('../includes/functions.php');       //Includes basic functions for non-s
 require('../includes/secpagesetup.php');    //Setup page variables
 forcechgpwd();                              //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+
+/**
+ * Read the last N lines from a log file without loading it entirely.
+ */
+function getLogTailLines($filepath, $maxLines = 8)
+{
+    global $msg;
+
+    if (!is_readable($filepath)) {
+        if (isset($msg)) {
+            $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
+        }
+        return [];
+    }
+
+    $handle = fopen($filepath, 'rb');
+    if ($handle === false) {
+        if (isset($msg)) {
+            $msg->logMessage('[ERROR]', "Failed to open log file: $filepath");
+        }
+        return [];
+    }
+
+    $buffer = 4096;
+    fseek($handle, 0, SEEK_END);
+    $output = '';
+    $linesFound = 0;
+
+    while (ftell($handle) > 0 && $linesFound <= $maxLines) {
+        $seek = min(ftell($handle), $buffer);
+        fseek($handle, -$seek, SEEK_CUR);
+        $chunk = fread($handle, $seek);
+        $output = $chunk . $output;
+        fseek($handle, -$seek, SEEK_CUR);
+        $linesFound += substr_count($chunk, "\n");
+    }
+
+    fclose($handle);
+
+    $allLines = explode("\n", trim($output));
+
+    return array_slice($allLines, -$maxLines);
+}
 
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $username ($useremail) Admin result: " . $admin);
@@ -222,17 +268,18 @@ require('../includes/menu.php');
             <h3>Logging </h3>
             <h4>Log file path</h4> <?php
             $filepath = "$logfile";
-            $file = file($filepath);
             echo 'Log file location: ' . $filepath . '<p>';
             echo '<h4>Log file - recent</h4>';
-            if (count($file) < 9) :
-                $lines = count($file);
+            $logLinesToShow = 8;
+            $recentLogLines = getLogTailLines($filepath, $logLinesToShow);
+
+            if (empty($recentLogLines)) :
+                echo 'No log entries available or log file could not be read.<br>';
             else :
-                $lines = 8;
+                foreach ($recentLogLines as $line) :
+                    echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "<br>";
+                endforeach;
             endif;
-            for ($i = count($file) - $lines; $i < count($file); $i++) :
-                echo $file[$i] . "\n", "<br>";
-            endfor;
 
             if ((isset($togglecss)) and ($togglecss == "y")) :
                 $msg->logMessage('[DEBUG]', "Turning off minimised CSS...");
