@@ -3149,11 +3149,13 @@ m13,12,"Fog",en,1,0,0,{id}
                 function deletePhoto() {
                     // Get the deck number
                     var deckNumber = $('input[name="decknumber"]').val();
+                    var csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
 
                     // Create form data
                     var formData = new FormData();
                     formData.append('decknumber', deckNumber);
                     formData.append('delete', '');
+                    formData.append('csrf_token', csrfToken);
 
                     // Perform AJAX request
                     $.ajax({
@@ -3193,11 +3195,13 @@ m13,12,"Fog",en,1,0,0,{id}
 
                         // Get the deck number from the hidden input
                         var deckNumber = $('input[name="decknumber"]').val();
+                        var csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
 
                         // Append the deck number to the form data
                         var formData = new FormData(this);
                         formData.append('decknumber', deckNumber);
                         formData.append('update', '');
+                        formData.append('csrf_token', csrfToken);
 
                         $.ajax({
                             url: '/ajax/ajaxphoto.php',
