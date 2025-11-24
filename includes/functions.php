@@ -1416,6 +1416,30 @@ function in_array_case_insensitive($needle, $haystack)
     return false;
 }
 
+/*
+ * Generate (or return existing) CSRF token for the user's session.
+ */
+function generateCsrfToken()
+{
+    if (!isset($_SESSION['csrf_token'])):
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    endif;
+
+    return $_SESSION['csrf_token'];
+}
+
+/*
+ * Validate the submitted CSRF token against the session token.
+ */
+function validateCsrfToken($submittedToken)
+{
+    if (!isset($_SESSION['csrf_token']) || !is_string($submittedToken)):
+        return false;
+    endif;
+
+    return hash_equals($_SESSION['csrf_token'], $submittedToken);
+}
+
 function input_interpreter($input_string)
 // Called by quickAdd in deckmanager class, index.php search inputs and profile.php collection imports
 

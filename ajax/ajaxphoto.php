@@ -61,10 +61,24 @@ if ($isValidReferrer):
 
         $response = ['success' => false, 'message' => ''];
 
+        if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])):
+            $msg->logMessage('[ERROR]',"Invalid CSRF token for ajaxphoto");
+            http_response_code(400);
+            $response['message'] = 'Invalid request token';
+            returnResponse();
+        endif;
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])):
             $msg->logMessage('[DEBUG]',"Called with 'update'");
             // Get the deck number from the form data
             $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
+
+            if (!is_string($decknumber) || !preg_match('/^[0-9]+$/', $decknumber)):
+                $msg->logMessage('[ERROR]',"Invalid deck number supplied: '$decknumber'");
+                http_response_code(400);
+                $response['message'] = 'Invalid deck number';
+                returnResponse();
+            endif;
 
             // Check if the file was uploaded without errors and it's a JPEG file
             if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK):
@@ -169,6 +183,13 @@ if ($isValidReferrer):
         elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])):
             $msg->logMessage('[DEBUG]',"Called with 'delete'");
             $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
+
+            if (!is_string($decknumber) || !preg_match('/^[0-9]+$/', $decknumber)):
+                $msg->logMessage('[ERROR]',"Invalid deck number supplied for delete: '$decknumber'");
+                http_response_code(400);
+                $response['message'] = 'Invalid deck number';
+                returnResponse();
+            endif;
 
             // Path to the file to be deleted
             $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';  //File path
