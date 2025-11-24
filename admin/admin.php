@@ -45,34 +45,34 @@ function getLogTailLines($filepath, $maxLines = 8)
 {
     global $msg;
 
-    if (!is_readable($filepath)) {
-        if (isset($msg)) {
+    if (!is_readable($filepath)):
+        if (isset($msg)):
             $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
-        }
+        endif;
         return [];
-    }
+    endif;
 
     $handle = fopen($filepath, 'rb');
-    if ($handle === false) {
-        if (isset($msg)) {
+    if ($handle === false):
+        if (isset($msg)):
             $msg->logMessage('[ERROR]', "Failed to open log file: $filepath");
-        }
+        endif;
         return [];
-    }
+    endif;
 
     $buffer = 4096;
     fseek($handle, 0, SEEK_END);
     $output = '';
     $linesFound = 0;
 
-    while (ftell($handle) > 0 && $linesFound <= $maxLines) {
+    while (ftell($handle) > 0 && $linesFound <= $maxLines):
         $seek = min(ftell($handle), $buffer);
         fseek($handle, -$seek, SEEK_CUR);
         $chunk = fread($handle, $seek);
         $output = $chunk . $output;
         fseek($handle, -$seek, SEEK_CUR);
         $linesFound += substr_count($chunk, "\n");
-    }
+    endwhile;
 
     fclose($handle);
 
