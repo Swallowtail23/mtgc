@@ -1,22 +1,25 @@
 <?php
-/* Version:     2.1
-    Date:       20/01/24
+/* Version:     2.2
+    Date:       24/11/25
     Name:       admin/reject.php
     Purpose:    Non-admin rejection page called by admin pages on attempted load
                 by non-admin or from non-secure page (if set in ini file)
-    Notes:      
-        
-    1.0
-                Initial version
- *  2.0 
+    Notes:
+
+ *  1.0
+ *              Initial version
+ *  2.0
  *              Moved to Message class from writelog
-  * 
+ *
  *  2.1         20/01/24
  *              Move to logMessage
+ *
+ *  2.2         24/11/25
+ *              PHPCS cleaning
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;?>
 
 <!DOCTYPE html>
@@ -30,28 +33,34 @@ endif;?>
     </head>
     <body id="body" class="body">
 
-    <?php 
-    include '../includes/overlays.php'; 
+    <?php
+    include '../includes/overlays.php';
     include '../includes/header.php';
     require('../includes/menu.php');
     $msg = new Message($logfile);
     ?>
     <div id='page'>
         <div class='staticpagecontent'>
-            <?php 
-            $msg->logMessage('[ERROR]',"Admin page called by user number {$_SESSION['user']}, admin status is $admin");
-            if ($admin == 3): 
+            <?php
+            $msg->logMessage('[ERROR]', "Admin page called by user number {$_SESSION['user']}, admin status is $admin");
+            if ($admin == 3) :
                 echo "<meta http-equiv='refresh' content='2;url=../index.php'>";
                 echo "<div class='alert-box error' id='adminerror'><span>error: </span>"
                         . "Insufficient rights to access this page. "
-                        . "Redirecting to main page.</div>";    
-                $msg->logMessage('[ERROR]',"Admin page called by non-admin user from ".$_SERVER['REMOTE_ADDR'].", exiting");
+                        . "Redirecting to main page.</div>";
+                $msg->logMessage(
+                    '[ERROR]',
+                    "Admin page called by non-admin user from " . $_SERVER['REMOTE_ADDR'] . ", exiting"
+                );
                 exit();
-            elseif ($admin == 2): 
+            elseif ($admin == 2) :
                 echo "<meta http-equiv='refresh' content='2;url=../index.php'>";
                 echo "<div class='alert-box error' id='adminerror'><span>error: </span>"
                         . "This page only accessible from location specified in ini file. "
-                        . "Redirecting to main page.</div>";    
-                $msg->logMessage('[ERROR]',"Admin page called by admin user from non-secure location: ".$_SERVER['REMOTE_ADDR'].", exiting");
+                        . "Redirecting to main page.</div>";
+                $msg->logMessage(
+                    '[ERROR]',
+                    "Admin page called by admin user from non-secure location: " . $_SERVER['REMOTE_ADDR'] . ", exiting"
+                );
                 exit();
             endif;
