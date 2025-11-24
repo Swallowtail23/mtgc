@@ -713,8 +713,8 @@ require('../includes/menu.php');
                                 );
                                 ?>
                             </td>
-                            <td><?php echo(row['object']td >
-                            < td > < ? php
+                            <td><?php echo(row['object']);?></td>
+                            <td><?php
                                 echo(
                                     "<a href=$myURL/admin/cards.php?cardtoedit="
                                     . "{$row['old_scryfall_id']}>{$row['migration_strategy']}</a>"
