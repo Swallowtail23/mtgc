@@ -1,70 +1,63 @@
-<?php 
-/* Version:     4.2
-    Date:       20/01/24
-    Name:       sets.php
-    Purpose:    Lists all setcodes and sets in the database
-    Notes:      This page is the only one NOT mobile responsive design. 
- *              This is because the only way to access it is from the
-                link on profile.php, from a <div> that is not visible on mobile.
- *  To do:      -
-        
-    1.0
-                Initial version
-    2.0         
-                Moved to use Mysqli_Manager library
- *  3.0
- *              Refactoring for cards_scry
- *
- *  4.0         02/12/2023
- *              Add pagination and set image reload for admins
- * 
- *  4.1         20/01/24
- *              Move to logMessage
- * 
- *  4.2         29/05/24
- *              Fix incorrect set ordering
+<?php
+
+/*
+Version:     4.3
+Date:        25/11/25
+Name:        sets.php
+Purpose:     Lists all setcodes and sets in the database.
+Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Moved to use Mysqli_Manager library
+    3.0         Refactoring for cards_scry
+    4.0 02/12/23 Add pagination and set image reload for admins
+    4.1 20/01/24 Move to logMessage
+    4.2 29/05/24 Fix incorrect set ordering
+    4.3 25/11/25 Standard tidy-up
 */
 
-if (file_exists('includes/sessionname.local.php')):
-    require('includes/sessionname.local.php');
-else:
-    require('includes/sessionname_template.php');
+if (file_exists('includes/sessionname.local.php')) :
+    require 'includes/sessionname.local.php';
+else :
+    require 'includes/sessionname_template.php';
 endif;
 startCustomSession();
-require ('includes/ini.php');               //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');      //Setup page variables
-forcechgpwd();                              //Check if user is disabled or needs to change password
+require 'includes/ini.php';               // Initialise and load ini file
+require 'includes/error_handling.php';
+require 'includes/functions.php';         // Includes basic functions for non-secure pages
+require 'includes/secpagesetup.php';      // Setup page variables
+forcechgpwd();                             // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
-?> 
+?>
 <!DOCTYPE html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo $siteTitle;?> - sets</title>
+    <title><?php echo htmlspecialchars($siteTitle);?> - sets</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-    <?php include('includes/googlefonts.php');?>
+    <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js"></script>
     <?php
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $setsPerPage = 30; // Adjust this value based on your preference
-    $range = 4; // Number of page results to show around current page in pagination
-    
-    // Get total sets count
+    $setsPerPage = 30;
+    $range = 4;
+
     $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT name) as totalSets FROM sets");
     $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
     $totalPages = ceil($totalSets / $setsPerPage);
-    
-    if ($page > $totalPages):
-        header("Location: /sets.php?page=" . max(1, $totalPages));
+
+    if ($page > $totalPages) :
+        header('Location: /sets.php?page=' . max(1, $totalPages));
         exit;
     endif;
-    
     ?>
     <script>
         const csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
@@ -76,10 +69,8 @@ $msg = new Message($logfile);
                 url: 'ajax/ajaxsetimg.php',
                 data: { setcode: setcode, csrf_token: csrfToken },
                 success: function(response) {
-                    // Parse the JSON response
                     var result = JSON.parse(response);
 
-                    // Display the message using an alert box
                     showMessage(result.status, result.message);
 
                     if (result.status === 'success') {
@@ -90,28 +81,25 @@ $msg = new Message($logfile);
                     document.body.style.cursor = "default";
                 },
                 error: function(error) {
-                    // Display an error message using an alert box
                     showMessage('error', 'An error occurred.');
                     console.error(error);
                     document.body.style.cursor = "default";
                 }
             });
-        };
+        }
 
         function showMessage(status, message) {
-            // Display the message using an alert box
             alert(message);
-        };
-        
-        // Function to send an AJAX request to filter sets
+        }
+
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
-        
+
         function buildPagination(totalPages, currentPage, setsPerPage) {
             console.log('Total: ' + totalPages + ', Current: ' + currentPage);
             var paginationHTML = '';
             paginationHTML += '<br>Page &nbsp;';
-            var range = <?php echo $range; ?>; // Number of pages to show before and after the current page
-            
+            var range = <?php echo $range; ?>;
+
             if (currentPage !== 1) {
                 paginationHTML += buildPageLink('previous', currentPage, setsPerPage);
             }
@@ -123,28 +111,32 @@ $msg = new Message($logfile);
                     paginationHTML += '<span class="pagination-item">...&nbsp;</span>';
                 }
             }
-            
+
             if (currentPage !== totalPages) {
                 paginationHTML += buildPageLink('next', currentPage, setsPerPage);
             }
-            
+
             paginationHTML += '<br>&nbsp;';
             return paginationHTML;
-        };
+        }
 
         function buildPageLink(page, currentPage, setsPerPage) {
             if (page === currentPage) {
                 return '<span class="pagination-item" style="font-weight: bold">' + page + '&nbsp;&nbsp;</span>';
             } else if (page === 'next') {
                 var nextPage = currentPage + 1;
-                return '<a class="pagination-item" href="javascript:loadPage(' + nextPage + ', ' + setsPerPage + ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+                return '<a class="pagination-item" href="javascript:loadPage(' + nextPage + ', ' + setsPerPage + ');">'
+                    + '<span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
             } else if (page === 'previous') {
                 var previousPage = currentPage - 1;
-                return '<a class="pagination-item" href="javascript:loadPage(' + previousPage + ', ' + setsPerPage + ');"><span class="material-symbols-outlined set-page pagination-item">skip_previous</span></a>&nbsp;';
+                return '<a class="pagination-item" href="javascript:loadPage(' + previousPage + ', '
+                    + setsPerPage + ');">'
+                    + '<span class="material-symbols-outlined set-page pagination-item">skip_previous</span></a>&nbsp;';
             } else {
-                return '<a class="pagination-item" href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">' + page + '&nbsp;&nbsp;</a>';
+                return '<a class="pagination-item" href="javascript:loadPage(' + page + ', ' + setsPerPage + ');">'
+                    + page + '&nbsp;&nbsp;</a>';
             }
-        };
+        }
 
         function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
             var offset = (pageNumber * setsPerPage) - (setsPerPage);
@@ -161,61 +153,65 @@ $msg = new Message($logfile);
                         document.getElementById('paginationTop').style = "display: none";
                         document.getElementById('paginationBottom').style = "display: none";
                         document.getElementById('noResults').style = "display: block";
-                        console.log("Set search: No results");
+                        console.log('Set search: No results');
                     } else if (response.numPages === 1) {
                         document.getElementById('setlist').style = "display: table";
                         updateTable(response.filteredSets);
-                        window.scrollTo(0,0);
+                        window.scrollTo(0, 0);
                         document.getElementById('paginationTop').style = "display: none";
                         document.getElementById('paginationBottom').style = "display: none";
                         document.getElementById('noResults').style = "display: none";
-                        console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                        console.log(
+                            'Set search: Results: ' + response.numResults
+                            + '; Pages: ' + response.numPages + '; Page: ' + pageNumber
+                        );
                     } else {
                         document.getElementById('setlist').style = "display: table";
                         updateTable(response.filteredSets);
-                        window.scrollTo(0,0);
+                        window.scrollTo(0, 0);
                         document.getElementById('paginationTop').style = "display: block";
                         document.getElementById('paginationBottom').style = "display: block";
                         document.getElementById('noResults').style = "display: none";
                         var paginationHTML = buildPagination(response.numPages, pageNumber, setsPerPage);
                         document.getElementById('paginationTop').innerHTML = paginationHTML;
                         document.getElementById('paginationBottom').innerHTML = paginationHTML;
-                        console.log("Set search: Results: " + response.numResults + "; Pages: " + response.numPages + "; Page: " + pageNumber);
+                        console.log(
+                            'Set search: Results: ' + response.numResults
+                            + '; Pages: ' + response.numPages + '; Page: ' + pageNumber
+                        );
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    console.error("Set search: AJAX error: " + textStatus + " - " + errorThrown);
+                    console.error('Set search: AJAX error: ' + textStatus + ' - ' + errorThrown);
                 }
             });
-        };
+        }
 
         function loadPage(pageNumber, setsPerPage) {
             var filterValue = document.getElementById('setCodeFilter').value;
             fetchAndDisplaySets(filterValue, pageNumber, setsPerPage);
-        };
-        
+        }
+
         var debounceTimer;
-        
+
         function filterSets() {
             var filterValue = document.getElementById('setCodeFilter').value;
             var setsPerPage = <?php echo $setsPerPage; ?>;
-            
-            // Clear the previous timer if it exists
+
             clearTimeout(debounceTimer);
-            
+
             debounceTimer = setTimeout(function() {
                 if (filterValue.length >= 3 || filterValue.length === 0) {
                     fetchAndDisplaySets(filterValue, 1, setsPerPage);
                 }
-            }, 300); // Adjust the delay (in milliseconds) as needed
-        };
+            }, 300);
+        }
 
-        // Function to update the table with filtered results
         function updateTable(filteredSets) {
             var table = document.querySelector('#setlist');
             var tableBody = table.getElementsByTagName('tbody')[0];
-            var currentYear = ''; // Variable to keep track of the current year
-            var totalColumns = isAdmin ? 8 : 7; // Total columns in the table
+            var currentYear = '';
+            var totalColumns = isAdmin ? 8 : 7;
 
             while (tableBody.rows.length > 1) {
                 tableBody.deleteRow(1);
@@ -227,16 +223,15 @@ $msg = new Message($logfile);
                     var yearRow = tableBody.insertRow(tableBody.rows.length);
                     var yearCell = yearRow.insertCell(0);
                     yearCell.colSpan = totalColumns;
-                    yearCell.className = "year-header";
+                    yearCell.className = 'year-header';
                     yearCell.innerHTML = '<h3>' + setYear + '</h3>';
                     currentYear = setYear;
                 }
 
                 var row = tableBody.insertRow(tableBody.rows.length);
-                // Populate the row with data from set
                 var iconCell = row.insertCell(0);
                 var setcode = set.setcode;
-                var time = new Date().getTime(); // To ensure fresh image load
+                var time = new Date().getTime();
                 var img = document.createElement('img');
                 img.className = 'seticon';
                 img.src = 'cardimg/seticons/' + setcode + '.svg?' + time;
@@ -246,7 +241,8 @@ $msg = new Message($logfile);
                 var codeCell = row.insertCell(1);
                 var setcodeupper = set.setcode.toUpperCase();
                 var link = document.createElement('a');
-                link.href = 'index.php?complex=yes&searchname=yes&legal=any&set%5B%5D=' + encodeURIComponent(setcodeupper) + '&sortBy=setdown&layout=grid';
+                link.href = 'index.php?complex=yes&searchname=yes&legal=any&set%5B%5D='
+                    + encodeURIComponent(setcodeupper) + '&sortBy=setdown&layout=grid';
                 link.textContent = setcodeupper;
                 codeCell.appendChild(link);
 
@@ -266,19 +262,16 @@ $msg = new Message($logfile);
                 parentCell.classList.add('columnhide');
 
                 var dateCell = row.insertCell(5);
-                var inputDate = set.setdate; // Replace set.setdate with your date variable
+                var inputDate = set.setdate;
 
-                // Split the input date into components
                 var dateComponents = inputDate.split('-');
                 var year = dateComponents[0];
                 var month = dateComponents[1];
                 var day = parseInt(dateComponents[2]);
 
-                // Create an array of month names
-                var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-                // Format the date as "30 Oct 2010" and set it in dateCell
-                dateCell.textContent = monthNames[parseInt(month) - 1] + " " + day;
+                dateCell.textContent = monthNames[parseInt(month) - 1] + ' ' + day;
 
                 var countCell = row.insertCell(6);
                 countCell.textContent = set.card_count.toLocaleString();
@@ -289,21 +282,21 @@ $msg = new Message($logfile);
                     reloadCell.style.textAlign = 'center';
 
                     var link = document.createElement('a');
-                    link.href = "javascript:void(0);";
+                    link.href = 'javascript:void(0);';
                     link.onclick = function() {
                         reloadImages(set.setcode);
                     };
 
                     var iconSpan = document.createElement('span');
-                    iconSpan.className = "material-symbols-outlined";
-                    iconSpan.textContent = "frame_reload";
+                    iconSpan.className = 'material-symbols-outlined';
+                    iconSpan.textContent = 'frame_reload';
 
                     link.appendChild(iconSpan);
                     reloadCell.appendChild(link);
                 }
             });
-        };
-        
+        }
+
         $(document).ready(function() {
             $('#setCodeFilter').focus();
         });
@@ -311,13 +304,13 @@ $msg = new Message($logfile);
 </head>
 
 <body class="body">
-<?php 
-include_once("includes/analyticstracking.php");
-require('includes/overlays.php');             
-require('includes/header.php');
-require('includes/menu.php'); 
+<?php
+include_once 'includes/analyticstracking.php';
+require 'includes/overlays.php';
+require 'includes/header.php';
+require 'includes/menu.php';
 ?>
-    
+
 <div id='page'>
     <div class='staticpagecontent'>
         <?php
@@ -338,42 +331,54 @@ require('includes/menu.php');
                     setdate DESC, length(setcode) ASC, length(parent_set_code) ASC, parent_set_code DESC, setcode ASC
                 LIMIT ?";
         $stmt = $db->prepare($sql);
-        $msg->logMessage('[DEBUG]',"Query is: $sql");
-        $stmt->bind_param("i", $setsPerPage);
-        if ($stmt === false):
-            trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Preparing SQL: " . $db->error, E_USER_ERROR);
+        $msg->logMessage('[DEBUG]', "Query is: $sql");
+        $stmt->bind_param('i', $setsPerPage);
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Preparing SQL: ' . $db->error,
+                E_USER_ERROR
+            );
         endif;
         $exec = $stmt->execute();
-        if ($exec === false):
-            trigger_error("[ERROR] ".basename(__FILE__)." ".__LINE__,": Executing SQL: " . $db->error, E_USER_ERROR);
-        else: 
+        if ($exec === false) :
+            trigger_error(
+                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Executing SQL: ' . $db->error,
+                E_USER_ERROR
+            );
+        else :
             $result = $stmt->get_result();
-            if ($result->num_rows === 0):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__.": No results ". $db->error, E_USER_ERROR);
+            if ($result->num_rows === 0) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__ . ': No results ' . $db->error,
+                    E_USER_ERROR
+                );
             endif;
         endif;
         ?>
         <div class="sets-header-container">
             <h2 class='h2pad sets-header'>Sets</h2>
             <div class="filter-container">
-                <input type="text" class="textinput" id="setCodeFilter" oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)" placeholder="NAME/CODE/YEAR FILTER">
+                <input type="text" class="textinput" id="setCodeFilter"
+                    oninput="filterSets(this.value, <?php echo $setsPerPage; ?>)"
+                    placeholder="NAME/CODE/YEAR FILTER">
                 <div id='cancelsetfilter'><span class="material-symbols-outlined">close</span></div>
             </div>
         </div> <?php
         echo '<div id="paginationTop" class="pagination" style="display: block;"><br>Page &nbsp;';
-        for ($i = 1; $i <= $totalPages; $i++):
-            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
-                // Highlight the current page, or add a link for other pages
-                if ($i == $page):
+        for ($i = 1; $i <= $totalPages; $i++) :
+            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) :
+                if ($i == $page) :
                     echo '<span class="pagination-item" style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
-                else:
-                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
+                else :
+                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', '
+                        . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
                 endif;
-            elseif ($i === $page - $range - 1 || $i === $page + $range + 1):
+            elseif ($i === $page - $range - 1 || $i === $page + $range + 1) :
                 echo '<span class="pagination-item">...&nbsp;</span>';
             endif;
         endfor;
-        echo '<a class="pagination-item" href="javascript:loadPage(' . $page + 1 . ', ' . $setsPerPage . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+        echo '<a class="pagination-item" href="javascript:loadPage(' . ($page + 1) . ', ' . $setsPerPage
+            . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
         echo '<br>&nbsp;</div>'; ?>
         <table id='setlist'>
             <tr>
@@ -398,7 +403,7 @@ require('includes/menu.php');
                 <td class='setcell columnhide'>
                     <b>Card count</b>
                 </td>
-                <?php if ($admin == 1): ?>
+                <?php if ($admin == 1) : ?>
                     <td class='setcell'>
                         <b>Reload images</b>
                     </td>
@@ -406,50 +411,49 @@ require('includes/menu.php');
             </tr>
             <?php
             $currentYear = null;
-            if($result === false):
-                // Should never get here with catches above
-                $msg->logMessage('[ERROR]',"Error retrieving data"); ?>
+            if ($result === false) :
+                $msg->logMessage('[ERROR]', 'Error retrieving data'); ?>
                 <tr>
                     <td colspan="2">Error retrieving data</td>
                 </tr> <?php
-            else:
-                while ($row = $result->fetch_assoc()): 
+            else :
+                while ($row = $result->fetch_assoc()) :
                     $setYear = date('Y', strtotime($row['setdate']));
-                    if(isset($row['setcode']) AND $row['setcode'] !== null):
+                    if (isset($row['setcode']) && $row['setcode'] !== null) :
                         $setcodeupper = strtoupper($row['setcode']);
-                    else:
+                    else :
                         $setcodeupper = '';
                     endif;
-                    if(isset($row['set_name']) AND $row['set_name'] !== null):
+                    if (isset($row['set_name']) && $row['set_name'] !== null) :
                         $setname = $row['set_name'];
-                    else:
+                    else :
                         $setname = '';
                     endif;
-                    if(isset($row['set_type']) AND $row['set_type'] !== null):
+                    if (isset($row['set_type']) && $row['set_type'] !== null) :
                         $settype = ucwords(str_replace('_', ' ', $row['set_type']));
-                    else:
+                    else :
                         $settype = '';
                     endif;
-                    if(isset($row['parent_set_code']) AND $row['parent_set_code'] !== null):
+                    if (isset($row['parent_set_code']) && $row['parent_set_code'] !== null) :
                         $parentsetcode = strtoupper($row['parent_set_code']);
-                    else:
+                    else :
                         $parentsetcode = '';
                     endif;
-                    if(isset($row['setdate']) AND $row['setdate'] !== null):
+                    if (isset($row['setdate']) && $row['setdate'] !== null) :
                         $setdate = strtoupper($row['setdate']);
-                    else:
+                    else :
                         $setdate = '';
                     endif;
-                    if(isset($row['card_count']) AND $row['card_count'] !== null):
+                    if (isset($row['card_count']) && $row['card_count'] !== null) :
                         $cardcount = strtoupper($row['card_count']);
-                    else:
+                    else :
                         $cardcount = '';
                     endif;
-                    if ($setYear != $currentYear):
+                    if ($setYear != $currentYear) :
                         echo '<tr>';
-                        if ($admin == 1):
+                        if ($admin == 1) :
                             echo '<td colspan="8" class="year-header"><h3>' . $setYear . '</h3></td>';
-                        else:
+                        else :
                             echo '<td colspan="7" class="year-header"><h3>' . $setYear . '</h3></td>';
                         endif;
                         echo '</tr>';
@@ -459,12 +463,14 @@ require('includes/menu.php');
                     ?>
                     <tr>
                         <td class='setcell'>
-                            <?php 
+                            <?php
                             $time = time();
-                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time' alt='$setcodeupper'>"; ?>
+                            echo "<img class='seticon' src='cardimg/seticons/{$row['setcode']}.svg?$time'"
+                                . " alt='$setcodeupper'>"; ?>
                         </td>
                         <td class='setcell'>
-                            <?php echo "<a href='index.php?complex=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D=$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
+                            <?php echo "<a href='index.php?complex=yes&amp;searchname=yes&amp;legal=any&amp;set%5B%5D="
+                                . "$setcodeupper&amp;sortBy=setdown&amp;layout=grid'>$setcodeupper</a>"; ?>
                         </td>
                         <td class='setcell'>
                             <?php echo $setname; ?>
@@ -481,37 +487,42 @@ require('includes/menu.php');
                         <td class='setcell columnhide' style='text-align: center;'>
                             <?php echo number_format($cardcount); ?>
                         </td>
+                        <?php if ($admin == 1) : ?>
                         <td class='setcell' style='text-align: center;'>
-                            <?php echo ($admin == 1 ? '<a href="javascript:void(0);" onclick="reloadImages(\''.$row['setcode'].'\')"><span class="material-symbols-outlined">frame_reload</span></a>' : ''); ?>
+                            <?php echo '<a href="javascript:void(0);" onclick="reloadImages(\''
+                                . $row['setcode'] . '\')"><span class="material-symbols-outlined">'
+                                . 'frame_reload</span></a>'; ?>
                         </td>
+                        <?php endif; ?>
                     </tr>
-                    <?php 
+                    <?php
                 endwhile;
             endif;
             ?>
         </table> <?php
         echo '<div id="noResults" style="display:none"><br>No results<br></div>';
         echo '<div id="paginationBottom" class="pagination"><br>Page &nbsp;';
-        for ($i = 1; $i <= $totalPages; $i++):
-            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)):
-                // Highlight the current page, or add a link for other pages
-                if ($i == $page):
+        for ($i = 1; $i <= $totalPages; $i++) :
+            if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) :
+                if ($i == $page) :
                     echo '<span class="pagination-item" style="font-weight: bold">' . $i . '&nbsp;&nbsp;</span>';
-                else:
-                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', ' . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
+                else :
+                    echo '<a class="pagination-item" href="javascript:loadPage(' . $i . ', '
+                        . $setsPerPage . ');">' . $i . '&nbsp;&nbsp;</a>';
                 endif;
-            elseif ($i === $page - $range - 1 || $i === $page + $range + 1):
+            elseif ($i === $page - $range - 1 || $i === $page + $range + 1) :
                 echo '<span class="pagination-item">...&nbsp;</span>';
             endif;
         endfor;
-        echo '<a class="pagination-item" href="javascript:loadPage(' . $page + 1 . ', ' . $setsPerPage . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
+        echo '<a class="pagination-item" href="javascript:loadPage(' . ($page + 1) . ', ' . $setsPerPage
+            . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
         echo '</div>';
         ?>
         <br>&nbsp;
     </div>echo '<br>&nbsp;</div>';
 </div>
-<?php     
-    require('includes/footer.php'); 
+<?php
+    require 'includes/footer.php';
 ?>
     <script>
         document.getElementById('cancelsetfilter').addEventListener('click', function() {
