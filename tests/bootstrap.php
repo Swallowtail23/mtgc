@@ -16,6 +16,6 @@ $GLOBALS['db'] = $db;
 $bracketsInNames = [];
 $importLinestoIgnore = [];
 
-require __DIR__ . '/../classes/message.class.php';
-require __DIR__ . '/../includes/functions.php';
-require __DIR__ . '/../includes/colour.php';
+require_once __DIR__ . '/../classes/message.class.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/colour.php';
