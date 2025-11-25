@@ -38,6 +38,7 @@ function colourfunction($colourcode)
 
     // Normalize split cards (e.g., "B // W") to "BW"
     $colourcode = str_replace(' ', '', str_replace('//', '', $colourcode));
+    $msg->logMessage('[DEBUG]', "Checking card, colour identity $colourcode");
 
     $singles = array(
         'B' => 'black',
@@ -206,7 +207,7 @@ function colourfunction($colourcode)
     );
 
     $length = strlen($colourcode);
-    $colour = '';
+    $colour = 'other';
 
     if ($length === 1 && isset($singles[$colourcode])) :
         $colour = $singles[$colourcode];
@@ -228,6 +229,8 @@ function colourfunction($colourcode)
     elseif ($length === 8 && isset($splitPairs[$colourcode])) :
         $colour = $splitPairs[$colourcode];
     endif;
+
+    $msg->logMessage('[DEBUG]', "Returning colour: $colour");
 
     return $colour;
 }
