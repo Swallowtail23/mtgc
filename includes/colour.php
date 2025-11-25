@@ -1,220 +1,233 @@
 <?php
-/* Version:     3.1
-    Date:       20/01/24
-    Name:       colour.php
-    Purpose:    PHP script with function to return colour name
-    Notes:      
- * 
-    1.0
-                Initial version
- *  2.0
- *              Moved to Message class from writelog
- *  3.0
- *              Fixes for cards_scry database
- * 
- *  3.1         20/01/24
- *              Move to logMessage
+
+/*
+Version:     4.0
+Date:        25/11/25
+Name:        colour.php
+Purpose:     Return colour name for a colour code.
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Moved to Message class from writelog
+    3.0         Fixes for cards_scry database
+    3.1 20/01/24 Move to logMessage
+    3.2 25/11/25 Standard tidy-up
+    4.0 25/11/25 Refactor to lookup-based mapping (no behaviour change)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 
 function colourfunction($colourcode)
 {
     global $logfile;
     $msg = new Message($logfile);
-    $msg->logMessage('[DEBUG]',"run with input: $colourcode");
-    $decode = json_decode($colourcode);
+    $msg->logMessage('[DEBUG]', "run with input: $colourcode");
+    $decoded = json_decode($colourcode);
     $colourcode = '';
-    if($decode !== null):
-        foreach($decode as $value):
-            $colourcode = $colourcode.$value;
+    if ($decoded !== null) :
+        foreach ($decoded as $value) :
+            $colourcode .= $value;
         endforeach;
     endif;
-    $msg->logMessage('[DEBUG]',"Checking card, colour identity $colourcode");
-    if (strlen($colourcode) === 1):
-        if ($colourcode === "B") :
-            $colour = "black";
-        elseif ($colourcode === "U") :
-            $colour = "blue";
-        elseif ($colourcode === "G") :
-            $colour = "green";
-        elseif ($colourcode === "R") :
-            $colour = "red";
-        elseif ($colourcode === "W") :
-            $colour = "white";
-        elseif ($colourcode === "A") :
-            $colour = "artifact";
-        elseif ($colourcode === "L") :
-            $colour = "land";
-        elseif ($colourcode === "C") :
-            $colour = "colourless";
+
+    // Normalize split cards (e.g., "B // W") to "BW"
+    $colourcode = str_replace(' ', '', str_replace('//', '', $colourcode));
+
+    $singles = array(
+        'B' => 'black',
+        'U' => 'blue',
+        'G' => 'green',
+        'R' => 'red',
+        'W' => 'white',
+        'A' => 'artifact',
+        'L' => 'land',
+        'C' => 'colourless'
+    );
+
+    $pairs = array(
+        'GL' => 'dryad',
+        'AU' => 'blueartifact',
+        'UA' => 'blueartifact',
+        'AR' => 'redartifact',
+        'RA' => 'redartifact',
+        'AG' => 'greenartifact',
+        'GA' => 'greenartifact',
+        'AW' => 'whiteartifact',
+        'WA' => 'whiteartifact',
+        'AB' => 'blackartifact',
+        'BA' => 'blackartifact',
+        'AL' => 'landartifact',
+        'LA' => 'landartifact',
+        'WB' => 'orzhov',
+        'BW' => 'orzhov',
+        'GW' => 'selesnya',
+        'WG' => 'selesnya',
+        'RG' => 'gruul',
+        'GR' => 'gruul',
+        'RB' => 'rakdos',
+        'BR' => 'rakdos',
+        'GB' => 'golgari',
+        'BG' => 'golgari',
+        'RW' => 'boros',
+        'WR' => 'boros',
+        'UW' => 'azorius',
+        'WU' => 'azorius',
+        'UB' => 'dimir',
+        'BU' => 'dimir',
+        'UR' => 'izzet',
+        'RU' => 'izzet',
+        'UG' => 'simic',
+        'GU' => 'simic'
+    );
+
+    $trios = array(
+        'WUB' => 'esper',
+        'BUW' => 'esper',
+        'UWB' => 'esper',
+        'UBW' => 'esper',
+        'WBU' => 'esper',
+        'BWU' => 'esper',
+        'WUG' => 'bant',
+        'GUW' => 'bant',
+        'UWG' => 'bant',
+        'UGW' => 'bant',
+        'WGU' => 'bant',
+        'GWU' => 'bant',
+        'RUB' => 'grixis',
+        'RBU' => 'grixis',
+        'URB' => 'grixis',
+        'UBR' => 'grixis',
+        'BRU' => 'grixis',
+        'BUR' => 'grixis',
+        'RGW' => 'naya',
+        'RWG' => 'naya',
+        'WGR' => 'naya',
+        'WRG' => 'naya',
+        'GRW' => 'naya',
+        'GWR' => 'naya',
+        'BGR' => 'jund',
+        'BRG' => 'jund',
+        'RGB' => 'jund',
+        'RBG' => 'jund',
+        'GBR' => 'jund',
+        'GRB' => 'jund',
+        'BGW' => 'abzan',
+        'BWG' => 'abzan',
+        'WGB' => 'abzan',
+        'WBG' => 'abzan',
+        'GBW' => 'abzan',
+        'GWB' => 'abzan',
+        'UGR' => 'temur',
+        'URG' => 'temur',
+        'RGU' => 'temur',
+        'RUG' => 'temur',
+        'GUR' => 'temur',
+        'GRU' => 'temur',
+        'RWU' => 'jeskai',
+        'RUW' => 'jeskai',
+        'WUR' => 'jeskai',
+        'WRU' => 'jeskai',
+        'URW' => 'jeskai',
+        'UWR' => 'jeskai',
+        'WRB' => 'mardu',
+        'WBR' => 'mardu',
+        'BRW' => 'mardu',
+        'BWR' => 'mardu',
+        'RBW' => 'mardu',
+        'RWB' => 'mardu',
+        'BGU' => 'sultai',
+        'BUG' => 'sultai',
+        'UGB' => 'sultai',
+        'UBG' => 'sultai',
+        'GBU' => 'sultai',
+        'GUB' => 'sultai',
+        'AUR' => 'blueredartifact',
+        'ARU' => 'blueredartifact',
+        'RAU' => 'blueredartifact',
+        'RUA' => 'blueredartifact',
+        'UAR' => 'blueredartifact',
+        'URA' => 'blueredartifact',
+        'AWU' => 'bluewhiteartifact',
+        'AUW' => 'bluewhiteartifact',
+        'WUA' => 'bluewhiteartifact',
+        'WAU' => 'bluewhiteartifact',
+        'UAW' => 'bluewhiteartifact',
+        'UWA' => 'bluewhiteartifact'
+    );
+
+    $fourSets = array(
+        'BGRU' => 'glint',
+        'BGRW' => 'dune',
+        'WRGU' => 'ink',
+        'BWGU' => 'witch',
+        'BRWU' => 'yore'
+    );
+
+    $splitPairs = array(
+        'B//B' => 'black',
+        'U//U' => 'blue',
+        'G//G' => 'green',
+        'R//R' => 'red',
+        'W//W' => 'white',
+        'B//W' => 'orzhov',
+        'W//B' => 'orzhov',
+        'G//W' => 'selesnya',
+        'W//G' => 'selesnya',
+        'R//G' => 'gruul',
+        'G//R' => 'gruul',
+        'B//R' => 'rakdos',
+        'R//B' => 'rakdos',
+        'B//G' => 'golgari',
+        'G//B' => 'golgari',
+        'W//R' => 'boros',
+        'R//W' => 'boros',
+        'W//U' => 'azorius',
+        'U//W' => 'azorius',
+        'B//U' => 'dimir',
+        'U//B' => 'dimir',
+        'R//U' => 'izzet',
+        'U//R' => 'izzet',
+        'G//U' => 'simic',
+        'U//G' => 'simic',
+        'WU//UB' => 'esper',
+        'GW//WU' => 'bant',
+        'GU//WU' => 'bant',
+        'UB//RB' => 'grixis',
+        'GR//GW' => 'naya',
+        'GB//GR' => 'jund',
+        'GR//GB' => 'jund',
+        'RB//GR' => 'jund'
+    );
+
+    $length = strlen($colourcode);
+    $colour = '';
+
+    if ($length === 1 && isset($singles[$colourcode])) :
+        $colour = $singles[$colourcode];
+    elseif ($length === 2 && isset($pairs[$colourcode])) :
+        $colour = $pairs[$colourcode];
+    elseif ($length === 3 && isset($trios[$colourcode])) :
+        $colour = $trios[$colourcode];
+    elseif ($length === 4) :
+        $sorted = implode('', array_unique(str_split($colourcode)));
+        if (isset($fourSets[$sorted])) :
+            $colour = $fourSets[$sorted];
         endif;
-    elseif (strlen($colourcode) === 2) :
-        if ($colourcode === "GL") :
-            $colour = "dryad";
-        elseif (in_array($colourcode,array('AU','UA'))) :
-            $colour = "blueartifact";
-        elseif (in_array($colourcode,array('AR','RA'))) :
-            $colour = "redartifact";
-        elseif (in_array($colourcode,array('AG','GA'))) :
-            $colour = "greenartifact";
-        elseif (in_array($colourcode,array('AW','WA'))) :
-            $colour = "whiteartifact";
-        elseif (in_array($colourcode,array('AB','BA'))) :
-            $colour = "blackartifact";
-        elseif (in_array($colourcode,array('AL','LA'))) :
-            $colour = "landartifact";
-        elseif (in_array($colourcode,array("WB","BW"))) :
-            $colour = "orzhov";
-        elseif (in_array($colourcode,array("GW","WG"))) :
-            $colour = "selesnya";
-        elseif (in_array($colourcode,array("RG","GR"))) :
-            $colour = "gruul";
-        elseif (in_array($colourcode,array("RB","BR"))) :
-            $colour = "rakdos";
-        elseif (in_array($colourcode,array("GB","BG"))) :
-            $colour = "golgari";
-        elseif (in_array($colourcode,array("RW","WR"))) :
-            $colour = "boros";
-        elseif (in_array($colourcode,array("UW","WU"))) :
-            $colour = "azorius";
-        elseif (in_array($colourcode,array("UB","BU"))) :
-            $colour = "dimir";
-        elseif (in_array($colourcode,array("UR","RU"))) :
-            $colour = "izzet";
-        elseif (in_array($colourcode,array("UG","GU"))) :
-            $colour = "simic";
-        endif;
-    elseif (strlen($colourcode) === 3) :
-        if (in_array($colourcode,array("WUB","BUW","UWB","UBW","WBU","BWU"))) :
-            $colour = "esper";
-        elseif (in_array($colourcode,array("WUG","GUW","UWG","UGW","WGU","GWU"))) :
-            $colour = "bant";
-        elseif (in_array($colourcode,array("RUB","RBU","URB","UBR","BRU","BUR"))) :
-            $colour = "grixis";
-        elseif (in_array($colourcode,array("RGW","RWG","WGR","WRG","GRW","GWR"))) :
-            $colour = "naya";
-        elseif (in_array($colourcode,array("BGR","BRG","RGB","RBG","GBR","GRB"))) :
-            $colour = "jund";
-        elseif (in_array($colourcode,array("BGW","BWG","WGB","WBG","GBW","GWB"))) :
-            $colour = "abzan";
-        elseif (in_array($colourcode,array("UGR","URG","RGU","RUG","GUR","GRU"))) :
-            $colour = "temur";
-        elseif (in_array($colourcode,array("RWU","RUW","WUR","WRU","URW","UWR"))) :
-            $colour = "jeskai";
-        elseif (in_array($colourcode,array("WRB","WBR","BRW","BWR","RBW","RWB"))) :
-            $colour = "mardu";
-        elseif (in_array($colourcode,array("BGU","BUG","UGB","UBG","GBU","GUB"))) :
-            $colour = "sultai";
-        elseif (in_array($colourcode,array("AUR","ARU","RAU","RUA","UAR","URA"))) :
-            $colour = "blueredartifact";
-        elseif (in_array($colourcode,array("AWU","AUW","WUA","WAU","UAW","UWA"))) :
-            $colour = "bluewhiteartifact";
-        endif;
-    elseif (strlen($colourcode) === 4) :
-            if ((in_array(substr($colourcode,0,1),array("B","R","G","U"))) 
-                    AND (in_array(substr($colourcode,1,1),array("B","R","G","U"))) 
-                    AND (in_array(substr($colourcode,2,1),array("B","R","G","U"))) 
-                    AND (in_array(substr($colourcode,3,1),array("B","R","G","U")))) :
-                $colour = "glint";
-            elseif ((in_array(substr($colourcode,0,1),array("B","R","G","W"))) 
-                    AND (in_array(substr($colourcode,1,1),array("B","R","G","W"))) 
-                    AND (in_array(substr($colourcode,2,1),array("B","R","G","W"))) 
-                    AND (in_array(substr($colourcode,3,1),array("B","R","G","W")))):
-                $colour = "dune";
-            elseif ((in_array(substr($colourcode,0,1),array("W","R","G","U"))) 
-                    AND (in_array(substr($colourcode,1,1),array("W","R","G","U"))) 
-                    AND (in_array(substr($colourcode,2,1),array("W","R","G","U"))) 
-                    AND (in_array(substr($colourcode,3,1),array("W","R","G","U")))):
-                $colour = "ink";
-            elseif ((in_array(substr($colourcode,0,1),array("B","W","G","U"))) 
-                    AND (in_array(substr($colourcode,1,1),array("B","W","G","U"))) 
-                    AND (in_array(substr($colourcode,2,1),array("B","W","G","U"))) 
-                    AND (in_array(substr($colourcode,3,1),array("B","W","G","U")))):
-                $colour = "witch";
-            elseif ((in_array(substr($colourcode,0,1),array("B","R","W","U"))) 
-                    AND (in_array(substr($colourcode,1,1),array("B","R","W","U"))) 
-                    AND (in_array(substr($colourcode,2,1),array("B","R","W","U"))) 
-                    AND (in_array(substr($colourcode,3,1),array("B","R","W","U")))):
-                $colour = "yore";
-            endif;
-    elseif ((strlen($colourcode) === 5) 
-            AND (in_array(substr($colourcode,0,1),array("B","R","W","U","G")))
-            AND (in_array(substr($colourcode,1,1),array("B","R","W","U","G")))
-            AND (in_array(substr($colourcode,2,1),array("B","R","W","U","G")))
-            AND (in_array(substr($colourcode,3,1),array("B","R","W","U","G")))
-            AND (in_array(substr($colourcode,4,1),array("B","R","W","U","G")))):
-        $colour = "five";           
-    elseif ((strlen($colourcode) === 6) 
-            AND ((substr($colourcode,0,1) == "A") 
-            OR (substr($colourcode,1,1) == "A") 
-            OR (substr($colourcode,2,1) == "A") 
-            OR (substr($colourcode,3,1) == "A") 
-            OR (substr($colourcode,4,1) == "A") 
-            OR (substr($colourcode,5,1) == "A"))):
-        $colour = "artifactfive"; 
-    elseif (strlen($colourcode) === 6) :
-        if ($colourcode === "B // B") :
-            $colour = "black";
-        elseif ($colourcode === "U // U") :
-            $colour = "blue";
-        elseif ($colourcode === "G // G") :
-            $colour = "green";
-        elseif ($colourcode === "R // R") :
-            $colour = "red";
-        elseif ($colourcode === "W // W") :
-            $colour = "white";
-        elseif (in_array($colourcode,array("B // W","W // B"))) :
-            $colour = "orzhov";
-        elseif (in_array($colourcode,array("G // W","W // G"))) :
-            $colour = "selesnya";
-        elseif (in_array($colourcode,array("R // G","G // R"))) :
-            $colour = "gruul";
-        elseif (in_array($colourcode,array("B // R","R // B"))) :
-            $colour = "rakdos";
-        elseif (in_array($colourcode,array("B // G","G // B"))) :
-            $colour = "golgari";
-        elseif (in_array($colourcode,array("W // R","R // W"))) :
-            $colour = "boros";
-        elseif (in_array($colourcode,array("W // U","U // W"))) :
-            $colour = "azorius";
-        elseif (in_array($colourcode,array("B // U","U // B"))) :
-            $colour = "dimir";
-        elseif (in_array($colourcode,array("R // U","U // R"))) :
-            $colour = "izzet";
-        elseif (in_array($colourcode,array("G // U","U // G"))) :
-            $colour = "simic";
-        endif;
-    elseif (strlen($colourcode) === 8) :
-        if ($colourcode === "WU // UB") :
-            $colour = "esper";
-        elseif (in_array($colourcode,array("GW // WU","GU // WU"))) :
-            $colour = "bant";
-        elseif ($colourcode === "UB // RB") :
-            $colour = "grixis";
-        elseif ($colourcode === "GR // GW") :
-            $colour = "naya";
-        elseif (in_array($colourcode,array("GB // GR","GR // GB","RB // GR"))) :
-            $colour = "jund";
-        elseif (in_array($colourcode,array("WB // GB","GW // WB"))) :
-            $colour = "junk";
-        elseif ($colourcode === "GU // UR") :
-            $colour = "rug";
-        elseif ($colourcode === "UR // WR") :
-            $colour = "usa";
-        elseif ($colourcode === "WR // WB") :
-            $colour = "oros";
-        elseif ($colourcode === "GB // GU") :
-            $colour = "bug";
-        endif;
-    else:
-        $colour = "other";
+    elseif ($length === 5 && count(array_unique(str_split($colourcode))) === 5) :
+        $colour = 'five';
+    elseif ($length === 6 && strpos($colourcode, 'A') !== false) :
+        $colour = 'artifactfive';
+    elseif ($length === 6 && isset($splitPairs[$colourcode])) :
+        $colour = $splitPairs[$colourcode];
+    elseif ($length === 8 && isset($splitPairs[$colourcode])) :
+        $colour = $splitPairs[$colourcode];
     endif;
-    if (empty($colour)):
-        $colour = "other";
-    endif;
-    $msg->logMessage('[DEBUG]',"Returning colour: $colour");
+
     return $colour;
 }
