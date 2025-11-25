@@ -1,39 +1,45 @@
 <?php
-/* Version:     2.0
-    Date:       18/03/23
-    Name:       initial.php
-    Purpose:    generate a usable password without site access
-    Notes:      #### MUST NOT BE SERVED PUBLICLY BY Apache #### 
-        
-    1.0
-                Initial version
- *  2.0         
- *              Migrate to password_hash
+
+/*
+Version:     2.1
+Date:        25/11/25
+Name:        initial.php
+Purpose:     Generate a usable password without site access.
+Notes:       #### MUST NOT BE SERVED PUBLICLY BY Apache ####
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0 18/03/23 Migrate to password_hash
+    2.1 25/11/25 Standard tidy-up
 */
-include ('../classes/ini.class.php');
-$ini = new INI("/opt/mtg/mtg_new.ini");
+
+include '../classes/ini.class.php';
+$ini = new INI('/opt/mtg/mtg_new.ini');
 $ini_array = $ini->data;
 
-//Set password parameters
-if (!isset($argv[0]) OR !isset($argv[1]) OR !isset($argv[2]) OR isset($argv[3])):
+if (!isset($argv[0]) || !isset($argv[1]) || !isset($argv[2]) || isset($argv[3])) :
     echo "Incorrect number of arguments (Should be 2: username and password), quitting";
     die;
 endif;
+
 $argument_loop = 1;
-foreach($argv as $value):
-    if ($argument_loop === 1):
-        // do nothing, this is the filename
-    elseif ($argument_loop === 2):
-        $username = $value; 
-    elseif ($argument_loop === 3):
+foreach ($argv as $value) :
+    if ($argument_loop === 1) :
+        // filename; do nothing
+    elseif ($argument_loop === 2) :
+        $username = $value;
+    elseif ($argument_loop === 3) :
         $password = $value;
-    else:
+    else :
         echo "Incorrect number of arguments (Should just be username and password), quitting";
         die;
     endif;
     $argument_loop = $argument_loop + 1;
 endforeach;
 
-$hashed_password = password_hash("$password", PASSWORD_DEFAULT);
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
 echo "Username: $username\n";
 echo "Hashed password: $hashed_password\n";
