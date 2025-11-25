@@ -1,55 +1,37 @@
 <?php
-/* Version:     4.2
-    Date:       13/10/24
-    Name:       deckManager.class.php
-    Purpose:    Class for quickAdd and deck import
-    Notes:      ProcessInput() called with deck number and input string
- *              - Interprets whether it is single or multiple line
- *              - If single line, calls quickadd() in single line mode
- *              Quickadd() then called
- *              - Interprets the string and gets the card ID
- *              - returns a card ID, or cardnotfound, or cardnotadded
-    To do:      -
-    @author     Simon Wilson <simon@simonandkate.net>
-    @copyright  2023 Simon Wilson
-    
- *  1.0         25/11/23
-                Initial version
- * 
- *  1.1         11/12/23
- *              Move deck-related methods from functions
- *              Move to single instance of Message class
- *  
-    1.2         20/01/24
- *              Move to logMessage
- * 
- *  1.3         15/02/24
- *              Empty 'type' breaks decks - cater for this (REX, SLD)
- * 
- *  2.0         09/06/2024
- *              Improve deck import capability to cater with MTGC import format 
- *              as well as quick add format
- *              Send email if multi input errors
- * 
- *  3.0         13/07/24
- *              MTGC-107 - correctly interpret sideboard cards on input
- * 
- *  4.0         08/09/24
- *              MTGC-125 - adding deck export code
- * 
- *  4.1         05/10/24
- *              MTGC-127 - Fix broken Deck missing export, and add public function to call from dltext.php
- *              MTGC-128 - Add Deck type change function, and add 'variable' method to deck export, used in deck duplicate
- * 
- *  4.2         13/10/24
- *              MTGC-133 - Prefer non-promo cards when adding Quick Add without specified setcode
+
+/*
+Version:     4.4
+Date:        25/11/25
+Name:        deckmanager.class.php
+Purpose:     Class for quickAdd and deck import.
+Notes:       ProcessInput() called with deck number and input string; quickadd() interprets and adds cards.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0 25/11/23 Initial version
+    1.1 11/12/23 Move deck-related methods from functions; move to single instance of Message class
+    1.2 20/01/24 Move to logMessage
+    1.3 15/02/24 Empty 'type' breaks decks - cater for this (REX, SLD)
+    2.0 09/06/24 Improve deck import capability to cater with MTGC import format as well as quick add format; send
+                email if multi input errors
+    3.0 13/07/24 MTGC-107 - correctly interpret sideboard cards on input
+    4.0 08/09/24 MTGC-125 - adding deck export code
+    4.1 05/10/24 MTGC-127 - Fix broken Deck missing export; add public function to call from dltext.php; MTGC-128 -
+                Add Deck type change function, and add 'variable' method to deck export, used in deck duplicate
+    4.2 13/10/24 MTGC-133 - Prefer non-promo cards when adding Quick Add without specified setcode
+    4.3 25/11/25 Standard tidy-up
+    4.4 25/11/25 Rename PHPMailer wrapper to PascalCase
 */
 
+// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 
-class DeckManager 
+class DeckManager
 {
     private $db;
     private $logfile;
@@ -60,8 +42,16 @@ class DeckManager
     private $importLinestoIgnore;
     private $siteTitle;
     private $nonPreferredSetCodes;
-    
-    public function __construct($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes, $siteTitle = null) {
+
+    public function __construct(
+        $db,
+        $logfile,
+        $useremail,
+        $serveremail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes,
+        $siteTitle = null
+    ) {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
@@ -70,190 +60,205 @@ class DeckManager
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
-        
     }
-    
-    public function processInput($decknumber, $input) {
-    // processInput can handle either single-line or multi-line 'add card' 
-    // inputs, using quickadd method to process
-    // Multi-line inputs are batched for combined data write by addDeckCardsBatch
-    // Called from deckdetail.php
-        
-        $this->message->logMessage('[DEBUG]',"ProcessInput called for deck $decknumber with '$input'");
+
+    public function processInput($decknumber, $input)
+    {
+        // processInput can handle either single-line or multi-line 'add card' inputs using quickadd.
+        // Multi-line inputs are batched for combined data write by addDeckCardsBatch; called from deckdetail.php.
+
+        $this->message->logMessage(
+            '[DEBUG]',
+            "ProcessInput called for deck $decknumber with '$input'"
+        );
         // Check if input is multiline
         $lines = explode("\n", $input);
         $inputType = '';
         $qtyLines = count($lines);
-        if ($qtyLines > 1):
-            $this->message->logMessage('[DEBUG]',"Multi-line input ($qtyLines lines), calling quickadd in batch mode");
+        if ($qtyLines > 1) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Multi-line input ($qtyLines lines), calling quickadd in batch mode"
+            );
             $row = 1;
             $sideboardTrigger = false;
             $warningsummary = '';
             $warningheading = 'Warning type, Row number, Input line';
-            foreach ($lines as $line):
+            foreach ($lines as $line) :
                 $line = trim($line);
                 $start = substr($line, 0, 8);
-                if(strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false):
-                    $this->message->logMessage('[DEBUG]',"Row $row: Header row: '$line'");
-                elseif(trim($line) === '' || in_array_case_insensitive(trim($line),$this->importLinestoIgnore)):
-                    if(trim($line) === 'Sideboard'):
-                        $this->message->logMessage('[DEBUG]',"Row $row: Sideboard header");
+                if (strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false) :
+                    $this->message->logMessage('[DEBUG]', "Row $row: Header row: '$line'");
+                elseif (trim($line) === '' || in_array_case_insensitive(trim($line), $this->importLinestoIgnore)) :
+                    if (trim($line) === 'Sideboard') :
+                        $this->message->logMessage('[DEBUG]', "Row $row: Sideboard header");
                         $sideboardTrigger = true;
-                    elseif(trim($line) === '' || in_array_case_insensitive(trim($line),$this->importLinestoIgnore)):
-                        $this->message->logMessage('[DEBUG]',"Row $row: Empty row");
+                    elseif (trim($line) === '' || in_array_case_insensitive(trim($line), $this->importLinestoIgnore)) :
+                        $this->message->logMessage('[DEBUG]', "Row $row: Empty row");
                     endif;
-                else:
-                    $this->message->logMessage('[DEBUG]',"Row $row: Data row: '$line'");
-                    $quickaddresult = $this->quickadd($decknumber, $line, $sideboardTrigger, true); // Set last parameter to true for batching
-                    if($quickaddresult === false || $quickaddresult === 'cardnotfound'):
-                        $this->message->logMessage('[DEBUG]',"Row $row: Result: fail");
-                        $newwarning = "ERROR - Row $row, Line: '$line'"."\n";
-                        $warningsummary = $warningsummary.$newwarning;
-                    else:
-                        $this->message->logMessage('[DEBUG]',"Row $row: Result: success");
+                else :
+                    $this->message->logMessage('[DEBUG]', "Row $row: Data row: '$line'");
+                    // Set last parameter to true for batching
+                    $quickaddresult = $this->quickadd(
+                        $decknumber,
+                        $line,
+                        $sideboardTrigger,
+                        true
+                    );
+                    if ($quickaddresult === false || $quickaddresult === 'cardnotfound') :
+                        $this->message->logMessage('[DEBUG]', "Row $row: Result: fail");
+                        $newwarning = "ERROR - Row $row, Line: '$line'" . "\n";
+                        $warningsummary = $warningsummary . $newwarning;
+                    else :
+                        $this->message->logMessage('[DEBUG]', "Row $row: Result: success");
                     endif;
                 endif;
                 $row = $row + 1;
             endforeach;
-            if ($warningsummary !== ''):
-                $from = "From: $this->serveremail\r\nReturn-path: $this->serveremail"; 
-                $subject = "Deck Import failures / warnings"; 
+            if ($warningsummary !== '') :
+                $from = "From: $this->serveremail\r\nReturn-path: $this->serveremail";
+                $subject = "Deck Import failures / warnings";
                 $message = "$warningheading \n \n $warningsummary \n";
-                mail($this->useremail, $subject, $message, $from); 
-                $this->message->logMessage('[DEBUG]',"Deck import warnings: '$warningsummary'");
+                mail($this->useremail, $subject, $message, $from);
+                $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningsummary'");
                 $quickaddresult = 'multierror';
             endif;
-        else:
-            $this->message->logMessage('[DEBUG]',"Single-line input, calling quickadd in single-line mode");
+        else :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Single-line input, calling quickadd in single-line mode"
+            );
             $inputType = 'SingleText';
             $quickaddresult = $this->quickadd($decknumber, $input);
-            $this->message->logMessage('[DEBUG]',"Result: $quickaddresult");
+            $this->message->logMessage('[DEBUG]', "Result: $quickaddresult");
             return $quickaddresult;
         endif;
         // If batched card array is not empty, perform batch insert
-        if (!empty($this->batchedCardIds)):
+        if (!empty($this->batchedCardIds)) :
             $this->addDeckCardsBatch($decknumber, $this->batchedCardIds);
             // Clear array after batch insert
             $this->batchedCardIds = [];
-            if(isset($quickaddresult) && $quickaddresult === 'multierror'):
+            if (isset($quickaddresult) && $quickaddresult === 'multierror') :
                 return $quickaddresult;
             endif;
         endif;
     }
-    
-    public function quickadd($decknumber,$get_string,$sideboardTrigger = false,$batch = false)
-    // Called from processInput()
+
+    /**
+     * Called from processInput().
+     */
+    public function quickadd($decknumber, $get_string, $sideboardTrigger = false, $batch = false)
     {
         global $noQuickAddLayouts;
-        
-        $this->message->logMessage('[NOTICE]',"Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')");
-        $quickaddstring = htmlspecialchars($get_string,ENT_NOQUOTES);
+
+        $this->message->logMessage(
+            '[NOTICE]',
+            "Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')"
+        );
+        $quickaddstring = htmlspecialchars($get_string, ENT_NOQUOTES);
         $interpreted_string = input_interpreter($quickaddstring);
-        if($interpreted_string !== false):
+        if ($interpreted_string !== false) :
             // UUID
-            if (isset($interpreted_string['uuid']) AND $interpreted_string['uuid'] !== ''):
+            if (isset($interpreted_string['uuid']) and $interpreted_string['uuid'] !== '') :
                 $quickaddUUID = $interpreted_string['uuid'];
-            else:
+            else :
                 $quickaddUUID = '';
             endif;
             // Quantity
-            if (isset($interpreted_string['qty']) AND $interpreted_string['qty'] !== ''):
+            if (isset($interpreted_string['qty']) and $interpreted_string['qty'] !== '') :
                 $quickaddqty = $interpreted_string['qty'];
-            else:
+            else :
                 $quickaddqty = 1;
             endif;
             // Name
-            if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
+            if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
                 $quickaddcard = $interpreted_string['name'];
-            else:
+            else :
                 $quickaddcard = '';
             endif;
             // Set
-            if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
+            if (isset($interpreted_string['set']) and $interpreted_string['set'] !== '') :
                 $quickaddset = strtoupper($interpreted_string['set']);
-            else:
+            else :
                 $quickaddset = '';
             endif;
             // Lang
-            if (isset($interpreted_string['lang']) AND $interpreted_string['lang'] !== ''):
+            if (isset($interpreted_string['lang']) and $interpreted_string['lang'] !== '') :
                 $quickaddlang = strtoupper($interpreted_string['lang']);
-            else:
+            else :
                 $quickaddlang = '';
             endif;
             // Collector number
-            if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
+            if (isset($interpreted_string['number']) and $interpreted_string['number'] !== '') :
                 $quickaddNumber = $interpreted_string['number'];
-            else:
+            else :
                 $quickaddNumber = '';
             endif;
-            $quickaddcard = htmlspecialchars_decode($quickaddcard,ENT_QUOTES);
-            if($sideboardTrigger):
+            $quickaddcard = htmlspecialchars_decode($quickaddcard, ENT_QUOTES);
+            if ($sideboardTrigger) :
                 $mainqty = 0;
                 $sideqty = $quickaddqty;
-            else:
+            else :
                 $mainqty = $quickaddqty;
                 $sideqty = 0;
             endif;
-            $this->message->logMessage('[DEBUG]',"Quick add interpreted as: Qty: [Main: $mainqty, Side: $sideqty] x Card: [$quickaddcard] Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] UUID: [$quickaddUUID]");
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Quick add interpreted as: Qty: [Main: $mainqty, Side: $sideqty] x Card: [$quickaddcard] "
+                . "Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] "
+                . "UUID: [$quickaddUUID]"
+            );
             $stmt = null;
 
             // Get card layouts to not include in quick add
             $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
             $placeholdersString = implode(',', $placeholders);
 
-            if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false):
+            if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false) :
                 // Card UUID provided and valid UUID
-                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided UUID: [$quickaddUUID]");
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Quick add proceeding with provided UUID: [$quickaddUUID]"
+                );
                 $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = [$quickaddUUID];
                 $stmt->bind_param('s', $params[0]);
-                
-            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== '' AND $quickaddlang !== ''):
+            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber !== '' and $quickaddlang !== '') :
                 // Card name, setcode, and collector number provided
-                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided name, set, number and specified language");
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                           f1_name = ? OR 
-                                                           f2_name = ? OR 
-                                                           printed_name = ? OR 
-                                                           f1_printed_name = ? OR 
-                                                           f2_printed_name = ? OR 
-                                                           flavor_name = ? OR
-                                                           f1_flavor_name = ? OR 
-                                                           f2_flavor_name = ?) AND 
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Quick add proceeding with provided name, set, number and specified language"
+                );
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
+                                                           OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
+                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
                                                            setcode = ? AND number_import = ? AND 
-                                                           lang LIKE ? AND 
-                                                           layout NOT IN ($placeholdersString)
+                                                           lang LIKE ? AND layout NOT IN ($placeholdersString) 
                                                            ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickaddcard);
                 array_push($params, $quickaddset, $quickaddNumber, $quickaddlang);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-                
-            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber !== '') :
                 // Card name, setcode, and collector number provided
-                $this->message->logMessage('[DEBUG]',"Quick add proceeding with provided name, set, number and primary language");
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                           f1_name = ? OR 
-                                                           f2_name = ? OR 
-                                                           printed_name = ? OR 
-                                                           f1_printed_name = ? OR 
-                                                           f2_printed_name = ? OR 
-                                                           flavor_name = ? OR
-                                                           f1_flavor_name = ? OR 
-                                                           f2_flavor_name = ?) AND 
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Quick add proceeding with provided name, set, number and primary language"
+                );
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
+                                                           OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
+                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
                                                            setcode = ? AND number_import = ? AND 
-                                                           `layout` NOT IN ($placeholdersString) AND
-                                                           primary_card = 1
+                                                           `layout` NOT IN ($placeholdersString) AND primary_card = 1 
                                                            ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickaddcard);
                 array_push($params, $quickaddset, $quickaddNumber);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-
-            elseif ($quickaddcard !== '' AND $quickaddset !== '' AND $quickaddNumber === ''):
+            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber === '') :
                 // Card name and setcode provided
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR
                                                            f1_name = ? OR 
@@ -273,88 +278,80 @@ class DeckManager
                 array_push($params, $quickaddset);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-
-            elseif ($quickaddcard !== '' AND $quickaddset === ''):
+            elseif ($quickaddcard !== '' and $quickaddset === '') :
                 // Card name only provided, or with a number (but useless without setcode) - just grab a name match
                 $setcodePlaceholders = implode(',', array_fill(0, count($this->nonPreferredSetCodes), '?'));
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                           f1_name = ? OR 
-                                                           f2_name = ? OR 
-                                                           printed_name = ? OR 
-                                                           f1_printed_name = ? OR 
-                                                           f2_printed_name = ? OR 
-                                                           flavor_name = ? OR
-                                                           f1_flavor_name = ? OR 
-                                                           f2_flavor_name = ?) AND 
-                                                           `layout` NOT IN ($placeholdersString) AND
-                                                           primary_card = 1 AND 
-                                                           setcode NOT IN ($setcodePlaceholders)
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? OR 
+                                                           printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
+                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
+                                                           `layout` NOT IN ($placeholdersString) AND 
+                                                           primary_card = 1 AND setcode NOT IN ($setcodePlaceholders) 
                                                            ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
                 $params = array_fill(0, 9, $quickaddcard); // First 9 are for the name variations
                 $params = array_merge($params, $noQuickAddLayouts); // Add layout exclusions
                 $params = array_merge($params, $this->nonPreferredSetCodes); // Add non-preferred set codes
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-
-            elseif ($quickaddcard === '' AND $quickaddset !== '' AND $quickaddNumber !== ''):
+            elseif ($quickaddcard === '' and $quickaddset !== '' and $quickaddNumber !== '') :
                 // Card name not provided, setcode, and collector number provided
-                $query = "SELECT id FROM cards_scry WHERE
-                                                        setcode = ? AND 
-                                                        number_import = ? AND 
-                                                        `layout` NOT IN ($placeholdersString) AND
-                                                        primary_card = 1
+                $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND 
+                                                        `layout` NOT IN ($placeholdersString) AND primary_card = 1 
                                                         ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = [$quickaddset, $quickaddNumber];
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-
-            else:
+            else :
                 // Not enough info, cannot add
-                $this->message->logMessage('[NOTICE]',"Quick add - Not enough info to identify a card to add");
+                $this->message->logMessage('[NOTICE]', "Quick add - Not enough info to identify a card to add");
                 $cardtoadd = 'cardnotfound';
                 return $cardtoadd;
             endif;
 
-            if ($stmt !== null AND $stmt->execute()):
+            if ($stmt !== null and $stmt->execute()) :
                 $result = $stmt->get_result();
-                if ($result->num_rows > 0):
+                if ($result->num_rows > 0) :
                     $row = $result->fetch_assoc();
                     $stmt->close();
                     $cardtoadd = $row['id'];
-                    $this->message->logMessage('[DEBUG]',"Quick add result: UUID result is '$cardtoadd'");
-                    if (!$batch):
+                    $this->message->logMessage('[DEBUG]', "Quick add result: UUID result is '$cardtoadd'");
+                    if (!$batch) :
                         // Call addDeckCard only if not in batch mode
                         $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
                         return $addresult;
-                    else:
+                    else :
                         // In batch mode, store the card ID and quantity in the batchedCardIds array
-                        $this->batchedCardIds[] = ['id' => $cardtoadd, 'mainqty' => $mainqty, 'sideqty' => $sideqty];
+                        $this->batchedCardIds[] = [
+                            'id' => $cardtoadd,
+                            'mainqty' => $mainqty,
+                            'sideqty' => $sideqty,
+                        ];
                     endif;
-                else:
+                else :
                     $stmt->close();
-                    $this->message->logMessage('[NOTICE]',"Quick add - Card not found");
+                    $this->message->logMessage('[NOTICE]', "Quick add - Card not found");
                     $cardtoadd = 'cardnotfound';
                     return $cardtoadd;
                 endif;
-            else:
+            else :
                 $stmt->close();
-                $this->message->logMessage('[ERROR]',"Quick add - SQL error: " . $stmt->error);
+                $this->message->logMessage('[ERROR]', "Quick add - SQL error: " . $stmt->error);
                 $cardtoadd = 'cardnotfound';
                 return $cardtoadd;
             endif;
-        else:
-            $this->message->logMessage('[ERROR]',"Quick add interpreter failed");
+        else :
+            $this->message->logMessage('[ERROR]', "Quick add interpreter failed");
             return false;
         endif;
     }
 
-    public function addDeckCardsBatch($decknumber, $batchedCardIds) {
-        $this->message->logMessage('[DEBUG]',"deckManager batch process called");
+    public function addDeckCardsBatch($decknumber, $batchedCardIds)
+    {
+        $this->message->logMessage('[DEBUG]', "deckManager batch process called");
         $values = [];
         $placeholders = [];
 
-        foreach ($batchedCardIds as $batchedCard):
+        foreach ($batchedCardIds as $batchedCard) :
             $id = $batchedCard['id'];
             $mainqty = $batchedCard['mainqty'];
             $sideqty = $batchedCard['sideqty'];
@@ -363,7 +360,7 @@ class DeckManager
             $placeholders[] = '(?, ?, ?, ?)';
         endforeach;
 
-        if (!empty($values)):
+        if (!empty($values)) :
             $valuesString = implode(', ', $values);
             $placeholdersString = implode(', ', $placeholders);
 
@@ -378,7 +375,7 @@ class DeckManager
 
             // Prepare an array with the values to be bound
             $bindValues = [];
-            foreach ($batchedCardIds as $batchedCard):
+            foreach ($batchedCardIds as $batchedCard) :
                 $bindValues[] = $decknumber;
                 $bindValues[] = $batchedCard['id'];
                 $bindValues[] = $batchedCard['mainqty'];
@@ -389,35 +386,45 @@ class DeckManager
             $stmt->bind_param($typeDefinition, ...$bindValues);
 
             if ($stmt->execute()) :
-                $this->message->logMessage('[DEBUG]',"deckManager batch process completed");
+                $this->message->logMessage('[DEBUG]', "deckManager batch process completed");
             else :
-                $this->message->logMessage('[ERROR]',"Error executing batch insert query: ".$stmt->error);
+                $this->message->logMessage('[ERROR]', "Error executing batch insert query: " . $stmt->error);
             endif;
 
             $stmt->close();
         endif;
     }
-    
-    public function deckOwnerCheck($deck,$user)
+
+    public function deckOwnerCheck($deck, $user)
     {
-        $this->message->logMessage('[DEBUG]',"Checking deck ownership: $deck, $user");
+        $this->message->logMessage('[DEBUG]', "Checking deck ownership: $deck, $user");
         $sql = "SELECT deckname, owner FROM decks WHERE decknumber = ? LIMIT 1";
         $result = $this->db->execute_query($sql, [$deck]);
-        if ($result === false):
-            trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $this->db->error, E_USER_ERROR);
-        else:
-            if ($row = $result->fetch_assoc()):
+        if ($result === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
+            if ($row = $result->fetch_assoc()) :
                 $deckname = $row['deckname'];
                 $owner = $row['owner'];
-                $this->message->logMessage('[DEBUG]',"Deck $deck ($deckname) belongs to owner $owner (called by $user)");
-                if ($owner != $user):
-                    $this->message->logMessage('[ERROR]',"Deck {$row['deckname']} does not belong to user $user, returning to deck page");
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Deck $deck ($deckname) belongs to owner $owner (called by $user)"
+                );
+                if ($owner != $user) :
+                    $this->message->logMessage(
+                        '[ERROR]',
+                        "Deck {$row['deckname']} does not belong to user $user, returning to deck page"
+                    );
                     return false;
-                else:
+                else :
                     return $deckname;
                 endif;
-            else:
-                $this->message->logMessage('[ERROR]',"No deck found for deck $deck, returning to deck page");
+            else :
+                $this->message->logMessage('[ERROR]', "No deck found for deck $deck, returning to deck page");
                 return false;
             endif;
         endif;
@@ -425,20 +432,28 @@ class DeckManager
 
     public function deckCardCheck($card, $user)
     {
-        $this->message->logMessage('[DEBUG]',"Checking to see what decks this card is in for user $user...");
+        $this->message->logMessage('[DEBUG]', "Checking to see what decks this card is in for user $user...");
 
         $sql = "SELECT deckcards.decknumber, deckcards.cardqty, deckcards.sideqty, decks.deckname 
                 FROM deckcards 
                 LEFT JOIN decks ON deckcards.decknumber = decks.decknumber 
                 WHERE cardnumber = ? AND owner = ?";
         $result = $this->db->execute_query($sql, [$card, $user]);
-        if ($result === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ".$this->db->error, E_USER_ERROR);
-        else:
+        if ($result === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
             $i = 0;
             $record = array();
-            while ($row = $result->fetch_assoc()):
-                $this->message->logMessage('[DEBUG]',"Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in decknumber {$row['decknumber']} owned by user $user");
+            while ($row = $result->fetch_assoc()) :
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Card $card, mainqty {$row['cardqty']}, sideqty {$row['sideqty']} in decknumber "
+                        . "{$row['decknumber']} owned by user $user"
+                );
                 $record[$i]['decknumber'] = $row['decknumber'];
                 $record[$i]['qty'] = $row['cardqty'];
                 $record[$i]['sideqty'] = $row['sideqty'];
@@ -449,263 +464,339 @@ class DeckManager
         endif;
     }
 
-    public function addDeckCard($deck,$card,$section,$quantity)
+    public function addDeckCard($deck, $card, $section, $quantity)
     {
         global $commander_decktypes, $commander_multiples, $any_quantity;
-        $this->message->logMessage('[NOTICE]',"Add card called: '$quantity' x '$card' to '$deck' ($section)");
+        $this->message->logMessage(
+            '[NOTICE]',
+            "Add card called: '$quantity' x '$card' to '$deck' ($section)"
+        );
 
         // Get card name and other key details of card to add
         $cardnamequery = "SELECT name,type,f1_type,ability FROM cards_scry WHERE id = ? LIMIT 1";
         $result = $this->db->execute_query($cardnamequery, [$card]);
         $cardname = $result->fetch_assoc();
-        if($result === FALSE):
-            trigger_error("[ERROR] Class " .__METHOD__ . " ".__LINE__," - SQL failure: Error: " . $this->db->error, E_USER_ERROR);
-        else:
+        if ($result === false) :
+            trigger_error(
+                "[ERROR] Class " . __METHOD__ . " " . __LINE__
+                    . " - SQL failure: Error: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
             $cardnametext = $cardname['name'];
             $i = 0;
-            $cdr_1_plus = FALSE;
-            
+            $cdr_1_plus = false;
+
             // Cater for cards with NULL type (REX and SLD double-sided cards with dual art but functionally same card
-            if($cardname['type'] !== NULL):
+            if ($cardname['type'] !== null) :
                 $card_type = $cardname['type'];
-            elseif ($cardname['type'] === NULL AND isset($cardname['f1_type'])):
+            elseif ($cardname['type'] === null and isset($cardname['f1_type'])) :
                 $card_type = $cardname['f1_type'];
-            elseif ($cardname['type'] === NULL AND isset($cardname['f2_type'])):
+            elseif ($cardname['type'] === null and isset($cardname['f2_type'])) :
                 $card_type = $cardname['f2_type'];
-            else:
+            else :
                 $card_type = 'None';
             endif;
-            
-            while($i < count($commander_multiples)):
-                $while_result = FALSE;
-                $this->message->logMessage('[DEBUG]',"Checking type for: {$commander_multiples[$i]}");
-                if(str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                    $while_result = TRUE;
-                    $cdr_1_plus = TRUE;
+
+            while ($i < count($commander_multiples)) :
+                $while_result = false;
+                $this->message->logMessage('[DEBUG]', "Checking type for: {$commander_multiples[$i]}");
+                if (str_contains($card_type, $commander_multiples[$i]) == true) :
+                    $while_result = true;
+                    $cdr_1_plus = true;
                 endif;
                 $i++;
             endwhile;
             $i = 0;
-            while($i < count($any_quantity)):
-                $while_result = FALSE;
-                $this->message->logMessage('[DEBUG]',"Checking ability for: {$any_quantity[$i]}");
-                if(isset($cardname['ability']) AND (str_contains($cardname['ability'],$any_quantity[$i]) == TRUE)):
-                    $while_result = TRUE;
-                    $cdr_1_plus = TRUE;
+            while ($i < count($any_quantity)) :
+                $while_result = false;
+                $this->message->logMessage('[DEBUG]', "Checking ability for: {$any_quantity[$i]}");
+                if (isset($cardname['ability']) and (str_contains($cardname['ability'], $any_quantity[$i]) == true)) :
+                    $while_result = true;
+                    $cdr_1_plus = true;
                 endif;
                 $i++;
             endwhile;
-            if($cdr_1_plus == FALSE):
+            if ($cdr_1_plus == false) :
                 $multi_allowed = "no";
-            else:
+            else :
                 $multi_allowed = "yes";
             endif;
-            $this->message->logMessage('[DEBUG]',"Card name for $card is $cardnametext; Commander multiples allowed: $multi_allowed");
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Card name for $card is $cardnametext; Commander multiples allowed: $multi_allowed"
+            );
         endif;
 
         // Get deck type and existing cards in it
-        if($decktypesql = $this->db->execute_query("SELECT type
+        if (
+            $decktypesql = $this->db->execute_query("SELECT type
                                     FROM decks 
-                                    WHERE decknumber = ?",[$deck])):
-            while ($row = $decktypesql->fetch_assoc()):
-                if ($row['type'] == NULL):
+                                    WHERE decknumber = ?", [$deck])
+        ) :
+            while ($row = $decktypesql->fetch_assoc()) :
+                if ($row['type'] == null) :
                     $decktype = "none";
-                else:
+                else :
                     $decktype = $row['type'];
                 endif;
             endwhile;
-        else:
+        else :
             $decktype = "none";
         endif;
         $cardlist = $this->db->execute_query("SELECT name,decks.type
                                     FROM deckcards 
                                 LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
                                 LEFT JOIN decks on deckcards.decknumber = decks.decknumber
-                                WHERE deckcards.decknumber = ? AND (cardqty > 0 OR sideqty > 0)",[$deck]);
+                                WHERE deckcards.decknumber = ? AND (cardqty > 0 OR sideqty > 0)", [$deck]);
         $cardlistnames = array();
-        while ($row = $cardlist->fetch_assoc()):
-            if(!in_array($row['name'], $cardlistnames)):
+        while ($row = $cardlist->fetch_assoc()) :
+            if (!in_array($row['name'], $cardlistnames)) :
                 $cardlistnames[] = $row['name'];
             endif;
         endwhile;
-        if(in_array($cardnametext,$cardlistnames)):
-            $this->message->logMessage('[DEBUG]',"Cardname $cardnametext is already in this deck");
-            $already_in_deck = TRUE;
-        else:
-            $already_in_deck = FALSE;
+        if (in_array($cardnametext, $cardlistnames)) :
+            $this->message->logMessage('[DEBUG]', "Cardname $cardnametext is already in this deck");
+            $already_in_deck = true;
+        else :
+            $already_in_deck = false;
         endif;
-        if(in_array($decktype,$commander_decktypes)):
-            $this->message->logMessage('[DEBUG]',"Deck $deck is Commander-type");
-            $cdr_type_deck = TRUE;
-        else:
-            $cdr_type_deck = FALSE;
+        if (in_array($decktype, $commander_decktypes)) :
+            $this->message->logMessage('[DEBUG]', "Deck $deck is Commander-type");
+            $cdr_type_deck = true;
+        else :
+            $cdr_type_deck = false;
         endif;
-        if($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
-            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's a Commander-style deck, and multiples of this type not allowed, can't add");
-            $quantity = FALSE;
-        elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == FALSE):
-            $this->message->logMessage('[DEBUG]',"This card not already in this deck, it's a Commander-style deck, and multiples of this type not allowed, adding 1");
+        if ($already_in_deck == true and $cdr_type_deck == true and $cdr_1_plus == false) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Card already in Commander-style deck; multiples of this type not allowed"
+            );
+            $quantity = false;
+        elseif ($already_in_deck == false and $cdr_type_deck == true and $cdr_1_plus == false) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Card not already in Commander-style deck; multiples of this type not allowed; adding 1"
+            );
             $quantity = 1;
-        elseif($already_in_deck == TRUE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
-            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty");
+        elseif ($already_in_deck == true and $cdr_type_deck == true and $cdr_1_plus == true) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Card already in Commander-style deck; multiples allowed; adding requested qty"
+            );
             $quantity = $quantity;
-        elseif($already_in_deck == FALSE AND $cdr_type_deck == TRUE AND $cdr_1_plus == TRUE):
-            $this->message->logMessage('[DEBUG]',"This card is not already in this deck, it's a Commander-style deck, and multiples of this type are allowed, adding requested qty");
+        elseif ($already_in_deck == false and $cdr_type_deck == true and $cdr_1_plus == true) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Card not already in Commander-style deck; multiples allowed; adding requested qty"
+            );
             $quantity = $quantity;
-        elseif($cdr_type_deck == FALSE):
-            $this->message->logMessage('[DEBUG]',"This card is already in this deck, it's not a Commander-style deck, adding requested qty");
+        elseif ($cdr_type_deck == false) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Non-Commander deck; adding requested qty"
+            );
             $quantity = $quantity;
         endif;
 
         // Add card to deck
 
-        if($quantity != FALSE):
-            $this->message->logMessage('[DEBUG]',"...adding $quantity x $card, $cardnametext to deck #$deck");
-            if($section == "side"):
-                $checkqry = $this->db->execute_query("SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",[$deck,$card]);
-                if ($checkqry !== false):
+        if ($quantity != false) :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "...adding $quantity x $card, $cardnametext to deck #$deck"
+            );
+            if ($section == "side") :
+                $checkqry = $this->db->execute_query(
+                    "SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",
+                    [$deck,$card]
+                );
+                if ($checkqry !== false) :
                     $rowcount = $checkqry->num_rows;
-                    if ($rowcount > 0): // The card is in the deck, no detail yet on qty or side/main
+                    if ($rowcount > 0) : // The card is in the deck, no detail yet on qty or side/main
                         $check = $checkqry->fetch_assoc();
-                        if($check['sideqty'] != NULL):
-                            $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = ? AND cardnumber = ?";
+                        if ($check['sideqty'] != null) :
+                            $cardquery = "UPDATE deckcards SET sideqty = sideqty + 1 WHERE decknumber = ? "
+                                . "AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "+1side";
-                        else:
+                        else :
                             $cardquery = "UPDATE deckcards SET sideqty = 1 WHERE decknumber = ? AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "+1side";
                         endif;
-                    else:
+                    else :
                         // The card is not in the deck at all
                         $cardquery = "INSERT into deckcards (decknumber, cardnumber, sideqty) VALUES (?, ?, ?)";
                         $params = [$deck,$card,$quantity];
                         $status = "+newside";
                     endif;
-                else:
-                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+                else :
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                            . ": SQL failure: " . $this->db->error,
+                        E_USER_ERROR
+                    );
                 endif;
-            elseif($section == "main"):
-                $checkqry = $this->db->execute_query("SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",[$deck,$card]);
-                if ($checkqry !== false):
+            elseif ($section == "main") :
+                $checkqry = $this->db->execute_query(
+                    "SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? LIMIT 1",
+                    [$deck,$card]
+                );
+                if ($checkqry !== false) :
                     $rowcount = $checkqry->num_rows;
-                    if ($rowcount > 0): // The card is in the deck, no detail yet on qty or side/main
+                    if ($rowcount > 0) : // The card is in the deck, no detail yet on qty or side/main
                         $check = $checkqry->fetch_assoc();
-                        if($check['cardqty'] != NULL):
-                            $cardquery = "UPDATE deckcards SET cardqty = cardqty + ? WHERE decknumber = ? AND cardnumber = ?";
+                        if ($check['cardqty'] != null) :
+                            $cardquery = "UPDATE deckcards SET cardqty = cardqty + ? WHERE decknumber = ? "
+                                . "AND cardnumber = ?";
                             $params = [$quantity,$deck,$card];
                             $status = "+1main";
-                        else:
+                        else :
                             $cardquery = "UPDATE deckcards SET cardqty = 1 WHERE decknumber = ? AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "+1main";
                         endif;
-                    else:
+                    else :
                         // The card is not in the deck at all
                         $cardquery = "INSERT into deckcards (decknumber, cardnumber, cardqty) VALUES (?, ?, ?)";
                         $params = [$deck,$card,$quantity];
                         $status = "+newmain";
                     endif;
-                else:
-                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+                else :
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                            . ": SQL failure: " . $this->db->error,
+                        E_USER_ERROR
+                    );
                 endif;
             endif;
 
-            $this->message->logMessage('[NOTICE]',"Add card called: $cardquery, status is $status");
-            if($runquery = $this->db->execute_query($cardquery,$params)):
+            $this->message->logMessage('[NOTICE]', "Add card called: $cardquery, status is $status");
+            if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 return $status;
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
-        else:
-            $this->message->logMessage('[DEBUG]',"...skipping $cardnametext to deck #$deck");
+        else :
+            $this->message->logMessage('[DEBUG]', "...skipping $cardnametext to deck #$deck");
             return 'cardnotadded';
         endif;
     }
 
-    public function subtractDeckCard($deck,$card,$section,$quantity)
+    public function subtractDeckCard($deck, $card, $section, $quantity)
     {
-        if($quantity == "all"):
-            if($section == "side"):
+        if ($quantity == "all") :
+            if ($section == "side") :
                 $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
                 $params = [$deck,$card];
                 $status = "allside";
-            elseif($section == "main"):
+            elseif ($section == "main") :
                 $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = ? AND cardnumber = ?";
                 $params = [$deck,$card];
                 $status = "allmain";
             endif;
-        else:
-            if($section == "side"):
-                $checkqry = $this->db->execute_query("SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND sideqty IS NOT NULL LIMIT 1",[$deck,$card]);
-                if ($checkqry !== false):
+        else :
+            if ($section == "side") :
+                $checkqry = $this->db->execute_query(
+                    "SELECT sideqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? "
+                    . "AND sideqty IS NOT NULL LIMIT 1",
+                    [$deck,$card]
+                );
+                if ($checkqry !== false) :
                     $rowcount = $checkqry->num_rows;
-                    if ($rowcount > 0): // The card is in the deck side
+                    if ($rowcount > 0) : // The card is in the deck side
                         $check = $checkqry->fetch_assoc();
-                        if($check['sideqty'] > 1):
-                            $cardquery = "UPDATE deckcards SET sideqty = sideqty - 1 WHERE decknumber = ? AND cardnumber = ?";
+                        if ($check['sideqty'] > 1) :
+                            $cardquery = "UPDATE deckcards SET sideqty = sideqty - 1 WHERE decknumber = ? "
+                                . "AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "-1side";
-                        elseif($check['sideqty'] == 1):
+                        elseif ($check['sideqty'] == 1) :
                             $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "lastside";
                         endif;
-                    else:
+                    else :
                         $status = "-error";
                         $cardquery = '';
                         $params = [];
                     endif;
-                else:
-                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+                else :
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                            . ": SQL failure: " . $this->db->error,
+                        E_USER_ERROR
+                    );
                 endif;
-            elseif($section == "main"):
-                $checkqry = $this->db->execute_query("SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ?  AND cardqty IS NOT NULL LIMIT 1",[$deck,$card]);
-                if ($checkqry !== false):
+            elseif ($section == "main") :
+                $checkqry = $this->db->execute_query(
+                    "SELECT cardqty FROM deckcards WHERE decknumber = ? AND cardnumber = ? "
+                    . " AND cardqty IS NOT NULL LIMIT 1",
+                    [$deck,$card]
+                );
+                if ($checkqry !== false) :
                     $rowcount = $checkqry->num_rows;
-                    if ($rowcount > 0): // The card is in the deck main
+                    if ($rowcount > 0) : // The card is in the deck main
                         $check = $checkqry->fetch_assoc();
-                        if($check['cardqty'] > 1):
-                            $cardquery = "UPDATE deckcards SET cardqty = cardqty - 1 WHERE decknumber = ? AND cardnumber = ?";
+                        if ($check['cardqty'] > 1) :
+                            $cardquery = "UPDATE deckcards SET cardqty = cardqty - 1 WHERE decknumber = ? "
+                                . "AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "-1main";
-                        elseif($check['cardqty'] == 1):
+                        elseif ($check['cardqty'] == 1) :
                             $cardquery = "UPDATE deckcards SET cardqty = NULL WHERE decknumber = ? AND cardnumber = ?";
                             $params = [$deck,$card];
                             $status = "lastmain";
                         endif;
-                    else:
+                    else :
                         $status = "-error";
                         $cardquery = '';
                         $params = [];
                     endif;
-                else:
-                    trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+                else :
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                            . ": SQL failure: " . $this->db->error,
+                        E_USER_ERROR
+                    );
                 endif;
             endif;
         endif;
 
-        $this->message->logMessage('[NOTICE]',"Delete deck card query called: $cardquery, status is $status");
+        $this->message->logMessage('[NOTICE]', "Delete deck card query called: $cardquery, status is $status");
 
-        if($status != '-error'):
-            if ($runquery = $this->db->execute_query($cardquery,$params)):
+        if ($status != '-error') :
+            if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 //ran ok
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
-        else:
-            $this->message->logMessage('[ERROR]',"Delete deck card query called: ERROR status is $status");
+        else :
+            $this->message->logMessage('[ERROR]', "Delete deck card query called: ERROR status is $status");
         endif;
 
         // Clean-up empties
-        if ($status == 'lastmain' OR $status == 'lastside' OR $status == 'allmain' OR $status == 'allside'):
-            $this->message->logMessage('[NOTICE]',"Delete deck card query called: $cardquery, status is $status");
+        if ($status == 'lastmain' or $status == 'lastside' or $status == 'allmain' or $status == 'allside') :
+            $this->message->logMessage('[NOTICE]', "Delete deck card query called: $cardquery, status is $status");
             $cardquery = "DELETE FROM deckcards WHERE decknumber = ? AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
             $params = [$deck];
-            if ($runquery = $this->db->execute_query($cardquery,$params)):
+            if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 //ran ok
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
         endif;
 
@@ -719,15 +810,19 @@ class DeckManager
         $check->bind_param('i', $deck);
         $check->execute();
         $check_result = $check->get_result();
-        if ($check_result->num_rows > 0):
+        if ($check_result->num_rows > 0) :
             // Commander already exists, remove old commander
             $removeCommanderQuery = 'UPDATE deckcards SET commander = 0 WHERE decknumber = ?';
             $removeCommanderStmt = $this->db->prepare($removeCommanderQuery);
             $removeCommanderStmt->bind_param('i', $deck);
-            if ($removeCommanderStmt->execute()):
-                $this->message->logMessage('[NOTICE]',"Old Commander removed");
-            else:
-                trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $this->db->error, E_USER_ERROR);
+            if ($removeCommanderStmt->execute()) :
+                $this->message->logMessage('[NOTICE]', "Old Commander removed");
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
             $removeCommanderStmt->close();
         endif;
@@ -737,100 +832,161 @@ class DeckManager
         $addCommanderQuery = 'UPDATE deckcards SET commander = 1 WHERE decknumber = ? AND cardnumber = ?';
         $addCommanderStmt = $this->db->prepare($addCommanderQuery);
         $addCommanderStmt->bind_param('is', $deck, $card);
-        if ($addCommanderStmt->execute()):
-            $this->message->logMessage('[NOTICE]',"Add Commander run: $addCommanderQuery, status is $status");
+        if ($addCommanderStmt->execute()) :
+            $this->message->logMessage('[NOTICE]', "Add Commander run: $addCommanderQuery, status is $status");
             return $status;
-        else:
-            trigger_error('[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: " . $this->db->error, E_USER_ERROR);
+        else :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
         $addCommanderStmt->close();
     }
 
-    public function addPartner($deck,$card)
+    public function addPartner($deck, $card)
     {
-        $check = $this->db->execute_query('SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 2',[$deck]);
-        if ($check->num_rows > 0): //Partner already there
-            if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$deck])):
-                $this->message->logMessage('[NOTICE]',"Old Partner removed");
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-            endif; 
+        $check = $this->db->execute_query(
+            'SELECT commander FROM deckcards WHERE decknumber = ? AND commander = 2',
+            [$deck]
+        );
+        if ($check->num_rows > 0) : //Partner already there
+            if (
+                $runquery = $this->db->execute_query(
+                    "UPDATE deckcards SET commander = 0 WHERE decknumber = ?",
+                    [$deck]
+                )
+            ) :
+                $this->message->logMessage('[NOTICE]', "Old Partner removed");
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
+            endif;
         endif;
         $status = "+ptnr";
-        if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = '2' WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
-            $this->message->logMessage('[NOTICE]',"Add Partner run, status is $status");
+        if (
+            $runquery = $this->db->execute_query(
+                "UPDATE deckcards SET commander = '2' WHERE decknumber = ? AND cardnumber = ?",
+                [$deck,$card]
+            )
+        ) :
+            $this->message->logMessage('[NOTICE]', "Add Partner run, status is $status");
             return $status;
-        else:
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-        endif; 
+        else :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
     }
 
-    public function delCommander($deck,$card)
+    public function delCommander($deck, $card)
     {
-        $check = $this->db->execute_query("SELECT commander FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND commander > 0",[$deck,$card]);
-        if ($check->num_rows > 0):
+        $check = $this->db->execute_query(
+            "SELECT commander FROM deckcards WHERE decknumber = ? AND cardnumber = ? AND commander > 0",
+            [$deck,$card]
+        );
+        if ($check->num_rows > 0) :
             $status = "-cdr";
-            if($runquery = $this->db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ? AND cardnumber = ?",[$deck,$card])):
-                $this->message->logMessage('[NOTICE]',"Remove Commander called, status is $status");
+            if (
+                $runquery = $this->db->execute_query(
+                    "UPDATE deckcards SET commander = 0 WHERE decknumber = ? AND cardnumber = ?",
+                    [$deck,$card]
+                )
+            ) :
+                $this->message->logMessage('[NOTICE]', "Remove Commander called, status is $status");
                 return $status;
-            else:
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-            endif;    
-        else:
+            else :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
+            endif;
+        else :
             $status = "notcdr";
         endif;
     }
 
     public function delDeck($decktodelete)
     {
-        $this->message->logMessage('[NOTICE]',"Delete deck called: deck $decktodelete");
+        $this->message->logMessage('[NOTICE]', "Delete deck called: deck $decktodelete");
         $stmt = $this->db->prepare("DELETE FROM decks WHERE decknumber = ?");
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $this->db->error, E_USER_ERROR);
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Preparing SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
-        $bind = $stmt->bind_param("i", $decktodelete); 
-        if ($bind === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $this->db->error, E_USER_ERROR);
+        $bind = $stmt->bind_param("i", $decktodelete);
+        if ($bind === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Binding SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
         $exec = $stmt->execute();
-        if ($exec === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck: ". $this->db->error, E_USER_ERROR);
-        else:
+        if ($exec === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Deleting deck: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
             $checkgone1 = "SELECT decknumber FROM decks WHERE decknumber = ? LIMIT 1";
-            $runquery1 = $this->db->execute_query($checkgone1,[$decktodelete]);
-            $result1=$runquery1->fetch_assoc();
-            if ($result1 === null):
+            $runquery1 = $this->db->execute_query($checkgone1, [$decktodelete]);
+            $result1 = $runquery1->fetch_assoc();
+            if ($result1 === null) :
                 $deck_deleted = 1;
-            else:
+            else :
                 $deck_deleted = 0;
             endif;
         endif;
         $stmt->close();
         $stmt = $this->db->prepare("DELETE FROM deckcards WHERE decknumber = ?");
-        if ($stmt === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Preparing SQL failure: ". $this->db->error, E_USER_ERROR);
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Preparing SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
-        $bind = $stmt->bind_param("i", $decktodelete); 
-        if ($bind === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Binding SQL failure: ". $this->db->error, E_USER_ERROR);
+        $bind = $stmt->bind_param("i", $decktodelete);
+        if ($bind === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Binding SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
         $exec = $stmt->execute();
-        if ($exec === false):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": Deleting deck cards: ". $this->db->error, E_USER_ERROR);
-        else:
+        if ($exec === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": Deleting deck cards: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
             $checkgone2 = "SELECT cardnumber FROM deckcards WHERE decknumber = ? LIMIT 1";
-            $runquery2 = $this->db->execute_query($checkgone2,[$decktodelete]);
-            $result2=$runquery2->fetch_assoc();
-            if ($result2 === null):
+            $runquery2 = $this->db->execute_query($checkgone2, [$decktodelete]);
+            $result2 = $runquery2->fetch_assoc();
+            if ($result2 === null) :
                 $deckcards_deleted = 1;
-            else:
+            else :
                 $deckcards_deleted = 0;
             endif;
         endif;
         $stmt->close();
-        if($deck_deleted === 1 AND $deckcards_deleted === 1):
-            $this->message->logMessage('[NOTICE]',"Deck $decktodelete deleted");
-        else:?>
+        if ($deck_deleted === 1 and $deckcards_deleted === 1) :
+            $this->message->logMessage('[NOTICE]', "Deck $decktodelete deleted");
+        else :?>
             <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck and/or cards not deleted</span>
                 <br>
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -838,39 +994,48 @@ class DeckManager
         endif;
     }
 
-    public function addDeck($user,$newdeckname)
+    public function addDeck($user, $newdeckname)
     {
-        $this->message->logMessage('[NOTICE]',"Add deck called: deck $newdeckname");
+        $this->message->logMessage('[NOTICE]', "Add deck called: deck $newdeckname");
         $decksuccess = [];
-        
+
         $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
         $decknameparams = [$user,$newdeckname];
-        $result = $this->db->execute_query($decknamechecksql,$decknameparams);
-        if($result !== false && $result->num_rows === 0):
-            $this->message->logMessage('[NOTICE]',"Deck does not exist for user: $user, deckname: '$newdeckname'");
-            
+        $result = $this->db->execute_query($decknamechecksql, $decknameparams);
+        if ($result !== false && $result->num_rows === 0) :
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Deck does not exist for user: $user, deckname: '$newdeckname'"
+            );
+
             //Create new deck
             $sql = "INSERT INTO decks (owner,deckname) VALUES (?,?)";
             $params = [$user,$newdeckname];
-            if($deckinsert = $this->db->execute_query($sql,$params) && $this->db->affected_rows === 1):
-                $this->message->logMessage('[NOTICE]',"SQL deck insert succeeded for user: $user, deckname: '$newdeckname'");
-            else:
-                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+            if ($deckinsert = $this->db->execute_query($sql, $params) && $this->db->affected_rows === 1) :
+                $this->message->logMessage(
+                    '[NOTICE]',
+                    "SQL deck insert succeeded for user: $user, deckname: '$newdeckname'"
+                );
+            else :
+                trigger_error(
+                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
 
             //Checking if it created OK
-            $this->message->logMessage('[NOTICE]',"Running confirm SQL query");
+            $this->message->logMessage('[NOTICE]', "Running confirm SQL query");
             $checksql = "SELECT decknumber FROM decks
                             WHERE owner = ? AND deckname = ? LIMIT 1";
             $checkparams = [$user,$newdeckname];
-            $runquery = $this->db->execute_query($checksql,$checkparams);
-            if($runquery !== false && $runquery->num_rows === 1):
-                $this->message->logMessage('[NOTICE]',"Confirmed existence of deck: $newdeckname");
+            $runquery = $this->db->execute_query($checksql, $checkparams);
+            if ($runquery !== false && $runquery->num_rows === 1) :
+                $this->message->logMessage('[NOTICE]', "Confirmed existence of deck: $newdeckname");
                 $deckcheckrow = $runquery->fetch_assoc();
                 $decksuccess['flag'] = 1; //set flag so we know we don't need to check for cards in deck.
                 $decksuccess['decknumber'] = $deckcheckrow['decknumber'];
-            elseif($runquery !== false && $runquery->num_rows === 0):  
-                $this->message->logMessage('[NOTICE]',"Failed - deck: $newdeckname not created");
+            elseif ($runquery !== false && $runquery->num_rows === 0) :
+                $this->message->logMessage('[NOTICE]', "Failed - deck: $newdeckname not created");
                 ?>
                 <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
                     <br>
@@ -878,42 +1043,52 @@ class DeckManager
                 </div>
                 <?php
                 $decksuccess['flag'] = 10; //set flag so we know to break.
-            else:
-                trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+            else :
+                trigger_error(
+                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
             endif;
-        elseif($result !== false && $result->num_rows === 1):
-            $this->message->logMessage('[NOTICE]',"New deck name already exists"); ?>
+        elseif ($result !== false && $result->num_rows === 1) :
+            $this->message->logMessage('[NOTICE]', "New deck name already exists"); ?>
             <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
                 <br>
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
             </div> <?php
             $decksuccess['flag'] = 10; //set flag so we know to break.
-        else:
-            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $this->db->error, E_USER_ERROR);
+        else :
+            trigger_error(
+                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
         endif;
-        if(!isset($decksuccess['decknumber'])):
-            $decksuccess['decknumber'] = NULL;
+        if (!isset($decksuccess['decknumber'])) :
+            $decksuccess['decknumber'] = null;
         endif;
         return $decksuccess;
     }
-    
-    public function renameDeck($deck,$newname,$user)
+
+    public function renameDeck($deck, $newname, $user)
     {
-        $this->message->logMessage('[NOTICE]',"Rename deck called: deck $deck to '$newname'");
+        $this->message->logMessage('[NOTICE]', "Rename deck called: deck $deck to '$newname'");
 
         // CHECK IF NAME IS ALREADY USED
         $query = 'SELECT decknumber FROM decks WHERE deckname=? AND owner=?';
         $stmt = $this->db->execute_query($query, [$newname,$user]);
-        if ($stmt === FALSE):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-        else:
-            if ($stmt->num_rows > 0):
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
+            if ($stmt->num_rows > 0) :
                 $newnamereturn = 2;
-                $this->message->logMessage('[NOTICE]',"Name '$newname' already used");
+                $this->message->logMessage('[NOTICE]', "Name '$newname' already used");
                 return($newnamereturn);
-            else:
+            else :
                 $newnamereturn = 0; //OK to continue
-                $this->message->logMessage('[NOTICE]',"Name '$newname' not already used");
+                $this->message->logMessage('[NOTICE]', "Name '$newname' not already used");
             endif;
         endif;
         $stmt->close();
@@ -921,77 +1096,106 @@ class DeckManager
         //RENAME
         $query = 'UPDATE decks SET deckname=? WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$newname,$deck]);
-        if ($stmt === FALSE):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-        else:
-            $this->message->logMessage('[DEBUG]',"Name '$newname' query run");
-            if ($this->db->affected_rows !== 1):
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
+            $this->message->logMessage('[DEBUG]', "Name '$newname' query run");
+            if ($this->db->affected_rows !== 1) :
                 $newnamereturn = 1; //Error
-                $this->message->logMessage('[DEBUG]',"...result: Unknown error: {$this->db->affected_rows} row(s) affected");
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "...result: Unknown error: {$this->db->affected_rows} row(s) affected"
+                );
             endif;
-            $this->message->logMessage('[DEBUG]',"...result: {$this->db->affected_rows} row affected ");
+            $this->message->logMessage('[DEBUG]', "...result: {$this->db->affected_rows} row affected ");
         endif;
         return($newnamereturn);
     }
 
-    public function setDeckType($deck,$decktype)
+    public function setDeckType($deck, $decktype)
     {
-        $this->message->logMessage('[NOTICE]',"Set deck type called: deck $deck to '$decktype'");
+        $this->message->logMessage('[NOTICE]', "Set deck type called: deck $deck to '$decktype'");
 
         //RENAME
         $query = 'UPDATE decks set type = ? WHERE decknumber = ?';
         $stmt = $this->db->execute_query($query, [$decktype,$deck]);
-        if ($stmt === FALSE):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-        else:
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        else :
             $decktypereturn = 0;
-            $this->message->logMessage('[DEBUG]',"Deck type '$decktype' query run");
-            if ($this->db->affected_rows !== 1):
+            $this->message->logMessage('[DEBUG]', "Deck type '$decktype' query run");
+            if ($this->db->affected_rows !== 1) :
                 $decktypereturn = 1; //Error
-                $this->message->logMessage('[DEBUG]',"...result: Unknown error: {$this->db->affected_rows} row(s) affected");
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "...result: Unknown error: {$this->db->affected_rows} row(s) affected"
+                );
             endif;
-            $this->message->logMessage('[DEBUG]',"...result: {$this->db->affected_rows} row affected ");
+            $this->message->logMessage('[DEBUG]', "...result: {$this->db->affected_rows} row affected ");
         endif;
         return($decktypereturn);
     }
-    
-    public function exportDeck($decknumber,$format,$zipFilePath = NULL) {
+
+    public function exportDeck($decknumber, $format, $zipFilePath = null)
+    {
         //Format options:
         //
         // - Download
         // - Email
         // - Bulk
         // - Variable (returns the decklist from the function, used in duplicate deck function)
-        
+
         global $commander_decktypes, $smtpParameters;
-        $this->message->logMessage('[NOTICE]',"Deck export called for deck $decknumber");
-        
+        $this->message->logMessage('[NOTICE]', "Deck export called for deck $decknumber");
+
         $query = 'SELECT * FROM decks WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$decknumber]);
-        if ($stmt === FALSE):
-            trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-        elseif ($stmt->num_rows < 1):
-            $this->message->logMessage('[ERROR]',"There is no deck $decknumber");
-            return FALSE;
-        else:
+        if ($stmt === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error,
+                E_USER_ERROR
+            );
+        elseif ($stmt->num_rows < 1) :
+            $this->message->logMessage('[ERROR]', "There is no deck $decknumber");
+            return false;
+        else :
             $deckrow = $stmt->fetch_assoc();
             $deckname = $deckrow['deckname'];
             $decktype = $deckrow['type'];
-            $this->message->logMessage('[DEBUG]',"Deck name is '$deckname' and type '$decktype' for deck $decknumber");
-            $detailquery = 'SELECT decknumber,cardnumber,cardqty,sideqty,commander,name,printed_name,f1_name,f1_printed_name,f2_name,f2_printed_name,type,setcode,number,number_import FROM deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id WHERE decknumber=?';
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Deck name is '$deckname' and type '$decktype' for deck $decknumber"
+            );
+            $detailquery = 'SELECT decknumber,cardnumber,cardqty,sideqty,commander,name,printed_name,f1_name,'
+                . 'f1_printed_name,f2_name,f2_printed_name,type,setcode,number,number_import '
+                . 'FROM deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id '
+                . 'WHERE decknumber=?';
             $detailstmt = $this->db->execute_query($detailquery, [$decknumber]);
-            $emptyDeck = FALSE;
-            if ($detailstmt === FALSE):
-                trigger_error('[ERROR]'.basename(__FILE__)." ".__LINE__."Function ".__FUNCTION__.": SQL failure: ". $this->db->error, E_USER_ERROR);
-            elseif ($detailstmt->num_rows < 1):
-                $this->message->logMessage('[ERROR]',"There are no cards in deck $decknumber");
-                $emptyDeck = TRUE;
-            else:
+            $emptyDeck = false;
+            if ($detailstmt === false) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error,
+                    E_USER_ERROR
+                );
+            elseif ($detailstmt->num_rows < 1) :
+                $this->message->logMessage('[ERROR]', "There are no cards in deck $decknumber");
+                $emptyDeck = true;
+            else :
                 $allRows = [];
-                while ($detailrow = $detailstmt->fetch_assoc()):
+                while ($detailrow = $detailstmt->fetch_assoc()) :
                     $allRows[] = $detailrow;
                 endwhile;
-                usort($allRows, function($a, $b) {
+                usort($allRows, function ($a, $b) {
                     // Handle NULL values in 'type'
                     $typeA = $a['type'] ?? '';  // If NULL, use an empty string
                     $typeB = $b['type'] ?? '';  // If NULL, use an empty string
@@ -1000,7 +1204,7 @@ class DeckManager
                     $typeComparison = strcmp($typeA, $typeB);
 
                     // If 'type' is the same, compare by 'name'
-                    if ($typeComparison === 0):
+                    if ($typeComparison === 0) :
                         // Handle NULL values in 'name'
                         $nameA = $a['name'] ?? '';  // If NULL, use an empty string
                         $nameB = $b['name'] ?? '';  // If NULL, use an empty string
@@ -1009,56 +1213,67 @@ class DeckManager
                     // Otherwise, return the result of the 'type' comparison
                     return $typeComparison;
                 });
-                if(is_null($decktype) || $decktype === ""):
+                if (is_null($decktype) || $decktype === "") :
                     $textfile = "{$deckrow['deckname']}\r\n\r\n";
-                else:
+                else :
                     $textfile = "$deckname ($decktype)\r\n\r\n";
                 endif;
                 $sidefile = "";
-                if(in_array($decktype, $commander_decktypes)):
+                if (in_array($decktype, $commander_decktypes)) :
                     $cdrDeck = 1;
-                    foreach ($allRows as $row):
-                        if ($row['commander'] === 1):
-                            $this->message->logMessage('[DEBUG]',"Commander found: {$row['name']}");
-                            $textfile = $textfile."Commander\r\n{$row['cardqty']} {$row['name']} ({$row['setcode']} {$row['number_import']})\r\n\r\n";
+                    foreach ($allRows as $row) :
+                        if ($row['commander'] === 1) :
+                            $this->message->logMessage('[DEBUG]', "Commander found: {$row['name']}");
+                            $textfile = $textfile . "Commander\r\n{$row['cardqty']} {$row['name']} "
+                                . "({$row['setcode']} {$row['number_import']})\r\n\r\n";
                         endif;
                     endforeach;
-                    foreach ($allRows as $row):
-                        if ($row['commander'] === 2):
-                            $this->message->logMessage('[DEBUG]',"Second commander found: {$row['name']}");
-                            $textfile = $textfile."Partner/Background\r\n{$row['cardqty']} {$row['name']} ({$row['setcode']} {$row['number_import']})\r\n\r\n";
+                    foreach ($allRows as $row) :
+                        if ($row['commander'] === 2) :
+                            $this->message->logMessage('[DEBUG]', "Second commander found: {$row['name']}");
+                            $textfile = $textfile . "Partner/Background\r\n{$row['cardqty']} {$row['name']} "
+                                . "({$row['setcode']} {$row['number_import']})\r\n\r\n";
                         endif;
                     endforeach;
-                else:                    
+                else :
                     $cdrDeck = 0;
                 endif;
-                foreach ($allRows as $detailrow):
-                    if($detailrow['cardqty'] >= 1 && ($cdrDeck !== 1 || ($cdrDeck === 1 && ($detailrow['commander'] !== 1 && $detailrow['commander'] !== 2)))):
-                        $textfile = $textfile."{$detailrow['cardqty']} {$detailrow['name']} ({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                foreach ($allRows as $detailrow) :
+                    if (
+                        $detailrow['cardqty'] >= 1
+                        && (
+                            $cdrDeck !== 1
+                            || ($cdrDeck === 1
+                            && ($detailrow['commander'] !== 1 && $detailrow['commander'] !== 2))
+                        )
+                    ) :
+                        $textfile = $textfile . "{$detailrow['cardqty']} {$detailrow['name']} "
+                            . "({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
                     endif;
-                    if($detailrow['sideqty'] >= 1):
-                        $sidefile = $sidefile."{$detailrow['sideqty']} {$detailrow['name']} ({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                    if ($detailrow['sideqty'] >= 1) :
+                        $sidefile = $sidefile . "{$detailrow['sideqty']} {$detailrow['name']} "
+                            . "({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
                     endif;
                 endforeach;
-                if($sidefile !== ""):
-                    $textfile = $textfile."\r\nSideboard\r\n\r\n".$sidefile;
+                if ($sidefile !== "") :
+                    $textfile = $textfile . "\r\nSideboard\r\n\r\n" . $sidefile;
                 endif;
             endif;
             $detailstmt->close();
         endif;
         $stmt->close();
 
-        if($emptyDeck !== TRUE):
-            if($format !== "variable"):
-                $filename = 'deck_'.$decknumber.'.txt';
-                $tmpName = tempnam(sys_get_temp_dir(), 'deck_'.$decknumber);
+        if ($emptyDeck !== true) :
+            if ($format !== "variable") :
+                $filename = 'deck_' . $decknumber . '.txt';
+                $tmpName = tempnam(sys_get_temp_dir(), 'deck_' . $decknumber);
                 file_put_contents($tmpName, $textfile);
             endif;
 
-            if($format === "download"):
+            if ($format === "download") :
                 header('Content-Description: File Transfer');
                 header('Content-Type: text/txt');
-                header('Content-Disposition: attachment; filename="'.rawurlencode($filename).'"');
+                header('Content-Disposition: attachment; filename="' . rawurlencode($filename) . '"');
                 header('Content-Transfer-Encoding: binary');
                 header('Expires: 0');
                 header('Cache-Control: must-revalidate');
@@ -1068,38 +1283,46 @@ class DeckManager
                 ob_clean();
                 flush();
                 readfile($tmpName);
-                if (isset($tmpName)):
+                if (isset($tmpName)) :
                     unlink($tmpName);
                 endif;
-            elseif($format === "email"):
-                $mail = new myPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
+            elseif ($format === "email") :
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
 
                 $subject = "Deck export";
                 $emailbody = "Your deck export ($deckname) is attached.";
                 $emailaltbody = "Your deck export ($deckname) is attached.";
-                $mailresult = $mail->sendEmail($this->useremail, TRUE, $subject, $emailbody, $emailaltbody, $tmpName, $filename);
-                if (isset($tmpName)):
+                $mailresult = $mail->sendEmail(
+                    $this->useremail,
+                    true,
+                    $subject,
+                    $emailbody,
+                    $emailaltbody,
+                    $tmpName,
+                    $filename
+                );
+                if (isset($tmpName)) :
                     unlink($tmpName);
                 endif;
-                if($mailresult === TRUE):
-                    return TRUE;
-                else:
-                    return FALSE;
+                if ($mailresult === true) :
+                    return true;
+                else :
+                    return false;
                 endif;
-            elseif($format === "bulk"):
+            elseif ($format === "bulk") :
                 // Generate a unique name for the zip file in the temp directory
                 $sanitizedEmail = str_replace('@', '_', $this->useremail);
                 $currentDate = date('d-M-Y');
-                if ($zipFilePath === NULL):
+                if ($zipFilePath === null) :
                     $zipFilename = "Decks-{$sanitizedEmail}-{$currentDate}.zip";
                     $zipFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $zipFilename;
                 endif;
                 $zip = new ZipArchive();
 
                 // Open the zip archive
-                if ($zip->open($zipFilePath, ZipArchive::CREATE) !== TRUE) {
+                if ($zip->open($zipFilePath, ZipArchive::CREATE) !== true) {
                     $this->message->logMessage('[ERROR]', "Cannot create or open ZIP file $zipFilePath");
-                    return FALSE;
+                    return false;
                 }
 
                 // Add the deck text file to the zip
@@ -1115,28 +1338,30 @@ class DeckManager
 
                 // Return the zip file name to the caller
                 return $zipFilePath;
-            elseif($format === "variable"):
-                $this->message->logMessage('[DEBUG]',"Variable return called for deck '$decknumber', returning $textfile");
+            elseif ($format === "variable") :
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Variable return called for deck '$decknumber', returning $textfile"
+                );
                 return $textfile;
-            else:
-
+            else :
             endif;
-        else:
-
+        else :
         endif;
     }
-    
-    public function exportMissing($textdata, $filename) {
+
+    public function exportMissing($textdata, $filename)
+    {
 
         // Create a temporary file
         $tmpName = tempnam(sys_get_temp_dir(), 'data');
-        if ($tmpName === false):
+        if ($tmpName === false) :
             $this->message->logMessage('[ERROR]', 'Failed to create temporary file');
             return false;
         endif;
 
         // Write text data to the file
-        if (file_put_contents($tmpName, $textdata) === false):
+        if (file_put_contents($tmpName, $textdata) === false) :
             $this->message->logMessage('[ERROR]', 'Failed to write to temporary file');
             unlink($tmpName);
             return false;
@@ -1145,7 +1370,7 @@ class DeckManager
         // Send headers for file download
         header('Content-Description: File Transfer');
         header('Content-Type: text/plain');
-        header('Content-Disposition: attachment; filename="'.rawurlencode($filename).'"');
+        header('Content-Disposition: attachment; filename="' . rawurlencode($filename) . '"');
         header('Content-Transfer-Encoding: binary');
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
@@ -1162,8 +1387,9 @@ class DeckManager
         return true;
     }
 
-    public function __toString() {
-        $this->message->logMessage("[ERROR]","Called as string");
+    public function __toString()
+    {
+        $this->message->logMessage("[ERROR]", "Called as string");
         return "Called as a string";
     }
 }

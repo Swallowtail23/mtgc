@@ -1,27 +1,22 @@
 <?php
-/* Version:     5.2
-    Date:       24/11/25
-    Name:       admin/users.php
-    Purpose:    User administrative tasks
-    Notes:
+/*
+Version:     5.3
+Date:        25/11/25
+Name:        users.php
+Purpose:     User administrative tasks
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 
- *  1.0
- *              Initial version
- *  2.0
- *              Mysqli_Manager
- *  3.0
- *              Migrate from writelog to message class
- *  4.0
- *              PHP 8.1 compatibility
- *
- *  5.0         17/12/2023
- *              Add local currency control
- *
- *  5.1         20/01/24
- *              Move to include sessionname and logMessage
- *
- *  5.2         24/11/25
- *              PHPCS cleaning
+History:
+    1.0         Initial version
+    2.0         Mysqli_Manager
+    3.0         Migrate from writelog to message class
+    4.0         PHP 8.1 compatibility
+    5.0 17/12/2023 Add local currency control
+    5.1 20/01/24 Move to include sessionname and logMessage
+    5.2 24/11/25 PHPCS cleaning
+    5.3 25/11/25 Header tidy and metadata standardization
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');

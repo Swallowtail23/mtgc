@@ -1,15 +1,15 @@
 <?php
-/* Version:     1.2
-    Date:       01/03/25
+/* Version:     1.3
+    Date:       25/11/25
     Name:       trust_device.php
     Purpose:    Handle trusted device creation separately from the login flow
-    
+
     @author     Simon Wilson
     @copyright  2025 MTG Collection
 
-    Notes:      
-    To do:      
-    
+    Notes:
+    To do:
+
     1.0
                 Initial version
     1.1
@@ -21,11 +21,14 @@
 
     1.2         01/03/25
                 Code tidy and consistency tweaks
+
+    1.3         25/11/25
+                Formatting clean-up
 */
 
-if (file_exists('includes/sessionname.local.php')):
+if (file_exists('includes/sessionname.local.php')) :
     require('includes/sessionname.local.php');
-else:
+else :
     require('includes/sessionname_template.php');
 endif;
 startCustomSession();
@@ -34,7 +37,7 @@ startCustomSession();
 session_regenerate_id(true);
 
 // Only proceed if user is logged in
-if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== TRUE) {
+if (!isset($_SESSION["logged"]) || $_SESSION["logged"] !== true) {
     header("Location: login.php");
     exit();
 }
@@ -57,13 +60,13 @@ if (!isset($db) || !$db instanceof mysqli) {
 }
 
 // Generate CSRF token if not set
-if (!isset($_SESSION["csrf_token"])):
+if (!isset($_SESSION["csrf_token"])) :
     $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
 endif;
 
 // Check for CSRF token
-if ($_SERVER["REQUEST_METHOD"] === "POST"):
-    if (!isset($_POST["csrf_token"]) || $_POST["csrf_token"] !== $_SESSION["csrf_token"]):
+if ($_SERVER["REQUEST_METHOD"] === "POST") :
+    if (!isset($_POST["csrf_token"]) || $_POST["csrf_token"] !== $_SESSION["csrf_token"]) :
         $msg->logMessage('[ERROR]', "CSRF token mismatch in trust_device.php");
         die("Invalid request.");
     endif;
@@ -76,7 +79,7 @@ $trust_choice = $_POST['trust_device'] ?? 'none';
 $redirect_to = $_POST['redirect_to'] ?? $_GET['redirect_to'] ?? $_SESSION['redirect_url'] ?? 'index.php';
 
 // ** Prevent redirect loop to login.php **
-if ($redirect_to === 'login.php'):
+if ($redirect_to === 'login.php') :
     $redirect_to = 'index.php';
 endif;
 
@@ -91,8 +94,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") :
 endif;
 
 // ** Process form submission **
-if ($trust_choice !== 'none'):
-    if ($trust_choice === 'yes'):
+if ($trust_choice !== 'none') :
+    if ($trust_choice === 'yes') :
         // User wants to trust this device
 
         try {
@@ -100,19 +103,22 @@ if ($trust_choice !== 'none'):
             $msg->logMessage('[DEBUG]', "Creating trusted device for user $user_id");
             $deviceManager = new TrustedDeviceManager($db, $logfile);
             $result = $deviceManager->createTrustedDevice($user_id, $trustDuration); // Set trust
-            $msg->logMessage('[NOTICE]', "User {$_SESSION["useremail"]} trusted device result: " . ($result ? 'success' : 'failed'));
+            $msg->logMessage(
+                '[NOTICE]',
+                'User ' . $_SESSION["useremail"] . ' trusted device result: ' . ($result ? 'success' : 'failed')
+            );
         } catch (Exception $e) {
             $msg->logMessage('[ERROR]', "Failed to create trusted device: " . $e->getMessage());
         }
-    else:
+    else :
         $msg->logMessage('[DEBUG]', "User chose not to trust this device");
     endif;
-    
+
     // Redirect to the appropriate page
     $msg->logMessage('[DEBUG]', "Redirecting to $redirect_to");
     header("Location: $redirect_to");
     exit();
-else:
+else :
     // This is not a form submission, so display the trust device prompt
     $msg->logMessage('[DEBUG]', "Trust choice not yet set, display the trust form");
     ?>
@@ -138,7 +144,11 @@ else:
                         <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirect_to); ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION["csrf_token"]; ?>">
 
-                        <button type="submit" class="profilebutton" style="background-color: #4CAF50; margin-right: 10px;">TRUST</button>
+                        <button
+                            type="submit"
+                            class="profilebutton"
+                            style="background-color: #4CAF50; margin-right: 10px;"
+                        >TRUST</button>
                     </form>
 
                     <form action="trust_device.php" method="post" style="margin-top: 10px;">
@@ -152,6 +162,6 @@ else:
             </div>
         </body>
     </html>
-<?php
+    <?php
 endif;
 ?>

@@ -1,21 +1,19 @@
 <?php
-/* Version:     2.2
-    Date:       24/11/25
-    Name:       admin/reject.php
-    Purpose:    Non-admin rejection page called by admin pages on attempted load
-                by non-admin or from non-secure page (if set in ini file)
-    Notes:
+/*
+Version:     2.3
+Date:        25/11/25
+Name:        reject.php
+Purpose:     Non-admin rejection page called by admin pages on attempted load by non-admin or from non-secure page
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 
- *  1.0
- *              Initial version
- *  2.0
- *              Moved to Message class from writelog
- *
- *  2.1         20/01/24
- *              Move to logMessage
- *
- *  2.2         24/11/25
- *              PHPCS cleaning
+History:
+    1.0         Initial version
+    2.0         Moved to Message class from writelog
+    2.1 20/01/24 Move to logMessage
+    2.2 24/11/25 PHPCS cleaning
+    2.3 25/11/25 Header tidy and metadata standardization
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

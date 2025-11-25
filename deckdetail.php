@@ -1,131 +1,71 @@
 <?php
-/* Version:     24.1
-    Date:       13/10/24
-    Name:       deckdetail.php
-    Purpose:    Deck detail page
-    Notes:      {none}
-    To do:      
-    
-    1.0
-                Initial version
- *  2.0         
- *              Migrated to mysqli
- *  3.0     
- *              Added export deck list
- *  4.0     
- *              Added 'Need' list
- *  5.0         
- *              Added 'Quick Add'
- *  6.0         
- *              Some tweaks in Quick Add code to work with apostrophes
- *  7.0     
- *              Added Google Charts for CMC chart view
- *  8.0
- *              Added Commander capability
- *  9.0 
- *              Move to use scryfall image function
- *  10.0
- *              Moved from writelog to Message class
- *  11.0
- *              Refactoring for cards_scry
- *  12.0
- *              PHP 8.1 compatibility
- *  12.1
- *              Removed unnecessary db escaping on notes
- *  13.0
- *              Fixed quick add import not reading setcode, tidied up some logging to include line number
- *  14.0
- *              Removed ability to add more than 1 for commander decks
- *              Removed qty display for Commander decks
- *  15.0   
- *              Improved performance by making "Missing" check manually called, not every page load
- *              Updated icons
- *              Added ability to have Partner Commander
- *  16.0   
- *              Added deckname edit, and delete deck from deck detail page
- *  17.0
- *              Add functional wishlist in decks
- *              Add commander colour identity
- *  18.0
- *              25/11/23
- *              Add import, and significantly more robust Quick Add
- *  19.0
- *              03/12/23
- *              Add photo capability
- *  19.1
- *              04/12/2023
- *              Refine photo security by serving images through a php script
- *
- *  19.2        14/01/24
- *              Move session.name to include
- * 
- *  19.3        20/01/24
- *              Move to logMessage
- * 
- *  19.4        15/02/24
- *              Empty 'type' breaks decks - cater for this (REX, SLD)
- * 
- *  19.5        09/06/24
- *              Add local currency for deck value
- *              Update help text for quick add and import
- *              Send email if multi input errors
- * 
- *  20.0        10/06/24
- *              Optimise missing queries, and run each time because it's faster
- * 
- *  20.1        06/07/24
- *              Add card collector numbers to deck exports
- *              Don't cut basic lands down to 1 when changing to commander deck
- * 
- *  20.2        08/07/24
- *              Fix incorrect export missing for cards in main and side MTGC103
- *              Fix missing card numbers on deck exports MTGC104
- * 
- *  21.0        13/07/24
- *              MTGC-107 - correctly interpret sideboard cards on input
- *              MTGC-108 - image hovers on mobile and desktop
- *              MTGC-27  - handle planes and phenomena
- * 
- *  21.1        28/07/24
- *              MTGC-112 - fix mobile 'missing' buttons not working on mobile
- * 
- *  22.0        02/08/24
- *              MTGC-115 - fix mouse and touch modes (JS changes)
- *              MTGC-116 - remove unneeded parts on WIshlist decks (mana, draw)
- *                       - Tidy up text and layout, add help popup
- *              MTGC-113 - Add mana colour pip qty to decks
- * 
- *  22.1        11/08/24
- *              MTGC-119 - save notes with Ajax instead of full page submit/reload
- * 
- *  23.0        08/09/24
- *              MTGC-125 - move deck export to deckmanager class, in preparation for 
- *                         automated deck exports
- * 
- *  24.0        05/10/24
- *              MTGC-128 - Deck duplication code
- * 
- *  24.1        13/10/24
- *              MTGC-136 - Code tidy and optimisation
- *              MTGC-130 - Break icons to new line for long deck names
- */
 
-if (file_exists('includes/sessionname.local.php')):
+/*
+Version:     24.2
+Date:        25/11/25
+Name:        deckdetail.php
+Purpose:     Deck detail page.
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Migrated to mysqli
+    3.0         Added export deck list
+    4.0         Added 'Need' list
+    5.0         Added 'Quick Add'
+    6.0         Some tweaks in Quick Add code to work with apostrophes
+    7.0         Added Google Charts for CMC chart view
+    8.0         Added Commander capability
+    9.0         Move to use scryfall image function
+    10.0        Moved from writelog to Message class
+    11.0        Refactoring for cards_scry
+    12.0        PHP 8.1 compatibility
+    12.1        Removed unnecessary db escaping on notes
+    13.0        Fixed quick add import not reading setcode; tidied some logging
+    14.0        Removed ability to add more than 1 for commander decks; removed qty display
+    15.0        Improved performance by making Missing check manual; updated icons; Partner Commander
+    16.0        Added deckname edit and delete deck from deck detail page
+    17.0        Add functional wishlist in decks; add commander colour identity
+    18.0 25/11/23 Add import; significantly more robust Quick Add
+    19.0 03/12/23 Add photo capability
+    19.1 04/12/23 Refine photo security by serving images through a PHP script
+    19.2 14/01/24 Move session.name to include
+    19.3 20/01/24 Move to logMessage
+    19.4 15/02/24 Empty type breaks decks - cater for this (REX, SLD)
+    19.5 09/06/24 Add local currency for deck value; update help text; email on multi input errors
+    20.0 10/06/24 Optimise missing queries, and run each time because it's faster
+    20.1 06/07/24 Add card collector numbers to deck exports; don't cut basic lands to 1 for commander
+    20.2 08/07/24 MTGC-108 - save/load multiline single-use quick add; add deck rename
+    20.3 27/07/24 Add hover image option for deck detail view
+    21.0 27/07/24 MTGC-111/109/110 - logging for deck add; preload hover images; fix tap hover on mobile
+    21.1 28/07/24 MTGC-112 - fix mobile Missing buttons not working
+    22.0 02/08/24 MTGC-115/116/113 - fix mouse/touch modes; tidy wishlist decks; add mana pip qty
+    22.1 11/08/24 MTGC-119 - save notes with Ajax instead of full submit
+    23.0 08/09/24 MTGC-125 - move deck export to deckmanager class (prep for automated exports)
+    24.0 05/10/24 MTGC-128 - Deck duplication code
+    24.1 13/10/24 MTGC-136/130 - Code tidy/optimisation; break icons line for long deck names
+    24.2 25/11/25 Standard tidy-up; Remove legacy $missing code; fixed sideboard only card display bug
+*/
+
+if (file_exists('includes/sessionname.local.php')) :
     require('includes/sessionname.local.php');
-else:
+else :
     require('includes/sessionname_template.php');
 endif;
 startCustomSession();
-require ('includes/ini.php');                //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');          //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');       //Setup page variables
-require ('includes/colour.php');
+require('includes/ini.php');                //Initialise and load ini file
+require('includes/error_handling.php');
+require('includes/functions.php');          //Includes basic functions for non-secure pages
+require('includes/secpagesetup.php');       //Setup page variables
+require('includes/colour.php');
 forcechgpwd();                               //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 $uniquecard_ref = [];
-?> 
+?>
 
 <!DOCTYPE html>
 <html>
@@ -151,12 +91,12 @@ $uniquecard_ref = [];
                 $('.deckcardimgdiv').hide("slow");
                 $('.randomcardimgdiv').hide("slow");
             });
-            
+
             $('#menubuttondiv, .searchicon').on('click', function () {
                 $('.deckcardimgdiv').hide("slow");
                 $('.randomcardimgdiv').hide("slow");
             });
-            
+
             // Scroll event for the window
             $(window).on('scroll', function () {
                 $('.deckcardimgdiv').hide("slow");
@@ -255,7 +195,8 @@ $uniquecard_ref = [];
                     $('td.hoverTD').on('touchend', function(e) {
                         const touchDuration = Date.now() - touchStartTime;
 
-                        if (!isScrolling && touchDuration < 300) { // 300ms threshold to distinguish between tap and scroll
+                        if (!isScrolling && touchDuration < 300) {
+                            // 300ms threshold to distinguish between tap and scroll
                             var $link = $(this).find('a.taphover');
                             if ($link.length) {
                                 e.preventDefault();
@@ -333,7 +274,7 @@ $uniquecard_ref = [];
                     var divWidth = $div.outerWidth();
                     var divHeight = $div.outerHeight();
                     $div.css('display', 'none');
-                    
+
                     // Set fallback value for divHeight if it's 0
                     if (divWidth === 0) {
                         divWidth = 180; // Assuming 180 as the default width
@@ -341,14 +282,15 @@ $uniquecard_ref = [];
                     if (divHeight === 0) {
                         divHeight = 258; // Assuming 258 as the default height
                     }
-                    
+
                     // Get the width of the menu if it's active
                     var menuWidth = getMenuWidth();
                     // Get the height of the header
                     var headerHeight = getHeaderHeight();
                     // Adjust position to prevent overflow if necessary
                     var leftPosition = mouseX - 150;
-                    var topPosition = mouseY - headerHeight + 80; // Always show the image 80px below mouse click, even when scrolled
+                    // Always show the image 80px below mouse click, even when scrolled
+                    var topPosition = mouseY - headerHeight + 80;
 
                     // Ensure the div stays within the viewport and does not overlap the menu
                     var viewportWidth = $(window).width();
@@ -361,7 +303,8 @@ $uniquecard_ref = [];
                         bottomViewable, divWidth, divHeight, realImgBottom
                     });
 
-                    // TopPosition is the distance from the top even if that is scrolled off the top of the view - it positions the top of the image below the header
+                    // TopPosition is the distance from the top even if that is scrolled off the top of the view
+                    // It positions the top of the image below the header
                     //      It is relative to bottom of header
                     // viewportHeight is what can be seen
                     // window.scrollY is what is off the top
@@ -372,12 +315,16 @@ $uniquecard_ref = [];
                     if (leftPosition < menuWidth) {
                         leftPosition = menuWidth + 100; // 10px padding from the menu
                     }
-                    if (realImgBottom + 10 > bottomViewable) { // the image won't fit in view
-                        topPosition = Math.max(mouseY - divHeight - headerHeight - 80, window.scrollY + 10); // 80px above mouse, unless < 10px from header
+                    if (realImgBottom + 10 > bottomViewable) {
+                        // the image won't fit in view
+                        topPosition = Math.max(
+                            mouseY - divHeight - headerHeight - 80,
+                            window.scrollY + 10
+                        ); // 80px above mouse, unless < 10px from header
                     }
-                    
+
                     console.log({ leftPosition, topPosition }); // Log the final positions
-                    
+
                     $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
                 }
 
@@ -450,7 +397,10 @@ $uniquecard_ref = [];
 
             function checkChanges() {
                 // Check if either textarea is different from its initial value
-                if (notesTextarea.val() !== initialNotesValue || (sidenotesTextarea.length && sidenotesTextarea.val() !== initialSidenotesValue)) {
+                if (
+                    notesTextarea.val() !== initialNotesValue
+                    || (sidenotesTextarea.length && sidenotesTextarea.val() !== initialSidenotesValue)
+                ) {
                     saveButton.prop('disabled', false);
                 } else {
                     saveButton.prop('disabled', true);
@@ -474,7 +424,8 @@ $uniquecard_ref = [];
                     if (data.success) {
                         if (data.decknumber) {
                             alert('Deck duplicated successfully!');
-                            window.location.href = 'deckdetail.php?deck=' + data.decknumber; // Redirect to the deck detail page with the deck number
+                            window.location.href = 'deckdetail.php?deck=' + data.decknumber;
+                            // Redirect to the deck detail page with the deck number
                         } else {
                             alert('Deck duplicated successfully, but no deck number returned.');
                             window.location.href = 'decks.php';
@@ -492,7 +443,7 @@ $uniquecard_ref = [];
                     console.error('Error:', error);
                     alert('There was an issue duplicating the deck.');
                 });
-            };            
+            };
         });
     </script>
 </head>
@@ -501,32 +452,30 @@ $uniquecard_ref = [];
 <?php
 include_once("includes/analyticstracking.php");
 require('includes/overlays.php');
-require('includes/header.php'); 
+require('includes/header.php');
 require('includes/menu.php'); //mobile menu
 
 $redirect = false;
 
-// Don't need to hide missing behind button with single SQL query, as it is much faster
-//
-// if (isset($_GET["missing"])):
-//     $missing = 'yes';
-// else:
-//     $missing = 'no';
-// endif;
-$missing = 'yes';
-
 $time = time();
 
-if (isset($_GET["deck"])):
+if (isset($_GET["deck"])) :
     $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
-    if (isset($_GET["updatetype"])):
+    if (isset($_GET["updatetype"])) :
         $updatetype = $_GET["updatetype"];
     endif;
-elseif (isset($_POST["deck"])):
+elseif (isset($_POST["deck"])) :
     $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
     $renamedeck     = isset($_POST['renamedeck']) ? 'yes' : '';
-    $newname        = isset($_POST['newname']) ? filter_input(INPUT_POST, 'newname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES): '';
-else: ?>
+    $newname        = isset($_POST['newname'])
+        ? filter_input(
+            INPUT_POST,
+            'newname',
+            FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+            FILTER_FLAG_NO_ENCODE_QUOTES
+        )
+        : '';
+else : ?>
     <div id='page'>
     <div class='staticpagecontent'>
     <h3>No decknumber given - returning to your deck list...</h3>
@@ -536,14 +485,14 @@ else: ?>
     require('includes/footer.php');
     exit();
 endif;?>
-<script type="text/javascript"> 
+<script type="text/javascript">
     function CloseMe( obj )
     {
         obj.style.display = 'none';
         window.location.href="deckdetail.php?deck=<?php echo $decknumber;?>";
     }
 </script> <?php
-$cardtoaction   = isset($_GET['card'])          ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS):'';
+$cardtoaction   = isset($_GET['card'])          ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS) : '';
 $deletemain     = isset($_GET['deletemain'])    ? 'yes' : '';
 $deleteside     = isset($_GET['deleteside'])    ? 'yes' : '';
 $maintoside     = isset($_GET['maintoside'])    ? 'yes' : '';
@@ -553,21 +502,21 @@ $minusmain      = isset($_GET['minusmain'])     ? 'yes' : '';
 $plusside       = isset($_GET['plusside'])      ? 'yes' : '';
 $minusside      = isset($_GET['minusside'])     ? 'yes' : '';
 $valid_commander = array("yes","no");
-if(isset($_GET['commander']) AND (in_array($_GET['commander'],$valid_commander))):
+if (isset($_GET['commander']) and (in_array($_GET['commander'], $valid_commander))) :
     $commander = $_GET['commander'];
-else:
+else :
     $commander = '';
 endif;
-if(isset($_GET['partner']) AND (in_array($_GET['partner'],$valid_commander))):
+if (isset($_GET['partner']) and (in_array($_GET['partner'], $valid_commander))) :
     $partner = $_GET['partner'];
-else:
+else :
     $partner = '';
 endif;
 
 // Check to see if the called deck belongs to the logged in user.
-$msg->logMessage('[NOTICE]',"Checking deck $decknumber");
+$msg->logMessage('[NOTICE]', "Checking deck $decknumber");
 $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
-if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
+if ($obj->deckOwnerCheck($decknumber, $user) == false) : ?>
     <div id='page'>
     <div class='staticpagecontent'>
     <h3>This deck is not yours... returning to your deck page...</h3>
@@ -579,203 +528,232 @@ if($obj->deckOwnerCheck($decknumber,$user) == FALSE): ?>
 endif;
 
 // Update name if called before reading info (we've already checked ownership)
-if(isset($_POST['newname'])):
-    $msg->logMessage('[DEBUG]',"Renaming deck to $newname");
-    $obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
-    $renameresult = $obj->renameDeck($decknumber,$newname,$user);
-    $msg->logMessage('[DEBUG]',"Renaming deck result: $renameresult");
-    if($renameresult == 2):
+if (isset($_POST['newname'])) :
+    $msg->logMessage('[DEBUG]', "Renaming deck to $newname");
+    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $renameresult = $obj->renameDeck($decknumber, $newname, $user);
+    $msg->logMessage('[DEBUG]', "Renaming deck result: $renameresult");
+    if ($renameresult == 2) :
         ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
-    elseif($renameresult > 0):
-         ?>
+    elseif ($renameresult > 0) :
+        ?>
         <div class="msg-new error-new" onclick='CloseMe(this)'><span>Unknown error</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
-    else:
+    else :
         $redirect = true;
     endif;
 endif;
 
 //Update deck type if called before reading info
-if (isset($updatetype)):
-    if(in_array($updatetype,$validtypes)):
-        $msg->logMessage('[DEBUG]',"Updating deck type to '$updatetype'");
-        $setdecktype = $obj->setDeckType($decknumber,$updatetype);
-        if ($setdecktype !== 0):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": Deck type change failed ", E_USER_ERROR);
-        else:
-            if(!in_array($updatetype,$commander_decktypes)):
-                if ($db->execute_query("UPDATE deckcards SET commander = 0 WHERE decknumber = ?",[$decknumber]) === FALSE):    
-                    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
+if (isset($updatetype)) :
+    if (in_array($updatetype, $validtypes)) :
+        $msg->logMessage('[DEBUG]', "Updating deck type to '$updatetype'");
+        $setdecktype = $obj->setDeckType($decknumber, $updatetype);
+        if ($setdecktype !== 0) :
+            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": Deck type change failed ", E_USER_ERROR);
+        else :
+            if (!in_array($updatetype, $commander_decktypes)) :
+                if (
+                    $db->execute_query(
+                        "UPDATE deckcards SET commander = 0 WHERE decknumber = ?",
+                        [$decknumber]
+                    ) === false
+                ) :
+                    trigger_error(
+                        "[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error,
+                        E_USER_ERROR
+                    );
                 endif;
             endif;
         endif;
-    else:
-        trigger_error("[ERROR] deckdetail.php ".__LINE__.": Error: Invalid deck type", E_USER_ERROR);
+    else :
+        trigger_error("[ERROR] deckdetail.php " . __LINE__ . ": Error: Invalid deck type", E_USER_ERROR);
     endif;
-    
+
     // Set quantities to 1 for commander decks
-    if(in_array($updatetype,$commander_decktypes)):
-        $query = "UPDATE deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id SET cardqty=? WHERE deckcards.decknumber = ? AND (deckcards.sideqty IS NULL or sideqty = 0) AND cards_scry.type NOT LIKE 'Basic Land%'";
-        $msg->logMessage('[DEBUG]',"Updating deck type to a Commander type, setting quantities to 1");
-        if ($db->execute_query($query, [1,$decknumber]) != TRUE):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
-        else:
-            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
+    if (in_array($updatetype, $commander_decktypes)) :
+        $query = "UPDATE deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id SET cardqty=? 
+            WHERE deckcards.decknumber = ? AND (deckcards.sideqty IS NULL or sideqty = 0) 
+            AND cards_scry.type NOT LIKE 'Basic Land%'";
+        $msg->logMessage('[DEBUG]', "Updating deck type to a Commander type, setting quantities to 1");
+        if ($db->execute_query($query, [1, $decknumber]) != true) :
+            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else :
+            $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty=? WHERE (decknumber = ? AND (cardqty IS NULL or cardqty = 0) )';
-        if ($db->execute_query($query, [1,$decknumber]) != TRUE):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
-        else:
-            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
+        if ($db->execute_query($query, [1, $decknumber]) != true) :
+            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else :
+            $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
-        if ($db->execute_query($query, [$decknumber]) != TRUE):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
-        else:
-            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
+        if ($db->execute_query($query, [$decknumber]) != true) :
+            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else :
+            $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
     endif;
-    if($updatetype == 'Wishlist'):
+    if ($updatetype == 'Wishlist') :
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
-        $msg->logMessage('[DEBUG]',"Updating deck type to a Wishlist, deleting sideboard cards");
-        if ($db->execute_query($query, [$decknumber]) != TRUE):
-            trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
-        else:
-            $msg->logMessage('[DEBUG]',"...sql result: {$db->info}");
+        $msg->logMessage('[DEBUG]', "Updating deck type to a Wishlist, deleting sideboard cards");
+        if ($db->execute_query($query, [$decknumber]) != true) :
+            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+        else :
+            $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
     endif;
     $redirect = true;
 endif;
 
 //Carry out quick add requests
-if (isset($_GET["quickadd"])):
-    $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
-    $cardtoadd = $deckManager->processInput($decknumber,$_GET["quickadd"]);
+if (isset($_GET["quickadd"])) :
+    $deckManager = new DeckManager(
+        $db,
+        $logfile,
+        $useremail,
+        $serveremail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
+    $cardtoadd = $deckManager->processInput($decknumber, $_GET["quickadd"]);
 endif;
 
 //Deck import
-if (isset($_POST['import'])):
-    $msg->logMessage('[DEBUG]',"Import called, checking file uploaded...");
-    if (is_uploaded_file($_FILES['filename']['tmp_name'])):
-        $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} uploaded");
+if (isset($_POST['import'])) :
+    $msg->logMessage('[DEBUG]', "Import called, checking file uploaded...");
+    if (is_uploaded_file($_FILES['filename']['tmp_name'])) :
+        $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
+        $deckManager = new DeckManager(
+            $db,
+            $logfile,
+            $useremail,
+            $serveremail,
+            $importLinestoIgnore,
+            $nonPreferredSetCodes
+        );
         // Read the entire file content into a variable
         $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
         fclose($file);
-        
+
         // Call the processInput method with the decknumber and file content
         $deckManager->processInput($decknumber, $fileContent);
         $redirect = true;
-    else:
-        $msg->logMessage('[DEBUG]',"Import file {$_FILES['filename']['name']} failed");
-    endif; 
+    else :
+        $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} failed");
+    endif;
 endif;
 
 // Get deck details from database
-if($deckinfoqry = $db->execute_query("SELECT deckname,notes,sidenotes,type FROM decks WHERE decknumber = ? LIMIT 1",[$decknumber])):
+if (
+    $deckinfoqry = $db->execute_query(
+        "SELECT deckname,notes,sidenotes,type FROM decks WHERE decknumber = ? LIMIT 1",
+        [$decknumber]
+    )
+) :
     $deckinfo = $deckinfoqry->fetch_assoc();
     $deckname   = $deckinfo['deckname'];
     $notes      = $deckinfo['notes'];
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
-else:
-    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
+else :
+    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
 // Get relevant db_field with legality
-if($decktype != ''):
+if ($decktype != '') :
     $db_field = card_legal_db_field($decktype);
-else:
+else :
     $db_field = '';
 endif;
-$msg->logMessage('[DEBUG]',"Legality db-field for this deck is '$db_field'");
+$msg->logMessage('[DEBUG]', "Legality db-field for this deck is '$db_field'");
 
 // Get deck legalities
-if($db_field != ''):
-    $deck_legality_list = deck_legal_list($decknumber,$decktype,$db_field);
-else:
+if ($db_field != '') :
+    $deck_legality_list = deck_legal_list($decknumber, $decktype, $db_field);
+else :
     $deck_legality_list = '';
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db,$logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
+$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
 
-if($deletemain == 'yes'):
-    $obj->subtractDeckCard($decknumber,$cardtoaction,"main","all");
+if ($deletemain == 'yes') :
+    $obj->subtractDeckCard($decknumber, $cardtoaction, "main", "all");
     $redirect = true;
-elseif($deleteside == 'yes'):
-    $obj->subtractDeckCard($decknumber,$cardtoaction,"side","all");
+elseif ($deleteside == 'yes') :
+    $obj->subtractDeckCard($decknumber, $cardtoaction, "side", "all");
     $redirect = true;
-elseif($maintoside == 'yes'):
-    if ($obj->subtractDeckCard($decknumber,$cardtoaction,'main','1') != "-error"):
-        $obj->addDeckCard($decknumber,$cardtoaction,"side","1");
+elseif ($maintoside == 'yes') :
+    if ($obj->subtractDeckCard($decknumber, $cardtoaction, 'main', '1') != "-error") :
+        $obj->addDeckCard($decknumber, $cardtoaction, "side", "1");
     endif;
     $redirect = true;
-elseif($sidetomain == 'yes'):
-    if ($obj->subtractDeckCard($decknumber,$cardtoaction,'side','1') != "-error"):
-        $obj->addDeckCard($decknumber,$cardtoaction,"main","1");
+elseif ($sidetomain == 'yes') :
+    if ($obj->subtractDeckCard($decknumber, $cardtoaction, 'side', '1') != "-error") :
+        $obj->addDeckCard($decknumber, $cardtoaction, "main", "1");
     endif;
     $redirect = true;
-elseif($plusmain == 'yes'):
-    $obj->addDeckCard($decknumber,$cardtoaction,"main","1");
+elseif ($plusmain == 'yes') :
+    $obj->addDeckCard($decknumber, $cardtoaction, "main", "1");
     $redirect = true;
-elseif($minusmain == 'yes'):
-    $obj->subtractDeckCard($decknumber,$cardtoaction,'main','1');
+elseif ($minusmain == 'yes') :
+    $obj->subtractDeckCard($decknumber, $cardtoaction, 'main', '1');
     $redirect = true;
-elseif($plusside == 'yes'):
-    $obj->addDeckCard($decknumber,$cardtoaction,"side","1");
+elseif ($plusside == 'yes') :
+    $obj->addDeckCard($decknumber, $cardtoaction, "side", "1");
     $redirect = true;
-elseif($minusside == 'yes'):
-    $obj->subtractDeckCard($decknumber,$cardtoaction,'side','1');
+elseif ($minusside == 'yes') :
+    $obj->subtractDeckCard($decknumber, $cardtoaction, 'side', '1');
     $redirect = true;
-elseif($commander == 'yes'):
-    $msg->logMessage('[NOTICE]',"Adding Commander to deck $decknumber: $cardtoaction");
-    $obj->addCommander($decknumber,$cardtoaction);
+elseif ($commander == 'yes') :
+    $msg->logMessage('[NOTICE]', "Adding Commander to deck $decknumber: $cardtoaction");
+    $obj->addCommander($decknumber, $cardtoaction);
     $redirect = true;
-elseif($partner == 'yes'):
-    $msg->logMessage('[NOTICE]',"Moving Commander to Partner for deck $decknumber: $cardtoaction");
-    $obj->addPartner($decknumber,$cardtoaction);
+elseif ($partner == 'yes') :
+    $msg->logMessage('[NOTICE]', "Moving Commander to Partner for deck $decknumber: $cardtoaction");
+    $obj->addPartner($decknumber, $cardtoaction);
     $redirect = true;
-elseif($commander == 'no'):
-    $obj->delCommander($decknumber,$cardtoaction);
+elseif ($commander == 'no') :
+    $obj->delCommander($decknumber, $cardtoaction);
     $redirect = true;
 endif;
 
 // PRG
-if($redirect == true): ?>
+if ($redirect == true) : ?>
     <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
     exit();
 endif;
 
 //Get card list
-$mainquery = ("SELECT *,cards_scry.id AS cardsid 
-                        FROM deckcards 
-                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
-                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
+$mainquery = ("SELECT *,cards_scry.id AS cardsid
+                        FROM deckcards
+                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id
                     WHERE decknumber = ? AND cardqty > 0 ORDER BY name");
-$msg->logMessage('[DEBUG]',"$mainquery");
+$msg->logMessage('[DEBUG]', "$mainquery");
 $result = $db->execute_query($mainquery, [$decknumber]);
-if ($result != TRUE):
-    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
+if ($result != true) :
+    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
-$sidequery = ("SELECT *,cards_scry.id AS cardsid 
-                        FROM deckcards 
-                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id 
-                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id 
+$sidequery = ("SELECT *,cards_scry.id AS cardsid
+                        FROM deckcards
+                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+                    LEFT JOIN $mytable ON cards_scry.id = $mytable.id
                     WHERE decknumber = ? AND sideqty > 0 ORDER BY name");
 $sideresult = $db->execute_query($sidequery, [$decknumber]);
-if ($sideresult != TRUE):
-    trigger_error("[ERROR] deckdetail.php: ".__LINE__.": SQL failure: Error: " . $db->error, E_USER_ERROR);
+if ($sideresult != true) :
+    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
 
 //Initialise variables to 0
@@ -789,17 +767,17 @@ $firebrick_font_tag = "style='color: FireBrick; font-weight: bold'";
 //This section works out which cards the user DOES NOT have, for later linking
 // in a text file to download
 $resultnames = [];
-$rowNumber = 0;        
-while ($row = $result->fetch_assoc()):
+$rowNumber = 0;
+while ($row = $result->fetch_assoc()) :
     $rowNumber++;
     $qty = $row['cardqty'];
 
     $found = false;
-    foreach ($resultnames as &$entry):
-        if ($entry['name'] === $row['name']):
-            if (isset($entry['qty'])):
+    foreach ($resultnames as &$entry) :
+        if ($entry['name'] === $row['name']) :
+            if (isset($entry['qty'])) :
                 $entry['qty'] += $qty;
-            else:
+            else :
                 $entry['qty'] = $qty;
             endif;
             $found = true;
@@ -808,20 +786,20 @@ while ($row = $result->fetch_assoc()):
     endforeach;
     unset($entry); // break the reference with the last element
 
-    if (!$found):
+    if (!$found) :
         $resultnames[$rowNumber] = ['name' => $row['name'], 'flavor_name' => $row['flavor_name'], 'qty' => $qty];
     endif;
 endwhile;
 
-while ($row = $sideresult->fetch_assoc()):
+while ($row = $sideresult->fetch_assoc()) :
     $qty = $row['sideqty'];
 
     $found = false;
-    foreach ($resultnames as &$entry):
-        if ($entry['name'] === $row['name']):
-            if (isset($entry['qty'])):
+    foreach ($resultnames as &$entry) :
+        if ($entry['name'] === $row['name']) :
+            if (isset($entry['qty'])) :
                 $entry['qty'] += $qty;
-            else:
+            else :
                 $entry['qty'] = $qty;
             endif;
             $found = true;
@@ -830,99 +808,97 @@ while ($row = $sideresult->fetch_assoc()):
     endforeach;
     unset($entry); // break the reference with the last element
 
-    if (!$found):
+    if (!$found) :
         $resultnames[] = ['name' => $row['name'], 'flavor_name' => $row['flavor_name'], 'qty' => $qty];
     endif;
 endwhile;
 $uniquecardscount = count($resultnames);
-$msg->logMessage('[DEBUG]',"Cards in deck: $uniquecardscount");
-$msg->logMessage('[DEBUG]',"Cards in deck: ".print_r($resultnames,true));
+$msg->logMessage('[DEBUG]', "Cards in deck: $uniquecardscount");
+$msg->logMessage('[DEBUG]', "Cards in deck: " . print_r($resultnames, true));
 $requiredlist = '';
 $requiredbuy = '';
-if($uniquecardscount > 0):
-
-    // $missing default now, see comments at top
-    if($missing == 'yes'):
+if ($uniquecardscount > 0) :
         $shortqty = array_fill(0, $uniquecardscount, '0'); //create an array the right size, all '0'
         $placeholderCount = count($resultnames) * 2; // 2 placeholders per card in the result list
         // Extract names from the subarrays
-        $names = array_map(function($entry)
-            {
+        $names = array_map(function ($entry) {
                 return $entry['name'];
-            }, $resultnames);
-        $msg->logMessage('[DEBUG]',"Missing check on ".count($resultnames)." cards");
-        $placeholders = implode(',', array_fill(0, count($resultnames), '?')); // create placeholders for prepared statement
+        }, $resultnames);
+        $msg->logMessage('[DEBUG]', "Missing check on " . count($resultnames) . " cards");
+        $placeholders = implode(',', array_fill(0, count($resultnames), '?'));
+        // create placeholders for prepared statement
 
-        $msg->logMessage('[DEBUG]',"Missing check on cards: ".implode(', ',$names));
-        
+        $msg->logMessage('[DEBUG]', "Missing check on cards: " . implode(', ', $names));
+
         // Duplicate the $resultnames array to match the number of placeholders
         $params = array_merge($names, $names);
 
         $query = "
             SELECT name, flavor_name,
-                   SUM(IFNULL(`$mytable`.etched, 0)) + SUM(IFNULL(`$mytable`.foil, 0)) + SUM(IFNULL(`$mytable`.normal, 0)) as allcopies 
-            FROM $mytable 
+                   SUM(IFNULL(`$mytable`.etched, 0))
+                       + SUM(IFNULL(`$mytable`.foil, 0))
+                       + SUM(IFNULL(`$mytable`.normal, 0)) AS allcopies
+            FROM $mytable
             LEFT JOIN cards_scry
             ON $mytable.id = cards_scry.id
-            WHERE 
+            WHERE
                 cards_scry.name IN ($placeholders) OR
                 cards_scry.flavor_name IN ($placeholders)
             GROUP BY name
         ";
 
-        if ($totalresult = $db->execute_query($query, $params)): // $totalresult will be an array of qties of cards in collection
-            $cardCopies = [];
-            $rowNumber = 0;
+    if ($totalresult = $db->execute_query($query, $params)) :
+        // $totalresult will be an array of qties of cards in collection
+        $cardCopies = [];
+        $rowNumber = 0;
 
-            while ($totalrow = $totalresult->fetch_assoc()):
-                $rowNumber++;
-                $msg->logMessage('[DEBUG]',print_r($totalrow['name'],true));
-                
-                if (!isset($cardCopies[$rowNumber])):
-                    $cardCopies[$rowNumber] = [];
-                endif;
-                
-                if (isset($totalrow['name']) && !empty($totalrow['name'])):
-                    $cardCopies[$rowNumber]['name'] = $totalrow['name'];
-                endif;
-                if (isset($totalrow['flavor_name']) && !empty($totalrow['flavor_name'])):
-                    $cardCopies[$rowNumber]['flavor_name'] = $totalrow['flavor_name'];
-                endif;
-                if (isset($totalrow['allcopies']) && !empty($totalrow['allcopies'])):
-                    $cardCopies[$rowNumber]['qty'] = $totalrow['allcopies'];
-                else:
+        while ($totalrow = $totalresult->fetch_assoc()) :
+            $rowNumber++;
+            $msg->logMessage('[DEBUG]', print_r($totalrow['name'], true));
+
+            if (!isset($cardCopies[$rowNumber])) :
+                $cardCopies[$rowNumber] = [];
+            endif;
+
+            if (isset($totalrow['name']) && !empty($totalrow['name'])) :
+                $cardCopies[$rowNumber]['name'] = $totalrow['name'];
+            endif;
+            if (isset($totalrow['flavor_name']) && !empty($totalrow['flavor_name'])) :
+                $cardCopies[$rowNumber]['flavor_name'] = $totalrow['flavor_name'];
+            endif;
+            if (isset($totalrow['allcopies']) && !empty($totalrow['allcopies'])) :
+                $cardCopies[$rowNumber]['qty'] = $totalrow['allcopies'];
+            else :
                     $cardCopies[$rowNumber]['qty'] = 0;
-                endif;
-            endwhile;
-            $msg->logMessage('[DEBUG]',print_r($cardCopies,true));
-            
-            foreach ($resultnames as $resultEntry):
-                $found = false;
-                foreach ($cardCopies as &$cardEntry):
-                    if ($resultEntry['name'] === $cardEntry['name']): // We have some of this card name
-                        if($resultEntry['qty'] > $cardEntry['qty']): // but not enough
-                            $shortqty = $resultEntry['qty'] - $cardEntry['qty'];
-                            $requiredlist .= $resultEntry['name'] . " x " . $shortqty . "\r\n";
-                            $requiredbuy .= $resultEntry['name'] . " " . $shortqty . "||";
-                        endif;
-                        $found = true;
-                        break;
+            endif;
+        endwhile;
+        $msg->logMessage('[DEBUG]', print_r($cardCopies, true));
+
+        foreach ($resultnames as $resultEntry) :
+            $found = false;
+            foreach ($cardCopies as &$cardEntry) :
+                if ($resultEntry['name'] === $cardEntry['name']) : // We have some of this card name
+                    if ($resultEntry['qty'] > $cardEntry['qty']) : // but not enough
+                        $shortqty = $resultEntry['qty'] - $cardEntry['qty'];
+                        $requiredlist .= $resultEntry['name'] . " x " . $shortqty . "\r\n";
+                        $requiredbuy .= $resultEntry['name'] . " " . $shortqty . "||";
                     endif;
-                endforeach;
-                unset($cardEntry); // Break the reference with the last element
-                if($found === false):
-                    $requiredlist .= $resultEntry['name'] . " x " . $resultEntry['qty'] . "\r\n";
-                    $requiredbuy .= $resultEntry['name'] . " " . $resultEntry['qty'] . "||";
+                    $found = true;
+                    break;
                 endif;
             endforeach;
-            
-            $msg->logMessage('[DEBUG]',"Cards required list: $requiredlist");
-            $msg->logMessage('[DEBUG]',"Cards required buy: $requiredbuy");
-        else:
-            $msg->logMessage('[ERROR]',"Database query failed");
-        endif;
-    endif;
+            unset($cardEntry); // Break the reference with the last element
+            if ($found === false) :
+                $requiredlist .= $resultEntry['name'] . " x " . $resultEntry['qty'] . "\r\n";
+                $requiredbuy .= $resultEntry['name'] . " " . $resultEntry['qty'] . "||";
+            endif;
+        endforeach;
 
+        $msg->logMessage('[DEBUG]', "Cards required list: $requiredlist");
+        $msg->logMessage('[DEBUG]', "Cards required buy: $requiredbuy");
+    else :
+            $msg->logMessage('[ERROR]', "Database query failed");
+    endif;
 endif;
 
 //This section builds hidden divs for each card with the image and a link,
@@ -930,7 +906,7 @@ endif;
 // for main and side
 // It also builds the legal Colour identity for Commander decks
 mysqli_data_seek($result, 0);
-$cdrSet = FALSE;
+$cdrSet = false;
 $cdr_colours = array();
 $w = 0;
 $u = 0;
@@ -945,125 +921,162 @@ $gr = 0;
 $gg = 0;
 $gc = 0;
 $i = 0;
-while ($row = $result->fetch_assoc()):
-    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+while ($row = $result->fetch_assoc()) :
+    if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
         $row['name'] = $row['flavor_name'];
     endif;
-    if($row['commander'] != 0 AND $row['commander'] != NULL):
-        $msg->logMessage('[DEBUG]',"Checking card, colour identity {$row['color_identity']}");
+    if ($row['commander'] != 0 and $row['commander'] != null) :
+        $msg->logMessage('[DEBUG]', "Checking card, colour identity {$row['color_identity']}");
         //card is a commander, get its colour identity
-        $cdrSet = TRUE;
+        $cdrSet = true;
         $cdr_colours[$i] = $row['color_identity'];
         $i = $i + 1;
     endif;
     $cardset = strtolower($row['setcode']);
-    $msg->logMessage('[DEBUG]',"Checking manacost for colour quantities");
-    if (isset($row['manacost']) && is_string($row['manacost']) && isset($row['cardqty']) && $row['cardqty'] !== NULL):
-        $w = $w + (substr_count($row['manacost'],"W") * $row['cardqty']);
-        $u = $u + (substr_count($row['manacost'],"U") * $row['cardqty']);
-        $b = $b + (substr_count($row['manacost'],"B") * $row['cardqty']);
-        $r = $r + (substr_count($row['manacost'],"R") * $row['cardqty']);
-        $g = $g + (substr_count($row['manacost'],"G") * $row['cardqty']);
-        $c = $c + (substr_count($row['manacost'],"C") * $row['cardqty']);
-    else:
-        $msg->logMessage('[DEBUG]',"Manacost not a string");
+    $msg->logMessage('[DEBUG]', "Checking manacost for colour quantities");
+    if (
+        isset($row['manacost'])
+        && is_string($row['manacost'])
+        && isset($row['cardqty'])
+        && $row['cardqty'] !== null
+    ) :
+        $w = $w + (substr_count($row['manacost'], "W") * $row['cardqty']);
+        $u = $u + (substr_count($row['manacost'], "U") * $row['cardqty']);
+        $b = $b + (substr_count($row['manacost'], "B") * $row['cardqty']);
+        $r = $r + (substr_count($row['manacost'], "R") * $row['cardqty']);
+        $g = $g + (substr_count($row['manacost'], "G") * $row['cardqty']);
+        $c = $c + (substr_count($row['manacost'], "C") * $row['cardqty']);
+    else :
+        $msg->logMessage('[DEBUG]', "Manacost not a string");
     endif;
-    $msg->logMessage('[DEBUG]',"Checking for generated mana");
-    if (isset($row['generatedmana']) && is_string($row['generatedmana']) && isset($row['cardqty']) && $row['cardqty'] !== NULL):
-        $msg->logMessage('[DEBUG]',"Generated mana ({$row['name']}) is {$row['generatedmana']}");
-        $gw = $gw + (substr_count($row['generatedmana'],"W") * $row['cardqty']);
-        $gu = $gu + (substr_count($row['generatedmana'],"U") * $row['cardqty']);
-        $gb = $gb + (substr_count($row['generatedmana'],"B") * $row['cardqty']);
-        $gr = $gr + (substr_count($row['generatedmana'],"R") * $row['cardqty']);
-        $gg = $gg + (substr_count($row['generatedmana'],"G") * $row['cardqty']);
-        $gc = $gc + (substr_count($row['generatedmana'],"C") * $row['cardqty']);
-    else:
-        $msg->logMessage('[DEBUG]',"Generated mana not a string");
+    $msg->logMessage('[DEBUG]', "Checking for generated mana");
+    if (
+        isset($row['generatedmana'])
+        && is_string($row['generatedmana'])
+        && isset($row['cardqty'])
+        && $row['cardqty'] !== null
+    ) :
+        $msg->logMessage('[DEBUG]', "Generated mana ({$row['name']}) is {$row['generatedmana']}");
+        $gw = $gw + (substr_count($row['generatedmana'], "W") * $row['cardqty']);
+        $gu = $gu + (substr_count($row['generatedmana'], "U") * $row['cardqty']);
+        $gb = $gb + (substr_count($row['generatedmana'], "B") * $row['cardqty']);
+        $gr = $gr + (substr_count($row['generatedmana'], "R") * $row['cardqty']);
+        $gg = $gg + (substr_count($row['generatedmana'], "G") * $row['cardqty']);
+        $gc = $gc + (substr_count($row['generatedmana'], "C") * $row['cardqty']);
+    else :
+        $msg->logMessage('[DEBUG]', "Generated mana not a string");
     endif;
     // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-    if ($row['type'] !== NULL):
+    if ($row['type'] !== null) :
         $card_type = $row['type'];
         $cardcmc = $row['cmc'];
-    elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+    elseif ($row['type'] === null and isset($row['f1_type'])) :
         $card_type = $row['f1_type'];
         $cardcmc = $row['f1_cmc'];
     endif;
-    
-    if (strpos($card_type,' //') !== false):
+
+    if (strpos($card_type, ' //') !== false) :
         $len = strpos($card_type, ' //');
         $card_type = substr($card_type, 0, $len);
     endif;
-    if ((strpos($card_type,'Creature') !== false) AND ($row['commander'] == 0)):
+    if ((strpos($card_type, 'Creature') !== false) and ($row['commander'] == 0)) :
         $creatures = $creatures + $row['cardqty'];
-    elseif ((strpos($card_type,'Sorcery') !== false) OR (strpos($card_type,'Instant') !== false)):  
+    elseif ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false)) :
         $instantsorcery = $instantsorcery + $row['cardqty'];
-    elseif ((strpos($card_type,'Sorcery') === false) AND (strpos($card_type,'Instant') === false) AND (strpos($card_type,'Creature') === false) AND (strpos($card_type,'Land') === false) AND ((strpos($card_type,'Plane') === false || strpos($card_type,'Planeswalker') !== false)) AND (strpos($card_type,'Phenomenon') === false) AND ($row['commander'] == 0)):
+    elseif (
+        (strpos($card_type, 'Sorcery') === false)
+        and (strpos($card_type, 'Instant') === false)
+        and (strpos($card_type, 'Creature') === false)
+        and (strpos($card_type, 'Land') === false)
+        and ((strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false))
+        and (strpos($card_type, 'Phenomenon') === false)
+        and ($row['commander'] == 0)
+    ) :
         $other = $other + $row['cardqty'];
-    elseif (strpos($card_type,'Land') !== false):
+    elseif (strpos($card_type, 'Land') !== false) :
         $lands = $lands + $row['cardqty'];
-    elseif (((strpos($card_type,'Plane') !== false && strpos($card_type,'Planeswalker') === false)) || strpos($card_type,'Phenomenon') !== false):
+    elseif (
+        ((strpos($card_type, 'Plane') !== false && strpos($card_type, 'Planeswalker') === false))
+        || strpos($card_type, 'Phenomenon') !== false
+    ) :
         $planes = $planes + $row['cardqty'];
     endif;
     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-    $imagefunction = $imageManager->getImage($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
-    if($imagefunction['front'] == 'error'):
+    $imagefunction = $imageManager->getImage(
+        $cardset,
+        $row['cardsid'],
+        $ImgLocation,
+        $row['layout'],
+        $two_card_detail_sections
+    );
+    if ($imagefunction['front'] == 'error') :
         $imageurl = '/cardimg/back.jpg';
-    else:
+    else :
         $imageurl = $imagefunction['front'];
     endif;
-    $deckcardname = str_replace("'",'&#39;',$row["name"]); 
+    $deckcardname = str_replace("'", '&#39;', $row["name"]);
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
-    $cardref = str_replace('.','-',$row['cardsid']);
+    $cardref = str_replace('.', '-', $row['cardsid']);
 endwhile;
-$msg->logMessage('[DEBUG]',"Colours: W: $w, U: $u, B: $b, R: $r, G: $g, C: $c");
-$msg->logMessage('[DEBUG]',"Gen mana: W: $gw, U: $gu, B: $gb, R: $gr, G: $gg, C: $gc");
+$msg->logMessage('[DEBUG]', "Colours: W: $w, U: $u, B: $b, R: $r, G: $g, C: $c");
+$msg->logMessage('[DEBUG]', "Gen mana: W: $gw, U: $gu, B: $gb, R: $gr, G: $gg, C: $gc");
 
-if(isset($cdrSet) AND $cdrSet === TRUE):
+if (isset($cdrSet) and $cdrSet === true) :
     // Finalise allowable colour identity for Commander decks
-    $cdr_colours_raw = $cdr_colours = '["'.count_chars( str_replace(array('"','[',']',',',' '),'',implode(",",$cdr_colours)),3).'"]';
-    $msg->logMessage('[DEBUG]',"Commander value (variable i) is $i, Colour identity to check is $cdr_colours");
+    $cdr_colours_raw = $cdr_colours = '["' . count_chars(
+        str_replace(array('"', '[', ']', ',', ' '), '', implode(",", $cdr_colours)),
+        3
+    ) . '"]';
+    $msg->logMessage('[DEBUG]', "Commander value (variable i) is $i, Colour identity to check is $cdr_colours");
 
-    if($i > 0 AND $cdr_colours == '[""]'):
+    if ($i > 0 and $cdr_colours == '[""]') :
         $cdr_colours = '["C"]';
     endif;
     $cdr_colours = colourfunction($cdr_colours);
-else:
+else :
     $cdr_colours_raw = $cdr_colours = "";
 endif;
 
 mysqli_data_seek($sideresult, 0);
-while ($row = $sideresult->fetch_assoc()):
-    if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+while ($row = $sideresult->fetch_assoc()) :
+    if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-    $imagefunction = $imageManager->getImage($cardset,$row['cardsid'],$ImgLocation,$row['layout'],$two_card_detail_sections);
-    if($imagefunction['front'] == 'error'):
+    $imagefunction = $imageManager->getImage(
+        $cardset,
+        $row['cardsid'],
+        $ImgLocation,
+        $row['layout'],
+        $two_card_detail_sections
+    );
+    if ($imagefunction['front'] == 'error') :
         $imageurl = '/cardimg/back.jpg';
-    else:
+    else :
         $imageurl = $imagefunction['front'];
     endif;
     $side = $side + $row['sideqty'];
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['sideqty']);
-    $cardref = str_replace('.','-',$row['cardsid']);
+    $cardref = str_replace('.', '-', $row['cardsid']);
 endwhile;
 
 // Next the main DIV section ?>
 <?php
-if(isset($cardtoadd) AND ($cardtoadd == 'cardnotfound' OR $cardtoadd == 'cardnotadded')): ?>
+if (isset($cardtoadd) and ($cardtoadd == 'cardnotfound' or $cardtoadd == 'cardnotadded')) : ?>
     <div class="msg-new error-new" onclick='CloseMe(this)'><span>That didn't work... check card name</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
-<?php
-elseif(isset($cardtoadd) AND ($cardtoadd == 'multierror')): ?>
-    <div class="msg-new error-new" onclick='CloseMe(this)'><span>Multi input errors<br>&nbsp;Details sent by email</span>
+    <?php
+elseif (isset($cardtoadd) and ($cardtoadd == 'multierror')) : ?>
+    <div class="msg-new error-new" onclick='CloseMe(this)'>
+        <span>Multi input errors<br>&nbsp;Details sent by email</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
-<?php
-elseif(isset($cardtoadd)): ?>
+    <?php
+elseif (isset($cardtoadd)) : ?>
     <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
     exit();
 endif;
@@ -1072,7 +1085,9 @@ endif;
     // Function to toggle the visibility of the info box
     function toggleInfoBox() {
         var infoBox = document.getElementById("infoBox");
-        infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
+        infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "")
+            ? "block"
+            : "none";
     }
 </script>
 <!-- Info box -->
@@ -1093,7 +1108,7 @@ m13,12,"Fog",en,1,0,0,{id}
         Text or CSV files should be formatted the same, but can vary line to line.
         If a line in an imported file reads "Sideboard", subsequent lines will be imported into the sideboard.
     </div>
-</div> 
+</div>
 <div id="page">
     <div class="staticpagecontent">
         <div id="decklist">
@@ -1104,16 +1119,16 @@ m13,12,"Fog",en,1,0,0,{id}
                 <input type='hidden' name="deletedeck" value="yes">
                 <input type='hidden' name="decktodelete" value="<?php echo $decknumber; ?>">
             </form>
-            <h2 class='h2pad'><?php 
-                    if (strlen($deckname) > 17):
-                        echo $deckname . '<br><br>';
-                    else:
+            <h2 class='h2pad'><?php
+            if (strlen($deckname) > 17) :
+                echo $deckname . '<br><br>';
+            else :
                         echo $deckname;
-                    endif; ?> 
-                &nbsp; 
-                <span 
+            endif; ?>
+                &nbsp;
+                <span
                     title="Delete"
-                    onmouseover="" 
+                    onmouseover=""
                     style="cursor: pointer;"
                     onclick="if(confirm('Confirm OK to delete deck?')) document.getElementById('deletedeck').submit();"
                     class='material-symbols-outlined'>
@@ -1131,10 +1146,12 @@ m13,12,"Fog",en,1,0,0,{id}
                 &nbsp;
                 <span
                     title="Duplicate"
-                    onclick="duplicateDeck( '<?php echo htmlspecialchars($user, ENT_QUOTES); ?>', 
-                                            '<?php echo htmlspecialchars($deckname, ENT_QUOTES); ?>', 
-                                            '<?php echo htmlspecialchars($decknumber, ENT_QUOTES); ?>',
-                                            '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES) : ''; ?>')"
+                    onclick="duplicateDeck(
+                        '<?php echo htmlspecialchars($user, ENT_QUOTES); ?>',
+                        '<?php echo htmlspecialchars($deckname, ENT_QUOTES); ?>',
+                        '<?php echo htmlspecialchars($decknumber, ENT_QUOTES); ?>',
+                        '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES) : ''; ?>'
+                    )"
                     onmouseover=""
                     style="cursor: pointer;"
                     class='material-symbols-outlined'>
@@ -1142,66 +1159,67 @@ m13,12,"Fog",en,1,0,0,{id}
                 </span>
             </h2>
                 <form id="renameForm" style="display: none;" action="?" method="POST">
-                    <br><textarea class='textinput' id='newname' name='newname' rows='1' cols='30' placeholder="New deck name" autofocus></textarea>
+                    <br><textarea class='textinput' id='newname' name='newname' rows='1' cols='30'
+                        placeholder="New deck name" autofocus></textarea>
                     <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
                     <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
                     <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
                 </form>
                 <script type="text/javascript">
                     document.getElementById('renameForm').addEventListener('submit', function(event) {
-                      event.preventDefault(); // Prevent form submission
-                      var fieldValue = document.getElementById('newname').value;
-                      if (fieldValue.trim() === '') {
-                        alert('Rename field cannot be empty');
-                        return;
-                      }
-                      else if (fieldValue.trim() === '<?php echo $deckname; ?>') 
-                      {
-                        alert('To cancel rename click edit button again');
-                        return;
-                      }
-                      else
-                      {
-                        this.submit();
-                      }
+                        event.preventDefault(); // Prevent form submission
+                        var fieldValue = document.getElementById('newname').value;
+                        if (fieldValue.trim() === '') {
+                            alert('Rename field cannot be empty');
+                            return;
+                        } else if (fieldValue.trim() === '<?php echo $deckname; ?>') {
+                            alert('To cancel rename click edit button again');
+                            return;
+                        } else {
+                            this.submit();
+                        }
                     });
                 </script> <?php
-                if ($decktype == ''):
+                if ($decktype == '') :
                     $decktype = "<i>Not set, click edit above</i>";
                 endif;        ?>
-                <h3>Deck type:<br><span id="currentType"><?php echo "<span style='font-weight:500' >$decktype</span><br></span>"; ?></h3>
+                <h3>Deck type:<br><span id="currentType">
+                    <?php echo "<span style='font-weight:500' >$decktype</span><br></span>"; ?>
+                </span></h3>
                 <form id="changeType" style="display: none;">
                     <select class='dropdown' size="1" name="updatetype" onchange='this.form.submit()'>
-                        <option <?php if($decktype=='' OR $decktype == "<i>Not set, click edit above</i>"):echo "selected='selected'";endif;?>disabled='disabled'>Pick one</option>
-                        <?php 
-                        foreach($validtypes as $deck):
-                            if ($decktype == $deck):
+                        <option <?php if ($decktype == '' or $decktype == "<i>Not set, click edit above</i>") :
+                            echo "selected='selected'";
+                                endif;?>disabled='disabled'>Pick one</option>
+                        <?php
+                        foreach ($validtypes as $deck) :
+                            if ($decktype == $deck) :
                                 echo "<option value='$deck' selected='selected'>$deck</option>";
-                            else:
+                            else :
                                 echo "<option value='$deck'>$deck</option>";
                             endif;
                         endforeach; ?>
-                    </select>    
+                    </select>
                     <input type="hidden"name="deck" value="<?php echo $decknumber;?>" />
                 </form>
-                
-            <?php 
-            if(in_array($decktype,$commander_decktypes) and $i > 0):
-                if($cdr_colours == 'five'):
+
+            <?php
+            if (in_array($decktype, $commander_decktypes) and $i > 0) :
+                if ($cdr_colours == 'five') :
                     $identity_title = 'All';
-                else:
+                else :
                     $identity_title = ucfirst($cdr_colours);
                 endif;
-                echo "Colour identity: <img alt='image' src=images/".$cdr_colours."_s.png> ($identity_title)<br>"; 
-            endif;?>   
-            
+                echo "Colour identity: <img alt='image' src=images/" . $cdr_colours . "_s.png> ($identity_title)<br>";
+            endif;?>
+
             <table class='deckcardlist'>
-                <tr class='deckcardlisthead'> 
+                <tr class='deckcardlisthead'>
                     <td class='deckcardlisthead1'>
                         <span class="noprint">Card</span>
                     </td>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)): ?>    
+                    <?php
+                    if (in_array($decktype, $commander_decktypes)) : ?>
                         <td class="deckcardlisthead3">
                             <span class="noprint">Cdr</span>
                         </td> <?php
@@ -1211,12 +1229,12 @@ m13,12,"Fog",en,1,0,0,{id}
                         <span class="noprint">Del</span>
                     </td>
                     <?php
-                    if($decktype != 'Wishlist'): ?>
+                    if ($decktype != 'Wishlist') : ?>
                         <td class='deckcardlisthead3'>
                             <span class="noprint">Side</span>
-                        </td> <?php 
+                        </td> <?php
                     endif;
-                    if(!in_array($decktype,$commander_decktypes)): ?>    
+                    if (!in_array($decktype, $commander_decktypes)) : ?>
                         <td class='deckcardlisthead3 deckcardlistright'>
                             <span class="noprint">- &nbsp;</span>
                         </td>
@@ -1227,16 +1245,16 @@ m13,12,"Fog",en,1,0,0,{id}
                             <span class="noprint">&nbsp;+</span>
                         </td> <?php
                     endif; ?>
-                </tr> 
+                </tr>
                 <?php
                 // Only show this row if the decktype is Commander style
-                if(in_array($decktype,$commander_decktypes)): 
-                    $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, adding commander row");
+                if (in_array($decktype, $commander_decktypes)) :
+                    $msg->logMessage('[DEBUG]', "This is a '$decktype' deck, adding commander row");
                     ?>
                     <tr>
                         <td colspan='4'>
                             <i><b>Commander</b></i>
-                        </td>    
+                        </td>
                     </tr>
                     <?php
                     $total    = 0;
@@ -1248,115 +1266,136 @@ m13,12,"Fog",en,1,0,0,{id}
                     $cmc[5]   = 0;
                     $cmc[6]   = 0;
                     $cmctotal = 0;
-                    if (mysqli_num_rows($result) > 0):
+                    if (mysqli_num_rows($result) > 0) :
                         mysqli_data_seek($result, 0);
                         $commandercount = 0;
-                        while ($row = $result->fetch_assoc()):
-                            if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                        while ($row = $result->fetch_assoc()) :
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
-                            
+
                             // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                            if ($row['type'] !== NULL):
+                            if ($row['type'] !== null) :
                                 $card_type = $row['type'];
                                 $cardcmc = $row['cmc'];
-                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            elseif ($row['type'] === null and isset($row['f1_type'])) :
                                 $card_type = $row['f1_type'];
                                 $cardcmc = $row['f1_cmc'];
                             endif;
-                            
-                            if ($row['commander'] == 1):
+
+                            if ($row['commander'] == 1) :
                                 $cardname = $row["name"];
                                 $rarity = $row["rarity"];
                                 $quantity = $row["cardqty"];
                                 $cardset = strtolower($row["setcode"]);
-                                $cardref = str_replace('.','-',$row['cardsid']);
+                                $cardref = str_replace('.', '-', $row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
                                 $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                                $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                                if($imagefunction['front'] == 'error'):
+                                $imagefunction = $imageManager->getImage(
+                                    $cardset,
+                                    $cardid,
+                                    $ImgLocation,
+                                    $layout,
+                                    $two_card_detail_sections
+                                );
+                                if ($imagefunction['front'] == 'error') :
                                     $imageurl = '/cardimg/back.jpg';
-                                else:
+                                else :
                                     $imageurl = $imagefunction['front'];
                                 endif;
-                                $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                                if($deck_legality_list != ''):
-                                    $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                                $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                                if ($deck_legality_list != '') :
+                                    $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                     $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                    if ($index !== false):
+                                    if ($index !== false) :
                                         $card_legal = $deck_legality_list[$index]['legality'];
-                                        if($card_legal === 'legal' OR $card_legal === NULL):
+                                        if ($card_legal === 'legal' or $card_legal === null) :
                                             $illegal_tag = '';
-                                        else:
-                                            $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                            $illegal_cards = TRUE;
+                                        else :
+                                            $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                            $illegal_cards = true;
                                         endif;
-                                    else:
+                                    else :
                                         $illegal_tag = '';
                                     endif;
-                                else:
+                                else :
                                     $illegal_tag = '';
                                 endif;
-                                
+
                                 $cardcmc = round($cardcmc);
                                 $cmctotal = $cmctotal + ($cardcmc * $quantity);
-                                if ($cardcmc > 5):
+                                if ($cardcmc > 5) :
                                     $cardcmc = 6;
                                 endif;
-                                $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; 
+                                $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity;
                                 $commandername = $cardname;
                                 ?>
                                 <tr class='deckrow'>
+                                <?php $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}"; ?>
                                 <td class="deckcardname hoverTD">
-                                    <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
+                                    <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a>";
                                     echo "<td class='deckcardlistcenter noprint'>";
-                                        $validpartner = FALSE;
-                                        $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid partner or background");
+                                        $validpartner = false;
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "This is a '$decktype' deck, checking if $cardname is a valid partner "
+                                            . "or background"
+                                        );
                                         $i = 0;
-                                        while($i < count($second_commander_text)):
-                                            if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
-                                                $validpartner = TRUE;
-                                            endif;
-                                            $i++;
-                                        endwhile;
-                                        if($validpartner == TRUE):
-                                            ?>
-                                            <span 
-                                                onmouseover="" 
+                                    while ($i < count($second_commander_text)) :
+                                        if (
+                                            isset($row['ability'])
+                                            and str_contains($row['ability'], $second_commander_text[$i]) == true
+                                        ) :
+                                            $validpartner = true;
+                                        endif;
+                                        $i++;
+                                    endwhile;
+                                    if ($validpartner == true) :
+                                        $partnerUrl = $cardActionBase . "&amp;partner=yes"; ?>
+                                            <span
+                                                onmouseover=""
                                                 title="Move to Partner"
-                                                style="cursor: pointer;" 
-                                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                                style="cursor: pointer;"
+                                                onclick="window.location='<?php echo $partnerUrl; ?>'"
                                                 class='material-symbols-outlined'>
                                                 south_east
                                             </span>
                                             <?php
-                                        else:
-                                            ?>
-                                            <span 
-                                                onmouseover="" 
+                                    else :
+                                        $commanderNoUrl = $cardActionBase . "&amp;commander=no"; ?>
+                                            <span
+                                                onmouseover=""
                                                 title="Move to main deck"
-                                                style="cursor: pointer;" 
-                                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
+                                                style="cursor: pointer;"
+                                                onclick="window.location='<?php echo $commanderNoUrl; ?>'"
                                                 class='material-symbols-outlined'>
                                                 arrow_downward
                                             </span>
                                             <?php
-                                        endif;
-                                    echo "</td>";
-                                echo "</td>"; ?>
+                                    endif;
+                                        echo "</td>";
+                                        echo "</td>"; ?>
                                 <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                     <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                    <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                    <img
+                                        alt='<?php echo $deckcardname;?>'
+                                        class='deckcardimg'
+                                        src='<?php echo $imageurl;?>'
+                                    ></a>
                                 </div> <?php
+                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Delete"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                     class='material-symbols-outlined'>
                                     delete_forever
                                 </span>
@@ -1364,104 +1403,114 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover=""  
+                                <span
+                                    onmouseover=""
                                     title="Move to sideboard"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                     class='material-symbols-outlined'>
                                     arrow_downward
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if(!in_array($decktype,$commander_decktypes)):
+                                if (!in_array($decktype, $commander_decktypes)) :
                                     echo "<td class='deckcardlistcenter'>";
                                     echo $quantity;
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
                                 $total = $total + $quantity;
-                                $commandercount = $commandercount +1;
+                                $commandercount = $commandercount + 1;
                             endif;
-                        endwhile; 
-                    endif; 
-                    if(in_array($decktype,$commander_decktypes)):
+                        endwhile;
+                    endif;
+                    if (in_array($decktype, $commander_decktypes)) :
                         ?>
                         <tr>
                             <td colspan='4'>
                                 <i><b>Partner / Background</b></i>
-                            </td>    
+                            </td>
                         </tr>
-                    <?php
-                        if (mysqli_num_rows($result) > 0):
+                        <?php
+                        if (mysqli_num_rows($result) > 0) :
                             mysqli_data_seek($result, 0);
-                            while ($row = $result->fetch_assoc()):
-                                if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                            while ($row = $result->fetch_assoc()) :
+                                if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                     $row['name'] = $row['flavor_name'];
                                 endif;
-                                
+
                                 // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                                if ($row['type'] !== NULL):
+                                if ($row['type'] !== null) :
                                     $card_type = $row['type'];
                                     $cardcmc = $row['cmc'];
-                                elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                                elseif ($row['type'] === null and isset($row['f1_type'])) :
                                     $card_type = $row['f1_type'];
                                     $cardcmc = $row['f1_cmc'];
                                 endif;
-                        
-                                if ($row['commander'] == 2):
+
+                                if ($row['commander'] == 2) :
                                     $cardname = $row["name"];
                                     $rarity = $row["rarity"];
                                     $quantity = $row["cardqty"];
                                     $cardset = strtolower($row["setcode"]);
-                                    $cardref = str_replace('.','-',$row['cardsid']);
+                                    $cardref = str_replace('.', '-', $row['cardsid']);
                                     $cardid = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
                                     $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                                    $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                                    if($imagefunction['front'] == 'error'):
+                                    $imagefunction = $imageManager->getImage(
+                                        $cardset,
+                                        $cardid,
+                                        $ImgLocation,
+                                        $layout,
+                                        $two_card_detail_sections
+                                    );
+                                    if ($imagefunction['front'] == 'error') :
                                         $imageurl = '/cardimg/back.jpg';
-                                    else:
+                                    else :
                                         $imageurl = $imagefunction['front'];
                                     endif;
-                                    $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                                    if($deck_legality_list != ''):
-                                        $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                                    $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                                    if ($deck_legality_list != '') :
+                                        $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                         $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                        if ($index !== false):
+                                        if ($index !== false) :
                                             $card_legal = $deck_legality_list[$index]['legality'];
-                                            if($card_legal === 'legal' OR $card_legal === NULL):
+                                            if ($card_legal === 'legal' or $card_legal === null) :
                                                 $illegal_tag = '';
-                                            else:
-                                                $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                                $illegal_cards = TRUE;
+                                            else :
+                                                $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                                $illegal_cards = true;
                                             endif;
-                                        else:
+                                        else :
                                             $illegal_tag = '';
                                         endif;
-                                    else:
+                                    else :
                                         $illegal_tag = '';
                                     endif;
                                     $cardcmc = round($cardcmc);
                                     $cmctotal = $cmctotal + ($cardcmc * $quantity);
-                                    if ($cardcmc > 5):
+                                    if ($cardcmc > 5) :
                                         $cardcmc = 6;
                                     endif;
-                                    $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; 
+                                    $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity;
                                     $secondcommandername = $cardname;
-                                    $warnings = TRUE;
+                                    $warnings = true;
                                     ?>
                                     <tr class='deckrow'>
+                                    <?php $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}"; ?>
                                     <td class="deckcardname hoverTD">
-                                        <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
-                                    echo "<td class='deckcardlistcenter noprint'>";
-                                    ?>
-                                    <span 
-                                        onmouseover="" 
+                                        <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                            . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                            . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
+                                            . "</a></a>";
+                                        echo "<td class='deckcardlistcenter noprint'>";
+                                        ?>
+                                    <span
+                                        onmouseover=""
                                         title="Move to main deck"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=no'" 
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;commander=no'"
                                         class='material-symbols-outlined'>
                                         arrow_downward
                                     </span>
@@ -1469,16 +1518,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";?>
                                     <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                         <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                        <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                        <img
+                                            alt='<?php echo $deckcardname;?>'
+                                            class='deckcardimg'
+                                            src='<?php echo $imageurl;?>'
+                                        ></a>
                                     </div> <?php
                                     echo "</td>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Delete" 
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                    <span
+                                        onmouseover=""
+                                        title="Delete"
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                         class='material-symbols-outlined'>
                                         delete_forever
                                     </span>
@@ -1486,17 +1539,17 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover=""  
+                                    <span
+                                        onmouseover=""
                                         title="Move to sideboard"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                         class='material-symbols-outlined'>
                                         arrow_downward
                                     </span>
                                     <?php
                                     echo "</td>";
-                                    if(!in_array($decktype,$commander_decktypes)):
+                                    if (!in_array($decktype, $commander_decktypes)) :
                                         echo "<td class='deckcardlistcenter'>";
                                         echo $quantity;
                                         echo "</td>";
@@ -1504,30 +1557,30 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</tr>";
                                     $total = $total + $quantity;
                                 endif;
-                            endwhile; 
-                        endif; 
+                            endwhile;
+                        endif;
                     endif;?>
                     <tr>
                         <td colspan='4'>
                             <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
-                        </td>    
+                        </td>
                     </tr>
-                    <?php 
-                else:
+                    <?php
+                else :
                     ?>
                     <tr>
-                        <?php 
-                        if(in_array($decktype,$commander_decktypes)): ?>    
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) : ?>
                             <td colspan='4'> <?php
-                        elseif($decktype == 'Wishlist'): ?>
+                        elseif ($decktype == 'Wishlist') : ?>
                             <td colspan='5'> <?php
-                        else: ?>
+                        else : ?>
                             <td colspan='6'> <?php
                         endif; ?>
                             <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
-                        </td>    
+                        </td>
                     </tr>
-                    <?php 
+                    <?php
                     $total    = 0;
                     $cmc[0]   = 0;
                     $cmc[1]   = 0;
@@ -1539,145 +1592,180 @@ m13,12,"Fog",en,1,0,0,{id}
                     $cmctotal = 0;
                 endif;
                 $deckcard_no = 1; // Initialise card count for random draw
-                if (mysqli_num_rows($result) > 0):
-                mysqli_data_seek($result, 0);
-                    while ($row = $result->fetch_assoc()):
-                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                if (mysqli_num_rows($result) > 0) :
+                    mysqli_data_seek($result, 0);
+                    while ($row = $result->fetch_assoc()) :
+                        if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
 
                         // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                        if ($row['type'] !== NULL):
+                        if ($row['type'] !== null) :
                             $card_type = $row['type'];
                             $cardcmc = $row['cmc'];
-                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
                             $card_type = $row['f1_type'];
                             $cardcmc = $row['f1_cmc'];
                         endif;
 
-                        if (strpos($card_type,' //') !== false):
+                        if (strpos($card_type, ' //') !== false) :
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type,'Creature') !== false) AND ($row['commander'] < 1)):
+                        if ((strpos($card_type, 'Creature') !== false) and ($row['commander'] < 1)) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
-                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $cardset,
+                                $cardid,
+                                $ImgLocation,
+                                $layout,
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            while ($rowqty < $quantity):
+                            while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
-                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                            if($deck_legality_list != ''):
-                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                            $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                            if ($deck_legality_list != '') :
+                                $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                if ($index !== false):
+                                if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                    if ($card_legal === 'legal' or $card_legal === null) :
                                         $illegal_tag = '';
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                        $illegal_cards = TRUE;
+                                    else :
+                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                        $illegal_cards = true;
                                     endif;
-                                else:
+                                else :
                                     $illegal_tag = '';
                                 endif;
-                            else:
+                            else :
                                 $illegal_tag = '';
                             endif;
-                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
-                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
+                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                                $colour_id = count_chars(
+                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
+                                    3
+                                );
+                                $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
-                                foreach($colour_id_array as $value):
-                                    if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
-                                        $card_colour_mismatch = TRUE;
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
+                                foreach ($colour_id_array as $value) :
+                                    if (strpos($cdr_colours_raw, $value) == false) :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity not OK with Commander(s)"
+                                        );
+                                        $card_colour_mismatch = true;
+                                    else :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity is OK with Commander(s)"
+                                        );
                                     endif;
                                 endforeach;
-                                if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
+                                if ($card_colour_mismatch == '' or $colour_id == '') :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
-                                    $deck_colour_mismatch = $card_colour_mismatch = TRUE;
+                                    $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif;
                             $cardcmc = round($cardcmc);
                             $cardlegendary = $card_type;
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
-                            if ($cardcmc > 5):
+                            if ($cardcmc > 5) :
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname hoverTD">
-                                <?php 
+                                <?php
                                 $i = 0;
-                                $cdr_1_plus = FALSE;
-                                while($i < count($commander_multiples)):
-                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                $cdr_1_plus = false;
+                                while ($i < count($commander_multiples)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while($i < count($any_quantity)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                while ($i < count($any_quantity)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                else:
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
+                                else :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                                if(in_array($decktype,$commander_decktypes)):
-                                    $validcommander = FALSE;
-                                    $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is a valid commander");
-                                    if((strpos($cardlegendary, "Legendary") !== false) AND (strpos($cardlegendary, "Creature") !== false)):
-                                        $validcommander = TRUE;
+                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                if (in_array($decktype, $commander_decktypes)) :
+                                    $validcommander = false;
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "This is a '$decktype' deck, checking if $cardname is a valid commander"
+                                    );
+                                    if (
+                                        (strpos($cardlegendary, "Legendary") !== false)
+                                        and (strpos($cardlegendary, "Creature") !== false)
+                                    ) :
+                                        $validcommander = true;
                                     endif;
                                     $i = 0;
-                                    while($i < count($valid_commander_text)):
-                                        if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
-                                            $validcommander = TRUE;
+                                    while ($i < count($valid_commander_text)) :
+                                        if (
+                                            isset($row['ability'])
+                                            and str_contains($row['ability'], $valid_commander_text[$i]) == true
+                                        ) :
+                                            $validcommander = true;
                                         endif;
                                         $i++;
                                     endwhile;
                                     echo "<td class='deckcardlistcenter noprint'>";
-                                    if($validcommander == TRUE):
+                                    if ($validcommander == true) :
                                         ?>
-                                        <span 
-                                            onmouseover="" 
+                                        <span
+                                            onmouseover=""
                                             title="Move to Commander"
-                                            style="cursor: pointer;" 
-                                            onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
+                                            style="cursor: pointer;"
+                                            onclick="window.location='<?php echo $cardActionBase; ?>&amp;commander=yes'"
                                             class='material-symbols-outlined'>
                                             person
                                         </span>
@@ -1685,45 +1773,49 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     echo "</td>";
                                 endif;
-                            echo "</td>";?>
+                                echo "</td>";?>
                             <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    src='<?php echo $imageurl;?>'
+                                ></a>
                             </div> <?php
                             echo "<td class='deckcardlistcenter noprint'>";
                             ?>
-                            <span 
-                                onmouseover="" 
+                            <span
+                                onmouseover=""
                                 title="Delete"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                style="cursor: pointer;"
+                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                 class='material-symbols-outlined'>
                                 delete_forever
                             </span>
                             <?php
                             echo "</td>";
-                            if($decktype != 'Wishlist'):
+                            if ($decktype != 'Wishlist') :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
-                                    title="Move to sideboard"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
-                                    class='material-symbols-outlined'>
-                                    arrow_downward
-                                </span>
+                            <span
+                                onmouseover=""
+                                title="Move to sideboard"
+                                style="cursor: pointer;"
+                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
+                                class='material-symbols-outlined'>
+                                arrow_downward
+                            </span>
                                 <?php
                                 echo "</td>";
                             endif;
-                            if(!in_array($decktype,$commander_decktypes)):
+                            if (!in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Remove one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
                                     class='material-symbols-outlined'>
                                     remove
                                 </span>
@@ -1734,11 +1826,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
@@ -1748,181 +1840,211 @@ m13,12,"Fog",en,1,0,0,{id}
                             echo "</tr>";
                             $total = $total + $quantity;
                         endif;
-                    endwhile; 
+                    endwhile;
                 endif; ?>
                 <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)): ?>    
+                    <?php
+                    if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
-                    elseif($decktype == 'Wishlist'): ?>
+                    elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
-                    else: ?>
+                    else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
                     <i><b>Instants and Sorceries (<?php echo $instantsorcery; ?>)</b></i>
-                    </td>    
+                    </td>
                 </tr>
-                <?php 
-                if (mysqli_num_rows($result) > 0):
+                <?php
+                if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
-                    while ($row = $result->fetch_assoc()):
-                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                    while ($row = $result->fetch_assoc()) :
+                        if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        
+
                         // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                        if ($row['type'] !== NULL):
+                        if ($row['type'] !== null) :
                             $card_type = $row['type'];
                             $cardcmc = $row['cmc'];
-                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
                             $card_type = $row['f1_type'];
                             $cardcmc = $row['f1_cmc'];
                         endif;
-                        
-                        if (strpos($card_type,' //') !== false):
+
+                        if (strpos($card_type, ' //') !== false) :
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type,'Sorcery') !== false) OR (strpos($card_type,'Instant') !== false)):
+                        if ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false)) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
-                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $cardset,
+                                $cardid,
+                                $ImgLocation,
+                                $layout,
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            while ($rowqty < $quantity):
+                            while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
-                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                            if($deck_legality_list != ''):
-                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                            $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                            if ($deck_legality_list != '') :
+                                $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                if ($index !== false):
+                                if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                    if ($card_legal === 'legal' or $card_legal === null) :
                                         $illegal_tag = '';
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                        $illegal_cards = TRUE;
+                                    else :
+                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                        $illegal_cards = true;
                                     endif;
-                                else:
+                                else :
                                     $illegal_tag = '';
                                 endif;
-                            else:
+                            else :
                                 $illegal_tag = '';
                             endif;
-                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
-                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
+                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                                $colour_id = count_chars(
+                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
+                                    3
+                                );
+                                $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
-                                foreach($colour_id_array as $value):
-                                    if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
-                                        $card_colour_mismatch = TRUE;
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
+                                foreach ($colour_id_array as $value) :
+                                    if (strpos($cdr_colours_raw, $value) == false) :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity not OK with Commander(s)"
+                                        );
+                                        $card_colour_mismatch = true;
+                                    else :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity is OK with Commander(s)"
+                                        );
                                     endif;
                                 endforeach;
-                                if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
+                                if ($card_colour_mismatch == '' or $colour_id == '') :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
-                                    $deck_colour_mismatch = $card_colour_mismatch = TRUE;
+                                    $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif;
                             $cardcmc = round($cardcmc);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
-                            if ($cardcmc > 5):
+                            if ($cardcmc > 5) :
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname hoverTD">
-                                <?php 
+                                <?php
                                 $i = 0;
-                                $cdr_1_plus = FALSE;
-                                while($i < count($commander_multiples)):
-                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                $cdr_1_plus = false;
+                                while ($i < count($commander_multiples)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while($i < count($any_quantity)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                while ($i < count($any_quantity)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                else:
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
+                                else :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                            echo "</td>";?>
+                                echo "</td>";?>
                             <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    src='<?php echo $imageurl;?>'
+                                ></a>
                             </div> <?php
-                            if(in_array($decktype,$commander_decktypes)):
+                            $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                            if (in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             ?>
-                            <span 
-                                onmouseover="" 
+                            <span
+                                onmouseover=""
                                 title="Delete"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                style="cursor: pointer;"
+                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                 class='material-symbols-outlined'>
                                 delete_forever
                             </span>
                             <?php
                             echo "</td>";
-                            if($decktype != 'Wishlist'):
+                            if ($decktype != 'Wishlist') :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Move to sideboard"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                     class='material-symbols-outlined'>
                                     arrow_downward
                                 </span>
                                 <?php
                                 echo "</td>";
                             endif;
-                            if(!in_array($decktype,$commander_decktypes)):
+                            if (!in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Remove one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
                                     class='material-symbols-outlined'>
                                     remove
                                 </span>
@@ -1933,11 +2055,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
@@ -1945,192 +2067,250 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                             endif;
                             echo "</tr>";
-                            $total = $total + $quantity; 
+                            $total = $total + $quantity;
                         endif;
-                    endwhile; 
+                    endwhile;
                 endif; ?>
                 <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)): ?>    
+                    <?php
+                    if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
-                    elseif($decktype == 'Wishlist'): ?>
+                    elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
-                    else: ?>
+                    else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
                     <i><b>Other (<?php echo $other; ?>)</b></i>
-                    </td>    
+                    </td>
                 </tr>
-                <?php 
-                if (mysqli_num_rows($result) > 0):
+                <?php
+                if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
-                    while ($row = $result->fetch_assoc()):
-                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                    while ($row = $result->fetch_assoc()) :
+                        if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        
+
                         // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                        if ($row['type'] !== NULL):
+                        if ($row['type'] !== null) :
                             $card_type = $row['type'];
                             $cardcmc = $row['cmc'];
-                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
                             $card_type = $row['f1_type'];
                             $cardcmc = $row['f1_cmc'];
                         endif;
-                        
-                        if (strpos($card_type,' //') !== false):
+
+                        if (strpos($card_type, ' //') !== false) :
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type,'Sorcery') === false) AND (strpos($card_type,'Instant') === false) AND (strpos($card_type,'Creature') === false) AND (strpos($card_type,'Land') === false) AND ((strpos($card_type,'Plane') === false || strpos($card_type,'Planeswalker') !== false)) AND (strpos($card_type,'Phenomenon') === false) AND ($row['commander'] < 1)):
+                        if (
+                            (strpos($card_type, 'Sorcery') === false)
+                            and (strpos($card_type, 'Instant') === false)
+                            and (strpos($card_type, 'Creature') === false)
+                            and (strpos($card_type, 'Land') === false)
+                            and (
+                                (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
+                            )
+                            and (strpos($card_type, 'Phenomenon') === false)
+                            and ($row['commander'] < 1)
+                        ) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
-                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $cardset,
+                                $cardid,
+                                $ImgLocation,
+                                $layout,
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            while ($rowqty < $quantity):
+                            while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
-                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                            if($deck_legality_list != ''):
-                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                            $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                            if ($deck_legality_list != '') :
+                                $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                if ($index !== false):
+                                if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                    if ($card_legal === 'legal' or $card_legal === null) :
                                         $illegal_tag = '';
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                        $illegal_cards = TRUE;
+                                    else :
+                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                        $illegal_cards = true;
                                     endif;
-                                else:
+                                else :
                                     $illegal_tag = '';
                                 endif;
-                            else:
+                            else :
                                 $illegal_tag = '';
                             endif;
-                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
-                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
+                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                                $colour_id = count_chars(
+                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
+                                    3
+                                );
+                                $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
-                                foreach($colour_id_array as $value):
-                                    if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
-                                        $card_colour_mismatch = TRUE;
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
+                                foreach ($colour_id_array as $value) :
+                                    if (strpos($cdr_colours_raw, $value) == false) :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity not OK with Commander(s)"
+                                        );
+                                        $card_colour_mismatch = true;
+                                    else :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity is OK with Commander(s)"
+                                        );
                                     endif;
                                 endforeach;
-                                if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
+                                if ($card_colour_mismatch == '' or $colour_id == '') :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
-                                    $deck_colour_mismatch = $card_colour_mismatch = TRUE;
+                                    $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif;
                             $cardcmc = round($cardcmc);
                             $cmctotal = $cmctotal + ($cardcmc * $quantity);
-                            if ($cardcmc > 5):
+                            if ($cardcmc > 5) :
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname hoverTD">
-                                <?php 
+                                <?php
                                 $i = 0;
-                                $cdr_1_plus = FALSE;
-                                while($i < count($commander_multiples)):
-                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                $cdr_1_plus = false;
+                                while ($i < count($commander_multiples)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while($i < count($any_quantity)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                while ($i < count($any_quantity)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                else:
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
+                                else :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                            echo "</td>";?>
+                                echo "</td>";?>
                             <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    src='<?php echo $imageurl;?>'
+                                ></a>
                             </div> <?php
-                            if(in_array($decktype,$commander_decktypes)):
-                                $validcommander = FALSE;
-                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a commander");
+                            if (in_array($decktype, $commander_decktypes)) :
+                                $validcommander = false;
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "This is a '$decktype' deck, checking if $cardname is valid as a commander"
+                                );
                                 $i = 0;
-                                while($i < count($valid_commander_text)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$valid_commander_text[$i]) == TRUE):
-                                        $validcommander = TRUE;
+                                while ($i < count($valid_commander_text)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $valid_commander_text[$i]) == true
+                                    ) :
+                                        $validcommander = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                $secondcommander = FALSE;
-                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander");
+                                $secondcommander = false;
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander"
+                                );
                                 $i = 0;
-                                while($i < count($second_commander_text)):
-                                    if(isset($row['ability']) AND str_contains($row['ability'],$second_commander_text[$i]) == TRUE):
-                                        $secondcommander = TRUE;
+                                while ($i < count($second_commander_text)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $second_commander_text[$i]) == true
+                                    ) :
+                                        $secondcommander = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                $secondcommanderonly = FALSE;
-                                $msg->logMessage('[DEBUG]',"This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only");
+                                $secondcommanderonly = false;
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only"
+                                );
                                 $i = 0;
-                                while($i < count($second_commander_only_type)):
-                                    if(isset($card_type) AND str_contains($card_type,$second_commander_only_type[$i]) == TRUE):
-                                        $secondcommanderonly = TRUE;
+                                while ($i < count($second_commander_only_type)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $second_commander_only_type[$i]) == true
+                                    ) :
+                                        $secondcommanderonly = true;
                                     endif;
                                     $i++;
                                 endwhile;
+                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
                                 echo "<td class='deckcardlistcenter noprint'>";
-                                if($validcommander == TRUE):
+                                if ($validcommander == true) :
                                     ?>
-                                    <span 
-                                        onmouseover="" 
+                                    <span
+                                        onmouseover=""
                                         title="Move to Commander"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;commander=yes'" 
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;commander=yes'"
                                         class='material-symbols-outlined'>
                                         person
                                     </span>
                                     <?php
-                                elseif($secondcommanderonly == TRUE):
+                                elseif ($secondcommanderonly == true) :
                                     ?>
-                                    <span 
-                                        onmouseover="" 
+                                    <span
+                                        onmouseover=""
                                         title="Move to Background"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;partner=yes'" 
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;partner=yes'"
                                         class='material-symbols-outlined'>
                                         north_west
                                     </span>
@@ -2140,38 +2320,38 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             ?>
-                            <span 
-                                onmouseover="" 
-                                title="Delete"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
-                                class='material-symbols-outlined'>
-                                delete_forever
-                            </span>
+                                <span
+                                    onmouseover=""
+                                    title="Delete"
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
+                                    class='material-symbols-outlined'>
+                                    delete_forever
+                                </span>
                             <?php
                             echo "</td>";
-                            if($decktype != 'Wishlist'):
+                            if ($decktype != 'Wishlist') :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Move to sideboard"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                     class='material-symbols-outlined'>
                                     arrow_downward
                                 </span>
                                 <?php
                                 echo "</td>";
                             endif;
-                            if(!in_array($decktype,$commander_decktypes)):
+                            if (!in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Remove one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
                                     class='material-symbols-outlined'>
                                     remove
                                 </span>
@@ -2182,11 +2362,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
@@ -2194,172 +2374,202 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                             endif;
                             echo "</tr>";
-                            $total = $total + $quantity; 
+                            $total = $total + $quantity;
                         endif;
-                    endwhile; 
+                    endwhile;
                 endif;
                 ?>
                 <tr>
-                    <?php 
-                    if(in_array($decktype,$commander_decktypes)): ?>    
+                    <?php
+                    if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
-                    elseif($decktype == 'Wishlist'): ?>
+                    elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
-                    else: ?>
+                    else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
                     <i><b>Lands (<?php echo $lands; ?>)</b></i>
-                    </td>    
+                    </td>
                 </tr>
-                <?php 
-                if (mysqli_num_rows($result) > 0):
+                <?php
+                if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
-                    while ($row = $result->fetch_assoc()):
-                        if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                    while ($row = $result->fetch_assoc()) :
+                        if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
                         $illegal_tag = $red_font_tag;
                         $wrong_colour_tag = $firebrick_font_tag;
-                        
+
                         // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                        if ($row['type'] !== NULL):
+                        if ($row['type'] !== null) :
                             $card_type = $row['type'];
                             $cardcmc = $row['cmc'];
-                        elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
                             $card_type = $row['f1_type'];
                             $cardcmc = $row['f1_cmc'];
                         endif;
-                        
+
                         // Check if it's a land, unless it's a Land Creature (Dryad Arbor)
-                        if (strpos($card_type,' //') !== false):
+                        if (strpos($card_type, ' //') !== false) :
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type,'Land') !== false) AND (strpos($card_type,'Land Creature') === false)):
+                        if (
+                            (strpos($card_type, 'Land') !== false)
+                            and (strpos($card_type, 'Land Creature') === false)
+                        ) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
-                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $cardset,
+                                $cardid,
+                                $ImgLocation,
+                                $layout,
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            while ($rowqty < $quantity):
+                            while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id='.$cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
-                            $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");
-                            if($deck_legality_list != ''):
-                                $msg->logMessage('[DEBUG]',"Checking legality for main deck card '$cardname'");
+                            $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
+                            if ($deck_legality_list != '') :
+                                $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                if ($index !== false):
+                                if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
+                                    if ($card_legal === 'legal' or $card_legal === null) :
                                         $illegal_tag = '';
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                        $illegal_cards = TRUE;
+                                    else :
+                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                        $illegal_cards = true;
                                     endif;
-                                else:
+                                else :
                                     $illegal_tag = '';
                                 endif;
-                            else:
+                            else :
                                 $illegal_tag = '';
                             endif;
-                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == ''):
-                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
+                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                                $colour_id = count_chars(
+                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
+                                    3
+                                );
+                                $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
-                                foreach($colour_id_array as $value):
-                                    if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
-                                        $card_colour_mismatch = TRUE;
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
+                                foreach ($colour_id_array as $value) :
+                                    if (strpos($cdr_colours_raw, $value) == false) :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity not OK with Commander(s)"
+                                        );
+                                        $card_colour_mismatch = true;
+                                    else :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity is OK with Commander(s)"
+                                        );
                                     endif;
                                 endforeach;
-                                if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
+                                if ($card_colour_mismatch == '' or $colour_id == '') :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
-                                    $deck_colour_mismatch = $card_colour_mismatch = TRUE;
+                                    $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif; ?>
                             <tr class='deckrow'>
                             <td class="deckcardname hoverTD">
-                                <?php 
+                                <?php
                                 $i = 0;
-                                $cdr_1_plus = FALSE;
-                                while($i < count($commander_multiples)):
-                                    if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                        $cdr_1_plus = TRUE;
+                                $cdr_1_plus = false;
+                                while ($i < count($commander_multiples)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                else:
-                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
+                                else :
+                                    echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                            echo "</td>";?>
+                                echo "</td>";?>
                             <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    src='<?php echo $imageurl;?>'
+                                ></a>
                             </div> <?php
-                            if(in_array($decktype,$commander_decktypes)):
+                            $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                            if (in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
                             echo "<td class='deckcardlistcenter noprint'>";
                             ?>
-                            <span 
-                                onmouseover="" 
+                            <span
+                                onmouseover=""
                                 title="Delete"
-                                style="cursor: pointer;" 
-                                onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                style="cursor: pointer;"
+                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                 class='material-symbols-outlined'>
                                 delete_forever
                             </span>
                             <?php
                             echo "</td>";
-                            if($decktype != 'Wishlist'):
+                            if ($decktype != 'Wishlist') :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Move to sideboard"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                     class='material-symbols-outlined'>
                                     arrow_downward
                                 </span>
                                 <?php
                                 echo "</td>";
                             endif;
-                            if(!in_array($decktype,$commander_decktypes)):
+                            if (!in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Remove one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
                                     class='material-symbols-outlined'>
                                     remove
                                 </span>
@@ -2370,11 +2580,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistleft noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
@@ -2382,134 +2592,159 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                             endif;
                             echo "</tr>";
-                            $total = $total + $quantity; 
+                            $total = $total + $quantity;
                         endif;
-                    endwhile; 
+                    endwhile;
                 endif;
-                $msg->logMessage('[DEBUG]',"Decktype: $decktype");
-                if($decktype !== 'Wishlist'):
-                    $msg->logMessage('[DEBUG]',"Not wishlist, adding a total row");?>
-                    <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;"> <?php 
-                        if(in_array($decktype,$commander_decktypes)):
-                            $msg->logMessage('[DEBUG]',"Commander type colspan 2");    
-                            echo "<td colspan='2'><i><b>Total</b></i></td>";
-                        else:
-                            $msg->logMessage('[DEBUG]',"Not Commander type colspan 4");  
+                $msg->logMessage('[DEBUG]', "Decktype: $decktype");
+                if ($decktype !== 'Wishlist') :
+                    $msg->logMessage('[DEBUG]', "Not wishlist, adding a total row");?>
+                    <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;"> <?php
+                    if (in_array($decktype, $commander_decktypes)) :
+                        $msg->logMessage('[DEBUG]', "Commander type colspan 2");
+                        echo "<td colspan='2'><i><b>Total</b></i></td>";
+                    else :
+                            $msg->logMessage('[DEBUG]', "Not Commander type colspan 4");
                             echo "<td colspan='4'><i><b>Total</b></i></td>";
-                        endif;?>
+                    endif;?>
                         <td class='deckcardlistcenter'>
                             <i><b><?php echo $total; ?></b></i>
                         </td>
                         <td>&nbsp;</td>
                     </tr> <?php
                 endif;
-                if($planes > 0):?>
+                if ($planes > 0) :?>
                     <tr>
-                        <?php 
-                        if(in_array($decktype,$commander_decktypes)): ?>    
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) : ?>
                             <td colspan='4'> <?php
-                        elseif($decktype == 'Wishlist'): ?>
+                        elseif ($decktype == 'Wishlist') : ?>
                             <td colspan='5'> <?php
-                        else: ?>
+                        else : ?>
                             <td colspan='6'> <?php
                         endif; ?>
                         <i><b>Planes and Phenomena (<?php echo $planes; ?>)</b></i>
-                        </td>    
+                        </td>
                     </tr>
-                    <?php 
-                    if (mysqli_num_rows($result) > 0):
+                    <?php
+                    if (mysqli_num_rows($result) > 0) :
                         mysqli_data_seek($result, 0);
-                        while ($row = $result->fetch_assoc()):
-                            if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                        while ($row = $result->fetch_assoc()) :
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
 
                             // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                            if ($row['type'] !== NULL):
+                            if ($row['type'] !== null) :
                                 $card_type = $row['type'];
                                 $cardcmc = $row['cmc'];
-                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            elseif ($row['type'] === null and isset($row['f1_type'])) :
                                 $card_type = $row['f1_type'];
                                 $cardcmc = $row['f1_cmc'];
                             endif;
 
-                            if (((strpos($card_type,'Plane') !== false && strpos($card_type,'Planeswalker') === false)) OR (strpos($card_type,'Phenomenon') !== false)):
+                            if (
+                                (strpos($card_type, 'Plane') !== false && strpos($card_type, 'Planeswalker') === false)
+                                or (strpos($card_type, 'Phenomenon') !== false)
+                            ) :
                                 $quantity = $row["cardqty"];
                                 $cardname = $row["name"];
                                 $rarity = $row["rarity"];
                                 $rowqty = 0;
                                 $cardset = strtolower($row["setcode"]);
-                                $cardref = str_replace('.','-',$row['cardsid']);
+                                $cardref = str_replace('.', '-', $row['cardsid']);
                                 $cardid = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
                                 $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                                $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                                if($imagefunction['front'] == 'error'):
+                                $imagefunction = $imageManager->getImage(
+                                    $cardset,
+                                    $cardid,
+                                    $ImgLocation,
+                                    $layout,
+                                    $two_card_detail_sections
+                                );
+                                if ($imagefunction['front'] == 'error') :
                                     $imageurl = '/cardimg/back.jpg';
-                                else:
+                                else :
                                     $imageurl = $imagefunction['front'];
                                 endif;
-                                $msg->logMessage('[DEBUG]',"Main deck card '$cardname ($cardset $cardnumber)'");?>
+                                $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");?>
                                 <tr class='deckrow'>
                                 <td class="deckcardname hoverTD">
-                                    <?php 
+                                    <?php
                                     $i = 0;
-                                    $cdr_1_plus = FALSE;
-                                    while($i < count($commander_multiples)):
-                                        if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                            $cdr_1_plus = TRUE;
+                                    $cdr_1_plus = false;
+                                    while ($i < count($commander_multiples)) :
+                                        if (
+                                            isset($card_type)
+                                            and str_contains($card_type, $commander_multiples[$i]) == true
+                                        ) :
+                                            $cdr_1_plus = true;
                                         endif;
                                         $i++;
                                     endwhile;
-                                    if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                    else:
-                                        echo "<a class='taphover' id='list-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                    if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                        echo "<a class='taphover' id='list-$cardref-taphover' "
+                                            . "href='carddetail.php?id={$row['cardsid']}'>"
+                                            . "$quantity $cardname "
+                                            . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
+                                            . "</a></a>";
+                                    else :
+                                        echo "<a class='taphover' id='list-$cardref-taphover' "
+                                            . "href='carddetail.php?id={$row['cardsid']}'>"
+                                            . "$cardname "
+                                            . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
+                                            . "</a></a>";
                                     endif;
-                                echo "</td>";?>
+                                    echo "</td>";?>
                                 <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
                                     <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                    <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
+                                    <img
+                                        alt='<?php echo $deckcardname;?>'
+                                        class='deckcardimg'
+                                        src='<?php echo $imageurl;?>'
+                                    ></a>
                                 </div> <?php
-                                if(in_array($decktype,$commander_decktypes)):
+                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                if (in_array($decktype, $commander_decktypes)) :
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     echo "</td>";
                                 endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Delete"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deletemain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
                                     class='material-symbols-outlined'>
                                     delete_forever
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if($decktype != 'Wishlist'):
+                                if ($decktype != 'Wishlist') :
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Move to sideboard"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;maintoside=yes'" 
+                                <span
+                                    onmouseover=""
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
                                         class='material-symbols-outlined'>
                                         arrow_downward
                                     </span>
                                     <?php
                                     echo "</td>";
                                 endif;
-                                if(!in_array($decktype,$commander_decktypes)):
+                                if (!in_array($decktype, $commander_decktypes)) :
                                     echo "<td class='deckcardlistright noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Remove one"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusmain=yes'" 
+                                <span
+                                    onmouseover=""
+                                    title="Remove one"
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
                                         class='material-symbols-outlined'>
                                         remove
                                     </span>
@@ -2520,11 +2755,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";
                                     echo "<td class='deckcardlistleft noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Add one"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusmain=yes'" 
+                                    <span
+                                        onmouseover=""
+                                    title="Add one"
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                         class='material-symbols-outlined'>
                                         add
                                     </span>
@@ -2533,39 +2768,39 @@ m13,12,"Fog",en,1,0,0,{id}
                                 endif;
                                 echo "</tr>";
                             endif;
-                        endwhile; 
+                        endwhile;
                     endif;
                 endif;
 // SIDEBOARD
-                if($decktype != 'Wishlist' && $side > 0):?>
+                if ($decktype != 'Wishlist' && $side > 0) :?>
                     <tr style="border-top: 1pt solid black;">
-                        <?php 
-                        if(in_array($decktype,$commander_decktypes)):
-                            ?>    
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) :
+                            ?>
                             <td colspan='4'>
-                        <?php
-                        else:
-                        ?>
+                            <?php
+                        else :
+                            ?>
                             <td colspan='6'>
-                        <?php
+                            <?php
                         endif;
 
                         ?>
                         <i><b>Sideboard</b></i>
-                        </td>    
+                        </td>
                     </tr>
-                    <?php 
+                    <?php
                     $sidetotal = 0;
-                    if (mysqli_num_rows($sideresult) > 0):
+                    if (mysqli_num_rows($sideresult) > 0) :
                         mysqli_data_seek($sideresult, 0);
-                        while ($row = $sideresult->fetch_assoc()):
-                            if(isset($row['flavor_name']) AND !empty($row['flavor_name'])):
+                        while ($row = $sideresult->fetch_assoc()) :
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
-                            if ($row['type'] !== NULL):
+                            if ($row['type'] !== null) :
                                 $card_type = $row['type'];
                                 $cardcmc = $row['cmc'];
-                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            elseif ($row['type'] === null and isset($row['f1_type'])) :
                                 $card_type = $row['f1_type'];
                                 $cardcmc = $row['f1_cmc'];
                             endif;
@@ -2575,109 +2810,156 @@ m13,12,"Fog",en,1,0,0,{id}
                             $rarity = $row["rarity"];
                             $quantity = $row["sideqty"];
                             $cardset = strtolower($row["setcode"]);
-                            $cardref = str_replace('.','-',$row['cardsid']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardid = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($cardset,$cardid,$ImgLocation,$layout,$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $cardset,
+                                $cardid,
+                                $ImgLocation,
+                                $layout,
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
-                            $msg->logMessage('[DEBUG]',"Sideboard card '$cardname ($cardset $cardnumber)'");
-                            if($deck_legality_list != '' AND ((strpos($card_type,'Plane') === false || strpos($card_type,'Planeswalker') !== false)) AND strpos($card_type,'Phenomenon') === false):
-                                $msg->logMessage('[DEBUG]',"Checking legality for sideboard card '$cardname' ('$card_type')");
+                            $msg->logMessage('[DEBUG]', "Sideboard card '$cardname ($cardset $cardnumber)'");
+                            if (
+                                $deck_legality_list != ''
+                                and (
+                                    (strpos($card_type, 'Plane') === false
+                                    || strpos($card_type, 'Planeswalker') !== false)
+                                )
+                                and strpos($card_type, 'Phenomenon') === false
+                            ) :
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "Checking legality for sideboard card '$cardname' ('$card_type')"
+                                );
                                 $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
-                                if ($index !== false):
+                                if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
-                                    if($card_legal === 'legal' OR $card_legal === NULL):
-                                        $msg->logMessage('[DEBUG]',"Card legality is 'legal' or null");
+                                    if ($card_legal === 'legal' or $card_legal === null) :
+                                        $msg->logMessage('[DEBUG]', "Card legality is 'legal' or null");
                                         $illegal_tag = '';
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Card not legal in this format");
-                                        $illegal_cards = TRUE;
+                                    else :
+                                        $msg->logMessage('[DEBUG]', "Card not legal in this format");
+                                        $illegal_cards = true;
                                     endif;
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card legality is unknown");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card legality is unknown");
                                     $illegal_tag = '';
                                 endif;
-                            else:
-                                $msg->logMessage('[DEBUG]',"Card legality is not needed");
+                            else :
+                                $msg->logMessage('[DEBUG]', "Card legality is not needed");
                                 $illegal_tag = '';
                             endif;
-                            if(in_array($decktype,$commander_decktypes) AND $illegal_tag == '' AND ((strpos($card_type,'Plane') === false || strpos($card_type,'Planeswalker') !== false)) AND (strpos($card_type,'Phenomenon') === false)):
-                                $colour_id = count_chars( str_replace(array('"','[',']',',',' '),'',$row['color_identity']),3);
-                                $msg->logMessage('[DEBUG]',"Card's colour identity is $colour_id");
+                            if (
+                                in_array($decktype, $commander_decktypes)
+                                and $illegal_tag == ''
+                                and (
+                                    (strpos($card_type, 'Plane') === false
+                                    || strpos($card_type, 'Planeswalker') !== false)
+                                )
+                                and (strpos($card_type, 'Phenomenon') === false)
+                            ) :
+                                $colour_id = count_chars(
+                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
+                                    3
+                                );
+                                $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
-                                foreach($colour_id_array as $value):
-                                    if(strpos($cdr_colours_raw,$value) == FALSE):
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity not OK with Commander(s)");
-                                        $card_colour_mismatch = TRUE;
-                                    else:
-                                        $msg->logMessage('[DEBUG]',"Colour $value in card's colour identity is OK with Commander(s)");
+                                foreach ($colour_id_array as $value) :
+                                    if (strpos($cdr_colours_raw, $value) == false) :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity not OK with Commander(s)"
+                                        );
+                                        $card_colour_mismatch = true;
+                                    else :
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Colour $value in card's colour identity is OK with Commander(s)"
+                                        );
                                     endif;
                                 endforeach;
-                                if($card_colour_mismatch == '' OR $colour_id == ''):
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity is OK with Commander(s)");
+                                if ($card_colour_mismatch == '' or $colour_id == '') :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity is OK with Commander(s)");
                                     $wrong_colour_tag = '';
-                                else:
-                                    $msg->logMessage('[DEBUG]',"Card's colour identity not OK with Commander(s)");
+                                else :
+                                    $msg->logMessage('[DEBUG]', "Card's colour identity not OK with Commander(s)");
                                     $illegal_tag = $wrong_colour_tag;
-                                    $deck_colour_mismatch = $card_colour_mismatch = TRUE;
+                                    $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif;
-                                                        
+
                             // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                            if ($row['type'] !== NULL):
+                            if ($row['type'] !== null) :
                                 $card_type = $row['type'];
                                 $cardcmc = $row['cmc'];
-                            elseif ($row['type'] === NULL AND isset($row['f1_type'])):
+                            elseif ($row['type'] === null and isset($row['f1_type'])) :
                                 $card_type = $row['f1_type'];
                                 $cardcmc = $row['f1_cmc'];
                             endif;?>
-                    
+
                             <tr class='deckrow'>
-                                <td class="deckcardname hoverTD">
-                                    <?php 
-                                    $i = 0;
-                                    $cdr_1_plus = FALSE;
-                                    while($i < count($commander_multiples)):
-                                        if(isset($card_type) AND str_contains($card_type,$commander_multiples[$i]) == TRUE):
-                                            $cdr_1_plus = TRUE;
-                                        endif;
-                                        $i++;
-                                    endwhile;
-                                    $i = 0;
-                                    while($i < count($any_quantity)):
-                                        if(isset($row['ability']) AND str_contains($row['ability'],$any_quantity[$i]) == TRUE):
-                                            $cdr_1_plus = TRUE;
-                                        endif;
-                                        $i++;
-                                    endwhile;
-                                    if(in_array($decktype,$commander_decktypes) AND $cdr_1_plus == TRUE):
-                                        echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
-                                    else:
-                                        echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' href='carddetail.php?id={$row['cardsid']}'>$cardname ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>"; 
+                                <?php
+                                $i = 0;
+                                $cdr_1_plus = false;
+                                while ($i < count($commander_multiples)) :
+                                    if (
+                                        isset($card_type)
+                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
                                     endif;
-                                echo "</td>";?>
-                                <div class='deckcardimgdiv' id='<?php echo "listside-$cardref";?>'>
-                                    <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                    <img alt='<?php echo $deckcardname;?>' class='deckcardimg' src='<?php echo $imageurl;?>'></a>
-                                </div> <?php
-                                if(in_array($decktype,$commander_decktypes)):
-                                    echo "<td class='deckcardlistcenter noprint'>";
-                                    echo "</td>";
-                                endif;
-                                echo "<td class='deckcardlistcenter noprint'>";
+                                    $i++;
+                                endwhile;
+                                $i = 0;
+                                while ($i < count($any_quantity)) :
+                                    if (
+                                        isset($row['ability'])
+                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                    ) :
+                                        $cdr_1_plus = true;
+                                    endif;
+                                    $i++;
+                                endwhile;
+                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $deckcardname = str_replace("'", '&#39;', $cardname);
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <td class="deckcardname hoverTD">
+                                <?php
+                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                    echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
+                                        . "</a>";
+                                else :
+                                    echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
+                                        . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
+                                        . "</a>";
+                                endif;
+                                ?>
+                            </td>
+                            <?php
+                            if (in_array($decktype, $commander_decktypes)) :
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                echo "</td>";
+                            endif;
+                                echo "<td class='deckcardlistcenter noprint'>";
+                            ?>
+                                <span
+                                    onmouseover=""
                                     title="Delete"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;deleteside=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deleteside=yes'"
                                     class='material-symbols-outlined'>
                                     delete_forever
                                 </span>
@@ -2685,24 +2967,24 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "</td>";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                                <span 
-                                    onmouseover="" 
+                                <span
+                                    onmouseover=""
                                     title="Move to main deck"
-                                    style="cursor: pointer;" 
-                                    onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;sidetomain=yes'" 
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;sidetomain=yes'"
                                     class='material-symbols-outlined'>
                                     arrow_upward
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if(!in_array($decktype,$commander_decktypes)):
+                                if (!in_array($decktype, $commander_decktypes)) :
                                     echo "<td class='deckcardlistright noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
+                                    <span
+                                        onmouseover=""
                                         title="Remove one"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;minusside=yes'" 
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusside=yes'"
                                         class='material-symbols-outlined'>
                                         remove
                                     </span>
@@ -2713,96 +2995,110 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";
                                     echo "<td class='deckcardlistleft noprint'>";
                                     ?>
-                                    <span 
-                                        onmouseover="" 
-                                        title="Add one"
-                                        style="cursor: pointer;" 
-                                        onclick="window.location='deckdetail.php?deck=<?php echo $decknumber;?>&amp;card=<?php echo $cardid?>&amp;plusside=yes'" 
-                                        class='material-symbols-outlined'>
-                                        add
-                                    </span>
+                                <span
+                                    onmouseover=""
+                                    title="Add one"
+                                    style="cursor: pointer;"
+                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusside=yes'"
+                                    class='material-symbols-outlined'>
+                                    add
+                                </span>
                                     <?php
                                     echo "</td>";
                                 endif;
-                            echo "</tr>";
+                                echo "</tr>";
+                                ?>
+                            <div class='deckcardimgdiv' id='<?php echo "listside-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    src='<?php echo $imageurl;?>'
+                                ></a>
+                            </div>
+                            <?php
                             $sidetotal = $sidetotal + $quantity;
-                            endwhile; 
+                        endwhile;
                     endif;?>
                     <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;">
-                        <?php 
-                        if(in_array($decktype,$commander_decktypes)):
-                            ?>    
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) :
+                            ?>
                             <td colspan="2">
-                        <?php
-                        else:
-                        ?>
+                            <?php
+                        else :
+                            ?>
                             <td colspan='4'>
-                        <?php
+                            <?php
                         endif;?>
-                            <i><b>Total sideboard</b></i>   
-                        </td>    
+                            <i><b>Total sideboard</b></i>
+                        </td>
 
                         <td colspan="1" class='deckcardlistcenter'>
                             <i><b><?php echo $sidetotal; ?></b></i>
                         </td>
                         <td colspan="1">&nbsp;</td>
                     </tr> <?php
-                else:
+                else :
                     $sidetotal = 0;
                 endif; ?>
             </table>
         </div>
         <div id="decknotesdiv">
             <?php
-            if((in_array($decktype,$hundredcarddecks) AND $total < 100)):
-                $warnings = TRUE;
-                $hundred_not_enough = TRUE;
+            if ((in_array($decktype, $hundredcarddecks) and $total < 100)) :
+                $warnings = true;
+                $hundred_not_enough = true;
             endif;
-            if((in_array($decktype,$sixtycarddecks) AND $total < 60)):
-                $warnings = TRUE;
-                $sixty_not_enough = TRUE;
+            if ((in_array($decktype, $sixtycarddecks) and $total < 60)) :
+                $warnings = true;
+                $sixty_not_enough = true;
             endif;
-            if((in_array($decktype,$fiftycarddecks) AND $total < 50)):
-                $warnings = TRUE;
-                $fifty_not_enough = TRUE;
+            if ((in_array($decktype, $fiftycarddecks) and $total < 50)) :
+                $warnings = true;
+                $fifty_not_enough = true;
             endif;
-            if($illegal_cards == TRUE):
-                $warnings = TRUE;
+            if ($illegal_cards == true) :
+                $warnings = true;
             endif;
-            if($deck_colour_mismatch == TRUE):
-                $warnings = TRUE;
+            if ($deck_colour_mismatch == true) :
+                $warnings = true;
             endif;
-            
-            if(isset($warnings)):
+
+            if (isset($warnings)) :
                 echo "<h4>&nbsp;Warnings</h4>";
                 echo "<ul style='margin-right: 20px;'>";
-                if(isset($secondcommandername)):
-                    echo "<li>You have a second commander ('<i>$secondcommandername</i>') - check rules and validity with your primary commander</li>";
+                if (isset($secondcommandername)) :
+                    echo "<li>You have a second commander ('<i>$secondcommandername</i>') - check rules and "
+                        . "validity with your primary commander</li>";
                 endif;
-                if(isset($hundred_not_enough)):
+                if (isset($hundred_not_enough)) :
                     echo "<li>Your commander deck doesn't have enough cards for legal play</li>";
                 endif;
-                if(isset($sixty_not_enough)):
+                if (isset($sixty_not_enough)) :
                     echo "<li>Your deck doesn't have enough cards for legal play</li>";
                 endif;
-                if(isset($fifty_not_enough)):
+                if (isset($fifty_not_enough)) :
                     echo "<li>Your deck doesn't have enough cards for legal play</li>";
                 endif;
-                if(isset($illegal_cards) AND $illegal_cards == TRUE):
+                if (isset($illegal_cards) and $illegal_cards == true) :
                     echo "<li>Your deck contains <span $red_font_tag>cards </span> not legal in this format</li>";
                 endif;
-                if(isset($deck_colour_mismatch) AND $deck_colour_mismatch == TRUE):
-                    echo "<li>Your deck contains <span $firebrick_font_tag>cards </span> not in your Commander(s) colour identity</li>";
+                if (isset($deck_colour_mismatch) and $deck_colour_mismatch == true) :
+                    echo "<li>Your deck contains <span $firebrick_font_tag>cards </span> not in your Commander(s) "
+                        . "colour identity</li>";
                 endif;
                 echo "</ul>";
             endif;
             ?>
             <form id="updatenotesform" action="?" method="POST">
                 <h4>&nbsp;Notes</h4>
-                <textarea class='decknotes textinput' id="notes" name='newnotes' rows='2' cols='40'><?php echo $notes; ?></textarea>
-                <?php if ($decktype != 'Wishlist'):  ?>
+                <textarea class='decknotes textinput' id="notes" name='newnotes' rows='2' cols='40'>
+<?php echo $notes; ?></textarea>
+                <?php if ($decktype != 'Wishlist') :  ?>
                     <h4>&nbsp;Sideboard notes</h4>
-                    <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'><?php echo $sidenotes; ?></textarea><br>
+                    <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'>
+                    <?php echo $sidenotes; ?></textarea><br>
                 <?php endif;  ?>
                 <input type='hidden' name='deck' value='<?php echo $decknumber?>'>
                 <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled>
@@ -2849,7 +3145,7 @@ m13,12,"Fog",en,1,0,0,{id}
             </script>
             <hr id='deckline' class='hr324'>
             <?php
-            if($total + $sidetotal > 0 AND $decktype != 'Wishlist'):
+            if ($total + $sidetotal > 0 and $decktype != 'Wishlist') :
                 ?>
                 <h4>&nbsp;Mana value</h4>
                 <script type="text/javascript">
@@ -2893,100 +3189,102 @@ m13,12,"Fog",en,1,0,0,{id}
                   }
                 </script>
                 <div id="barchart_material" style="width: 85%; height: 150px;"></div>
-            <?php 
-                if(($total - $lands) != 0):
-                    $avgcmc = round(($cmctotal / ($total - $lands)),2);
+                <?php
+                if (($total - $lands) != 0) :
+                    $avgcmc = round(($cmctotal / ($total - $lands)), 2);
                     echo "<br>Average mana value = $avgcmc" ;
-                else:
+                else :
                     echo "<br>Average mana value = N/A";
                 endif;
-                if($w + $u + $b + $r + $g + $c + $gw + $gu + $gb + $gr + $gg + $gc > 0): 
+                if ($w + $u + $b + $r + $g + $c + $gw + $gu + $gb + $gr + $gg + $gc > 0) :
                     $totalpips = $w + $u + $b + $r + $g + $c;
                     $totalmana = $gw + $gu + $gb + $gr + $gg + $gc;
-                    $w_percent = $u_percent = $b_percent = $r_percent = $g_percent = $gw_percent = $gu_percent = $gb_percent = $gr_percent = $gg_percent = $c_percent = $gc_percent = 0;
-                    if ($w > 0):
-                        $w_percent = number_format($w / $totalpips * 100,0);
+                    $w_percent = $u_percent = $b_percent = $r_percent = $g_percent
+                        = $gw_percent = $gu_percent = $gb_percent = $gr_percent
+                        = $gg_percent = $c_percent = $gc_percent = 0;
+                    if ($w > 0) :
+                        $w_percent = number_format($w / $totalpips * 100, 0);
                     endif;
-                    if ($u > 0):
-                        $u_percent = number_format($u / $totalpips * 100,0);
+                    if ($u > 0) :
+                        $u_percent = number_format($u / $totalpips * 100, 0);
                     endif;
-                    if ($b > 0):
-                        $b_percent = number_format($b / $totalpips * 100,0);
+                    if ($b > 0) :
+                        $b_percent = number_format($b / $totalpips * 100, 0);
                     endif;
-                    if ($r > 0):
-                        $r_percent = number_format($r / $totalpips * 100,0);
+                    if ($r > 0) :
+                        $r_percent = number_format($r / $totalpips * 100, 0);
                     endif;
-                    if ($g > 0):
-                        $g_percent = number_format($g / $totalpips * 100,0);
-                    endif;                    
-                    if ($c > 0):
-                        $c_percent = number_format($c / $totalpips * 100,0);
+                    if ($g > 0) :
+                        $g_percent = number_format($g / $totalpips * 100, 0);
+                    endif;
+                    if ($c > 0) :
+                        $c_percent = number_format($c / $totalpips * 100, 0);
                     endif;
                 endif;
-                if($gw + $gu + $gb + $gr + $gg + $gc > 0):
+                if ($gw + $gu + $gb + $gr + $gg + $gc > 0) :
                     $totalmana = $gw + $gu + $gb + $gr + $gg + $gc;
-                    if ($gw > 0):
-                        $gw_percent = number_format($gw / $totalmana * 100,0);
+                    if ($gw > 0) :
+                        $gw_percent = number_format($gw / $totalmana * 100, 0);
                     endif;
-                    if ($gu > 0):
-                        $gu_percent = number_format($gu / $totalmana * 100,0);
+                    if ($gu > 0) :
+                        $gu_percent = number_format($gu / $totalmana * 100, 0);
                     endif;
-                    if ($gb > 0):
-                        $gb_percent = number_format($gb / $totalmana * 100,0);
+                    if ($gb > 0) :
+                        $gb_percent = number_format($gb / $totalmana * 100, 0);
                     endif;
-                    if ($gr > 0):
-                        $gr_percent = number_format($gr / $totalmana * 100,0);
+                    if ($gr > 0) :
+                        $gr_percent = number_format($gr / $totalmana * 100, 0);
                     endif;
-                    if ($gg > 0):
-                        $gg_percent = number_format($gg / $totalmana * 100,0);
-                    endif;                    
-                    if ($gc > 0):
-                        $gc_percent = number_format($gc / $totalmana * 100,0);
+                    if ($gg > 0) :
+                        $gg_percent = number_format($gg / $totalmana * 100, 0);
+                    endif;
+                    if ($gc > 0) :
+                        $gc_percent = number_format($gc / $totalmana * 100, 0);
                     endif;
                 endif;
-                if($decktype != 'Wishlist'):?>
+                if ($decktype != 'Wishlist') :?>
                     <table style="width: 95%;">
                         <tr>
                             <td style="text-align: center; width: 20%;"><b>Mana:</b></td>
                             <td style="text-align: center;"><b>Costs</b></td>
                             <td style="text-align: center;"><b>Sources</b></td>
                         </tr><?php
-                        if($w + $gw > 0): ?>
+                        if ($w + $gw > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{W}"); ?> </td>
                             <td style="text-align: center;"><?php echo $w === 0 ? '-' : "$w ($w_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gw === 0 ? '-' : "$gw ($gw_percent%)"; ?> </td>
                         </tr><?php
                         endif;
-                        if($u + $gu > 0): ?>
+                        if ($u + $gu > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{U}"); ?> </td>
                             <td style="text-align: center;"><?php echo $u === 0 ? '-' : "$u ($u_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gu === 0 ? '-' : "$gu ($gu_percent%)"; ?> </td>
                         </tr><?php
                         endif;
-                        if($b + $gb > 0): ?>
+                        if ($b + $gb > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{B}"); ?> </td>
                             <td style="text-align: center;"><?php echo $b === 0 ? '-' : "$b ($b_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gb === 0 ? '-' : "$gb ($gb_percent%)"; ?> </td>
                         </tr><?php
                         endif;
-                        if($r + $gr > 0): ?>
+                        if ($r + $gr > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{R}"); ?> </td>
                             <td style="text-align: center;"><?php echo $r === 0 ? '-' : "$r ($r_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gr === 0 ? '-' : "$gr ($gr_percent%)"; ?> </td>
                         </tr><?php
                         endif;
-                        if($g + $gg > 0): ?>
+                        if ($g + $gg > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{G}"); ?> </td>
                             <td style="text-align: center;"><?php echo $g === 0 ? '-' : "$g ($g_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gg === 0 ? '-' : "$gg ($gg_percent%)"; ?> </td>
                         </tr><?php
                         endif;
-                        if($c + $gc > 0): ?>
+                        if ($c + $gc > 0) : ?>
                         <tr>
                             <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{C}"); ?> </td>
                             <td style="text-align: center;"><?php echo $c === 0 ? '-' : "$c ($c_percent%)"; ?> </td>
@@ -2997,18 +3295,18 @@ m13,12,"Fog",en,1,0,0,{id}
                 endif;
                 $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                 $formattedDeckValue = $a->format($deckvalue);
-                $msg->logMessage('[DEBUG]',"Formatted value = $formattedDeckValue");
-                if(isset($rate) AND $rate > 0):
+                $msg->logMessage('[DEBUG]', "Formatted value = $formattedDeckValue");
+                if (isset($rate) and $rate > 0) :
                     $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
                     $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
                     $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
                     $localvalue = $b->format($deckvalue * $rate);
-                    echo "<b>Deck value</b><br>(TCGplayer) = ".$formattedDeckValue." ($localvalue)";
-                else:
-                    echo "<b>Deck value</b><br>(TCGplayer) = ".$formattedDeckValue;
+                    echo "<b>Deck value</b><br>(TCGplayer) = " . $formattedDeckValue . " ($localvalue)";
+                else :
+                    echo "<b>Deck value</b><br>(TCGplayer) = " . $formattedDeckValue;
                 endif;
-            endif; 
-            if(isset($uniquecard_ref) AND count($uniquecard_ref) > 6 AND $decktype != 'Wishlist'): ?>
+            endif;
+            if (isset($uniquecard_ref) and count($uniquecard_ref) > 6 and $decktype != 'Wishlist') : ?>
                 <script type="text/javascript">
                     // AJAX call to refresh the table and rebind events
                     function refreshTable() {
@@ -3039,19 +3337,19 @@ m13,12,"Fog",en,1,0,0,{id}
                 <h4>Random draw</h4>
                 <button class='profilebutton' onclick="refreshTable()">NEW DRAW</button>
                 <div id="table-container">
-                    <?php 
+                    <?php
                     define('INCLUDE_CHECK', true);
                     include 'ajax/ajaxrandomdraw.php'; ?>
                 </div>
-            <?php 
+                <?php
             endif;
-            if($decktype != 'Wishlist'): // Condense to 2 columns for wishlists
-            ?>
+            if ($decktype != 'Wishlist') : // Condense to 2 columns for wishlists
+                ?>
         </div>
-        <div id='deckfunctions'> 
-            <?php
+        <div id='deckfunctions'>
+                <?php
             endif;
-            if($total + $sidetotal > 0): ?>
+            if ($total + $sidetotal > 0) : ?>
                 <h4>Deck lists</h4>
                 <?php
                 $filename = preg_replace('/[^\w]/', '', $deckname);
@@ -3066,12 +3364,12 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>
                     </tr>
                     <?php
-                    if($missing == 'yes' AND $requiredlist != ''):
-                        $requiredlist = htmlspecialchars($requiredlist,ENT_QUOTES);
-                        $requiredbuy = htmlspecialchars($requiredbuy,ENT_QUOTES);
-                        $filename_missing = preg_replace('/[^\w]/', '', $deckname.'_missing');
-                        $msg->logMessage('[DEBUG]',"Required list = $requiredlist");
-                        $msg->logMessage('[DEBUG]',"Missing filename = $filename_missing");?>
+                    if ($requiredlist != '') :
+                        $requiredlist = htmlspecialchars($requiredlist, ENT_QUOTES);
+                        $requiredbuy = htmlspecialchars($requiredbuy, ENT_QUOTES);
+                        $filename_missing = preg_replace('/[^\w]/', '', $deckname . '_missing');
+                        $msg->logMessage('[DEBUG]', "Required list = $requiredlist");
+                        $msg->logMessage('[DEBUG]', "Missing filename = $filename_missing");?>
                         <script type="text/javascript">
                             document.body.style.cursor='default';
                         </script>
@@ -3081,29 +3379,29 @@ m13,12,"Fog",en,1,0,0,{id}
                                     <input class='profilebutton' type="submit" value="MISSING">
                                     <?php echo "<input type='hidden' name='text' value='$requiredlist'>"; ?>
                                     <?php echo "<input type='hidden' name='filename' value='$filename_missing'>"; ?>
-                                </form> 
-                            </td>
-                        </tr>
-                        <tr style="height:36px;">
-                            <td>Buy missing:</td>
-                            <td><a href="https://store.tcgplayer.com/list/selectproductmagic.aspx?partner=MTGCOLLECT&c=<?php echo $requiredbuy; ?>" target='_blank' class='profilebutton tcgbuybutton'>TCGPLAYER</a></td>
-                        </tr>
-                        <?php
-                    elseif($missing == 'yes' AND $requiredlist == ''): ?>
-                        <tr style="height:48px;">
-                            <td colspan="2">(No cards missing from My Collection)</td>
-                        </tr>
-                        <?php
-                    else: //This section not used, as $missing is always yes
-                        ?> 
-                        <tr style="height:36px;">
-                            <td>Compare to collection for missing cards:</td>
-                            <td><form action="deckdetail.php" method="GET">
-                                    <input type='hidden' name='deck' value='<?php echo $decknumber ?>'>
-                                    <input type='hidden' name='missing' value='yes'>
-                                    <input class='profilebutton' type="submit" value="COMPARE" onclick='ComparePrep()'>
                                 </form>
                             </td>
+                        </tr>
+                        <?php
+                        $tcgUrl = "https://store.tcgplayer.com/list/selectproductmagic.aspx"
+                            . "?partner=MTGCOLLECT&c={$requiredbuy}";
+                        ?>
+                        <tr style="height:36px;">
+                            <td>Buy missing:</td>
+                            <td>
+                                <a
+                                    href="<?php echo $tcgUrl; ?>"
+                                    target="_blank"
+                                    class="profilebutton tcgbuybutton"
+                                >
+                                    TCGPLAYER
+                                </a>
+                            </td>
+                        </tr>
+                        <?php
+                    else : ?>
+                        <tr style="height:48px;">
+                            <td colspan="2">(No cards missing from My Collection)</td>
                         </tr>
                         <?php
                     endif; ?>
@@ -3114,7 +3412,7 @@ m13,12,"Fog",en,1,0,0,{id}
             <form action="deckdetail.php"  method="GET">
                 <!-- Hovering help button -->
                 <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">help</span>
-                
+
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
                 <br>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
@@ -3127,7 +3425,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     $("#importfile").change(
                         function(){
                             if ($(this).val()){
-                                $("#importsubmit").removeAttr('disabled'); 
+                                $("#importsubmit").removeAttr('disabled');
                             }
                             else {
                                 $("#importsubmit").attr('disabled',true);
@@ -3139,7 +3437,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     $("#importphoto").change(
                         function(){
                             if ($(this).val()){
-                                $("#photosubmit").removeAttr('disabled'); 
+                                $("#photosubmit").removeAttr('disabled');
                             }
                             else {
                                 $("#photosubmit").attr('disabled',true);
@@ -3241,29 +3539,37 @@ m13,12,"Fog",en,1,0,0,{id}
                     });
                 });
             </script>
-            <script type="text/javascript"> 
+            <script type="text/javascript">
                 function ImportPrep()
                     {
                         document.body.style.cursor='wait';
                     }
-            </script> 
+            </script>
             <form enctype='multipart/form-data' action='?' method='post'>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
                     <span>SELECT</span>
                 </label>
-                <input class='profilebutton' id='importsubmit' type='submit' name='import' value='IMPORT' disabled onclick='ImportPrep()';>
+                <input
+                    class='profilebutton'
+                    id='importsubmit'
+                    type='submit'
+                    name='import'
+                    value='IMPORT'
+                    disabled
+                    onclick='ImportPrep()'
+                >
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
-            </form> 
+            </form>
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
                 <?php
-                $imageFilePath = $ImgLocation.'deck_photos/'.$decknumber.'.jpg';
-                $existingImage = 'cardimg/deck_photos/'.$decknumber.'.jpg';
+                $imageFilePath = $ImgLocation . 'deck_photos/' . $decknumber . '.jpg';
+                $existingImage = 'cardimg/deck_photos/' . $decknumber . '.jpg';
                 // Check if the file exists and log appropriate messages
-                if (file_exists($imageFilePath)):
+                if (file_exists($imageFilePath)) :
                     $msg->logMessage('[DEBUG]', "Image exists at: $imageFilePath, existingImage: $existingImage");
-                else:
+                else :
                     $msg->logMessage('[DEBUG]', "No current image at: $imageFilePath, existingImage: $existingImage");
                 endif; ?>
                 <form id="uploadForm">
@@ -3273,16 +3579,27 @@ m13,12,"Fog",en,1,0,0,{id}
                         <span>SELECT</span>
                     </label>
                     <input class='profilebutton' id='photosubmit' type='submit' value="UPLOAD">
-                    <button class="profilebutton" id="deletePhotoBtn" type="button" onclick="deletePhoto()" <?php echo !file_exists($imageFilePath) ? 'style="display:none;"' : ''; ?> >DELETE</button>
+                    <button
+                        class="profilebutton"
+                        id="deletePhotoBtn"
+                        type="button"
+                        onclick="deletePhoto()"
+                        <?php echo !file_exists($imageFilePath) ? 'style="display:none;"' : ''; ?>
+                    >DELETE</button>
                 </form>
                 <?php
-                if (file_exists($imageFilePath)):?>
+                if (file_exists($imageFilePath)) :?>
                     <div id='photo_div'>
                         <br>
-                        <!-- <img id="deckPhoto" src="<?php // $time = time(); echo $existingImage.'?'.$time; ?>" style="max-width: 300px;" alt="Existing Photo"> -->
-                        <img id="deckPhoto" src="deckimage.php?deck=<?php echo $decknumber; ?>" style="max-width: 300px;" alt="Existing Photo">
+                        <!-- Placeholder for legacy deck photo preview -->
+                        <img
+                            id="deckPhoto"
+                            src="deckimage.php?deck=<?php echo $decknumber; ?>"
+                            style="max-width: 300px;"
+                            alt="Existing Photo"
+                        >
                     </div><?php
-                else: ?>
+                else : ?>
                     <div id='photo_div' style="display: none;">
                         <br>
                         <img id="deckPhoto" src="" style="max-width: 300px;" alt="Existing Photo">
@@ -3294,8 +3611,8 @@ m13,12,"Fog",en,1,0,0,{id}
     </div>
 </div>
 
-<?php 
-$msg->logMessage('[DEBUG]',"Page complete");
-require('includes/footer.php'); ?>        
+<?php
+$msg->logMessage('[DEBUG]', "Page complete");
+require('includes/footer.php'); ?>
 </body>
 </html>

@@ -1,29 +1,23 @@
 <?php
-/* Version:     5.3
-    Date:       24/11/25
-    Name:       admin/cards.php
-    Purpose:    Card administrative tasks
-    Notes:
+/*
+Version:     5.4
+Date:        25/11/25
+Name:        cards.php
+Purpose:     Card administrative tasks
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 
-    1.0
-                Initial version - no function yet
- *  2.0
- *              Functions added for add, edit, copy cards; run legality check; add pre-release promos
- *  3.0
- *              Move from writelog to Message class
- *  4.0
- *              Much simpler form, all data from Scryfall, so no editing here - just delete or delete image
- *  5.0
- *              PHP 8.1 compatibility
- *
- *  5.1         10/12/2023
- *              Sanitise UUID
- *
- *  5.2         20/01/24
- *              Move to include sessionname and logMessage
- *
- *  5.3         24/11/25
- *              PHPCS cleaned
+History:
+    1.0         Initial version - no function yet
+    2.0         Functions added for add, edit, copy cards; run legality check; add pre-release promos
+    3.0         Move from writelog to Message class
+    4.0         Much simpler form, all data from Scryfall, so no editing here - just delete or delete image
+    5.0         PHP 8.1 compatibility
+    5.1 10/12/2023 Sanitise UUID
+    5.2 20/01/24 Move to include sessionname and logMessage
+    5.3 24/11/25 PHPCS cleaned
+    5.4 25/11/25 Header tidy and metadata standardization
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -223,8 +217,8 @@ endif;
     <?php include('../includes/googlefonts.php'); ?>
     <script src="../js/jquery.js"></script>
 </head>
-<body id="body" class="body">    
-   
+<body id="body" class="body">
+
 <?php
 include '../includes/overlays.php';
 include '../includes/header.php';
@@ -285,7 +279,7 @@ require('../includes/menu.php');
                             echo '<td>' . $result['strategy'] . '</td>'; ?>
                                 <td>
                                     <a target="_blank" href='/carddetail.php?id=<?php echo $result['new_id'];?>'>
-                                         <?php echo $result['new_id']; ?> 
+                                         <?php echo $result['new_id']; ?>
                                     </a>
                                 </td>
                                 <?php
@@ -293,7 +287,7 @@ require('../includes/menu.php');
                                 echo '<td>' . $result['migration_name'] . '</td>'; ?>
                                 <td>
                                     <a target="_blank" href='<?php echo $result['migration_uri'];?>'>
-                                         <?php echo $result['migration_uri']; ?> 
+                                         <?php echo $result['migration_uri']; ?>
                                     </a>
                                 </td>
                                 <?php

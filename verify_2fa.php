@@ -1,14 +1,14 @@
 <?php
-/* Version:     1.3
-    Date:       01/03/25
+/* Version:     1.4
+    Date:       25/11/25
     Name:       verify_2fa.php
     Purpose:    Complete the second step of two-factor authentication
-    
+
     @author     Simon Wilson
     @copyright  2025 MTG Collection
 
-    Notes:      
-    To do:      
+    Notes:
+    To do:
 
     1.1         28/02/25
                 Minor fixes, CSRF protection
@@ -18,11 +18,14 @@
 
     1.3         01/03/25
                 Code tweaks/tidy-up
+
+    1.4         25/11/25
+                Formatting clean-up
 */
 
-if (file_exists('includes/sessionname.local.php')):
+if (file_exists('includes/sessionname.local.php')) :
     require('includes/sessionname.local.php');
-else:
+else :
     require('includes/sessionname_template.php');
 endif;
 startCustomSession();
@@ -42,7 +45,7 @@ $msg = new Message($logfile);
 $cssver = cssver();
 
 // Redirect to login.php if user has not completed first factor
-if (!isset($_SESSION['user_pending_2fa'])):
+if (!isset($_SESSION['user_pending_2fa'])) :
     $msg->logMessage('[ERROR]', "Access to verify_2fa.php attempted without completing first factor authentication");
     header("Location: login.php");
     exit();
@@ -55,13 +58,13 @@ $is_admin = $_SESSION['admin_pending_2fa'] ?? false;
 $pwd_change_required = $_SESSION['chgpwd_pending_2fa'] ?? false;
 
 // Ensure `$db` is valid before proceeding
-if (!isset($db) || !$db instanceof mysqli):
+if (!isset($db) || !$db instanceof mysqli) :
     $msg->logMessage('[ERROR]', "Database connection is invalid in verify_2fa.php");
     die("A database error occurred, please try again later");
 endif;
 
 // Generate CSRF token if not set
-if (!isset($_SESSION["csrf_token"])):
+if (!isset($_SESSION["csrf_token"])) :
     $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
 endif;
 
@@ -69,36 +72,36 @@ endif;
 $verification_attempted = false;
 $verification_error = '';
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['verify'])):
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['verify'])) :
     $verification_attempted = true;
     $code = trim($_POST['code']);
 
     // **Check CSRF token**
-    if (!isset($_POST["csrf_token"]) || $_POST["csrf_token"] !== $_SESSION["csrf_token"]):
+    if (!isset($_POST["csrf_token"]) || $_POST["csrf_token"] !== $_SESSION["csrf_token"]) :
         $msg->logMessage('[ERROR]', "CSRF token mismatch in verify_2fa.php");
         die("Invalid request");
     endif;
 
-    if (empty($code)):
+    if (empty($code)) :
         $verification_error = 'Please enter a verification code';
-    else:
+    else :
         // Verify code
         $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
-        if ($tfaManager->verify($user_id, $code)):
+        if ($tfaManager->verify($user_id, $code)) :
             // Code is valid, complete authentication
             $msg->logMessage('[NOTICE]', "2FA verification successful for user ID: $user_id ($email)");
 
             // **Regenerate session to prevent fixation**
             session_regenerate_id(true);
-            $_SESSION["logged"] = TRUE;
+            $_SESSION["logged"] = true;
             $_SESSION["user"] = $user_id;
             $_SESSION["useremail"] = $email;
-            $_SESSION['admin'] = $is_admin ? TRUE : FALSE;
+            $_SESSION['admin'] = $is_admin ? true : false;
 
             // Set password change flag if applicable
-            if ($pwd_change_required):
-                $_SESSION["chgpwd"] = TRUE;
-                $_SESSION['just_logged_in'] = TRUE;
+            if ($pwd_change_required) :
+                $_SESSION["chgpwd"] = true;
+                $_SESSION['just_logged_in'] = true;
             endif;
 
             // Update login timestamp
@@ -113,20 +116,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['verify'])):
             unset($_SESSION['chgpwd_pending_2fa']);
 
             // **Handle redirects**
-            if ($pwd_change_required):
+            if ($pwd_change_required) :
                 header("Location: profile.php");
-            else:
+            else :
                 // Redirect to trust_device.php with optional redirect URL
-                if (isset($_SESSION['redirect_url_after_2fa'])):
+                if (isset($_SESSION['redirect_url_after_2fa'])) :
                     $redirect = $_SESSION['redirect_url_after_2fa'];
                     unset($_SESSION['redirect_url_after_2fa']); // **Prevent future misdirects**
                     header("Location: trust_device.php?redirect_to=" . urlencode($redirect));
-                else:
+                else :
                     header("Location: trust_device.php");
                 endif;
             endif;
             exit();
-        else:
+        else :
             $verification_error = 'Invalid verification code. Please try again.';
             $msg->logMessage('[NOTICE]', "Failed 2FA verification attempt for user ID: $user_id ($email)");
         endif;
@@ -134,14 +137,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['verify'])):
 endif;
 
 // Resend code if requested
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['resend'])):
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['resend'])) :
     $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
     $tfaManager->startVerification($user_id, $email);
     $msg->logMessage('[NOTICE]', "Verification code resent for user ID: $user_id ($email)");
 endif;
 
 // Cancel verification if requested
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['cancel'])):
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['cancel'])) :
     // **Clear 2FA session data**
     unset($_SESSION['user_pending_2fa']);
     unset($_SESSION['useremail_pending_2fa']);
@@ -166,7 +169,7 @@ endif;
     </head>
     <body id="loginbody" class="body">
         <?php include_once("includes/analyticstracking.php") ?>
-        <div id="loginheader">    
+        <div id="loginheader">
             <h2 id='h2'><?php echo $siteTitle;?> - Verification</h2>
 
             <div style="text-align: center; margin-bottom: 20px;">
@@ -174,14 +177,21 @@ endif;
                 <p>Please enter the code to complete your login.</p>
             </div>
 
-            <?php if ($verification_attempted && !empty($verification_error)): ?>
+            <?php if ($verification_attempted && !empty($verification_error)) : ?>
                 <div style="color: red; margin-bottom: 15px;">
                     <?php echo htmlspecialchars($verification_error); ?>
                 </div>
             <?php endif; ?>
 
             <form action="verify_2fa.php" method="post">
-                <input class='textinput loginfield' type='text' name='code' autofocus placeholder='VERIFICATION CODE' style="text-align: center; letter-spacing: 8px; font-size: 1.5em;"/>
+                <input
+                    class='textinput loginfield'
+                    type='text'
+                    name='code'
+                    autofocus
+                    placeholder='VERIFICATION CODE'
+                    style="text-align: center; letter-spacing: 8px; font-size: 1.5em;"
+                />
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION["csrf_token"]; ?>">
                 <br><br>
                 <input type="submit" name="verify" id="loginsubmit" value="VERIFY" />

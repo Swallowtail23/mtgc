@@ -1,6 +1,6 @@
 <?php 
-/* Version:     7.0
-    Date:       28/02/25
+/* Version:     7.1
+    Date:       25/11/25
     Name:       login.php
     Purpose:    Check for existing session, process login.
     Notes:      {none}
@@ -30,6 +30,8 @@
  * 
  *  7.0         28/02/25
  *              Trusted devices capability
+ *  7.1         25/11/25
+ *              Update UserStatus method calls to camelCase
 */
 if (file_exists('includes/sessionname.local.php')):
     require('includes/sessionname.local.php');
@@ -233,14 +235,14 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                 if (!empty($email) && !empty($password)):
                     if (filter_var($email, FILTER_VALIDATE_EMAIL)):
                         $badlog = new UserStatus($db,$logfile,$email);
-                        $badlog_result = $badlog->GetBadLogin();
+                        $badlog_result = $badlog->getBadLogin();
                         if ($badlog_result['count'] !== null AND $badlog_result['count'] < ($Badloglimit)):
                             $pwval = new PasswordCheck($db, $logfile, $siteTitle);
                             $pwval_result = $pwval->PWValidate($email,$password);
                             if ($pwval_result === 10):
                                 // username and password checks out OK - carry on!
                                 $userstat = new UserStatus($db,$logfile,$email);
-                                $userstat_result = $userstat->GetUserStatus();
+                                $userstat_result = $userstat->getUserStatus();
                                 $msg->logMessage('[DEBUG]',"UserStatus for $email is {$userstat_result['code']}");
                                 if ($userstat_result['code'] === 0):
                                     trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
@@ -272,7 +274,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         if($badlog_result['count'] != 0):
                                             $msg->logMessage('[NOTICE]',"Logon (first factor) ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
                                             $zerobadlog = new UserStatus($db,$logfile,$email);
-                                            $zerobadlog->ZeroBadLogin();
+                                            $zerobadlog->zeroBadLogin();
                                         endif;
                                         
                                         // If there was a redirect URL, preserve it
@@ -303,7 +305,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                         if($badlog_result['count'] != 0):
                                             $msg->logMessage('[NOTICE]',"Logon ok for $email, clearing non-zero bad login count ({$badlog_result['count']})");
                                             $zerobadlog = new UserStatus($db,$logfile,$email);
-                                            $zerobadlog->ZeroBadLogin();
+                                            $zerobadlog->zeroBadLogin();
                                         endif;
                                     endif;
                                 else:
@@ -317,7 +319,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                                 echo 'Incorrect username/password. Please try again.';
                                 $msg->logMessage('[ERROR]',"Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}");
                                 $obj = new UserStatus($db,$logfile,$email);
-                                $obj->IncrementBadLogin();
+                                $obj->incrementBadLogin();
                                 session_destroy();
                                 echo "<meta http-equiv='refresh' content='3;url=login.php'>";
                                 exit();
@@ -332,7 +334,7 @@ $msg->logMessage('[DEBUG]', "Session vars: " .
                             echo 'Too many incorrect logins. Use the reset button to contact admin. Returning to login...';
                             $msg->logMessage('[NOTICE]',"Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}");
                             $obj = new UserStatus($db,$logfile,$email);
-                            $obj->TriggerLocked();
+                            $obj->triggerLocked();
                             session_destroy();
                             echo "<meta http-equiv='refresh' content='5;url=login.php'>";
                             exit();

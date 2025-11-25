@@ -26,6 +26,10 @@
 - Error handling: use `mtg_error` for user-facing errors and `mtg_exception` for exception paths/logging.
 - Mobile-responsive design uses jQuery on the frontend.
 - Follow existing PSR-12-ish formatting and class/function placement conventions.
+- Exception to PSR-12 formatting: Always use if/else/endif, while/endwhile, foreach/endforeach formats
+- All file edits should increment file information header/version history (where present)
+- Do not split SQL statements with string concatenation; keep them as single literals (with embedded newlines if needed)
+- App is not namespaced. All classes are global.
 
 ## Logging
 - Log file path is set in `/opt/mtg/mtg_new.ini`; ensure the process user can write to it.

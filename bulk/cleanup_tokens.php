@@ -1,17 +1,18 @@
 <?php
-/* Version:     1.1
-    Date:       10/06/25
-    Name:       cleanup_tokens.php
-    Purpose:    Cleanup expired trusted device tokens
-    Notes:      To be run via cron, e.g. daily
-                
-    @author     Simon Wilson <simon@simonandkate.net>
-    @copyright  2025 Simon Wilson
-    
- *  1.0
-                Initial version
-    1.1         10/06/24
-                Added DOCUMENT_ROOT so can run when called from bulk folder by php-cli
+
+/*
+Version:     1.2
+Date:        25/11/25
+Name:        cleanup_tokens.php
+Purpose:     Cleanup expired trusted device tokens
+Notes:       To be run via cron, e.g. daily
+Author:      Simon Wilson <simon@simonandkate.net>
+Copyright:   2025 Simon Wilson
+
+History:
+    1.0         Initial version
+    1.1 10/06/24 Added DOCUMENT_ROOT so can run when called from bulk folder by php-cli
+    1.2 25/11/25 Formatting clean-up
 */
 
 // Load required files

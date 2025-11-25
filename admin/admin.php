@@ -1,29 +1,23 @@
 <?php
-/* Version:     4.4
-    Date:       24/11/25
-    Name:       admin/admin.php
-    Purpose:    Site control panel
-    Notes:
+/*
+Version:     4.5
+Date:        25/11/25
+Name:        admin.php
+Purpose:     Site control panel
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 
-    1.0
-                Initial version
-    2.0
-                Mysqli_Manager
- *  3.0
- *              Moved from writelog to Message class
- *  4.0
- *              PHP 8.1 compatibility
- *  4.1
- *              Fixed error on unminifying CSS
- *
- *  4.2         20/01/24
- *              Move to include sessionname and logMessage
- *
- *  4.3         24/11/25
- *              Code tidy (phpcs)
- *
- *  4.4         24/11/25
- *              Add bounded log tail reader to avoid loading full log file
+History:
+    1.0         Initial version
+    2.0         Mysqli_Manager
+    3.0         Moved from writelog to Message class
+    4.0         PHP 8.1 compatibility
+    4.1         Fixed error on unminifying CSS
+    4.2 20/01/24 Move to include sessionname and logMessage
+    4.3 24/11/25 Code tidy (phpcs)
+    4.4 24/11/25 Add bounded log tail reader to avoid loading full log file
+    4.5 25/11/25 Header tidy and metadata standardization
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -45,16 +39,16 @@ function getLogTailLines($filepath, $maxLines = 8)
 {
     global $msg;
 
-    if (!is_readable($filepath)):
-        if (isset($msg)):
+    if (!is_readable($filepath)) :
+        if (isset($msg)) :
             $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
         endif;
         return [];
     endif;
 
     $handle = fopen($filepath, 'rb');
-    if ($handle === false):
-        if (isset($msg)):
+    if ($handle === false) :
+        if (isset($msg)) :
             $msg->logMessage('[ERROR]', "Failed to open log file: $filepath");
         endif;
         return [];
@@ -65,7 +59,7 @@ function getLogTailLines($filepath, $maxLines = 8)
     $output = '';
     $linesFound = 0;
 
-    while (ftell($handle) > 0 && $linesFound <= $maxLines):
+    while (ftell($handle) > 0 && $linesFound <= $maxLines) :
         $seek = min(ftell($handle), $buffer);
         fseek($handle, -$seek, SEEK_CUR);
         $chunk = fread($handle, $seek);
@@ -212,7 +206,7 @@ endif;
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
     <?php include('../includes/googlefonts.php');?>
     <script src="../js/jquery.js"></script>
-    <script type="text/javascript">   
+    <script type="text/javascript">
         jQuery( function($) {
             $('#newinfoupdate').submit(function() {
                 if(($('#updatetext').val() === '') || ($('#updatedate').val() === '')){
@@ -398,7 +392,7 @@ require('../includes/menu.php');
                                     <input class='profilebutton' type="submit" value="MINIFY" />
                                     <input type="hidden" name="publishcss" value="y"/>
                                 </form> <?php
-                            endif;?> 
+                            endif;?>
                         </td>
                     </tr>
                     <tr>
@@ -783,12 +777,12 @@ require('../includes/menu.php');
                             if (!empty($resultArray)) :
                                 echo '<table border="1">';
                                 echo '<tr><th>Deck Name</th><th>Owner</th></tr>';
-                            foreach ($resultArray as $deckresult) :
-                                echo '<tr>';
-                                echo '<td>' . $deckresult['deckname'] . '</td>';
-                                echo '<td>' . $deckresult['deckowner'] . '</td>';
-                                echo '</tr>';
-                            endforeach;
+                                foreach ($resultArray as $deckresult) :
+                                    echo '<tr>';
+                                    echo '<td>' . $deckresult['deckname'] . '</td>';
+                                    echo '<td>' . $deckresult['deckowner'] . '</td>';
+                                    echo '</tr>';
+                                endforeach;
                                 echo '</table>';
                             else :
                                     echo 'None';
