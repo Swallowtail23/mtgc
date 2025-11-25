@@ -11,3 +11,4 @@ cardimg/
 /vendor
 /includes/sessionname.local.php
 vendor/
+.phpunit.result.cache
