@@ -1,31 +1,33 @@
-<?php 
-/* Version:     1.0
-    Date:       17/10/16
-    Name:       issues.php
-    Purpose:    Issues page
-    Notes:      No db functions. 
-    To do:      -
-    
-    1.0
-                Initial version
- * 
- *  1.1         10/06/24
- *              Added AND / OR to type searches, so removed issue referring to
- *              this limitation.
+<?php
+
+/*
+Version:     1.2
+Date:        25/11/25
+Name:        issues.php
+Purpose:     Issues page.
+Notes:       No db functions.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    1.1 10/06/24 Added AND / OR to type searches, removed issue note
+    1.2 25/11/25 Standard tidy-up
 */
 
-if (file_exists('includes/sessionname.local.php')):
-    require('includes/sessionname.local.php');
-else:
-    require('includes/sessionname_template.php');
+if (file_exists('includes/sessionname.local.php')) :
+    require 'includes/sessionname.local.php';
+else :
+    require 'includes/sessionname_template.php';
 endif;
 startCustomSession();
-require ('includes/ini.php');               //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');     //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');      //Setup page variables
-forcechgpwd();                              //Check if user is disabled or needs to change password
-?> 
+require 'includes/ini.php'; // Initialise and load ini file
+require 'includes/error_handling.php';
+require 'includes/functions.php'; // Includes basic functions for non-secure pages
+require 'includes/secpagesetup.php'; // Setup page variables
+forcechgpwd(); // Check if user is disabled or needs to change password
+?>
 <!DOCTYPE html>
 
 <head>
@@ -39,9 +41,9 @@ forcechgpwd();                              //Check if user is disabled or needs
 </head>
 
 <body id="body" class="body">
-<?php 
-include_once("includes/analyticstracking.php");    
-require('includes/overlays.php');             
+<?php
+include_once("includes/analyticstracking.php");
+require('includes/overlays.php');
 require('includes/header.php');
 require('includes/menu.php');
 
@@ -52,14 +54,16 @@ require('includes/menu.php');
             <img src="images/white_m.png"><?php echo $siteTitle;?>
         </div>
         <h2 class='h2pad'>Known issues and bugs</h2>
-    <ul>
-        <li><b>Images are slow to load.</b> Images for new cards are fetched when they are added to the database, but for older cards the images are fetched the first time they are needed. This can take a while - be patient.</li>
-    </ul>
+        <ul>
+            <li><b>Images are slow to load.</b> Images for new cards are fetched when they are added to the database,
+                but for older cards the images are fetched the first time they are needed. This can take a while - be
+                patient.</li>
+        </ul>
 &nbsp;
 </div>
 </div>
-<?php 
-require('includes/footer.php'); 
+<?php
+require('includes/footer.php');
 ?>
 </body>
 </html>

@@ -1,19 +1,20 @@
 <?php
 
-/* Version:     2.1
-    Date:       25/11/25
-    Name:       help.php
-    Purpose:    Provides a help submission form and place for help notes
-    Notes:      {none}
-    To do:      -
+/*
+Version:     2.2
+Date:        25/11/25
+Name:        help.php
+Purpose:     Provides a help submission form and place for help notes.
+Notes:       {none}
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 
-    1.0
-                Initial version
-    2.0
-                Removed database call (secpagesetup provides all the info needed)
-
-    2.1         25/11/25
-                Formatting clean-up
+History:
+    1.0         Initial version
+    2.0         Removed database call (secpagesetup provides all the info needed)
+    2.1 25/11/25 Formatting clean-up
+    2.2 25/11/25 Standard tidy-up
 */
 
 if (file_exists('includes/sessionname.local.php')) :
