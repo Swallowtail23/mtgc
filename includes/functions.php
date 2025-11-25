@@ -1,6 +1,6 @@
 <?php
-/* Version:     24.4
-    Date:       23/08/24
+/* Version:     24.5
+    Date:       25/11/25
     Name:       functions.php
     Purpose:    Functions for all pages
     Notes:      
@@ -93,6 +93,8 @@
  * 
  * 24.4         23/08/24
  *              MTGC-123 Use normal price for topvalue if needed
+ * 24.5         25/11/25
+ *              Update PHPMailer class name to PascalCase
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1214,7 +1216,7 @@ function scryfallImport($file_location,$type)
     $msg->logMessage('[NOTICE]',"Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, included $count_inc, updated: $count_update, other: $count_other");
     $message = "Total: $total_count; total added: $count_add; total skipped: $count_skip; total included: $count_inc; total updated: $count_update";
     return $message;
-    // return $message to then use in parent to send email using myPHPMailer
+    // return $message to then use in parent to send email using MyPHPMailer
 }
 
 function validateTrueDecimal($v) 

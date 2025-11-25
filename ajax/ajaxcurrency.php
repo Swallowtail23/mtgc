@@ -1,27 +1,28 @@
-<?php 
-/* Version:     1.1
-    Date:       20/01/24
-    Name:       ajaxcurrency.php
-    Purpose:    PHP script to set user's local currency
-    Notes:      The page does not run standard secpagesetup as it breaks 
-                the ajax login catch.
-    To do:      -
+<?php
 
-    1.0         17/12/23
-                Initial version
+/*
+Version:     1.2
+Date:        25/11/25
+Name:        ajaxcurrency.php
+Purpose:     PHP script to set user's local currency
+Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 
-    1.1         20/01/24
- *              Include sessionname.php and move to logMessage
+History:
+    1.0 17/12/23 Initial version
+    1.1 20/01/24 Include sessionname.php and move to logMessage
+    1.2 25/11/25 Standard tidy-up
 */
-if (file_exists('../includes/sessionname.local.php')):
+if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
-else:
+else :
     require('../includes/sessionname_template.php');
 endif;
 startCustomSession();
-require ('../includes/ini.php');
-require ('../includes/error_handling.php');
-require ('../includes/functions.php');
+require('../includes/ini.php');
+require('../includes/error_handling.php');
+require('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new Message($logfile);
 
@@ -35,60 +36,58 @@ $expectedReferringPages =   [
 $normalizedReferringPage = str_replace('www.', '', $referringPage);
 
 $isValidReferrer = false;
-foreach ($expectedReferringPages as $page):
+foreach ($expectedReferringPages as $page) :
     // Normalize each expected referring page URL
     $normalizedPage = str_replace('www.', '', $page);
-    if (strpos($normalizedReferringPage, $normalizedPage) !== false):
+    if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
         $isValidReferrer = true;
         break;
     endif;
 endforeach;
 
-if ($isValidReferrer):
-
-    if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== TRUE): 
-        echo "<meta http-equiv='refresh' content='2;url=/login.php'>";               // check if user is logged in; else redirect to login.php
-        exit(); 
-    else: 
+if ($isValidReferrer) :
+    if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
+        echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
+        exit();
+    else :
         //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new SessionManager($db,$adminip,$_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         $fx = $userArray['fx'];
         $useremail = $_SESSION['useremail'];
 
-        if (isset($_GET['currency']) ):  //Update GET details
+        if (isset($_GET['currency'])) :  //Update GET details
             $usercurrency = $db->real_escape_string($_GET['currency']);
-            if($usercurrency === 'zzz' || !in_array($usercurrency, array_column($currencies, 'code'))):
-                $usercurrency = NULL;
+            if ($usercurrency === 'zzz' || !in_array($usercurrency, array_column($currencies, 'code'))) :
+                $usercurrency = null;
             endif;
-            $msg->logMessage('[DEBUG]',"Called with user currency '$usercurrency'");
+            $msg->logMessage('[DEBUG]', "Called with user currency '$usercurrency'");
             $query = "UPDATE users SET currency = ? WHERE usernumber = ?";
             $params = [$usercurrency, $user];
             $result = $db->execute_query($query, $params);
-            if($result === false):
-                trigger_error('[ERROR] profile.php: Error: '.$db->error, E_USER_ERROR);
-            else:
+            if ($result === false) :
+                trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
+            else :
                 // Set string to NULL to provide feedback in success message if $usercurrency is NULL
-                if($usercurrency === NULL):
+                if ($usercurrency === null) :
                     $usercurrency = 'NULL';
                 endif;
-                $msg->logMessage('[NOTICE]',"User currency change for $useremail");
+                $msg->logMessage('[NOTICE]', "User currency change for $useremail");
                 echo json_encode(['success' => 'User currency changed to: ' . $usercurrency]);
                 exit();
             endif;
-        else:  // Error handling
+        else :  // Error handling
             http_response_code(400);
-            $msg->logMessage('[ERROR]',"Not correctly called");
+            $msg->logMessage('[ERROR]', "Not correctly called");
             echo json_encode(['error' => 'Offset not in range']);
             exit();
         endif;
     endif;
-else:
+else :
     //Otherwise forbid access
-    $msg->logMessage('[ERROR]',"Not called from valid page");
+    $msg->logMessage('[ERROR]', "Not called from valid page");
     http_response_code(403);
     echo 'Access forbidden';
 endif;
-?>

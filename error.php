@@ -1,27 +1,32 @@
 <?php
-/* Version:     2.0
-    Date:       17/10/16
-    Name:       error.php
-    Purpose:    Very basic page with no database connectivity
-    Notes:      Ini file is parsed with parse_ini_file, not INI class, as classes
-                not loaded in this page
-    To do:      -
-    
-    1.0
-                Initial version
+
+/*
+Version:     2.1
+Date:        25/11/25
+Name:        error.php
+Purpose:     Very basic page with no database connectivity.
+Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes not loaded in this page.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0 17/10/16 Update copyright text
+    2.1 25/11/25 Standard tidy-up
 */
 
 $ini_array = parse_ini_file("/opt/mtg/mtg_new.ini");
 //Copyright string
 $copyright = $ini_array['Copyright'];
-if($ini_array['tier'] === 'dev'):
+if ($ini_array['tier'] === 'dev') :
     $tier = 'dev';
-else:
+else :
     $tier = 'prod';
 endif;
 $siteTitle = $ini_array['title'];
 $cssver = "";
-?> 
+?>
 
 <!DOCTYPE html>
 <html>
@@ -37,12 +42,12 @@ $cssver = "";
 <body class="body">
 <?php
 // Start building the page here, so errors show in the website template
-// Includes first - menu and header            
-if ((isset($_SESSION["logged"])) AND ($_SESSION["logged"] == TRUE)) :
+// Includes first - menu and header
+if ((isset($_SESSION["logged"])) and ($_SESSION["logged"] == true)) :
     require('includes/overlays.php');
 endif;
 require('includes/header.php'); ?>
-<div id='menubuttondiv' class="togglemenu">    
+<div id='menubuttondiv' class="togglemenu">
     <a href="#" id='toggle-menu'><span class="material-symbols-outlined menu">menu</span></a>
 </div>
 <div id="menu">
@@ -60,7 +65,7 @@ require('includes/header.php'); ?>
     </div>
 </div>
 
-<?php 
-require('includes/footer.php'); ?>        
+<?php
+require('includes/footer.php'); ?>
 </body>
 </html>

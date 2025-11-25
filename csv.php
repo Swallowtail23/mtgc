@@ -1,77 +1,76 @@
-<?php 
-/* Version:     4.1
-    Date:       14/01/24
-    Name:       csv.php
-    Purpose:    PHP script to export collection and redirect, called from profile.php
-    Notes:      Redirects to profile.php if not in SMTP debug, with flag on success/fail
-        
-    1.0
-                Initial version
- *  2.0         
- *              Migrated to Mysqli_Manager
- *  3.0
- *              PHP 8.1 compatibility
- *              Primarily now just logic, see class/functions
- *  
- *  4.0         13/01/24
- *              Added PHPMailer capability
- *
- *  4.1         14/01/24
- *              Documentation tweaks and minor changes
-                Move to use logMessage function
- */
-      
+<?php
+
+/*
+Version:     4.2
+Date:        25/11/25
+Name:        csv.php
+Purpose:     Export collection and redirect from profile.php.
+Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Migrated to Mysqli_Manager
+    3.0         PHP 8.1 compatibility; primarily logic, see class/functions
+    4.0 13/01/24 Added PHPMailer capability
+    4.1 14/01/24 Documentation tweaks; move to logMessage function
+    4.2 25/11/25 Standard tidy-up
+*/
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 
-if (file_exists('includes/sessionname.local.php')):
-    require('includes/sessionname.local.php');
-else:
-    require('includes/sessionname_template.php');
+if (file_exists('includes/sessionname.local.php')) :
+    require 'includes/sessionname.local.php';
+else :
+    require 'includes/sessionname_template.php';
 endif;
+
 startCustomSession();
-require ('includes/ini.php');                //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');          //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');       //Setup page variables
+require 'includes/ini.php'; // Initialise and load ini file
+require 'includes/error_handling.php';
+require 'includes/functions.php'; // Includes basic functions for non-secure pages
+require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new Message($logfile);
-                
+
 // Page content starts here
-if(isset($_GET['table'])):
+if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    $msg->logMessage('[NOTICE]',"csv.php running for '$table'");
-    
-    $obj = new ImportExport($db,$logfile,$useremail,$serveremail,$siteTitle);
-    
+    $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
+
+    $obj = new ImportExport($db, $logfile, $useremail, $serveremail, $siteTitle);
+
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output
-    // In email mode, if SMTP is set to debug (PHPMailer) and site is in Debug log level, the SMTP output will also be output to screen
-    if(isset($_GET['type']) && $_GET['type'] === 'echo'):
-        $msg->logMessage('[DEBUG]',"csv.php running for '$table', output ('{$_GET['type']}')");
+    // In email mode, if SMTP is set to debug and site is in Debug log level, the SMTP output
+    // will also be output to screen
+    if (isset($_GET['type']) && $_GET['type'] === 'echo') :
+        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
         $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'echo');
-    elseif(isset($_GET['type']) && $_GET['type'] === 'email'):
-        $msg->logMessage('[DEBUG]',"csv.php running for '$table', output ('{$_GET['type']}')");
+    elseif (isset($_GET['type']) && $_GET['type'] === 'email') :
+        $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
         $mailexport = $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'email');
-        if($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3):
-            $msg->logMessage('[DEBUG]',"In debug, not redirecting");
-        else:
+        if ($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3) :
+            $msg->logMessage('[DEBUG]', 'In debug, not redirecting');
+        else :
             // If not in debug mode, redirect back to profile.php
-            $msg->logMessage('[DEBUG]',"Not in SMTP/site debug, redirecting back to profile.php");
+            $msg->logMessage('[DEBUG]', 'Not in SMTP/site debug, redirecting back to profile.php');
             // If the mailexport was successful
-            if($mailexport === TRUE):
+            if ($mailexport === true) :
                 header('Location: profile.php?csvsuccess=true');
-            else:
+            else :
                 header('Location: profile.php?csvsuccess=false');
             endif;
             exit;
         endif;
-    else:
-        $msg->logMessage('[DEBUG]',"csv.php called for '$table', output type unclear ('{$_GET['type']}')");
+    else :
+        $msg->logMessage('[DEBUG]', "csv.php called for '$table', output type unclear ('{$_GET['type']}')");
         trigger_error("[ERROR] csv.php: Called with incorrect parameters", E_USER_ERROR);
     endif;
-else:
-    $msg->logMessage('[DEBUG]',"csv.php running, failed");
+else :
+    $msg->logMessage('[DEBUG]', 'csv.php running, failed');
     trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);
 endif;
-?>
