@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.0
-Date:        25/11/25
+Version:     4.1
+Date:        26/11/25
 Name:        colour.php
 Purpose:     Return colour name for a colour code.
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     3.1 20/01/24 Move to logMessage
     3.2 25/11/25 Standard tidy-up
     4.0 25/11/25 Refactor to lookup-based mapping (no behaviour change)
+    4.1 26/11/25 Allow string colour codes (split card normalization works)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -25,15 +26,22 @@ endif;
 
 function colourfunction($colourcode)
 {
+    $originalColourcode = $colourcode;
     global $logfile;
     $msg = new Message($logfile);
     $msg->logMessage('[DEBUG]', "run with input: $colourcode");
     $decoded = json_decode($colourcode);
     $colourcode = '';
     if ($decoded !== null) :
-        foreach ($decoded as $value) :
-            $colourcode .= $value;
-        endforeach;
+        if (is_array($decoded)) :
+            foreach ($decoded as $value) :
+                $colourcode .= $value;
+            endforeach;
+        else :
+            $colourcode = (string) $decoded;
+        endif;
+    else :
+        $colourcode = (string) $originalColourcode;
     endif;
 
     // Normalize split cards (e.g., "B // W") to "BW"
