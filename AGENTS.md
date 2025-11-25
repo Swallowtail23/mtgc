@@ -37,4 +37,5 @@
 
 ## Testing
 - PHPUnit suite: `vendor/bin/phpunit` (requires composer install).
+- PHPUnit test directory: `tests`
 - Point `/opt/mtg/mtg_new.ini` to a test database/config when running tests to avoid clobbering production data.
