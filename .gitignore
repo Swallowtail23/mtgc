@@ -12,3 +12,4 @@ cardimg/
 /includes/sessionname.local.php
 vendor/
 .phpunit.result.cache
+.SECURITY_REPORT.md
