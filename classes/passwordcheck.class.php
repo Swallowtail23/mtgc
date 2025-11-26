@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        25/11/25
+Version:     2.3
+Date:        27/11/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     2.0         Moved from crypt() to password_verify()
     2.1 20/01/24 Move to logMessage
     2.2 25/11/25 Standard tidy-up
+    2.3 27/11/25 Add email validation to newUser
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -159,6 +160,11 @@ class PasswordCheck
     {
         global $serveremail, $adminemail;
         $msg = new Message($this->logfile);
+        $postemail = trim($postemail);
+        if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
+            $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");
+            return 6;
+        endif;
         $mysql_date = date('Y-m-d');
         if ($password === '') :
             $noSuppliedPW = true;

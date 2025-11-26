@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.4
+Version:     5.5
 Date:        27/11/25
 Name:        users.php
 Purpose:     User administrative tasks
@@ -18,6 +18,7 @@ History:
     5.2 24/11/25 PHPCS cleaning
     5.3 25/11/25 Header tidy and metadata standardization
     5.4 26/11/25 Escape new user inputs for output
+    5.5 27/11/25 Validate email in new user flow
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -109,6 +110,8 @@ require('../includes/menu.php');
                      . "successfully recorded and checked.</div>";
                 echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                      . "already exists for this user.</div>";
+            elseif ($newuserstatus === 6) :
+                echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
             else :
                 echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
             endif;
