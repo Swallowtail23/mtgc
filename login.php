@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.2
-Date:        25/11/25
+Version:     7.4
+Date:        27/11/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -21,6 +21,8 @@ History:
     7.0 28/02/25 Trusted devices capability
     7.1 25/11/25 Update UserStatus method calls to camelCase
     7.2 25/11/25 Standard tidy-up
+    7.3 27/11/25 Use dedicated variable for Turnstile client
+    7.4 27/11/25 Disable login submit until Turnstile success
 */
 
 use andkab\Turnstile\Turnstile;
@@ -199,8 +201,8 @@ $msg->logMessage(
         <?php
         // Cloudflare Turnstile
         if ($turnstile === 1 && isset($_POST['cf-turnstile-response'])) :
-            $turnstile = new Turnstile("$turnstile_secret_key");
-            $verifyResponse = $turnstile->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
+            $turnstileClient = new Turnstile("$turnstile_secret_key");
+            $verifyResponse = $turnstileClient->verify($_POST['cf-turnstile-response'], $_SERVER['REMOTE_ADDR']);
             if ($verifyResponse->isSuccess()) :
                 $msg->logMessage('[NOTICE]', "Cloudflare Turnstile success from {$_SERVER['REMOTE_ADDR']}");
             elseif ($verifyResponse->hasErrors()) :
@@ -446,13 +448,42 @@ $msg->logMessage(
             echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
             if ($turnstile === 1) :
                 echo "<br>";
-                echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' data-theme='light'></div>";
+                echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' "
+                    . "data-theme='light' data-callback='onTurnstileSuccess' "
+                    . "data-error-callback='onTurnstileError' data-expired-callback='onTurnstileExpired'></div>";
             endif;
-            echo '<input type="submit" id="loginsubmit" value="LOGIN" />';
+            if ($turnstile === 1) :
+                echo '<input type="submit" id="loginsubmit" value="LOGIN" disabled="disabled" />';
+            else :
+                echo '<input type="submit" id="loginsubmit" value="LOGIN" />';
+            endif;
             echo '</form><br>'; ?>
             <div class='loginpagebutton'>
                 <a href='reset.php'>RESET</a>
-            </div> <?php
+            </div>
+            <?php if ($turnstile === 1) : ?>
+            <script>
+                (function () {
+                    var submitButton = document.getElementById('loginsubmit');
+
+                    if (!submitButton) {
+                        return;
+                    }
+
+                    window.onTurnstileSuccess = function () {
+                        submitButton.disabled = false;
+                    };
+
+                    window.onTurnstileError = function () {
+                        submitButton.disabled = true;
+                    };
+
+                    window.onTurnstileExpired = function () {
+                        submitButton.disabled = true;
+                    };
+                })();
+            </script>
+            <?php endif; ?> <?php
         endif; ?>
     </div>
 </body>
