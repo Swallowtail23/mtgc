@@ -50,6 +50,7 @@ History:
     24.6 26/11/25 Standard tidy-up (header/whitespace)
     24.7 26/11/25 Improve cssver - gentler failure, more robust check
                   Remove redundant check_input function
+                  Remove unneeded $db call from valid_uuid()
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1508,7 +1509,7 @@ function deck_legal_list($decknumber, $deck_type, $db_field)
 
 function valid_uuid($uuid)
 {
-    global $db, $logfile;
+    global $logfile;
     $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking for valid UUID ($uuid)");
@@ -1519,7 +1520,6 @@ function valid_uuid($uuid)
         )
     ) :
         $msg->logMessage('[DEBUG]', "Valid UUID ($uuid)");
-        $uuid = $db->real_escape_string($uuid);
         return $uuid;
     else :
         $msg->logMessage('[ERROR]', "Invalid UUID ($uuid), returning 'false'");

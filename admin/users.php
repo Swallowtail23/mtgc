@@ -17,7 +17,7 @@ History:
     5.1 20/01/24 Move to include sessionname and logMessage
     5.2 24/11/25 PHPCS cleaning
     5.3 25/11/25 Header tidy and metadata standardization
-    5.4 27/11/25 Escape new user inputs for output
+    5.4 26/11/25 Escape new user inputs for output
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
