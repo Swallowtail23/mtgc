@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.3
-Date:        25/11/25
+Version:     5.4
+Date:        27/11/25
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     5.1 20/01/24 Move to include sessionname and logMessage
     5.2 24/11/25 PHPCS cleaning
     5.3 25/11/25 Header tidy and metadata standardization
+    5.4 27/11/25 Escape new user inputs for output
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -47,11 +48,11 @@ if (isset($_POST['newuser'])) :
     endif;
     if (isset($_POST['email'])) :
         $postemail_raw = $_POST['email'];
-        $postemail = check_input($_POST['email']);
+        $postemail = htmlspecialchars($postemail_raw, ENT_QUOTES, 'UTF-8');
     endif;
     if (isset($_POST['username'])) :
         $username_raw = $_POST['username'];
-        $username = check_input($_POST['username']);
+        $username = htmlspecialchars($username_raw, ENT_QUOTES, 'UTF-8');
     endif;
 endif;
 if (isset($_POST['updateusers'])) :

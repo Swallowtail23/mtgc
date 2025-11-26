@@ -49,6 +49,7 @@ History:
     24.5 25/11/25 Update PHPMailer class name to PascalCase
     24.6 26/11/25 Standard tidy-up (header/whitespace)
     24.7 26/11/25 Improve cssver - gentler failure, more robust check
+                  Remove redundant check_input function
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -61,17 +62,6 @@ function forcechgpwd()
     if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
         header("Location: /profile.php");
     endif;
-}
-
-// Only used in admin/users.php - assess for removal
-function check_input($value)
-{
-    global $db;
-    if (!is_numeric($value)) :
-        $value = "'" . $db->real_escape_string($value) . "'";
-    endif;
-
-    return $value;
 }
 
 function cssver()
