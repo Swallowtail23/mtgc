@@ -1,73 +1,50 @@
 <?php
-/* Version:     12.1
-    Date:       02/03/25
-    Name:       index.php
-    Purpose:    Main site page
-    Notes:       
-    To do:      
-    
-    1.0
-                Initial version
- *  2.0     
- *              Moved image calls to use scryfall function
- *  3.0         
- *              Moved from writelog to Message class
- *  4.0
- *              Moved to mysqli
- *  5.0
- *              Re-factoring for cards_scry
- *              Javascript simplification and Ajax changes
- *  6.0
- *              Layout changes for Arena cards
- *  7.0
- *              Add flip capability for battle cards
- *  8.0
- *              Changes to handle etched cards
- *
- *  9.0         02/12/23
- *              Add javascript to add/remove b/w based on cview mode
- *
- * 10.0         09/12/23
- *              Move main search to parameterised queries
- * 
- * 11.0         02/01/24
- *              Add language search parameters
- * 
- * 11.1         20/01/24
- *              Move to logMessage
- * 
- * 11.2         22/01/24
- *              Increased $maxresults to 3,500 to cope with The List
- * 
- * 11.3         06/06/24
- *              Move interpretation of input field to global function
- *              This allows interpretation of e.g. "Farfinder [IKO 2]"
- * 
- * 11.4         10/06/24
- *              Add AND / OR to type searches
- * 
- * 11.5         09/12/24
- *              Move tribal valid list to ini.php
- * 
- * 12.0         01/03/25
- *              Add Name exact
- * 
- * 12.1         02/03/25
- *              Catch and evade empty ability search
+
+/*
+Version:     12.2
+Date:        26/11/25
+Name:        index.php
+Purpose:     Main site page
+Notes:       {none}
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Moved image calls to use scryfall function
+    3.0         Moved from writelog to Message class
+    4.0         Moved to mysqli
+    5.0         Re-factoring for cards_scry
+                Javascript simplification and Ajax changes
+    6.0         Layout changes for Arena cards
+    7.0         Add flip capability for battle cards
+    8.0         Changes to handle etched cards
+    9.0 02/12/23 Add javascript to add/remove b/w based on cview mode
+    10.0 09/12/23 Move main search to parameterised queries
+    11.0 02/01/24 Add language search parameters
+    11.1 20/01/24 Move to logMessage
+    11.2 22/01/24 Increased $maxresults to 3,500 to cope with The List
+    11.3 06/06/24 Move interpretation of input field to global function
+                  This allows interpretation of e.g. "Farfinder [IKO 2]"
+    11.4 10/06/24 Add AND / OR to type searches
+    11.5 09/12/24 Move tribal valid list to ini.php
+    12.0 01/03/25 Add Name exact
+    12.1 02/03/25 Catch and evade empty ability search
+    12.2 26/11/25 Standard tidy-up
 */
 
-//Call script initiation mechs
-if (file_exists('includes/sessionname.local.php')):
-    require('includes/sessionname.local.php');
-else:
-    require('includes/sessionname_template.php');
+// Call script initiation mechs
+if (file_exists('includes/sessionname.local.php')) :
+    require 'includes/sessionname.local.php';
+else :
+    require 'includes/sessionname_template.php';
 endif;
+
 startCustomSession();
-require ('includes/ini.php');                //Initialise and load ini file
-require ('includes/error_handling.php');
-require ('includes/functions.php');      //Includes basic functions for non-secure pages
-require ('includes/secpagesetup.php');       //Setup page variables
-forcechgpwd();                               //Check if user is disabled or needs to change password
+require 'includes/ini.php';               // Initialise and load ini file
+require 'includes/error_handling.php';
+require 'includes/functions.php';         // Includes basic functions for non-secure pages
+require 'includes/secpagesetup.php';      // Setup page variables
+forcechgpwd();                            // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 // Default numbers per page and max
@@ -78,35 +55,36 @@ $maxresults = 3500;
 $time = time();
 
 // Is admin running the page
-$msg->logMessage('[DEBUG]',"Admin is $admin");
+$msg->logMessage('[DEBUG]', "Admin is $admin");
 
 // Define layout and results per page for each layout type
-if (!empty($_GET)):
+$validLayout = array("grid", "list", "bulk");
+
+if (!empty($_GET)) :
     $fullQueryString = $_SERVER['QUERY_STRING'];
-    $msg->logMessage('[DEBUG]',"Query string: " . $fullQueryString);
-else:
-    $msg->logMessage('[DEBUG]',"Query string: none");
+    $msg->logMessage('[DEBUG]', "Query string: " . $fullQueryString);
+else :
+    $msg->logMessage('[DEBUG]', "Query string: none");
 endif;
 
-if (isset($_GET['layout'])):
-    $valid_layout = array("grid","list","bulk");
+$layout = 'grid'; // default layout
+$perpage = $gridperpage;
+
+if (isset($_GET['layout'])) :
     $layout = $_GET['layout'];
-    if (!in_array($layout,$valid_layout)):
-        $layout == 'grid';
+    if (!in_array($layout, $validLayout)) :
+        $layout = 'grid';
     endif;
-    if ($layout == 'grid'):
+    if ($layout == 'grid') :
         $perpage = $gridperpage;
-    elseif ($layout == 'list'):
+    elseif ($layout == 'list') :
         $perpage = $listperpage;
-    elseif ($layout == 'bulk'):
+    elseif ($layout == 'bulk') :
         $perpage = $bulkperpage;
-    else:
+    else :
         $layout = 'grid';
         $perpage = $gridperpage;
     endif;
-else:
-    $layout = 'grid'; //default to grid if not specified
-    $perpage = $gridperpage;
 endif;
 
 // Set up all the stuff we need and filter GET variables
@@ -115,38 +93,38 @@ if (isset($_GET["page"])) :
 else :
     $page = 1;
 endif;
-$perpage = (int)$perpage;
+$perpage = (int) $perpage;
 $start_from = ($page - 1) * $perpage;
-$start_from = (int)$start_from;
-if (isset($_GET['name']) AND $_GET['name'] !== ""):
-    $nameget = htmlspecialchars($_GET["name"],ENT_NOQUOTES);
-    $msg->logMessage('[DEBUG]',"Name in GET is $nameget");
+$start_from = (int) $start_from;
+if (isset($_GET['name']) and $_GET['name'] !== "") :
+    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES);
+    $msg->logMessage('[DEBUG]', "Name in GET is $nameget");
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
-    $msg->logMessage('[DEBUG]',"Name after trimming is $nametrim");
+    $msg->logMessage('[DEBUG]', "Name after trimming is $nametrim");
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
-    $msg->logMessage('[DEBUG]',"Name after URL removal is $name");
+    $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
     $interpreted_string = input_interpreter($name);
-    if (isset($interpreted_string['name']) AND $interpreted_string['name'] !== ''):
+    if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
         $name = $interpreted_string['name'];
-    else:
+    else :
         $name = '';
     endif;
     // Set
-    if (isset($interpreted_string['set']) AND $interpreted_string['set'] !== ''):
+    if (isset($interpreted_string['set']) and $interpreted_string['set'] !== '') :
         $setcoderegexsearch = strtoupper($interpreted_string['set']);
-    else:
+    else :
         $setcoderegexsearch = '';
     endif;
     // Collector number
-    if (isset($interpreted_string['number']) AND $interpreted_string['number'] !== ''):
+    if (isset($interpreted_string['number']) and $interpreted_string['number'] !== '') :
         $numberregexsearch = $interpreted_string['number'];
-    else:
+    else :
         $numberregexsearch = '';
     endif;
-    $card = htmlspecialchars_decode($name,ENT_QUOTES);
+    $card = htmlspecialchars_decode($name, ENT_QUOTES);
     $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
-else:
+else :
     $name = '';
     $setcoderegexsearch = '';
     $numberregexsearch = '';
@@ -169,13 +147,13 @@ $land = isset($_GET['land']) ? 'yes' : '';
 $battle = isset($_GET['battle']) ? 'yes' : '';
 $valid_colourOp = array("AND","OR","");
 $colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
-if (!in_array($colourOp,$valid_colourOp)):
+if (!in_array($colourOp, $valid_colourOp)) :
     $colourOp = '';
 endif;
 $colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
 $valid_typeOp = array("AND","OR","");
 $typeOp = isset($_GET['typeOp']) ? "{$_GET['typeOp']}" : '';
-if (!in_array($typeOp,$valid_typeOp)):
+if (!in_array($typeOp, $valid_typeOp)) :
     $typeOp = '';
 endif;
 $common = isset($_GET['common']) ? 'yes' : '';
@@ -187,7 +165,7 @@ $arena = isset($_GET['arena']) ? 'yes' : '';
 $online = isset($_GET['online']) ? 'yes' : '';
 $valid_gametypeOp = array("AND","OR","");
 $gametypeOp = isset($_GET['gametypeOp']) ? "{$_GET['gametypeOp']}" : '';
-if (!in_array($gametypeOp,$valid_gametypeOp)):
+if (!in_array($gametypeOp, $valid_gametypeOp)) :
     $gametypeOp = '';
 endif;
 $gametypeExcl = isset($_GET['gametypeExcl']) ? 'ONLY' : '';
@@ -199,44 +177,60 @@ $enchantment = isset($_GET['enchantment']) ? 'yes' : '';
 $planeswalker = isset($_GET['planeswalker']) ? 'yes' : '';
 $tribal = isset($_GET['tribal']) ? 'yes' : '';
 $tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
-if (!in_array($tribe,$valid_tribe)):
+if (!in_array($tribe, $valid_tribe)) :
     $tribe = '';
 endif;
 $legendary = isset($_GET['legendary']) ? 'yes' : '';
 $token = isset($_GET['token']) ? 'yes' : '';
-# $rareOp = isset($_GET['rareOp']) ? filter_input(INPUT_GET, 'rareOp', FILTER_SANITIZE_STRING):'';
 $exact = isset($_GET['exact']) ? 'yes' : '';
 $allprintings = isset($_GET['allprintings']) ? 'yes' : '';
-if ((isset($_GET['set'])) AND ( is_array($_GET['set']))):
-    $selectedSets = filter_var_array($_GET['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+if ((isset($_GET['set'])) and (is_array($_GET['set']))) :
+    $selectedSets = filter_var_array(
+        $_GET['set'],
+        FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        FILTER_FLAG_NO_ENCODE_QUOTES
+    );
 endif;
-$valid_sortBy = array("name","price","cmc","cmcdown","set","setdown","setnumberdown","powerup","powerdown","toughup","toughdown","auto");
+$valid_sortBy = array(
+    "name",
+    "price",
+    "cmc",
+    "cmcdown",
+    "set",
+    "setdown",
+    "setnumberdown",
+    "powerup",
+    "powerdown",
+    "toughup",
+    "toughdown",
+    "auto"
+);
 $sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
-if (!in_array($sortBy,$valid_sortBy)):
+if (!in_array($sortBy, $valid_sortBy)) :
     $sortBy = '';
 endif;
 $valid_operator = ["ltn", "gtr", "eq"];
 $poweroperator = isset($_GET['poweroperator']) ? "{$_GET['poweroperator']}" : '';
-if (!in_array($poweroperator,$valid_operator, true)):
+if (!in_array($poweroperator, $valid_operator, true)) :
     $poweroperator = '';
 endif;
 $toughoperator = isset($_GET['toughoperator']) ? "{$_GET['toughoperator']}" : '';
-if (!in_array($toughoperator,$valid_operator, true)):
+if (!in_array($toughoperator, $valid_operator, true)) :
     $toughoperator = '';
 endif;
 $loyaltyoperator = isset($_GET['loyaltyoperator']) ? "{$_GET['loyaltyoperator']}" : '';
-if (!in_array($loyaltyoperator,$valid_operator, true)):
+if (!in_array($loyaltyoperator, $valid_operator, true)) :
     $loyaltyoperator = '';
 endif;
 $cmcoperator = isset($_GET['cmcoperator']) ? "{$_GET['cmcoperator']}" : '';
-if (!in_array($cmcoperator,$valid_operator, true)):
+if (!in_array($cmcoperator, $valid_operator, true)) :
     $cmcoperator = '';
 endif;
 $collqtyoperator = $_GET['collQtyOp'] ?? '';
-if (!in_array($collqtyoperator, $valid_operator, true)):
+if (!in_array($collqtyoperator, $valid_operator, true)) :
     $collqtyoperator = '';
 endif;
-$cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT):'';
+$cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT) : '';
 $power = filter_input(INPUT_GET, 'power', FILTER_VALIDATE_INT, [
     'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
 ]);
@@ -253,19 +247,19 @@ $mytable = $user . "collection";
 $adv = isset($_GET['complex']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
 $valid_scope = array("all","mycollection","notcollection");
-if (!in_array($scope,$valid_scope)):
+if (!in_array($scope, $valid_scope)) :
     $scope = '';
 endif;
 $valid_legal = array("std","pnr","mdn","vin","lgc","alc","his");
 $legal = isset($_GET['legal']) ? "{$_GET['legal']}" : '';
-if (!in_array($legal,$valid_legal)):
+if (!in_array($legal, $valid_legal)) :
     $legal = '';
 endif;
 $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
 $searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
-if ($searchLang === 'all'):
+if ($searchLang === 'all') :
     $searchLang = 'all';
-elseif ($searchLang === 'default' || !in_array($searchLang,$search_langs_codes)):
+elseif ($searchLang === 'default' || !in_array($searchLang, $search_langs_codes)) :
     $searchLang = '';
 endif;
 
@@ -274,22 +268,22 @@ $tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
 $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
 
 $result = $db->query($tableExistsQuery);
-if ($result->num_rows == 0):
+if ($result->num_rows == 0) :
     $msg->logMessage('[NOTICE]', "No existing collection table...");
     $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
     $msg->logMessage('[DEBUG]', "Copying collection template...: $query2");
 
-    if ($db->query($query2) === TRUE):
+    if ($db->query($query2) === true) :
         $msg->logMessage('[NOTICE]', "Collection template copy successful");
-    else:
+    else :
         $msg->logMessage('[NOTICE]', "Collection template copy failed: " . $db->error);
     endif;
-else:
+else :
     $msg->logMessage('[DEBUG]', "Collection table exists");
 endif;
-    
+
 // More general query building:
-$selectAll = "SELECT 
+$selectAll = "SELECT
                 cards_scry.id as cs_id,
                 price,
                 price_foil,
@@ -327,47 +321,50 @@ $selectAll = "SELECT
                 WHERE ";
 $sorting = "LIMIT $start_from, $perpage";
 require('includes/criteria.php'); //Builds $criteria and assesses validity
-// If search is Mycollection / Sort By Price: 
+// If search is Mycollection / Sort By Price:
 // Update pricing in case any new cards have been added to collection
-if (($sortBy == 'price') AND ( $scope == 'mycollection')):
-    $msg->logMessage('[NOTICE]',"My Collection / Price query called, updating collection pricing");
-    $obj = new PriceManager($db,$logfile,$useremail);
+if (($sortBy == 'price') and ( $scope == 'mycollection')) :
+    $msg->logMessage('[NOTICE]', "My Collection / Price query called, updating collection pricing");
+    $obj = new PriceManager($db, $logfile, $useremail);
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
-if ( $scope == 'mycollection' OR $sortBy == 'price'): // Price search waives the limit
+if ($scope == 'mycollection' or $sortBy == 'price') : // Price search waives the limit
     $collectionsearch = true;
-else:
+else :
     $collectionsearch = false;
-endif;    
+endif;
 // Run the query
-if ($validsearch === "true"):
-    $msg->logMessage('[DEBUG]',"User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}");
-    $msg->logMessage('[DEBUG]',"with parameters: ".var_export($params, true));
+if ($validsearch === "true") :
+    $msg->logMessage('[DEBUG]', "User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}");
+    $msg->logMessage('[DEBUG]', "with parameters: " . var_export($params, true));
     // parameterised query has been built in criteria.php, proceed with it
-    if($result = $db->execute_query($query, $params)):
-        $msg->logMessage('[DEBUG]',"SQL query succeeded");
-        $queryQty = "SELECT COUNT(*) FROM cards_scry LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id WHERE ".$criteria;
-        $msg->logMessage('[DEBUG]',"User $useremail called count query $queryQty");
+    if ($result = $db->execute_query($query, $params)) :
+        $msg->logMessage('[DEBUG]', "SQL query succeeded");
+        $queryQty = "SELECT COUNT(*) FROM cards_scry
+                LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
+                WHERE " . $criteria;
+        $msg->logMessage('[DEBUG]', "User $useremail called count query $queryQty");
         // Execute the count query
-        if ($countResult = $db->execute_query($queryQty, $params)):
+        if ($countResult = $db->execute_query($queryQty, $params)) :
             $row = $countResult->fetch_row();
             $qtyresults = $row[0];
-            $msg->logMessage('[DEBUG]',"Query has $qtyresults results");
+            $msg->logMessage('[DEBUG]', "Query has $qtyresults results");
 
-            if ($qtyresults > $maxresults AND $collectionsearch == false):
+            if ($qtyresults > $maxresults and $collectionsearch == false) :
                 $validsearch = "toomany"; //variable set for header.php to display warning
             endif;
-        else:
-            trigger_error("[ERROR]".basename(__FILE__)." ".__LINE__.": SQL failure: " . $db->error, E_USER_ERROR);
+        else :
+            $error = "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error;
+            trigger_error($error, E_USER_ERROR);
         endif;
     endif;
-else:
+else :
     $msg->logMessage('[DEBUG]', "Not a valid search");
 endif;
 # query for page navigation
-if (isset($qtyresults)):
-    if ($qtyresults > ($page * $perpage)):
+if (isset($qtyresults)) :
+    if ($qtyresults > ($page * $perpage)) :
         $next = $page + 1;
     endif;
     // Work out number of results, and pages
@@ -383,7 +380,7 @@ endif;
 $getstringbulk = getStringParameters($_GET, 'layout', 'page');
 
 // Page layout starts here
-$msg->logMessage('[DEBUG]',"Loading page layout");
+$msg->logMessage('[DEBUG]', "Loading page layout");
 ?>
 <!DOCTYPE html>
 <html>
@@ -432,9 +429,17 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
         </script>
 
         <?php
-        if ((isset($qtyresults)) AND ( $qtyresults != 0)): //Only load these scripts if this is a results call
+        if ((isset($qtyresults)) and ($qtyresults != 0)) : //Only load these scripts if this is a results call
             // Only load IAS if results are more than a page-full per page type
-            if( ($layout == 'bulk' AND ( $qtyresults > $bulkperpage)) OR ($layout == 'list' AND ( $qtyresults > $listperpage)) OR ($layout == 'grid' AND ( $qtyresults > $gridperpage) AND (isset($validsearch) AND ($validsearch !== "toomany")))  ) :   
+            if (
+                ($layout == 'bulk' and ($qtyresults > $bulkperpage))
+                or ($layout == 'list' and ($qtyresults > $listperpage))
+                or (
+                    $layout == 'grid'
+                    and ($qtyresults > $gridperpage)
+                    and (isset($validsearch) and ($validsearch !== "toomany"))
+                )
+            ) :
                 // IAS will be needed ?>
                 <script src="/js/infinite-ajax-scroll.min.js"></script>
                 <script type="text/javascript">
@@ -469,9 +474,9 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                         history.replaceState(state, e.title, e.url);
                     });
                 });
-                </script>   
+                </script>
                 <?php
-            else: //Results > 0 but < a page, show the No More Results footer at the end ?>
+            else : //Results > 0 but < a page, show the No More Results footer at the end ?>
                 <script type="text/javascript">
                     $(document).ready(function () {
                         let el = document.querySelector('.ias-no-more');
@@ -494,8 +499,10 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 };
 
                 function getUrlVars(){
-                    var vars = [], hash; 
-                    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&'); // cut the URL string down to just everything after the ?, split this into an array with information like this: array [0] = "var=xxx"; array [1] = "var2=yyy";
+                    var vars = [], hash;
+                    var queryStart = window.location.href.indexOf('?') + 1;
+                    // Cut the URL to just everything after the ? and split into an array
+                    var hashes = window.location.href.slice(queryStart).split('&');
                     //loop through each item in that array
                     for(var i = 0; i < hashes.length; i++)
                     {   //split the item at the "="
@@ -509,22 +516,22 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                     return vars;
                 };
             </script> <?php
-            if(($layout == 'grid' || $layout == 'bulk') AND isset($validsearch) AND ($validsearch !== "toomany")):  
+            if (($layout == 'grid' || $layout == 'bulk') and isset($validsearch) and ($validsearch !== "toomany")) :
                 // Load ajax grid update JS ?>
                 <script src="/js/ajaxUpdate.js"></script> <?php
-            endif; 
-            if($layout == 'grid' AND isset($validsearch) AND ($validsearch !== "toomany")):  
-                $floating_button = true; 
+            endif;
+            if ($layout == 'grid' and isset($validsearch) and ($validsearch !== "toomany")) :
+                $floating_button = true;
                 // Load script to manage toggle of classes to show B&W (Collection View)?>
                 <script src="/js/cviewClassToggle.js"></script> <?php
-            endif; 
+            endif;
         endif;?>
     </head>
 
-    <body> <?php 
+    <body> <?php
         include_once("includes/analyticstracking.php");
         $getString = getStringParameters($_GET, 'page'); ?>
-        <div class="top"> <?php 
+        <div class="top"> <?php
             echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
         </div>
         <?php
@@ -532,7 +539,7 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
         require('includes/header.php');  //build header
         require('includes/menu.php'); //mobile menu
 
-        if ((isset($qtyresults)) AND ( $qtyresults != 0)) : //Display Bulk / List / Grid menus and results header row
+        if ((isset($qtyresults)) and ( $qtyresults != 0)) : //Display Bulk / List / Grid menus and results header row
             if ($layout == 'bulk') :
                 require('includes/bulkmenus.php');
             elseif ($layout == 'list') :
@@ -540,12 +547,13 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
             elseif ($layout == 'grid') :
                 require('includes/gridmenus.php');
             endif;
-        else: ?>
+        else : ?>
             <script>
                 // Function to toggle the visibility of the info box
                 function toggleInfoBox() {
                     var infoBox = document.getElementById("infoBox");
-                    infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "") ? "block" : "none";
+                    var isHidden = (infoBox.style.display === "none" || infoBox.style.display === "");
+                    infoBox.style.display = isHidden ? "block" : "none";
                 }
             </script>
 
@@ -576,7 +584,7 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                     Use the language drop-down to search for other languages.
                     <br>
                     <br><b>Advanced search</b><br>
-                    [ ] shortcut patterns will work in the main search to search with a name, or ability, etc., e.g. 
+                    [ ] shortcut patterns will work in the main search to search with a name, or ability, etc., e.g.
                     selecting Ability search and:<br>
                     <br>
                     &nbsp;&nbsp;&nbsp;&nbsp;<i>Haste [m13]</i>
@@ -590,196 +598,247 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
             </div> <?php
         endif;
         ?>
-        <div id='page'> 
+        <div id='page'>
             <span id="printtitle" class="headername">
                 <img src="images/white_m.png"><?php echo $siteTitle;?>
             </span>
             <?php
-            if ((isset($qtyresults)) AND ( $qtyresults != 0)):
+            if ((isset($qtyresults)) and ( $qtyresults != 0)) :
                 if ($layout == 'bulk') : ?>
                     <div id="resultsgrid" class='wrap'>
                         <?php
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)): //$row now contains all card info
-                            $msg->logMessage('[DEBUG]',"Current card: {$row['cs_id']}");
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : //$row now contains all card info
+                            $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']}");
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            if(isset($row['finishes'])):
-                                $finishes = json_decode($row['finishes'], TRUE);
+                            if (isset($row['finishes'])) :
+                                $finishes = json_decode($row['finishes'], true);
                                 $cardtypes = cardtypes($finishes);
-                            else:
+                            else :
                                 $finishes = null;
                                 $cardtypes = 'none';
                             endif;
-                            $msg->logMessage('[DEBUG]',"Current card: {$row['cs_id']} is $cardtypes");
-                            if (strpos($row['game_types'], 'paper') == false):
+                            $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']} is $cardtypes");
+                            if (strpos($row['game_types'], 'paper') == false) :
                                 $not_paper = true;
-                            else:
+                            else :
                                 $not_paper = false;
                             endif;
                             $uppercasesetcode = strtoupper($setcode);
-                            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                            if (
+                                ($row['p1_component'] === 'meld_result' and $row['p1_name'] === $row['name'])
+                                or ($row['p2_component'] === 'meld_result' and $row['p2_name'] === $row['name'])
+                                or ($row['p3_component'] === 'meld_result' and $row['p3_name'] === $row['name'])
+                            ) :
                                 $meld = 'meld_result';
-                            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                            elseif (
+                                $row['p1_component'] === 'meld_part'
+                                or $row['p2_component'] === 'meld_part'
+                                or $row['p2_component'] === 'meld_part'
+                            ) :
                                 $meld = 'meld_part';
-                            else:
+                            else :
                                 $meld = '';
                             endif;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
-                            if (empty($row['normal'])):
+                            if (empty($row['normal'])) :
                                 $myqty = 0;
-                            else:
+                            else :
                                 $myqty = $row['normal'];
                             endif;
-                            if (empty($row['foil'])):
+                            if (empty($row['foil'])) :
                                 $myfoil = 0;
-                            else:
+                            else :
                                 $myfoil = $row['foil'];
                             endif;
-                            if (empty($row['etched'])):
+                            if (empty($row['etched'])) :
                                 $myetch = 0;
-                            else:
+                            else :
                                 $myetch = $row['etched'];
                             endif;
-                            if(($myqty + $myfoil + $myetch) > 0):
+                            if (($myqty + $myfoil + $myetch) > 0) :
                                 $in_collection = ' in_collection';
-                            else:
+                            else :
                                 $in_collection = '';
                             endif;
                             ?>
                             <div class='gridbox gridboxbulk item'><?php
-                                if(stristr($row['name'],' // ') !== false):
-                                    $bulkname = substr($row['name'], 0, strpos($row['name'], " // "))." //...";
-                                else:
+                            if (stristr($row['name'], ' // ') !== false) :
+                                $bulkname = substr($row['name'], 0, strpos($row['name'], " // ")) . " //...";
+                            else :
                                     $bulkname = $row['name'];
-                                endif;
-                                if(strlen($bulkname) > 17):
-                                    $bulkname = substr($bulkname,0,17)."...";
-                                endif;
+                            endif;
+                            if (strlen($bulkname) > 17) :
+                                $bulkname = substr($bulkname, 0, 17) . "...";
+                            endif;
                                 $displayName = htmlspecialchars($row['name'], ENT_QUOTES, 'UTF-8');
                                 $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
                                 $csId = htmlspecialchars($row['cs_id'], ENT_QUOTES, 'UTF-8');
-                                echo "&nbsp;&nbsp;<a title='$displayName ($displayLang)' class='gridlinkbulk' href='/carddetail.php?id=$csId' tabindex='-1'>{$uppercasesetcode} {$row['number']} $bulkname ($displayLang)</a>";
-                                $cellid = "cell".$scryid;
-                                $cellid_one = $cellid.'_one';
-                                $cellid_two = $cellid.'_two';
-                                $cellid_three = $cellid.'_three';
+                                $gridLink = "&nbsp;&nbsp;<a title='$displayName ($displayLang)' class='gridlinkbulk' "
+                                    . "href='/carddetail.php?id=$csId' tabindex='-1'>"
+                                    . "{$uppercasesetcode} {$row['number']} $bulkname ($displayLang)</a>";
+                                echo $gridLink;
+                                $cellid = "cell" . $scryid;
+                                $cellid_one = $cellid . '_one';
+                                $cellid_two = $cellid . '_two';
+                                $cellid_three = $cellid . '_three';
                                 $cellid_one_flash = $cellid_one;
                                 $cellid_two_flash = $cellid_two;
                                 $cellid_three_flash = $cellid_three;
-                                ?>
+                            ?>
                                 <table class='bulksubmittable'>
                                     <tr class='bulksubmitrow'>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_one"; ?>">
                                             <?php
-                                            if($meld === 'meld_result'):
+                                            if ($meld === 'meld_result') :
                                                 echo "Meld card";
-                                            elseif ($not_paper == true):
+                                            elseif ($not_paper == true) :
                                                 echo "<i>MtG Arena/Online</i>";
-                                            elseif ($cardtypes === 'foilonly'):
+                                            elseif ($cardtypes === 'foilonly') :
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $foilInput = "Foil: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            elseif ($cardtypes === 'etchedonly'):
+                                            elseif ($cardtypes === 'etchedonly') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 $poststring = 'newqty';
-                                                echo "Normal: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $qtyInput = "Normal: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myqty' value='$myqty' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $qtyInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif;?>
                                         </td>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_two"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_two"; ?>">
                                             <?php
-                                            if($meld === 'meld_result'):
+                                            if ($meld === 'meld_result') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'foilonly'):
+                                            elseif ($cardtypes === 'foilonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normalonly'):
+                                            elseif ($cardtypes === 'normalonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'etchedonly'):
+                                            elseif ($cardtypes === 'etchedonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normaletched'):
+                                            elseif ($cardtypes === 'normaletched') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_two' "
+                                                    . "type='number' step='1' min='0' name='myetch' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\","
+                                                    . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                $foilInput = "Foil: <input class='bulkinput' id='$cellid_two' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\","
+                                                    . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif;?>
                                         </td>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_three"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_three"; ?>">
                                             <?php
-                                            if ($cardtypes === 'normalfoiletched'):
+                                            if ($cardtypes === 'normalfoiletched') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_three' "
+                                                    . "type='number' step='1' min='0' name='myetch' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\","
+                                                    . "\"$cellid_three_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 echo "&nbsp;";
                                             endif;?>
                                         </td>
                                     </tr>
                                 </table>
-                            </div> <?php 
+                            </div> <?php
                         endwhile; ?>
                         <div class="ias-no-more">NO MORE RESULTS
                         </div>
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING">
                         </div>
                         <!--page navigation--> <?php
-                        if (isset($next)):
+                        if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
-                            </div> <?php 
-                        endif ?>
+                            <div class="pagination">
+                                <?php
+                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
+                                echo $nextLink;
+                                ?>
+                            </div>
+                        <?php endif ?>
                         <table class='bottompad'>
                             <tr>
                                 <td>
                                     &nbsp;
                                 </td>
                             </tr>
-                        </table>    
+                        </table>
                     </div> <?php
-                elseif ($layout == 'list'):?>
+                elseif ($layout == 'list') :?>
                     <div id='results' class='wrap'>
                         <?php
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)) : 
-                            $msg->logMessage('[DEBUG]',"Current card: {$row['cs_id']}");
-                            $scryid = $row['cs_id']; ?>
-                            <div class='item' style="cursor: pointer;" onclick="location.href='carddetail.php?id=<?php echo $scryid;?>';">
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) :
+                            $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']}");
+                            $scryid = $row['cs_id'];
+                            $cardUrl = "carddetail.php?id=$scryid";
+                            $onclick = "location.href='" . $cardUrl . "';"; ?>
+                            <div class='item' style="cursor: pointer;" onclick="<?php echo $onclick; ?>">
                                 <table> <?php
-                                    $msg->logMessage('[DEBUG]',"Current card: $scryid");
+                                    $msg->logMessage('[DEBUG]', "Current card: $scryid");
                                     $setcode = strtolower($row['setcode']);
                                     $uppercasesetcode = strtoupper($setcode);
                                     $scryid = $row['cs_id'];
-                                    if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
-                                        $meld = 'meld_result';
-                                    elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
-                                        $meld = 'meld_part';
-                                    else:
-                                        $meld = '';
-                                    endif;
-                                    if(strlen($row['name']) > 14):
-                                        $listname = substr($row['name'],0,14)."...";
-                                    else:
-                                        $listname = $row['name'];
-                                    endif;
+                                if (
+                                    ($row['p1_component'] === 'meld_result' and $row['p1_name'] === $row['name'])
+                                    or ($row['p2_component'] === 'meld_result' and $row['p2_name'] === $row['name'])
+                                    or ($row['p3_component'] === 'meld_result' and $row['p3_name'] === $row['name'])
+                                ) :
+                                    $meld = 'meld_result';
+                                elseif (
+                                    $row['p1_component'] === 'meld_part'
+                                    or $row['p2_component'] === 'meld_part'
+                                    or $row['p2_component'] === 'meld_part'
+                                ) :
+                                    $meld = 'meld_part';
+                                else :
+                                    $meld = '';
+                                endif;
+                                if (strlen($row['name']) > 14) :
+                                    $listname = substr($row['name'], 0, 14) . "...";
+                                else :
+                                    $listname = $row['name'];
+                                endif;
                                     $displayName = htmlspecialchars($row['name'], ENT_QUOTES, 'UTF-8');
                                     $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
                                     $csId = htmlspecialchars($row['cs_id'], ENT_QUOTES, 'UTF-8');
-                                    ?>
+                                ?>
                                     <tr class='resultsrow'>
-                                        <td title='<?php echo "$displayName ($displayLang)" ?>' class="valuename"> <?php echo "$listname ($displayLang)"; ?> </td>    
-                                            <?php
-                                            if(isset($row['manacost']) AND !empty($row['manacost'])):
-                                                $manac = symbolreplace($row['manacost']);
-                                            else:
-                                                $manac = NULL;
-                                            endif;
-                                            ?>
+                                <td title='<?php echo "$displayName ($displayLang)" ?>' class="valuename">
+                                    <?php echo "$listname ($displayLang)"; ?>
+                                </td>
+                                <?php
+                                if (isset($row['manacost']) and !empty($row['manacost'])) :
+                                    $manac = symbolreplace($row['manacost']);
+                                else :
+                                    $manac = null;
+                                endif;
+                                ?>
                                         <td class="valuerarity"> <?php echo ucfirst($row['rarity']); ?> </td>
                                         <td class="valueset"> <?php echo $row['set_name']; ?> </td>
                                         <td class="valuetype"> <?php echo $row['type']; ?> </td>
@@ -790,26 +849,30 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                                             echo $row['normal'] + $row['foil'] + $row['etched'];
                                             ?>
                                         </td>
-                                        <td class="valueabilities"> 
+                                        <td class="valueabilities">
                                             <?php
-                                            if(isset($row['ability']) AND !empty($row['ability'])):
+                                            if (isset($row['ability']) and !empty($row['ability'])) :
                                                 $ability = symbolreplace($row['ability']);
                                                 echo $ability;
                                             endif;
-                                            ?> 
+                                            ?>
                                         </td>
                                     </tr>
                                 </table>
                             </div>
-                  <?php endwhile; ?>
+                        <?php endwhile; ?>
                         <div class="ias-no-more">NO MORE RESULTS</div>
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
-                        if (isset($next)):
+                        if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
+                            <div class="pagination">
+                                <?php
+                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
+                                echo $nextLink;
+                                ?>
                             </div>
                         <?php endif ?>
                         <table class='bottompad'>
@@ -818,8 +881,8 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                                     &nbsp;
                                 </td>
                             </tr>
-                        </table>    
-                    </div> <?php 
+                        </table>
+                    </div> <?php
                 elseif ($layout == 'grid') :?>
                     <script type="text/javascript">
                         function swapImage(img_id, card_id, imageurl, imagebackurl) {
@@ -858,185 +921,238 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         $x = 1;
-                        while ($row = $result->fetch_array(MYSQLI_BOTH)): 
-                            $flipbutton = $row['cs_id']."flip";
-                            $img_id = $row['cs_id']."img";
+                        while ($row = $result->fetch_array(MYSQLI_BOTH)) :
+                            $flipbutton = $row['cs_id'] . "flip";
+                            $img_id = $row['cs_id'] . "img";
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
-                            if(isset($row['finishes'])):
-                                $finishes = json_decode($row['finishes'], TRUE);
+                            if (isset($row['finishes'])) :
+                                $finishes = json_decode($row['finishes'], true);
                                 $cardtypes = cardtypes($finishes);
-                            else:
+                            else :
                                 $finishes = null;
                                 $cardtypes = 'none';
                             endif;
-                            $msg->logMessage('[DEBUG]',"Current card: {$row['cs_id']} is $cardtypes");
-                            if (strpos($row['game_types'], 'paper') == false):
+                            $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']} is $cardtypes");
+                            if (strpos($row['game_types'], 'paper') == false) :
                                 $not_paper = true;
-                            else:
+                            else :
                                 $not_paper = false;
                             endif;
                             $uppercasesetcode = strtoupper($setcode);
-                            if(($row['p1_component'] === 'meld_result' AND $row['p1_name'] === $row['name']) OR ($row['p2_component'] === 'meld_result' AND $row['p2_name'] === $row['name']) OR ($row['p3_component'] === 'meld_result' AND $row['p3_name'] === $row['name'])):
+                            if (
+                                ($row['p1_component'] === 'meld_result' and $row['p1_name'] === $row['name'])
+                                or ($row['p2_component'] === 'meld_result' and $row['p2_name'] === $row['name'])
+                                or ($row['p3_component'] === 'meld_result' and $row['p3_name'] === $row['name'])
+                            ) :
                                 $meld = 'meld_result';
-                            elseif($row['p1_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part' OR $row['p2_component'] === 'meld_part'):
+                            elseif (
+                                $row['p1_component'] === 'meld_part'
+                                or $row['p2_component'] === 'meld_part'
+                                or $row['p2_component'] === 'meld_part'
+                            ) :
                                 $meld = 'meld_part';
-                            else:
+                            else :
                                 $meld = '';
                             endif;
                             $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
-                            $imagefunction = $imageManager->getImage($setcode,$row['cs_id'],$ImgLocation,$row['layout'],$two_card_detail_sections);
-                            if($imagefunction['front'] == 'error'):
+                            $imagefunction = $imageManager->getImage(
+                                $setcode,
+                                $row['cs_id'],
+                                $ImgLocation,
+                                $row['layout'],
+                                $two_card_detail_sections
+                            );
+                            if ($imagefunction['front'] == 'error') :
                                 $imageurl = '/cardimg/back.jpg';
-                            else:
+                            else :
                                 $imageurl = $imagefunction['front'];
                             endif;
                             //If page is being loaded by admin, don't cache the image
-                            if(($admin == 1) AND ($imageurl !== '/cardimg/back.jpg')):
-                                $msg->logMessage('[DEBUG]',"Admin loading, don't cache image");
-                                $imageurl = $imageurl.'?='.$time;
+                            if (($admin == 1) and ($imageurl !== '/cardimg/back.jpg')) :
+                                $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
+                                $imageurl = $imageurl . '?=' . $time;
                             endif;
-                            if(!is_null($imagefunction['back'])):
-                                if($imagefunction['back'] === 'error' OR $imagefunction['back'] === 'error'):
+                            if (!is_null($imagefunction['back'])) :
+                                if ($imagefunction['back'] === 'error' or $imagefunction['back'] === 'error') :
                                     $imagebackurl = '/cardimg/back.jpg';
-                                else:
-                                    $imagebackurl = $imagefunction['back']."?$time";
+                                else :
+                                    $imagebackurl = $imagefunction['back'] . "?$time";
                                 endif;
                             endif;
                             // If the current record has null fields set the variables to 0 so updates
                             // from the Grid work.
-                            // if (!isset($_POST["update"])) :    
-                            if (empty($row['normal'])):
+                            // if (!isset($_POST["update"])) :
+                            if (empty($row['normal'])) :
                                 $myqty = 0;
-                            else:
+                            else :
                                 $myqty = $row['normal'];
                             endif;
-                            if (empty($row['foil'])):
+                            if (empty($row['foil'])) :
                                 $myfoil = 0;
-                            else:
+                            else :
                                 $myfoil = $row['foil'];
                             endif;
-                            if (empty($row['etched'])):
+                            if (empty($row['etched'])) :
                                 $myetch = 0;
-                            else:
+                            else :
                                 $myetch = $row['etched'];
                             endif;
                             $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
-                                    
-                            $msg->logMessage('[DEBUG]',"Collection view is $collection_view");
-                            if(($myqty + $myfoil + $myetch) == 0 AND $collection_view == 1):
+
+                            $msg->logMessage('[DEBUG]', "Collection view is $collection_view");
+                            if (($myqty + $myfoil + $myetch) == 0 and $collection_view == 1) :
                                 $in_collection = ' none no_collection';
-                            elseif(($myqty + $myfoil + $myetch) == 0):
+                            elseif (($myqty + $myfoil + $myetch) == 0) :
                                 $in_collection = ' none';
-                            elseif(($myqty + $myfoil + $myetch) > 0 AND $collection_view == 1):
+                            elseif (($myqty + $myfoil + $myetch) > 0 and $collection_view == 1) :
                                 $in_collection = '';
-                            else:
+                            else :
                                 $in_collection = '';
                             endif;
                             ?>
                             <div class='gridbox item'>
                                 <?php
-                                $msg->logMessage('[DEBUG]',"$imageurl");
-                                if(in_array($row['layout'],$flip_button_cards)):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\",\"{$imageurl}\",\"{$imagebackurl}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
-                                elseif($row['layout'] === 'flip'):
-                                    echo "<div style='cursor: pointer;' class='flipbutton' onclick=rotateImg(\"{$img_id}\")><span class='material-symbols-outlined refresh'>refresh</span></div>";
+                                $msg->logMessage('[DEBUG]', "$imageurl");
+                                if (in_array($row['layout'], $flip_button_cards)) :
+                                    $flipButton = "<div style='cursor: pointer;' class='flipbutton' "
+                                        . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
+                                        . "\"{$imageurl}\",\"{$imagebackurl}\")>"
+                                        . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
+                                    echo $flipButton;
+                                elseif ($row['layout'] === 'flip') :
+                                    $flipButton = "<div style='cursor: pointer;' class='flipbutton' "
+                                        . "onclick=rotateImg(\"{$img_id}\")>"
+                                        . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
+                                    echo $flipButton;
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
                                 $number_import = $row['number_import'];
-                                echo "<a class='gridlink' href='/carddetail.php?id=$scryid'><img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) no. $number_import' class='card-image cardimg$in_collection' alt='$scryid' src='$imageurl'></a>";
-                                $cellid = "cell".$scryid;
-                                $cellid_one = $cellid.'_one';
-                                $cellid_two = $cellid.'_two';
-                                $cellid_three = $cellid.'_three';
+                                $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
+                                    . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
+                                    . "no. $number_import' class='card-image cardimg$in_collection' "
+                                    . "alt='$scryid' src='$imageurl'></a>";
+                                echo $gridLink;
+                                $cellid = "cell" . $scryid;
+                                $cellid_one = $cellid . '_one';
+                                $cellid_two = $cellid . '_two';
+                                $cellid_three = $cellid . '_three';
                                 $cellid_one_flash = $cellid_one;
                                 $cellid_two_flash = $cellid_two;
                                 $cellid_three_flash = $cellid_three;
                                 ?>
                                 <table class='bulksubmittable'>
                                     <tr class='bulksubmitrow'>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_one"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_one"; ?>">
                                             <?php
-                                            if($meld === 'meld_result'):
+                                            if ($meld === 'meld_result') :
                                                 echo "Meld card";
-                                            elseif ($not_paper == true):
+                                            elseif ($not_paper == true) :
                                                 echo "<i>MtG Arena/Online</i>";
-                                            elseif ($cardtypes === 'foilonly'):
+                                            elseif ($cardtypes === 'foilonly') :
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $foilInput = "Foil: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            elseif ($cardtypes === 'etchedonly'):
+                                            elseif ($cardtypes === 'etchedonly') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myfoil' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 $poststring = 'newqty';
-                                                echo "Normal: <input class='bulkinput' id='$cellid_one' type='number' step='1' min='0' name='myqty' value='$myqty' onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                                $qtyInput = "Normal: <input class='bulkinput' id='$cellid_one' "
+                                                    . "type='number' step='1' min='0' name='myqty' value='$myqty' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\","
+                                                    . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                echo $qtyInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif;?>
                                         </td>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_two"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_two"; ?>">
                                             <?php
-                                            if($meld === 'meld_result'):
+                                            if ($meld === 'meld_result') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'foilonly'):
+                                            elseif ($cardtypes === 'foilonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normalonly'):
+                                            elseif ($cardtypes === 'normalonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'etchedonly'):
+                                            elseif ($cardtypes === 'etchedonly') :
                                                 echo "&nbsp;";
-                                            elseif ($cardtypes === 'normaletched'):
+                                            elseif ($cardtypes === 'normaletched') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_two' "
+                                                    . "type='number' step='1' min='0' name='myetch' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\","
+                                                    . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 $poststring = 'newfoil';
-                                                echo "Foil: <input class='bulkinput' id='$cellid_two' type='number' step='1' min='0' name='myfoil' value='$myfoil' onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                                $foilInput = "Foil: <input class='bulkinput' id='$cellid_two' "
+                                                    . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\","
+                                                    . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             endif;?>
                                         </td>
-                                        <td class='bulksubmittd' id="<?php echo $cellid."td_three"; ?>">
+                                        <td class='bulksubmittd' id="<?php echo $cellid . "td_three"; ?>">
                                             <?php
-                                            if ($cardtypes === 'normalfoiletched'):
+                                            if ($cardtypes === 'normalfoiletched') :
                                                 $poststring = 'newetch';
-                                                echo "Etch: <input class='bulkinput' id='$cellid_three' type='number' step='1' min='0' name='myetch' value='$myetch' onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                                $etchInput = "Etch: <input class='bulkinput' id='$cellid_three' "
+                                                    . "type='number' step='1' min='0' name='myetch' value='$myetch' "
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\","
+                                                    . "\"$cellid_three_flash\",\"$poststring\");'>";
+                                                echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
-                                            else:
+                                            else :
                                                 echo "&nbsp;";
                                             endif;?>
                                         </td>
                                     </tr>
                                 </table>
-                            </div>    
-                  <?php endwhile; ?>
+                            </div>
+                        <?php endwhile; ?>
                         <div class="ias-no-more">NO MORE RESULTS</div>
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
-                        if (isset($next)):
+                        if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
                             ?>
-                            <div class="pagination"> <?php echo "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>"; ?>
+                            <div class="pagination">
+                                <?php
+                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
+                                echo $nextLink;
+                                ?>
                             </div>
-                  <?php endif ?>
+                        <?php endif ?>
                         <table class='bottompad'>
                             <tr>
                                 <td>
                                     &nbsp;
                                 </td>
                             </tr>
-                        </table>    
+                        </table>
                     </div>
                     <?php
                 endif;
             else :
-                $msg->logMessage('[DEBUG]',"Loading search layout");
+                $msg->logMessage('[DEBUG]', "Loading search layout");
                 require('includes/search.php');
             endif;
             ?>
-        </div> <?php 
-        require('includes/footer.php'); 
-        $msg->logMessage('[DEBUG]',"Finished");?>
+        </div> <?php
+        require('includes/footer.php');
+        $msg->logMessage('[DEBUG]', "Finished");?>
         <script>
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', function() {
@@ -1083,9 +1199,14 @@ $msg->logMessage('[DEBUG]',"Loading page layout");
                 updateVisibility();
                 function updateCollQtyState() {
                     if ($('input[name="scope"]:checked').val() === "mycollection") {
-                        $('#collqtyspan select').prop('disabled', false).removeClass('disabled');
+                        $('#collqtyspan select')
+                            .prop('disabled', false)
+                            .removeClass('disabled');
                     } else {
-                        $('#collqtyspan select').prop('disabled', true).val("").addClass('disabled'); // Clear selection and disable
+                        $('#collqtyspan select')
+                            .prop('disabled', true)
+                            .val("")
+                            .addClass('disabled'); // Clear selection and disable
                     }
                 }
 
