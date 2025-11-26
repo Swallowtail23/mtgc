@@ -1,78 +1,71 @@
 <?php
-/* Version:     5.2
-    Date:       09/12/24
-    Name:       ini.php
-    Purpose:    PHP script to manage error routines, logging and setup global variables/arrays
-    Notes:      {none}
- *
+
+/*
+Version:     5.3
+Date:        26/11/25
+Name:        ini.php
+Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
     1.0         Initial version
- * 
- *  2.0
- *              Add card variable types for centralisation of card types.
- *  2.1
- *              27/11/23
- *              Added fx variables from ini file
- *  
- *  3.0         17/12/23
- *              Added local fx currency array
- * 
- *  4.0         02/01/24
- *              Add language arrays
- * 
- *  5.0         13/01/24
- *              Add PHPMailer variables
- * 
- *  5.1         07/07/24
- *              Add array for cards with brackets in names
- * 
- *  5.2         09/12/24
- *              Move tribal here from index page
+    2.0         Add card variable types for centralisation of card types
+    2.1 27/11/23 Added fx variables from ini file
+    3.0 17/12/23 Added local fx currency array
+    4.0 02/01/24 Add language arrays
+    5.0 13/01/24 Add PHPMailer variables
+    5.1 07/07/24 Add array for cards with brackets in names
+    5.2 09/12/24 Move tribal here from index page
+    5.3 26/11/25 Standard tidy-up
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 
 $status = session_status();
-if($status == PHP_SESSION_NONE):
+if ($status == PHP_SESSION_NONE) :
     //There is no active session
-    if (file_exists('sessionname.php')):
-        require('sessionname.php');
-    else:
-        require('sessionname_template.php');
+    if (file_exists('sessionname.php')) :
+        require 'sessionname.php';
+    else :
+        require 'sessionname_template.php';
     endif;
     startCustomSession();
 endif;
 
-//Disable MTGPrice functionality
+// Disable MTGPrice functionality
 $mtgprice = false;
-                                
-//  Class autoloading
-/// Composer
+
+// Class autoloading
+// Composer
 $root = realpath($_SERVER["DOCUMENT_ROOT"]);
 require_once "$root/vendor/autoload.php";
-/// Other classes
+// Other classes
 function autoLoader($class_name)
 {
     $class_name_lwr = strtolower($class_name);
-    if (file_exists($_SERVER["DOCUMENT_ROOT"].'/classes/'.$class_name_lwr.'.class.php')):
-        include $_SERVER["DOCUMENT_ROOT"].'/classes/'.$class_name_lwr.'.class.php';
+    if (file_exists($_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php')) :
+        include $_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php';
     endif;
-};
+}
 spl_autoload_register('autoLoader');
 
-//Set error reporting based on ini file's dev setting
+// Set error reporting based on ini file's dev setting
 $ini = new INI("/opt/mtg/mtg_new.ini");
 $ini_array = $ini->data;
 $myURL = $ini_array['general']['URL'];
 $siteTitle = $ini_array['general']['title'];
 $fxAPI = $ini_array['fx']['FreecurrencyAPI'];
 $fxLocal = $ini_array['fx']['TargetCurrency'];
-if($ini_array['general']['tier'] === 'dev'):
+if ($ini_array['general']['tier'] === 'dev') :
     $tier = 'dev';
     error_reporting(E_ALL);
     // Dummy Turnstile test keys:
-    
+
     // Client side:
 
     // $turnstile_site_key = '1x00000000000000000000AA';  // Always pass visible
@@ -82,26 +75,26 @@ if($ini_array['general']['tier'] === 'dev'):
     // $turnstile_site_key = '3x00000000000000000000FF';  // Use to simulate interactive request
 
     // Server side:
-       
-       $turnstile_secret_key='1x0000000000000000000000000000000AA'; // Always pass
+
+    $turnstile_secret_key = '1x0000000000000000000000000000000AA'; // Always pass
     // $turnstile_secret_key='2x0000000000000000000000000000000AA'; // Always fail
     // $turnstile_secret_key='3x0000000000000000000000000000000AA'; // Generates token spent error
-elseif($ini_array['general']['tier'] === 'prod'):
+elseif ($ini_array['general']['tier'] === 'prod') :
     $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE);    
+    error_reporting(E_ALL & ~E_NOTICE);
     $turnstile_site_key = $ini_array['security']['Turnstile_site_key'];
     $turnstile_secret_key = $ini_array['security']['Turnstile_secret_key'];
-else:
+else :
     $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE); 
+    error_reporting(E_ALL & ~E_NOTICE);
     $turnstile_site_key = $ini_array['security']['Turnstile_site_key'];
     $turnstile_secret_key = $ini_array['security']['Turnstile_secret_key'];
 endif;
 
 // Enable Turnstile
-if($ini_array['security']['Turnstile'] !== 'enabled'):
+if ($ini_array['security']['Turnstile'] !== 'enabled') :
     $turnstile = 0;
-else:
+else :
     $turnstile = 1;
 endif;
 
@@ -109,20 +102,20 @@ endif;
 $trustDuration = $ini_array['security']['TrustDuration'];
 
 // Enable Disqus card commenting
-if($ini_array['comments']['Disqus'] !== 'enabled'):
+if ($ini_array['comments']['Disqus'] !== 'enabled') :
     $disqus = 0;
     $disqusDev = '';
     $disqusProd = '';
-else:
+else :
     $disqus = 1;
     $disqusDev = $ini_array['comments']['DisqusDevURL'];
     $disqusProd = $ini_array['comments']['DisqusProdURL'];
 endif;
 
 //Admin IP
-if($ini_array['security']['AdminIP'] === ''):
+if ($ini_array['security']['AdminIP'] === '') :
     $adminip = 1;
-else:
+else :
     $adminip = $ini_array['security']['AdminIP'];
 endif;
 
@@ -131,16 +124,16 @@ $loglevelini = $ini_array['general']['Loglevel'];
 
 //Email settings (PHPMailer, see https://github.com/PHPMailer/PHPMailer
 //Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $ini_array['general']['Loglevel'] = 3
-$smtpParameters =   [
-                    'SMTPDebug' => $ini_array['email']['SMTPDebug'],
-                    'SMTPHost' => $ini_array['email']['Host'],
-                    'SMTPAuth' => $ini_array['email']['SMTPAuth'],
-                    'SMTPUsername' => $ini_array['email']['Username'],
-                    'SMTPPassword' => $ini_array['email']['Password'],
-                    'SMTPSecure' => $ini_array['email']['SMTPSecure'],
-                    'SMTPPort' => $ini_array['email']['Port'],
-                    'globalDebug' => $loglevelini
-                    ];
+$smtpParameters = [
+    'SMTPDebug' => $ini_array['email']['SMTPDebug'],
+    'SMTPHost' => $ini_array['email']['Host'],
+    'SMTPAuth' => $ini_array['email']['SMTPAuth'],
+    'SMTPUsername' => $ini_array['email']['Username'],
+    'SMTPPassword' => $ini_array['email']['Password'],
+    'SMTPSecure' => $ini_array['email']['SMTPSecure'],
+    'SMTPPort' => $ini_array['email']['Port'],
+    'globalDebug' => $loglevelini
+];
 
 //Email addresses
 $adminemail = $ini_array['email']['AdminEmail'];
@@ -155,19 +148,24 @@ $ImgLocation = $ini_array['general']['ImgLocation'];
 //Location settings
 date_default_timezone_set($ini_array['general']['Timezone']);
 $localeini = $ini_array['general']['Locale'];
-setlocale(LC_MONETARY,$localeini);  //used to display $ values
+setlocale(LC_MONETARY, $localeini);  //used to display $ values
 
 //Logfile check
 $logfile = $ini_array['general']['Logfile'];
-if (($fd = fopen($logfile, "a")) === false):
+if (($fd = fopen($logfile, "a")) === false) :
     openlog("MTG", LOG_NDELAY, LOG_USER);
-    syslog(LOG_ERR, "[MTG-DEBUG] Ini.php: Can't write to MTG log file ($logfile) - check path and permissions. Falling back to syslog.");
+    syslog(
+        LOG_ERR,
+        "[MTG-DEBUG] Ini.php: Can't write to MTG log file ($logfile) "
+        . "- check path and permissions. Falling back to syslog."
+    );
     closelog();
     $logfile = 0;
-elseif($loglevelini === '3' AND ($fd = fopen($logfile, "a")) !== false):
-    $msg = "[DEBUG] Ini.php (direct write to logfile) ({$_SERVER['PHP_SELF']}): Successfully checked logfile access to $logfile";
-    $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
-    fclose($fd); 
+elseif ($loglevelini === '3' and ($fd = fopen($logfile, "a")) !== false) :
+    $msg = "[DEBUG] Ini.php (direct write to logfile) ({$_SERVER['PHP_SELF']}): "
+         . "Successfully checked logfile access to $logfile";
+    $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
+    fclose($fd);
 endif;
 
 //Copyright string
@@ -176,38 +174,38 @@ $copyright = $ini_array['general']['Copyright'];
 //DB connect
 define('DB_HOST', $ini_array['database']['DBServer']);  //host
 define('DB_USER', $ini_array['database']['DBUser']);    // db username
-define('DB_PASS', $ini_array['database']['DBPass']);    // db password 
+define('DB_PASS', $ini_array['database']['DBPass']);    // db password
 define('DB_NAME', $ini_array['database']['DBName']);    // db name
 
 $dbname = $ini_array['database']['DBName'];
 
 try {
     $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    if ($db->connect_error):
-        throw new Exception('Failed to connect to MySQL Database <br /> Error Info : ' . $db->connect_error);
+    if ($db->connect_error) :
+        throw new Exception(
+            'Failed to connect to MySQL Database <br /> Error Info : ' . $db->connect_error
+        );
     endif;
     $db->set_charset('utf8mb4');
-
 //try {
 //    $db = new Mysqli_Manager();
 //    $db->conn(); // connect DB
 //    $db->set_charset("utf8mb4");
-
 } catch (Exception $err) {
-    if(($fd = fopen($logfile, "a")) !== false):
+    if (($fd = fopen($logfile, "a")) !== false) :
         $msg = "[ERROR] Fatal database exception: {$err->getMessage()}";
-        $str = "[" . date("Y/m/d H:i:s", time()) . "] ".$msg;
+        $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
         fwrite($fd, $str . "\n");
-        fclose($fd); 
-    else:
+        fclose($fd);
+    else :
         openlog("MTG", LOG_NDELAY, LOG_USER);
         syslog(LOG_ERR, "[MTG-DEBUG] Fatal database exception: {$err->getMessage()}");
         closelog();
     endif;
     $databaseaccess = 0;
-    $from = "From: ".$serveremail;
+    $from = "From: " . $serveremail;
     $subject = "Fatal database exception on MTGCollection";
-    $message = wordwrap($err->getMessage(),70);
+    $message = wordwrap($err->getMessage(), 70);
     mail($adminemail, $subject, $message, $from);
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
@@ -312,7 +310,7 @@ $currencies = array(
                         array(
                             'code' => 'zzz',
                             'pretty' => 'None',
-                            'db' => NULL
+                            'db' => null
                             ),
                         array(
                             'code' => 'aud',
@@ -393,13 +391,13 @@ $commander_multiples = array("Basic Land",
 $any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
 
 //Commander variations
-$valid_commander_text = array("can be your commander"); // Check for abilities which allow a card to be used as a commander
+$valid_commander_text = array("can be your commander"); // Check for abilities which allow card to be a commander
 
 $second_commander_text = array("Partner",
                                "Friends forever",
-                               "Doctor's companion");   // Check for abilities which allow a card to be used as a second commander
+                               "Doctor's companion");   // Check for abilities which allow card to be second commander
 
-$second_commander_only_type = array("Background");      // Check for "Type" which are valid ONLY in second commander slot
+$second_commander_only_type = array("Background");      // Check for "Type" valid ONLY in second commander slot
 
 // Selectable deck types on deck detail page
 $validtypes = array('Commander',
@@ -407,7 +405,7 @@ $validtypes = array('Commander',
                     'Tiny Leader',
                     'Standard',
                     'Modern',
-                    'Wishlist');                     
+                    'Wishlist');
 
 // Card layouts to NOT import in deck quick add routine
 $noQuickAddLayouts = array(
@@ -415,7 +413,7 @@ $noQuickAddLayouts = array(
                     'double_faced_token',
                     'emblem',
                     'meld',
-                    'art_series'); 
+                    'art_series');
 
 // Cards with brackets contents in names (not currently needed or used, see input_interpreter())
 $bracketsInNames = array(
@@ -430,7 +428,7 @@ $bracketsInNames = array(
                     '2000',
                     '2001',
                     'Used',
-                    'Theme'); 
+                    'Theme');
 
 // This def also in bulk_ini
 $importLinestoIgnore = array(

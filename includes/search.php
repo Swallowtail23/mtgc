@@ -1,37 +1,32 @@
-<?php 
-/* Version:     6.0
-    Date:       01/03/25
-    Name:       search.php
-    Purpose:    Layout for search on index.php
-    Notes:      
- * 
-    1.0
-                Initial version
- *  2.0
- *              Added code to get sets from DB instead of setshtml.php
- *  3.0
- *              Add Arena legalities
- * 
- *  4.0         6/12/23
- *              Add year to optgroup
- * 
- *  5.0         02/01/24
- *              Add language search capability             
- *
- *  5.1         22/01/24
- *              Add Automatic search order, with variation for PLST and SLD
- * 
- *  5.2         10/06/24
- *              Add AND / OR to type searches
- * 
- *  6.0         01/03/25
- *              Add Name exact
+<?php
+
+/*
+Version:     6.1
+Date:        26/11/25
+Name:        search.php
+Purpose:     Layout for search on index.php
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Added code to get sets from DB instead of setshtml.php
+    3.0         Add Arena legalities
+    4.0 06/12/23 Add year to optgroup
+    5.0 02/01/24 Add language search capability
+    5.1 22/01/24 Add Automatic search order, with variation for PLST and SLD
+    5.2 10/06/24 Add AND / OR to type searches
+    6.0 01/03/25 Add Name exact
+    6.1 26/11/25 Standard tidy-up
 */
-if (__FILE__ == $_SERVER['PHP_SELF']):
+
+if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 ?>
-<script type="text/javascript"> 
+<script type="text/javascript">
     function SubmitPrep()
         {
             document.body.style.cursor='wait';
@@ -44,51 +39,104 @@ endif;
         <div id='first_div'>
             <h2 id="h2">Advanced search</h2>
             <input type="hidden" name="complex" value="yes">
-            <?php // echo "<input type='hidden' name='collection' value='$collection'>"; 
+            <?php // echo "<input type='hidden' name='collection' value='$collection'>";
             echo "<input type='hidden' name='layout' value='$layout'>"; ?>
-            <input title="Leave empty for broad search" id='advsearchinput' type="text" name="name" placeholder="Search" autocomplete='off' value="<?php if (isset($qtyresults) AND $qtyresults > 0) { echo $name; }; ?>"><br>
+            <input
+                title="Leave empty for broad search"
+                id='advsearchinput'
+                type="text"
+                name="name"
+                placeholder="Search"
+                autocomplete='off'
+                value="<?php if (isset($qtyresults) and $qtyresults > 0) {
+                    echo $name;
+                       }; ?>"
+            ><br>
             <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
             <span title="Search card names" class="parametersmall checkbox-group">
-                <input id='cb1' type="checkbox" class="scopecheckbox checkbox notnotes notability notsetcode notpromo" name="searchname" value="yes" checked="checked">
+                <input
+                    id='cb1'
+                    type="checkbox"
+                    class="scopecheckbox checkbox notnotes notability notsetcode notpromo"
+                    name="searchname"
+                    value="yes"
+                    checked="checked"
+                >
                 <label for='cb1'>
                     <span class="check"></span>
                     <span class="box"></span>Name
                 </label>
             </span>
             <span title="Search card types" class="parametersmall checkbox-group">
-                <input id='cb2' type="checkbox" class="scopecheckbox checkbox notname notnotes notability notsetcode notpromo" name="searchtype" value="yes">
+                <input
+                    id='cb2'
+                    type="checkbox"
+                    class="scopecheckbox checkbox notname notnotes notability notsetcode notpromo"
+                    name="searchtype"
+                    value="yes"
+                >
                 <label for='cb2'><span class="check"></span>
                     <span class="box"></span>Type
                 </label>
             </span>
             <span title="Search my notes" class="parametersmall checkbox-group">
-                <input id = "yesnotes" type="checkbox" class="scopecheckbox checkbox notname notability notsetcode notpromo" name="searchnotes" value="yes">
+                <input
+                    id="yesnotes"
+                    type="checkbox"
+                    class="scopecheckbox checkbox notname notability notsetcode notpromo"
+                    name="searchnotes"
+                    value="yes"
+                >
                 <label for='yesnotes'>
                     <span class="check"></span>
                     <span class="box"></span>Notes
                 </label>
             </span><br>
             <span title="Search setcodes (e.g. 'SOI'")" class="parametersmall checkbox-group">
-                <input id='searchsetcode' type="checkbox" class="scopecheckbox checkbox notname notnotes notability notpromo" name="searchsetcode" value="yes">
+                <input
+                    id='searchsetcode'
+                    type="checkbox"
+                    class="scopecheckbox checkbox notname notnotes notability notpromo"
+                    name="searchsetcode"
+                    value="yes"
+                >
                 <label for='searchsetcode'><span class="check"></span>
                     <span class="box"></span>Setcode
                 </label>
             </span>
             <span title="Search promo types, e.g. 'surgefoil'" class="parametersmall checkbox-group">
-                <input id='searchpromo' type="checkbox" class="scopecheckbox checkbox notname notnotes notability" name="searchpromo" value="yes">
+                <input
+                    id='searchpromo'
+                    type="checkbox"
+                    class="scopecheckbox checkbox notname notnotes notability"
+                    name="searchpromo"
+                    value="yes"
+                >
                 <label for='searchpromo'><span class="check"></span>
                     <span class="box"></span>Promo
                 </label>
             </span>
             <span title="Search recent releases" class="parametersmall checkbox-group">
-                <input id='searchnew' type="checkbox" class="scopecheckbox checkbox notnotes" name="searchnew" value="yes">
+                <input
+                    id='searchnew'
+                    type="checkbox"
+                    class="scopecheckbox checkbox notnotes"
+                    name="searchnew"
+                    value="yes"
+                >
                 <label for='searchnew'><span class="check"></span>
                     <span class="box"></span>New (7d)
                 </label>
             </span>
             <br>
             <span title="Search card abilities" class="parametersmall checkbox-group">
-                <input id="abilitymain" type="checkbox" class="scopecheckbox checkbox notname notsetcode" name="searchability" value="yes">
+                <input
+                    id="abilitymain"
+                    type="checkbox"
+                    class="scopecheckbox checkbox notname notsetcode"
+                    name="searchability"
+                    value="yes"
+                >
                 <label for="abilitymain">
                     <span class="check"></span>
                     <span class="box"></span>Ability
@@ -104,13 +152,22 @@ endif;
             </span>
             <h4 class="h4" style="margin-top:30px;">Search scope:</h4>
             <span class="parametersmall">
-                <label class="radio"><input type="radio" name="scope" value="all" checked="checked"><span class="outer"><span class="inner"></span></span>All cards</label>
+                <label class="radio">
+                    <input type="radio" name="scope" value="all" checked="checked">
+                    <span class="outer"><span class="inner"></span></span>All cards
+                </label>
             </span>
             <span title="Only show my cards" class="parametersmall">
-                <label class="radio"><input type="radio" name="scope" value="mycollection"><span class="outer"><span class="inner"></span></span>My cards</label>
+                <label class="radio">
+                    <input type="radio" name="scope" value="mycollection">
+                    <span class="outer"><span class="inner"></span></span>My cards
+                </label>
             </span>
             <span title="Only show cards I don't have" class="parametersmall">
-                <label class="radio"><input type="radio" name="scope" value="notcollection"><span class="outer"><span class="inner"></span></span>Missing</label>
+                <label class="radio">
+                    <input type="radio" name="scope" value="notcollection">
+                    <span class="outer"><span class="inner"></span></span>Missing
+                </label>
             </span>
             <br>
             <span id="collqtyspan">My cards qty:&nbsp;
@@ -130,80 +187,138 @@ endif;
             </span>
             <h4 class="h4" style="margin-top:15px;">Set:</h4> Ctrl+click to select multiple sets:<br>
             <select class='setselect' size="15" multiple name="set[]">
-                <?php 
+                <?php
                 $result = $db->query(
-                       'SELECT 
+                    'SELECT
                             name AS set_name,
                             code AS setcode,
                             min(release_date) as date,
                             parent_set_code
                         FROM sets
-                        GROUP BY 
+                        GROUP BY
                             name
-                        ORDER BY 
-                            release_date DESC, parent_set_code DESC');
-                if ($result === false):
+                        ORDER BY
+                            release_date DESC, parent_set_code DESC'
+                );
+                if ($result === false) :
                     trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
-                else:
+                else :
                     $currentblock = $currentyear = null;
-                    while ($row = $result->fetch_assoc()):
-                        if(isset($row['setcode']) AND $row['setcode'] !== null):
+                    while ($row = $result->fetch_assoc()) :
+                        if (isset($row['setcode']) and $row['setcode'] !== null) :
                             $set_upper = strtoupper($row['setcode']);
-                        else:
+                        else :
                             $set_upper = '';
                         endif;
-                        if(isset($row['parent_set_code']) AND $row['parent_set_code'] !== null):
+                        if (isset($row['parent_set_code']) and $row['parent_set_code'] !== null) :
                             $parent_set_upper = strtoupper($row['parent_set_code']);
-                        else:
+                        else :
                             $parent_set_upper = '';
                         endif;
-                        if(isset($row['date']) AND $row['date'] !== null):
+                        if (isset($row['date']) and $row['date'] !== null) :
                             $rowyear = date('Y', strtotime($row['date']));
-                        else:
+                        else :
                             $rowyear = '';
                         endif;
-                        if( $currentyear == null || $currentyear != $rowyear):
-                            if($currentyear != null):
+                        if ($currentyear == null || $currentyear != $rowyear) :
+                            if ($currentyear != null) :
                                 echo "</optgroup>\n";
                             endif;
-                            echo "<optgroup class='optgroup' label='$rowyear' style='color: #3F51B5; font-weight: bold; font-style: italic;'>\n";
+                            echo "<optgroup class='optgroup' label='$rowyear' "
+                                 . "style='color: #3F51B5; font-weight: bold; font-style: italic;'>"
+                                 . "\n";
                             $currentyear = $rowyear;
                         endif;
-                        if( $currentblock == null || $parent_set_upper != $currentblock ):
-                            if( $currentblock != null ):
+                        if ($currentblock == null || $parent_set_upper != $currentblock) :
+                            if ($currentblock != null) :
                                 echo "</optgroup\n>";
                             endif;
-                            echo "<optgroup class='optgroup' label='&nbsp;&nbsp;&nbsp;&nbsp;$parent_set_upper' style='color: #3F51B5; font-style: italic;'>\n";
+                            echo "<optgroup class='optgroup' label='&nbsp;&nbsp;&nbsp;&nbsp;$parent_set_upper' "
+                                 . "style='color: #3F51B5; font-style: italic;'>"
+                                 . "\n";
                             $currentblock = $parent_set_upper;
                         endif;
-                        echo "<option title='{$row['set_name']}' value='{$row['setcode']}' style='color: rgba(0,0,0,0.77); font-style: normal;'>&nbsp;&nbsp;&nbsp;&nbsp;$set_upper: {$row['set_name']}</option>\n";
+                        echo "<option title='{$row['set_name']}' value='{$row['setcode']}' "
+                             . "style='color: rgba(0,0,0,0.77); font-style: normal;'>"
+                             . "&nbsp;&nbsp;&nbsp;&nbsp;$set_upper: {$row['set_name']}</option>"
+                             . "\n";
                     endwhile;
-                endif;    
-                if( $currentblock != null ) echo "</optgroup>\n";
+                endif;
+                if ($currentblock != null) echo "</optgroup>\n";
                 ?>
             </select>
             <br><br>
-            
+
             <h4 class="h4Sortby">Sort by</h4>
-            <label class="radio"><input type="radio" name="sortBy" value="auto" checked="checked"><span class="outer"><span class="inner"></span></span>Automatic</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="set"><span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="setdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="setnumberdown"><span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;</label><br>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="name"><span class="outer"><span class="inner"></span></span>Name</label></span>
-            <label class="radio"><input type="radio" name="sortBy" value="price"><span class="outer"><span class="inner"></span></span>Price &#x25BC;</label><br>
-            <label class="radio"><input type="radio" name="sortBy" value="cmc"><span class="outer"><span class="inner"></span></span>Mana value &#x25B2;</label>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="cmcdown"><span class="outer"><span class="inner"></span></span>Mana value &#x25BC; </label></span><br>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="powerup"><span class="outer"><span class="inner"></span></span>Power &#x25B2;</label></span>
-            <label class="radio"><input type="radio" name="sortBy" value="powerdown"><span class="outer"><span class="inner"></span></span>Power &#x25BC;</label><br>
-            <span class="parametermed"><label class="radio"><input type="radio" name="sortBy" value="toughup"><span class="outer"><span class="inner"></span></span>Toughness &#x25B2;</label></span>
-            <label class="radio"><input type="radio" name="sortBy" value="toughdown"><span class="outer"><span class="inner"></span></span>Toughness &#x25BC;</label>
-            
+            <label class="radio">
+                <input type="radio" name="sortBy" value="auto" checked="checked">
+                <span class="outer"><span class="inner"></span></span>Automatic
+            </label><br>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="set">
+                <span class="outer"><span class="inner"></span></span>Set &#x25B2;/ Number &#x25B2;
+            </label><br>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="setdown">
+                <span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25B2;
+            </label><br>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="setnumberdown">
+                <span class="outer"><span class="inner"></span></span>Set &#x25BC;/ Number &#x25BC;
+            </label><br>
+            <span class="parametermed">
+                <label class="radio">
+                    <input type="radio" name="sortBy" value="name">
+                    <span class="outer"><span class="inner"></span></span>Name
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="price">
+                <span class="outer"><span class="inner"></span></span>Price &#x25BC;
+            </label><br>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="cmc">
+                <span class="outer"><span class="inner"></span></span>Mana value &#x25B2;
+            </label>
+            <span class="parametermed">
+                <label class="radio">
+                    <input type="radio" name="sortBy" value="cmcdown">
+                    <span class="outer"><span class="inner"></span></span>Mana value &#x25BC;
+                </label>
+            </span><br>
+            <span class="parametermed">
+                <label class="radio">
+                    <input type="radio" name="sortBy" value="powerup">
+                    <span class="outer"><span class="inner"></span></span>Power &#x25B2;
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="powerdown">
+                <span class="outer"><span class="inner"></span></span>Power &#x25BC;
+            </label><br>
+            <span class="parametermed">
+                <label class="radio">
+                    <input type="radio" name="sortBy" value="toughup">
+                    <span class="outer"><span class="inner"></span></span>Toughness &#x25B2;
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="sortBy" value="toughdown">
+                <span class="outer"><span class="inner"></span></span>Toughness &#x25BC;
+            </label>
+
             <h4 class="h4">Game type</h4>
             <span class="parametersmall">
-                <label class="radio"><input type="radio" name="gametypeOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
+                <label class="radio">
+                    <input type="radio" name="gametypeOp" value="AND" checked="checked">
+                    <span class="outer"><span class="inner"></span></span>AND
+                </label>
             </span>
             <span class="parametersmall">
-                <label class="radio"><input type="radio" name="gametypeOp" value="OR"><span class="outer"><span class="inner"></span></span>OR</label>
+                <label class="radio">
+                    <input type="radio" name="gametypeOp" value="OR">
+                    <span class="outer"><span class="inner"></span></span>OR
+                </label>
             </span>
             <span class="checkbox-group">
                 <input id='cb26' type="checkbox" class="checkbox" name="gametypeExcl" value="ONLY">
@@ -238,21 +353,65 @@ endif;
         <div id="second_div">
             <div>
                 <h4 class="h4">Legality</h4>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="any" checked><span class="outer"><span class="inner"></span></span>Any</label></span>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="std"><span class="outer"><span class="inner"></span></span>Standard</label></span>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="pnr"><span class="outer"><span class="inner"></span></span>Pioneer</label></span><br>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="mdn"><span class="outer"><span class="inner"></span></span>Modern</label></span>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="vin"><span class="outer"><span class="inner"></span></span>Vintage</label></span>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="lgc"><span class="outer"><span class="inner"></span></span>Legacy</label></span><br>
-                <span class="parametersmall"><label class="radio"><input type="radio" name="legal" value="alc"><span class="outer"><span class="inner"></span></span>Alchemy</label></span>
-                <label class="radio"><input type="radio" name="legal" value="his"><span class="outer"><span class="inner"></span></span>Historic</label>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="any" checked>
+                        <span class="outer"><span class="inner"></span></span>Any
+                    </label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="std">
+                        <span class="outer"><span class="inner"></span></span>Standard
+                    </label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="pnr">
+                        <span class="outer"><span class="inner"></span></span>Pioneer
+                    </label>
+                </span><br>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="mdn">
+                        <span class="outer"><span class="inner"></span></span>Modern
+                    </label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="vin">
+                        <span class="outer"><span class="inner"></span></span>Vintage
+                    </label>
+                </span>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="lgc">
+                        <span class="outer"><span class="inner"></span></span>Legacy
+                    </label>
+                </span><br>
+                <span class="parametersmall">
+                    <label class="radio">
+                        <input type="radio" name="legal" value="alc">
+                        <span class="outer"><span class="inner"></span></span>Alchemy
+                    </label>
+                </span>
+                <label class="radio">
+                    <input type="radio" name="legal" value="his">
+                    <span class="outer"><span class="inner"></span></span>Historic
+                </label>
 
                 <h4 class="h4">Colour</h4>
                 <span class="parametersmall">
-                    <label class="radio"><input type="radio" name="colourOp" value="AND" checked="checked"><span class="outer"><span class="inner"></span></span>AND</label>
+                    <label class="radio">
+                        <input type="radio" name="colourOp" value="AND" checked="checked">
+                        <span class="outer"><span class="inner"></span></span>AND
+                    </label>
                 </span>
                 <span class="parametersmall">
-                    <label class="radio"><input type="radio" name="colourOp" value="OR"><span class="outer"><span class="inner"></span></span>OR</label>
+                    <label class="radio">
+                        <input type="radio" name="colourOp" value="OR">
+                        <span class="outer"><span class="inner"></span></span>OR
+                    </label>
                 </span>
                 <span class="checkbox-group">
                     <input id='cb4' type="checkbox" class="checkbox" name="colourExcl" value="ONLY">
@@ -334,10 +493,16 @@ endif;
                 </span><br>
                 <h4 class="h4">Type</h4>
                 <span class="parametersmall">
-                    <label class="radio"><input type="radio" name="typeOp" value="AND"><span class="outer"><span class="inner"></span></span>AND</label>
+                    <label class="radio">
+                        <input type="radio" name="typeOp" value="AND">
+                        <span class="outer"><span class="inner"></span></span>AND
+                    </label>
                 </span>
                 <span class="parametersmall">
-                    <label class="radio"><input type="radio" name="typeOp" value="OR" checked="checked"><span class="outer"><span class="inner"></span></span>OR</label>
+                    <label class="radio">
+                        <input type="radio" name="typeOp" value="OR" checked="checked">
+                        <span class="outer"><span class="inner"></span></span>OR
+                    </label>
                 </span><br>
                 <span class="parametermed checkbox-group">
                     <input id='cb15' type="checkbox" class="checkbox" name="instant" value="yes">
@@ -418,27 +583,66 @@ endif;
                 </span>
             </div>
             <h4 class="h4">Typal</h4>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="merfolk"><span class="outer"><span class="inner"></span></span>Merfolk</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="goblin"><span class="outer"><span class="inner"></span></span>Goblin</label></span>
-            <label class="radio"><input type="radio" name="tribe" value="treefolk"><span class="outer"><span class="inner"></span></span>Treefolk</label><br>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="elf"><span class="outer"><span class="inner"></span></span>Elf</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="vampire"><span class="outer"><span class="inner"></span></span>Vampire</label></span>
-            <label class="radio"><input type="radio" name="tribe" value="sliver"><span class="outer"><span class="inner"></span></span>Sliver</label><br>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="human"><span class="outer"><span class="inner"></span></span>Human</label></span>
-            <span class="parametersmall"><label class="radio"><input type="radio" name="tribe" value="spider"><span class="outer"><span class="inner"></span></span>Spider</label></span>
-            <label class="radio"><input type="radio" name="tribe" value="zombie"><span class="outer"><span class="inner"></span></span>Zombie</label>
-            
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="merfolk">
+                    <span class="outer"><span class="inner"></span></span>Merfolk
+                </label>
+            </span>
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="goblin">
+                    <span class="outer"><span class="inner"></span></span>Goblin
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="tribe" value="treefolk">
+                <span class="outer"><span class="inner"></span></span>Treefolk
+            </label><br>
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="elf">
+                    <span class="outer"><span class="inner"></span></span>Elf
+                </label>
+            </span>
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="vampire">
+                    <span class="outer"><span class="inner"></span></span>Vampire
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="tribe" value="sliver">
+                <span class="outer"><span class="inner"></span></span>Sliver
+            </label><br>
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="human">
+                    <span class="outer"><span class="inner"></span></span>Human
+                </label>
+            </span>
+            <span class="parametersmall">
+                <label class="radio">
+                    <input type="radio" name="tribe" value="spider">
+                    <span class="outer"><span class="inner"></span></span>Spider
+                </label>
+            </span>
+            <label class="radio">
+                <input type="radio" name="tribe" value="zombie">
+                <span class="outer"><span class="inner"></span></span>Zombie
+            </label>
+
             <h4 class="h4">Language</h4>
-            <select class="dropdown" name='lang' id='langSelect'> 
-                <option value='default' selected>Default</option><?php 
-                foreach($search_langs as $lang): ?>
+            <select class="dropdown" name='lang' id='langSelect'>
+                <option value='default' selected>Default</option><?php
+                foreach ($search_langs as $lang) : ?>
                     <option value='<?php echo $lang['code']; ?>'>
                         <?php echo $lang['pretty']; ?>
-                    </option> <?php 
+                    </option> <?php
                 endforeach; ?>
                 <option value='all'>All languages</option>
             </select>
-            
+
             <h4 class="h4">Power / Toughness / Loyalty / Mana value</h4>
             Power<br>
             <select class="dropdown" name="poweroperator">
@@ -483,7 +687,7 @@ endif;
                 <option value="10">10</option>
                 <option value="15">15</option>
                 <option value="20">20</option>
-            </select> 
+            </select>
             <br>Loyalty<br>
             <select class="dropdown" name="loyaltyoperator">
                 <option disabled selected style='display:none;'>&nbsp;</option>
@@ -503,7 +707,7 @@ endif;
                 <option value="8">8</option>
                 <option value="9">9</option>
                 <option value="10">10</option>
-            </select>  
+            </select>
             <br>Mana value<br>
             <select class="dropdown" name="cmcoperator">
                 <option disabled selected style='display:none;'>&nbsp;</option>
@@ -525,7 +729,7 @@ endif;
                 <option value="10">10</option>
                 <option value="15">15</option>
                 <option value="20">20</option>
-            </select>             
+            </select>
             <br>&nbsp;<br>
         </div>
     </div>
