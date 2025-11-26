@@ -1,25 +1,28 @@
-<?php 
-/* Version:     2.1
- *              25/03/23
-    Name:       menu.php
-    Purpose:    PHP script to display menu
-    Notes:      {none}
- * 
-    1.0
-                Initial version
- *  2.0
- *              PHP 8.1 compatibility
- * 
- *  2.1         20/01/24
- *              Move to logMessage
+<?php
+
+/*
+Version:     2.2
+Date:        26/11/25
+Name:        menu.php
+Purpose:     PHP script to display menu
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         PHP 8.1 compatibility
+    2.1 20/01/24 Move to logMessage
+    2.2 26/11/25 Standard tidy-up
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 ?>
 
-<div id='menubuttondiv' class="togglemenu">    
+<div id='menubuttondiv' class="togglemenu">
     <a href="#" id='toggle-menu'><span id ="menu-icon" class="material-symbols-outlined menu">menu</span></a>
 </div>
 <div id="menu">
@@ -32,13 +35,13 @@ endif;
     <div class='nav_nodivider'><a title="Decks" href="/decks.php">Decks</a></div>
     <div class='nav_nodivider'><a title="About" href="/info.php">About</a>
         <?php
-        
+
         //If Update notice within last week, display NEW on menu
-        if(isset($db)):
-            if($rowqry = $db->execute_query("SELECT date FROM updatenotices ORDER by date DESC LIMIT 1")):
+        if (isset($db)) :
+            if ($rowqry = $db->execute_query("SELECT date FROM updatenotices ORDER by date DESC LIMIT 1")) :
                 $row = $rowqry->fetch_assoc();
                 $latestupdate = strtotime($row['date']);
-                if((time()-(60*60*24*7)) < $latestupdate):
+                if ((time() - (60 * 60 * 24 * 7)) < $latestupdate) :
                     ?>
                     <div id='newcontent' display=block>
                         <a href='info.php'><span></span></a>
@@ -48,15 +51,15 @@ endif;
                     </div>
                     <?php
                 endif;
-            else:
+            else :
                 $obj = new Message($logfile);
-                $obj->logMessage('[DEBUG]',"No menu updates");
+                $obj->logMessage('[DEBUG]', "No menu updates");
             endif;
         endif;
         ?>
     </div>
     <div class='nav_divider'><a title="Help" href="/help.php">Help</a></div>
-    <?php if (isset($_SESSION['admin']) AND ($_SESSION['admin'] === TRUE)): ?>
+    <?php if (isset($_SESSION['admin']) and ($_SESSION['admin'] === true)) : ?>
         <div class='nav_divider'><a title="Admin" href="/admin/admin.php">Admin</a></div>
     <?php endif; ?>
 </div>

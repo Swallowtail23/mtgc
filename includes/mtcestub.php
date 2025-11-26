@@ -1,15 +1,22 @@
 <?php
-/* Version:     1.0
-    Date:       17/10/16
-    Name:       mtcestub.php
-    Purpose:    PHP script to display Maintenance message
-    Notes:      {none}
- * 
-    1.0
-                Initial version
+
+/*
+Version:     1.1
+Date:        26/11/25
+Name:        mtcestub.php
+Purpose:     PHP script to display Maintenance message
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    1.1 26/11/25 Standard tidy-up
 */
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 ?>
 

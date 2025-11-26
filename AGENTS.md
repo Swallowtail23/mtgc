@@ -39,3 +39,24 @@
 - PHPUnit suite: `vendor/bin/phpunit` (requires composer install).
 - PHPUnit test directory: `tests`
 - Point `/opt/mtg/mtg_new.ini` to a test database/config when running tests to avoid clobbering production data.
+
+## AI actions
+- Standard Tidyup: No approval needed. Remove end of line whitespaces, apply phpcs automatic tidyup, split long lines to be <=120 characters, apply standard header format (see below). Do not change logic, program flow, or control structures. Must not change output.
+- Advanced Tidyup: Standard Tidyup plus also conduct a basic review of logic and possible optimisation. Make no logic code changes or optimisation without approval.
+- Standard Header format example:
+/*
+Version:     2.2
+Date:        25/11/25
+Name:        help.php
+Purpose:     Provides a help submission form and place for help notes.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0         Initial version
+    2.0         Removed database call (secpagesetup provides all the info needed)
+    2.1 25/11/25 Formatting clean-up
+    2.2 25/11/25 Standard tidy-up
+*/

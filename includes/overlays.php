@@ -1,18 +1,23 @@
-<?php 
-/* Version:     2.0
-    Date:       20/11/23
-    Name:       overlays.php
-    Purpose:    buttons overlay
-    Notes:      {none}
- * 
-    1.0         17/10/16
-                Initial version
- * 
- *  2.0         20/11/23
- *              Added floating button to enable/disable Collection View to grid view
+<?php
+
+/*
+Version:     2.1
+Date:        26/11/25
+Name:        overlays.php
+Purpose:     Buttons overlay
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+
+History:
+    1.0 17/10/16 Initial version
+    2.0 20/11/23 Added floating button to enable/disable Collection View to grid view
+    2.1 26/11/25 Standard tidy-up
 */
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
-die('Direct access prohibited');
+    die('Direct access prohibited');
 endif;
 ?>
 
@@ -22,16 +27,28 @@ endif;
 
 <div id="float_cview_div">
 <?php
-    if(isset($floating_button) AND $floating_button === true AND $collection_view === 1 AND isset($scope) AND ($scope !== 'notcollection' && $scope !== 'mycollection')): ?>
-        <label id="floating_button_label" class="floating-button" title="Toggle collection view off"> 
+if (
+    isset($floating_button)
+    and $floating_button === true
+    and $collection_view === 1
+    and isset($scope)
+    and ($scope !== 'notcollection' && $scope !== 'mycollection')
+) : ?>
+        <label id="floating_button_label" class="floating-button" title="Toggle collection view off">
             <input type="checkbox" id="float_cview" class="option_toggle" checked="true" value="on" />
             <div id="slider_cview" class="slider round material-symbols-outlined"></div>
         </label>  <?php
-    elseif(isset($floating_button) AND $floating_button === true AND $collection_view === 0 AND isset($scope) AND ($scope !== 'notcollection' && $scope !== 'mycollection')): ?>
-        <label id="floating_button_label" class="floating-button" title="Toggle collection view on"> 
+elseif (
+    isset($floating_button)
+    and $floating_button === true
+    and $collection_view === 0
+    and isset($scope)
+    and ($scope !== 'notcollection' && $scope !== 'mycollection')
+) : ?>
+        <label id="floating_button_label" class="floating-button" title="Toggle collection view on">
             <input type="checkbox" id="float_cview" class="option_toggle" value="on" />
             <div id="slider_cview" class="slider round material-symbols-outlined book_2"></div>
         </label>  <?php
-    endif; 
+endif;
 ?>
 </div>
