@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     24.6
+Version:     24.7
 Date:        26/11/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -48,6 +48,7 @@ History:
     24.4 23/08/24 MTGC-123 Use normal price for topvalue if needed
     24.5 25/11/25 Update PHPMailer class name to PascalCase
     24.6 26/11/25 Standard tidy-up (header/whitespace)
+    24.7 26/11/25 Improve cssver - gentler failure, more robust check
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -62,6 +63,7 @@ function forcechgpwd()
     endif;
 }
 
+// Only used in admin/users.php - assess for removal
 function check_input($value)
 {
     global $db;
@@ -74,18 +76,20 @@ function check_input($value)
 
 function cssver()
 {
-    global $db;
+    global $db, $logfile;
+    $msg = new Message($logfile);
     $sql = "SELECT usemin FROM admin LIMIT 1";
     $result = $db->execute_query($sql);
     if ($result === false) :
-        trigger_error(
-            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                . ": SQL failure: " . $db->error,
-            E_USER_ERROR
+        $msg->logMessage(
+            '[ERROR]',
+            "CSS version check failed, defaulting to minified CSS: " . $db->error
         );
+        return "-min";
     else :
         $row = $result->fetch_assoc();
-        if (!empty($row) and $row['usemin'] == 1) :
+        $result->free();
+        if (!empty($row) and (int) $row['usemin'] === 1) :
             return "-min";
         else :
             return "";
