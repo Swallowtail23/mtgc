@@ -1410,6 +1410,10 @@ function isValidLanguageCode($lang)
 
 function in_array_case_insensitive($needle, $haystack) 
 {
+    if (!is_array($haystack)):
+        return false;
+    endif;
+
     foreach ($haystack as $item):
         if (strtolower($needle) == strtolower($item)):
             return true;

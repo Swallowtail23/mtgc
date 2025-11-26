@@ -5,7 +5,7 @@ if (!class_exists('INI')) {
     {
         public $data;
 
-        public function __construct()
+        public function __construct($file = null, $sections = true)
         {
             $this->data = [
                 'general' => [
@@ -61,7 +61,7 @@ if (!class_exists('INI')) {
 if (!class_exists('SessionManager')) {
     class SessionManager
     {
-        public function __construct()
+        public function __construct($db = null, $adminip = null, $session = null, $fxAPI = null, $fxLocal = null, $logfile = null)
         {
         }
 
