@@ -793,7 +793,7 @@ else :
                     // This should be the same as 'DEFAULT' below
                     $order = "
                         ORDER BY
-                            set_date DESC
+                            set_date DESC,
                             cards_scry.set_name ASC,
                             primary_card DESC,
                             number ASC,
