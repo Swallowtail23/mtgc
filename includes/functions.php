@@ -88,7 +88,9 @@ function cssver()
         return "-min";
     else :
         $row = $result->fetch_assoc();
-        $result->free();
+        if (method_exists($result, 'free')) :
+            $result->free();
+        endif;
         if (!empty($row) and (int) $row['usemin'] === 1) :
             return "-min";
         else :
