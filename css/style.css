@@ -257,8 +257,8 @@ table
     font-family: "Roboto", sans-serif;
 }
 
-.loginpagebutton 
-{ 
+.loginpagebutton
+{
     position: relative;
     top: -50px;
     left: 140px;
@@ -266,15 +266,26 @@ table
 }
 .loginpagebutton a
 {
-    display: block; 
+    display: block;
     text-decoration: none;
     line-height: 30px;
     text-align: center;
 }
 
 #loginsubmit:hover, .loginpagebutton:hover,  .sendreset:hover
-{ 
+{
   color: #8c9eff;
+}
+
+/* Disabled state for the login button */
+#loginsubmit:disabled {
+    color: #cccccc;        /* greyed text */
+    cursor: not-allowed;   /* optional: gives visual hint */
+}
+
+/* Prevent hover colour change when disabled */
+#loginsubmit:disabled:hover {
+    color: #cccccc;        /* keep the grey */
 }
 
 #carddetailheader

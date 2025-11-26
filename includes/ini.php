@@ -68,8 +68,8 @@ if ($ini_array['general']['tier'] === 'dev') :
 
     // Client side:
 
-    // $turnstile_site_key = '1x00000000000000000000AA';  // Always pass visible
-       $turnstile_site_key = '1x00000000000000000000BB';  // Always pass invisible
+       $turnstile_site_key = '1x00000000000000000000AA';  // Always pass visible
+    // $turnstile_site_key = '1x00000000000000000000BB';  // Always pass invisible
     // $turnstile_site_key = '2x00000000000000000000AB';  // Always block visible
     // $turnstile_site_key = '2x00000000000000000000BB';  // Always block invisible
     // $turnstile_site_key = '3x00000000000000000000FF';  // Use to simulate interactive request
