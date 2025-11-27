@@ -77,7 +77,7 @@ if ($isValidReferrer) :
             }
         } catch (Exception $e) {
             trigger_error(
-                "[ERROR] ajaxdecknotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->errorInfo()[0],
+                "[ERROR] ajaxdecknotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->error,
                 E_USER_ERROR
             );
             http_response_code(400);

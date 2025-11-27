@@ -82,7 +82,7 @@ if ($isValidReferrer) :
             }
         } catch (Exception $e) {
             trigger_error(
-                "[ERROR] ajaxcardnotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->errorInfo()[0],
+                "[ERROR] ajaxcardnotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->error,
                 E_USER_ERROR
             );
             http_response_code(400);

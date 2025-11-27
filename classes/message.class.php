@@ -71,8 +71,8 @@ class Message
         endif;
 
         if ($msglevel < ($loglevel + 1)) :
+            $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
             if (($fd = fopen($log, "a")) !== false) :
-                $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
                 fwrite($fd, $str . "\n");
                 fclose($fd);
             else :

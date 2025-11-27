@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.3
-Date:        25/11/25
+Version:     5.4
+Date:        28/11/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
 Notes:       {none}
@@ -20,6 +20,7 @@ History:
     5.1 06/07/24 Catch fringe import cases, and improve return notices
     5.2 25/11/25 Standard tidy-up
     5.3 25/11/25 Rename PHPMailer wrapper to PascalCase
+    5.4 28/11/25 ImportCollectionRegex: declare global noQuickAddLayouts
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -193,6 +194,7 @@ class ImportExport
         // 'regex' may have no header row, and content like '1 All Is Dust [M3C 152]'
         // or any other style that input_interpreter() can assess
         $importFormat = 'regex';
+        global $noQuickAddLayouts;
         $this->message->logMessage('[DEBUG]', "Import starting in '$importType' mode, '$importFormat' format");
 
         $handle = fopen($filename, "r");

@@ -237,7 +237,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                             $ajaxid = $row['id'];
                             $ajaxnumber = $row['number_import'];
                             $b_name = '<strong>' . $typed . '</strong>';
-                            $final_name = str_ireplace($typed, $b_name, $name);
+                            $final_name = str_ireplace($typed, $b_name, (string)$name);
                             ?>
                                 <tr>
                                     <td title='<?php echo "$displaysetcode - $name" ?>' class="name">

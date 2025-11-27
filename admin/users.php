@@ -72,15 +72,28 @@ endif;
     <?php include('../includes/googlefonts.php');?>
     <script src="../js/jquery.js"></script>
     <script type="text/javascript">
-        jQuery( function($) {
-            $('#newuserform').submit(function() {
-                if(($('#username').val() === '') || ($('#email').val() === ''))){
-                    alert("You need to complete all fields");
-                    return false;
-                }
-            });
+    jQuery(function($) {
+        $('#newuserform').on('submit', function(event) {
+            const username = $('#username').val().trim();
+            const email    = $('#email').val().trim();
+            // Determine which field is missing
+            let missingField = null;
+            if (username === '') {
+                missingField = '#username';
+            } else if (email === '') {
+                missingField = '#email';
+            }
+            if (missingField !== null) {
+                event.preventDefault();
+                alert("You need to complete all fields");
+                $(missingField).focus();
+                return false;
+            }
+            // Allow form to submit normally
+            return true;
         });
-</script>
+    });
+    </script>
 </head>
 <body id="body" class="body">
 

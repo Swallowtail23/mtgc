@@ -206,6 +206,9 @@ class PasswordCheck
         $stmt_select = $this->db->prepare($query_select);
         $stmt_select->bind_param("s", $postemail);
 
+        $db_password   = '';
+        $db_username   = '';
+        $db_usernumber = '';
         if ($stmt_select->execute()) :
             $stmt_select->store_result();
             $stmt_select->bind_result($db_password, $db_username, $db_usernumber);
