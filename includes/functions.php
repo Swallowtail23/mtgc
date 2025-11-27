@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     24.7
-Date:        26/11/25
+Version:     24.8
+Date:        28/11/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -51,6 +51,7 @@ History:
     24.7 26/11/25 Improve cssver - gentler failure, more robust check
                   Remove redundant check_input function
                   Remove unneeded $db call from valid_uuid()
+    24.8 28/11/25 Use strtr map for symbolreplace to reduce passes
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -209,114 +210,107 @@ function mtcemode($user)
 
 function symbolreplace($str)
 {
-    $str = str_replace('{E}', '<img src="images/e.png" alt="{E}" class="manaimg">', $str);
-    $str = str_replace('{T}', '<img src="images/t.png" alt="{T}" class="manaimg">', $str);
-    $str = str_replace('{Q}', '<img src="images/q.png" alt="{Q}" class="manaimg">', $str);
-    $str = str_replace('{P}', '<img src="images/paw.png" alt="{Q}" class="manaimg" title="pawprint">', $str);
-    $str = str_replace('{H}', 'Phyrexian mana ', $str);
+    static $symbols = [
+        '{E}'      => '<img src="images/e.png" alt="{E}" class="manaimg">',
+        '{T}'      => '<img src="images/t.png" alt="{T}" class="manaimg">',
+        '{Q}'      => '<img src="images/q.png" alt="{Q}" class="manaimg">',
+        '{P}'      => '<img src="images/paw.png" alt="{Q}" class="manaimg" title="pawprint">',
+        '{H}'      => 'Phyrexian mana ',
+        '{W}'      => '<img src="images/w.png" alt="{W}" class="manaimg">',
+        '{U}'      => '<img src="images/u.png" alt="{U}" class="manaimg">',
+        '{B}'      => '<img src="images/b.png" alt="{B}" class="manaimg">',
+        '{R}'      => '<img src="images/r.png" alt="{R}" class="manaimg">',
+        '{G}'      => '<img src="images/g.png" alt="{G}" class="manaimg">',
+        '{S}'      => '<img src="images/s.png" alt="{S}" class="manaimg">',
+        '{C}'      => '<img src="images/colourless_mana.png" alt="{C}" class="manaimg">',
+        '{HR}'     => '<img src="images/hr.png" alt="{HR}" class="manaimg">',
+        '{+oo}'    => '<img src="images/inf.png" alt="{+oo}" class="manaimg">',
+        '{100}'    => '<img src="images/100.png" alt="{100}" class="manaimg">',
+        '{1000000}' => '<img src="images/1m.png" alt="{1000000}" class="manaimg">',
+        '{WU}'     => '<img src="images/wu.png" alt="{WU}" class="manaimg">',
+        '{W/U}'    => '<img src="images/wu.png" alt="{WU}" class="manaimg">',
+        '{WB}'     => '<img src="images/wb.png" alt="{WB}" class="manaimg">',
+        '{W/B}'    => '<img src="images/wb.png" alt="{WB}" class="manaimg">',
+        '{UB}'     => '<img src="images/ub.png" alt="{UB}" class="manaimg">',
+        '{U/B}'    => '<img src="images/ub.png" alt="{UB}" class="manaimg">',
+        '{UR}'     => '<img src="images/ur.png" alt="{UR}" class="manaimg">',
+        '{U/R}'    => '<img src="images/ur.png" alt="{UR}" class="manaimg">',
+        '{BR}'     => '<img src="images/br.png" alt="{BR}" class="manaimg">',
+        '{B/R}'    => '<img src="images/br.png" alt="{BR}" class="manaimg">',
+        '{BG}'     => '<img src="images/bg.png" alt="{BG}" class="manaimg">',
+        '{B/G}'    => '<img src="images/bg.png" alt="{BG}" class="manaimg">',
+        '{RW}'     => '<img src="images/rw.png" alt="{RW}" class="manaimg">',
+        '{R/W}'    => '<img src="images/rw.png" alt="{RW}" class="manaimg">',
+        '{RG}'     => '<img src="images/rg.png" alt="{RG}" class="manaimg">',
+        '{R/G}'    => '<img src="images/rg.png" alt="{RG}" class="manaimg">',
+        '{GW}'     => '<img src="images/gw.png" alt="{GW}" class="manaimg">',
+        '{G/W}'    => '<img src="images/gw.png" alt="{GW}" class="manaimg">',
+        '{GU}'     => '<img src="images/gu.png" alt="{GU}" class="manaimg">',
+        '{G/U}'    => '<img src="images/gu.png" alt="{GU}" class="manaimg">',
+        '{C/W}'    => '<img src="images/cw.png" alt="{C/W}" class="manaimg">',
+        '{C/U}'    => '<img src="images/cu.png" alt="{C/U}" class="manaimg">',
+        '{C/B}'    => '<img src="images/cb.png" alt="{C/B}" class="manaimg">',
+        '{C/R}'    => '<img src="images/cr.png" alt="{C/R}" class="manaimg">',
+        '{C/G}'    => '<img src="images/cg.png" alt="{C/G}" class="manaimg">',
+        '{2W}'     => '<img src="images/2w.png" alt="{2W}" class="manaimg">',
+        '{2U}'     => '<img src="images/2u.png" alt="{2U}" class="manaimg">',
+        '{2B}'     => '<img src="images/2b.png" alt="{2B}" class="manaimg">',
+        '{2R}'     => '<img src="images/2r.png" alt="{2R}" class="manaimg">',
+        '{2G}'     => '<img src="images/2g.png" alt="{2G}" class="manaimg">',
+        '{2/W}'    => '<img src="images/2w.png" alt="{2/W}" class="manaimg">',
+        '{2/B}'    => '<img src="images/2b.png" alt="{2/B}" class="manaimg">',
+        '{2/G}'    => '<img src="images/2g.png" alt="{2/G}" class="manaimg">',
+        '{2/U}'    => '<img src="images/2u.png" alt="{2/U}" class="manaimg">',
+        '{2/R}'    => '<img src="images/2r.png" alt="{2/R}" class="manaimg">',
+        '{X}'      => '<img src="images/x.png" alt="{X}" class="manaimg">',
+        '{Y}'      => '<img src="images/y.png" alt="{Y}" class="manaimg">',
+        '{Z}'      => '<img src="images/z.png" alt="{Z}" class="manaimg">',
+        '{1/2}'    => '<img src="images/half.png" alt="{1/2}" class="manaimg">',
+        '{0}'      => '<img src="images/0.png" alt="{0}" class="manaimg">',
+        '{1}'      => '<img src="images/1.png" alt="{1}" class="manaimg">',
+        '{2}'      => '<img src="images/2.png" alt="{2}" class="manaimg">',
+        '{3}'      => '<img src="images/3.png" alt="{3}" class="manaimg">',
+        '{4}'      => '<img src="images/4.png" alt="{4}" class="manaimg">',
+        '{5}'      => '<img src="images/5.png" alt="{5}" class="manaimg">',
+        '{6}'      => '<img src="images/6.png" alt="{6}" class="manaimg">',
+        '{7}'      => '<img src="images/7.png" alt="{7}" class="manaimg">',
+        '{8}'      => '<img src="images/8.png" alt="{8}" class="manaimg">',
+        '{9}'      => '<img src="images/9.png" alt="{9}" class="manaimg">',
+        '{10}'     => '<img src="images/10.png" alt="{10}" class="manaimg">',
+        '{11}'     => '<img src="images/11.png" alt="{11}" class="manaimg">',
+        '{12}'     => '<img src="images/12.png" alt="{12}" class="manaimg">',
+        '{13}'     => '<img src="images/13.png" alt="{13}" class="manaimg">',
+        '{14}'     => '<img src="images/14.png" alt="{14}" class="manaimg">',
+        '{15}'     => '<img src="images/15.png" alt="{15}" class="manaimg">',
+        '{16}'     => '<img src="images/16.png" alt="{16}" class="manaimg">',
+        '{17}'     => '<img src="images/17.png" alt="{17}" class="manaimg">',
+        '{18}'     => '<img src="images/18.png" alt="{18}" class="manaimg">',
+        '{19}'     => '<img src="images/19.png" alt="{19}" class="manaimg">',
+        '{20}'     => '<img src="images/20.png" alt="{20}" class="manaimg">',
+        '{PW}'     => '<img src="images/pw.png" alt="{PW}" class="manaimg">',
+        '{W/P}'    => '<img src="images/pw.png" alt="{W/P}" class="manaimg">',
+        '{PU}'     => '<img src="images/pu.png" alt="{PU}" class="manaimg">',
+        '{U/P}'    => '<img src="images/pu.png" alt="{U/P}" class="manaimg">',
+        '{PB}'     => '<img src="images/pb.png" alt="{PB}" class="manaimg">',
+        '{B/P}'    => '<img src="images/pb.png" alt="{B/P}" class="manaimg">',
+        '{PR}'     => '<img src="images/pr.png" alt="{PR}" class="manaimg">',
+        '{R/P}'    => '<img src="images/pr.png" alt="{R/P}" class="manaimg">',
+        '{PG}'     => '<img src="images/pg.png" alt="{PG}" class="manaimg">',
+        '{G/P}'    => '<img src="images/pg.png" alt="{G/P}" class="manaimg">',
+        '{CHAOS}'  => '<img src="images/chaos.png" alt="{PG}" class="manaimg">',
+        '{G/U/P}'  => '<img src="images/gup.png" alt="{G/U/P}" class="manaimg">',
+        '{G/W/P}'  => '<img src="images/gwp.png" alt="{G/W/P}" class="manaimg">',
+        '{R/G/P}'  => '<img src="images/rgp.png" alt="{R/G/P}" class="manaimg">',
+        '{R/W/P}'  => '<img src="images/rwp.png" alt="{R/W/P}" class="manaimg">',
+        '{PWk}'    => 'Planeswalk',
+        '{Ch}'     => 'Chaos',
+        "\n"       => '<br>',
+        '?'        => '-',
+        '£'        => '<br>',
+        '#'        => '',
+    ];
 
-    $str = str_replace('{W}', '<img src="images/w.png" alt="{W}" class="manaimg">', $str);
-    $str = str_replace('{U}', '<img src="images/u.png" alt="{U}" class="manaimg">', $str);
-    $str = str_replace('{B}', '<img src="images/b.png" alt="{B}" class="manaimg">', $str);
-    $str = str_replace('{R}', '<img src="images/r.png" alt="{R}" class="manaimg">', $str);
-    $str = str_replace('{G}', '<img src="images/g.png" alt="{G}" class="manaimg">', $str);
-    $str = str_replace('{S}', '<img src="images/s.png" alt="{S}" class="manaimg">', $str);
-    $str = str_replace('{C}', '<img src="images/colourless_mana.png" alt="{C}" class="manaimg">', $str);
-
-    $str = str_replace('{HR}', '<img src="images/hr.png" alt="{HR}" class="manaimg">', $str);
-    $str = str_replace('{+oo}', '<img src="images/inf.png" alt="{+oo}" class="manaimg">', $str);
-    $str = str_replace('{100}', '<img src="images/100.png" alt="{100}" class="manaimg">', $str);
-    $str = str_replace('{1000000}', '<img src="images/1m.png" alt="{1000000}" class="manaimg">', $str);
-
-    $str = str_replace('{WU}', '<img src="images/wu.png" alt="{WU}" class="manaimg">', $str);
-    $str = str_replace('{W/U}', '<img src="images/wu.png" alt="{WU}" class="manaimg">', $str);
-    $str = str_replace('{WB}', '<img src="images/wb.png" alt="{WB}" class="manaimg">', $str);
-    $str = str_replace('{W/B}', '<img src="images/wb.png" alt="{WB}" class="manaimg">', $str);
-    $str = str_replace('{UB}', '<img src="images/ub.png" alt="{UB}" class="manaimg">', $str);
-    $str = str_replace('{U/B}', '<img src="images/ub.png" alt="{UB}" class="manaimg">', $str);
-    $str = str_replace('{UR}', '<img src="images/ur.png" alt="{UR}" class="manaimg">', $str);
-    $str = str_replace('{U/R}', '<img src="images/ur.png" alt="{UR}" class="manaimg">', $str);
-    $str = str_replace('{BR}', '<img src="images/br.png" alt="{BR}" class="manaimg">', $str);
-    $str = str_replace('{B/R}', '<img src="images/br.png" alt="{BR}" class="manaimg">', $str);
-    $str = str_replace('{BG}', '<img src="images/bg.png" alt="{BG}" class="manaimg">', $str);
-    $str = str_replace('{B/G}', '<img src="images/bg.png" alt="{BG}" class="manaimg">', $str);
-    $str = str_replace('{RW}', '<img src="images/rw.png" alt="{RW}" class="manaimg">', $str);
-    $str = str_replace('{R/W}', '<img src="images/rw.png" alt="{RW}" class="manaimg">', $str);
-    $str = str_replace('{RG}', '<img src="images/rg.png" alt="{RG}" class="manaimg">', $str);
-    $str = str_replace('{R/G}', '<img src="images/rg.png" alt="{RG}" class="manaimg">', $str);
-    $str = str_replace('{GW}', '<img src="images/gw.png" alt="{GW}" class="manaimg">', $str);
-    $str = str_replace('{G/W}', '<img src="images/gw.png" alt="{GW}" class="manaimg">', $str);
-    $str = str_replace('{GU}', '<img src="images/gu.png" alt="{GU}" class="manaimg">', $str);
-    $str = str_replace('{G/U}', '<img src="images/gu.png" alt="{GU}" class="manaimg">', $str);
-
-    $str = str_replace('{C/W}', '<img src="images/cw.png" alt="{C/W}" class="manaimg">', $str);
-    $str = str_replace('{C/U}', '<img src="images/cu.png" alt="{C/U}" class="manaimg">', $str);
-    $str = str_replace('{C/B}', '<img src="images/cb.png" alt="{C/B}" class="manaimg">', $str);
-    $str = str_replace('{C/R}', '<img src="images/cr.png" alt="{C/R}" class="manaimg">', $str);
-    $str = str_replace('{C/G}', '<img src="images/cg.png" alt="{C/G}" class="manaimg">', $str);
-
-    $str = str_replace('{2W}', '<img src="images/2w.png" alt="{2W}" class="manaimg">', $str);
-    $str = str_replace('{2U}', '<img src="images/2u.png" alt="{2U}" class="manaimg">', $str);
-    $str = str_replace('{2B}', '<img src="images/2b.png" alt="{2B}" class="manaimg">', $str);
-    $str = str_replace('{2R}', '<img src="images/2r.png" alt="{2R}" class="manaimg">', $str);
-    $str = str_replace('{2G}', '<img src="images/2g.png" alt="{2G}" class="manaimg">', $str);
-    $str = str_replace('{2/W}', '<img src="images/2w.png" alt="{2/W}" class="manaimg">', $str);
-    $str = str_replace('{2/B}', '<img src="images/2b.png" alt="{2/B}" class="manaimg">', $str);
-    $str = str_replace('{2/G}', '<img src="images/2g.png" alt="{2/G}" class="manaimg">', $str);
-    $str = str_replace('{2/U}', '<img src="images/2u.png" alt="{2/U}" class="manaimg">', $str);
-    $str = str_replace('{2/R}', '<img src="images/2r.png" alt="{2/R}" class="manaimg">', $str);
-
-    $str = str_replace('{X}', '<img src="images/x.png" alt="{X}" class="manaimg">', $str);
-    $str = str_replace('{Y}', '<img src="images/y.png" alt="{Y}" class="manaimg">', $str);
-    $str = str_replace('{Z}', '<img src="images/z.png" alt="{Z}" class="manaimg">', $str);
-
-    $str = str_replace('{1/2}', '<img src="images/half.png" alt="{1/2}" class="manaimg">', $str);
-    $str = str_replace('{0}', '<img src="images/0.png" alt="{0}" class="manaimg">', $str);
-    $str = str_replace('{1}', '<img src="images/1.png" alt="{1}" class="manaimg">', $str);
-    $str = str_replace('{2}', '<img src="images/2.png" alt="{2}" class="manaimg">', $str);
-    $str = str_replace('{3}', '<img src="images/3.png" alt="{3}" class="manaimg">', $str);
-    $str = str_replace('{4}', '<img src="images/4.png" alt="{4}" class="manaimg">', $str);
-    $str = str_replace('{5}', '<img src="images/5.png" alt="{5}" class="manaimg">', $str);
-    $str = str_replace('{6}', '<img src="images/6.png" alt="{6}" class="manaimg">', $str);
-    $str = str_replace('{7}', '<img src="images/7.png" alt="{7}" class="manaimg">', $str);
-    $str = str_replace('{8}', '<img src="images/8.png" alt="{8}" class="manaimg">', $str);
-    $str = str_replace('{9}', '<img src="images/9.png" alt="{9}" class="manaimg">', $str);
-    $str = str_replace('{10}', '<img src="images/10.png" alt="{10}" class="manaimg">', $str);
-    $str = str_replace('{11}', '<img src="images/11.png" alt="{11}" class="manaimg">', $str);
-    $str = str_replace('{12}', '<img src="images/12.png" alt="{12}" class="manaimg">', $str);
-    $str = str_replace('{13}', '<img src="images/13.png" alt="{13}" class="manaimg">', $str);
-    $str = str_replace('{14}', '<img src="images/14.png" alt="{14}" class="manaimg">', $str);
-    $str = str_replace('{15}', '<img src="images/15.png" alt="{15}" class="manaimg">', $str);
-    $str = str_replace('{16}', '<img src="images/16.png" alt="{16}" class="manaimg">', $str);
-    $str = str_replace('{17}', '<img src="images/17.png" alt="{17}" class="manaimg">', $str);
-    $str = str_replace('{18}', '<img src="images/18.png" alt="{18}" class="manaimg">', $str);
-    $str = str_replace('{19}', '<img src="images/19.png" alt="{19}" class="manaimg">', $str);
-    $str = str_replace('{20}', '<img src="images/20.png" alt="{20}" class="manaimg">', $str);
-
-    $str = str_replace('{PW}', '<img src="images/pw.png" alt="{PW}" class="manaimg">', $str);
-    $str = str_replace('{W/P}', '<img src="images/pw.png" alt="{W/P}" class="manaimg">', $str);
-    $str = str_replace('{PU}', '<img src="images/pu.png" alt="{PU}" class="manaimg">', $str);
-    $str = str_replace('{U/P}', '<img src="images/pu.png" alt="{U/P}" class="manaimg">', $str);
-    $str = str_replace('{PB}', '<img src="images/pb.png" alt="{PB}" class="manaimg">', $str);
-    $str = str_replace('{B/P}', '<img src="images/pb.png" alt="{B/P}" class="manaimg">', $str);
-    $str = str_replace('{PR}', '<img src="images/pr.png" alt="{PR}" class="manaimg">', $str);
-    $str = str_replace('{R/P}', '<img src="images/pr.png" alt="{R/P}" class="manaimg">', $str);
-    $str = str_replace('{PG}', '<img src="images/pg.png" alt="{PG}" class="manaimg">', $str);
-    $str = str_replace('{G/P}', '<img src="images/pg.png" alt="{G/P}" class="manaimg">', $str);
-
-    $str = str_replace('{CHAOS}', '<img src="images/chaos.png" alt="{PG}" class="manaimg">', $str);
-    $str = str_replace('{G/U/P}', '<img src="images/gup.png" alt="{G/U/P}" class="manaimg">', $str);
-    $str = str_replace('{G/W/P}', '<img src="images/gwp.png" alt="{G/W/P}" class="manaimg">', $str);
-    $str = str_replace('{R/G/P}', '<img src="images/rgp.png" alt="{R/G/P}" class="manaimg">', $str);
-    $str = str_replace('{R/W/P}', '<img src="images/rwp.png" alt="{R/W/P}" class="manaimg">', $str);
-
-    $str = str_replace('?', '-', $str);
-    $str = str_replace('£', '<br>', $str);
-    $str = str_replace('#', '', $str);
-    $str = str_replace('{PWk}', 'Planeswalk', $str);
-    $str = str_replace('{Ch}', 'Chaos', $str);
-    $str = str_replace("\n", "<br>", $str);
-    return $str;
+    return strtr($str, $symbols);
 }
 
 function langreplace($str)
