@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.4
-Date:        25/11/25
+Version:     4.5
+Date:        28/11/25
 Name:        deckmanager.class.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickadd() interprets and adds cards.
@@ -24,6 +24,7 @@ History:
     4.2 13/10/24 MTGC-133 - Prefer non-promo cards when adding Quick Add without specified setcode
     4.3 25/11/25 Standard tidy-up
     4.4 25/11/25 Rename PHPMailer wrapper to PascalCase
+    4.5 28/11/25 Rename inputInterpreter call
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -156,7 +157,7 @@ class DeckManager
             "Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')"
         );
         $quickaddstring = htmlspecialchars($get_string, ENT_NOQUOTES);
-        $interpreted_string = input_interpreter($quickaddstring);
+        $interpreted_string = inputInterpreter($quickaddstring);
         if ($interpreted_string !== false) :
             // UUID
             if (isset($interpreted_string['uuid']) and $interpreted_string['uuid'] !== '') :

@@ -6,7 +6,7 @@ class InputInterpreterTest extends TestCase
     public function testCsvHeader()
     {
         $line = 'set,number,name,lang,normal,foil,etched,uuid';
-        $this->assertSame('header', input_interpreter($line));
+        $this->assertSame('header', inputInterpreter($line));
     }
 
     public function testValidCsvRow()
@@ -23,7 +23,7 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertSame($expected, input_interpreter($line));
+        $this->assertSame($expected, inputInterpreter($line));
     }
 
     public function testNonCsvText()
@@ -40,7 +40,7 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, input_interpreter($line));
+        $this->assertEquals($expected, inputInterpreter($line));
     }
 
     public function testNoPatternMatches()
@@ -56,6 +56,6 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, input_interpreter('@@@'));
+        $this->assertEquals($expected, inputInterpreter('@@@'));
     }
 }

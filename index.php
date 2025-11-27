@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     12.2
-Date:        26/11/25
+Version:     12.3
+Date:        28/11/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
@@ -30,6 +30,7 @@ History:
     12.0 01/03/25 Add Name exact
     12.1 02/03/25 Catch and evade empty ability search
     12.2 26/11/25 Standard tidy-up
+    12.3 28/11/25 Update inputInterpreter call
 */
 
 // Call script initiation mechs
@@ -104,7 +105,7 @@ if (isset($_GET['name']) and $_GET['name'] !== "") :
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
-    $interpreted_string = input_interpreter($name);
+    $interpreted_string = inputInterpreter($name);
     if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
         $name = $interpreted_string['name'];
     else :

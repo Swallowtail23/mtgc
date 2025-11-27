@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.3
-Date:        26/11/25
+Version:     5.4
+Date:        28/11/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
 Notes:       -
@@ -20,6 +20,7 @@ History:
     5.1 07/07/24 Add array for cards with brackets in names
     5.2 09/12/24 Move tribal here from index page
     5.3 26/11/25 Standard tidy-up
+    5.4 28/11/25 Update inputInterpreter reference
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -415,7 +416,7 @@ $noQuickAddLayouts = array(
                     'meld',
                     'art_series');
 
-// Cards with brackets contents in names (not currently needed or used, see input_interpreter())
+// Cards with brackets contents in names (not currently needed or used, see inputInterpreter())
 $bracketsInNames = array(
                     "cont'd",
                     'Front Card',

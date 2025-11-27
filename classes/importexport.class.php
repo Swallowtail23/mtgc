@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.4
+Version:     5.5
 Date:        28/11/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
@@ -21,6 +21,7 @@ History:
     5.2 25/11/25 Standard tidy-up
     5.3 25/11/25 Rename PHPMailer wrapper to PascalCase
     5.4 28/11/25 ImportCollectionRegex: declare global noQuickAddLayouts
+    5.5 28/11/25 Rename inputInterpreter call
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -192,7 +193,7 @@ class ImportExport
         // Import type = add, replace or remove
         // Import format = 'regex'
         // 'regex' may have no header row, and content like '1 All Is Dust [M3C 152]'
-        // or any other style that input_interpreter() can assess
+        // or any other style that inputInterpreter() can assess
         $importFormat = 'regex';
         global $noQuickAddLayouts;
         $this->message->logMessage('[DEBUG]', "Import starting in '$importType' mode, '$importFormat' format");
@@ -211,7 +212,7 @@ class ImportExport
             $row_no = $i + 1;
             $this->message->logMessage('[DEBUG]', "Row: $row_no: Reviewing line");
             $linestring = htmlspecialchars($line, ENT_NOQUOTES);
-            $interpreted_string = input_interpreter($linestring);
+            $interpreted_string = inputInterpreter($linestring);
             if ($interpreted_string === 'header') :
                 $this->message->logMessage('[DEBUG]', "Row: $row_no: Header row");
             elseif ($interpreted_string === 'empty line') :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     24.8
+Version:     24.9
 Date:        28/11/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -52,6 +52,7 @@ History:
                   Remove redundant check_input function
                   Remove unneeded $db call from valid_uuid()
     24.8 28/11/25 Use strtr map for symbolreplace to reduce passes
+                  Rename input_interpreter to camelCase inputInterpreter
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -1594,7 +1595,7 @@ function validateCsrfToken($submittedToken)
     return hash_equals($_SESSION['csrf_token'], $submittedToken);
 }
 
-function input_interpreter($input_string)
+function inputInterpreter($input_string)
 {
     // Called by quickAdd in deckmanager class, index.php search inputs and profile.php collection imports
     // This function takes an input string, either from deck quick add or search strings,
