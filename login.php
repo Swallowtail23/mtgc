@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.4
+Version:     7.5
 Date:        27/11/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -23,6 +23,7 @@ History:
     7.2 25/11/25 Standard tidy-up
     7.3 27/11/25 Use dedicated variable for Turnstile client
     7.4 27/11/25 Disable login submit until Turnstile success
+    7.5 27/11/25 Enable login submit via JS when Turnstile disabled or success
 */
 
 use andkab\Turnstile\Turnstile;
@@ -452,39 +453,47 @@ $msg->logMessage(
                     . "data-theme='light' data-callback='onTurnstileSuccess' "
                     . "data-error-callback='onTurnstileError' data-expired-callback='onTurnstileExpired'></div>";
             endif;
-            if ($turnstile === 1) :
-                echo '<input type="submit" id="loginsubmit" value="LOGIN" disabled="disabled" />';
-            else :
-                echo '<input type="submit" id="loginsubmit" value="LOGIN" />';
-            endif;
+            echo '<input type="submit" id="loginsubmit" value="LOGIN" disabled="disabled" />';
             echo '</form><br>'; ?>
             <div class='loginpagebutton'>
                 <a href='reset.php'>RESET</a>
             </div>
-            <?php if ($turnstile === 1) : ?>
             <script>
                 (function () {
                     var submitButton = document.getElementById('loginsubmit');
+                    var turnstileEnabled = <?php echo ($turnstile === 1) ? 'true' : 'false'; ?>;
 
                     if (!submitButton) {
                         return;
                     }
 
-                    window.onTurnstileSuccess = function () {
+                    var enableButton = function () {
                         submitButton.disabled = false;
                     };
 
-                    window.onTurnstileError = function () {
+                    var disableButton = function () {
                         submitButton.disabled = true;
                     };
 
+                    if (!turnstileEnabled) {
+                        enableButton();
+                        return;
+                    }
+
+                    window.onTurnstileSuccess = function () {
+                        enableButton();
+                    };
+
+                    window.onTurnstileError = function () {
+                        disableButton();
+                    };
+
                     window.onTurnstileExpired = function () {
-                        submitButton.disabled = true;
+                        disableButton();
                     };
                 })();
             </script>
-            <?php endif; ?> <?php
-        endif; ?>
+            <?php endif; ?>
     </div>
 </body>
 </html>
