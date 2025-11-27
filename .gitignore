@@ -13,3 +13,4 @@ cardimg/
 vendor/
 .phpunit.result.cache
 .SECURITY_REPORT.md
+.vscode/
