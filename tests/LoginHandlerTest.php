@@ -247,7 +247,7 @@ class LoginHandlerTest extends TestCase
         }
     }
 
-    private function buildHandler(FakeDb $db, callable $terminator = null, int $turnstileEnabled = 0): LoginHandler
+    private function buildHandler(FakeDb $db, ?callable $terminator = null, int $turnstileEnabled = 0): LoginHandler
     {
         global $logfile, $smtpParameters, $serveremail, $Badloglimit, $turnstile, $turnstile_secret_key, $siteTitle;
         $logfile = sys_get_temp_dir() . '/mtg_loginhandler_test.log';
