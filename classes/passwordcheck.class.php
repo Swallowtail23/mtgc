@@ -87,7 +87,7 @@ class PasswordCheck
 
     public function passwordReset($email, $admin, $dbname)
     {
-        global $serveremail, $adminemail;
+        global $serveremail, $adminemail, $siteTitle, $myURL;
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
             return 0;
@@ -117,7 +117,10 @@ class PasswordCheck
                     if ($reset === 1) :
                         $from = "From: $serveremail\r\nReturn-path: $serveremail";
                         $subject = "Password reset";
-                        $message = "$randompassword";
+                        $message = "A new password was requested for your email at $siteTitle ($myURL)\n\n"
+                                   . "Please login with this temporary password: $randompassword\n"
+                                   . "You will need to then choose a new password.\n\n"
+                                   . "If you did not request a new password at $siteTitle, you can ignore this email.";
                         mail($email, $subject, $message, $from);
                     elseif ($reset === 0) :
                         $from = "From: $serveremail\r\nReturn-path: $serveremail";
@@ -206,6 +209,9 @@ class PasswordCheck
         $stmt_select = $this->db->prepare($query_select);
         $stmt_select->bind_param("s", $postemail);
 
+        $db_password   = '';
+        $db_username   = '';
+        $db_usernumber = '';
         if ($stmt_select->execute()) :
             $stmt_select->store_result();
             $stmt_select->bind_result($db_password, $db_username, $db_usernumber);

@@ -597,13 +597,13 @@ endif;
                                     qrInner.innerHTML = `
                                         <h2>Two-factor authentication enabled successfully</h2>
                                         <h3>Scan QR Code using your authentication app</h3>
-                                        <img src=\"${qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
+                                        <img src=\"{$qrDataUri}\" alt=\"Scan QR Code to set up 2FA\">
                                         <h3>...or manually enter this code:</h3>
-                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">${formattedSecretKey}</p>
+                                        <p class=\"secret-key\" onclick=\"copySecretKey()\">{$formattedSecretKey}</p>
                                         <input
                                             type=\"text\"
                                             id=\"hiddenSecretKey\"
-                                            value=\"${encodedSecretKey}\"
+                                            value=\"{$encodedSecretKey}\"
                                             style=\"position:absolute; left:-9999px;\"
                                         >
                                         <h3>Verify your 6-digit code:</h3>
@@ -618,7 +618,7 @@ endif;
                                                 placeholder='Enter 6-digit code'
                                                 style='font-size: 18px; text-align: center; width: 120px;'
                                             >
-                                            <input type='hidden' name='tfa_secret' value='${encodedSecretKey}'>
+                                            <input type='hidden' name='tfa_secret' value='{$encodedSecretKey}'>
                                             <button
                                                 type='submit'
                                                 name='verify_2fa'
@@ -905,10 +905,11 @@ endif;
                             <td style="text-align: center;">
                                 <p style="margin-top: 10px;">
                                 <a href="profile.php?remove_all_devices=1"
-                                   onclick="return confirm('Are you sure you want to remove ALL trusted devices? "
-                                        + "You will need to log in again on all devices.');"
+                                   onclick="return confirm('Are you sure you want to remove ALL trusted devices? '
+                                        + 'You will need to log in again on all devices.');"
                                    class="profilebutton"
-                                   style="padding: 3px 8px; width: 56px; display: inline-block;">CLEAR</a>
+                                   style="padding: 3px 8px; width: 56px; display: inline-block;">CLEAR
+                                </a>
                                 </p>
                             </td>
                         </tr><?php

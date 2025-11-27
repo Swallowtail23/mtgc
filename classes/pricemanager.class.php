@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        25/11/25
+Version:     1.5
+Date:        28/11/25
 Name:        pricemanager.class.php
 Purpose:     Price management class.
 Notes:       {none}
@@ -16,6 +16,7 @@ History:
     1.2 23/08/24 MTGC-123 - Use normal value if needed for Top Value
     1.3 01/03/25 MTGC-124 - Move last price calc function here from functions file
     1.4 25/11/25 Standard tidy-up
+    1.5 28/11/25 Remove unused status assignment
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -68,7 +69,6 @@ class PriceManager
             endif;
         else :
             $this->message->logMessage('[ERROR]', "Scryfall API error");
-            $this->status = 0;
             trigger_error(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error,

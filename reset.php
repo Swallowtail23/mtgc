@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.1
-Date:        25/11/25
+Version:     2.2
+Date:        28/11/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -14,6 +14,7 @@ History:
     1.0         Initial version
     2.0 05/09/17 Removed hard-coded email address, now uses ini.php
     2.1 25/11/25 Standard tidy-up
+    2.2 28/11/25 Use PasswordCheck::passwordReset for reset requests
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -46,33 +47,22 @@ $cssver = cssver();
 <div id="loginheader">
     <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
 <?php
-    if (isset($_REQUEST['action'])) :
-        $action = $_REQUEST['action'];
-        if (isset($_POST['email'])) :
-            $email = spamcheck($_POST['email']);
-        else :
-            $email = false;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') :
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $validEmail = filter_var($email, FILTER_VALIDATE_EMAIL);
+        if ($validEmail) :
+            $pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+            $pwReset->passwordReset($validEmail, 1, $dbname);
         endif;
-        if ($email == false) :
-            echo "Valid email is required, please fill <a href=\"\">the form</a> again.";
-        elseif ($email == 'No match') :
-            echo "If the email address exists, your request will be actioned";
-            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-        else :
-            $from = "From: $email\r\nReturn-path: $email";
-            $subject = "Password reset request for $email";
-            $message = "Password reset request for $email\r\n$from";
-            mail($adminemail, $subject, $message, $from);
-            echo "If the email address exists, your request will be actioned";
-            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-        endif;
+        echo "If the email address exists, a new temporary password has been sent.";
+        echo "<meta http-equiv='refresh' content='3;url=login.php'>";
     else :
         ?>
         <form  action="?" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="submit">
             <br>Request password reset:<br><br>
             <?php echo "<input class='textinput loginfield' name='email' type='email' "
-                       . "placeholder='EMAIL' size='30'/><br>"; ?>
+                       . "placeholder='EMAIL' size='30' required/><br>"; ?>
             <input class='sendreset' type="submit" value="SEND"/>
         </form>
         <?php

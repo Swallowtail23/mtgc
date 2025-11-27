@@ -143,7 +143,7 @@ class UserStatus
                 );
             endif;
         endif;
-        $this->message->logMessage("[DEBUG]", "Returning {$this->badlogincount['code']}");
+        $this->message->logMessage("[DEBUG]", "Returning bad login code: {$this->badlogincount['code']}");
         return $this->badlogincount;
     }
 

@@ -684,7 +684,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
         else :
             $msg->logMessage('[ERROR]', "Scryfall Bulk API: File download error, waiting 5 minutes to try again");
             sleep(300);
-            $bulkreturn = downloadbulk($bulk_uri, $file_location);
+            $bulkreturn = downloadbulk($uri, $file_location);
             if (!($bulkreturn == true and file_exists($file_location) and filesize($file_location) > 0)) :
                 $msg->logMessage('[ERROR]', "Scryfall Bulk API: File download error on retry, exiting.");
                 $download_bulk = false;
