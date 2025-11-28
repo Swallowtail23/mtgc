@@ -8,7 +8,7 @@ Purpose:     Functions for all pages
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       -
+To do:       camelCase functions;
 
 History:
     1.0         Initial version

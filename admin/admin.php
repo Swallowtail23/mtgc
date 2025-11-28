@@ -7,6 +7,7 @@ Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       Review for optimisations;
 
 History:
     1.0         Initial version
