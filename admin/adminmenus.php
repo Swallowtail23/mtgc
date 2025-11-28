@@ -1,17 +1,19 @@
 <?php
 /*
-Version:     1.2
-Date:        25/11/25
+Version:     1.3
+Date:        28/11/25
 Name:        adminmenus.php
 Purpose:     Menus for admin pages
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0 18/10/16 Initial version
     1.1 24/11/25 PHPCS cleaned
     1.2 25/11/25 Header tidy and metadata standardization
+    1.3 28/11/25 Add To do line after copyright
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');

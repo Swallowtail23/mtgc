@@ -1,12 +1,13 @@
 <?php
 /*
-Version:     2.3
-Date:        25/11/25
+Version:     2.4
+Date:        28/11/25
 Name:        reject.php
 Purpose:     Non-admin rejection page called by admin pages on attempted load by non-admin or from non-secure page
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0         Initial version
@@ -14,6 +15,7 @@ History:
     2.1 20/01/24 Move to logMessage
     2.2 24/11/25 PHPCS cleaning
     2.3 25/11/25 Header tidy and metadata standardization
+    2.4 28/11/25 Add To do line after copyright
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

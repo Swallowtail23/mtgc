@@ -1,18 +1,20 @@
 <?php
 
 /*
-Version:     1.2
-Date:        25/11/25
+Version:     1.3
+Date:        28/11/25
 Name:        ajaxgroup.php
 Purpose:     PHP script to turn ajax group on/off
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0         Initial version
     1.1 20/01/24 Include sessionname.php and move to logMessage
     1.2 25/11/25 Standard tidy-up
+    1.3 28/11/25 Add To do line after copyright
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

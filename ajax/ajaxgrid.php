@@ -1,13 +1,14 @@
 <?php
 
 /*
-Version:     5.3
-Date:        25/11/25
+Version:     5.4
+Date:        28/11/25
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0         Initial version
@@ -18,6 +19,7 @@ History:
     5.1 10/12/23 Add cardid regex filter; improve error handling back to Ajax
     5.2 20/01/24 Include sessionname.php and move to logMessage
     5.3 25/11/25 Standard tidy-up
+    5.4 28/11/25 Add To do line after copyright
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

@@ -1,12 +1,13 @@
 <?php
 /*
-Version:     5.5
-Date:        27/11/25
+Version:     5.6
+Date:        28/11/25
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0         Initial version
@@ -19,6 +20,7 @@ History:
     5.3 25/11/25 Header tidy and metadata standardization
     5.4 26/11/25 Escape new user inputs for output
     5.5 27/11/25 Validate email in new user flow
+    5.6 28/11/25 Add To do line after copyright
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');

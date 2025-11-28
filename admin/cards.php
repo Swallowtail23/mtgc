@@ -1,12 +1,13 @@
 <?php
 /*
-Version:     5.4
-Date:        25/11/25
+Version:     5.5
+Date:        28/11/25
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
+To do:       -
 
 History:
     1.0         Initial version - no function yet
@@ -18,6 +19,7 @@ History:
     5.2 20/01/24 Move to include sessionname and logMessage
     5.3 24/11/25 PHPCS cleaned
     5.4 25/11/25 Header tidy and metadata standardization
+    5.5 28/11/25 Add To do line after copyright
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
