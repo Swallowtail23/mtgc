@@ -109,7 +109,7 @@ class LoginHandler
 
                     $this->message->logMessage('[NOTICE]', "Auto-login via trusted device for user $useremail");
 
-                    if (!loginstamp($useremail)) :
+                    if (!loginStamp($useremail)) :
                         $this->message->logMessage(
                             '[ERROR]',
                             "Failed to update last login timestamp for $useremail"
@@ -400,11 +400,11 @@ class LoginHandler
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
 
-        if (!loginstamp($email)) :
+        if (!loginStamp($email)) :
             $this->message->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
         endif;
 
-        $mtcestatus = mtcemode($usernumber);
+        $mtcestatus = mtceModeCheck($usernumber);
         if ($mtcestatus == 1) :
             echo "<br>Site is undergoing maintenance, please try again later...";
             session_destroy();

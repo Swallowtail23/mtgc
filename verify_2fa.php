@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        25/11/25
+Version:     1.6
+Date:        29/11/25
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     1.3 01/03/25 Code tweaks/tidy-up
     1.4 25/11/25 Formatting clean-up
     1.5 25/11/25 Standard tidy-up
+    1.6 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -32,7 +33,7 @@ require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
 $msg = new Message($logfile);
-$cssver = cssver();
+$cssver = cssVersionCheck();
 
 if (!isset($_SESSION['user_pending_2fa'])) :
     $msg->logMessage('[ERROR]', 'Access to verify_2fa.php attempted without completing first factor authentication');
@@ -84,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
                 $_SESSION['just_logged_in'] = true;
             endif;
 
-            if (!loginstamp($email)) :
+            if (!loginStamp($email)) :
                 $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
             endif;
 

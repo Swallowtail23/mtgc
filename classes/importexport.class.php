@@ -295,7 +295,7 @@ class ImportExport
                 );
                 $stmt = null;
 
-                if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false) :
+                if ($quickaddUUID !== '' && validUUID($quickaddUUID) !== false) :
                     // Card UUID provided and valid UUID
                     $this->message->logMessage(
                         '[DEBUG]',
@@ -517,7 +517,7 @@ class ImportExport
             $row_no = $batchedCard['row'];
             $id = $batchedCard['id'];
             $finishes = json_decode($batchedCard['finishes'], true);
-            $cardtype = cardtypes($finishes);
+            $cardtype = cardTypes($finishes);
             $normal = $batchedCard['normal'];
             $foil = $batchedCard['foil'];
             $etched = $batchedCard['etched'];

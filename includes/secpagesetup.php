@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        26/11/25
+Version:     2.4
+Date:        29/11/25
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
 Notes:       -
@@ -16,13 +16,14 @@ History:
     2.1 27/11/23 Moved fx logic into session manager class's user info method
     2.2 20/01/24 Move to logMessage
     2.3 26/11/25 Standard tidy-up
+    2.4 29/11/25 Rename cssVersionCheck() & mtceModeCheck() usage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-$cssver = cssver();                                       // find CSS Version
+$cssver = cssVersionCheck();                              // find CSS Version
 if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];  // capture entered URL
     header("Location: /login.php");                       // check if user is logged in; else redirect to login.php
@@ -45,7 +46,7 @@ else :
 
         $useremail = $_SESSION['useremail'];              // get email address of user, available in SESSION
 
-        $mtcestatus = mtcemode($user);                    // check mtce mode active and if an admin user
+        $mtcestatus = mtceModeCheck($user);                    // check mtce mode active and if an admin user
         if ($mtcestatus == 1) :                           // check if site is in maintenance mode
             include('includes/mtcestub.php');
             session_destroy();

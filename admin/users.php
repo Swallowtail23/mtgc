@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.6
-Date:        28/11/25
+Version:     5.7
+Date:        29/11/25
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -21,6 +21,7 @@ History:
     5.4 26/11/25 Escape new user inputs for output
     5.5 27/11/25 Validate email in new user flow
     5.6 28/11/25 Add To do line after copyright
+    5.7 29/11/25 Rename forcePasswordChange usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -32,7 +33,7 @@ require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
-forcechgpwd();                                  //Check if user is disabled or needs to change password
+forcePasswordChange();                          //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php

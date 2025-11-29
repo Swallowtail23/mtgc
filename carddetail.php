@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     19.4
-Date:        25/11/25
+Version:     19.5
+Date:        29/11/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -38,6 +38,7 @@ History:
     19.2 22/01/24 Add revised sorting for PLST and SLD cards, per criteria.php
     19.3 11/08/24 Update notes and refresh image via AJAX
     19.4 25/11/25 Standard tidy-up and long-line wraps
+    19.5 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -50,7 +51,7 @@ require('includes/ini.php');                //Initialise and load ini file
 require('includes/error_handling.php');     //Initialise and load error/logging file
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
-forcechgpwd();                               //Check if user is disabled or needs to change password
+forcePasswordChange();                       //Check if user is disabled or needs to change password
 require('includes/colour.php');
 
 $msg = new Message($logfile);
@@ -64,9 +65,9 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])) :
-    $cardid = valid_uuid($_GET["id"]);
+    $cardid = validUUID($_GET["id"]);
 elseif (isset($_POST["id"])) :
-    $cardid = valid_uuid($_POST["id"]);
+    $cardid = validUUID($_POST["id"]);
 endif;
 
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
@@ -498,7 +499,7 @@ require('includes/menu.php'); //mobile menu
                 $msg->logMessage('[DEBUG]', "Card has a promo_type set: {$row['promo_types']}");
                 $full_promo_text = '';
                 foreach ($promo as $value) :
-                    $promo_description = promo_lookup($value);
+                    $promo_description = promoLookup($value);
                     if ($promo_description !== 'skip') :
                         if ($full_promo_text === '') :
                             $full_promo_text = $full_promo_text . "$promo_description";
@@ -669,7 +670,7 @@ require('includes/menu.php'); //mobile menu
                 //Set card types
             if (isset($row['finishes'])) :
                 $finishes = json_decode($row['finishes'], true);
-                $cardtypes = cardtypes($finishes);
+                $cardtypes = cardTypes($finishes);
             else :
                     $finishes = null;
                     $cardtypes = 'none';
@@ -1331,9 +1332,9 @@ require('includes/menu.php'); //mobile menu
                                     and $card_lang != 'en'
                                     and $row['primary_card'] === 1
                                 ) :
-                                    echo "<br><b>Language: </b>" . langreplace($card_lang) . " (primary print)";
+                                    echo "<br><b>Language: </b>" . langReplace($card_lang) . " (primary print)";
                                 elseif (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                        echo "<br><b>Language: </b>" . langreplace($card_lang);
+                                        echo "<br><b>Language: </b>" . langReplace($card_lang);
                                 endif;
                                     echo "<br>";
                                     echo "<b>Rarity: </b>";
@@ -1371,7 +1372,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<b>Mana value: </b>" . $row['f1_cmc'];
                                     echo "<br>";
                                 endif;
-                                $manacost = symbolreplace($row['f1_manacost']);
+                                $manacost = symbolReplace($row['f1_manacost']);
                                 if ($manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
@@ -1381,11 +1382,11 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langreplace($card_lang);
+                                    echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] != '') :
-                                    echo "<b>Abilities: </b>" . symbolreplace($row['f1_ability']);
+                                    echo "<b>Abilities: </b>" . symbolReplace($row['f1_ability']);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['f1_type'], 'reature') !== false) :
@@ -1399,13 +1400,13 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                             else :
-                                $manacost = symbolreplace($row['manacost']);
+                                $manacost = symbolReplace($row['manacost']);
                                 if ($manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
                                 if ($row['ability'] != '') :
-                                    echo "<b>Abilities: </b>" . symbolreplace($row['ability']);
+                                    echo "<b>Abilities: </b>" . symbolReplace($row['ability']);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['type'], 'reature') !== false) :
@@ -1579,7 +1580,7 @@ require('includes/menu.php'); //mobile menu
                                 echo "<h3>Adventure: </h3>";
                                 echo "<b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = symbolreplace($row['f2_manacost']);
+                                $flipmanacost = symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1589,7 +1590,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langreplace($card_lang);
+                                    echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
@@ -1605,7 +1606,7 @@ require('includes/menu.php'); //mobile menu
                             elseif ($row['layout'] === 'split' or $row['layout'] === 'flip') :
                                 echo "<br><b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = symbolreplace($row['f2_manacost']);
+                                $flipmanacost = symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1615,11 +1616,11 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langreplace($card_lang);
+                                    echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = symbolreplace($flipability);
+                                    $flipability = symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
@@ -2529,10 +2530,10 @@ require('includes/menu.php'); //mobile menu
                                     else :
                                         $source = $rulingrow['source'];
                                     endif;
-                                    $ruling = $ruling . $newdate . ": " . symbolreplace($rulingrow['comment'])
+                                    $ruling = $ruling . $newdate . ": " . symbolReplace($rulingrow['comment'])
                                         . " (" . $source . ")<br>";
                                 endwhile;
-                                $ruling = autolink($ruling, array("target" => "_blank","rel" => "nofollow"));
+                                $ruling = autoLink($ruling, array("target" => "_blank","rel" => "nofollow"));
                                 if (!in_array($row['layout'], $two_card_detail_sections)) :
                                     echo "<h3 class='shallowh3'>Rulings:</h3> " . $ruling . "&nbsp;";
                                 endif;
@@ -2611,7 +2612,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<b>Mana value: </b>" . $row['f2_cmc'];
                                     echo "<br>";
                                 endif;
-                                $flipmanacost = symbolreplace($row['f2_manacost']);
+                                $flipmanacost = symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -2621,11 +2622,11 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langreplace($card_lang);
+                                    echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = symbolreplace($flipability);
+                                    $flipability = symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
@@ -2657,7 +2658,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
                 if ($disqus === 1) :
                     $msg->logMessage('[DEBUG]', "Disqus enabled");
-                    $page_url = strtok(get_full_url(), '?') . "?id=" . $cardid;
+                    $page_url = strtok(getFullURL(), '?') . "?id=" . $cardid;
                     if ($tier === 'dev') :
                         $msg->logMessage('[DEBUG]', "Disqus site is '$disqusDev'");
                         $disqus_site = "$disqusDev/embed.js";

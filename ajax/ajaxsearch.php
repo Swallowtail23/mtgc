@@ -109,7 +109,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                         $teststring = trim($setcode);
                     endif;
                     $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                    if (isset($teststring) && in_array_case_insensitive($teststring, $bracketsInNames)) :
+                    if (isset($teststring) && inArrayCaseInsensitive($teststring, $bracketsInNames)) :
                         $msg->logMessage(
                             '[DEBUG]',
                             "Bracket contents match a card with brackets in name, resetting name, set to match"

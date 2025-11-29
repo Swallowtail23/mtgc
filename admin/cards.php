@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.5
-Date:        28/11/25
+Version:     5.6
+Date:        29/11/25
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -20,6 +20,7 @@ History:
     5.3 24/11/25 PHPCS cleaned
     5.4 25/11/25 Header tidy and metadata standardization
     5.5 28/11/25 Add To do line after copyright
+    5.6 29/11/25 Rename forcePasswordChange usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -31,7 +32,7 @@ require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
-forcechgpwd();                                  //Check if user is disabled or needs to change password
+forcePasswordChange();                          //Check if user is disabled or needs to change password
 
 
 $msg = new Message($logfile);
@@ -47,7 +48,7 @@ endif;
 
 // Find if this card is in any decks
 if (isset($_GET['cardtoedit'])) :
-    $id = valid_uuid($_GET['cardtoedit']);
+    $id = validUUID($_GET['cardtoedit']);
     if ($id === false) :
         $msg->logMessage('[ERROR]', "Admin card page called without valid UUID");
         trigger_error("[ERROR] cards.php: Invalid UUID", E_USER_ERROR);

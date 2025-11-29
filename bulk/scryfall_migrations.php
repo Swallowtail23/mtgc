@@ -68,7 +68,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 
     if ($download > 0) :
         $msg->logMessage('[DEBUG]', "Scryfall migrations API: ($page), downloading: $url");
-        $setsreturn = downloadbulk($url, $page);
+        $setsreturn = downloadBulk($url, $page);
     endif;
     return $page;
 }

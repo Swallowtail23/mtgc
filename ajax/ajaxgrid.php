@@ -62,7 +62,7 @@ if ($isValidReferrer) :
         exit();
     else :
         $cardid = $_POST['cardid'] ?? '';
-        if (valid_uuid($cardid) === false) :
+        if (validUUID($cardid) === false) :
             $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
             $response['status'] = 'error';
             $response['message'] = "Called with invalid card UUID";

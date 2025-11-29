@@ -90,11 +90,11 @@ class DeckManager
                 $start = substr($line, 0, 8);
                 if (strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false) :
                     $this->message->logMessage('[DEBUG]', "Row $row: Header row: '$line'");
-                elseif (trim($line) === '' || in_array_case_insensitive(trim($line), $this->importLinestoIgnore)) :
+                elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
                     if (trim($line) === 'Sideboard') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Sideboard header");
                         $sideboardTrigger = true;
-                    elseif (trim($line) === '' || in_array_case_insensitive(trim($line), $this->importLinestoIgnore)) :
+                    elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
                         $this->message->logMessage('[DEBUG]', "Row $row: Empty row");
                     endif;
                 else :
@@ -215,7 +215,7 @@ class DeckManager
             $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
             $placeholdersString = implode(',', $placeholders);
 
-            if ($quickaddUUID !== '' && valid_uuid($quickaddUUID) !== false) :
+            if ($quickaddUUID !== '' && validUUID($quickaddUUID) !== false) :
                 // Card UUID provided and valid UUID
                 $this->message->logMessage(
                     '[DEBUG]',

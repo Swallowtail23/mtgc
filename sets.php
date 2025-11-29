@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.3
-Date:        25/11/25
+Version:     4.4
+Date:        29/11/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -18,6 +18,7 @@ History:
     4.1 20/01/24 Move to logMessage
     4.2 29/05/24 Fix incorrect set ordering
     4.3 25/11/25 Standard tidy-up
+    4.4 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -30,7 +31,7 @@ require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
-forcechgpwd();                             // Check if user is disabled or needs to change password
+forcePasswordChange();                     // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 ?>

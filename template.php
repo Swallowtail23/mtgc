@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        25/11/25
+Version:     1.2
+Date:        29/11/25
 Name:        template.php
 Purpose:     Site template.
 Notes:       {none}
@@ -13,6 +13,7 @@ To do:       -
 History:
     1.0         Initial version
     1.1 25/11/25 Standard tidy-up
+    1.2 29/11/25 Update forcePasswordChange call
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -25,7 +26,7 @@ require 'includes/ini.php';                // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
-forcechgpwd();
+forcePasswordChange();
 ?>
 
 <!DOCTYPE html>

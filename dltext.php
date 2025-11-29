@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.1
-Date:        25/11/25
+Version:     4.2
+Date:        29/11/25
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -16,6 +16,7 @@ History:
     3.0 08/09/24 MTGC-125 - move export logic to deckManager class
     4.0 05/10/24 MTGC-127 - fix broken deck missing export via DeckManager
     4.1 25/11/25 Standard tidy-up
+    4.2 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -28,7 +29,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-forcechgpwd(); // Check if user is disabled or needs to change password
+forcePasswordChange(); // Check if user is disabled or needs to change password
 
 if (isset($_POST['decknumber'])) :
     $decknumber = filter_input(

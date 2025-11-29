@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     12.3
-Date:        28/11/25
+Version:     12.4
+Date:        29/11/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
@@ -31,6 +31,7 @@ History:
     12.1 02/03/25 Catch and evade empty ability search
     12.2 26/11/25 Standard tidy-up
     12.3 28/11/25 Update inputInterpreter call
+    12.4 29/11/25 Rename forcePasswordChange usage
 */
 
 // Call script initiation mechs
@@ -45,7 +46,7 @@ require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
-forcechgpwd();                            // Check if user is disabled or needs to change password
+forcePasswordChange();                    // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 // Default numbers per page and max
@@ -614,7 +615,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = cardtypes($finishes);
+                                $cardtypes = cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';
@@ -835,7 +836,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                 </td>
                                 <?php
                                 if (isset($row['manacost']) and !empty($row['manacost'])) :
-                                    $manac = symbolreplace($row['manacost']);
+                                    $manac = symbolReplace($row['manacost']);
                                 else :
                                     $manac = null;
                                 endif;
@@ -853,7 +854,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                         <td class="valueabilities">
                                             <?php
                                             if (isset($row['ability']) and !empty($row['ability'])) :
-                                                $ability = symbolreplace($row['ability']);
+                                                $ability = symbolReplace($row['ability']);
                                                 echo $ability;
                                             endif;
                                             ?>
@@ -929,7 +930,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = cardtypes($finishes);
+                                $cardtypes = cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';

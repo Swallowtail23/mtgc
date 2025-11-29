@@ -1,11 +1,12 @@
 <?php
 
 /*
-Version:     13.2
-Date:        25/11/25
+Version:     13.3
+Date:        29/11/25
 Name:        profile.php
 Purpose:     User profile page.
-Notes:       This page must not run the forcechgpwd function - this is the page that a user goes to TO change password.
+Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
+             password.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -30,6 +31,7 @@ History:
     13.0 01/03/25 Alterations for display of additional security options
     13.1 02/03/25 Display fixes, including MTGC-145
     13.2 25/11/25 Standard tidy-up
+    13.3 29/11/25 Update forcePasswordChange reference in notes
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -337,7 +339,7 @@ endif;
                         $db_password = $row['password'];
                         if ($new_password == $new_password_2) :
                             $msg->logMessage('[DEBUG]', "New passwords double type = match");
-                            if (valid_pass($new_password)) :
+                            if (validPass($new_password)) :
                                 $msg->logMessage('[DEBUG]', "New password is a valid password");
                                 if ($new_password != $old_password) :
                                     $msg->logMessage('[DEBUG]', "New password is different to old password");
@@ -456,7 +458,7 @@ endif;
 
             //8. Update pricing in case any new cards have been added to collection
                 //Make sure only number+collection is passed as table name
-                if (valid_tablename($mytable) !== false) :
+                if (validTableName($mytable) !== false) :
                     $obj = new PriceManager($db, $logfile, $useremail);
                     $obj->updateCollectionValues($mytable);
                 else :

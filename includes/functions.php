@@ -2,13 +2,13 @@
 
 /*
 Version:     24.9
-Date:        28/11/25
+Date:        29/11/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       camelCase functions;
+To do:       -
 
 History:
     1.0         Initial version
@@ -50,16 +50,17 @@ History:
     24.6 26/11/25 Standard tidy-up (header/whitespace)
     24.7 26/11/25 Improve cssver - gentler failure, more robust check
                   Remove redundant check_input function
-                  Remove unneeded $db call from valid_uuid()
+                  Remove unneeded $db call from validUUID()
     24.8 28/11/25 Use strtr map for symbolreplace to reduce passes
                   Rename input_interpreter to camelCase inputInterpreter
+    24.9 29/11/25 Rename all non-camelCase functions
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-function forcechgpwd()
+function forcePasswordChange()
 {
     global $_SESSION;
     if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
@@ -67,7 +68,7 @@ function forcechgpwd()
     endif;
 }
 
-function cssver()
+function cssVersionCheck()
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -92,41 +93,7 @@ function cssver()
     endif;
 }
 
-function spamcheck($field)
-{
-    global $db, $logfile;
-    $msg = new Message($logfile);
-
-    // Sanitize e-mail address
-    $msg->logMessage('[DEBUG]', "Checking email address <$field>");
-    $field = filter_var($field, FILTER_SANITIZE_EMAIL);
-    if (!filter_var($field, FILTER_VALIDATE_EMAIL)) :
-        $msg->logMessage('[ERROR]', "Invalid email address <$field> passed");
-        return false;
-    else :
-        $sql = "SELECT usernumber, username FROM users WHERE email = ? LIMIT 1";
-        $result = $db->execute_query($sql, [$field]);
-        if ($result === false) :
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $db->error,
-                E_USER_ERROR
-            );
-        else :
-            $row = $result->fetch_assoc();
-            if (empty($row)) :
-                return 'No match';
-            elseif (filter_var($field, FILTER_VALIDATE_EMAIL)) :
-                $msg->logMessage('[NOTICE]', "Email address validated for reset request");
-                return $field;
-            else :
-                return false;
-            endif;
-        endif;
-    endif;
-}
-
-function setmtcemode($toggle)
+function setMtceMode($toggle)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -155,7 +122,7 @@ function setmtcemode($toggle)
     endif;
 }
 
-function mtcemode($user)
+function mtceModeCheck($user)
 {
     global $db,$logfile;
     $msg = new Message($logfile);
@@ -209,7 +176,7 @@ function mtcemode($user)
     endif;
 }
 
-function symbolreplace($str)
+function symbolReplace($str)
 {
     static $symbols = [
         '{E}'      => '<img src="images/e.png" alt="{E}" class="manaimg">',
@@ -314,7 +281,7 @@ function symbolreplace($str)
     return strtr($str, $symbols);
 }
 
-function langreplace($str)
+function langReplace($str)
 {
     global $search_langs;
 
@@ -325,21 +292,6 @@ function langreplace($str)
     endforeach;
 
     return $str; // Return the original string if no match is found
-}
-
-function finddates($str)
-{
-    $matches = array();
-    $pattern = '/'
-               . '([0-9]{1,2})'
-               . '([\/])'
-               . '([0-9]{1,2})'
-               . '([\/])'
-               . '([0-9]{0,4})'
-               . '/';
-    if (preg_match_all($pattern, $str, $matches)) :
-        return $matches[0];
-    endif;
 }
 
 function checkRemoteFile($url)
@@ -430,7 +382,7 @@ function getStringParameters($input, $ignore1, $ignore2 = '')
     return $output;
 }
 
-function valid_pass($candidate)
+function validPass($candidate)
 {
     if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $candidate, $hole)) :
         return false;
@@ -440,7 +392,7 @@ function valid_pass($candidate)
     $hole = '';
 }
 
-function autolink($str, $attributes = array())
+function autoLink($str, $attributes = array())
 {
     $attrs = '';
     foreach ($attributes as $attribute => $value) :
@@ -456,7 +408,7 @@ function autolink($str, $attributes = array())
     return $str;
 }
 
-function get_full_url()
+function getFullURL()
 {
     // Get HTTP/HTTPS (the possible values for this vary from server to server)
     $myUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']
@@ -473,7 +425,7 @@ function get_full_url()
     return $myUrl;
 }
 
-function loginstamp($useremail)
+function loginStamp($useremail)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -490,7 +442,7 @@ function loginstamp($useremail)
     endif;
 }
 
-function downloadbulk($url, $dest)
+function downloadBulk($url, $dest)
 {
     global $db, $logfile;
     $options = array(
@@ -666,7 +618,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
     endif;
     if ($download > 0) :
         $msg->logMessage('[NOTICE]', "Scryfall Bulk API: downloading: $uri");
-        $bulkreturn = downloadbulk($uri, $file_location);
+        $bulkreturn = downloadBulk($uri, $file_location);
         if ($bulkreturn == true and file_exists($file_location) and filesize($file_location) > 0) :
             $file_size = filesize($file_location);
             $msg->logMessage(
@@ -679,7 +631,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
         else :
             $msg->logMessage('[ERROR]', "Scryfall Bulk API: File download error, waiting 5 minutes to try again");
             sleep(300);
-            $bulkreturn = downloadbulk($uri, $file_location);
+            $bulkreturn = downloadBulk($uri, $file_location);
             if (!($bulkreturn == true and file_exists($file_location) and filesize($file_location) > 0)) :
                 $msg->logMessage('[ERROR]', "Scryfall Bulk API: File download error on retry, exiting.");
                 $download_bulk = false;
@@ -1358,7 +1310,7 @@ function validateTrueDecimal($v)
     return(floor($v) != $v);
 }
 
-function cardtypes($finishes)
+function cardTypes($finishes)
 {
     global $db, $logfile;
     $cardtypes = 'none';
@@ -1392,39 +1344,7 @@ function cardtypes($finishes)
     return $cardtypes;
 }
 
-function cardtype_for_id($id)
-{
-    global $db, $logfile;
-    $msg = new Message($logfile);
-
-    $msg->logMessage('[DEBUG]', "Looking up card types for card $id");
-    $stmt = $db->execute_query("SELECT finishes FROM cards_scry WHERE id = ? LIMIT 1", [$id]);
-    if ($stmt != true) :
-        trigger_error(
-            "[ERROR] Class " . __METHOD__ . " " . __LINE__ . " - SQL failure: Error: " . $db->error,
-            E_USER_ERROR
-        );
-    else :
-        if ($stmt->num_rows > 0) :
-            $result = $stmt->fetch_assoc();
-            if (isset($result['finishes'])) :
-                $msg->logMessage('[DEBUG]', "Card $id is valid, looking up finishes");
-                $finishes = json_decode($result['finishes'], true);
-                $cardtypes = cardtypes($finishes);
-            else :
-                $msg->logMessage('[DEBUG]', "Card $id is valid, but no finishes");
-                $cardtypes = 'none';
-            endif;
-        else :
-            $msg->logMessage('[DEBUG]', "Card $id has no match");
-            $cardtypes = 'nomatch';
-        endif;
-    endif;
-    $msg->logMessage('[DEBUG]', "Card type for $id is $cardtypes");
-    return $cardtypes;
-}
-
-function card_legal_db_field($decktype)
+function cardLegalDBField($decktype)
 {
     global $db, $deck_legality_map, $logfile;
     $msg = new Message($logfile);
@@ -1438,7 +1358,7 @@ function card_legal_db_field($decktype)
     return $db_field;
 }
 
-function promo_lookup($promo_type)
+function promoLookup($promo_type)
 {
     global $promos_to_show, $logfile;
     $msg = new Message($logfile);
@@ -1454,7 +1374,7 @@ function promo_lookup($promo_type)
     return $promo_description;
 }
 
-function deck_legal_list($decknumber, $deck_type, $db_field)
+function deckLegalList($decknumber, $deck_type, $db_field)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -1502,7 +1422,7 @@ function deck_legal_list($decknumber, $deck_type, $db_field)
     return $list;
 }
 
-function valid_uuid($uuid)
+function validUUID($uuid)
 {
     global $logfile;
     $msg = new Message($logfile);
@@ -1522,7 +1442,7 @@ function valid_uuid($uuid)
     endif;
 }
 
-function valid_tablename($input)
+function validTableName($input)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -1555,7 +1475,7 @@ function isValidLanguageCode($lang)
     return preg_match('/^[a-zA-Z]*$/', $lang) || empty($lang);
 }
 
-function in_array_case_insensitive($needle, $haystack)
+function inArrayCaseInsensitive($needle, $haystack)
 {
     if (!is_array($haystack)) :
         return false;
@@ -1666,7 +1586,7 @@ function inputInterpreter($input_string)
                     !isValidCardName($fields[2]) ||
                     !(is_numeric($fields[3]) || empty($fields[3])) ||
                     !(is_numeric($fields[4]) || empty($fields[4])) ||
-                    !valid_uuid($fields[5])
+                    !validUUID($fields[5])
                 ) :
                     $csvFormat = 'invalid';
                 else :
@@ -1680,7 +1600,7 @@ function inputInterpreter($input_string)
                     !(is_numeric($fields[4]) || empty($fields[4])) ||
                     !(is_numeric($fields[5]) || empty($fields[5])) ||
                     !(is_numeric($fields[6]) || empty($fields[6])) ||
-                    !(valid_uuid($fields[7]) || empty($fields[7]))
+                    !(validUUID($fields[7]) || empty($fields[7]))
                 ) :
                     $csvFormat = 'invalid';
                 else :
@@ -1770,7 +1690,7 @@ function inputInterpreter($input_string)
             return false;
         endif;
     elseif (
-        trim($sanitised_string) === '' || in_array_case_insensitive(trim($sanitised_string), $importLinestoIgnore)
+        trim($sanitised_string) === '' || inArrayCaseInsensitive(trim($sanitised_string), $importLinestoIgnore)
     ) :
         return 'empty line';
     else :
@@ -1933,7 +1853,7 @@ function inputInterpreter($input_string)
                     $teststring = trim($matches[2]);
                 endif;
             endif;
-            if (isset($teststring) && in_array_case_insensitive($teststring, $bracketsInNames)) :
+            if (isset($teststring) && inArrayCaseInsensitive($teststring, $bracketsInNames)) :
                 $msg->logMessage(
                     '[DEBUG]',
                     "Bracket contents match a card with brackets in name, resetting name, set to match"

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        28/11/25
+Version:     2.3
+Date:        29/11/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -15,6 +15,7 @@ History:
     2.0 05/09/17 Removed hard-coded email address, now uses ini.php
     2.1 25/11/25 Standard tidy-up
     2.2 28/11/25 Use PasswordCheck::passwordReset for reset requests
+    2.3 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -27,7 +28,7 @@ require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
-$cssver = cssver();
+$cssver = cssVersionCheck();
 
 ?>
 <!DOCTYPE html>

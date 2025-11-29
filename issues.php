@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        25/11/25
+Version:     1.3
+Date:        29/11/25
 Name:        issues.php
 Purpose:     Issues page.
 Notes:       No db functions.
@@ -14,6 +14,7 @@ History:
     1.0         Initial version
     1.1 10/06/24 Added AND / OR to type searches, removed issue note
     1.2 25/11/25 Standard tidy-up
+    1.3 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -26,7 +27,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-forcechgpwd(); // Check if user is disabled or needs to change password
+forcePasswordChange(); // Check if user is disabled or needs to change password
 ?>
 <!DOCTYPE html>
 

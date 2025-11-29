@@ -35,7 +35,7 @@ $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');
 
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    if (valid_tablename($table) !== false) :
+    if (validTableName($table) !== false) :
         $obj = new PriceManager($db, $logfile, $useremail);
         $obj->updateCollectionValues($table);
     else :

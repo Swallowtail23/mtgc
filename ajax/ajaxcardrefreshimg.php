@@ -58,7 +58,7 @@ if ($isValidReferrer) :
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         $useremail = $_SESSION['useremail'];
-        $cardUUID = isset($_POST['cardid']) ? valid_uuid($_POST['cardid']) : false;
+        $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
 
         if ($cardUUID === false) :
             $msg->logMessage('[ERROR]', "Invalid UUID provided");

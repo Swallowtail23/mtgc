@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     24.2
-Date:        25/11/25
+Version:     24.3
+Date:        29/11/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -48,6 +48,7 @@ History:
     24.0 05/10/24 MTGC-128 - Deck duplication code
     24.1 13/10/24 MTGC-136/130 - Code tidy/optimisation; break icons line for long deck names
     24.2 25/11/25 Standard tidy-up; Remove legacy $missing code; fixed sideboard only card display bug
+    24.3 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -61,7 +62,7 @@ require('includes/error_handling.php');
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
 require('includes/colour.php');
-forcechgpwd();                               //Check if user is disabled or needs to change password
+forcePasswordChange();                       //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 $uniquecard_ref = [];
@@ -671,7 +672,7 @@ endif;
 
 // Get relevant db_field with legality
 if ($decktype != '') :
-    $db_field = card_legal_db_field($decktype);
+    $db_field = cardLegalDBField($decktype);
 else :
     $db_field = '';
 endif;
@@ -679,7 +680,7 @@ $msg->logMessage('[DEBUG]', "Legality db-field for this deck is '$db_field'");
 
 // Get deck legalities
 if ($db_field != '') :
-    $deck_legality_list = deck_legal_list($decknumber, $decktype, $db_field);
+    $deck_legality_list = deckLegalList($decknumber, $decktype, $db_field);
 else :
     $deck_legality_list = '';
 endif;
@@ -3251,42 +3252,42 @@ m13,12,"Fog",en,1,0,0,{id}
                         </tr><?php
                         if ($w + $gw > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{W}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{W}"); ?> </td>
                             <td style="text-align: center;"><?php echo $w === 0 ? '-' : "$w ($w_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gw === 0 ? '-' : "$gw ($gw_percent%)"; ?> </td>
                         </tr><?php
                         endif;
                         if ($u + $gu > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{U}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{U}"); ?> </td>
                             <td style="text-align: center;"><?php echo $u === 0 ? '-' : "$u ($u_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gu === 0 ? '-' : "$gu ($gu_percent%)"; ?> </td>
                         </tr><?php
                         endif;
                         if ($b + $gb > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{B}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{B}"); ?> </td>
                             <td style="text-align: center;"><?php echo $b === 0 ? '-' : "$b ($b_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gb === 0 ? '-' : "$gb ($gb_percent%)"; ?> </td>
                         </tr><?php
                         endif;
                         if ($r + $gr > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{R}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{R}"); ?> </td>
                             <td style="text-align: center;"><?php echo $r === 0 ? '-' : "$r ($r_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gr === 0 ? '-' : "$gr ($gr_percent%)"; ?> </td>
                         </tr><?php
                         endif;
                         if ($g + $gg > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{G}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{G}"); ?> </td>
                             <td style="text-align: center;"><?php echo $g === 0 ? '-' : "$g ($g_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gg === 0 ? '-' : "$gg ($gg_percent%)"; ?> </td>
                         </tr><?php
                         endif;
                         if ($c + $gc > 0) : ?>
                         <tr>
-                            <td style="text-align: center; width: 20%;"><?php echo symbolreplace("{C}"); ?> </td>
+                            <td style="text-align: center; width: 20%;"><?php echo symbolReplace("{C}"); ?> </td>
                             <td style="text-align: center;"><?php echo $c === 0 ? '-' : "$c ($c_percent%)"; ?> </td>
                             <td style="text-align: center;"><?php echo $gc === 0 ? '-' : "$gc ($gc_percent%)"; ?> </td>
                         </tr><?php

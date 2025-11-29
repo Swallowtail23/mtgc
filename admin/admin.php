@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     4.5
-Date:        25/11/25
+Version:     4.6
+Date:        29/11/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
@@ -19,6 +19,9 @@ History:
     4.3 24/11/25 Code tidy (phpcs)
     4.4 24/11/25 Add bounded log tail reader to avoid loading full log file
     4.5 25/11/25 Header tidy and metadata standardization
+    4.6 29/11/25 Rename forcePasswordChange() usage
+                 Rename cssVersionCheck() usage
+                 Rename setMtceMode() usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -30,7 +33,7 @@ require('../includes/ini.php');             //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
-forcechgpwd();                              //Check if user is disabled or needs to change password
+forcePasswordChange();                      //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 /**
@@ -285,7 +288,7 @@ require('../includes/menu.php');
                 else :
                     trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
-                $cssver = cssver(); //run again
+                $cssver = cssVersionCheck(); //run again
             endif;
             if ((isset($publishcss)) and ($publishcss == "y")) :
                 $msg->logMessage('[DEBUG]', "Turning on minimised CSS...");
@@ -296,7 +299,7 @@ require('../includes/menu.php');
                 else :
                     trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
-                $cssver = cssver(); //run again
+                $cssver = cssVersionCheck(); //run again
             endif;
             if ((isset($clearscryfalljson)) and ($clearscryfalljson == "y")) :
                 if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
@@ -304,15 +307,15 @@ require('../includes/menu.php');
                 else :
                     trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
                 endif;
-                $cssver = cssver(); //run again
+                $cssver = cssVersionCheck(); //run again
             endif;
 
             if ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE ON')) :
-                setmtcemode('on');
+                setMtceMode('on');
             elseif ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE OFF')) :
-                setmtcemode('off');
+                setMtceMode('off');
             endif;
-            $mtcestatus = mtcemode($user); ?>
+            $mtcestatus = mtceModeCheck($user); ?>
             <br>
             <table>
                 <tbody>

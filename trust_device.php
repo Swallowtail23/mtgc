@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        25/11/25
+Version:     1.5
+Date:        29/11/25
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -16,6 +16,7 @@ History:
     1.2 01/03/25 Code tidy and consistency tweaks
     1.3 25/11/25 Formatting clean-up
     1.4 25/11/25 Standard tidy-up
+    1.5 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -36,7 +37,7 @@ require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
 $msg = new Message($logfile);
-$cssver = cssver();
+$cssver = cssVersionCheck();
 
 if (!isset($db) || !$db instanceof mysqli) {
     $msg->logMessage('[ERROR]', 'Database connection is invalid in trust_device.php');

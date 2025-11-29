@@ -75,7 +75,7 @@ else :
 endif;
 if ($download > 0) :
     $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $url");
-    $rulingreturn = downloadbulk($rulings_uri, $file_location);
+    $rulingreturn = downloadBulk($rulings_uri, $file_location);
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 

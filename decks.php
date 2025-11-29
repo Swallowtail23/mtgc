@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.2
-Date:        25/11/25
+Version:     5.3
+Date:        29/11/25
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -19,6 +19,7 @@ History:
     5.0         PHP 8.1 compatibility
     5.1 20/01/24 Move to logMessage
     5.2 25/11/25 Standard tidy-up
+    5.3 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -31,7 +32,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-forcechgpwd(); // Check if user is disabled or needs to change password
+forcePasswordChange(); // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
 //page specific variables

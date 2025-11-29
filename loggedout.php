@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.1
-Date:        25/11/25
+Version:     2.2
+Date:        29/11/25
 Name:        loggedout.php
 Purpose:     Logged out landing page.
 Notes:       {none}
@@ -14,6 +14,7 @@ History:
     1.0         Initial version
     2.0 28/02/25 Add trusted device handling
     2.1 25/11/25 Standard tidy-up
+    2.2 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -28,7 +29,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
 $msg = new Message($logfile);
-$cssver = cssver();
+$cssver = cssVersionCheck();
 ?>
 <!DOCTYPE html>
 <html>

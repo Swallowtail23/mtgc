@@ -726,10 +726,10 @@ else :
                 // Auto / The List
                 $plstName = ($searchsetcode === 'yes' && str_contains(strtolower($name), 'plst'));
                 $plstRegex = (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch), 'plst'));
-                $plstSelected = (isset($selectedSets) && in_array_case_insensitive('plst', $selectedSets));
+                $plstSelected = (isset($selectedSets) && inArrayCaseInsensitive('plst', $selectedSets));
                 $sldName = ($searchsetcode === 'yes' && str_contains(strtolower($name), 'sld'));
                 $sldRegex = (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch), 'sld'));
-                $sldSelected = (isset($selectedSets) && in_array_case_insensitive('sld', $selectedSets));
+                $sldSelected = (isset($selectedSets) && inArrayCaseInsensitive('sld', $selectedSets));
                 $isEmptyCollectionSearch = (
                     $scope === "mycollection"
                     and $searchname === "yes"

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.6
-Date:        28/11/25
+Version:     7.7
+Date:        29/11/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -25,6 +25,7 @@ History:
     7.4 27/11/25 Disable login submit until Turnstile success
     7.5 27/11/25 Enable login submit via JS when Turnstile disabled or success
     7.6 28/11/25 Extract login handling into LoginHandler class for clarity
+    7.7 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -56,7 +57,7 @@ if (!isset($db) || !$db instanceof mysqli) :
     die('A database error occurred. Please try again later.');
 endif;
 
-$cssver = cssver();
+$cssver = cssVersionCheck();
 
 // Temporary variable to store a redirection URL
 $redirectUrl = $_SESSION['redirect_url'] ?? null;

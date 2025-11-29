@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        25/11/25
+Version:     2.3
+Date:        29/11/25
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     2.0         Removed database call (secpagesetup provides all the info needed)
     2.1 25/11/25 Formatting clean-up
     2.2 25/11/25 Standard tidy-up
+    2.3 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -27,7 +28,7 @@ require('includes/ini.php');               //Initialise and load ini file
 require('includes/error_handling.php');
 require('includes/functions.php');     //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');      //Setup page variables
-forcechgpwd();                              //Check if user is disabled or needs to change password
+forcePasswordChange();                      //Check if user is disabled or needs to change password
 ?>
 <!DOCTYPE html>
 
