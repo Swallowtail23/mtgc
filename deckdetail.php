@@ -487,7 +487,7 @@ else : ?>
     exit();
 endif;?>
 <script type="text/javascript">
-    function CloseMe( obj )
+    function closeMe( obj )
     {
         obj.style.display = 'none';
         window.location.href="deckdetail.php?deck=<?php echo $decknumber;?>";
@@ -536,14 +536,14 @@ if (isset($_POST['newname'])) :
     $msg->logMessage('[DEBUG]', "Renaming deck result: $renameresult");
     if ($renameresult == 2) :
         ?>
-        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists already</span>
+        <div class="msg-new error-new" onclick='closeMe(this)'><span>Deck name exists already</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
         <?php
     elseif ($renameresult > 0) :
         ?>
-        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Unknown error</span>
+        <div class="msg-new error-new" onclick='closeMe(this)'><span>Unknown error</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
@@ -1065,13 +1065,13 @@ endwhile;
 // Next the main DIV section ?>
 <?php
 if (isset($cardtoadd) and ($cardtoadd == 'cardnotfound' or $cardtoadd == 'cardnotadded')) : ?>
-    <div class="msg-new error-new" onclick='CloseMe(this)'><span>That didn't work... check card name</span>
+    <div class="msg-new error-new" onclick='closeMe(this)'><span>That didn't work... check card name</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
     <?php
 elseif (isset($cardtoadd) and ($cardtoadd == 'multierror')) : ?>
-    <div class="msg-new error-new" onclick='CloseMe(this)'>
+    <div class="msg-new error-new" onclick='closeMe(this)'>
         <span>Multi input errors<br>&nbsp;Details sent by email</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -3541,7 +3541,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 });
             </script>
             <script type="text/javascript">
-                function ImportPrep()
+                function importPrep()
                     {
                         document.body.style.cursor='wait';
                     }
@@ -3558,7 +3558,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     name='import'
                     value='IMPORT'
                     disabled
-                    onclick='ImportPrep()'
+                    onclick='importPrep()'
                 >
                 <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
             </form>

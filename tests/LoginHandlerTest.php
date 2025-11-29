@@ -62,7 +62,7 @@ class PasswordCheck
     {
     }
 
-    public function PWValidate($email, $password)
+    public function validatePassword($email, $password)
     {
         return self::$result;
     }

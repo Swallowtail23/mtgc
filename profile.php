@@ -173,7 +173,7 @@ endif;
                 alert("Secret key copied to clipboard");
             };
 
-            function CloseMe( obj )
+            function closeMe( obj )
             {
                 obj.style.display = 'none';
                 window.location.href = "<?php echo $myURL; ?>/profile.php";
@@ -188,22 +188,22 @@ endif;
         require 'includes/menu.php'; ?>
 
         <!-- Info box -->
-        <div id="csvsuccess" class="msg-new" onclick='CloseMe(this)' style="display: none;">
+        <div id="csvsuccess" class="msg-new" onclick='closeMe(this)' style="display: none;">
             <span>CSV email send was successful</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
-        <div id="csvfailure" class="msg-new error-new" onclick='CloseMe(this)' style="display: none;">
+        <div id="csvfailure" class="msg-new error-new" onclick='closeMe(this)' style="display: none;">
             <span>CSV email send was NOT successful</span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
-        <div id="delcollresult" class="msg-new" onclick='CloseMe(this)' style="display: none;">
+        <div id="delcollresult" class="msg-new" onclick='closeMe(this)' style="display: none;">
             <span><?php echo $delcollresult; ?></span>
             <br>
             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
         </div>
-        <div id="newdecksuccess" class="msg-new" onclick='CloseMe(this)' style="display: none;">
+        <div id="newdecksuccess" class="msg-new" onclick='closeMe(this)' style="display: none;">
             <span>
                 Deck
                 <i>
@@ -1003,7 +1003,7 @@ endif;
                                     });
                                 });
 
-                                function ImportPrep() {
+                                function importPrep() {
                                     // alert('Import can take several minutes, please be patient...');
                                     document.body.style.cursor='wait';
                                 };
@@ -1246,7 +1246,7 @@ HTML;
                                                     type='submit'
                                                     name='import'
                                                     value='IMPORT'
-                                                    onclick='ImportPrep()';>
+                                                    onclick='importPrep()';>
                                                 <input type="hidden" name="format" value="regex">
                                             </label>
                                             <table>

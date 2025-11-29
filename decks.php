@@ -70,7 +70,7 @@ $decktodelete = isset($_POST['decktodelete'])
             });
         });
 
-        function CloseMe( obj ) {
+        function closeMe( obj ) {
             obj.style.display = 'none';
         };
 
@@ -119,7 +119,7 @@ require('includes/menu.php'); //mobile menu
         if ($newdeck == "yes") :
             if ($deckname == '') :
                 ?>
-                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Name can't be empty</span>
+                <div class="msg-new error-new" onclick='closeMe(this)'><span>Name can't be empty</span>
                     <br>
                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                 </div>

@@ -214,7 +214,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
         });
 
         // Other js functions
-        function CloseMe( obj )
+        function closeMe( obj )
         {
             obj.style.display = 'none';
             window.location.href="carddetail.php?id=<?php echo $cardid;?>";
@@ -624,14 +624,14 @@ require('includes/menu.php'); //mobile menu
                     $info = getimagesize($_FILES['filename']['tmp_name']);
                     if (($info === false) or ($info[2] !== IMAGETYPE_JPEG)) :
                         $msg->logMessage('[NOTICE]', "Image upload failed - not an image or not a JPG"); ?>
-                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Not a JPG image</span>
+                        <div class="msg-new error-new" onclick='closeMe(this)'><span>Not a JPG image</span>
                             <br>
                                                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
                     else :
                             $upload_name = $ImgLocation . strtolower($setcode) . "/" . $imgname;
                         if (!move_uploaded_file($_FILES['filename']['tmp_name'], $upload_name)) : ?>
-                        <div class="msg-new error-new" onclick='CloseMe(this)'><span>Image write failed</span>
+                        <div class="msg-new error-new" onclick='closeMe(this)'><span>Image write failed</span>
                             <br>
                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
@@ -2214,7 +2214,7 @@ require('includes/menu.php'); //mobile menu
                                                 $nonPreferredSetCodes
                                             );
                                         if ($obj->deckOwnerCheck($decktoaddto, $user) == false) : ?>
-                                                <div class="msg-new error-new" onclick='CloseMe(this)'>
+                                                <div class="msg-new error-new" onclick='closeMe(this)'>
                                                     <span>You don't have that deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2252,7 +2252,7 @@ require('includes/menu.php'); //mobile menu
                                                     "{$cardcheckrow['cardnumber']} is already in that deck"
                                                 );
                                                 ?>
-                                                <div class="msg-new error-new" onclick='CloseMe(this)'>
+                                                <div class="msg-new error-new" onclick='closeMe(this)'>
                                                     <span>Card already in deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2301,7 +2301,7 @@ require('includes/menu.php'); //mobile menu
                                                     and ($resultchkins['cardqty'] == $deckqty)
                                                 ) :
                                                     ?>
-                                                        <div class="msg-new success-new" onclick='CloseMe(this)'>
+                                                        <div class="msg-new success-new" onclick='closeMe(this)'>
                                                             <span>Card added</span>
                                                             <br>
                                                             <p
@@ -2316,7 +2316,7 @@ require('includes/menu.php'); //mobile menu
                                                         "Card $cardid added to deck $decktoaddto"
                                                     );
                                                 else :?>
-                                                    <div class="msg-new warning-new" onclick='CloseMe(this)'>
+                                                    <div class="msg-new warning-new" onclick='closeMe(this)'>
                                                         <span>Card in deck, but quantity mismatch</span>
                                                         <br>
                                                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2329,7 +2329,7 @@ require('includes/menu.php'); //mobile menu
                                                 endif;
                                             else :
                                                 ?>
-                                                    <div class="msg-new error-new" onclick='CloseMe(this)'>
+                                                    <div class="msg-new error-new" onclick='closeMe(this)'>
                                                         <span>Card not added</span>
                                                         <br>
                                                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>

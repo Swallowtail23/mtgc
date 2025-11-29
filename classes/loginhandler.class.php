@@ -279,7 +279,7 @@ class LoginHandler
         endif;
 
         $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
-        $passwordResult = $passwordCheck->PWValidate($email, $password);
+        $passwordResult = $passwordCheck->validatePassword($email, $password);
         if ($passwordResult !== 10) :
             $this->message->logMessage(
                 '[ERROR]',

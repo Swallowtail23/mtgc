@@ -988,7 +988,7 @@ class DeckManager
         if ($deck_deleted === 1 and $deckcards_deleted === 1) :
             $this->message->logMessage('[NOTICE]', "Deck $decktodelete deleted");
         else :?>
-            <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck and/or cards not deleted</span>
+            <div class="msg-new error-new" onclick='closeMe(this)'><span>Deck and/or cards not deleted</span>
                 <br>
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
             </div> <?php
@@ -1038,7 +1038,7 @@ class DeckManager
             elseif ($runquery !== false && $runquery->num_rows === 0) :
                 $this->message->logMessage('[NOTICE]', "Failed - deck: $newdeckname not created");
                 ?>
-                <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck creation failed</span>
+                <div class="msg-new error-new" onclick='closeMe(this)'><span>Deck creation failed</span>
                     <br>
                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                 </div>
@@ -1052,7 +1052,7 @@ class DeckManager
             endif;
         elseif ($result !== false && $result->num_rows === 1) :
             $this->message->logMessage('[NOTICE]', "New deck name already exists"); ?>
-            <div class="msg-new error-new" onclick='CloseMe(this)'><span>Deck name exists</span>
+            <div class="msg-new error-new" onclick='closeMe(this)'><span>Deck name exists</span>
                 <br>
                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
             </div> <?php

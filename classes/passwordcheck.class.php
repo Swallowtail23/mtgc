@@ -40,7 +40,7 @@ class PasswordCheck
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
-    public function PWValidate($email, $password)
+    public function validatePassword(($email, $password)
     {
         /**
          * Returns:
