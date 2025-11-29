@@ -23,7 +23,7 @@
 ## Code Style Guidelines
 - PHP 8.2 with direct `mysqli` queries (no ORM).
 - Session handling through `sessionmanager.class.php`.
-- Error handling: use `mtg_error` for user-facing errors and `mtg_exception` for exception paths/logging.
+- Error handling: use `mtgError` for user-facing errors and `mtgException` for exception paths/logging.
 - Mobile-responsive design uses jQuery on the frontend.
 - Follow existing PSR-12-ish formatting and class/function placement conventions.
 - Exception to PSR-12 formatting: Always use if/else/endif, while/endwhile, foreach/endforeach formats

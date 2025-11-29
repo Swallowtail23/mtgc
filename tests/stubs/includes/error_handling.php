@@ -14,5 +14,5 @@ function mtgException($err = null)
     return true;
 }
 
-set_error_handler('mtg_error');
-set_exception_handler('mtg_exception');
+set_error_handler('mtgError');
+set_exception_handler('mtgException');

@@ -318,8 +318,8 @@ Schedule `cleanup_tokens.sh` to run daily to remove expired trusted-device entri
     - reads in the ini file
     - checks the logfile is accessible and writable
     - establishes a mysqli database connection ($db)
-    - sets the function for handling errors (mtg_error)
-    - ... and exceptions (mtg_exception)
+    - sets the function for handling errors (mtgError)
+    - ... and exceptions (mtgException)
     - sets the writelog function (to be rewritten)
     - sets several arrays and variables to allow for changes to cards and types,
         which would otherwise need to be hard-coded into pages

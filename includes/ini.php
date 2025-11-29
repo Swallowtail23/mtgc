@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.4
-Date:        28/11/25
+Version:     5.5
+Date:        29/11/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
 Notes:       -
@@ -21,6 +21,7 @@ History:
     5.2 09/12/24 Move tribal here from index page
     5.3 26/11/25 Standard tidy-up
     5.4 28/11/25 Update inputInterpreter reference
+    5.5 29/11/25 Remove unused reference to $mtgprice
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -37,9 +38,6 @@ if ($status == PHP_SESSION_NONE) :
     endif;
     startCustomSession();
 endif;
-
-// Disable MTGPrice functionality
-$mtgprice = false;
 
 // Class autoloading
 // Composer
