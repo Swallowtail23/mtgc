@@ -37,7 +37,7 @@ $msg = new Message($logfile);
 
 //page specific variables
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';
-$deckname = isset($_POST['deckname'])
+$deckName = isset($_POST['deckname'])
     ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES)
     : '';
 $deletedeck = isset($_POST['deletedeck']) ? 'yes' : '';
@@ -117,7 +117,7 @@ require('includes/menu.php'); //mobile menu
 
         // Create a new deck
         if ($newdeck == "yes") :
-            if ($deckname == '') :
+            if ($deckName == '') :
                 ?>
                 <div class="msg-new error-new" onclick='closeMe(this)'><span>Name can't be empty</span>
                     <br>
@@ -125,17 +125,17 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <?php
             else :
-                        $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckname'");
+                        $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckName'");
                         $obj = new DeckManager(
                             $db,
                             $logfile,
-                            $useremail,
-                            $serveremail,
+                            $userEmail,
+                            $serverEmail,
                             $importLinestoIgnore,
                             $nonPreferredSetCodes
                         );
                         // returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
-                        $decksuccess = $obj->addDeck($user, $deckname);
+                        $decksuccess = $obj->addDeck($user, $deckName);
             endif;
         endif;
 
@@ -145,8 +145,8 @@ require('includes/menu.php'); //mobile menu
             $obj = new DeckManager(
                 $db,
                 $logfile,
-                $useremail,
-                $serveremail,
+                $userEmail,
+                $serverEmail,
                 $importLinestoIgnore,
                 $nonPreferredSetCodes
             );

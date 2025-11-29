@@ -153,8 +153,8 @@ endif;
 <?php
 $adminpages = strpos($_SERVER['PHP_SELF'], "/admin/");
 if (
-    (isset($mtcestatus))
-    and ($mtcestatus != 1)
+    (isset($mtceStatus))
+    and ($mtceStatus != 1)
     and (!isset($_SESSION["chgpwd"]))
     and ($adminpages === false)
 ) :

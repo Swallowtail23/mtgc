@@ -30,7 +30,7 @@ $max_fileage = 23 * 3600;
 $url = "https://api.scryfall.com/bulk-data/rulings";
 
 // Bulk file store point
-$file_location = $ImgLocation . 'json/rulings.json';
+$file_location = $imgLocation . 'json/rulings.json';
 
 // Set counts
 $total_count = 0;
@@ -79,7 +79,7 @@ if ($download > 0) :
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 
-$data = Items::fromFile($ImgLocation . 'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
+$data = Items::fromFile($imgLocation . 'json/rulings.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE rulings_scry')) :
     $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Old rulings cleared");
 else :
@@ -121,6 +121,6 @@ $msg->logMessage('[NOTICE]', "$total_count bulk rulings completed");
 // Email results
 $subject = "MTG rulings update completed";
 $body = "Total rulings: $total_count";
-$mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-$mailresult = $mail->sendEmail($adminemail, false, $subject, $body);
+$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+$mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");

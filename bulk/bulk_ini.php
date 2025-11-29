@@ -36,11 +36,11 @@ spl_autoload_register('autoLoader');
 
 //Set error reporting based on ini file's dev setting
 $ini = new INI("/opt/mtg/mtg_new.ini");
-$ini_array = $ini->data;
-if ($ini_array['general']['tier'] === 'dev') :
+$iniArray = $ini->data;
+if ($iniArray['general']['tier'] === 'dev') :
     $tier = 'dev';
     error_reporting(E_ALL);
-elseif ($ini_array['general']['tier'] === 'prod') :
+elseif ($iniArray['general']['tier'] === 'prod') :
     $tier = 'prod';
     error_reporting(E_ALL & ~E_NOTICE);
 else :
@@ -49,35 +49,35 @@ else :
 endif;
 
 //Logging levels
-$loglevelini = $ini_array['general']['Loglevel'];
+$logLevelIni = $iniArray['general']['Loglevel'];
 
 //Email settings (PHPMailer, see https://github.com/PHPMailer/PHPMailer
-//Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $ini_array['general']['Loglevel'] = 3
+//Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $iniArray['general']['Loglevel'] = 3
 $smtpParameters =   [
-                    'SMTPDebug' => $ini_array['email']['SMTPDebug'],
-                    'SMTPHost' => $ini_array['email']['Host'],
-                    'SMTPAuth' => $ini_array['email']['SMTPAuth'],
-                    'SMTPUsername' => $ini_array['email']['Username'],
-                    'SMTPPassword' => $ini_array['email']['Password'],
-                    'SMTPSecure' => $ini_array['email']['SMTPSecure'],
-                    'SMTPPort' => $ini_array['email']['Port'],
-                    'globalDebug' => $loglevelini
+                    'SMTPDebug' => $iniArray['email']['SMTPDebug'],
+                    'SMTPHost' => $iniArray['email']['Host'],
+                    'SMTPAuth' => $iniArray['email']['SMTPAuth'],
+                    'SMTPUsername' => $iniArray['email']['Username'],
+                    'SMTPPassword' => $iniArray['email']['Password'],
+                    'SMTPSecure' => $iniArray['email']['SMTPSecure'],
+                    'SMTPPort' => $iniArray['email']['Port'],
+                    'globalDebug' => $logLevelIni
                     ];
 
 //Email addresses
-$adminemail = $ini_array['email']['AdminEmail'];
-$serveremail = $ini_array['email']['ServerEmail'];
+$adminEmail = $iniArray['email']['AdminEmail'];
+$serverEmail = $iniArray['email']['ServerEmail'];
 
 //Card image location
-$ImgLocation = $ini_array['general']['ImgLocation'];
+$imgLocation = $iniArray['general']['ImgLocation'];
 
 //Location settings
-date_default_timezone_set($ini_array['general']['Timezone']);
-$localeini = $ini_array['general']['Locale'];
+date_default_timezone_set($iniArray['general']['Timezone']);
+$localeini = $iniArray['general']['Locale'];
 setlocale(LC_MONETARY, $localeini);  //used to display $ values
 
 //Logfile check
-$logfile = $ini_array['general']['Logfile'];
+$logfile = $iniArray['general']['Logfile'];
 if (($fd = fopen($logfile, "a")) === false) :
     openlog("MTG", LOG_NDELAY, LOG_USER);
     syslog(
@@ -87,7 +87,7 @@ if (($fd = fopen($logfile, "a")) === false) :
     );
     closelog();
     $logfile = 0;
-elseif ($loglevelini === '3' and ($fd = fopen($logfile, "a")) !== false) :
+elseif ($logLevelIni === '3' and ($fd = fopen($logfile, "a")) !== false) :
     $msg = "[DEBUG] Ini.php (direct write to logfile) ({$_SERVER['PHP_SELF']}): Successfully checked logfile "
         . "access to $logfile";
     $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
@@ -95,14 +95,14 @@ elseif ($loglevelini === '3' and ($fd = fopen($logfile, "a")) !== false) :
 endif;
 
 //Web root URL and site title
-$myURL = $ini_array['general']['URL'];
-$siteTitle = $ini_array['general']['title'];
+$myURL = $iniArray['general']['URL'];
+$siteTitle = $iniArray['general']['title'];
 
 //DB connect
-define('DB_HOST', $ini_array['database']['DBServer']);  //host
-define('DB_USER', $ini_array['database']['DBUser']);    // db username
-define('DB_PASS', $ini_array['database']['DBPass']);    // db password
-define('DB_NAME', $ini_array['database']['DBName']);    // db name
+define('DB_HOST', $iniArray['database']['DBServer']);  //host
+define('DB_USER', $iniArray['database']['DBUser']);    // db username
+define('DB_PASS', $iniArray['database']['DBPass']);    // db password
+define('DB_NAME', $iniArray['database']['DBName']);    // db name
 
 try {
     $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -127,16 +127,16 @@ try {
         closelog();
     endif;
     $databaseaccess = 0;
-    $from = "From: " . $serveremail;
+    $from = "From: " . $serverEmail;
     $subject = "Fatal database exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
-    mail($adminemail, $subject, $message, $from);
+    mail($adminEmail, $subject, $message, $from);
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }
 
 //Primary definition is in ini.php - used here for image retrieval for new cards
-$two_card_detail_sections = array('transform',
+$twoCardDetailSections = array('transform',
                                   'modal_dfc',
                                   'reversible_card',
                                   'double_faced_token',

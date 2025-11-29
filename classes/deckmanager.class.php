@@ -5,7 +5,7 @@ Version:     4.5
 Date:        28/11/25
 Name:        deckmanager.class.php
 Purpose:     Class for quickAdd and deck import.
-Notes:       ProcessInput() called with deck number and input string; quickadd() interprets and adds cards.
+Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -38,8 +38,8 @@ class DeckManager
     private $logfile;
     private $batchedCardIds = []; // Array to store batched cards to add
     private $message;
-    private $useremail;
-    private $serveremail;
+    private $userEmail;
+    private $serverEmail;
     private $importLinestoIgnore;
     private $siteTitle;
     private $nonPreferredSetCodes;
@@ -47,8 +47,8 @@ class DeckManager
     public function __construct(
         $db,
         $logfile,
-        $useremail,
-        $serveremail,
+        $userEmail,
+        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $siteTitle = null
@@ -56,21 +56,21 @@ class DeckManager
         $this->db = $db;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
-        $this->useremail = $useremail;
-        $this->serveremail = $serveremail;
+        $this->userEmail = $userEmail;
+        $this->serverEmail = $serverEmail;
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
-    public function processInput($decknumber, $input)
+    public function processInput($deckNumber, $input)
     {
         // processInput can handle either single-line or multi-line 'add card' inputs using quickadd.
         // Multi-line inputs are batched for combined data write by addDeckCardsBatch; called from deckdetail.php.
 
         $this->message->logMessage(
             '[DEBUG]',
-            "ProcessInput called for deck $decknumber with '$input'"
+            "ProcessInput called for deck $deckNumber with '$input'"
         );
         // Check if input is multiline
         $lines = explode("\n", $input);
@@ -83,8 +83,8 @@ class DeckManager
             );
             $row = 1;
             $sideboardTrigger = false;
-            $warningsummary = '';
-            $warningheading = 'Warning type, Row number, Input line';
+            $warningSummary = '';
+            $warningHeading = 'Warning type, Row number, Input line';
             foreach ($lines as $line) :
                 $line = trim($line);
                 $start = substr($line, 0, 8);
@@ -100,29 +100,29 @@ class DeckManager
                 else :
                     $this->message->logMessage('[DEBUG]', "Row $row: Data row: '$line'");
                     // Set last parameter to true for batching
-                    $quickaddresult = $this->quickadd(
-                        $decknumber,
+                    $quickAddResult = $this->quickAdd(
+                        $deckNumber,
                         $line,
                         $sideboardTrigger,
                         true
                     );
-                    if ($quickaddresult === false || $quickaddresult === 'cardnotfound') :
+                    if ($quickAddResult === false || $quickAddResult === 'cardnotfound') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Result: fail");
-                        $newwarning = "ERROR - Row $row, Line: '$line'" . "\n";
-                        $warningsummary = $warningsummary . $newwarning;
+                        $newWarning = "ERROR - Row $row, Line: '$line'" . "\n";
+                        $warningSummary = $warningSummary . $newWarning;
                     else :
                         $this->message->logMessage('[DEBUG]', "Row $row: Result: success");
                     endif;
                 endif;
                 $row = $row + 1;
             endforeach;
-            if ($warningsummary !== '') :
-                $from = "From: $this->serveremail\r\nReturn-path: $this->serveremail";
+            if ($warningSummary !== '') :
+                $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                 $subject = "Deck Import failures / warnings";
-                $message = "$warningheading \n \n $warningsummary \n";
-                mail($this->useremail, $subject, $message, $from);
-                $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningsummary'");
-                $quickaddresult = 'multierror';
+                $message = "$warningHeading \n \n $warningSummary \n";
+                mail($this->userEmail, $subject, $message, $from);
+                $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningSummary'");
+                $quickAddResult = 'multierror';
             endif;
         else :
             $this->message->logMessage(
@@ -130,17 +130,17 @@ class DeckManager
                 "Single-line input, calling quickadd in single-line mode"
             );
             $inputType = 'SingleText';
-            $quickaddresult = $this->quickadd($decknumber, $input);
-            $this->message->logMessage('[DEBUG]', "Result: $quickaddresult");
-            return $quickaddresult;
+            $quickAddResult = $this->quickAdd($deckNumber, $input);
+            $this->message->logMessage('[DEBUG]', "Result: $quickAddResult");
+            return $quickAddResult;
         endif;
         // If batched card array is not empty, perform batch insert
         if (!empty($this->batchedCardIds)) :
-            $this->addDeckCardsBatch($decknumber, $this->batchedCardIds);
+            $this->addDeckCardsBatch($deckNumber, $this->batchedCardIds);
             // Clear array after batch insert
             $this->batchedCardIds = [];
-            if (isset($quickaddresult) && $quickaddresult === 'multierror') :
-                return $quickaddresult;
+            if (isset($quickAddResult) && $quickAddResult === 'multierror') :
+                return $quickAddResult;
             endif;
         endif;
     }
@@ -148,66 +148,66 @@ class DeckManager
     /**
      * Called from processInput().
      */
-    public function quickadd($decknumber, $get_string, $sideboardTrigger = false, $batch = false)
+    public function quickAdd($deckNumber, $getString, $sideboardTrigger = false, $batch = false)
     {
         global $noQuickAddLayouts;
 
         $this->message->logMessage(
             '[NOTICE]',
-            "Quick add interpreter called for deck $decknumber with '$get_string' (batch mode '$batch')"
+            "Quick add interpreter called for deck $deckNumber with '$getString' (batch mode '$batch')"
         );
-        $quickaddstring = htmlspecialchars($get_string, ENT_NOQUOTES);
-        $interpreted_string = inputInterpreter($quickaddstring);
-        if ($interpreted_string !== false) :
+        $quickAddString = htmlspecialchars($getString, ENT_NOQUOTES);
+        $interpretedString = inputInterpreter($quickAddString);
+        if ($interpretedString !== false) :
             // UUID
-            if (isset($interpreted_string['uuid']) and $interpreted_string['uuid'] !== '') :
-                $quickaddUUID = $interpreted_string['uuid'];
+            if (isset($interpretedString['uuid']) and $interpretedString['uuid'] !== '') :
+                $quickAddUuid = $interpretedString['uuid'];
             else :
-                $quickaddUUID = '';
+                $quickAddUuid = '';
             endif;
             // Quantity
-            if (isset($interpreted_string['qty']) and $interpreted_string['qty'] !== '') :
-                $quickaddqty = $interpreted_string['qty'];
+            if (isset($interpretedString['qty']) and $interpretedString['qty'] !== '') :
+                $quickAddQty = $interpretedString['qty'];
             else :
-                $quickaddqty = 1;
+                $quickAddQty = 1;
             endif;
             // Name
-            if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
-                $quickaddcard = $interpreted_string['name'];
+            if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
+                $quickAddCard = $interpretedString['name'];
             else :
-                $quickaddcard = '';
+                $quickAddCard = '';
             endif;
             // Set
-            if (isset($interpreted_string['set']) and $interpreted_string['set'] !== '') :
-                $quickaddset = strtoupper($interpreted_string['set']);
+            if (isset($interpretedString['set']) and $interpretedString['set'] !== '') :
+                $quickAddSet = strtoupper($interpretedString['set']);
             else :
-                $quickaddset = '';
+                $quickAddSet = '';
             endif;
             // Lang
-            if (isset($interpreted_string['lang']) and $interpreted_string['lang'] !== '') :
-                $quickaddlang = strtoupper($interpreted_string['lang']);
+            if (isset($interpretedString['lang']) and $interpretedString['lang'] !== '') :
+                $quickAddLang = strtoupper($interpretedString['lang']);
             else :
-                $quickaddlang = '';
+                $quickAddLang = '';
             endif;
             // Collector number
-            if (isset($interpreted_string['number']) and $interpreted_string['number'] !== '') :
-                $quickaddNumber = $interpreted_string['number'];
+            if (isset($interpretedString['number']) and $interpretedString['number'] !== '') :
+                $quickAddNumber = $interpretedString['number'];
             else :
-                $quickaddNumber = '';
+                $quickAddNumber = '';
             endif;
-            $quickaddcard = htmlspecialchars_decode($quickaddcard, ENT_QUOTES);
+            $quickAddCard = htmlspecialchars_decode($quickAddCard, ENT_QUOTES);
             if ($sideboardTrigger) :
-                $mainqty = 0;
-                $sideqty = $quickaddqty;
+                $mainQty = 0;
+                $sideQty = $quickAddQty;
             else :
-                $mainqty = $quickaddqty;
-                $sideqty = 0;
+                $mainQty = $quickAddQty;
+                $sideQty = 0;
             endif;
             $this->message->logMessage(
                 '[DEBUG]',
-                "Quick add interpreted as: Qty: [Main: $mainqty, Side: $sideqty] x Card: [$quickaddcard] "
-                . "Set: [$quickaddset] Collector number: [$quickaddNumber] Language: [$quickaddlang] "
-                . "UUID: [$quickaddUUID]"
+                "Quick add interpreted as: Qty: [Main: $mainQty, Side: $sideQty] x Card: [$quickAddCard] "
+                . "Set: [$quickAddSet] Collector number: [$quickAddNumber] Language: [$quickAddLang] "
+                . "UUID: [$quickAddUuid]"
             );
             $stmt = null;
 
@@ -215,17 +215,17 @@ class DeckManager
             $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
             $placeholdersString = implode(',', $placeholders);
 
-            if ($quickaddUUID !== '' && validUUID($quickaddUUID) !== false) :
+            if ($quickAddUuid !== '' && validUUID($quickAddUuid) !== false) :
                 // Card UUID provided and valid UUID
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Quick add proceeding with provided UUID: [$quickaddUUID]"
+                    "Quick add proceeding with provided UUID: [$quickAddUuid]"
                 );
                 $query = "SELECT id,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
                 $stmt = $this->db->prepare($query);
-                $params = [$quickaddUUID];
+                $params = [$quickAddUuid];
                 $stmt->bind_param('s', $params[0]);
-            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber !== '' and $quickaddlang !== '') :
+            elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber !== '' and $quickAddLang !== '') :
                 // Card name, setcode, and collector number provided
                 $this->message->logMessage(
                     '[DEBUG]',
@@ -238,11 +238,11 @@ class DeckManager
                                                            lang LIKE ? AND layout NOT IN ($placeholdersString) 
                                                            ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
-                $params = array_fill(0, 9, $quickaddcard);
-                array_push($params, $quickaddset, $quickaddNumber, $quickaddlang);
+                $params = array_fill(0, 9, $quickAddCard);
+                array_push($params, $quickAddSet, $quickAddNumber, $quickAddLang);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber !== '') :
+            elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber !== '') :
                 // Card name, setcode, and collector number provided
                 $this->message->logMessage(
                     '[DEBUG]',
@@ -255,11 +255,11 @@ class DeckManager
                                                            `layout` NOT IN ($placeholdersString) AND primary_card = 1 
                                                            ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
-                $params = array_fill(0, 9, $quickaddcard);
-                array_push($params, $quickaddset, $quickaddNumber);
+                $params = array_fill(0, 9, $quickAddCard);
+                array_push($params, $quickAddSet, $quickAddNumber);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber === '') :
+            elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber === '') :
                 // Card name and setcode provided
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR
                                                            f1_name = ? OR 
@@ -275,11 +275,11 @@ class DeckManager
                                                            primary_card = 1
                                                            ORDER BY release_date DESC, number ASC LIMIT 1";
                 $stmt = $this->db->prepare($query);
-                $params = array_fill(0, 9, $quickaddcard);
-                array_push($params, $quickaddset);
+                $params = array_fill(0, 9, $quickAddCard);
+                array_push($params, $quickAddSet);
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            elseif ($quickaddcard !== '' and $quickaddset === '') :
+            elseif ($quickAddCard !== '' and $quickAddSet === '') :
                 // Card name only provided, or with a number (but useless without setcode) - just grab a name match
                 $setcodePlaceholders = implode(',', array_fill(0, count($this->nonPreferredSetCodes), '?'));
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? OR 
@@ -288,18 +288,18 @@ class DeckManager
                                                            `layout` NOT IN ($placeholdersString) AND 
                                                            primary_card = 1 AND setcode NOT IN ($setcodePlaceholders) 
                                                            ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
-                $params = array_fill(0, 9, $quickaddcard); // First 9 are for the name variations
+                $params = array_fill(0, 9, $quickAddCard); // First 9 are for the name variations
                 $params = array_merge($params, $noQuickAddLayouts); // Add layout exclusions
                 $params = array_merge($params, $this->nonPreferredSetCodes); // Add non-preferred set codes
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-            elseif ($quickaddcard === '' and $quickaddset !== '' and $quickaddNumber !== '') :
+            elseif ($quickAddCard === '' and $quickAddSet !== '' and $quickAddNumber !== '') :
                 // Card name not provided, setcode, and collector number provided
                 $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND 
                                                         `layout` NOT IN ($placeholdersString) AND primary_card = 1 
                                                         ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
-                $params = [$quickaddset, $quickaddNumber];
+                $params = [$quickAddSet, $quickAddNumber];
                 $params = array_merge($params, $noQuickAddLayouts);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
             else :
@@ -318,14 +318,14 @@ class DeckManager
                     $this->message->logMessage('[DEBUG]', "Quick add result: UUID result is '$cardtoadd'");
                     if (!$batch) :
                         // Call addDeckCard only if not in batch mode
-                        $addresult = $this->addDeckCard($decknumber, $cardtoadd, "main", "$quickaddqty");
+                        $addresult = $this->addDeckCard($deckNumber, $cardtoadd, "main", "$quickAddQty");
                         return $addresult;
                     else :
                         // In batch mode, store the card ID and quantity in the batchedCardIds array
                         $this->batchedCardIds[] = [
                             'id' => $cardtoadd,
-                            'mainqty' => $mainqty,
-                            'sideqty' => $sideqty,
+                            'mainqty' => $mainQty,
+                            'sideqty' => $sideQty,
                         ];
                     endif;
                 else :
@@ -346,7 +346,7 @@ class DeckManager
         endif;
     }
 
-    public function addDeckCardsBatch($decknumber, $batchedCardIds)
+    public function addDeckCardsBatch($deckNumber, $batchedCardIds)
     {
         $this->message->logMessage('[DEBUG]', "deckManager batch process called");
         $values = [];
@@ -354,10 +354,10 @@ class DeckManager
 
         foreach ($batchedCardIds as $batchedCard) :
             $id = $batchedCard['id'];
-            $mainqty = $batchedCard['mainqty'];
-            $sideqty = $batchedCard['sideqty'];
+            $mainQty = $batchedCard['mainqty'];
+            $sideQty = $batchedCard['sideqty'];
             // Add each card to the batch
-            $values[] = "($decknumber, $id, $mainqty, $sideqty)";
+            $values[] = "($deckNumber, $id, $mainQty, $sideQty)";
             $placeholders[] = '(?, ?, ?, ?)';
         endforeach;
 
@@ -377,7 +377,7 @@ class DeckManager
             // Prepare an array with the values to be bound
             $bindValues = [];
             foreach ($batchedCardIds as $batchedCard) :
-                $bindValues[] = $decknumber;
+                $bindValues[] = $deckNumber;
                 $bindValues[] = $batchedCard['id'];
                 $bindValues[] = $batchedCard['mainqty'];
                 $bindValues[] = $batchedCard['sideqty'];
@@ -409,11 +409,11 @@ class DeckManager
             );
         else :
             if ($row = $result->fetch_assoc()) :
-                $deckname = $row['deckname'];
+                $deckName = $row['deckname'];
                 $owner = $row['owner'];
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Deck $deck ($deckname) belongs to owner $owner (called by $user)"
+                    "Deck $deck ($deckName) belongs to owner $owner (called by $user)"
                 );
                 if ($owner != $user) :
                     $this->message->logMessage(
@@ -422,7 +422,7 @@ class DeckManager
                     );
                     return false;
                 else :
-                    return $deckname;
+                    return $deckName;
                 endif;
             else :
                 $this->message->logMessage('[ERROR]', "No deck found for deck $deck, returning to deck page");
@@ -1145,7 +1145,7 @@ class DeckManager
         return($decktypereturn);
     }
 
-    public function exportDeck($decknumber, $format, $zipFilePath = null)
+    public function exportDeck($deckNumber, $format, $zipFilePath = null)
     {
         //Format options:
         //
@@ -1155,10 +1155,10 @@ class DeckManager
         // - Variable (returns the decklist from the function, used in duplicate deck function)
 
         global $commander_decktypes, $smtpParameters;
-        $this->message->logMessage('[NOTICE]', "Deck export called for deck $decknumber");
+        $this->message->logMessage('[NOTICE]', "Deck export called for deck $deckNumber");
 
         $query = 'SELECT * FROM decks WHERE decknumber=?';
-        $stmt = $this->db->execute_query($query, [$decknumber]);
+        $stmt = $this->db->execute_query($query, [$deckNumber]);
         if ($stmt === false) :
             trigger_error(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -1166,21 +1166,21 @@ class DeckManager
                 E_USER_ERROR
             );
         elseif ($stmt->num_rows < 1) :
-            $this->message->logMessage('[ERROR]', "There is no deck $decknumber");
+            $this->message->logMessage('[ERROR]', "There is no deck $deckNumber");
             return false;
         else :
             $deckrow = $stmt->fetch_assoc();
-            $deckname = $deckrow['deckname'];
+            $deckName = $deckrow['deckname'];
             $decktype = $deckrow['type'];
             $this->message->logMessage(
                 '[DEBUG]',
-                "Deck name is '$deckname' and type '$decktype' for deck $decknumber"
+                "Deck name is '$deckName' and type '$decktype' for deck $deckNumber"
             );
             $detailquery = 'SELECT decknumber,cardnumber,cardqty,sideqty,commander,name,printed_name,f1_name,'
                 . 'f1_printed_name,f2_name,f2_printed_name,type,setcode,number,number_import '
                 . 'FROM deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id '
                 . 'WHERE decknumber=?';
-            $detailstmt = $this->db->execute_query($detailquery, [$decknumber]);
+            $detailstmt = $this->db->execute_query($detailquery, [$deckNumber]);
             $emptyDeck = false;
             if ($detailstmt === false) :
                 trigger_error(
@@ -1189,7 +1189,7 @@ class DeckManager
                     E_USER_ERROR
                 );
             elseif ($detailstmt->num_rows < 1) :
-                $this->message->logMessage('[ERROR]', "There are no cards in deck $decknumber");
+                $this->message->logMessage('[ERROR]', "There are no cards in deck $deckNumber");
                 $emptyDeck = true;
             else :
                 $allRows = [];
@@ -1217,7 +1217,7 @@ class DeckManager
                 if (is_null($decktype) || $decktype === "") :
                     $textfile = "{$deckrow['deckname']}\r\n\r\n";
                 else :
-                    $textfile = "$deckname ($decktype)\r\n\r\n";
+                    $textfile = "$deckName ($decktype)\r\n\r\n";
                 endif;
                 $sidefile = "";
                 if (in_array($decktype, $commander_decktypes)) :
@@ -1266,8 +1266,8 @@ class DeckManager
 
         if ($emptyDeck !== true) :
             if ($format !== "variable") :
-                $filename = 'deck_' . $decknumber . '.txt';
-                $tmpName = tempnam(sys_get_temp_dir(), 'deck_' . $decknumber);
+                $filename = 'deck_' . $deckNumber . '.txt';
+                $tmpName = tempnam(sys_get_temp_dir(), 'deck_' . $deckNumber);
                 file_put_contents($tmpName, $textfile);
             endif;
 
@@ -1288,13 +1288,13 @@ class DeckManager
                     unlink($tmpName);
                 endif;
             elseif ($format === "email") :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $subject = "Deck export";
-                $emailbody = "Your deck export ($deckname) is attached.";
-                $emailaltbody = "Your deck export ($deckname) is attached.";
+                $emailbody = "Your deck export ($deckName) is attached.";
+                $emailaltbody = "Your deck export ($deckName) is attached.";
                 $mailresult = $mail->sendEmail(
-                    $this->useremail,
+                    $this->userEmail,
                     true,
                     $subject,
                     $emailbody,
@@ -1312,7 +1312,7 @@ class DeckManager
                 endif;
             elseif ($format === "bulk") :
                 // Generate a unique name for the zip file in the temp directory
-                $sanitizedEmail = str_replace('@', '_', $this->useremail);
+                $sanitizedEmail = str_replace('@', '_', $this->userEmail);
                 $currentDate = date('d-M-Y');
                 if ($zipFilePath === null) :
                     $zipFilename = "Decks-{$sanitizedEmail}-{$currentDate}.zip";
@@ -1342,7 +1342,7 @@ class DeckManager
             elseif ($format === "variable") :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Variable return called for deck '$decknumber', returning $textfile"
+                    "Variable return called for deck '$deckNumber', returning $textfile"
                 );
                 return $textfile;
             else :

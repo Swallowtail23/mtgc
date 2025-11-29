@@ -34,17 +34,17 @@ class TwoFactorManager
     private $code_expiry = 600; // 10 minutes in seconds
     private $max_attempts = 3;
     private $smtp_parameters;
-    private $serveremail;
+    private $serverEmail;
 
     /**
      * Constructor
      */
-    public function __construct($db, $smtpParameters, $serveremail, $logfile = "")
+    public function __construct($db, $smtpParameters, $serverEmail, $logfile = "")
     {
         $this->db = $db;
         $this->logfile = $logfile;
         $this->smtp_parameters = $smtpParameters;
-        $this->serveremail = $serveremail;
+        $this->serverEmail = $serverEmail;
 
         if (!class_exists('Message')) :
             require_once(__DIR__ . '/../classes/message.class.php');
@@ -412,7 +412,7 @@ class TwoFactorManager
         endif;
 
         try {
-            $mail = new MyPHPMailer(true, $this->smtp_parameters, $this->serveremail, $this->logfile);
+            $mail = new MyPHPMailer(true, $this->smtp_parameters, $this->serverEmail, $this->logfile);
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\n"
                 . "If you did not request this code, please ignore this email.";

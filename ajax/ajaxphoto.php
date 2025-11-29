@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         $response = ['success' => false, 'message' => ''];
 
@@ -71,10 +71,10 @@ if ($isValidReferrer) :
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) :
             $msg->logMessage('[DEBUG]', "Called with 'update'");
             // Get the deck number from the form data
-            $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
+            $deckNumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
-            if (!is_string($decknumber) || !preg_match('/^[0-9]+$/', $decknumber)) :
-                $msg->logMessage('[ERROR]', "Invalid deck number supplied: '$decknumber'");
+            if (!is_string($deckNumber) || !preg_match('/^[0-9]+$/', $deckNumber)) :
+                $msg->logMessage('[ERROR]', "Invalid deck number supplied: '$deckNumber'");
                 http_response_code(400);
                 $response['message'] = 'Invalid deck number';
                 returnResponse();
@@ -90,21 +90,21 @@ if ($isValidReferrer) :
                     $response['message'] = 'File size exceeds 20MB';
                     returnResponse();
                 elseif ($mimeType === 'image/jpeg') :
-                    $deckPhotosDir = $ImgLocation . 'deck_photos/';
+                    $deckPhotosDir = $imgLocation . 'deck_photos/';
 
                     // Create 'deck_photos' folder if it doesn't exist
                     if (!file_exists($deckPhotosDir)) :
-                        $msg->logMessage('[DEBUG]', "Creating 'deck_photos' folder in $ImgLocation");
+                        $msg->logMessage('[DEBUG]', "Creating 'deck_photos' folder in $imgLocation");
 
                         if (!@mkdir($deckPhotosDir, 0755, true)) :
                             $response['message'] = '<br>Failed to create directory for deck photos';
                             returnResponse();
                         endif;
                     else :
-                        $msg->logMessage('[DEBUG]', "'deck_photos' folder already in $ImgLocation");
+                        $msg->logMessage('[DEBUG]', "'deck_photos' folder already in $imgLocation");
                     endif;
 
-                    $uploadFile = $deckPhotosDir . $decknumber . '.jpg';
+                    $uploadFile = $deckPhotosDir . $deckNumber . '.jpg';
 
                     // Check if the file size is greater than 1MB
                     list($width, $height) = getimagesize($_FILES['photo']['tmp_name']);
@@ -196,18 +196,18 @@ if ($isValidReferrer) :
             endif;
         elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) :
             $msg->logMessage('[DEBUG]', "Called with 'delete'");
-            $decknumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
+            $deckNumber = isset($_POST['decknumber']) ? $_POST['decknumber'] : '';
 
-            if (!is_string($decknumber) || !preg_match('/^[0-9]+$/', $decknumber)) :
-                $msg->logMessage('[ERROR]', "Invalid deck number supplied for delete: '$decknumber'");
+            if (!is_string($deckNumber) || !preg_match('/^[0-9]+$/', $deckNumber)) :
+                $msg->logMessage('[ERROR]', "Invalid deck number supplied for delete: '$deckNumber'");
                 http_response_code(400);
                 $response['message'] = 'Invalid deck number';
                 returnResponse();
             endif;
 
             // Path to the file to be deleted
-            $imageFilePath = $ImgLocation . 'deck_photos/' . $decknumber . '.jpg';  //File path
-            $existingImage = 'cardimg/deck_photos/' . $decknumber . '.jpg';       //Web path
+            $imageFilePath = $imgLocation . 'deck_photos/' . $deckNumber . '.jpg';  //File path
+            $existingImage = 'cardimg/deck_photos/' . $deckNumber . '.jpg';       //Web path
 
             // Check if the file exists before attempting to delete
             if (file_exists($imageFilePath)) :

@@ -20,22 +20,22 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 $msg   = new Message($logfile);
-$obj   = new ImportExport($db, $logfile, $serveremail, $serveremail, $siteTitle);
-$mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
+$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
+$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
 
 $list = '';
 $usersExport = $db->execute_query(
     "SELECT username, usernumber, email, status FROM users WHERE weeklyexport = 1 AND status = 'active'"
 );
 while ($user = $usersExport->fetch_assoc()) :
-    $username = ucfirst($user['username']);
-    $usernumber = $user['usernumber'];
-    $usertable = $usernumber . "collection";
-    $useremail = $user['email'];
-    $decks = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $userName = ucfirst($user['username']);
+    $userNumber = $user['usernumber'];
+    $usertable = $userNumber . "collection";
+    $userEmail = $user['email'];
+    $decks = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
     // Decks
     $query = 'SELECT decknumber FROM decks WHERE owner=?';
-    $stmt = $db->execute_query($query, [$usernumber]);
+    $stmt = $db->execute_query($query, [$userNumber]);
     if ($stmt === false) :
         trigger_error(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: "
@@ -43,17 +43,17 @@ while ($user = $usersExport->fetch_assoc()) :
             E_USER_ERROR
         );
     elseif ($stmt->num_rows < 1) :
-        $msg->logMessage('[ERROR]', "No decks for user '$useremail'");
+        $msg->logMessage('[ERROR]', "No decks for user '$userEmail'");
     else :
         $qtyDecks = $stmt->num_rows;
-        $msg->logMessage('[DEBUG]', "$qtyDecks decks for user '$useremail'");
+        $msg->logMessage('[DEBUG]', "$qtyDecks decks for user '$userEmail'");
         $decksProcessed = 0;
         while ($deckrow = $stmt->fetch_assoc()) :
-            $decknumber = $deckrow['decknumber'];
+            $deckNumber = $deckrow['decknumber'];
             if ($decksProcessed === 0) :
                 $decksProcessed = $decksProcessed + 1;
                 $msg->logMessage('[DEBUG]', "Processing deck $decksProcessed/$qtyDecks");
-                $zipFilePath = $decks->exportDeck($decknumber, "bulk");
+                $zipFilePath = $decks->exportDeck($deckNumber, "bulk");
                 if ($zipFilePath === false) :
                     $msg->logMessage('[ERROR]', "Error returned from deckManager");
                     exit;
@@ -61,7 +61,7 @@ while ($user = $usersExport->fetch_assoc()) :
             else :
                 $decksProcessed = $decksProcessed + 1;
                 $msg->logMessage('[DEBUG]', "Processing deck $decksProcessed/$qtyDecks");
-                $addnext = $decks->exportDeck($decknumber, "bulk", $zipFilePath);
+                $addnext = $decks->exportDeck($deckNumber, "bulk", $zipFilePath);
                 if ($addnext === false) :
                     $msg->logMessage('[ERROR]', "Error returned from deckManager");
                     exit;
@@ -69,22 +69,22 @@ while ($user = $usersExport->fetch_assoc()) :
             endif;
         endwhile;
         $subject = "$siteTitle weekly decks export";
-        $emailbody = "Hi $username, please see attached your weekly decks export from $siteTitle. <br><br> Opt out "
+        $emailbody = "Hi $userName, please see attached your weekly decks export from $siteTitle. <br><br> Opt out "
             . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitle profile page</a>";
-        $emailaltbody = "Hi $username, please see attached your weekly decks export from $siteTitle. \r\n\r\n Opt "
+        $emailaltbody = "Hi $userName, please see attached your weekly decks export from $siteTitle. \r\n\r\n Opt "
             . "out of automated emails in your profile at your $siteTitle profile page ($myURL/profile.php) \r\n\r\n";
-        $mailresult = $mail->sendEmail($useremail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
+        $mailresult = $mail->sendEmail($userEmail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
         if (isset($zipFilePath)) :
             unlink($zipFilePath);
         endif;
     endif;
 
     // Collection
-    $obj->exportCollectionToCsv($usertable, $myURL, $smtpParameters, 'weekly', 'export.csv', $username, $useremail);
-    $list .= "$username ($useremail)\r\n";
+    $obj->exportCollectionToCsv($usertable, $myURL, $smtpParameters, 'weekly', 'export.csv', $userName, $userEmail);
+    $list .= "$userName ($userEmail)\r\n";
 endwhile;
 
 $subject = "$siteTitle weekly export user report";
 $emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
-$mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-$mailresult = $mail->sendEmail($adminemail, false, $subject, $emailbody);
+$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+$mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);

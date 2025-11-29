@@ -249,10 +249,10 @@ class LoginHandlerTest extends TestCase
 
     private function buildHandler(FakeDb $db, ?callable $terminator = null, int $turnstileEnabled = 0): LoginHandler
     {
-        global $logfile, $smtpParameters, $serveremail, $Badloglimit, $turnstile, $turnstile_secret_key, $siteTitle;
+        global $logfile, $smtpParameters, $serverEmail, $Badloglimit, $turnstile, $turnstile_secret_key, $siteTitle;
         $logfile = sys_get_temp_dir() . '/mtg_loginhandler_test.log';
         $smtpParameters = [];
-        $serveremail = 'server@example.com';
+        $serverEmail = 'server@example.com';
         $Badloglimit = 3;
         $turnstile = $turnstileEnabled;
         $turnstile_secret_key = '';
@@ -266,7 +266,7 @@ class LoginHandlerTest extends TestCase
             $Badloglimit,
             $siteTitle,
             $smtpParameters,
-            $serveremail,
+            $serverEmail,
             $terminator
         );
     }

@@ -58,7 +58,7 @@ if ($isValidReferrer) :
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         $fx = $userArray['fx'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (isset($_GET['currency'])) :  //Update GET details
             $usercurrency = $db->real_escape_string($_GET['currency']);
@@ -76,7 +76,7 @@ if ($isValidReferrer) :
                 if ($usercurrency === null) :
                     $usercurrency = 'NULL';
                 endif;
-                $msg->logMessage('[NOTICE]', "User currency change for $useremail");
+                $msg->logMessage('[NOTICE]', "User currency change for $userEmail");
                 echo json_encode(['success' => 'User currency changed to: ' . $usercurrency]);
                 exit();
             endif;

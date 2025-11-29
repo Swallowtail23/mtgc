@@ -34,7 +34,7 @@ else :
     $userArray = $sessionManager->getUserInfo();
     if ($userArray !== false) :
         $user = $userArray['usernumber'];
-        $username = $userArray['username'];               // get user name
+        $userName = $userArray['username'];               // get user name
         $mytable = $userArray['table'];                   // user's collection table
         $collection_view = $userArray['collection_view']; // has this user selected Collection View
         $admin = $userArray['admin'];
@@ -44,10 +44,10 @@ else :
         $targetCurrency = $userArray['currency'];
         $rate = $userArray['rate'];
 
-        $useremail = $_SESSION['useremail'];              // get email address of user, available in SESSION
+        $userEmail = $_SESSION['useremail'];              // get email address of user, available in SESSION
 
-        $mtcestatus = mtceModeCheck($user);                    // check mtce mode active and if an admin user
-        if ($mtcestatus == 1) :                           // check if site is in maintenance mode
+        $mtceStatus = mtceModeCheck($user);                    // check mtce mode active and if an admin user
+        if ($mtceStatus == 1) :                           // check if site is in maintenance mode
             include('includes/mtcestub.php');
             session_destroy();
             exit();

@@ -38,7 +38,7 @@ forcePasswordChange();                          //Check if user is disabled or n
 $msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
-$msg->logMessage('[DEBUG]', "Admin page called by user $username ($useremail)");
+$msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");
 
 // Is admin running the page
 $msg->logMessage('[ERROR]', "Admin is $admin");
@@ -64,12 +64,12 @@ if (isset($_GET['cardtoedit'])) :
     if ($stmt) :
         $stmt->bind_param("s", $id);
         $stmt->execute();
-        $stmt->bind_result($deckname, $deckowner);
+        $stmt->bind_result($deckName, $deckOwner);
     else :
         trigger_error("[ERROR] cards.php: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
     endif;
     while ($stmt->fetch()) :
-        $resultArray[] = array('deckname' => $deckname, 'deckowner' => $deckowner);
+        $resultArray[] = array('deckname' => $deckName, 'deckowner' => $deckOwner);
     endwhile;
     $stmt->close();
 
@@ -77,12 +77,12 @@ if (isset($_GET['cardtoedit'])) :
     $stmt = $db->prepare($sql2);
     if ($stmt) :
         $stmt->execute();
-        $stmt->bind_result($usernumber, $username);
+        $stmt->bind_result($userNumber, $userName);
     else :
         trigger_error("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
     endif;
     while ($stmt->fetch()) :
-        $userResultArray[] = array('usernumber' => $usernumber, 'username' => $username);
+        $userResultArray[] = array('usernumber' => $userNumber, 'username' => $userName);
     endwhile;
     $stmt->close();
 
@@ -169,7 +169,7 @@ if ((isset($_GET['delete'])) and ($_GET['delete'] == 'DELETE')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $msg->logMessage('[ERROR]', "Delete card $id called by $useremail from {$_SERVER['REMOTE_ADDR']}");
+    $msg->logMessage('[ERROR]', "Delete card $id called by $userEmail from {$_SERVER['REMOTE_ADDR']}");
 
     // Delete from cards_scry
     $sql = "DELETE FROM cards_scry WHERE id = ?";
@@ -204,7 +204,7 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $obj->refreshImage($id);
 endif;
 
@@ -334,16 +334,16 @@ require('../includes/menu.php');
                     else :
                             echo 'None';
                     endif;
-            elseif (isset($imageurl) and $imageurl !== '' and $imagedelete === 'success') :
+            elseif (isset($imageUrl) and $imageUrl !== '' and $imagedelete === 'success') :
                     echo "<h3>Image delete processed</h3>";
-                    echo "$imageurl deleted";
+                    echo "$imageUrl deleted";
                 if (isset($imagebackdelete)) :
                     echo "$imagebackurl deleted";
                 endif;
                     echo "<meta http-equiv='refresh' content='2;url=cards.php'>";
-            elseif (isset($imageurl) and $imageurl !== '' and $imagedelete === 'failure') :
+            elseif (isset($imageUrl) and $imageUrl !== '' and $imagedelete === 'failure') :
                     echo "<h3>Image delete NOT processed</h3>";
-                    echo "$imagedelete $imageurl NOT deleted";
+                    echo "$imagedelete $imageUrl NOT deleted";
             else :
                     echo "<h3>Load this page from a card details page to delete a card or its image</h3>";
             endif; ?>

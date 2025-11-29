@@ -54,8 +54,8 @@ if ($isValidReferrer) :
     $msg->logMessage('[DEBUG]', "Called from deckdetail.php");
 
     if (isset($_GET['deck']) && ($_GET['deck']) !== '') :
-        $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
-        $imageFilePath = $ImgLocation . 'deck_photos/' . $decknumber . '.jpg'; // Filesystem path
+        $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
+        $imageFilePath = $imgLocation . 'deck_photos/' . $deckNumber . '.jpg'; // Filesystem path
 
         // Check if the file exists
         if (file_exists($imageFilePath)) :

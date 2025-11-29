@@ -6,8 +6,8 @@ Date:        25/11/25
 Name:        myphpmailer.class.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
-                 $mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-                 $mailresult = $mail->sendEmail($adminemail, false, $subject, $body);
+                 $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+                 $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -36,25 +36,25 @@ class MyPHPMailer extends PHPMailer
      * @param string    $body A default HTML message body
      */
     private $smtpParameters;
-    private $serveremail;
+    private $serverEmail;
     private $logfile;
     private $message;
     private $siteTitle;
 
-    public function __construct($exceptions, $smtpParameters, $serveremail, $logfile, $siteTitle = null)
+    public function __construct($exceptions, $smtpParameters, $serverEmail, $logfile, $siteTitle = null)
     {
         //Don't forget to do this or other things may not be set correctly!
         parent::__construct($exceptions);
         // Set variables
         $this->smtpParameters = $smtpParameters;
-        $this->serveremail = $serveremail;
+        $this->serverEmail = $serverEmail;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
 
         // Set defaults for PHPMailer from ini.file
-        $this->setFrom($this->serveremail, $this->siteTitle);
-        $this->addReplyTo($this->serveremail, $this->siteTitle);
+        $this->setFrom($this->serverEmail, $this->siteTitle);
+        $this->addReplyTo($this->serverEmail, $this->siteTitle);
         $this->isSMTP();
         $this->Host       = $smtpParameters['SMTPHost'];
         $this->Port       = $smtpParameters['SMTPPort'];

@@ -31,15 +31,15 @@ class IniDebug
         $this->message = new Message($this->logfile);
     }
 
-    public function inidebugging($loglevelini, $logfile, $message)
+    public function inidebugging($logLevelIni, $logfile, $message)
     {
-        if ($loglevelini === '3' and $logfile !== 0) :
+        if ($logLevelIni === '3' and $logfile !== 0) :
             $fd = fopen($logfile, "a");
             $msg = "[DEBUG] $message";
             $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
             fwrite($fd, $str . "\n");
             fclose($fd);
-        elseif ($loglevelini === '3' and $logfile === 0) :
+        elseif ($logLevelIni === '3' and $logfile === 0) :
             openlog("MTG", LOG_NDELAY, LOG_USER);
             syslog(LOG_INFO, "[MTG-DEBUG] $message");
             closelog();

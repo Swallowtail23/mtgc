@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
     if (empty($code)) :
         $verification_error = 'Please enter a verification code';
     else :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         if ($tfaManager->verify($user_id, $code)) :
             $msg->logMessage('[NOTICE]', "2FA verification successful for user ID: $user_id ($email)");
 
@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
 endif;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) :
-    $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+    $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
     $tfaManager->startVerification($user_id, $email);
     $msg->logMessage('[NOTICE]', "Verification code resent for user ID: $user_id ($email)");
 endif;

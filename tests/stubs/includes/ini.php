@@ -2,7 +2,7 @@
 
 // Stub ini for index tests to avoid real config and DB connections.
 
-$ini_array = [
+$iniArray = [
     'general' => [
         'URL' => 'http://localhost',
         'title' => 'MTG Collection',
@@ -50,25 +50,25 @@ $ini_array = [
     ]
 ];
 
-$myURL = $ini_array['general']['URL'];
-$siteTitle = $ini_array['general']['title'];
-$fxAPI = $ini_array['fx']['FreecurrencyAPI'];
-$fxLocal = $ini_array['fx']['TargetCurrency'];
+$myURL = $iniArray['general']['URL'];
+$siteTitle = $iniArray['general']['title'];
+$fxAPI = $iniArray['fx']['FreecurrencyAPI'];
+$fxLocal = $iniArray['fx']['TargetCurrency'];
 $adminip = 1;
-$loglevelini = $ini_array['general']['Loglevel'];
-$adminemail = $ini_array['email']['AdminEmail'];
-$serveremail = $ini_array['email']['ServerEmail'];
-$Badloglimit = $ini_array['security']['Badloginlimit'];
-$ImgLocation = $ini_array['general']['ImgLocation'];
-$copyright = $ini_array['general']['Copyright'];
-$trustDuration = $ini_array['security']['TrustDuration'];
+$logLevelIni = $iniArray['general']['Loglevel'];
+$adminEmail = $iniArray['email']['AdminEmail'];
+$serverEmail = $iniArray['email']['ServerEmail'];
+$Badloglimit = $iniArray['security']['Badloginlimit'];
+$imgLocation = $iniArray['general']['ImgLocation'];
+$copyright = $iniArray['general']['Copyright'];
+$trustDuration = $iniArray['security']['TrustDuration'];
 $turnstile_site_key = '';
 $turnstile_secret_key = '';
 $turnstile = 0;
 $valid_tribe = [];
 $search_langs_codes = ['en'];
 
-$logfile = $ini_array['general']['Logfile'];
+$logfile = $iniArray['general']['Logfile'];
 
 if (!isset($GLOBALS['db'])) {
     $GLOBALS['db'] = new class {

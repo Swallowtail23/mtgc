@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
         $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
 
         if ($cardUUID === false) :
@@ -67,10 +67,10 @@ if ($isValidReferrer) :
             exit();
         endif;
 
-        $msg->logMessage('[NOTICE]', "Image refresh called for $cardUUID by $useremail");
+        $msg->logMessage('[NOTICE]', "Image refresh called for $cardUUID by $userEmail");
 
         try {
-            $obj = new ImageManager($db, $logfile, $serveremail, $adminemail);
+            $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
             $newImage = $obj->refreshImage($cardUUID);
 
             if ($newImage === 'success') :

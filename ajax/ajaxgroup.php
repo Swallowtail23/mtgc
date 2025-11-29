@@ -58,7 +58,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (isset($_POST['group']) && $_POST['group'] === 'OPT OUT') :
             $msg->logMessage('[ERROR]', "Call to opt out of groups");
@@ -68,7 +68,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Group opt-out run for $useremail");
+                $msg->logMessage('[ERROR]', "Group opt-out run for $userEmail");
             endif;
         elseif (isset($_POST['group']) && $_POST['group'] === 'OPT IN') :
             $msg->logMessage('[ERROR]', "Call to opt into groups");
@@ -78,7 +78,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Group opt-in run for $useremail");
+                $msg->logMessage('[ERROR]', "Group opt-in run for $userEmail");
             endif;
         else :
             http_response_code(400);

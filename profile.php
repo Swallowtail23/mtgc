@@ -92,7 +92,7 @@ endif;
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $useremail, $serveremail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     $msg->logMessage('[DEBUG]', "Truncating collection table...");
@@ -351,18 +351,18 @@ endif;
                                         );
                                         $pwdchg = $db->execute_query(
                                             "UPDATE users SET password = ? WHERE email = ?",
-                                            [$new_password, $useremail]
+                                            [$new_password, $userEmail]
                                         );
                                         $msg->logMessage(
                                             '[NOTICE]',
-                                            "Password change call for $useremail from {$_SERVER['REMOTE_ADDR']}"
+                                            "Password change call for $userEmail from {$_SERVER['REMOTE_ADDR']}"
                                         );
                                         if ($pwdchg === false) :
                                             trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
                                         endif;
                                         $pwdvalidateqry = $db->execute_query(
                                             "SELECT password FROM users WHERE email = ?",
-                                            [$useremail]
+                                            [$userEmail]
                                         );
                                         if ($pwdvalidateqry === false) :
                                             trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
@@ -372,7 +372,7 @@ endif;
                                                 $msg->logMessage(
                                                     '[NOTICE]',
                                                     "Confirmed new password written to database for "
-                                                    . "$useremail from {$_SERVER['REMOTE_ADDR']}"
+                                                    . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                                 // Removing all trusted devices
                                                 (new TrustedDeviceManager($db, $logfile))
@@ -384,7 +384,7 @@ endif;
                                                 // Clear the force password flag and session variable
                                                 $chgflagclear = $db->execute_query(
                                                     "UPDATE users SET status = 'active' WHERE email = ?",
-                                                    [$useremail]
+                                                    [$userEmail]
                                                 );
                                                 if ($chgflagclear === false) :
                                                     trigger_error(
@@ -404,7 +404,7 @@ endif;
                                                 $msg->logMessage(
                                                     '[NOTICE]',
                                                     "New password not verified from database for "
-                                                    . "$useremail from {$_SERVER['REMOTE_ADDR']}"
+                                                    . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                             endif;
                                         endif;
@@ -436,7 +436,7 @@ endif;
                         . "You must set a new password.</div>";
                     $msg->logMessage(
                         '[NOTICE]',
-                        "Enforcing password change for $useremail from {$_SERVER['REMOTE_ADDR']}"
+                        "Enforcing password change for $userEmail from {$_SERVER['REMOTE_ADDR']}"
                     );
                 endif;
             //4. Collection view
@@ -459,7 +459,7 @@ endif;
             //8. Update pricing in case any new cards have been added to collection
                 //Make sure only number+collection is passed as table name
                 if (validTableName($mytable) !== false) :
-                    $obj = new PriceManager($db, $logfile, $useremail);
+                    $obj = new PriceManager($db, $logfile, $userEmail);
                     $obj->updateCollectionValues($mytable);
                 else :
                     trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);
@@ -537,7 +537,7 @@ endif;
 
             //9. 2FA Section
                 // Get 2FA status for this user
-                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serveremail, $logfile);
+                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
                 $tfa_enabled = $tfaManager->isEnabled($userId);
 
                 // Check if we should enable or disable 2FA
@@ -1379,13 +1379,13 @@ HTML;
                                 exit;
                             endif;
                             $importfile = $_FILES['filename']['tmp_name'];
-                            $obj = new ImportExport($db, $logfile, $useremail, $serveremail, $siteTitle);
+                            $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
                             $importcards = $obj->importCollectionRegex(
                                 $importfile,
                                 $mytable,
                                 $importType,
-                                $useremail,
-                                $serveremail
+                                $userEmail,
+                                $serverEmail
                             );
                             if ($importcards === 'emptyfile') :
                                 echo "<h4>File contains no card data</h4>";
@@ -1397,8 +1397,8 @@ HTML;
                                     $obj = new DeckManager(
                                         $db,
                                         $logfile,
-                                        $useremail,
-                                        $serveremail,
+                                        $userEmail,
+                                        $serverEmail,
                                         $importLinestoIgnore,
                                         $nonPreferredSetCodes
                                     );
@@ -1409,19 +1409,19 @@ HTML;
                                     // returns array with success flag, and deck number if success
                                     $decksuccess = $obj->addDeck($userId, $tmpdeckname);
                                     if ($decksuccess['flag'] === 1) :
-                                        $decknumber = $decksuccess['decknumber'];
+                                        $deckNumber = $decksuccess['decknumber'];
                                         $msg->logMessage(
                                             '[DEBUG]',
-                                            "Deck created, $tmpdeckname created, deck number is $decknumber"
+                                            "Deck created, $tmpdeckname created, deck number is $deckNumber"
                                         );
-                                        echo "<script>var deckNumber = '$decknumber'; var deckName = '$tmpdeckname'; "
+                                        echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
                                             . "var deckCreated = true;</script>";
                                         $file = fopen($_FILES['filename']['tmp_name'], 'r');
                                         $deckManager = new DeckManager(
                                             $db,
                                             $logfile,
-                                            $useremail,
-                                            $serveremail,
+                                            $userEmail,
+                                            $serverEmail,
                                             $importLinestoIgnore,
                                             $nonPreferredSetCodes
                                         );
@@ -1430,17 +1430,17 @@ HTML;
                                         fclose($file);
 
                                         // Call the processInput method with the decknumber and file content
-                                        $deckManager->processInput($decknumber, $fileContent);
+                                        $deckManager->processInput($deckNumber, $fileContent);
                                     else :
                                         $msg->logMessage('[ERROR]', "Deck NOT created");
                                     endif;
                                     $msg->logMessage(
                                         '[DEBUG]',
-                                        "redirecting to profile.php?deckcreated=$tmpdeckname&decknumber=$decknumber"
+                                        "redirecting to profile.php?deckcreated=$tmpdeckname&decknumber=$deckNumber"
                                     );
                                     echo "<meta http-equiv='refresh' "
                                         . "content='0;url=profile.php?deckcreated=$tmpdeckname";
-                                    echo "&decknumber=$decknumber'>";
+                                    echo "&decknumber=$deckNumber'>";
                                 else :
                                     $msg->logMessage('[DEBUG]', "adddeck is not 'yes', skipping deck creation.");
                                     echo "<meta http-equiv='refresh' content='0;url=profile.php'>";

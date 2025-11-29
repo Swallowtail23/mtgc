@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (
             isset($_POST['user'])
@@ -66,15 +66,15 @@ if ($isValidReferrer) :
             && isset($_POST['decktype'])
         ) :
             $user = filter_input(INPUT_POST, 'user', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $deckname = filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $decknumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $deckName = filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $decktype = filter_input(INPUT_POST, 'decktype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $msg->logMessage(
                 '[ERROR]',
-                "Call to duplicate user $user's deck number $decknumber, $deckname ($decktype)"
+                "Call to duplicate user $user's deck number $deckNumber, $deckName ($decktype)"
             );
             $counter = 1;
-            $newdeckname = $deckname . "_$counter";
+            $newdeckname = $deckName . "_$counter";
 
             do {
                 // Check if the deck name already exists
@@ -85,7 +85,7 @@ if ($isValidReferrer) :
                 if ($result !== false && $result->num_rows > 0) :
                     // Increment the counter and create a new name
                     $counter++;
-                    $newdeckname = $deckname . "_$counter";  // Ensure that only one counter is appended
+                    $newdeckname = $deckName . "_$counter";  // Ensure that only one counter is appended
                 endif;
             } while ($result !== false && $result->num_rows > 0);
 
@@ -93,8 +93,8 @@ if ($isValidReferrer) :
             $obj = new DeckManager(
                 $db,
                 $logfile,
-                $useremail,
-                $serveremail,
+                $userEmail,
+                $serverEmail,
                 $importLinestoIgnore,
                 $nonPreferredSetCodes
             );
@@ -104,7 +104,7 @@ if ($isValidReferrer) :
             $msg->logMessage('[DEBUG]', "Created deck number {$decksuccess['decknumber']}");
 
             //get the cardlist from the source deck
-            $cardlist = $obj->exportDeck($decknumber, "variable");
+            $cardlist = $obj->exportDeck($deckNumber, "variable");
             $msg->logMessage('[DEBUG]', "Cardlist: $cardlist");
 
             //Set the decktype the same as the source deck

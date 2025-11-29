@@ -425,7 +425,7 @@ function getFullURL()
     return $myUrl;
 }
 
-function loginStamp($useremail)
+function loginStamp($userEmail)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
@@ -433,7 +433,7 @@ function loginStamp($useremail)
     $msg->logMessage('[NOTICE]', "Writing user login");
     $logindate = date("Y-m-d");
     $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
-    if ($db->execute_query($query, [$logindate,$useremail]) === true) :
+    if ($db->execute_query($query, [$logindate,$userEmail]) === true) :
         $msg->logMessage('[DEBUG]', "Writing user login successful");
         return 1;
     else :
@@ -475,7 +475,7 @@ function downloadBulk($url, $dest)
 function getBulkInfo($type)
 {
     // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
-    global $logfile, $default_cards_url, $all_cards_url, $ImgLocation;
+    global $logfile, $default_cards_url, $all_cards_url, $imgLocation;
     $msg = new Message($logfile);
     $date = date('Y-m-d');
     $bulk_info = false;
@@ -486,18 +486,18 @@ function getBulkInfo($type)
 
     if ($type === "all") :
         $url = $all_cards_url;
-        $fileLocation = $ImgLocation . 'json/bulk_all.json';
+        $fileLocation = $imgLocation . 'json/bulk_all.json';
     elseif ($type === "standard") :  // At the moment, elseif and else do the same, i.e. a "primary" load only
         $url = $default_cards_url;
-        $fileLocation = $ImgLocation . 'json/bulk.json';
+        $fileLocation = $imgLocation . 'json/bulk.json';
     elseif ($type === "refresh") :
         $url_default = $default_cards_url;
         $url_all = $all_cards_url;
-        $fileLocation_default = $ImgLocation . 'json/bulk.json';
-        $fileLocation_all = $ImgLocation . 'json/bulk_all.json';
+        $fileLocation_default = $imgLocation . 'json/bulk.json';
+        $fileLocation_all = $imgLocation . 'json/bulk_all.json';
     else :  // At the moment, else does a "standard" load only
         $url = $default_cards_url;
-        $fileLocation = $ImgLocation . 'json/bulk.json';
+        $fileLocation = $imgLocation . 'json/bulk.json';
     endif;
 
     if (isset($url) && $url !== '' && isset($fileLocation)) :
@@ -666,10 +666,10 @@ function scryfallImport($file_location, $type)
         $langs_to_skip,
         $langs_to_skip_all,
         $layouts_to_skip,
-        $serveremail,
-        $adminemail,
-        $ImgLocation,
-        $two_card_detail_sections;
+        $serverEmail,
+        $adminEmail,
+        $imgLocation,
+        $twoCardDetailSections;
     $msg = new Message($logfile);
 
     // Initiate counters at zero
@@ -1269,13 +1269,13 @@ function scryfallImport($file_location, $type)
                     $msg->logMessage('[DEBUG]', "Added card - no error returned; return code: $status");
                     //Fetching image
                     if ($imageDownloads === true) :
-                        $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                        $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                         $imageManager->getImage(
                             $value["set"],
                             $id,
-                            $ImgLocation,
+                            $imgLocation,
                             $value["layout"],
-                            $two_card_detail_sections
+                            $twoCardDetailSections
                         );
                     endif;
                 elseif ($status === 2) :
@@ -1374,18 +1374,18 @@ function promoLookup($promo_type)
     return $promo_description;
 }
 
-function deckLegalList($decknumber, $deck_type, $db_field)
+function deckLegalList($deckNumber, $deck_type, $db_field)
 {
     global $db, $logfile;
     $msg = new Message($logfile);
 
     $msg->logMessage(
         '[DEBUG]',
-        "Getting deck legality list for $deck_type deck '$decknumber' (using db_field '$db_field')"
+        "Getting deck legality list for $deck_type deck '$deckNumber' (using db_field '$db_field')"
     );
     $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
     $msg->logMessage('[DEBUG]', "Looking up SQL: $sql");
-    $sqlresult = $db->execute_query($sql, [$decknumber]);
+    $sqlresult = $db->execute_query($sql, [$deckNumber]);
     if ($sqlresult === false) :
         trigger_error(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__

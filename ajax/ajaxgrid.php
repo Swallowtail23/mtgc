@@ -34,7 +34,7 @@ require('../includes/functions.php');      //Includes basic functions for non-se
 require('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
 $msg = new Message($logfile);
-$priceMgr = new PriceManager($db, $logfile, $useremail);
+$priceMgr = new PriceManager($db, $logfile, $userEmail);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -61,9 +61,9 @@ if ($isValidReferrer) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
         exit();
     else :
-        $cardid = $_POST['cardid'] ?? '';
-        if (validUUID($cardid) === false) :
-            $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
+        $cardId = $_POST['cardid'] ?? '';
+        if (validUUID($cardId) === false) :
+            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
             $response['status'] = 'error';
             $response['message'] = "Called with invalid card UUID";
             http_response_code(400);
@@ -78,12 +78,12 @@ if ($isValidReferrer) :
             if (is_int($qty / 1) and $qty > -1) :
                 $msg->logMessage(
                     '[NOTICE]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Normal:$qty"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Normal:$qty"
                 );
             else :
                 $msg->logMessage(
                     '[ERROR]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardid"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardId"
                 );
                 $response['status'] = 'error';
                 $response['message'] = "Invalid normal qty";
@@ -97,12 +97,12 @@ if ($isValidReferrer) :
             if (is_int($qty / 1) and $qty > -1) :
                 $msg->logMessage(
                     '[NOTICE]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Foil:$qty"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Foil:$qty"
                 );
             else :
                 $msg->logMessage(
                     '[ERROR]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardid"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardId"
                 );
                 $response['status'] = 'error';
                 $response['message'] = "Invalid foil qty";
@@ -116,12 +116,12 @@ if ($isValidReferrer) :
             if (is_int($qty / 1) and $qty > -1) :
                 $msg->logMessage(
                     '[NOTICE]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardid, request: Etched:$qty"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Etched:$qty"
                 );
             else :
                 $msg->logMessage(
                     '[ERROR]',
-                    "User $useremail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardid"
+                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardId"
                 );
                 $response['status'] = 'error';
                 $response['message'] = "Invalid etch qty";
@@ -131,7 +131,7 @@ if ($isValidReferrer) :
                 exit;
             endif;
         else :
-            $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
+            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
             $response['status'] = 'error';
             $response['message'] = "Invalid call";
             http_response_code(400);
@@ -153,7 +153,7 @@ if ($isValidReferrer) :
             exit;
         endif;
 
-        $sqlid = $cardid;
+        $sqlid = $cardId;
 
         //Check existing quantity
         $beforeresultqry = $db->execute_query(
@@ -161,7 +161,7 @@ if ($isValidReferrer) :
             [$sqlid]
         );
         if ($beforeresultqry === false) :
-            $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values");
+            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -187,7 +187,7 @@ if ($isValidReferrer) :
             endif;
             $msg->logMessage(
                 '[NOTICE]',
-                "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, "
+                "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update for $sqlid, prior values: Normal:$myqty, "
                 . "Foil:$myfoil, Etched:$myetch"
             );
         endif;
@@ -214,7 +214,7 @@ if ($isValidReferrer) :
         $params = [$sqlqty, $sqlid, $sqlqty];
         $sqlupdate = $db->execute_query($updatequery, $params);
         if ($sqlupdate === false) :
-            $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
+            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -241,7 +241,7 @@ if ($isValidReferrer) :
             [$sqlid]
         );
         if ($checkresultqry === false) :
-            $msg->logMessage('[ERROR]', "User $useremail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
+            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
             $response['status'] = 'error';
             $response['message'] = "SQL update error: $db->error";
             http_response_code(400);
@@ -254,7 +254,7 @@ if ($isValidReferrer) :
                 if ((int)$sqlqty === (int)$checkresult['normal']) :
                     $msg->logMessage(
                         '[NOTICE]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update completed for $sqlid, "
                         . "new value: Normal:{$checkresult['normal']}"
                     );
                     $response['status'] = 'success';
@@ -263,7 +263,7 @@ if ($isValidReferrer) :
                 else :
                     $msg->logMessage(
                         '[ERROR]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
                         . "new value: Normal:{$checkresult['normal']}"
                     );
                     $response['status'] = 'error';
@@ -274,7 +274,7 @@ if ($isValidReferrer) :
                 if ((int)$sqlqty === (int)$checkresult['foil']) :
                     $msg->logMessage(
                         '[NOTICE]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, "
                         . "new value: Foil: {$checkresult['foil']}"
                     );
                     $response['status'] = 'success';
@@ -282,7 +282,7 @@ if ($isValidReferrer) :
                 else :
                     $msg->logMessage(
                         '[ERROR]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
                         . "new value: Foil: {$checkresult['foil']}"
                     );
                     $response['status'] = 'error';
@@ -293,7 +293,7 @@ if ($isValidReferrer) :
                 if ((int)$sqlqty === (int)$checkresult['etched']) :
                     $msg->logMessage(
                         '[NOTICE]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Grid check completed for $sqlid, "
                         . "new value: Etched: {$checkresult['etched']}"
                     );
                     $response['status'] = 'success';
@@ -302,7 +302,7 @@ if ($isValidReferrer) :
                 else :
                     $msg->logMessage(
                         '[ERROR]',
-                        "User $useremail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
+                        "User $userEmail({$_SERVER['REMOTE_ADDR']}) Grid check FAIL for $sqlid, "
                         . "new value: Etched: {$checkresult['etched']}"
                     );
                     $response['status'] = 'error';

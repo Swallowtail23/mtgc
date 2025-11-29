@@ -25,13 +25,13 @@ endif;
 
 function mtgError($number, $string, $file, $line, $context = '')
 {
-    global $logfile, $adminemail, $serveremail;
+    global $logfile, $adminEmail, $serverEmail;
     $msg = new Message($logfile);
 
     if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
     else :
-        $useremail = $serveremail;
+        $userEmail = $serverEmail;
     endif;
 
     if (!(error_reporting() & $number)) :
@@ -41,34 +41,34 @@ function mtgError($number, $string, $file, $line, $context = '')
     switch ($number) :
         case E_USER_ERROR:
             $msg->logMessage('[ERROR]', "$string (E_USER_ERROR) in $file on line $line");
-            $from = "From: $useremail\r\nReturn-path: $useremail";
+            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_ERROR) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminemail, $subject, $message, $from);
+            mail($adminEmail, $subject, $message, $from);
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         case E_USER_WARNING:
             $msg->logMessage('[ERROR]', "$string (E_USER_WARNING) in $file on line $line");
-            $from = "From: $useremail\r\nReturn-path: $useremail";
+            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_WARNING) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminemail, $subject, $message, $from);
+            mail($adminEmail, $subject, $message, $from);
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         case E_USER_NOTICE:
             $msg->logMessage('[ERROR]', "$string (E_USER_NOTICE) in $file on line $line");
-            $from = "From: $useremail\r\nReturn-path: $useremail";
+            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_NOTICE) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminemail, $subject, $message, $from);
+            mail($adminEmail, $subject, $message, $from);
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         default:
             $msg->logMessage('[ERROR]', "$string Error in $file on line $line");
-            $from = "From: $useremail\r\nReturn-path: $useremail";
+            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminemail, $subject, $message, $from);
+            mail($adminEmail, $subject, $message, $from);
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
     endswitch;
@@ -76,7 +76,7 @@ function mtgError($number, $string, $file, $line, $context = '')
 
 function mtgException($err)
 {
-    global $logfile, $adminemail, $serveremail;
+    global $logfile, $adminEmail, $serverEmail;
     if (($fd = fopen($logfile, 'a')) !== false) :
         $msg = "[ERROR] Fatal exception: {$err->getMessage()}";
         $str = "[" . date('Y/m/d H:i:s', time()) . "] " . $msg;
@@ -87,10 +87,10 @@ function mtgException($err)
         syslog(LOG_ERR, "[MTG-DEBUG] Fatal exception: {$err->getMessage()}");
         closelog();
     endif;
-    $from = "From: " . $serveremail;
+    $from = "From: " . $serverEmail;
     $subject = "Exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
-    mail($adminemail, $subject, $message, $from);
+    mail($adminEmail, $subject, $message, $from);
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     exit();
 }

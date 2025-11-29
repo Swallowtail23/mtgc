@@ -90,29 +90,29 @@ class LoginHandler
             $stmt = $this->db->prepare($user_query);
 
             if ($stmt) :
-                $usernumber = null;
-                $username = null;
-                $useremail = null;
+                $userNumber = null;
+                $userName = null;
+                $userEmail = null;
                 $admin = null;
                 $stmt->bind_param("i", $trustedDeviceUser);
                 $stmt->execute();
                 $stmt->store_result();
 
                 if ($stmt->num_rows === 1) :
-                    $stmt->bind_result($usernumber, $username, $useremail, $admin);
+                    $stmt->bind_result($userNumber, $userName, $userEmail, $admin);
                     $stmt->fetch();
 
                     $_SESSION['logged'] = true;
-                    $_SESSION['user'] = $usernumber;
-                    $_SESSION['useremail'] = $useremail;
+                    $_SESSION['user'] = $userNumber;
+                    $_SESSION['useremail'] = $userEmail;
                     $_SESSION['admin'] = (bool) $admin;
 
-                    $this->message->logMessage('[NOTICE]', "Auto-login via trusted device for user $useremail");
+                    $this->message->logMessage('[NOTICE]', "Auto-login via trusted device for user $userEmail");
 
-                    if (!loginStamp($useremail)) :
+                    if (!loginStamp($userEmail)) :
                         $this->message->logMessage(
                             '[ERROR]',
-                            "Failed to update last login timestamp for $useremail"
+                            "Failed to update last login timestamp for $userEmail"
                         );
                     endif;
 
@@ -395,7 +395,7 @@ class LoginHandler
         endif;
 
         $email = $loginData['email'];
-        $usernumber = $loginData['usernumber'];
+        $userNumber = $loginData['usernumber'];
         $userStatusResult = $loginData['userstat_result'];
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
@@ -404,8 +404,8 @@ class LoginHandler
             $this->message->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
         endif;
 
-        $mtcestatus = mtceModeCheck($usernumber);
-        if ($mtcestatus == 1) :
+        $mtceStatus = mtceModeCheck($userNumber);
+        if ($mtceStatus == 1) :
             echo "<br>Site is undergoing maintenance, please try again later...";
             session_destroy();
             echo "<meta http-equiv='refresh' content='5;url=login.php'>";

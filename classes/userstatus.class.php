@@ -65,8 +65,8 @@ class UserStatus
                 elseif ($row->num_rows === 1) :
                     $row = $row->fetch_assoc();
                     $status = $row['status'];
-                    $usernumber = $row['usernumber'];
-                    $this->status['number'] = $usernumber;
+                    $userNumber = $row['usernumber'];
+                    $this->status['number'] = $userNumber;
                     $adminrights = $row['admin'];
                     $this->status['admin'] = $adminrights;
                     if ($status == 'active') :

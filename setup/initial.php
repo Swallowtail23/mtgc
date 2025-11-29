@@ -18,7 +18,7 @@ History:
 
 include '../classes/ini.class.php';
 $ini = new INI('/opt/mtg/mtg_new.ini');
-$ini_array = $ini->data;
+$iniArray = $ini->data;
 
 if (!isset($argv[0]) || !isset($argv[1]) || !isset($argv[2]) || isset($argv[3])) :
     echo "Incorrect number of arguments (Should be 2: username and password), quitting";
@@ -30,7 +30,7 @@ foreach ($argv as $value) :
     if ($argument_loop === 1) :
         // filename; do nothing
     elseif ($argument_loop === 2) :
-        $username = $value;
+        $userName = $value;
     elseif ($argument_loop === 3) :
         $password = $value;
     else :
@@ -41,5 +41,5 @@ foreach ($argv as $value) :
 endforeach;
 
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-echo "Username: $username\n";
+echo "Username: $userName\n";
 echo "Hashed password: $hashed_password\n";

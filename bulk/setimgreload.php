@@ -22,7 +22,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 
 $msg = new Message($logfile);
-$obj  = new ImageManager($db, $logfile, $serveremail, $adminemail);
+$obj  = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
 
 if (isset($argv[1])) :
     $setcode = $argv[1];
@@ -36,14 +36,14 @@ if (isset($argv[1])) :
         $stmt->execute();
         $stmt->store_result();
         $msg->logMessage('[ERROR]', "Number of images to be refreshed in $setcode: " . $stmt->num_rows);
-        $stmt->bind_result($cardid);
+        $stmt->bind_result($cardId);
         $iteration = 1;
         $fail_count = 0;
         $success_count = 0;
         $num_rows = $stmt->num_rows;
         while ($stmt->fetch()) :
             $msg->logMessage('[DEBUG]', "Image #$iteration/$num_rows");
-            $refresh_result = $obj->refreshImage($cardid);
+            $refresh_result = $obj->refreshImage($cardId);
             if ($refresh_result === 'failure') :
                 $fail_count++;
                 $msg->logMessage('[ERROR]', "Function 'refreshImage' failed");
@@ -66,8 +66,8 @@ if (isset($argv[1])) :
         $subject = "MTG Images reloaded for $setcode";
         $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
             . "Failed: $fail_count";
-        $mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-        $mailresult = $mail->sendEmail($adminemail, false, $subject, $body);
+        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+        $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
         $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
     else :
         echo json_encode(["status" => "error", "message" => "SQL error"]);

@@ -41,7 +41,7 @@ if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $logfile, $useremail, $serveremail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

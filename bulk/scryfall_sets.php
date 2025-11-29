@@ -33,20 +33,20 @@ $time = time();
 $url = "https://api.scryfall.com/sets";
 
 // Bulk file store point
-$file_location = $ImgLocation . 'json/sets.json';
+$file_location = $imgLocation . 'json/sets.json';
 
 //Check image location
-if (!file_exists($ImgLocation . "seticons")) :
-    $msg->logMessage('[NOTICE]', "Creating new directory {$ImgLocation}/seticons");
-    mkdir($ImgLocation . "seticons");
+if (!file_exists($imgLocation . "seticons")) :
+    $msg->logMessage('[NOTICE]', "Creating new directory {$imgLocation}/seticons");
+    mkdir($imgLocation . "seticons");
 endif;
 
 // Delete all set icons once a week to force redownload (to make sure current)
 if (date('N') == 6) : // 'N' format in date() returns 1 for Monday to 7 for Sunday
-    $msg->logMessage('[NOTICE]', "Today is Saturday, deleting all files in {$ImgLocation}/seticons");
+    $msg->logMessage('[NOTICE]', "Today is Saturday, deleting all files in {$imgLocation}/seticons");
 
     // Get all files in the seticons directory
-    $files = glob($ImgLocation . "seticons/*"); // Use a wildcard to get all files
+    $files = glob($imgLocation . "seticons/*"); // Use a wildcard to get all files
 
     // Iterate over the files and delete each one
     foreach ($files as $file) :
@@ -56,7 +56,7 @@ if (date('N') == 6) : // 'N' format in date() returns 1 for Monday to 7 for Sund
         endif;
     endforeach;
 
-    $msg->logMessage('[NOTICE]', "All files in {$ImgLocation}/seticons have been deleted");
+    $msg->logMessage('[NOTICE]', "All files in {$imgLocation}/seticons have been deleted");
 endif;
 
 // Set counts
@@ -83,7 +83,7 @@ if ($download > 0) :
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall sets API: Local file: $file_location");
 
-$data = Items::fromFile($ImgLocation . 'json/sets.json', ['decoder' => new ExtJsonDecoder(true)]);
+$data = Items::fromFile($imgLocation . 'json/sets.json', ['decoder' => new ExtJsonDecoder(true)]);
 if ($result = $db->query('TRUNCATE TABLE sets')) :
     $msg->logMessage('[NOTICE]', "Scryfall Sets API: sets table cleared");
 else :
@@ -147,8 +147,8 @@ foreach ($data as $key => $value) :
                     $total_count = $total_count + 1;
                 endif;
                 $stmt->close();
-                //$seticon = $ImgLocation."seticons/".$parent_set_code.".svg";
-                $seticon = $ImgLocation . "seticons/" . $code . ".svg";
+                //$seticon = $imgLocation."seticons/".$parent_set_code.".svg";
+                $seticon = $imgLocation . "seticons/" . $code . ".svg";
                 $msg->logMessage('[DEBUG]', "Set icon for '$code' to be $seticon from $icon_svg_uri?$time");
                 if (!file_exists($seticon)) :
                     $msg->logMessage('[DEBUG]', "Icon not at $seticon");
@@ -166,6 +166,6 @@ $msg->logMessage('[NOTICE]', "$total_count bulk sets completed");
 // Email results
 $subject = "MTG sets update completed";
 $body = "Total sets: $total_count";
-$mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-$mailresult = $mail->sendEmail($adminemail, false, $subject, $body);
+$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+$mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");

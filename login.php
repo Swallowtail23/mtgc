@@ -49,7 +49,7 @@ $loginHandler = new LoginHandler(
     $Badloglimit,
     $siteTitle,
     $smtpParameters,
-    $serveremail
+    $serverEmail
 );
 
 if (!isset($db) || !$db instanceof mysqli) :

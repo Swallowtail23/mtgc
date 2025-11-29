@@ -65,9 +65,9 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])) :
-    $cardid = validUUID($_GET["id"]);
+    $cardId = validUUID($_GET["id"]);
 elseif (isset($_POST["id"])) :
-    $cardid = validUUID($_POST["id"]);
+    $cardId = validUUID($_POST["id"]);
 endif;
 
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
@@ -217,7 +217,7 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
         function closeMe( obj )
         {
             obj.style.display = 'none';
-            window.location.href="carddetail.php?id=<?php echo $cardid;?>";
+            window.location.href="carddetail.php?id=<?php echo $cardId;?>";
         };
 
         function isInteger(x) {
@@ -270,7 +270,7 @@ require('includes/menu.php'); //mobile menu
       rel="stylesheet">
 <div id="page">
     <div id="carddetail"> <?php
-    if ($cardid === false) :
+    if ($cardId === false) :
         echo "<h2 class='h2pad'>Invalid card UUID</h2>";
         exit;
     endif; ?>
@@ -298,17 +298,17 @@ require('includes/menu.php'); //mobile menu
     endif;
 
     // Check/update/populate JSON data
-    $obj = new PriceManager($db, $logfile, $useremail);
+    $obj = new PriceManager($db, $logfile, $userEmail);
     $msg->logMessage('[DEBUG]', "Is card ID provided, does card exist? If yes ensure latest price");
     if (
         (isset($_GET["id"]) or isset($_POST["id"]))
-        and ($scryfallresult = $obj->scryfall($cardid))['action'] !== 'nocard'
+        and ($scryfallresult = $obj->scryfall($cardId))['action'] !== 'nocard'
     ) :
         $msg->logMessage('[DEBUG]', "Scryfall run, returned action '{$scryfallresult["action"]}'");
         if ($scryfallresult["action"] === 'update' || $scryfallresult["action"] === 'get') :
             // Update topvalue if new data has been obtained
             $msg->logMessage('[DEBUG]', "Scryfall run returned Get or Update: Updating topvalue");
-            $obj->updateCollectionValues($mytable, $cardid);
+            $obj->updateCollectionValues($mytable, $cardId);
         endif;
 
         $searchqry =
@@ -437,7 +437,7 @@ require('includes/menu.php'); //mobile menu
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 WHERE cards_scry.id = ?
                 LIMIT 1";
-        $params = [$cardid];
+        $params = [$cardId];
 
         if ($result = $db->execute_query($searchqry, $params)) :
             $msg->logMessage('[DEBUG]', "SQL query succeeded");
@@ -561,26 +561,26 @@ require('includes/menu.php'); //mobile menu
                     $scryfallimg = null;
             endif;
 
-                $msg->logMessage('[DEBUG]', "Scryfall image location called by $useremail: $scryfallimg");
-                $imgname = $cardid . ".jpg";
-                $imgname_2 = $cardid . "_b.jpg";
+                $msg->logMessage('[DEBUG]', "Scryfall image location called by $userEmail: $scryfallimg");
+                $imgname = $cardId . ".jpg";
+                $imgname_2 = $cardId . "_b.jpg";
                 $msg->logMessage(
                     '[DEBUG]',
-                    "Call for getImage by $useremail with $setcode,$id,$ImgLocation, {$row['layout']}"
+                    "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
-                $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                 $imagefunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],
-                    $ImgLocation,
+                    $imgLocation,
                     $row['layout'],
-                    $two_card_detail_sections
+                    $twoCardDetailSections
                 );
                 $msg->logMessage('[DEBUG]', "getImage result: {$imagefunction['front']} / {$imagefunction['back']}");
             if ($imagefunction['front'] == 'error') :
-                $imageurl = '/cardimg/back.jpg';
+                $imageUrl = '/cardimg/back.jpg';
             else :
-                    $imageurl = $imagefunction['front'];
+                    $imageUrl = $imagefunction['front'];
             endif;
             if (!is_null($imagefunction['back'])) :
                 if (
@@ -618,7 +618,7 @@ require('includes/menu.php'); //mobile menu
 
                 //Process image change if it's been called by an admin.
             if (isset($_POST['import']) and $admin == 1) :
-                $msg->logMessage('[NOTICE]', "Image upload called by $useremail");
+                $msg->logMessage('[NOTICE]', "Image upload called by $userEmail");
                 if (is_uploaded_file($_FILES['filename']['tmp_name'])) :
                     $handle = fopen($_FILES['filename']['tmp_name'], "r");
                     $info = getimagesize($_FILES['filename']['tmp_name']);
@@ -629,18 +629,18 @@ require('includes/menu.php'); //mobile menu
                                                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
                     else :
-                            $upload_name = $ImgLocation . strtolower($setcode) . "/" . $imgname;
+                            $upload_name = $imgLocation . strtolower($setcode) . "/" . $imgname;
                         if (!move_uploaded_file($_FILES['filename']['tmp_name'], $upload_name)) : ?>
                         <div class="msg-new error-new" onclick='closeMe(this)'><span>Image write failed</span>
                             <br>
                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
-                        $msg->logMessage('[ERROR]', "Image upload for $cardid by $useremail failed");
+                        $msg->logMessage('[ERROR]', "Image upload for $cardId by $userEmail failed");
                         else :
                             // Image upload successful. Set variable to load card page 'fresh' at completion
                             // (see end of script)
                                 $ctrlf5 = 1;
-                                $msg->logMessage('[NOTICE]', "Image upload for $cardid by $useremail ok");
+                                $msg->logMessage('[NOTICE]', "Image upload for $cardId by $userEmail ok");
                         endif;
                     endif;
                 endif;
@@ -761,10 +761,10 @@ require('includes/menu.php'); //mobile menu
                             </div> <?php
                     endif;
                         $img_id = 'cardimg';
-                    if (in_array($row['layout'], $two_card_detail_sections)) :
+                    if (in_array($row['layout'], $twoCardDetailSections)) :
                         echo "<div style='cursor: pointer;' class='flipbuttondetail' "
                             . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
-                            . "\"{$imageurl}\",\"{$imagebackurl}\")>"
+                            . "\"{$imageUrl}\",\"{$imagebackurl}\")>"
                             . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
                     endif;
                         // Find the prev number card's ID
@@ -861,12 +861,12 @@ require('includes/menu.php'); //mobile menu
                                     <?php
                                     $lookupid = htmlentities($row['cs_id'], ENT_QUOTES, "UTF-8");
                                     //If page is being loaded by admin, don't cache the main image
-                                    if (($admin == 1) and ($imageurl !== '/cardimg/back.jpg')) :
+                                    if (($admin == 1) and ($imageUrl !== '/cardimg/back.jpg')) :
                                         $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
-                                        $imgmodtime = filemtime($ImgLocation . strtolower($setcode) . "/" . $imgname);
-                                        $imagelocation = $imageurl . '?=' . $imgmodtime;
+                                        $imgmodtime = filemtime($imgLocation . strtolower($setcode) . "/" . $imgname);
+                                        $imagelocation = $imageUrl . '?=' . $imgmodtime;
                                     else :
-                                            $imagelocation = $imageurl;
+                                            $imagelocation = $imageUrl;
                                     endif;
                                         $msg->logMessage('[DEBUG]', "Image location is " . $imagelocation);
                                         // Set classes for hover image
@@ -2180,7 +2180,7 @@ require('includes/menu.php'); //mobile menu
                                 if (isset($decktoaddto)) :
                                     $msg->logMessage(
                                         '[NOTICE]',
-                                        "Received request to add $deckqty x card $cardid to deck: '$decktoaddto'; "
+                                        "Received request to add $deckqty x card $cardId to deck: '$decktoaddto'; "
                                         . "Newdeck: '$newdeckname'"
                                     );
                                     // If the deck is new, is the new name unique? If yes, create it.
@@ -2192,8 +2192,8 @@ require('includes/menu.php'); //mobile menu
                                         $obj = new DeckManager(
                                             $db,
                                             $logfile,
-                                            $useremail,
-                                            $serveremail,
+                                            $userEmail,
+                                            $serverEmail,
                                             $importLinestoIgnore,
                                             $nonPreferredSetCodes
                                         );
@@ -2208,8 +2208,8 @@ require('includes/menu.php'); //mobile menu
                                             $obj = new DeckManager(
                                                 $db,
                                                 $logfile,
-                                                $useremail,
-                                                $serveremail,
+                                                $userEmail,
+                                                $serverEmail,
                                                 $importLinestoIgnore,
                                                 $nonPreferredSetCodes
                                             );
@@ -2237,13 +2237,13 @@ require('includes/menu.php'); //mobile menu
                                         if ($decksuccess['flag'] === 2) : // Not a new deck, run card check
                                             $msg->logMessage(
                                                 '[NOTICE]',
-                                                "Running SQL to see if $cardid is already in deck $decktoaddto"
+                                                "Running SQL to see if $cardId is already in deck $decktoaddto"
                                             );
 
                                             $sql = "SELECT cardnumber FROM deckcards "
                                                 . "WHERE decknumber = ? AND cardnumber = ? "
                                                 . "AND ((cardqty IS NOT NULL) OR (sideqty IS NOT NULL))";
-                                            $params = [$decktoaddto,$cardid];
+                                            $params = [$decktoaddto,$cardId];
                                             $resultchk = $db->execute_query($sql, $params);
                                             if ($resultchk !== false && $resultchk->num_rows === 1) :
                                                 $cardcheckrow = $resultchk->fetch_assoc();
@@ -2281,23 +2281,23 @@ require('includes/menu.php'); //mobile menu
                                             $obj = new DeckManager(
                                                 $db,
                                                 $logfile,
-                                                $useremail,
-                                                $serveremail,
+                                                $userEmail,
+                                                $serverEmail,
                                                 $importLinestoIgnore,
                                                 $nonPreferredSetCodes
                                             );
-                                            $obj->addDeckCard($decktoaddto, $cardid, 'main', $deckqty);
+                                            $obj->addDeckCard($decktoaddto, $cardId, 'main', $deckqty);
 
                                             //Check it's added
                                             $sql = "SELECT cardnumber,cardqty FROM deckcards WHERE decknumber = ? "
                                                 . "AND cardnumber = ? AND cardqty = ? LIMIT 1";
-                                            $params = [$decktoaddto,$cardid,$deckqty];
+                                            $params = [$decktoaddto,$cardId,$deckqty];
                                             $resultchksql = $db->execute_query($sql, $params);
                                             if ($resultchksql !== false && $resultchksql->num_rows === 1) :
                                                 $msg->logMessage('[DEBUG]', "SQL select for card succeeded");
                                                 $resultchkins = $resultchksql->fetch_assoc();
                                                 if (
-                                                    ($resultchkins['cardnumber'] == $cardid)
+                                                    ($resultchkins['cardnumber'] == $cardId)
                                                     and ($resultchkins['cardqty'] == $deckqty)
                                                 ) :
                                                     ?>
@@ -2313,7 +2313,7 @@ require('includes/menu.php'); //mobile menu
                                                     <?php
                                                     $msg->logMessage(
                                                         '[NOTICE]',
-                                                        "Card $cardid added to deck $decktoaddto"
+                                                        "Card $cardId added to deck $decktoaddto"
                                                     );
                                                 else :?>
                                                     <div class="msg-new warning-new" onclick='closeMe(this)'>
@@ -2324,7 +2324,7 @@ require('includes/menu.php'); //mobile menu
                                                     <?php
                                                     $msg->logMessage(
                                                         '[NOTICE]',
-                                                        "Card $cardid in deck $decktoaddto, but quantity mismatch"
+                                                        "Card $cardId in deck $decktoaddto, but quantity mismatch"
                                                     );
                                                 endif;
                                             else :
@@ -2337,22 +2337,22 @@ require('includes/menu.php'); //mobile menu
                                                     <?php
                                                     $msg->logMessage(
                                                         '[ERROR]',
-                                                        "Card $cardid was not added to deck $decktoaddto"
+                                                        "Card $cardId was not added to deck $decktoaddto"
                                                     );
                                             endif;
                                         endif;
                                     endif;
                                 endif;
-                                $msg->logMessage('[NOTICE]', "Checking to see if $cardid is in any owned decks");
+                                $msg->logMessage('[NOTICE]', "Checking to see if $cardId is in any owned decks");
                                 $obj = new DeckManager(
                                     $db,
                                     $logfile,
-                                    $useremail,
-                                    $serveremail,
+                                    $userEmail,
+                                    $serverEmail,
                                     $importLinestoIgnore,
                                     $nonPreferredSetCodes
                                 );
-                                $inmydecks = $obj->deckCardCheck($cardid, $user);
+                                $inmydecks = $obj->deckCardCheck($cardId, $user);
                                 echo "<b>Decks</b><br>";
                                 if (!empty($inmydecks)) :
                                     foreach ($inmydecks as $decksrow) :
@@ -2372,16 +2372,16 @@ require('includes/menu.php'); //mobile menu
                                     foreach ($grpuser as $decksgrprow) :
                                         $grpuserid = $grpuser[$t]['id'];
                                         $grpusername = ucfirst($grpuser[$t]['name']);
-                                        $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardid");
+                                        $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
                                         $obj = new DeckManager(
                                             $db,
                                             $logfile,
-                                            $useremail,
-                                            $serveremail,
+                                            $userEmail,
+                                            $serverEmail,
                                             $importLinestoIgnore,
                                             $nonPreferredSetCodes
                                         );
-                                        $ingrpdecks = $obj->deckCardCheck($cardid, $grpuserid);
+                                        $ingrpdecks = $obj->deckCardCheck($cardId, $grpuserid);
                                         $t = $t + 1;
                                         if (!empty($ingrpdecks)) :
                                             foreach ($ingrpdecks as $decksgrprow) :
@@ -2508,7 +2508,7 @@ require('includes/menu.php'); //mobile menu
                         else :
                             $result = $stmt->get_result();
                             $msg->logMessage('[NOTICE]', "Rulings: {$result->num_rows} ({$row['oracle_id']})");
-                            if (($result->num_rows === 0) and !in_array($row['layout'], $two_card_detail_sections)) :
+                            if (($result->num_rows === 0) and !in_array($row['layout'], $twoCardDetailSections)) :
                                 // no rulings ?>
                             <div>
                             <h3 class='shallowh3'>Rulings</h3>&nbsp;
@@ -2534,7 +2534,7 @@ require('includes/menu.php'); //mobile menu
                                         . " (" . $source . ")<br>";
                                 endwhile;
                                 $ruling = autoLink($ruling, array("target" => "_blank","rel" => "nofollow"));
-                                if (!in_array($row['layout'], $two_card_detail_sections)) :
+                                if (!in_array($row['layout'], $twoCardDetailSections)) :
                                     echo "<h3 class='shallowh3'>Rulings:</h3> " . $ruling . "&nbsp;";
                                 endif;
                                 echo("</div>");
@@ -2543,7 +2543,7 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <!-- Flip card -->
                     <?php
-                    if (in_array($row['layout'], $two_card_detail_sections)) : ?>
+                    if (in_array($row['layout'], $twoCardDetailSections)) : ?>
                     <div id="carddetailflip">
                         <div id="carddetailflipimg">
                             <table>
@@ -2555,7 +2555,7 @@ require('includes/menu.php'); //mobile menu
                                             if (($admin == 1) and ($imagebackurl !== '/cardimg/back.jpg')) :
                                                 $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
                                                 $imgmodtime = filemtime(
-                                                    $ImgLocation . strtolower($setcode) . "/" . $imgname_2
+                                                    $imgLocation . strtolower($setcode) . "/" . $imgname_2
                                                 );
                                                 $imagelocationback = $imagebackurl . '?=' . $imgmodtime;
                                             else :
@@ -2658,7 +2658,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
                 if ($disqus === 1) :
                     $msg->logMessage('[DEBUG]', "Disqus enabled");
-                    $page_url = strtok(getFullURL(), '?') . "?id=" . $cardid;
+                    $page_url = strtok(getFullURL(), '?') . "?id=" . $cardId;
                     if ($tier === 'dev') :
                         $msg->logMessage('[DEBUG]', "Disqus site is '$disqusDev'");
                         $disqus_site = "$disqusDev/embed.js";
@@ -2700,7 +2700,7 @@ require('includes/menu.php'); //mobile menu
 </div>
 <?php
 if (isset($ctrlf5)) :
-    echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardid'>";
+    echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardId'>";
 endif;
 require('includes/footer.php'); ?>
 </body>

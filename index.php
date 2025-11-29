@@ -106,21 +106,21 @@ if (isset($_GET['name']) and $_GET['name'] !== "") :
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
-    $interpreted_string = inputInterpreter($name);
-    if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
-        $name = $interpreted_string['name'];
+    $interpretedString = inputInterpreter($name);
+    if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
+        $name = $interpretedString['name'];
     else :
         $name = '';
     endif;
     // Set
-    if (isset($interpreted_string['set']) and $interpreted_string['set'] !== '') :
-        $setcoderegexsearch = strtoupper($interpreted_string['set']);
+    if (isset($interpretedString['set']) and $interpretedString['set'] !== '') :
+        $setcoderegexsearch = strtoupper($interpretedString['set']);
     else :
         $setcoderegexsearch = '';
     endif;
     // Collector number
-    if (isset($interpreted_string['number']) and $interpreted_string['number'] !== '') :
-        $numberregexsearch = $interpreted_string['number'];
+    if (isset($interpretedString['number']) and $interpretedString['number'] !== '') :
+        $numberregexsearch = $interpretedString['number'];
     else :
         $numberregexsearch = '';
     endif;
@@ -327,7 +327,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') and ( $scope == 'mycollection')) :
     $msg->logMessage('[NOTICE]', "My Collection / Price query called, updating collection pricing");
-    $obj = new PriceManager($db, $logfile, $useremail);
+    $obj = new PriceManager($db, $logfile, $userEmail);
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
@@ -338,7 +338,7 @@ else :
 endif;
 // Run the query
 if ($validsearch === "true") :
-    $msg->logMessage('[DEBUG]', "User $useremail called query $query from {$_SERVER['REMOTE_ADDR']}");
+    $msg->logMessage('[DEBUG]', "User $userEmail called query $query from {$_SERVER['REMOTE_ADDR']}");
     $msg->logMessage('[DEBUG]', "with parameters: " . var_export($params, true));
     // parameterised query has been built in criteria.php, proceed with it
     if ($result = $db->execute_query($query, $params)) :
@@ -346,7 +346,7 @@ if ($validsearch === "true") :
         $queryQty = "SELECT COUNT(*) FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 WHERE " . $criteria;
-        $msg->logMessage('[DEBUG]', "User $useremail called count query $queryQty");
+        $msg->logMessage('[DEBUG]', "User $userEmail called count query $queryQty");
         // Execute the count query
         if ($countResult = $db->execute_query($queryQty, $params)) :
             $row = $countResult->fetch_row();
@@ -957,23 +957,23 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],
-                                $ImgLocation,
+                                $imgLocation,
                                 $row['layout'],
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             //If page is being loaded by admin, don't cache the image
-                            if (($admin == 1) and ($imageurl !== '/cardimg/back.jpg')) :
+                            if (($admin == 1) and ($imageUrl !== '/cardimg/back.jpg')) :
                                 $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
-                                $imageurl = $imageurl . '?=' . $time;
+                                $imageUrl = $imageUrl . '?=' . $time;
                             endif;
                             if (!is_null($imagefunction['back'])) :
                                 if ($imagefunction['back'] === 'error' or $imagefunction['back'] === 'error') :
@@ -1015,11 +1015,11 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                             ?>
                             <div class='gridbox item'>
                                 <?php
-                                $msg->logMessage('[DEBUG]', "$imageurl");
+                                $msg->logMessage('[DEBUG]', "$imageUrl");
                                 if (in_array($row['layout'], $flip_button_cards)) :
                                     $flipButton = "<div style='cursor: pointer;' class='flipbutton' "
                                         . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
-                                        . "\"{$imageurl}\",\"{$imagebackurl}\")>"
+                                        . "\"{$imageUrl}\",\"{$imagebackurl}\")>"
                                         . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
                                     echo $flipButton;
                                 elseif ($row['layout'] === 'flip') :
@@ -1033,7 +1033,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                 $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
                                     . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
                                     . "no. $number_import' class='card-image cardimg$in_collection' "
-                                    . "alt='$scryid' src='$imageurl'></a>";
+                                    . "alt='$scryid' src='$imageUrl'></a>";
                                 echo $gridLink;
                                 $cellid = "cell" . $scryid;
                                 $cellid_one = $cellid . '_one';

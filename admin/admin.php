@@ -80,18 +80,18 @@ function getLogTailLines($filepath, $maxLines = 8)
 }
 
 //Check if user is logged in, if not redirect to login.php
-$msg->logMessage('[DEBUG]', "Admin page called by user $username ($useremail) Admin result: " . $admin);
+$msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail) Admin result: " . $admin);
 if ($admin !== 1) :
     require('reject.php');
 endif;
 
 //Get date for update form
-$dateobject = new DateYMD();
-$date = $dateobject->getToday();
+$dateObject = new DateYMD();
+$date = $dateObject->getToday();
 
-$clearscryfalljson = isset($_GET['clearscryfalljson']) ? 'y' : '';
-$togglecss = isset($_GET['togglecss']) ? 'y' : '';
-$publishcss = isset($_GET['publishcss']) ? 'y' : '';
+$clearScryfallJson = isset($_GET['clearscryfalljson']) ? 'y' : '';
+$toggleCss = isset($_GET['togglecss']) ? 'y' : '';
+$publishCss = isset($_GET['publishcss']) ? 'y' : '';
 
 if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     $update = 1;
@@ -109,7 +109,7 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
         );
     endif;
     if (isset($_POST['updatetext'])) :
-        $updatetext = filter_input(
+        $updateText = filter_input(
             INPUT_POST,
             'updatetext',
             FILTER_SANITIZE_FULL_SPECIAL_CHARS,
@@ -120,7 +120,7 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     $stmt = $db->prepare("INSERT INTO updatenotices (`date`, `author`, `update`) VALUES (?, ?, ?)");
 
     if ($stmt) :
-        $stmt->bind_param("sss", $date, $name, $updatetext);
+        $stmt->bind_param("sss", $date, $name, $updateText);
         if ($stmt->execute()) :
             $msg->logMessage('[NOTICE]', "Adding update notice: Insert ID: " . $stmt->insert_id);
         else :
@@ -132,7 +132,7 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     endif;
 endif;
 
-if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DELETE')) :
+if ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'DELETE')) :
     $msg->logMessage('[DEBUG]', "Delete all migrations called");
 
     // Delete records from cards_scry table
@@ -153,7 +153,7 @@ if ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'DEL
         // Log the total number of rows deleted in migrations
         $msg->logMessage('[NOTICE]', "Updated {$db->affected_rows} rows in migrations");
     endif;
-elseif ((isset($_POST['delete_migrations'])) && ($_POST['delete_migrations'] == 'TEST')) :
+elseif ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'TEST')) :
     $msg->logMessage('[DEBUG]', "Test delete migrations called");
 
     $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
@@ -189,13 +189,13 @@ endif;
 if (isset($_GET['loglevel'])) :
     $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
     $ini->data['general']['Loglevel'] = "$newloglevel";
-    $msg->logMessage('[NOTICE]', "Log level change by user $username to $newloglevel");
+    $msg->logMessage('[NOTICE]', "Log level change by user $userName to $newloglevel");
     $ini->write();
     //re-read ini file
     $ini = new INI("/opt/mtg/mtg_new.ini");
-    $ini_array = $ini->data;
-    $loglevelini = $ini_array['general']['Loglevel'];
-    if ($loglevelini == $newloglevel) :
+    $iniArray = $ini->data;
+    $logLevelIni = $iniArray['general']['Loglevel'];
+    if ($logLevelIni == $newloglevel) :
         $msg->logMessage('[NOTICE]', "Log level change success to $newloglevel");
     endif;
 endif;
@@ -260,7 +260,7 @@ require('../includes/menu.php');
                         </td>
                     </tr>
                 </table>
-                <input name='name' type='hidden' value='<?php echo ucfirst($username) ?>'/>
+                <input name='name' type='hidden' value='<?php echo ucfirst($userName) ?>'/>
             </form>
 
             <h3>Logging </h3>
@@ -279,29 +279,29 @@ require('../includes/menu.php');
                 endforeach;
             endif;
 
-            if ((isset($togglecss)) and ($togglecss == "y")) :
+            if ((isset($toggleCss)) and ($toggleCss == "y")) :
                 $msg->logMessage('[DEBUG]', "Turning off minimised CSS...");
-                $cssquery = 0;
+                $cssQuery = 0;
                 $query = 'UPDATE admin SET usemin=?';
-                if ($db->execute_query($query, [$cssquery]) === true) :
+                if ($db->execute_query($query, [$cssQuery]) === true) :
                     $msg->logMessage('[NOTICE]', "Turned off minimised CSS");
                 else :
                     trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
                 $cssver = cssVersionCheck(); //run again
             endif;
-            if ((isset($publishcss)) and ($publishcss == "y")) :
+            if ((isset($publishCss)) and ($publishCss == "y")) :
                 $msg->logMessage('[DEBUG]', "Turning on minimised CSS...");
-                $cssquery = 1;
+                $cssQuery = 1;
                 $query = 'UPDATE admin SET usemin=?';
-                if ($db->execute_query($query, [$cssquery]) === true) :
+                if ($db->execute_query($query, [$cssQuery]) === true) :
                     $msg->logMessage('[NOTICE]', "Turned on minimised CSS");
                 else :
                     trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
                 endif;
                 $cssver = cssVersionCheck(); //run again
             endif;
-            if ((isset($clearscryfalljson)) and ($clearscryfalljson == "y")) :
+            if ((isset($clearScryfallJson)) and ($clearScryfallJson == "y")) :
                 if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
                     $msg->logMessage('[NOTICE]', "JSON data removed");
                 else :
@@ -315,7 +315,7 @@ require('../includes/menu.php');
             elseif ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE OFF')) :
                 setMtceMode('off');
             endif;
-            $mtcestatus = mtceModeCheck($user); ?>
+            $mtceStatus = mtceModeCheck($user); ?>
             <br>
             <table>
                 <tbody>
@@ -329,7 +329,7 @@ require('../includes/menu.php');
                                 <label class="radio">
                                     <input type="radio" name="loglevel" value="1"
                                         <?php
-                                        if ($loglevelini === '1') :
+                                        if ($logLevelIni === '1') :
                                             echo 'checked="checked"';
                                         endif;
                                         ?>
@@ -343,7 +343,7 @@ require('../includes/menu.php');
                                 <label class="radio">
                                     <input type="radio" name="loglevel" value="2"
                                         <?php
-                                        if ($loglevelini === '2') :
+                                        if ($logLevelIni === '2') :
                                             echo 'checked="checked"';
                                         endif;
                                         ?>
@@ -357,7 +357,7 @@ require('../includes/menu.php');
                                 <label class="radio">
                                     <input type="radio" name="loglevel" value="3"
                                         <?php
-                                        if ($loglevelini === '3') :
+                                        if ($logLevelIni === '3') :
                                             echo 'checked="checked"';
                                         endif;
                                         ?>
@@ -415,14 +415,14 @@ require('../includes/menu.php');
                         <td class="options_left">
                             <h4>Maintenance Mode</h4>
                             Current Maintenance mode status: <?php
-                            if (($mtcestatus == 1) or ($mtcestatus == 2)) :
+                            if (($mtceStatus == 1) or ($mtceStatus == 2)) :
                                 echo "On";
                             else :
                                 echo "Off";
                             endif; ?>
                         </td>
                         <td> <?php
-                        if (($mtcestatus == 1) or ($mtcestatus == 2)) : ?>
+                        if (($mtceStatus == 1) or ($mtceStatus == 2)) : ?>
                                 <form action='admin.php' method='GET'>
                                     <input
                                         class='profilebutton'
@@ -470,14 +470,14 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $ini_array['general']['title'] . '<br>';
-                            echo $ini_array['general']['tier'] . '<br>';
-                            echo $ini_array['general']['ImgLocation'] . '<br>';
-                            echo $ini_array['general']['Logfile'] . '<br>';
-                            echo $ini_array['general']['Timezone'] . '<br>';
-                            echo $ini_array['general']['Locale'] . '<br>';
-                            echo $ini_array['general']['Copyright'] . '<br>';
-                            echo $ini_array['general']['URL'] . '<br>';
+                            echo $iniArray['general']['title'] . '<br>';
+                            echo $iniArray['general']['tier'] . '<br>';
+                            echo $iniArray['general']['ImgLocation'] . '<br>';
+                            echo $iniArray['general']['Logfile'] . '<br>';
+                            echo $iniArray['general']['Timezone'] . '<br>';
+                            echo $iniArray['general']['Locale'] . '<br>';
+                            echo $iniArray['general']['Copyright'] . '<br>';
+                            echo $iniArray['general']['URL'] . '<br>';
                             ?>
                         </td>
                     </tr>
@@ -495,9 +495,9 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $ini_array['database']['DBServer'] . '<br>';
-                            echo $ini_array['database']['DBName'] . '<br>';
-                            echo $ini_array['database']['DBUser'] . '<br>';
+                            echo $iniArray['database']['DBServer'] . '<br>';
+                            echo $iniArray['database']['DBName'] . '<br>';
+                            echo $iniArray['database']['DBUser'] . '<br>';
                             echo 'See ini file';
                             ?>
                         </td>
@@ -517,10 +517,10 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $ini_array['security']['AdminIP'] . '<br>';
-                            echo $ini_array['security']['Badloginlimit'] . '<br>';
-                            echo $ini_array['security']['Turnstile'] . '<br>';
-                            echo $ini_array['security']['Turnstile_site_key'] . '<br>';
+                            echo $iniArray['security']['AdminIP'] . '<br>';
+                            echo $iniArray['security']['Badloginlimit'] . '<br>';
+                            echo $iniArray['security']['Turnstile'] . '<br>';
+                            echo $iniArray['security']['Turnstile_site_key'] . '<br>';
                             echo 'See ini file';
                             ?>
                         </td>
@@ -538,9 +538,9 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $ini_array['fx']['FreecurrencyAPI'] . '<br>';
-                            echo $ini_array['fx']['FreecurrencyURL'] . '<br>';
-                            echo $ini_array['fx']['TargetCurrency'] . '<br>';
+                            echo $iniArray['fx']['FreecurrencyAPI'] . '<br>';
+                            echo $iniArray['fx']['FreecurrencyURL'] . '<br>';
+                            echo $iniArray['fx']['TargetCurrency'] . '<br>';
                             ?>
                         </td>
                     </tr>
@@ -561,8 +561,8 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $serveremail . '<br>';
-                            echo $adminemail . '<br>';
+                            echo $serverEmail . '<br>';
+                            echo $adminEmail . '<br>';
                             echo $smtpParameters['SMTPHost'] . '<br>';
                             echo $smtpParameters['SMTPPort'] . '<br>';
                             echo $smtpParameters['SMTPAuth'] . '<br>';
@@ -584,9 +584,9 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            echo $ini_array['comments']['Disqus'] . '<br>';
-                            echo $ini_array['comments']['DisqusDevURL'] . '<br>';
-                            echo $ini_array['comments']['DisqusProdURL'] . '<br>';
+                            echo $iniArray['comments']['Disqus'] . '<br>';
+                            echo $iniArray['comments']['DisqusDevURL'] . '<br>';
+                            echo $iniArray['comments']['DisqusProdURL'] . '<br>';
                             ?>
                         </td>
                     </tr>
@@ -636,7 +636,7 @@ require('../includes/menu.php');
                         <form id="deleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                             <button
                                 type="submit"
-                                name="delete_migrations"
+                                name="deleteMigrations"
                                 value="DELETE"
                                 onclick="confirmDelete()"
                             >
@@ -646,7 +646,7 @@ require('../includes/menu.php');
                     <?php else : ?>
                         <!-- Display the TEST DELETE button with the $countSql variable -->
                         <form id="testDeleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-                            <input type="hidden" name="delete_migrations" value="TEST">
+                            <input type="hidden" name="deleteMigrations" value="TEST">
                             <button type="button" onclick="confirmTestDelete()">Test migrations deletion</button>
                         </form>
                     <?php endif; ?>
@@ -667,9 +667,9 @@ require('../includes/menu.php');
                     </tr>
                     <tr>
                     <?php
-                    $row_no = 1;
+                    $rowNumber = 1;
                     while ($row = $stmt->fetch_assoc()) :
-                        $row_no = $row_no + 1;
+                        $rowNumber = $rowNumber + 1;
 
                         // Find decks and owners of cards needing migration
                         $userResultArray = $collectionResultArray = $resultArray = array();
@@ -682,12 +682,12 @@ require('../includes/menu.php');
                         if ($stmt2) :
                             $stmt2->bind_param("s", $row['old_scryfall_id']);
                             $stmt2->execute();
-                            $stmt2->bind_result($deckname, $deckowner);
+                            $stmt2->bind_result($deckName, $deckOwner);
                         else :
                             trigger_error("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
                         endif;
                         while ($stmt2->fetch()) :
-                            $resultArray[] = array('deckname' => $deckname, 'deckowner' => $deckowner);
+                            $resultArray[] = array('deckname' => $deckName, 'deckowner' => $deckOwner);
                         endwhile;
                         $stmt2->close();
 
@@ -695,12 +695,12 @@ require('../includes/menu.php');
                         $stmt3 = $db->prepare($sql3);
                         if ($stmt3) :
                             $stmt3->execute();
-                            $stmt3->bind_result($usernumber, $username);
+                            $stmt3->bind_result($userNumber, $userName);
                         else :
                             trigger_error("[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error, E_USER_ERROR);
                         endif;
                         while ($stmt3->fetch()) :
-                            $userResultArray[] = array('usernumber' => $usernumber, 'username' => $username);
+                            $userResultArray[] = array('usernumber' => $userNumber, 'username' => $userName);
                         endwhile;
                         $stmt3->close();
 
@@ -750,7 +750,7 @@ require('../includes/menu.php');
                         endforeach;
                         ?>
                         <tr>
-                            <td><?php echo($row_no);?></td>
+                            <td><?php echo($rowNumber);?></td>
                             <td><?php
                                 echo(
                                     "<a href=$myURL/carddetail.php?id="

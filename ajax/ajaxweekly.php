@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (isset($_POST['weekly']) && $_POST['weekly'] === 'TURN OFF') :
             $msg->logMessage('[ERROR]', "Call to turn off weekly export");
@@ -67,7 +67,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] ajaxweekly.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Call to turn off weekly export run for $useremail");
+                $msg->logMessage('[ERROR]', "Call to turn off weekly export run for $userEmail");
             endif;
         elseif (isset($_POST['weekly']) && $_POST['weekly'] === 'TURN ON') :
             $msg->logMessage('[ERROR]', "Call to turn on weekly export");
@@ -77,7 +77,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] ajaxweekly.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Call to turn off weekly export run for $useremail");
+                $msg->logMessage('[ERROR]', "Call to turn off weekly export run for $userEmail");
             endif;
         else :
             http_response_code(400);

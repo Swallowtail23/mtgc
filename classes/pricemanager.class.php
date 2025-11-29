@@ -28,39 +28,39 @@ class PriceManager
 {
     private $db;
     private $logfile;
-    private $useremail;
+    private $userEmail;
     private $message;
 
-    public function __construct($db, $logfile, $useremail)
+    public function __construct($db, $logfile, $userEmail)
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->useremail = $useremail;
+        $this->userEmail = $userEmail;
         $this->message = new Message($this->logfile);
     }
 
     // Fetch TCG buy URI and price from scryfall.com JSON data
-    public function scryfall($cardid, $action = '')
+    public function scryfall($cardId, $action = '')
     {
         //Set up the function
         global $max_card_data_age; //From ini.php
-        $this->message->logMessage('[DEBUG]', "Scryfall API by $this->useremail for $cardid");
-        if (!isset($cardid)) :
-            $this->message->logMessage('[ERROR]', "Scryfall API by $this->useremail without required card id");
+        $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail for $cardId");
+        if (!isset($cardId)) :
+            $this->message->logMessage('[ERROR]', "Scryfall API by $this->userEmail without required card id");
             exit;
         endif;
         $baseurl = "https://api.scryfall.com/";
-        $cardid = $this->db->real_escape_string($cardid);
+        $cardId = $this->db->real_escape_string($cardId);
         $time = time();
         //Set the URL
-        $url = $baseurl . "cards/" . $cardid . "?" . $time;
-        $this->message->logMessage('[DEBUG]', "Scryfall API by $this->useremail URL for $cardid is $url");
+        $url = $baseurl . "cards/" . $cardId . "?" . $time;
+        $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail URL for $cardId is $url");
 
-        if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardid])) :
+        if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardId])) :
             if ($row->num_rows === 0) :
                 $this->message->logMessage(
                     '[ERROR]',
-                    "Scryfall API by $this->useremail, no card with this id - returning 'nocard'"
+                    "Scryfall API by $this->userEmail, no card with this id - returning 'nocard'"
                 );
                 $returnarray = array("action" => "nocard");
                 return $returnarray;
@@ -79,14 +79,14 @@ class PriceManager
         // Check for existing data, not too old, and set required action
         $rowqry = $this->db->execute_query(
             "SELECT jsonupdatetime, tcg_buy_uri FROM scryfalljson WHERE id = ? LIMIT 1",
-            [$cardid]
+            [$cardId]
         );
         if ($rowqry !== false and $rowqry->num_rows < 1) :
             //No data, fetch and insert:
             $scryaction = 'get';
             $this->message->logMessage(
                 '[DEBUG]',
-                "Scryfall API by $this->useremail with result: No data exists for $cardid, running '$scryaction'"
+                "Scryfall API by $this->userEmail with result: No data exists for $cardId, running '$scryaction'"
             );
         elseif ($rowqry !== false) :
             $row = $rowqry->fetch_assoc();
@@ -94,22 +94,22 @@ class PriceManager
             $record_age = (time() - $lastjsontime);
             $this->message->logMessage(
                 '[DEBUG]',
-                "Scryfall API by $this->useremail with result: Data exists for $cardid, $record_age seconds old"
+                "Scryfall API by $this->userEmail with result: Data exists for $cardId, $record_age seconds old"
             );
             if ($record_age > $max_card_data_age) :
                 //Old data, fetch and update:
                 $scryaction = 'update';
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail with result: Data stale (older than $max_card_data_age seconds)"
-                        . " for $cardid, running '$scryaction'"
+                    "Scryfall API by $this->userEmail with result: Data stale (older than $max_card_data_age seconds)"
+                        . " for $cardId, running '$scryaction'"
                 );
             elseif ($action == "update") :
                 //Update forced
                 $scryaction = 'update';
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail with result: Data update requested for $cardid, running "
+                    "Scryfall API by $this->userEmail with result: Data update requested for $cardId, running "
                         . "'$scryaction'"
                 );
             else :
@@ -117,8 +117,8 @@ class PriceManager
                 $scryaction = 'read';
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail with result: Data not stale "
-                        . "(younger than $max_card_data_age seconds) for $cardid, running '$scryaction'"
+                    "Scryfall API by $this->userEmail with result: Data not stale "
+                        . "(younger than $max_card_data_age seconds) for $cardId, running '$scryaction'"
                 );
             endif;
         else :
@@ -135,7 +135,7 @@ class PriceManager
         if ($scryaction === 'update') :
             $this->message->logMessage(
                 '[DEBUG]',
-                "Scryfall API by $this->useremail with 'update' result: fetching $url"
+                "Scryfall API by $this->userEmail with 'update' result: fetching $url"
             );
             $options = array(
                 CURLOPT_RETURNTRANSFER => true,
@@ -149,7 +149,7 @@ class PriceManager
             $ch = curl_init($url);
             curl_setopt_array($ch, $options);
             $curlresult = curl_exec($ch);
-            $this->message->logMessage('[DEBUG]', "Scryfall API by $this->useremail with update: $curlresult");
+            $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail with update: $curlresult");
             curl_close($ch);
             $scryfall_result = json_decode($curlresult, true);
             if (isset($scryfall_result["purchase_uris"]["tcgplayer"])) :
@@ -158,11 +158,11 @@ class PriceManager
                 $tcg_buy_uri = null;
             endif;
             if (isset($scryfall_result["prices"])) :
-                $this->message->logMessage('[DEBUG]', "Scryfall API by $this->useremail, price section included");
+                $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail, price section included");
                 if (isset($scryfall_result["prices"]["usd"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd set: {$scryfall_result["prices"]["usd"]}"
+                        "Scryfall API by $this->userEmail, price/usd set: {$scryfall_result["prices"]["usd"]}"
                     );
                     if ($scryfall_result["prices"]["usd"] == '') :
                         $price = 0.00;
@@ -174,14 +174,14 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd not set, setting to null"
                     );
                     $price = null;
                 endif;
                 if (isset($scryfall_result["prices"]["usd_foil"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}"
+                        "Scryfall API by $this->userEmail, price/usd_foil set: {$scryfall_result["prices"]["usd_foil"]}"
                     );
                     if ($scryfall_result["prices"]["usd_foil"] == '') :
                         $price_foil = 0.00;
@@ -193,14 +193,14 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_foil not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd_foil not set, setting to null"
                     );
                     $price_foil = null;
                 endif;
                 if (isset($scryfall_result["prices"]["usd_etched"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_etched set: "
+                        "Scryfall API by $this->userEmail, price/usd_etched set: "
                         . "{$scryfall_result['prices']['usd_etched']}"
                     );
                     if ($scryfall_result["prices"]["usd_etched"] == '') :
@@ -213,7 +213,7 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_etched not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd_etched not set, setting to null"
                     );
                     $price_etched = null;
                 endif;
@@ -258,7 +258,7 @@ class PriceManager
                     );
                 endif;
                 $this->message->logMessage('[NOTICE]', "$update_tcg_uri");
-                $stmt->bind_param('sss', $tcg_buy_uri, $time, $cardid);
+                $stmt->bind_param('sss', $tcg_buy_uri, $time, $cardId);
                 if ($stmt === false) :
                     trigger_error(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -272,7 +272,7 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Updating tcg uri, new data written for $cardid: Insert ID: " . $stmt->insert_id
+                        "Updating tcg uri, new data written for $cardId: Insert ID: " . $stmt->insert_id
                     );
                 endif;
 
@@ -287,7 +287,7 @@ class PriceManager
                     );
                 endif;
                 $this->message->logMessage('[NOTICE]', "$update_prices");
-                $stmt->bind_param('sssss', $price, $price_foil, $price_etched, $price_sort, $cardid);
+                $stmt->bind_param('sssss', $price, $price_foil, $price_etched, $price_sort, $cardId);
                 if ($stmt === false) :
                     trigger_error(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -299,19 +299,19 @@ class PriceManager
                 if ($exec === false) :
                     $this->message->logMessage(
                         '[ERROR]',
-                        "Scryfall API by $this->useremail, price data update failed: " . $this->db->error
+                        "Scryfall API by $this->userEmail, price data update failed: " . $this->db->error
                     );
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price data updated for $cardid: Insert ID: "
+                        "Scryfall API by $this->userEmail, price data updated for $cardId: Insert ID: "
                             . $stmt->insert_id
                     );
                 endif;
             else :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, result does not contain a prices section"
+                    "Scryfall API by $this->userEmail, result does not contain a prices section"
                 );
                 $prices = 0;
                 $price = 0;
@@ -335,7 +335,7 @@ class PriceManager
             $price_etched = null;
             $this->message->logMessage(
                 '[DEBUG]',
-                "Scryfall API by $this->useremail, returning $tcg_buy_uri"
+                "Scryfall API by $this->userEmail, returning $tcg_buy_uri"
             );
             $returnarray = array(
                 "action" => "read",
@@ -349,7 +349,7 @@ class PriceManager
         elseif ($scryaction === 'get') :
             $this->message->logMessage(
                 '[DEBUG]',
-                "Scryfall API by $this->useremail with 'get' result: fetching $url"
+                "Scryfall API by $this->userEmail with 'get' result: fetching $url"
             );
             $options = array(
                 CURLOPT_RETURNTRANSFER => true,
@@ -361,32 +361,32 @@ class PriceManager
             $ch = curl_init($url);
             curl_setopt_array($ch, $options);
             $curlresult = curl_exec($ch);
-            $this->message->logMessage('[DEBUG]', "Scryfall API by $this->useremail with get: $curlresult");
+            $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail with get: $curlresult");
             curl_close($ch);
             $scryfall_result = json_decode($curlresult, true);
             if (isset($scryfall_result["purchase_uris"]["tcgplayer"])) :
                 $tcg_buy_uri = $scryfall_result["purchase_uris"]["tcgplayer"];
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, result contain tcg link "
+                    "Scryfall API by $this->userEmail, result contain tcg link "
                         . "{$scryfall_result['purchase_uris']['tcgplayer']}"
                 );
             else :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, result does not contain a tcg link"
+                    "Scryfall API by $this->userEmail, result does not contain a tcg link"
                 );
                 $tcg_buy_uri = 0;
             endif;
             if (isset($scryfall_result["prices"])) :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, price section included"
+                    "Scryfall API by $this->userEmail, price section included"
                 );
                 if (isset($scryfall_result["prices"]["usd"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd set: "
+                        "Scryfall API by $this->userEmail, price/usd set: "
                             . "{$scryfall_result['prices']['usd']}"
                     );
                     if ($scryfall_result["prices"]["usd"] == '') :
@@ -399,14 +399,14 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd not set, setting to null"
                     );
                     $price = null;
                 endif;
                 if (isset($scryfall_result["prices"]["usd_foil"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_foil set: "
+                        "Scryfall API by $this->userEmail, price/usd_foil set: "
                             . "{$scryfall_result['prices']['usd_foil']}"
                     );
                     if ($scryfall_result["prices"]["usd_foil"] == '') :
@@ -419,14 +419,14 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_foil not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd_foil not set, setting to null"
                     );
                     $price_foil = null;
                 endif;
                 if (isset($scryfall_result["prices"]["usd_etched"])) :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_etched set: "
+                        "Scryfall API by $this->userEmail, price/usd_etched set: "
                             . "{$scryfall_result['prices']['usd_etched']}"
                     );
                     if ($scryfall_result["prices"]["usd_etched"] == '') :
@@ -439,7 +439,7 @@ class PriceManager
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price/usd_etched not set, setting to null"
+                        "Scryfall API by $this->userEmail, price/usd_etched not set, setting to null"
                     );
                     $price_etched = null;
                 endif;
@@ -470,13 +470,13 @@ class PriceManager
                 endif;
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, prices are: $price, $price_foil and $price_etched; "
+                    "Scryfall API by $this->userEmail, prices are: $price, $price_foil and $price_etched; "
                         . "Sort price = $price_sort"
                 );
             else :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, result does not contain a prices section"
+                    "Scryfall API by $this->userEmail, result does not contain a prices section"
                 );
                 $prices = 0;
                 $price = 0;
@@ -493,7 +493,7 @@ class PriceManager
                 );
             endif;
             $this->message->logMessage('[DEBUG]', "$query");
-            $stmt->bind_param('sss', $cardid, $time, $tcg_buy_uri);
+            $stmt->bind_param('sss', $cardId, $time, $tcg_buy_uri);
             if ($stmt === false) :
                 trigger_error(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -507,18 +507,18 @@ class PriceManager
             else :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, new data written for $cardid: Insert ID: "
+                    "Scryfall API by $this->userEmail, new data written for $cardId: Insert ID: "
                         . $stmt->insert_id
                 );
             endif;
             if (!isset($prices)) :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->useremail, writing prices $price, $price_foil, $price_sort"
+                    "Scryfall API by $this->userEmail, writing prices $price, $price_foil, $price_sort"
                 );
                 $query = 'UPDATE cards_scry SET price = ?,price_foil = ?,price_sort = ? WHERE id = ?';
                 $stmt = $this->db->prepare($query);
-                $stmt->bind_param('ssss', $price, $price_foil, $price_sort, $cardid);
+                $stmt->bind_param('ssss', $price, $price_foil, $price_sort, $cardId);
                 if ($stmt === false) :
                     trigger_error(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -530,12 +530,12 @@ class PriceManager
                 if ($exec === false) :
                     $this->message->logMessage(
                         '[ERROR]',
-                        "Scryfall API by $this->useremail, price data update failed"
+                        "Scryfall API by $this->userEmail, price data update failed"
                     );
                 else :
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Scryfall API by $this->useremail, price data updated: Insert ID: " . $stmt->insert_id
+                        "Scryfall API by $this->userEmail, price data updated: Insert ID: " . $stmt->insert_id
                     );
                 endif;
             endif;
@@ -551,12 +551,12 @@ class PriceManager
     }
 
 
-    public function updateCollectionValues($collection, $cardid = "")
+    public function updateCollectionValues($collection, $cardId = "")
     {
         $i = 0; // Counter for updated rows
         $findcards = false; // Will store our result set
 
-        if ($cardid === "") : //Full collection value update
+        if ($cardId === "") : //Full collection value update
             $query = "SELECT
                         `$collection`.id AS id,
                         IFNULL(`$collection`.normal,0) AS mynormal,
@@ -613,7 +613,7 @@ class PriceManager
                         AND `$collection`.id = ?";
                     $stmt = $this->db->prepare($query);
             if ($stmt) :
-                $stmt->bind_param("s", $cardid);
+                $stmt->bind_param("s", $cardId);
                 $stmt->execute();
                 $findcards = $stmt->get_result();
                 $stmt->close();
@@ -650,11 +650,11 @@ class PriceManager
                     $etchedrate = 0;
                 endif;
                 $selectedrate = max($normalrate, $foilrate, $etchedrate);
-                $cardid = $this->db->real_escape_string($row['id']);
+                $cardId = $this->db->real_escape_string($row['id']);
                 $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
                     VALUES (?,?)
                     ON DUPLICATE KEY UPDATE topvalue = ?";
-                $params = [$selectedrate,$cardid,$selectedrate];
+                $params = [$selectedrate,$cardId,$selectedrate];
                 if ($updatemax = $this->db->execute_query($updatemaxqry, $params)) :
                     //succeeded
                 else :

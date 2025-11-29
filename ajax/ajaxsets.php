@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (isset($_GET['filter'], $_GET['setsPerPage'], $_GET['offset'])) :
             $filter = $_GET['filter'];

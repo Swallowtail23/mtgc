@@ -28,7 +28,7 @@ endif;
 <div id="menu">
     <div class='nav_profile'>
         <a id='profile_cell' title="Profile" href="/profile.php">Profile</a>
-        <a id="nav_email" href="/profile.php"><?php echo $useremail; ?></a>
+        <a id="nav_email" href="/profile.php"><?php echo $userEmail; ?></a>
     </div>
     <div class='nav_nodivider'><a title="Home" href="/">Home</a></div>
     <div class='nav_nodivider'><a title="Decks" href="/sets.php">Sets</a></div>

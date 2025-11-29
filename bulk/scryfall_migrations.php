@@ -26,10 +26,10 @@ $msg = new Message($logfile);
 
 // URLs
 $starturl = "https://api.scryfall.com/migrations";
-$myURL = $ini_array['general']['URL'];
+$myURL = $iniArray['general']['URL'];
 
 // Bulk file store point
-$file_folder = $ImgLocation . 'json/';
+$file_folder = $imgLocation . 'json/';
 
 // Row counts
 $total_count = 0;
@@ -368,6 +368,6 @@ $msg->logMessage('[NOTICE]', "$total_count bulk migrations completed, $need_acti
 // Email results
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
-$mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-$mailresult = $mail->sendEmail($adminemail, false, $subject, $body);
+$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+$mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");

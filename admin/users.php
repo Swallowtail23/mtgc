@@ -37,7 +37,7 @@ forcePasswordChange();                          //Check if user is disabled or n
 $msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
-$msg->logMessage('[ERROR]', "Admin page called by user $username ($useremail)");
+$msg->logMessage('[ERROR]', "Admin page called by user $userName ($userEmail)");
 // Is admin running the page
 $msg->logMessage('[ERROR]', "Admin is $admin");
 if ($admin !== 1) :
@@ -56,7 +56,7 @@ if (isset($_POST['newuser'])) :
     endif;
     if (isset($_POST['username'])) :
         $username_raw = $_POST['username'];
-        $username = htmlspecialchars($username_raw, ENT_QUOTES, 'UTF-8');
+        $userName = htmlspecialchars($username_raw, ENT_QUOTES, 'UTF-8');
     endif;
 endif;
 if (isset($_POST['updateusers'])) :
@@ -118,11 +118,11 @@ require('../includes/menu.php');
                 $dbname
             ); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
             if ($newuserstatus === 2) :
-                echo "<div class='alert-box success'><span>success: </span>User $username / $postemail created, "
+                echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail created, "
                      . "password successfully recorded and checked.</div>";
                 echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
             elseif ($newuserstatus === 1) :
-                echo "<div class='alert-box success'><span>success: </span>User $username / $postemail password "
+                echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail password "
                      . "successfully recorded and checked.</div>";
                 echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                      . "already exists for this user.</div>";
@@ -162,7 +162,7 @@ require('../includes/menu.php');
                     $affected_rows = $db->affected_rows;
                     $msg->logMessage(
                         '[ERROR]',
-                        "Update user query by $useremail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows"
+                        "Update user query by $userEmail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows"
                     );
                 else :
                     $msg->logMessage('[ERROR]', "Update user query unsuccessful");
@@ -241,11 +241,11 @@ require('../includes/menu.php');
                     $obj = new PasswordCheck($db, $logfile, $siteTitle);
                     $reset = $obj->passwordReset($sql_eml, $admin, $dbname);
                     if ($reset === 2) :
-                        echo "<div class='alert-box success'><span>success: </span>User $username / $sql_eml created, "
+                        echo "<div class='alert-box success'><span>success: </span>User $userName / $sql_eml created, "
                              . "password successfully recorded and checked.</div>";
                         echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
                     elseif ($reset === 1) :
-                        echo "<div class='alert-box success'><span>success: </span>User $username / $sql_eml password "
+                        echo "<div class='alert-box success'><span>success: </span>User $userName / $sql_eml password "
                              . "successfully recorded and checked.</div>";
                         echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                              . "already exists for this user.</div>";

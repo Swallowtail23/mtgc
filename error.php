@@ -16,15 +16,15 @@ History:
     2.1 25/11/25 Standard tidy-up
 */
 
-$ini_array = parse_ini_file("/opt/mtg/mtg_new.ini");
+$iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
 //Copyright string
-$copyright = $ini_array['Copyright'];
-if ($ini_array['tier'] === 'dev') :
+$copyright = $iniArray['Copyright'];
+if ($iniArray['tier'] === 'dev') :
     $tier = 'dev';
 else :
     $tier = 'prod';
 endif;
-$siteTitle = $ini_array['title'];
+$siteTitle = $iniArray['title'];
 $cssver = "";
 ?>
 

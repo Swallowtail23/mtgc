@@ -57,19 +57,19 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
         $newnotes = isset($_POST['newnotes']) ? trim($_POST['newnotes']) : '';
         $newsidenotes = isset($_POST['newsidenotes']) ? trim($_POST['newsidenotes']) : '';
-        $decknumber = isset($_POST['decknumber']) ? intval($_POST['decknumber']) : 0;
+        $deckNumber = isset($_POST['decknumber']) ? intval($_POST['decknumber']) : 0;
 
         $msg->logMessage(
             '[NOTICE]',
-            "Called with: Notes: $newnotes, Side notes: $newsidenotes, Deck number: $decknumber"
+            "Called with: Notes: $newnotes, Side notes: $newsidenotes, Deck number: $deckNumber"
         );
 
         try {
             $query = "UPDATE decks SET notes = ?, sidenotes = ? WHERE decknumber = ?";
-            $result = $db->execute_query($query, [$newnotes, $newsidenotes, $decknumber]);
+            $result = $db->execute_query($query, [$newnotes, $newsidenotes, $deckNumber]);
 
             if ($result) {
                 echo json_encode(['success' => true]);

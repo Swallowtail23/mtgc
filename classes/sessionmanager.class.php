@@ -83,11 +83,11 @@ class SessionManager
             $this->message->logMessage('[DEBUG]', "No records found for usernumber: $userNumber");
             return false;
         endif;
-        $stmt->bind_result($status, $username, $adminDb, $grpinout, $groupid, $collection_view, $currency);
+        $stmt->bind_result($status, $userName, $adminDb, $grpinout, $groupid, $collection_view, $currency);
         if ($stmt->fetch()) :
             $this->message->logMessage(
                 '[DEBUG]',
-                "User status: $status, $username, $adminDb, $grpinout, $groupid, $collection_view, $currency"
+                "User status: $status, $userName, $adminDb, $grpinout, $groupid, $collection_view, $currency"
             );
         else :
             $this->message->logMessage('[DEBUG]', "Fetch failed");
@@ -175,7 +175,7 @@ class SessionManager
             endif;
             $this->addToSessionArray([
                 'usernumber' => $userNumber,
-                'username' => $username,
+                'username' => $userName,
                 'admin' => $adminArray,
                 'grpinout' => $grpinout,
                 'groupid' => $groupid,

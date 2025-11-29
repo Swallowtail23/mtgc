@@ -33,18 +33,18 @@ class ImportExport
 {
     private $db;
     private $logfile;
-    private $useremail;
-    private $serveremail;
+    private $userEmail;
+    private $serverEmail;
     private $message;
     private $siteTitle;
     private $batchedCardIds = []; // Array to store batched cards to add
 
-    public function __construct($db, $logfile, $useremail, $serveremail, $siteTitle = null)
+    public function __construct($db, $logfile, $userEmail, $serverEmail, $siteTitle = null)
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->useremail = $useremail;
-        $this->serveremail = $serveremail;
+        $this->userEmail = $userEmail;
+        $this->serverEmail = $serverEmail;
         $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
@@ -55,8 +55,8 @@ class ImportExport
         $smtpParameters,
         $format = 'echo',
         $filename = 'export.csv',
-        $username = '',
-        $useremail = ''
+        $userName = '',
+        $userEmail = ''
     ) {
         $csv_terminated = "\n";
         $csv_separator = ",";
@@ -126,7 +126,7 @@ class ImportExport
                 echo "\xEF\xBB\xBF"; // UTF-8 BOM
                 echo $out;
             elseif ($format === 'email') :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -138,7 +138,7 @@ class ImportExport
                     . "your profile at your $this->siteTitle profile page "
                     . "($myURL/profile.php) \r\n\r\n";
                 $mailresult = $mail->sendEmail(
-                    $this->useremail,
+                    $this->userEmail,
                     true,
                     $subject,
                     $emailbody,
@@ -154,21 +154,21 @@ class ImportExport
                 else :
                     return false;
                 endif;
-            elseif ($format === 'weekly' && $username !== '' && $useremail !== '') :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serveremail, $this->logfile);
+            elseif ($format === 'weekly' && $userName !== '' && $userEmail !== '') :
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
 
                 $subject = "$this->siteTitle weekly collection export";
-                $emailbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle.
+                $emailbody = "Hi $userName, please see attached your weekly collection export from $this->siteTitle.
                     <br><br> Opt out of automated emails in your profile at
                     <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
-                $emailaltbody = "Hi $username, please see attached your weekly collection export from $this->siteTitle.
+                $emailaltbody = "Hi $userName, please see attached your weekly collection export from $this->siteTitle.
                     \r\n\r\n Opt out of automated emails in your profile at your
                     $this->siteTitle profile page ($myURL/profile.php) \r\n\r\n";
                 $mailresult = $mail->sendEmail(
-                    $useremail,
+                    $userEmail,
                     true,
                     $subject,
                     $emailbody,
@@ -188,7 +188,7 @@ class ImportExport
         endif;
     }
 
-    public function importCollectionRegex($filename, $mytable, $importType, $useremail, $serveremail)
+    public function importCollectionRegex($filename, $mytable, $importType, $userEmail, $serverEmail)
     {
         // Import type = add, replace or remove
         // Import format = 'regex'
@@ -203,118 +203,118 @@ class ImportExport
         $i = 0;
         $count = 0;
         $total = 0;
-        $warningsummary = '';
+        $warningSummary = '';
         $lines = explode("\n", $fileContent);
         $qtyLines = count($lines);
         $this->message->logMessage('[DEBUG]', "Regex deck import has $qtyLines lines");
 
         foreach ($lines as $line) :
-            $row_no = $i + 1;
-            $this->message->logMessage('[DEBUG]', "Row: $row_no: Reviewing line");
+            $rowNumber = $i + 1;
+            $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Reviewing line");
             $linestring = htmlspecialchars($line, ENT_NOQUOTES);
-            $interpreted_string = inputInterpreter($linestring);
-            if ($interpreted_string === 'header') :
-                $this->message->logMessage('[DEBUG]', "Row: $row_no: Header row");
-            elseif ($interpreted_string === 'empty line') :
-                $this->message->logMessage('[DEBUG]', "Row: $row_no: Empty row");
+            $interpretedString = inputInterpreter($linestring);
+            if ($interpretedString === 'header') :
+                $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Header row");
+            elseif ($interpretedString === 'empty line') :
+                $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Empty row");
             elseif (
-                $interpreted_string === false
+                $interpretedString === false
                 || (
-                    empty($interpreted_string['uuid'])
-                    && (empty($interpreted_string['set']) || empty($interpreted_string['number']))
+                    empty($interpretedString['uuid'])
+                    && (empty($interpretedString['set']) || empty($interpretedString['number']))
                 )
             ) :
-                $this->message->logMessage('[DEBUG]', "Row: $row_no: Not enough usable card info (or empty row)");
-                $newwarning = "$row_no, Not enough info to identify card (row detail: '$line') \n";
-                $warningsummary = $warningsummary . $newwarning;
+                $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Not enough usable card info (or empty row)");
+                $newWarning = "$rowNumber, Not enough info to identify card (row detail: '$line') \n";
+                $warningSummary = $warningSummary . $newWarning;
             else :
-                $this->message->logMessage('[DEBUG]', "Row: $row_no: Possible card");
+                $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Possible card");
                 $count = $count + 1; //Increment unique card row count
 
                 // UUID
-                if (isset($interpreted_string['uuid']) and $interpreted_string['uuid'] !== '') :
-                    $quickaddUUID = $interpreted_string['uuid'];
+                if (isset($interpretedString['uuid']) and $interpretedString['uuid'] !== '') :
+                    $quickAddUuid = $interpretedString['uuid'];
                 else :
-                    $quickaddUUID = '';
+                    $quickAddUuid = '';
                 endif;
 
                 // Quantity
-                if (isset($interpreted_string['normal']) and $interpreted_string['normal'] !== '') :
-                    $quickaddnormal = $interpreted_string['normal'];
+                if (isset($interpretedString['normal']) and $interpretedString['normal'] !== '') :
+                    $quickaddnormal = $interpretedString['normal'];
                 else :
                     $quickaddnormal = 0;
                 endif;
-                if (isset($interpreted_string['foil']) and $interpreted_string['foil'] !== '') :
-                    $quickaddfoil = $interpreted_string['foil'];
+                if (isset($interpretedString['foil']) and $interpretedString['foil'] !== '') :
+                    $quickaddfoil = $interpretedString['foil'];
                 else :
                     $quickaddfoil = 0;
                 endif;
-                if (isset($interpreted_string['etched']) and $interpreted_string['etched'] !== '') :
-                    $quickaddetched = $interpreted_string['etched'];
+                if (isset($interpretedString['etched']) and $interpretedString['etched'] !== '') :
+                    $quickaddetched = $interpretedString['etched'];
                 else :
                     $quickaddetched = 0;
                 endif;
 
                 // Name
-                if (isset($interpreted_string['name']) and $interpreted_string['name'] !== '') :
-                    $quickaddcard = $interpreted_string['name'];
+                if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
+                    $quickAddCard = $interpretedString['name'];
                 else :
-                    $quickaddcard = '';
+                    $quickAddCard = '';
                 endif;
 
                 // Set
-                if (isset($interpreted_string['set']) and $interpreted_string['set'] !== '') :
-                    $quickaddset = strtoupper($interpreted_string['set']);
+                if (isset($interpretedString['set']) and $interpretedString['set'] !== '') :
+                    $quickAddSet = strtoupper($interpretedString['set']);
                 else :
-                    $quickaddset = '';
+                    $quickAddSet = '';
                 endif;
 
                 // Lang
-                if (isset($interpreted_string['lang']) and $interpreted_string['lang'] !== '') :
-                    $quickaddlang = strtoupper($interpreted_string['lang']);
+                if (isset($interpretedString['lang']) and $interpretedString['lang'] !== '') :
+                    $quickAddLang = strtoupper($interpretedString['lang']);
                 else :
-                    $quickaddlang = '';
+                    $quickAddLang = '';
                 endif;
 
                 // Collector number
-                if (isset($interpreted_string['number']) and $interpreted_string['number'] !== '') :
-                    $quickaddNumber = $interpreted_string['number'];
+                if (isset($interpretedString['number']) and $interpretedString['number'] !== '') :
+                    $quickAddNumber = $interpretedString['number'];
                 else :
-                    $quickaddNumber = '';
+                    $quickAddNumber = '';
                 endif;
 
-                $quickaddcard = htmlspecialchars_decode($quickaddcard, ENT_QUOTES);
+                $quickAddCard = htmlspecialchars_decode($quickAddCard, ENT_QUOTES);
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Row: $row_no: Quick add interpreted as: "
+                    "Row: $rowNumber: Quick add interpreted as: "
                         . "Normal: [$quickaddnormal] "
                         . "Foil: [$quickaddfoil] "
                         . "Etched: [$quickaddetched] "
-                        . " x Card: [$quickaddcard] Set: [$quickaddset] "
-                    . "Collector number: [$quickaddNumber] Language: [$quickaddlang] UUID: [$quickaddUUID]"
+                        . " x Card: [$quickAddCard] Set: [$quickAddSet] "
+                    . "Collector number: [$quickAddNumber] Language: [$quickAddLang] UUID: [$quickAddUuid]"
                 );
                 $stmt = null;
 
-                if ($quickaddUUID !== '' && validUUID($quickaddUUID) !== false) :
+                if ($quickAddUuid !== '' && validUUID($quickAddUuid) !== false) :
                     // Card UUID provided and valid UUID
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Row: $row_no: Quick add proceeding with provided UUID: [$quickaddUUID]"
+                        "Row: $rowNumber: Quick add proceeding with provided UUID: [$quickAddUuid]"
                     );
                     $query = "SELECT id,finishes,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
                     $stmt = $this->db->prepare($query);
-                    $params = [$quickaddUUID];
+                    $params = [$quickAddUuid];
                     $stmt->bind_param('s', $params[0]);
                 elseif (
-                    $quickaddcard !== ''
-                    and $quickaddset !== ''
-                    and $quickaddNumber !== ''
-                    and $quickaddlang !== ''
+                    $quickAddCard !== ''
+                    and $quickAddSet !== ''
+                    and $quickAddNumber !== ''
+                    and $quickAddLang !== ''
                 ) :
                     // Card name, setcode, and collector number provided
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Row: $row_no: Quick add proceeding with provided name, set, number and specified language"
+                        "Row: $rowNumber: Quick add proceeding with provided name, set, number and specified language"
                     );
                     $query = "SELECT id,finishes FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
                                                                    OR printed_name = ? OR f1_printed_name = ? OR 
@@ -323,14 +323,14 @@ class ImportExport
                                                                    setcode = ? AND number_import = ? AND 
                                                                    lang LIKE ? ORDER BY release_date DESC LIMIT 1";
                     $stmt = $this->db->prepare($query);
-                    $params = array_fill(0, 9, $quickaddcard);
-                    array_push($params, $quickaddset, $quickaddNumber, $quickaddlang);
+                    $params = array_fill(0, 9, $quickAddCard);
+                    array_push($params, $quickAddSet, $quickAddNumber, $quickAddLang);
                     $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-                elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber !== '') :
+                elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber !== '') :
                     // Card name, setcode, and collector number provided
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Row: $row_no: Quick add proceeding with provided name, set, number and primary language"
+                        "Row: $rowNumber: Quick add proceeding with provided name, set, number and primary language"
                     );
                     $query = "SELECT id,finishes FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
                                                                    OR printed_name = ? OR f1_printed_name = ? OR 
@@ -339,14 +339,14 @@ class ImportExport
                                                                    setcode = ? AND number_import = ? AND 
                                                                    primary_card = 1 ORDER BY release_date DESC LIMIT 1";
                     $stmt = $this->db->prepare($query);
-                    $params = array_fill(0, 9, $quickaddcard);
-                    array_push($params, $quickaddset, $quickaddNumber);
+                    $params = array_fill(0, 9, $quickAddCard);
+                    array_push($params, $quickAddSet, $quickAddNumber);
                     $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-                elseif ($quickaddcard !== '' and $quickaddset !== '' and $quickaddNumber === '') :
+                elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber === '') :
                     // Card name and setcode provided
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Row: $row_no: Quick add proceeding with provided name, set"
+                        "Row: $rowNumber: Quick add proceeding with provided name, set"
                     );
                     $query = "SELECT id,finishes FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
                                                                    OR printed_name = ? OR f1_printed_name = ? OR 
@@ -355,30 +355,30 @@ class ImportExport
                                                                    setcode = ? AND primary_card = 1 
                                                                    ORDER BY release_date DESC, number ASC LIMIT 1";
                     $stmt = $this->db->prepare($query);
-                    $params = array_fill(0, 9, $quickaddcard);
-                    array_push($params, $quickaddset);
+                    $params = array_fill(0, 9, $quickAddCard);
+                    array_push($params, $quickAddSet);
                     $params = array_merge($params, $noQuickAddLayouts);
                     $stmt->bind_param(str_repeat('s', count($params)), ...$params);
-                elseif ($quickaddcard === '' and $quickaddset !== '' and $quickaddNumber !== '') :
+                elseif ($quickAddCard === '' and $quickAddSet !== '' and $quickAddNumber !== '') :
                     // Card name not provided, setcode, and collector number provided
                     $this->message->logMessage(
                         '[DEBUG]',
-                        "Row: $row_no: Quick add proceeding with provided set and number"
+                        "Row: $rowNumber: Quick add proceeding with provided set and number"
                     );
                     $query = "SELECT id,finishes FROM cards_scry WHERE setcode = ? AND number_import = ? 
                                                                AND primary_card = 1 ORDER BY release_date DESC LIMIT 1";
                     $stmt = $this->db->prepare($query);
-                    $params = [$quickaddset, $quickaddNumber];
+                    $params = [$quickAddSet, $quickAddNumber];
                     $stmt->bind_param(str_repeat('s', count($params)), ...$params);
                 else :
                     // Not enough info, cannot add
                     $this->message->logMessage(
                         '[NOTICE]',
-                        "Row: $row_no: Quick add - Not enough info to identify a card to add"
+                        "Row: $rowNumber: Quick add - Not enough info to identify a card to add"
                     );
                     $cardtoadd = 'cardnotfound';
-                    $newwarning = "$row_no, Not enough info to identify card (row detail: '$line') \n";
-                    $warningsummary = $warningsummary . $newwarning;
+                    $newWarning = "$rowNumber, Not enough info to identify card (row detail: '$line') \n";
+                    $warningSummary = $warningSummary . $newWarning;
                 endif;
                 if ($stmt !== null and $stmt->execute()) :
                     $result = $stmt->get_result();
@@ -389,11 +389,11 @@ class ImportExport
                         $finishes = $row['finishes'];
                         $this->message->logMessage(
                             '[DEBUG]',
-                            "Row: $row_no: Quick add result: UUID result is '$cardtoadd', adding to batch"
+                            "Row: $rowNumber: Quick add result: UUID result is '$cardtoadd', adding to batch"
                         );
                         $this->batchedCardIds[] = [
                             'line' => $line,
-                            'row' => $row_no,
+                            'row' => $rowNumber,
                             'id' => $cardtoadd,
                             'finishes' => $finishes,
                             'normal' => $quickaddnormal,
@@ -403,17 +403,17 @@ class ImportExport
                         $total = $total + $quickaddnormal + $quickaddfoil + $quickaddetched;
                     else :
                         $stmt->close();
-                        $this->message->logMessage('[NOTICE]', "Row: $row_no: Quick add - Card not found");
+                        $this->message->logMessage('[NOTICE]', "Row: $rowNumber: Quick add - Card not found");
                         $cardtoadd = 'cardnotfound';
-                        $newwarning = "$row_no, Card not found (row detail: '$line') \n";
-                        $warningsummary = $warningsummary . $newwarning;
+                        $newWarning = "$rowNumber, Card not found (row detail: '$line') \n";
+                        $warningSummary = $warningSummary . $newWarning;
                     endif;
                 else :
                     $stmt->close();
                     $this->message->logMessage('[ERROR]', "Quick add - SQL error: " . $stmt->error);
                     $cardtoadd = 'cardnotfound';
-                    $newwarning = "$row_no, Unknown error (row detail: '$line') \n";
-                    $warningsummary = $warningsummary . $newwarning;
+                    $newWarning = "$rowNumber, Unknown error (row detail: '$line') \n";
+                    $warningSummary = $warningSummary . $newWarning;
                 endif;
             endif;
             $i = $i + 1;
@@ -429,17 +429,17 @@ class ImportExport
         endif;
 
         // Finalise any warnings from file scan phase
-        if ($warningsummary === '') :
-            $warningsummary = "Input file scan warnings or errors\n\nNone\n\n";
+        if ($warningSummary === '') :
+            $warningSummary = "Input file scan warnings or errors\n\nNone\n\n";
         else :
-            $warningsummary = "Input file scan warnings or errors (Row number, Warning/error)\n\n" . $warningsummary;
+            $warningSummary = "Input file scan warnings or errors (Row number, Warning/error)\n\n" . $warningSummary;
         endif;
 
         // If batched card array is not empty, perform batch insert
         if (!empty($this->batchedCardIds)) :
             $batchOutput = $this->addCardsBatch($mytable, $importType, $count, $total, $this->batchedCardIds);
             if ($batchOutput['warnings'] !== 'none') :
-                $warningsummary = $warningsummary . $batchOutput['warnings'];
+                $warningSummary = $warningSummary . $batchOutput['warnings'];
             else :
                 //
             endif;
@@ -454,10 +454,10 @@ class ImportExport
         fclose($handle);
         $summary = "Import done - $count unique cards, $importType total: $total.";
         print $summary;
-        $from = "From: $serveremail\r\nReturn-path: $serveremail";
+        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
         $subject = "Import failures / warnings";
-        $message = "$warningsummary \n \n$summary";
-        mail($useremail, $subject, $message, $from);
+        $message = "$warningSummary \n \n$summary";
+        mail($userEmail, $subject, $message, $from);
                 $this->message->logMessage(
                     '[NOTICE]',
                     "Import process run with '$importType' ($actionedRows of $count card rows actioned, "
@@ -514,7 +514,7 @@ class ImportExport
 
         foreach ($batchedCardIds as $key => $batchedCard) :
             $line = $batchedCard['line'];
-            $row_no = $batchedCard['row'];
+            $rowNumber = $batchedCard['row'];
             $id = $batchedCard['id'];
             $finishes = json_decode($batchedCard['finishes'], true);
             $cardtype = cardTypes($finishes);
@@ -527,9 +527,9 @@ class ImportExport
             if ($normal > 0 && !str_contains($cardtype, 'normal')) :
                 $this->message->logMessage(
                     '[ERROR]',
-                    "Row: $row_no: Batch import finish mapping error (normal) - skipping row"
+                    "Row: $rowNumber: Batch import finish mapping error (normal) - skipping row"
                 );
-                $newWarning = "$row_no, Normal qty cannot be mapped to card without normal finish - row skipped "
+                $newWarning = "$rowNumber, Normal qty cannot be mapped to card without normal finish - row skipped "
                     . "(row detail: '$line') \n";
                 $batchWarnings = $batchWarnings . $newWarning;
                 $total = $total - $qty;         // Deduct cards from total card count
@@ -540,9 +540,9 @@ class ImportExport
             if ($foil > 0 && !str_contains($cardtype, 'foil')) :
                 $this->message->logMessage(
                     '[ERROR]',
-                    "Row: $row_no: Batch import finish mapping error (foil) - skipping row"
+                    "Row: $rowNumber: Batch import finish mapping error (foil) - skipping row"
                 );
-                $newWarning = "$row_no, Foil qty cannot be mapped to card without foil finish - row skipped "
+                $newWarning = "$rowNumber, Foil qty cannot be mapped to card without foil finish - row skipped "
                     . "(row detail: '$line') \n";
                 $batchWarnings = $batchWarnings . $newWarning;
                 $total = $total - $foil;
@@ -553,9 +553,9 @@ class ImportExport
             if ($etched > 0 && !str_contains($cardtype, 'etched')) :
                 $this->message->logMessage(
                     '[ERROR]',
-                    "Row: $row_no: Batch import finish mapping error (etched) - skipping row"
+                    "Row: $rowNumber: Batch import finish mapping error (etched) - skipping row"
                 );
-                $newWarning = "$row_no, Etched qty cannot be mapped to card without etched finish - row skipped "
+                $newWarning = "$rowNumber, Etched qty cannot be mapped to card without etched finish - row skipped "
                     . "(row detail: '$line') \n";
                 $batchWarnings = $batchWarnings . $newWarning;
                 $total = $total - $etched;
@@ -564,7 +564,7 @@ class ImportExport
                 continue;
             endif;
             // Add each card to the batch
-            $this->message->logMessage('[DEBUG]', "Row: $row_no: Batch import - adding to batch ('$line')");
+            $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Batch import - adding to batch ('$line')");
             $values[] = "($id, $normal, $foil, $etched)";
             $placeholders[] = '(?, ?, ?, ?)';
         endforeach;

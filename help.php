@@ -48,7 +48,7 @@ include_once("includes/analyticstracking.php");
 require('includes/overlays.php');
 require('includes/header.php');
 require('includes/menu.php');
-$name = ucfirst($username);
+$name = ucfirst($userName);
 ?>
 <div id='page'>
     <div class='staticpagecontent'>
@@ -77,8 +77,8 @@ $name = ucfirst($username);
                            . "value='$name' disabled size='30'/><br>"; ?>
                 Your email:<br>
                 <?php echo "<input class='disabledtext' "
-                           . "name='email' type='email' placeholder='$useremail' "
-                           . "value='$useremail' disabled size='30'/><br>"; ?>
+                           . "name='email' type='email' placeholder='$userEmail' "
+                           . "value='$userEmail' disabled size='30'/><br>"; ?>
                 Referring page:<br>
                 <?php echo "<input class='disabledtext "
                            . "disabledtextwide' name='page' type='text' "
@@ -92,16 +92,16 @@ $name = ucfirst($username);
             else :
                 $referpage = $_SESSION["referpage"];
                 $message = wordwrap($_REQUEST['message'], 70);
-                if (($name == "") || ($useremail == "") || ($message == "")) :
+                if (($name == "") || ($userEmail == "") || ($message == "")) :
                     echo "All fields are required, please fill <a href=\"\">the form</a> again.";
                 else :
-                    $from = "From: $name<$useremail>\r\nReturn-path: $useremail";
+                    $from = "From: $name<$userEmail>\r\nReturn-path: $userEmail";
                     if ($referpage != '') :
                         $subject = "Message sent using your contact form from $referpage";
                     else :
                         $subject = "Message sent using your contact form";
                     endif;
-                    mail($adminemail, $subject, $message, $from);
+                    mail($adminEmail, $subject, $message, $from);
                     echo "Email sent!";
                     echo "<meta http-equiv='refresh' content='2;url=help.php'>";
                 endif;

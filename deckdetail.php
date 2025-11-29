@@ -461,12 +461,12 @@ $redirect = false;
 $time = time();
 
 if (isset($_GET["deck"])) :
-    $decknumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
+    $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
     if (isset($_GET["updatetype"])) :
         $updatetype = $_GET["updatetype"];
     endif;
 elseif (isset($_POST["deck"])) :
-    $decknumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
+    $deckNumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
     $renamedeck     = isset($_POST['renamedeck']) ? 'yes' : '';
     $newname        = isset($_POST['newname'])
         ? filter_input(
@@ -490,7 +490,7 @@ endif;?>
     function closeMe( obj )
     {
         obj.style.display = 'none';
-        window.location.href="deckdetail.php?deck=<?php echo $decknumber;?>";
+        window.location.href="deckdetail.php?deck=<?php echo $deckNumber;?>";
     }
 </script> <?php
 $cardtoaction   = isset($_GET['card'])          ? filter_input(INPUT_GET, 'card', FILTER_SANITIZE_SPECIAL_CHARS) : '';
@@ -515,9 +515,9 @@ else :
 endif;
 
 // Check to see if the called deck belongs to the logged in user.
-$msg->logMessage('[NOTICE]', "Checking deck $decknumber");
-$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
-if ($obj->deckOwnerCheck($decknumber, $user) == false) : ?>
+$msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
+$obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+if ($obj->deckOwnerCheck($deckNumber, $user) == false) : ?>
     <div id='page'>
     <div class='staticpagecontent'>
     <h3>This deck is not yours... returning to your deck page...</h3>
@@ -531,8 +531,8 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if (isset($_POST['newname'])) :
     $msg->logMessage('[DEBUG]', "Renaming deck to $newname");
-    $obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
-    $renameresult = $obj->renameDeck($decknumber, $newname, $user);
+    $obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $renameresult = $obj->renameDeck($deckNumber, $newname, $user);
     $msg->logMessage('[DEBUG]', "Renaming deck result: $renameresult");
     if ($renameresult == 2) :
         ?>
@@ -557,7 +557,7 @@ endif;
 if (isset($updatetype)) :
     if (in_array($updatetype, $validtypes)) :
         $msg->logMessage('[DEBUG]', "Updating deck type to '$updatetype'");
-        $setdecktype = $obj->setDeckType($decknumber, $updatetype);
+        $setdecktype = $obj->setDeckType($deckNumber, $updatetype);
         if ($setdecktype !== 0) :
             trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": Deck type change failed ", E_USER_ERROR);
         else :
@@ -565,7 +565,7 @@ if (isset($updatetype)) :
                 if (
                     $db->execute_query(
                         "UPDATE deckcards SET commander = 0 WHERE decknumber = ?",
-                        [$decknumber]
+                        [$deckNumber]
                     ) === false
                 ) :
                     trigger_error(
@@ -585,19 +585,19 @@ if (isset($updatetype)) :
             WHERE deckcards.decknumber = ? AND (deckcards.sideqty IS NULL or sideqty = 0) 
             AND cards_scry.type NOT LIKE 'Basic Land%'";
         $msg->logMessage('[DEBUG]', "Updating deck type to a Commander type, setting quantities to 1");
-        if ($db->execute_query($query, [1, $decknumber]) != true) :
+        if ($db->execute_query($query, [1, $deckNumber]) != true) :
             trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty=? WHERE (decknumber = ? AND (cardqty IS NULL or cardqty = 0) )';
-        if ($db->execute_query($query, [1, $decknumber]) != true) :
+        if ($db->execute_query($query, [1, $deckNumber]) != true) :
             trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
-        if ($db->execute_query($query, [$decknumber]) != true) :
+        if ($db->execute_query($query, [$deckNumber]) != true) :
             trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
@@ -606,7 +606,7 @@ if (isset($updatetype)) :
     if ($updatetype == 'Wishlist') :
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
         $msg->logMessage('[DEBUG]', "Updating deck type to a Wishlist, deleting sideboard cards");
-        if ($db->execute_query($query, [$decknumber]) != true) :
+        if ($db->execute_query($query, [$deckNumber]) != true) :
             trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
@@ -620,12 +620,12 @@ if (isset($_GET["quickadd"])) :
     $deckManager = new DeckManager(
         $db,
         $logfile,
-        $useremail,
-        $serveremail,
+        $userEmail,
+        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes
     );
-    $cardtoadd = $deckManager->processInput($decknumber, $_GET["quickadd"]);
+    $cardtoadd = $deckManager->processInput($deckNumber, $_GET["quickadd"]);
 endif;
 
 //Deck import
@@ -637,8 +637,8 @@ if (isset($_POST['import'])) :
         $deckManager = new DeckManager(
             $db,
             $logfile,
-            $useremail,
-            $serveremail,
+            $userEmail,
+            $serverEmail,
             $importLinestoIgnore,
             $nonPreferredSetCodes
         );
@@ -647,7 +647,7 @@ if (isset($_POST['import'])) :
         fclose($file);
 
         // Call the processInput method with the decknumber and file content
-        $deckManager->processInput($decknumber, $fileContent);
+        $deckManager->processInput($deckNumber, $fileContent);
         $redirect = true;
     else :
         $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} failed");
@@ -658,11 +658,11 @@ endif;
 if (
     $deckinfoqry = $db->execute_query(
         "SELECT deckname,notes,sidenotes,type FROM decks WHERE decknumber = ? LIMIT 1",
-        [$decknumber]
+        [$deckNumber]
     )
 ) :
     $deckinfo = $deckinfoqry->fetch_assoc();
-    $deckname   = $deckinfo['deckname'];
+    $deckName   = $deckinfo['deckname'];
     $notes      = $deckinfo['notes'];
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
@@ -680,58 +680,58 @@ $msg->logMessage('[DEBUG]', "Legality db-field for this deck is '$db_field'");
 
 // Get deck legalities
 if ($db_field != '') :
-    $deck_legality_list = deckLegalList($decknumber, $decktype, $db_field);
+    $deck_legality_list = deckLegalList($deckNumber, $decktype, $db_field);
 else :
     $deck_legality_list = '';
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db, $logfile, $useremail, $serveremail, $importLinestoIgnore, $nonPreferredSetCodes);
+$obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
 
 if ($deletemain == 'yes') :
-    $obj->subtractDeckCard($decknumber, $cardtoaction, "main", "all");
+    $obj->subtractDeckCard($deckNumber, $cardtoaction, "main", "all");
     $redirect = true;
 elseif ($deleteside == 'yes') :
-    $obj->subtractDeckCard($decknumber, $cardtoaction, "side", "all");
+    $obj->subtractDeckCard($deckNumber, $cardtoaction, "side", "all");
     $redirect = true;
 elseif ($maintoside == 'yes') :
-    if ($obj->subtractDeckCard($decknumber, $cardtoaction, 'main', '1') != "-error") :
-        $obj->addDeckCard($decknumber, $cardtoaction, "side", "1");
+    if ($obj->subtractDeckCard($deckNumber, $cardtoaction, 'main', '1') != "-error") :
+        $obj->addDeckCard($deckNumber, $cardtoaction, "side", "1");
     endif;
     $redirect = true;
 elseif ($sidetomain == 'yes') :
-    if ($obj->subtractDeckCard($decknumber, $cardtoaction, 'side', '1') != "-error") :
-        $obj->addDeckCard($decknumber, $cardtoaction, "main", "1");
+    if ($obj->subtractDeckCard($deckNumber, $cardtoaction, 'side', '1') != "-error") :
+        $obj->addDeckCard($deckNumber, $cardtoaction, "main", "1");
     endif;
     $redirect = true;
 elseif ($plusmain == 'yes') :
-    $obj->addDeckCard($decknumber, $cardtoaction, "main", "1");
+    $obj->addDeckCard($deckNumber, $cardtoaction, "main", "1");
     $redirect = true;
 elseif ($minusmain == 'yes') :
-    $obj->subtractDeckCard($decknumber, $cardtoaction, 'main', '1');
+    $obj->subtractDeckCard($deckNumber, $cardtoaction, 'main', '1');
     $redirect = true;
 elseif ($plusside == 'yes') :
-    $obj->addDeckCard($decknumber, $cardtoaction, "side", "1");
+    $obj->addDeckCard($deckNumber, $cardtoaction, "side", "1");
     $redirect = true;
 elseif ($minusside == 'yes') :
-    $obj->subtractDeckCard($decknumber, $cardtoaction, 'side', '1');
+    $obj->subtractDeckCard($deckNumber, $cardtoaction, 'side', '1');
     $redirect = true;
 elseif ($commander == 'yes') :
-    $msg->logMessage('[NOTICE]', "Adding Commander to deck $decknumber: $cardtoaction");
-    $obj->addCommander($decknumber, $cardtoaction);
+    $msg->logMessage('[NOTICE]', "Adding Commander to deck $deckNumber: $cardtoaction");
+    $obj->addCommander($deckNumber, $cardtoaction);
     $redirect = true;
 elseif ($partner == 'yes') :
-    $msg->logMessage('[NOTICE]', "Moving Commander to Partner for deck $decknumber: $cardtoaction");
-    $obj->addPartner($decknumber, $cardtoaction);
+    $msg->logMessage('[NOTICE]', "Moving Commander to Partner for deck $deckNumber: $cardtoaction");
+    $obj->addPartner($deckNumber, $cardtoaction);
     $redirect = true;
 elseif ($commander == 'no') :
-    $obj->delCommander($decknumber, $cardtoaction);
+    $obj->delCommander($deckNumber, $cardtoaction);
     $redirect = true;
 endif;
 
 // PRG
 if ($redirect == true) : ?>
-    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
+    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $deckNumber; ?>'> <?php
     exit();
 endif;
 
@@ -742,7 +742,7 @@ $mainquery = ("SELECT *,cards_scry.id AS cardsid
                     LEFT JOIN $mytable ON cards_scry.id = $mytable.id
                     WHERE decknumber = ? AND cardqty > 0 ORDER BY name");
 $msg->logMessage('[DEBUG]', "$mainquery");
-$result = $db->execute_query($mainquery, [$decknumber]);
+$result = $db->execute_query($mainquery, [$deckNumber]);
 if ($result != true) :
     trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
@@ -752,7 +752,7 @@ $sidequery = ("SELECT *,cards_scry.id AS cardsid
                     LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
                     LEFT JOIN $mytable ON cards_scry.id = $mytable.id
                     WHERE decknumber = ? AND sideqty > 0 ORDER BY name");
-$sideresult = $db->execute_query($sidequery, [$decknumber]);
+$sideresult = $db->execute_query($sidequery, [$deckNumber]);
 if ($sideresult != true) :
     trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
 endif;
@@ -1002,18 +1002,18 @@ while ($row = $result->fetch_assoc()) :
     ) :
         $planes = $planes + $row['cardqty'];
     endif;
-    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imagefunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
-        $ImgLocation,
+        $imgLocation,
         $row['layout'],
-        $two_card_detail_sections
+        $twoCardDetailSections
     );
     if ($imagefunction['front'] == 'error') :
-        $imageurl = '/cardimg/back.jpg';
+        $imageUrl = '/cardimg/back.jpg';
     else :
-        $imageurl = $imagefunction['front'];
+        $imageUrl = $imagefunction['front'];
     endif;
     $deckcardname = str_replace("'", '&#39;', $row["name"]);
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
@@ -1044,18 +1044,18 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
-    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imagefunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
-        $ImgLocation,
+        $imgLocation,
         $row['layout'],
-        $two_card_detail_sections
+        $twoCardDetailSections
     );
     if ($imagefunction['front'] == 'error') :
-        $imageurl = '/cardimg/back.jpg';
+        $imageUrl = '/cardimg/back.jpg';
     else :
-        $imageurl = $imagefunction['front'];
+        $imageUrl = $imagefunction['front'];
     endif;
     $side = $side + $row['sideqty'];
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['sideqty']);
@@ -1078,7 +1078,7 @@ elseif (isset($cardtoadd) and ($cardtoadd == 'multierror')) : ?>
     </div>
     <?php
 elseif (isset($cardtoadd)) : ?>
-    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $decknumber; ?>'> <?php
+    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $deckNumber; ?>'> <?php
     exit();
 endif;
 ?>
@@ -1118,13 +1118,13 @@ m13,12,"Fog",en,1,0,0,{id}
             </span>
             <form id="deletedeck" action="decks.php" method="POST">
                 <input type='hidden' name="deletedeck" value="yes">
-                <input type='hidden' name="decktodelete" value="<?php echo $decknumber; ?>">
+                <input type='hidden' name="decktodelete" value="<?php echo $deckNumber; ?>">
             </form>
             <h2 class='h2pad'><?php
-            if (strlen($deckname) > 17) :
-                echo $deckname . '<br><br>';
+            if (strlen($deckName) > 17) :
+                echo $deckName . '<br><br>';
             else :
-                        echo $deckname;
+                        echo $deckName;
             endif; ?>
                 &nbsp;
                 <span
@@ -1149,8 +1149,8 @@ m13,12,"Fog",en,1,0,0,{id}
                     title="Duplicate"
                     onclick="duplicateDeck(
                         '<?php echo htmlspecialchars($user, ENT_QUOTES); ?>',
-                        '<?php echo htmlspecialchars($deckname, ENT_QUOTES); ?>',
-                        '<?php echo htmlspecialchars($decknumber, ENT_QUOTES); ?>',
+                        '<?php echo htmlspecialchars($deckName, ENT_QUOTES); ?>',
+                        '<?php echo htmlspecialchars($deckNumber, ENT_QUOTES); ?>',
                         '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES) : ''; ?>'
                     )"
                     onmouseover=""
@@ -1163,7 +1163,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     <br><textarea class='textinput' id='newname' name='newname' rows='1' cols='30'
                         placeholder="New deck name" autofocus></textarea>
                     <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
-                    <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
+                    <input type='hidden' id='deck' name='deck' value="<?php echo $deckNumber; ?>">
                     <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
                 </form>
                 <script type="text/javascript">
@@ -1173,7 +1173,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         if (fieldValue.trim() === '') {
                             alert('Rename field cannot be empty');
                             return;
-                        } else if (fieldValue.trim() === '<?php echo $deckname; ?>') {
+                        } else if (fieldValue.trim() === '<?php echo $deckName; ?>') {
                             alert('To cancel rename click edit button again');
                             return;
                         } else {
@@ -1201,7 +1201,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             endif;
                         endforeach; ?>
                     </select>
-                    <input type="hidden"name="deck" value="<?php echo $decknumber;?>" />
+                    <input type="hidden"name="deck" value="<?php echo $deckNumber;?>" />
                 </form>
 
             <?php
@@ -1290,26 +1290,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $quantity = $row["cardqty"];
                                 $cardset = strtolower($row["setcode"]);
                                 $cardref = str_replace('.', '-', $row['cardsid']);
-                                $cardid = $row['cardsid'];
+                                $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                 $imagefunction = $imageManager->getImage(
                                     $cardset,
-                                    $cardid,
-                                    $ImgLocation,
+                                    $cardId,
+                                    $imgLocation,
                                     $layout,
-                                    $two_card_detail_sections
+                                    $twoCardDetailSections
                                 );
                                 if ($imagefunction['front'] == 'error') :
-                                    $imageurl = '/cardimg/back.jpg';
+                                    $imageUrl = '/cardimg/back.jpg';
                                 else :
-                                    $imageurl = $imagefunction['front'];
+                                    $imageUrl = $imagefunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                                 if ($deck_legality_list != '') :
                                     $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                    $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                    $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                     if ($index !== false) :
                                         $card_legal = $deck_legality_list[$index]['legality'];
                                         if ($card_legal === 'legal' or $card_legal === null) :
@@ -1334,7 +1334,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $commandername = $cardname;
                                 ?>
                                 <tr class='deckrow'>
-                                <?php $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}"; ?>
+                                <?php $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"; ?>
                                 <td class="deckcardname hoverTD">
                                     <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
@@ -1386,10 +1386,10 @@ m13,12,"Fog",en,1,0,0,{id}
                                     <img
                                         alt='<?php echo $deckcardname;?>'
                                         class='deckcardimg'
-                                        src='<?php echo $imageurl;?>'
+                                        src='<?php echo $imageUrl;?>'
                                     ></a>
                                 </div> <?php
-                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
                                 <span
@@ -1455,26 +1455,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $quantity = $row["cardqty"];
                                     $cardset = strtolower($row["setcode"]);
                                     $cardref = str_replace('.', '-', $row['cardsid']);
-                                    $cardid = $row['cardsid'];
+                                    $cardId = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
-                                    $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                                    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                     $imagefunction = $imageManager->getImage(
                                         $cardset,
-                                        $cardid,
-                                        $ImgLocation,
+                                        $cardId,
+                                        $imgLocation,
                                         $layout,
-                                        $two_card_detail_sections
+                                        $twoCardDetailSections
                                     );
                                     if ($imagefunction['front'] == 'error') :
-                                        $imageurl = '/cardimg/back.jpg';
+                                        $imageUrl = '/cardimg/back.jpg';
                                     else :
-                                        $imageurl = $imagefunction['front'];
+                                        $imageUrl = $imagefunction['front'];
                                     endif;
                                     $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                                     if ($deck_legality_list != '') :
                                         $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                        $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                        $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                         if ($index !== false) :
                                             $card_legal = $deck_legality_list[$index]['legality'];
                                             if ($card_legal === 'legal' or $card_legal === null) :
@@ -1499,7 +1499,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $warnings = true;
                                     ?>
                                     <tr class='deckrow'>
-                                    <?php $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}"; ?>
+                                    <?php $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"; ?>
                                     <td class="deckcardname hoverTD">
                                         <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                             . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
@@ -1522,7 +1522,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                         <img
                                             alt='<?php echo $deckcardname;?>'
                                             class='deckcardimg'
-                                            src='<?php echo $imageurl;?>'
+                                            src='<?php echo $imageUrl;?>'
                                         ></a>
                                     </div> <?php
                                     echo "</td>";
@@ -1622,35 +1622,35 @@ m13,12,"Fog",en,1,0,0,{id}
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.', '-', $row['cardsid']);
-                            $cardid = $row['cardsid'];
+                            $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $cardset,
-                                $cardid,
-                                $ImgLocation,
+                                $cardId,
+                                $imgLocation,
                                 $layout,
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
-                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
-                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                             if ($deck_legality_list != '') :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                 if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if ($card_legal === 'legal' or $card_legal === null) :
@@ -1736,7 +1736,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                         . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 if (in_array($decktype, $commander_decktypes)) :
                                     $validcommander = false;
                                     $msg->logMessage(
@@ -1780,7 +1780,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
-                                    src='<?php echo $imageurl;?>'
+                                    src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
                             echo "<td class='deckcardlistcenter noprint'>";
@@ -1885,35 +1885,35 @@ m13,12,"Fog",en,1,0,0,{id}
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.', '-', $row['cardsid']);
-                            $cardid = $row['cardsid'];
+                            $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $cardset,
-                                $cardid,
-                                $ImgLocation,
+                                $cardId,
+                                $imgLocation,
                                 $layout,
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
-                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
-                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                             if ($deck_legality_list != '') :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                 if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if ($card_legal === 'legal' or $card_legal === null) :
@@ -2004,10 +2004,10 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
-                                    src='<?php echo $imageurl;?>'
+                                    src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
-                            $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                            $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                             if (in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
@@ -2124,35 +2124,35 @@ m13,12,"Fog",en,1,0,0,{id}
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.', '-', $row['cardsid']);
-                            $cardid = $row['cardsid'];
+                            $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $cardset,
-                                $cardid,
-                                $ImgLocation,
+                                $cardId,
+                                $imgLocation,
                                 $layout,
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
-                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
-                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                             if ($deck_legality_list != '') :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                 if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if ($card_legal === 'legal' or $card_legal === null) :
@@ -2243,7 +2243,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
-                                    src='<?php echo $imageurl;?>'
+                                    src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
                             if (in_array($decktype, $commander_decktypes)) :
@@ -2292,7 +2292,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     $i++;
                                 endwhile;
-                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 if ($validcommander == true) :
                                     ?>
@@ -2426,35 +2426,35 @@ m13,12,"Fog",en,1,0,0,{id}
                             $rowqty = 0;
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.', '-', $row['cardsid']);
-                            $cardid = $row['cardsid'];
+                            $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $cardset,
-                                $cardid,
-                                $ImgLocation,
+                                $cardId,
+                                $imgLocation,
                                 $layout,
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
                                 $uniquecard_ref["$deckcard_no"]['cardref'] = $cardref;
-                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardid;
-                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageurl;
-                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardid;
+                                $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
+                                $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
+                                $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
                             $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                             if ($deck_legality_list != '') :
                                 $msg->logMessage('[DEBUG]', "Checking legality for main deck card '$cardname'");
-                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                 if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if ($card_legal === 'legal' or $card_legal === null) :
@@ -2529,10 +2529,10 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
-                                    src='<?php echo $imageurl;?>'
+                                    src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
-                            $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                            $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                             if (in_array($decktype, $commander_decktypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
@@ -2654,21 +2654,21 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $rowqty = 0;
                                 $cardset = strtolower($row["setcode"]);
                                 $cardref = str_replace('.', '-', $row['cardsid']);
-                                $cardid = $row['cardsid'];
+                                $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                 $imagefunction = $imageManager->getImage(
                                     $cardset,
-                                    $cardid,
-                                    $ImgLocation,
+                                    $cardId,
+                                    $imgLocation,
                                     $layout,
-                                    $two_card_detail_sections
+                                    $twoCardDetailSections
                                 );
                                 if ($imagefunction['front'] == 'error') :
-                                    $imageurl = '/cardimg/back.jpg';
+                                    $imageUrl = '/cardimg/back.jpg';
                                 else :
-                                    $imageurl = $imagefunction['front'];
+                                    $imageUrl = $imagefunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");?>
                                 <tr class='deckrow'>
@@ -2704,10 +2704,10 @@ m13,12,"Fog",en,1,0,0,{id}
                                     <img
                                         alt='<?php echo $deckcardname;?>'
                                         class='deckcardimg'
-                                        src='<?php echo $imageurl;?>'
+                                        src='<?php echo $imageUrl;?>'
                                     ></a>
                                 </div> <?php
-                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 if (in_array($decktype, $commander_decktypes)) :
                                     echo "<td class='deckcardlistcenter noprint'>";
                                     echo "</td>";
@@ -2812,21 +2812,21 @@ m13,12,"Fog",en,1,0,0,{id}
                             $quantity = $row["sideqty"];
                             $cardset = strtolower($row["setcode"]);
                             $cardref = str_replace('.', '-', $row['cardsid']);
-                            $cardid = $row['cardsid'];
+                            $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serveremail, $adminemail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imagefunction = $imageManager->getImage(
                                 $cardset,
-                                $cardid,
-                                $ImgLocation,
+                                $cardId,
+                                $imgLocation,
                                 $layout,
-                                $two_card_detail_sections
+                                $twoCardDetailSections
                             );
                             if ($imagefunction['front'] == 'error') :
-                                $imageurl = '/cardimg/back.jpg';
+                                $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageurl = $imagefunction['front'];
+                                $imageUrl = $imagefunction['front'];
                             endif;
                             $msg->logMessage('[DEBUG]', "Sideboard card '$cardname ($cardset $cardnumber)'");
                             if (
@@ -2841,7 +2841,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     '[DEBUG]',
                                     "Checking legality for sideboard card '$cardname' ('$card_type')"
                                 );
-                                $index = array_search("$cardid", array_column($deck_legality_list, 'id'));
+                                $index = array_search("$cardId", array_column($deck_legality_list, 'id'));
                                 if ($index !== false) :
                                     $card_legal = $deck_legality_list[$index]['legality'];
                                     if ($card_legal === 'legal' or $card_legal === null) :
@@ -2931,7 +2931,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     $i++;
                                 endwhile;
-                                $cardActionBase = "deckdetail.php?deck={$decknumber}&amp;card={$cardid}";
+                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 $deckcardname = str_replace("'", '&#39;', $cardname);
                                 ?>
                                 <td class="deckcardname hoverTD">
@@ -3014,7 +3014,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
-                                    src='<?php echo $imageurl;?>'
+                                    src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div>
                             <?php
@@ -3101,7 +3101,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'>
                     <?php echo $sidenotes; ?></textarea><br>
                 <?php endif;  ?>
-                <input type='hidden' name='deck' value='<?php echo $decknumber?>'>
+                <input type='hidden' name='deck' value='<?php echo $deckNumber?>'>
                 <button class='inline_button save_icon' type="button" onclick="submitForm()" title="Save" disabled>
                     <span class="material-symbols-outlined">save</span>
                 </button>
@@ -3353,14 +3353,14 @@ m13,12,"Fog",en,1,0,0,{id}
             if ($total + $sidetotal > 0) : ?>
                 <h4>Deck lists</h4>
                 <?php
-                $filename = preg_replace('/[^\w]/', '', $deckname);
+                $filename = preg_replace('/[^\w]/', '', $deckName);
                 ?>
                 <table style="width:100%;">
                     <tr style="height:36px;">
                         <td>Export formatted card list:</td>
                         <td><form action="dltext.php" method="POST">
                                 <input class='profilebutton' type="submit" value="DECKLIST">
-                                <?php echo "<input type='hidden' name='decknumber' value='$decknumber'>"; ?>
+                                <?php echo "<input type='hidden' name='decknumber' value='$deckNumber'>"; ?>
                             </form>
                         </td>
                     </tr>
@@ -3368,7 +3368,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     if ($requiredlist != '') :
                         $requiredlist = htmlspecialchars($requiredlist, ENT_QUOTES);
                         $requiredbuy = htmlspecialchars($requiredbuy, ENT_QUOTES);
-                        $filename_missing = preg_replace('/[^\w]/', '', $deckname . '_missing');
+                        $filename_missing = preg_replace('/[^\w]/', '', $deckName . '_missing');
                         $msg->logMessage('[DEBUG]', "Required list = $requiredlist");
                         $msg->logMessage('[DEBUG]', "Missing filename = $filename_missing");?>
                         <script type="text/javascript">
@@ -3417,7 +3417,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
                 <br>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
-                <?php echo "<input type='hidden' name='deck' value='$decknumber'>"; ?>
+                <?php echo "<input type='hidden' name='deck' value='$deckNumber'>"; ?>
             </form>
             <h4>Text or csv file</h4>
             <script type="text/javascript">
@@ -3513,8 +3513,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 if (response.success) {
                                     $('#result').html(response.message);
                                     // Reload the image
-                                    // var imageUrl = 'cardimg/deck_photos/<?php echo $decknumber; ?>.jpg';
-                                    var imageUrl = 'deckimage.php?deck=<?php echo $decknumber; ?>';
+                                    // var imageUrl = 'cardimg/deck_photos/<?php echo $deckNumber; ?>.jpg';
+                                    var imageUrl = 'deckimage.php?deck=<?php echo $deckNumber; ?>';
                                     var timestamp = new Date().getTime();
                                     $('#deckPhoto').attr('src', imageUrl + '&' + timestamp);
                                     $('#photo_div').show();
@@ -3560,13 +3560,13 @@ m13,12,"Fog",en,1,0,0,{id}
                     disabled
                     onclick='importPrep()'
                 >
-                <input type='hidden' id='deck' name='deck' value="<?php echo $decknumber; ?>">
+                <input type='hidden' id='deck' name='deck' value="<?php echo $deckNumber; ?>">
             </form>
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
                 <?php
-                $imageFilePath = $ImgLocation . 'deck_photos/' . $decknumber . '.jpg';
-                $existingImage = 'cardimg/deck_photos/' . $decknumber . '.jpg';
+                $imageFilePath = $imgLocation . 'deck_photos/' . $deckNumber . '.jpg';
+                $existingImage = 'cardimg/deck_photos/' . $deckNumber . '.jpg';
                 // Check if the file exists and log appropriate messages
                 if (file_exists($imageFilePath)) :
                     $msg->logMessage('[DEBUG]', "Image exists at: $imageFilePath, existingImage: $existingImage");
@@ -3574,7 +3574,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     $msg->logMessage('[DEBUG]', "No current image at: $imageFilePath, existingImage: $existingImage");
                 endif; ?>
                 <form id="uploadForm">
-                    <input type="hidden" name="decknumber" value="<?php echo $decknumber; ?>">
+                    <input type="hidden" name="decknumber" value="<?php echo $deckNumber; ?>">
                     <label class='importlabel'>
                         <input id='importphoto' type='file' name='photo' accept='image/jpeg'>
                         <span>SELECT</span>
@@ -3595,7 +3595,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         <!-- Placeholder for legacy deck photo preview -->
                         <img
                             id="deckPhoto"
-                            src="deckimage.php?deck=<?php echo $decknumber; ?>"
+                            src="deckimage.php?deck=<?php echo $deckNumber; ?>"
                             style="max-width: 300px;"
                             alt="Existing Photo"
                         >

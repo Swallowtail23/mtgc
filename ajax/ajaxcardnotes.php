@@ -57,7 +57,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
         $newnotes = isset($_POST['newnotes']) ? trim($_POST['newnotes']) : '';
         $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
 

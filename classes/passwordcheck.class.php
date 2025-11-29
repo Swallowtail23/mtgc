@@ -40,7 +40,7 @@ class PasswordCheck
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
-    public function validatePassword(($email, $password)
+    public function validatePassword($email, $password)
     {
         /**
          * Returns:
@@ -87,7 +87,7 @@ class PasswordCheck
 
     public function passwordReset($email, $admin, $dbname)
     {
-        global $serveremail, $adminemail, $siteTitle, $myURL;
+        global $serverEmail, $adminEmail, $siteTitle, $myURL;
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
             return 0;
@@ -109,13 +109,13 @@ class PasswordCheck
                     exit;
                 elseif ($row->num_rows === 1) : // $email matches a user
                     $row = $row->fetch_assoc();
-                    $username = $row['username'];
+                    $userName = $row['username'];
                     $randompassword = $this->generateRandomPassword(12);
-                    $this->message->logMessage("[DEBUG]", "New password generated for $email, $username");
-                    $reset = $this->newUser($username, $email, $randompassword, $dbname);
+                    $this->message->logMessage("[DEBUG]", "New password generated for $email, $userName");
+                    $reset = $this->newUser($userName, $email, $randompassword, $dbname);
                     $this->message->logMessage("[DEBUG]", "Newuser result: $reset");
                     if ($reset === 1) :
-                        $from = "From: $serveremail\r\nReturn-path: $serveremail";
+                        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
                         $subject = "Password reset";
                         $message = "A new password was requested for your email at $siteTitle ($myURL)\n\n"
                                    . "Please login with this temporary password: $randompassword\n"
@@ -123,10 +123,10 @@ class PasswordCheck
                                    . "If you did not request a new password at $siteTitle, you can ignore this email.";
                         mail($email, $subject, $message, $from);
                     elseif ($reset === 0) :
-                        $from = "From: $serveremail\r\nReturn-path: $serveremail";
+                        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
                         $subject = "Password reset failed";
-                        $message = "Password reset failed for $username / $email";
-                        mail($adminemail, $subject, $message, $from);
+                        $message = "Password reset failed for $userName / $email";
+                        mail($adminEmail, $subject, $message, $from);
                     endif;
                 else :
                     trigger_error(
@@ -159,9 +159,9 @@ class PasswordCheck
         return $randomPassword;
     }
 
-    public function newUser($username, $postemail, $password = '', $dbname = '')
+    public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
-        global $serveremail, $adminemail;
+        global $serverEmail, $adminEmail;
         $msg = new Message($this->logfile);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
@@ -181,11 +181,11 @@ class PasswordCheck
                     ON DUPLICATE KEY UPDATE password=?, status='chgpwd', badlogins=0 ";
         $msg->logMessage(
             '[NOTICE]',
-            "New user query/password update for $username / $postemail from {$_SERVER['REMOTE_ADDR']}"
+            "New user query/password update for $userName / $postemail from {$_SERVER['REMOTE_ADDR']}"
         );
         $stmt = $this->db->prepare($query);
         if ($stmt) :
-            $stmt->bind_param("sssss", $username, $mysql_date, $postemail, $hashed_password, $hashed_password);
+            $stmt->bind_param("sssss", $userName, $mysql_date, $postemail, $hashed_password, $hashed_password);
             if ($stmt->execute()) :
                 $affected_rows = $stmt->affected_rows;
                 $msg->logMessage(
@@ -273,7 +273,7 @@ class PasswordCheck
         endif;
 
         if ($usersuccess === 1 && $noSuppliedPW === true) :
-            $from = "From: $serveremail\r\nReturn-path: $serveremail";
+            $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
             $subject = "New account at $this->siteTitle";
             $message = "Your new password is $password";
             mail($postemail, $subject, $message, $from);

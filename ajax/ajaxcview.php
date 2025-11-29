@@ -59,7 +59,7 @@ if ($isValidReferrer) :
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
-        $useremail = $_SESSION['useremail'];
+        $userEmail = $_SESSION['useremail'];
 
         if (isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF') :
             $msg->logMessage('[ERROR]', "Call to turn off collection view");
@@ -69,7 +69,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Call to turn off collection view run for $useremail");
+                $msg->logMessage('[ERROR]', "Call to turn off collection view run for $userEmail");
             endif;
         elseif (isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN ON') :
             $msg->logMessage('[ERROR]', "Call to turn on collection view");
@@ -79,7 +79,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
             else :
-                $msg->logMessage('[ERROR]', "Call to turn off collection view run for $useremail");
+                $msg->logMessage('[ERROR]', "Call to turn off collection view run for $userEmail");
             endif;
         else :
             http_response_code(400);

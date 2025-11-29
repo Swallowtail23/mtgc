@@ -83,17 +83,17 @@ if ($bulkInfo !== false) :
             $msg->logMessage('[ERROR]', "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri");
             exit;
         else :
-            if ($file_location === $ImgLocation . 'json/bulk.json') :
+            if ($file_location === $imgLocation . 'json/bulk.json') :
                 $type = 'default';
-            elseif ($file_location === $ImgLocation . 'json/bulk_all.json') :
+            elseif ($file_location === $imgLocation . 'json/bulk_all.json') :
                 $type = 'all';
             endif;
 
             // Email results
             $bulkResultMessage = scryfallImport($file_location, $type);
             $subject = "MTG bulk update completed ($type)";
-            $mail = new MyPHPMailer(true, $smtpParameters, $serveremail, $logfile);
-            $mailresult = $mail->sendEmail($adminemail, false, $subject, $bulkResultMessage);
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
             $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
         endif;
     endif;
