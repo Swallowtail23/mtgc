@@ -23,7 +23,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-function mtg_error($number, $string, $file, $line, $context = '')
+function mtgError($number, $string, $file, $line, $context = '')
 {
     global $logfile, $adminemail, $serveremail;
     $msg = new Message($logfile);
@@ -74,7 +74,7 @@ function mtg_error($number, $string, $file, $line, $context = '')
     endswitch;
 }
 
-function mtg_exception($err)
+function mtgException($err)
 {
     global $logfile, $adminemail, $serveremail;
     if (($fd = fopen($logfile, 'a')) !== false) :

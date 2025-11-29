@@ -27,7 +27,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 ?>
 <script type="text/javascript">
-    function SubmitPrep()
+    function submitPrep()
         {
             document.body.style.cursor='wait';
         }
@@ -52,7 +52,7 @@ endif;
                     echo $name;
                        }; ?>"
             ><br>
-            <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='SubmitPrep()'><br>
+            <input class='stdsubmit' id='advsubmit' type="submit" value='SUBMIT' onclick='submitPrep()'><br>
             <span title="Search card names" class="parametersmall checkbox-group">
                 <input
                     id='cb1'

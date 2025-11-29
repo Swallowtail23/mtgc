@@ -1033,7 +1033,7 @@ if (isset($cdrSet) and $cdrSet === true) :
     if ($i > 0 and $cdr_colours == '[""]') :
         $cdr_colours = '["C"]';
     endif;
-    $cdr_colours = colourfunction($cdr_colours);
+    $cdr_colours = colourFunction($cdr_colours);
 else :
     $cdr_colours_raw = $cdr_colours = "";
 endif;

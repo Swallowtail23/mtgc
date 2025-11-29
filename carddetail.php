@@ -461,17 +461,17 @@ require('includes/menu.php'); //mobile menu
             $card_primary = $row['primary_card'];
 
             if ($row['color'] !== null) :
-                $card_colour = colourfunction($row['color']);
+                $card_colour = colourFunction($row['color']);
             else :
                     $card_colour = '';
             endif;
             if ($row['f1_colour'] !== null) :
-                $f1_colour = colourfunction($row['f1_colour']);
+                $f1_colour = colourFunction($row['f1_colour']);
             else :
                     $f1_colour = '';
             endif;
             if ($row['f2_colour'] !== null) :
-                $f2_colour = colourfunction($row['f2_colour']);
+                $f2_colour = colourFunction($row['f2_colour']);
             else :
                     $f2_colour = '';
             endif;

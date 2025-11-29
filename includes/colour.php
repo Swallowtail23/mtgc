@@ -24,7 +24,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-function colourfunction($colourcode)
+function colourFunction($colourcode)
 {
     $originalColourcode = $colourcode;
     global $logfile;
