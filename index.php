@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     12.4
+Version:     13.0
 Date:        29/11/25
 Name:        index.php
 Purpose:     Main site page
@@ -32,6 +32,7 @@ History:
     12.2 26/11/25 Standard tidy-up
     12.3 28/11/25 Update inputInterpreter call
     12.4 29/11/25 Rename forcePasswordChange usage
+    13.0 29/11/25 Add async image checks
 */
 
 // Call script initiation mechs
@@ -395,6 +396,47 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
+            function refreshCardImagesAsync() {
+                const seen = {};
+                $('img').each(function() {
+                    const src = $(this).attr('src');
+                    const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
+                    if (!match) {
+                        return;
+                    }
+                    const cardId = match[1];
+                    if (seen[cardId]) {
+                        return;
+                    }
+                    seen[cardId] = true;
+                    $.ajax({
+                        url: 'ajax/ajaximagecheck.php',
+                        type: 'POST',
+                        data: { cardid: cardId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (!response || !response.success) {
+                                return;
+                            }
+                            if (response.front) {
+                                const newSrc = response.front + '?t=' + Date.now();
+                                $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
+                            }
+                            if (response.back) {
+                                const newBackSrc = response.back + '?t=' + Date.now();
+                                $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
+                            }
+                        }
+                    });
+                });
+            }
+        </script>
+        <script type="text/javascript">
+            $(function() {
+                refreshCardImagesAsync();
+            });
+        </script>
+        <script type="text/javascript">
             // Setup search form radio button exclusions
             $(function() {
                 function setupMutualExclusion(selectorA, selectorB) {
@@ -464,6 +506,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                     });
                     ias.on('page', (event) => {
                         $(".top").show(200);
+                        refreshCardImagesAsync();
                     });
                     ias.on('last', function() {
                         let el = document.querySelector('.ias-no-more');
@@ -958,28 +1001,28 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                 $meld = '';
                             endif;
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],
                                 $imgLocation,
                                 $row['layout'],
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             //If page is being loaded by admin, don't cache the image
                             if (($admin == 1) and ($imageUrl !== '/cardimg/back.jpg')) :
                                 $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
                                 $imageUrl = $imageUrl . '?=' . $time;
                             endif;
-                            if (!is_null($imagefunction['back'])) :
-                                if ($imagefunction['back'] === 'error' or $imagefunction['back'] === 'error') :
+                            if (!is_null($imageFunction['back'])) :
+                                if ($imageFunction['back'] === 'error' or $imageFunction['back'] === 'error') :
                                     $imagebackurl = '/cardimg/back.jpg';
                                 else :
-                                    $imagebackurl = $imagefunction['back'] . "?$time";
+                                    $imagebackurl = $imageFunction['back'] . "?$time";
                                 endif;
                             endif;
                             // If the current record has null fields set the variables to 0 so updates

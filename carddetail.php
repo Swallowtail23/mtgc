@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     19.5
+Version:     20.0
 Date:        29/11/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -39,6 +39,7 @@ History:
     19.3 11/08/24 Update notes and refresh image via AJAX
     19.4 25/11/25 Standard tidy-up and long-line wraps
     19.5 29/11/25 Rename forcePasswordChange usage
+    20.0 29/11/25 Add async image checks
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -93,6 +94,45 @@ $refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
     <script src="/js/ajaxUpdate.js"></script>
+    <script type="text/javascript">
+        function refreshCardImagesAsync() {
+            const seen = {};
+            $('img').each(function() {
+                const src = $(this).attr('src');
+                const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
+                if (!match) {
+                    return;
+                }
+                const cardId = match[1];
+                if (seen[cardId]) {
+                    return;
+                }
+                seen[cardId] = true;
+                $.ajax({
+                    url: 'ajax/ajaximagecheck.php',
+                    type: 'POST',
+                    data: { cardid: cardId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (!response || !response.success) {
+                            return;
+                        }
+                        if (response.front) {
+                            const newSrc = response.front + '?t=' + Date.now();
+                            $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
+                        }
+                        if (response.back) {
+                            const newBackSrc = response.back + '?t=' + Date.now();
+                            $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
+                        }
+                    }
+                });
+            });
+        }
+        $(function() {
+            refreshCardImagesAsync();
+        });
+    </script>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
             var button = document.getElementById('addtodeckbutton');
@@ -569,28 +609,28 @@ require('includes/menu.php'); //mobile menu
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
                 $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                $imagefunction = $imageManager->getImage(
+                $imageFunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],
                     $imgLocation,
                     $row['layout'],
                     $twoCardDetailSections
                 );
-                $msg->logMessage('[DEBUG]', "getImage result: {$imagefunction['front']} / {$imagefunction['back']}");
-            if ($imagefunction['front'] == 'error') :
+                $msg->logMessage('[DEBUG]', "getImage result: {$imageFunction['front']} / {$imageFunction['back']}");
+            if ($imageFunction['front'] == 'error') :
                 $imageUrl = '/cardimg/back.jpg';
             else :
-                    $imageUrl = $imagefunction['front'];
+                    $imageUrl = $imageFunction['front'];
             endif;
-            if (!is_null($imagefunction['back'])) :
+            if (!is_null($imageFunction['back'])) :
                 if (
-                    $imagefunction['back'] === ''
-                    or $imagefunction['back'] === 'error'
-                    or $imagefunction['back'] === 'empty'
+                    $imageFunction['back'] === ''
+                    or $imageFunction['back'] === 'error'
+                    or $imageFunction['back'] === 'empty'
                 ) :
                     $imagebackurl = '/cardimg/back.jpg';
                 else :
-                        $imagebackurl = $imagefunction['back'];
+                        $imagebackurl = $imageFunction['back'];
                 endif;
             endif;
                 $settotal = 0;
