@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        25/11/25
+Version:     1.3
+Date:        29/11/25
 Name:        imagemanager.class.php
 Purpose:     Local image management class.
 Notes:       {none}
@@ -13,6 +13,8 @@ To do:       -
 History:
     1.0 16/11/23 Initial version
     1.1 25/11/25 Standard tidy-up
+    1.2 29/11/25 Add remote/local diff check and refresh
+    1.3 29/11/25 Move refresh to async path; add image check endpoint support
 */
 
 /*
@@ -28,6 +30,9 @@ endif;
 
 class ImageManager
 {
+    // Skip remote checks for images newer than this (in seconds)
+    private const IMAGE_MAX_AGE = 604800; // 7 days
+
     private $db;
     private $logfile;
     private $serverEmail;
@@ -47,6 +52,7 @@ class ImageManager
     {
         $this->message->logMessage('[DEBUG]', "Called for $setcode, $cardId, $imgLocation, $layout");
 
+        $cardImages = $this->getCardImageUris($cardId);
         $localfile = $imgLocation . $setcode . '/' . $cardId . '.jpg';
         $this->message->logMessage('[DEBUG]', "File should be at $localfile");
 
@@ -58,66 +64,7 @@ class ImageManager
         // Front face
         if (!file_exists($localfile)) :
             $this->message->logMessage('[DEBUG]', "$localfile missing, running get image function");
-
-            $sql = "SELECT image_uri, layout, f1_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
-            $result = $this->db->execute_query($sql, [$cardId]);
-
-            if ($result === false) :
-                trigger_error(
-                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                        . ": SQL error: " . $this->db->error,
-                    E_USER_ERROR
-                );
-            else :
-                $this->message->logMessage('[DEBUG]', "Query $sql successful");
-
-                $codeRow = $result->fetch_array(MYSQLI_ASSOC);
-                $imageUrl = '';
-
-                if (isset($codeRow['image_uri']) and !is_null($codeRow['image_uri'])) :
-                    $this->message->logMessage('[DEBUG]', "Standard card, {$codeRow['image_uri']}");
-                    $imageUrl = strtolower($codeRow['image_uri']);
-                    $this->message->logMessage(
-                        '[DEBUG]',
-                        "Looking on scryfall.com ($cardId) for image to use as $localfile"
-                    );
-                elseif (isset($codeRow['f1_image_uri']) and !is_null($codeRow['f1_image_uri'])) :
-                    $this->message->logMessage('[DEBUG]', "Flip card, {$codeRow['f1_image_uri']}");
-                    $imageUrl = strtolower($codeRow['f1_image_uri']);
-                    $this->message->logMessage(
-                        '[DEBUG]',
-                        "Looking on scryfall.com ($cardId) for images to use as $localfile"
-                    );
-                endif;
-
-                if (strpos($imageUrl, '.jpg?') !== false) :
-                    $imageUrl = substr($imageUrl, 0, (strpos($imageUrl, ".jpg?") + 5)) . "?t=" . time();
-                    $this->message->logMessage('[DEBUG]', "Imageurl is $imageUrl");
-                endif;
-
-                if ((checkRemoteFile($imageUrl) == false) or ($imageUrl === '')) :
-                    $imageUrl = '';
-                    $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
-                    $subject = "Invalid image from Scryfall API";
-                    $message = "$imageUrl for card $cardId does not exist - check database entry against API, "
-                        . "has it been deleted?";
-                    mail($this->adminEmail, $subject, $message, $from);
-                    $frontImg = 'error';
-                else :
-                    $options = array('http' => array('user_agent' => 'MtGCollection/1.0'));
-                    $context = stream_context_create($options);
-                    $image = file_get_contents($imageUrl, false, $context);
-
-                    if (!file_exists($imgLocation . $setcode)) :
-                        $this->message->logMessage('[DEBUG]', "Creating new directory $setcode");
-                        mkdir($imgLocation . $setcode);
-                    endif;
-
-                    file_put_contents($localfile, $image);
-                    $relativePath = strpos($localfile, 'cardimg');
-                    $frontImg = substr($localfile, $relativePath);
-                endif;
-            endif;
+            $frontImg = $this->fetchAndStoreImage($cardImages['front'], $imgLocation, $setcode, $localfile);
         else :
             $this->message->logMessage('[DEBUG]', "File exists already at $localfile");
             $relativePath = strpos($localfile, 'cardimg');
@@ -133,61 +80,7 @@ class ImageManager
         if (isset($localFileB)) :
             if (!file_exists($localFileB)) :
                 $this->message->logMessage('[DEBUG]', "$localFileB missing, running get image function");
-
-                $sql = "SELECT layout, f2_image_uri FROM cards_scry WHERE id like ? LIMIT 1";
-                $result2 = $this->db->execute_query($sql, [$cardId]);
-
-                if ($result2 === false) :
-                    trigger_error(
-                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": SQL error: " . $this->db->error,
-                        E_USER_ERROR
-                    );
-                else :
-                    $this->message->logMessage('[DEBUG]', "Query $sql successful");
-
-                    $codeRow2 = $result2->fetch_array(MYSQLI_ASSOC);
-                    $imageUrl2 = '';
-
-                    if (isset($codeRow2['f2_image_uri']) and !is_null($codeRow2['f2_image_uri'])) :
-                        $this->message->logMessage('[DEBUG]', "Flip card back, {$codeRow2['f2_image_uri']}");
-                        $this->message->logMessage(
-                            '[DEBUG]',
-                            "Looking on scryfall.com ($cardId) for images to use as $localFileB"
-                        );
-                        $imageUrl2 = strtolower($codeRow2['f2_image_uri']);
-                    endif;
-
-                    $this->message->logMessage('[DEBUG]', "Flip card back image, {$codeRow2['f2_image_uri']}");
-                    $this->message->logMessage(
-                        '[DEBUG]',
-                        "Looking on scryfall.com ($cardId) for image to use as $localFileB"
-                    );
-
-                    if (strpos($imageUrl2, '.jpg?') !== false) :
-                        $imageUrl2 = substr($imageUrl2, 0, (strpos($imageUrl2, ".jpg?") + 5)) . "?t=" . time();
-                        $this->message->logMessage('[DEBUG]', "Imageurl_2 is $imageUrl2");
-                    endif;
-
-                    if ($imageUrl2 === '') :
-                        $backImg = 'empty';
-                    elseif (checkRemoteFile($imageUrl2) == false) :
-                        $backImg = 'error';
-                    else :
-                        $options = array('http' => array('user_agent' => 'MtGCollection/1.0'));
-                        $context = stream_context_create($options);
-                        $image2 = file_get_contents($imageUrl2, false, $context);
-
-                        if (!file_exists($imgLocation . $setcode)) :
-                            $this->message->logMessage('[DEBUG]', "Creating new directory $setcode");
-                            mkdir($imgLocation . $setcode);
-                        endif;
-
-                        file_put_contents($localFileB, $image2);
-                        $relativePath2 = strpos($localFileB, 'cardimg');
-                        $backImg = substr($localFileB, $relativePath2);
-                    endif;
-                endif;
+                $backImg = $this->fetchAndStoreImage($cardImages['back'], $imgLocation, $setcode, $localFileB);
             elseif (file_exists($localFileB)) :
                 $this->message->logMessage('[DEBUG]', "File exists already at $localFileB");
                 $relativePath2 = strpos($localFileB, 'cardimg');
@@ -200,50 +93,36 @@ class ImageManager
         return $imageUrl;
     }
 
-    public function diffImage($url, $localFilePath)
+    public function diffImage($remoteUrl, $localFilePath)
     {
-        $this->message->logMessage('[DEBUG]', "Comparing $url with local file $localFilePath");
+        $this->message->logMessage('[DEBUG]', "Comparing $remoteUrl with $localFilePath");
 
-        // Get headers for the online image
-        $onlineHeaders = get_headers($url, 1);
-
-        if ($onlineHeaders === false) :
-            // Failed to retrieve headers for the online image
+        $headers = @get_headers($remoteUrl, 1);
+        if ($headers === false || stripos($headers[0], '200') === false) :
+            $this->message->logMessage('[ERROR]', "Unable to fetch headers for $remoteUrl");
             return false;
         endif;
 
-        // Get the "Content-Length" header to check file size
-        if (isset($onlineHeaders['Content-Length'])) :
-            $onlineFileSize = $onlineHeaders['Content-Length'];
-            $this->message->logMessage('[DEBUG]', "$url size is $onlineFileSize");
-        else :
-            $onlineFileSize = 0;
+        $remoteSize = isset($headers['Content-Length']) ? (int) $headers['Content-Length'] : null;
+        if ($remoteSize === null) :
+            $this->message->logMessage('[DEBUG]', "No comparable headers on $remoteUrl");
+            return false;
         endif;
 
-        // Get the "Last-Modified" header to check the modification date
-        if (isset($onlineHeaders['Last-Modified'])) :
-            $onlineLastModified = strtotime($onlineHeaders['Last-Modified']);
-            $this->message->logMessage('[DEBUG]', "$url mod time is $onlineLastModified");
-        else :
-            $onlineLastModified = 0;
-        endif;
+        $localSize = filesize($localFilePath);
+        $sizeDiffers = ($remoteSize !== $localSize);
 
-        // Get the local file size
-        $localFileSize = filesize($localFilePath);
-        $this->message->logMessage('[DEBUG]', "$localFilePath size is $localFileSize");
-
-        // Get the local file modification date
-        $localLastModified = filemtime($localFilePath);
-        $this->message->logMessage('[DEBUG]', "$localFilePath mod time is $localLastModified");
-
-        // Compare file sizes and modification dates
-        if ($onlineFileSize !== $localFileSize or $onlineLastModified !== $localLastModified) :
-            $this->message->logMessage('[DEBUG]', "Result:- files are different");
+        if ($sizeDiffers) :
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Image differs (size? yes)"
+            );
             return true;
-        else :
-            $this->message->logMessage('[DEBUG]', "Result:- files are same");
-            return false;
         endif;
+
+        $this->message->logMessage('[DEBUG]', "Image matches remote headers");
+        @touch($localFilePath); // bump mtime to avoid immediate rechecks
+        return false;
     }
 
     public function refreshImage($cardId)
@@ -264,15 +143,15 @@ class ImageManager
             $imagebackdelete = $imagedelete = '';
             $row = $result->fetch_assoc();
             // $imgLocation is set in ini
-            $imagefunction = $this->getImage(
+            $imageFunction = $this->getImage(
                 $row['setcode'],
                 $cardId,
                 $imgLocation,
                 $row['layout'],
                 $twoCardDetailSections
             );
-            if ($imagefunction['front'] != 'error') :
-                $imagename = substr($imagefunction['front'], strrpos($imagefunction['front'], '/') + 1);
+            if ($imageFunction['front'] != 'error') :
+                $imagename = substr($imageFunction['front'], strrpos($imageFunction['front'], '/') + 1);
                 $imageUrl = $imgLocation . $row['setcode'] . "/" . $imagename;
                 try {
                     if (!unlink($imageUrl)) :
@@ -288,11 +167,11 @@ class ImageManager
                 }
             endif;
             if (
-                $imagefunction['back'] != ''
-                and $imagefunction['back'] != 'error'
-                and $imagefunction['back'] != 'empty'
+                $imageFunction['back'] != ''
+                and $imageFunction['back'] != 'error'
+                and $imageFunction['back'] != 'empty'
             ) :
-                $imagebackname = substr($imagefunction['back'], strrpos($imagefunction['back'], '/') + 1);
+                $imagebackname = substr($imageFunction['back'], strrpos($imageFunction['back'], '/') + 1);
                 $imagebackurl = $imgLocation . $row['setcode'] . "/" . $imagebackname;
                 try {
                     if (!unlink($imagebackurl)) :
@@ -317,7 +196,7 @@ class ImageManager
         else :
             $this->message->logMessage('[DEBUG]', "Re-fetching image for $cardId");
             // $imgLocation is set in ini
-            $imagefunction = $this->getImage(
+            $imageFunction = $this->getImage(
                 $row['setcode'],
                 $cardId,
                 $imgLocation,
@@ -332,6 +211,129 @@ class ImageManager
     {
         $this->message->logMessage("[ERROR]", "Called as string");
         return "Called as a string";
+    }
+
+    public function checkAndRefreshImage($cardId)
+    {
+        global $imgLocation, $twoCardDetailSections;
+
+        $cardData = $this->getCardImageUris($cardId);
+        $setcode = $cardData['setcode'];
+
+        $frontPath = $imgLocation . $setcode . '/' . $cardId . '.jpg';
+        $backPath = $imgLocation . $setcode . '/' . $cardId . '_b.jpg';
+
+        $frontResult = $this->processImageFace($cardData['front'], $frontPath, $imgLocation, $setcode);
+        $backResult = '';
+
+        if (in_array($cardData['layout'], $twoCardDetailSections)) :
+            $backResult = $this->processImageFace($cardData['back'], $backPath, $imgLocation, $setcode);
+        endif;
+
+        return array(
+            'front' => $frontResult,
+            'back' => $backResult,
+        );
+    }
+
+    private function getCardImageUris($cardId)
+    {
+        $sql = "SELECT image_uri, f1_image_uri, f2_image_uri, setcode, layout FROM cards_scry WHERE id like ? LIMIT 1";
+        $result = $this->db->execute_query($sql, [$cardId]);
+
+        if ($result === false) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL error: " . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
+
+        $row = $result->fetch_array(MYSQLI_ASSOC);
+
+        $front = '';
+        $back = '';
+
+        if (isset($row['image_uri']) && !is_null($row['image_uri'])) :
+            $front = strtolower($row['image_uri']);
+        elseif (isset($row['f1_image_uri']) && !is_null($row['f1_image_uri'])) :
+            $front = strtolower($row['f1_image_uri']);
+        endif;
+
+        if (isset($row['f2_image_uri']) && !is_null($row['f2_image_uri'])) :
+            $back = strtolower($row['f2_image_uri']);
+        endif;
+
+        $front = $this->normaliseImageUrl($front);
+        $back = $this->normaliseImageUrl($back);
+
+        return array(
+            'front' => $front,
+            'back' => $back,
+            'setcode' => $row['setcode'],
+            'layout' => $row['layout']
+        );
+    }
+
+    private function normaliseImageUrl($url)
+    {
+        if ($url === '') :
+            return '';
+        endif;
+        if (strpos($url, '.jpg?') !== false) :
+            return substr($url, 0, (strpos($url, ".jpg?") + 5));
+        endif;
+        return $url;
+    }
+
+    private function fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $destination)
+    {
+        if ($remoteUrl === '') :
+            return 'empty';
+        endif;
+
+        if (checkRemoteFile($remoteUrl) == false) :
+            $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
+            $subject = "Invalid image from Scryfall API";
+            $message = "$remoteUrl does not exist - check database entry against API, has it been deleted?";
+            mail($this->adminEmail, $subject, $message, $from);
+            return 'error';
+        endif;
+
+        $options = array('http' => array('user_agent' => 'MtGCollection/1.0'));
+        $context = stream_context_create($options);
+        $image = file_get_contents($remoteUrl, false, $context);
+
+        if (!file_exists($imgLocation . $setcode)) :
+            $this->message->logMessage('[DEBUG]', "Creating new directory $setcode");
+            mkdir($imgLocation . $setcode);
+        endif;
+
+        file_put_contents($destination, $image);
+        $relativePath = strpos($destination, 'cardimg');
+        return substr($destination, $relativePath);
+    }
+
+    private function processImageFace($remoteUrl, $localPath, $imgLocation, $setcode)
+    {
+        $relativePath = strpos($localPath, 'cardimg');
+        $currentPath = substr($localPath, $relativePath);
+
+        if (!file_exists($localPath)) :
+            return $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
+        endif;
+
+        $age = time() - filemtime($localPath);
+        if ($age < self::IMAGE_MAX_AGE) :
+            return $currentPath;
+        endif;
+
+        if ($remoteUrl !== '' && $this->diffImage($remoteUrl, $localPath)) :
+            $this->message->logMessage('[DEBUG]', "Refreshing local image $localPath from $remoteUrl");
+            return $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
+        endif;
+
+        return $currentPath;
     }
 }
 // phpcs:enable

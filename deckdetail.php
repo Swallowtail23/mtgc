@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     24.3
+Version:     25.0
 Date:        29/11/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -49,6 +49,7 @@ History:
     24.1 13/10/24 MTGC-136/130 - Code tidy/optimisation; break icons line for long deck names
     24.2 25/11/25 Standard tidy-up; Remove legacy $missing code; fixed sideboard only card display bug
     24.3 29/11/25 Rename forcePasswordChange usage
+    25.0 29/11/25 Add async image checks
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -81,7 +82,44 @@ $uniquecard_ref = [];
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
+        function refreshCardImagesAsync() {
+            const seen = {};
+            $('img').each(function() {
+                const src = $(this).attr('src');
+                const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
+                if (!match) {
+                    return;
+                }
+                const cardId = match[1];
+                if (seen[cardId]) {
+                    return;
+                }
+                seen[cardId] = true;
+                $.ajax({
+                    url: 'ajax/ajaximagecheck.php',
+                    type: 'POST',
+                    data: { cardid: cardId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (!response || !response.success) {
+                            return;
+                        }
+                        if (response.front) {
+                            const newSrc = response.front + '?t=' + Date.now();
+                            $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
+                        }
+                        if (response.back) {
+                            const newBackSrc = response.back + '?t=' + Date.now();
+                            $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+    <script type="text/javascript">
         jQuery(document).ready(function ($) {
+            refreshCardImagesAsync();
             // Update the 'onerror' attribute for all images
             $('img').on('error', function() {
                 this.src = '/cardimg/back.jpg';
@@ -1003,17 +1041,17 @@ while ($row = $result->fetch_assoc()) :
         $planes = $planes + $row['cardqty'];
     endif;
     $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-    $imagefunction = $imageManager->getImage(
+    $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
         $imgLocation,
         $row['layout'],
         $twoCardDetailSections
     );
-    if ($imagefunction['front'] == 'error') :
+    if ($imageFunction['front'] == 'error') :
         $imageUrl = '/cardimg/back.jpg';
     else :
-        $imageUrl = $imagefunction['front'];
+        $imageUrl = $imageFunction['front'];
     endif;
     $deckcardname = str_replace("'", '&#39;', $row["name"]);
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['cardqty']);
@@ -1045,17 +1083,17 @@ while ($row = $sideresult->fetch_assoc()) :
     endif;
     $cardset = strtolower($row["setcode"]);
     $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-    $imagefunction = $imageManager->getImage(
+    $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
         $imgLocation,
         $row['layout'],
         $twoCardDetailSections
     );
-    if ($imagefunction['front'] == 'error') :
+    if ($imageFunction['front'] == 'error') :
         $imageUrl = '/cardimg/back.jpg';
     else :
-        $imageUrl = $imagefunction['front'];
+        $imageUrl = $imageFunction['front'];
     endif;
     $side = $side + $row['sideqty'];
     $deckvalue = $deckvalue + ($row['price_sort'] * $row['sideqty']);
@@ -1294,17 +1332,17 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
                                 $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                                $imagefunction = $imageManager->getImage(
+                                $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
                                     $imgLocation,
                                     $layout,
                                     $twoCardDetailSections
                                 );
-                                if ($imagefunction['front'] == 'error') :
+                                if ($imageFunction['front'] == 'error') :
                                     $imageUrl = '/cardimg/back.jpg';
                                 else :
-                                    $imageUrl = $imagefunction['front'];
+                                    $imageUrl = $imageFunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                                 if ($deck_legality_list != '') :
@@ -1459,17 +1497,17 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
                                     $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                                    $imagefunction = $imageManager->getImage(
+                                    $imageFunction = $imageManager->getImage(
                                         $cardset,
                                         $cardId,
                                         $imgLocation,
                                         $layout,
                                         $twoCardDetailSections
                                     );
-                                    if ($imagefunction['front'] == 'error') :
+                                    if ($imageFunction['front'] == 'error') :
                                         $imageUrl = '/cardimg/back.jpg';
                                     else :
-                                        $imageUrl = $imagefunction['front'];
+                                        $imageUrl = $imageFunction['front'];
                                     endif;
                                     $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");
                                     if ($deck_legality_list != '') :
@@ -1626,17 +1664,17 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
@@ -1889,17 +1927,17 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
@@ -2128,17 +2166,17 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
@@ -2430,17 +2468,17 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             while ($rowqty < $quantity) :
                                 $uniquecard_ref["$deckcard_no"]['name'] = $cardname;
@@ -2658,17 +2696,17 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
                                 $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                                $imagefunction = $imageManager->getImage(
+                                $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
                                     $imgLocation,
                                     $layout,
                                     $twoCardDetailSections
                                 );
-                                if ($imagefunction['front'] == 'error') :
+                                if ($imageFunction['front'] == 'error') :
                                     $imageUrl = '/cardimg/back.jpg';
                                 else :
-                                    $imageUrl = $imagefunction['front'];
+                                    $imageUrl = $imageFunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");?>
                                 <tr class='deckrow'>
@@ -2816,17 +2854,17 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
                             $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                            $imagefunction = $imageManager->getImage(
+                            $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections
                             );
-                            if ($imagefunction['front'] == 'error') :
+                            if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
-                                $imageUrl = $imagefunction['front'];
+                                $imageUrl = $imageFunction['front'];
                             endif;
                             $msg->logMessage('[DEBUG]', "Sideboard card '$cardname ($cardset $cardnumber)'");
                             if (
