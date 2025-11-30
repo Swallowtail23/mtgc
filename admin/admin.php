@@ -7,7 +7,7 @@ Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       Review for optimisations;
+To do:       Configuration management - behind re-login
 
 History:
     1.0         Initial version
