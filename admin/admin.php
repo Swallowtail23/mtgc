@@ -7,7 +7,7 @@ Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       Configuration management - behind re-login
+To do:       Move style elements to CSS file
 
 History:
     1.0         Initial version
@@ -509,30 +509,6 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
     <?php include('../includes/googlefonts.php');?>
     <script src="../js/jquery.js"></script>
-    <style>
-        .disabled-field {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .field-error {
-            border: 2px solid red !important;
-        }
-            .disabled-field {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .config-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: flex-start;
-            }
-        .config-grid .config-section {
-            flex: 1 1 calc(25% - 6px);
-            min-width: 220px;
-            max-width: calc(25% - 10px);
-        }
-</style>
     <script type="text/javascript">
         jQuery( function($) {
             var configPasswordField = $('#config_password');
