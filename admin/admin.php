@@ -997,7 +997,8 @@ require('../includes/menu.php');
                                                     name="general_title"
                                                     <?php echo $configInputStyle;?>
                                                     title="Site title shown to users"
-                                                    value="<?php echo htmlspecialchars($iniArray['general']['title']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['general']['title']); ?>"
                                                 >
                                             </label><br>
                                             <label>Tier<br>
@@ -1006,7 +1007,8 @@ require('../includes/menu.php');
                                                     id="general_tier"
                                                     class="textinput"
                                                     <?php echo $configInputStyle;?>
-                                                    title="dev uses built-in dev Turnstile keys; prod uses configured keys"
+                                                    title="dev uses built-in dev Turnstile keys; "
+                                                           . "prod uses configured keys"
                                                 >
                                                     <option value="dev"
                                                         <?php if ($iniArray['general']['tier'] === 'dev') :
@@ -1037,7 +1039,8 @@ require('../includes/menu.php');
                                                     name="general_logfile"
                                                     <?php echo $configInputStyle;?>
                                                     title="Full path to application logfile (must be writable)"
-                                                    value="<?php echo htmlspecialchars($iniArray['general']['Logfile']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['general']['Logfile']);?>"
                                                 >
                                             </label><br>
                                             <label>Timezone<br>
@@ -1069,7 +1072,8 @@ require('../includes/menu.php');
                                                     name="general_locale"
                                                     <?php echo $configInputStyle;?>
                                                     title="Locale used for formatting numbers and dates"
-                                                    value="<?php echo htmlspecialchars($iniArray['general']['Locale']);?>"
+                                                    value="<?php
+                                                     echo htmlspecialchars($iniArray['general']['Locale']);?>"
                                                 >
                                             </label><br>
                                             <label>Copyright<br>
@@ -1089,7 +1093,8 @@ require('../includes/menu.php');
                                                     name="general_url"
                                                     <?php echo $configInputStyle;?>
                                                     title="Base site URL"
-                                                    value="<?php echo htmlspecialchars($iniArray['general']['URL']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['general']['URL']);?>"
                                                 >
                                             </label><br>
                                             <label>Log level<br>
@@ -1249,7 +1254,8 @@ require('../includes/menu.php');
                                                     name="email_username"
                                                     <?php echo $configInputStyle;?>
                                                     title="SMTP username"
-                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
                                                     <?php if (!$emailAuthEnabled || !$emailEnabled) :
                                                         echo 'disabled';
                                                     endif;?>
@@ -1272,7 +1278,10 @@ require('../includes/menu.php');
                                                         endif;?>
                                                     >SMTPS</option>
                                                     <option value="starttls"
-                                                        <?php if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS') :
+                                                        <?php
+                                                        if (
+                                                            $smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS'
+                                                        ) :
                                                             echo 'selected';
                                                         endif;?>
                                                     >STARTTLS</option>
@@ -1311,8 +1320,9 @@ require('../includes/menu.php');
                                                     type="text"
                                                     name="security_admin_ip"
                                                     <?php echo $configInputStyle;?>
-                                                    title="Restrict admin login to this IP (leave blank to disable check)"
-                                                    value="<?php echo htmlspecialchars($iniArray['security']['AdminIP']);?>"
+                                                    title="Restrict admin login to this IP (disabled if empty)"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['security']['AdminIP']);?>"
                                                 >
                                             </label><br>
                                             <label>Bad login limit<br>
@@ -1361,8 +1371,10 @@ require('../includes/menu.php');
                                                         echo htmlspecialchars($turnstileSiteKeyIni);
                                                     endif;
                                                     ?>"
-                                                    data-realvalue="<?php echo htmlspecialchars($turnstileSiteKeyIni);?>"
-                                                    <?php if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
+                                                    data-realvalue="<?php
+                                                        echo htmlspecialchars($turnstileSiteKeyIni);?>"
+                                                    <?php
+                                                    if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
                                                         echo 'disabled';
                                                     endif;?>
                                                 >
@@ -1382,7 +1394,8 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Turnstile secret key (prod tier only)"
                                                     data-realvalue=""
-                                                    <?php if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
+                                                    <?php
+                                                    if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
                                                         echo 'disabled';
                                                     endif;?>
                                                 >
@@ -1467,7 +1480,8 @@ require('../includes/menu.php');
                                                     name="database_name"
                                                     <?php echo $configInputStyle;?>
                                                     title="Database name"
-                                                    value="<?php echo htmlspecialchars($iniArray['database']['DBName']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['database']['DBName']);?>"
                                                 >
                                             </label><br>
                                             <label>User<br>
@@ -1477,7 +1491,8 @@ require('../includes/menu.php');
                                                     name="database_user"
                                                     <?php echo $configInputStyle;?>
                                                     title="Database user name"
-                                                    value="<?php echo htmlspecialchars($iniArray['database']['DBUser']);?>"
+                                                    value="<?php
+                                                        echo htmlspecialchars($iniArray['database']['DBUser']);?>"
                                                 >
                                             </label><br>
                                             <button id="db_password_toggle" type="button" class="profilebutton">
