@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8082}:80"
     volumes:
       - ${BASE_DIR}/cardimg:/mnt/data/cardimg
       - ${BASE_DIR}/config/mtg_new.ini:/opt/mtg/mtg_new.ini

@@ -33,10 +33,22 @@ echo "[INFO] Using container command: ${DOCKER_CMD}"
 # ─────────────────────────────────────────────
 
 read -rp "Enter base directory for data/config/logs (e.g. /home/username): " BASE_PARENT
+read -rp "Enter port for the web UI (e.g. 8082): " WEB_PORT
 
-# Validate input
+# Validate base dir
 if [[ -z "$BASE_PARENT" ]]; then
     echo "[ERROR] Base directory is required. Aborting."
+    exit 1
+fi
+
+# Default port if empty
+if [[ -z "$WEB_PORT" ]]; then
+    WEB_PORT=8082
+fi
+
+# Very basic numeric check (optional)
+if ! [[ "$WEB_PORT" =~ ^[0-9]+$ ]]; then
+    echo "[ERROR] Port must be a number. Aborting."
     exit 1
 fi
 
@@ -47,8 +59,11 @@ MARKER_FILE="$BASE_DIR/logs/.scryfall_import_done"
 # Create required directories
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
 
-# Write .env file
-echo "BASE_DIR=$BASE_DIR" > .env
+# Write .env file (both vars together)
+{
+    echo "BASE_DIR=$BASE_DIR"
+    echo "WEB_PORT=$WEB_PORT"
+} > .env
 
 # Copy placeholder configs if not present
 if [[ ! -f "$BASE_DIR/config/mtg_new.ini" ]]; then
@@ -65,12 +80,7 @@ fi
 chmod +w "$BASE_DIR/config/mtg_new.ini"
 
 # ─────────────────────────────────────────────
-# Start containers via compose
-# ─────────────────────────────────────────────
-${COMPOSE_CMD} up --build -d
-
-# ─────────────────────────────────────────────
-# Check if db-data volume exists
+# Check if db-data volume exists (before containers start)
 # ─────────────────────────────────────────────
 DO_DB_SETUP=1
 if ${DOCKER_CMD} volume ls --format '{{.Name}}' | grep -qi 'mtgc_db-data'; then
@@ -79,10 +89,15 @@ if ${DOCKER_CMD} volume ls --format '{{.Name}}' | grep -qi 'mtgc_db-data'; then
 fi
 
 # ─────────────────────────────────────────────
+# Start containers via compose
+# ─────────────────────────────────────────────
+${COMPOSE_CMD} up --build -d
+
+# ─────────────────────────────────────────────
 # Wait for MySQL
 # ─────────────────────────────────────────────
 echo "Waiting for MySQL to be available..."
-until ${DOCKER_CMD} exec mtgc-web-1 mysqladmin ping -h"db" --silent; do
+until ${DOCKER_CMD} exec mtgc_web_1 mysqladmin ping -h"db" --silent; do
     echo "MySQL is not available yet. Waiting..."
     sleep 2
 done
@@ -96,7 +111,7 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     echo "Starting initial DB setup..."
 
     # Put DB into maintenance mode
-    ${DOCKER_CMD} exec mtgc-db-1 mysql -u root -prootpass -e \
+    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
         "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
     # Prompt for user info
@@ -106,15 +121,15 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     echo
 
     # Get hashed password from PHP script
-    hashed=$(${DOCKER_CMD} exec mtgc-web-1 php /var/www/mtgnew/setup/initial.php "$username" "$password" \
+    hashed=$(${DOCKER_CMD} exec mtgc_web_1 php /var/www/mtgnew/setup/initial.php "$username" "$password" \
         | grep "Hashed password:" | awk -F': ' '{print $2}' | xargs)
 
     if [[ -n "$hashed" ]]; then
-        ${DOCKER_CMD} exec mtgc-db-1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
             "INSERT INTO mtg.users (username, email, password, reg_date, status) VALUES ('$username', '$email', '$hashed', NOW(), 'active');"
-        ${DOCKER_CMD} exec mtgc-db-1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
             "UPDATE mtg.users SET admin=1 WHERE username='$username';"
-        ${DOCKER_CMD} exec mtgc-db-1 mysql -u root -prootpass -e \
+        ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
             "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
     else
         echo "[ERROR] Failed to get hashed password."
@@ -133,10 +148,10 @@ fi
 # ─────────────────────────────────────────────
 if [[ ! -f "$MARKER_FILE" ]]; then
     echo "Running bulk Scryfall import - this may take up to 2 hours..."
-    ${DOCKER_CMD} exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
-    ${DOCKER_CMD} exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
-    ${DOCKER_CMD} exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
-    ${DOCKER_CMD} exec mtgc-web-1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
     echo "done" > "$MARKER_FILE"
 else
     echo "Bulk import already completed previously - skipping."
@@ -145,7 +160,7 @@ fi
 # ─────────────────────────────────────────────
 # Clear maintenance mode
 # ─────────────────────────────────────────────
-${DOCKER_CMD} exec mtgc-db-1 mysql -u root -prootpass -e \
+${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
     "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
-echo "✅ Setup complete. You can now log in via http://localhost:8080"
+echo "✅ Setup complete. You can now log in via http://localhost:${WEB_PORT}"
