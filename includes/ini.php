@@ -186,10 +186,6 @@ try {
         );
     endif;
     $db->set_charset('utf8mb4');
-//try {
-//    $db = new Mysqli_Manager();
-//    $db->conn(); // connect DB
-//    $db->set_charset("utf8mb4");
 } catch (Exception $err) {
     if (($fd = fopen($logfile, "a")) !== false) :
         $msg = "[ERROR] Fatal database exception: {$err->getMessage()}";

@@ -48,17 +48,17 @@ $cssver = cssVersionCheck();
 <div id="loginheader">
     <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
 <?php
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') :
-        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-        $validEmail = filter_var($email, FILTER_VALIDATE_EMAIL);
-        if ($validEmail) :
-            $pwReset = new PasswordCheck($db, $logfile, $siteTitle);
-            $pwReset->passwordReset($validEmail, 1, $dbname);
-        endif;
-        echo "If the email address exists, a new temporary password has been sent.";
-        echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-    else :
-        ?>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') :
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $validEmail = filter_var($email, FILTER_VALIDATE_EMAIL);
+    if ($validEmail) :
+        $pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+        $pwReset->passwordReset($validEmail, 1, $dbname);
+    endif;
+    echo "If the email address exists, a new temporary password has been sent.";
+    echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+else :
+    ?>
         <form  action="?" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="submit">
             <br>Request password reset:<br><br>
@@ -67,8 +67,8 @@ $cssver = cssVersionCheck();
             <input class='sendreset' type="submit" value="SEND"/>
         </form>
         <?php
-    endif;
-    ?>
+endif;
+?>
 </div>
 </body>
 </html>

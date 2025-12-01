@@ -231,12 +231,12 @@ class DeckManager
                     '[DEBUG]',
                     "Quick add proceeding with provided name, set, number and specified language"
                 );
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
-                                                           OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
-                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
-                                                           setcode = ? AND number_import = ? AND 
-                                                           lang LIKE ? AND layout NOT IN ($placeholdersString) 
-                                                           ORDER BY release_date DESC LIMIT 1";
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ?
+                    OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR
+                    flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND
+                    setcode = ? AND number_import = ? AND
+                    lang LIKE ? AND layout NOT IN ($placeholdersString)
+                    ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickAddCard);
                 array_push($params, $quickAddSet, $quickAddNumber, $quickAddLang);
@@ -248,12 +248,12 @@ class DeckManager
                     '[DEBUG]',
                     "Quick add proceeding with provided name, set, number and primary language"
                 );
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? 
-                                                           OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
-                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
-                                                           setcode = ? AND number_import = ? AND 
-                                                           `layout` NOT IN ($placeholdersString) AND primary_card = 1 
-                                                           ORDER BY release_date DESC LIMIT 1";
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ?
+                    OR printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR
+                    flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND
+                    setcode = ? AND number_import = ? AND
+                    `layout` NOT IN ($placeholdersString) AND primary_card = 1
+                    ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickAddCard);
                 array_push($params, $quickAddSet, $quickAddNumber);
@@ -262,18 +262,18 @@ class DeckManager
             elseif ($quickAddCard !== '' and $quickAddSet !== '' and $quickAddNumber === '') :
                 // Card name and setcode provided
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR
-                                                           f1_name = ? OR 
-                                                           f2_name = ? OR 
-                                                           printed_name = ? OR 
-                                                           f1_printed_name = ? OR 
-                                                           f2_printed_name = ? OR 
-                                                           flavor_name = ? OR
-                                                           f1_flavor_name = ? OR 
-                                                           f2_flavor_name = ?) AND 
-                                                           setcode = ? AND 
-                                                           `layout` NOT IN ($placeholdersString)  AND
-                                                           primary_card = 1
-                                                           ORDER BY release_date DESC, number ASC LIMIT 1";
+                    f1_name = ? OR
+                    f2_name = ? OR
+                    printed_name = ? OR
+                    f1_printed_name = ? OR
+                    f2_printed_name = ? OR
+                    flavor_name = ? OR
+                    f1_flavor_name = ? OR
+                    f2_flavor_name = ?) AND
+                    setcode = ? AND
+                    `layout` NOT IN ($placeholdersString)  AND
+                    primary_card = 1
+                    ORDER BY release_date DESC, number ASC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = array_fill(0, 9, $quickAddCard);
                 array_push($params, $quickAddSet);
@@ -282,12 +282,12 @@ class DeckManager
             elseif ($quickAddCard !== '' and $quickAddSet === '') :
                 // Card name only provided, or with a number (but useless without setcode) - just grab a name match
                 $setcodePlaceholders = implode(',', array_fill(0, count($this->nonPreferredSetCodes), '?'));
-                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? OR 
-                                                           printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR 
-                                                           flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND 
-                                                           `layout` NOT IN ($placeholdersString) AND 
-                                                           primary_card = 1 AND setcode NOT IN ($setcodePlaceholders) 
-                                                           ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
+                $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? OR
+                    printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR
+                    flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND
+                    `layout` NOT IN ($placeholdersString) AND
+                    primary_card = 1 AND setcode NOT IN ($setcodePlaceholders)
+                    ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
                 $params = array_fill(0, 9, $quickAddCard); // First 9 are for the name variations
                 $params = array_merge($params, $noQuickAddLayouts); // Add layout exclusions
                 $params = array_merge($params, $this->nonPreferredSetCodes); // Add non-preferred set codes
@@ -295,9 +295,9 @@ class DeckManager
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
             elseif ($quickAddCard === '' and $quickAddSet !== '' and $quickAddNumber !== '') :
                 // Card name not provided, setcode, and collector number provided
-                $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND 
-                                                        `layout` NOT IN ($placeholdersString) AND primary_card = 1 
-                                                        ORDER BY release_date DESC LIMIT 1";
+                $query = "SELECT id FROM cards_scry WHERE setcode = ? AND number_import = ? AND
+                    `layout` NOT IN ($placeholdersString) AND primary_card = 1
+                    ORDER BY release_date DESC LIMIT 1";
                 $stmt = $this->db->prepare($query);
                 $params = [$quickAddSet, $quickAddNumber];
                 $params = array_merge($params, $noQuickAddLayouts);
@@ -365,8 +365,8 @@ class DeckManager
             $valuesString = implode(', ', $values);
             $placeholdersString = implode(', ', $placeholders);
 
-            $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty, sideqty) VALUES $placeholdersString 
-                        ON DUPLICATE KEY UPDATE cardqty = cardqty + VALUES(cardqty), sideqty = sideqty + VALUES(sideqty)";
+            $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty, sideqty) VALUES $placeholdersString
+                ON DUPLICATE KEY UPDATE cardqty = cardqty + VALUES(cardqty), sideqty = sideqty + VALUES(sideqty)";
 
             // Bind parameters and execute the query
             $stmt = $this->db->prepare($query);
@@ -788,7 +788,12 @@ class DeckManager
         // Clean-up empties
         if ($status == 'lastmain' or $status == 'lastside' or $status == 'allmain' or $status == 'allside') :
             $this->message->logMessage('[NOTICE]', "Delete deck card query called: $cardquery, status is $status");
-            $cardquery = "DELETE FROM deckcards WHERE decknumber = ? AND ((cardqty = 0 AND sideqty = 0) OR (cardqty = 0 AND sideqty IS NULL) OR (cardqty IS NULL AND sideqty = 0) OR (cardqty IS NULL AND sideqty IS NULL))";
+            $cardquery = "DELETE FROM deckcards WHERE decknumber = ? AND (
+                (cardqty = 0 AND sideqty = 0) OR
+                (cardqty = 0 AND sideqty IS NULL) OR
+                (cardqty IS NULL AND sideqty = 0) OR
+                (cardqty IS NULL AND sideqty IS NULL)
+            )";
             $params = [$deck];
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 //ran ok

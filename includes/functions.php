@@ -299,6 +299,16 @@ function checkRemoteFile($url)
     global $logfile;
     $msg = new Message($logfile);
 
+    if (stripos($url, 'file://') === 0) :
+        $path = substr($url, 7);
+        if (is_file($path) && filesize($path) > 0) :
+            $msg->logMessage('[NOTICE]', "$url exists locally");
+            return true;
+        endif;
+        $msg->logMessage('[ERROR]', "$url does not exist locally or is empty");
+        return false;
+    endif;
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
