@@ -1,0 +1,32 @@
+# Ignore version control
+.git
+.github/
+.vscode
+
+# Dependency directories
+vendor/
+/node_modules
+
+# Test suites and configs
+/tests
+.phpunit.result.cache
+phpunit.xml
+phpcs.xml
+
+# Local overrides and IDE files
+includes/sessionname.local.php
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+.idea/
+
+# Runtime data that should be mounted separately
+cardimg/
+.well-known/
+
+# Docker files
+docker-compose.override.yml*
+Dockerfile*

@@ -35,9 +35,11 @@ require('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
 $msg = new Message($logfile);
 $priceMgr = new PriceManager($db, $logfile, $userEmail);
+$msg->logMessage('[DEBUG]',"Ajax grid update called");
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+$msg->logMessage('[DEBUG]',"Referring page is: $referringPage");
 $expectedReferringPages =   [
                                 $myURL . '/index.php',
                                 $myURL . '/carddetail.php'
@@ -57,6 +59,7 @@ foreach ($expectedReferringPages as $page) :
 endforeach;
 
 if ($isValidReferrer) :
+    $msg->logMessage('[DEBUG]',"Ajax grid update, referrer is valid");
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
         exit();
@@ -315,5 +318,6 @@ if ($isValidReferrer) :
         // Send JSON response
         header('Content-Type: application/json');
         echo json_encode($response);
+        exit;
     endif;
 endif;
