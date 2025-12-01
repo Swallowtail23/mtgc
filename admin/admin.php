@@ -228,6 +228,20 @@ $configAction = filter_input(INPUT_POST, 'config_action', FILTER_SANITIZE_FULL_S
 $timezoneList = timezone_identifiers_list();
 sort($timezoneList);
 $configInputStyle = 'style="width:220px"';
+$turnstileSiteKeyIni = $iniArray['security']['Turnstile_site_key'] ?? '';
+$turnstileSecretKeyIni = $iniArray['security']['Turnstile_secret_key'] ?? '';
+$trustDurationIni = $iniArray['security']['TrustDuration'] ?? '';
+$fxApiIni = $iniArray['fx']['FreecurrencyAPI'] ?? '';
+$fxUrlIni = $iniArray['fx']['FreecurrencyURL'] ?? '';
+$fxTargetCurrencyIni = $iniArray['fx']['TargetCurrency'] ?? '';
+$smtpDebugIni = $iniArray['email']['SMTPDebug'] ?? '';
+$smtpHostIni = $iniArray['email']['Host'] ?? '';
+$smtpPortIni = $iniArray['email']['Port'] ?? '';
+$smtpUserIni = $iniArray['email']['Username'] ?? '';
+$smtpPasswordIni = $iniArray['email']['Password'] ?? '';
+$smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
+$disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
+$disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -350,6 +364,10 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     if ($smtpPort !== null && $smtpPort !== false && $smtpPort !== '') :
         $updatedIni['email']['Port'] = $smtpPort;
     endif;
+    $emailStatus = getPostedValue('email_status', $iniArray['email']['Email'] ?? 'enabled');
+    if (in_array($emailStatus, array('enabled', 'disabled'), true)) :
+        $updatedIni['email']['Email'] = $emailStatus;
+    endif;
     $smtpAuth = getPostedValue('email_auth', $iniArray['email']['SMTPAuth']);
     if ($smtpAuth === 'enabled' || $smtpAuth === '1' || $smtpAuth === 'true' || $smtpAuth === 1) :
         $updatedIni['email']['SMTPAuth'] = 1;
@@ -425,6 +443,8 @@ endif;
 
 $turnstileEnabled = ($iniArray['security']['Turnstile'] === 'enabled');
 $commentsEnabled = ($iniArray['comments']['Disqus'] === 'enabled');
+$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
+$emailEnabled = ($emailEnabledSetting === 'enabled');
 $emailAuthEnabled = (
     $iniArray['email']['SMTPAuth'] === true
     || $iniArray['email']['SMTPAuth'] === 1
@@ -457,6 +477,12 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
     <?php include('../includes/googlefonts.php');?>
     <script src="../js/jquery.js"></script>
+    <style>
+        .disabled-field {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
     <script type="text/javascript">
         jQuery( function($) {
             $('#newinfoupdate').submit(function() {
@@ -473,6 +499,11 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 var enabled = enableValues.indexOf(controller.val()) !== -1;
                 targetSelectors.forEach(function(selector) {
                     $(selector).prop('disabled', !enabled);
+                    if (!enabled) {
+                        $(selector).addClass('disabled-field');
+                    } else {
+                        $(selector).removeClass('disabled-field');
+                    }
                 });
             }
 
@@ -542,10 +573,46 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 ['#email_username', '#email_password_toggle', '#email_secure'],
                 ['enabled']
             );
+            toggleDependent(
+                '#email_status',
+                [
+                    '#email_server',
+                    '#email_admin',
+                    '#email_smtp_debug',
+                    '#email_host',
+                    '#email_port',
+                    '#email_auth',
+                    '#email_username',
+                    '#email_password_toggle',
+                    '#email_secure'
+                ],
+                ['enabled']
+            );
             $('#email_auth').on('change', function() {
                 toggleDependent(
                     '#email_auth',
                     ['#email_username', '#email_password_toggle', '#email_secure'],
+                    ['enabled']
+                );
+                if ($(this).val() !== 'enabled') {
+                    $('#email_password_section').hide();
+                    $('#email_password_changed').val('0');
+                }
+            });
+            $('#email_status').on('change', function() {
+                toggleDependent(
+                    '#email_status',
+                    [
+                        '#email_server',
+                        '#email_admin',
+                        '#email_smtp_debug',
+                        '#email_host',
+                        '#email_port',
+                        '#email_auth',
+                        '#email_username',
+                        '#email_password_toggle',
+                        '#email_secure'
+                    ],
                     ['enabled']
                 );
                 if ($(this).val() !== 'enabled') {
@@ -1166,44 +1233,80 @@ require('../includes/menu.php');
                                     </div>
                                     <div class="config-section">
                                         <h4>Email settings</h4>
+                                        <label>Email status<br>
+                                            <select
+                                                name="email_status"
+                                                id="email_status"
+                                                class="textinput"
+                                                <?php echo $configInputStyle;?>
+                                                title="Enable or disable all email sending"
+                                            >
+                                                <option value="enabled"
+                                                    <?php if ($emailEnabled) :
+                                                        echo 'selected';
+                                                    endif;?>
+                                                >enabled</option>
+                                                <option value="disabled"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'selected';
+                                                    endif;?>
+                                                >disabled</option>
+                                            </select>
+                                        </label><br>
                                         <label>Server email<br>
                                             <input
                                                 class="textinput"
                                                 type="email"
+                                                id="email_server"
                                                 name="email_server"
                                                 <?php echo $configInputStyle;?>
                                                 title="From/Reply-To address used by emails"
                                                 value="<?php echo htmlspecialchars($serverEmail);?>"
+                                                <?php if (!$emailEnabled) :
+                                                    echo 'disabled';
+                                                endif;?>
                                             >
                                         </label><br>
                                         <label>Admin email<br>
                                             <input
                                                 class="textinput"
                                                 type="email"
+                                                id="email_admin"
                                                 name="email_admin"
                                                 <?php echo $configInputStyle;?>
                                                 title="Administrative contact email"
                                                 value="<?php echo htmlspecialchars($adminEmail);?>"
+                                                <?php if (!$emailEnabled) :
+                                                    echo 'disabled';
+                                                endif;?>
                                             >
                                         </label><br>
                                         <label>SMTP debug<br>
                                             <input
                                                 class="textinput"
                                                 type="text"
+                                                id="email_smtp_debug"
                                                 name="email_smtp_debug"
                                                 <?php echo $configInputStyle;?>
                                                 title="PHPMailer debug level"
                                                 value="<?php echo htmlspecialchars($smtpParameters['SMTPDebug']);?>"
+                                                <?php if (!$emailEnabled) :
+                                                    echo 'disabled';
+                                                endif;?>
                                             >
                                         </label><br>
                                         <label>SMTP host<br>
                                             <input
                                                 class="textinput"
                                                 type="text"
+                                                id="email_host"
                                                 name="email_host"
                                                 <?php echo $configInputStyle;?>
                                                 title="SMTP server hostname"
                                                 value="<?php echo htmlspecialchars($smtpParameters['SMTPHost']);?>"
+                                                <?php if (!$emailEnabled) :
+                                                    echo 'disabled';
+                                                endif;?>
                                             >
                                         </label><br>
                                         <label>SMTP port<br>
@@ -1224,6 +1327,9 @@ require('../includes/menu.php');
                                                 class="textinput"
                                                 <?php echo $configInputStyle;?>
                                                 title="Enable SMTP authentication"
+                                                <?php if (!$emailEnabled) :
+                                                    echo 'disabled';
+                                                endif;?>
                                             >
                                                 <option value="enabled"
                                                     <?php if ($emailAuthEnabled) :
@@ -1246,13 +1352,13 @@ require('../includes/menu.php');
                                                 <?php echo $configInputStyle;?>
                                                 title="SMTP username"
                                                 value="<?php echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
-                                                <?php if (!$emailAuthEnabled) :
+                                                <?php if (!$emailAuthEnabled || !$emailEnabled) :
                                                     echo 'disabled';
                                                 endif;?>
                                             >
                                         </label><br>
                                         <button id="email_password_toggle" type="button" class="profilebutton"
-                                            <?php if (!$emailAuthEnabled) :
+                                            <?php if (!$emailAuthEnabled || !$emailEnabled) :
                                                 echo 'disabled';
                                             endif;?>
                                         >
@@ -1277,7 +1383,7 @@ require('../includes/menu.php');
                                                 class="textinput"
                                                 <?php echo $configInputStyle;?>
                                                 title="Encryption method for SMTP"
-                                                <?php if (!$emailAuthEnabled) :
+                                                <?php if (!$emailAuthEnabled || !$emailEnabled) :
                                                     echo 'disabled';
                                                 endif;?>
                                             >

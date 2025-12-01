@@ -130,7 +130,9 @@ try {
     $from = "From: " . $serverEmail;
     $subject = "Fatal database exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
-    mail($adminEmail, $subject, $message, $from);
+    if (isset($emailEnabled) && $emailEnabled === true) :
+        mail($adminEmail, $subject, $message, $from);
+    endif;
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }

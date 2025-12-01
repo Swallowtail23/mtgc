@@ -25,7 +25,7 @@ endif;
 
 function mtgError($number, $string, $file, $line, $context = '')
 {
-    global $logfile, $adminEmail, $serverEmail;
+    global $logfile, $adminEmail, $serverEmail, $emailEnabled;
     $msg = new Message($logfile);
 
     if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
@@ -44,7 +44,14 @@ function mtgError($number, $string, $file, $line, $context = '')
             $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_ERROR) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminEmail, $subject, $message, $from);
+            if ($emailEnabled) :
+                mail($adminEmail, $subject, $message, $from);
+            else :
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; E_USER_ERROR notification not sent for $file:$line"
+                );
+            endif;
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         case E_USER_WARNING:
@@ -52,7 +59,14 @@ function mtgError($number, $string, $file, $line, $context = '')
             $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_WARNING) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminEmail, $subject, $message, $from);
+            if ($emailEnabled) :
+                mail($adminEmail, $subject, $message, $from);
+            else :
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; E_USER_WARNING notification not sent for $file:$line"
+                );
+            endif;
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         case E_USER_NOTICE:
@@ -60,7 +74,14 @@ function mtgError($number, $string, $file, $line, $context = '')
             $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_NOTICE) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminEmail, $subject, $message, $from);
+            if ($emailEnabled) :
+                mail($adminEmail, $subject, $message, $from);
+            else :
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; E_USER_NOTICE notification not sent for $file:$line"
+                );
+            endif;
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
         default:
@@ -68,7 +89,11 @@ function mtgError($number, $string, $file, $line, $context = '')
             $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
-            mail($adminEmail, $subject, $message, $from);
+            if ($emailEnabled) :
+                mail($adminEmail, $subject, $message, $from);
+            else :
+                $msg->logMessage('[NOTICE]', "Email disabled; error notification not sent for $file:$line");
+            endif;
             echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
             exit();
     endswitch;
@@ -76,7 +101,7 @@ function mtgError($number, $string, $file, $line, $context = '')
 
 function mtgException($err)
 {
-    global $logfile, $adminEmail, $serverEmail;
+    global $logfile, $adminEmail, $serverEmail, $emailEnabled;
     if (($fd = fopen($logfile, 'a')) !== false) :
         $msg = "[ERROR] Fatal exception: {$err->getMessage()}";
         $str = "[" . date('Y/m/d H:i:s', time()) . "] " . $msg;
@@ -90,7 +115,15 @@ function mtgException($err)
     $from = "From: " . $serverEmail;
     $subject = "Exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
-    mail($adminEmail, $subject, $message, $from);
+    if ($emailEnabled) :
+        mail($adminEmail, $subject, $message, $from);
+    else :
+        $fallback = new Message($logfile);
+        $fallback->logMessage(
+            '[NOTICE]',
+            "Email disabled; exception notification not sent ({$err->getMessage()})"
+        );
+    endif;
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     exit();
 }

@@ -238,20 +238,18 @@ require('../includes/menu.php');
                         '[ERROR]',
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
-                    $obj = new PasswordCheck($db, $logfile, $siteTitle);
-                    $reset = $obj->passwordReset($sql_eml, $admin, $dbname);
-                    if ($reset === 2) :
-                        echo "<div class='alert-box success'><span>success: </span>User $userName / $sql_eml created, "
-                             . "password successfully recorded and checked.</div>";
-                        echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
-                    elseif ($reset === 1) :
-                        echo "<div class='alert-box success'><span>success: </span>User $userName / $sql_eml password "
-                             . "successfully recorded and checked.</div>";
-                        echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
-                             . "already exists for this user.</div>";
+                    if ($emailEnabled) :
+                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                        $sent = $obj->requestResetToken($sql_eml, true);
+                        if ($sent) :
+                            echo "<div class='alert-box success'><span>success: </span>Password reset link sent (if "
+                                 . "user exists).</div>";
+                        else :
+                            echo "<div class='alert-box error'><span>error: </span>Failed to send reset link.</div>";
+                        endif;
                     else :
-                        echo "<div class='alert-box error'><span>error: </span>Something went wrong. "
-                             . "Check logs.</div>";
+                        echo "<div class='alert-box notice'><span>notice: </span>Email is disabled; reset links cannot "
+                             . "be sent.</div>";
                     endif;
                 endif;
             endforeach;
@@ -261,6 +259,11 @@ require('../includes/menu.php');
         <form id='newuserform' name="newuser" action="users.php" method="post" autocomplete="user-form">
             <h3> New user </h3>
             Leave password blank to have a random password generated and sent to the new user's email address.<br>
+            <?php
+            if (!$emailEnabled) :
+                echo "<b>This system has global email functionality disabled. "
+                      . "Use this form to reset passwords.</b><br>";
+            endif;?>
             <input type='hidden' name="newuser" value="yes">
             <input
                 class="textinput"
@@ -443,7 +446,13 @@ require('../includes/menu.php');
                                     <option value='' selected></option>
                                     <option value=deletecards>Delete collection</option>
                                     <option value=deleteuser>Delete user & cards</option>
-                                    <option value=resetpassword>Reset password</option>
+                                    <option value="resetpassword"
+                                        <?php
+                                        if (!$emailEnabled) :
+                                            echo 'disabled';
+                                        endif;
+                                        ?>
+                                    >Send reset link</option>
                                 </select>
                             </td>
                         </tr>

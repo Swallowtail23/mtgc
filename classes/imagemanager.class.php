@@ -191,7 +191,14 @@ class ImageManager
             $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Image unlink failure";
             $message = "Failed image unlink: $imageUrl. Front: $imagedelete; Back: $imagebackdelete";
-            mail($this->adminEmail, $subject, $message, $from);
+            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                mail($this->adminEmail, $subject, $message, $from);
+            else :
+                $this->message->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; missing image alert not sent for $remoteUrl"
+                );
+            endif;
             return 'failure';
         else :
             $this->message->logMessage('[DEBUG]', "Re-fetching image for $cardId");
@@ -296,7 +303,14 @@ class ImageManager
             $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Invalid image from Scryfall API";
             $message = "$remoteUrl does not exist - check database entry against API, has it been deleted?";
-            mail($this->adminEmail, $subject, $message, $from);
+            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                mail($this->adminEmail, $subject, $message, $from);
+            else :
+                $this->message->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; image unlink failure alert not sent for $imagebackurl"
+                );
+            endif;
             return 'error';
         endif;
 

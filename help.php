@@ -61,34 +61,39 @@ $name = ucfirst($userName);
                 $action = $_REQUEST['action'];
             endif;
             if ((!isset($action)) or ($action == "")) :
-                if (isset($_SERVER['HTTP_REFERER'])) :
-                    $referpage = $_SESSION["referpage"] = $_SERVER['HTTP_REFERER'];
+                if (!$emailEnabled) :
+                    echo "This system has global email functionality disabled, "
+                         . "reporting is not available<br>";
                 else :
-                    $host = $_SERVER['HTTP_HOST'];
-                    $uri = $_SERVER['REQUEST_URI'];
-                    $referpage = "https://" . $host . $uri;
+                    if (isset($_SERVER['HTTP_REFERER'])) :
+                        $referpage = $_SESSION["referpage"] = $_SERVER['HTTP_REFERER'];
+                    else :
+                        $host = $_SERVER['HTTP_HOST'];
+                        $uri = $_SERVER['REQUEST_URI'];
+                        $referpage = "https://" . $host . $uri;
+                    endif;
+                    ?>
+                    <form  action="#" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="submit">
+                    Your name:<br>
+                    <?php echo "<input class='disabledtext' "
+                            . "name='name' type='text' placeholder='$name' "
+                            . "value='$name' disabled size='30'/><br>"; ?>
+                    Your email:<br>
+                    <?php echo "<input class='disabledtext' "
+                            . "name='email' type='email' placeholder='$userEmail' "
+                            . "value='$userEmail' disabled size='30'/><br>"; ?>
+                    Referring page:<br>
+                    <?php echo "<input class='disabledtext "
+                            . "disabledtextwide' name='page' type='text' "
+                            . "placeholder='$referpage' value='$referpage' "
+                            . "disabled size='60'/><br>"; ?>
+                    Your message:<br>
+                    <textarea class='messagetext textinput' name="message" rows="7" cols="30"></textarea><br>
+                    <input class='inline_button stdwidthbutton' type="submit" value="SEND MESSAGE"/>
+                    </form>
+                    <?php
                 endif;
-                ?>
-                <form  action="#" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="submit">
-                Your name:<br>
-                <?php echo "<input class='disabledtext' "
-                           . "name='name' type='text' placeholder='$name' "
-                           . "value='$name' disabled size='30'/><br>"; ?>
-                Your email:<br>
-                <?php echo "<input class='disabledtext' "
-                           . "name='email' type='email' placeholder='$userEmail' "
-                           . "value='$userEmail' disabled size='30'/><br>"; ?>
-                Referring page:<br>
-                <?php echo "<input class='disabledtext "
-                           . "disabledtextwide' name='page' type='text' "
-                           . "placeholder='$referpage' value='$referpage' "
-                           . "disabled size='60'/><br>"; ?>
-                Your message:<br>
-                <textarea class='messagetext textinput' name="message" rows="7" cols="30"></textarea><br>
-                <input class='inline_button stdwidthbutton' type="submit" value="SEND MESSAGE"/>
-                </form>
-                <?php
             else :
                 $referpage = $_SESSION["referpage"];
                 $message = wordwrap($_REQUEST['message'], 70);
@@ -101,8 +106,16 @@ $name = ucfirst($userName);
                     else :
                         $subject = "Message sent using your contact form";
                     endif;
-                    mail($adminEmail, $subject, $message, $from);
-                    echo "Email sent!";
+                    if (isset($emailEnabled) && $emailEnabled === true) :
+                        mail($adminEmail, $subject, $message, $from);
+                        echo "Email sent!";
+                    else :
+                        $msg->logMessage(
+                            '[NOTICE]',
+                            "Email disabled; contact form not emailed (from $userEmail, subject: $subject)"
+                        );
+                        echo "Email is disabled; your message was not sent.";
+                    endif;
                     echo "<meta http-equiv='refresh' content='2;url=help.php'>";
                 endif;
                 $_SESSION["referpage"] = '';

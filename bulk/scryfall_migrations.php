@@ -368,6 +368,16 @@ $msg->logMessage('[NOTICE]', "$total_count bulk migrations completed, $need_acti
 // Email results
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
-$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-$mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
-$msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+if (isset($emailEnabled) && $emailEnabled === true) :
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
+else :
+    $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_migrations alert');
+    $mailresult = false;
+endif;
+$msg->logMessage(
+    '[NOTICE]',
+    $mailresult === false
+        ? 'Email result: not sent (disabled or failure)'
+        : "Email result: $mailresult"
+);

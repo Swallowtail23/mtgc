@@ -40,31 +40,35 @@ namespace {
     }
 
 // Stub dependencies used by LoginHandler
-    class TrustedDeviceManager
-    {
-        public static $result = false;
-
-        public function __construct($db = null, $logfile = null)
+    if (!class_exists('TrustedDeviceManager')) {
+        class TrustedDeviceManager
         {
-        }
+            public static $result = false;
 
-        public function validateTrustedDevice()
-        {
-            return self::$result;
+            public function __construct($db = null, $logfile = null)
+            {
+            }
+
+            public function validateTrustedDevice()
+            {
+                return self::$result;
+            }
         }
     }
 
-    class PasswordCheck
-    {
-        public static $result = 10;
-
-        public function __construct($db = null, $logfile = null, $siteTitle = null)
+    if (!class_exists('PasswordCheck')) {
+        class PasswordCheck
         {
-        }
+            public static $result = 10;
 
-        public function validatePassword($email, $password)
-        {
-            return self::$result;
+            public function __construct($db = null, $logfile = null, $siteTitle = null)
+            {
+            }
+
+            public function validatePassword($email, $password)
+            {
+                return self::$result;
+            }
         }
     }
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.1
-Date:        25/11/25
+Version:     2.2
+Date:        01/12/25
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
 Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes not loaded in this page.
@@ -14,6 +14,7 @@ History:
     1.0         Initial version
     2.0 17/10/16 Update copyright text
     2.1 25/11/25 Standard tidy-up
+    2.2 01/12/25 Note when email alerts are disabled
 */
 
 $iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
@@ -57,7 +58,15 @@ require('includes/header.php'); ?>
     <div class="staticpagecontent">
         <h3>Error</h3>
         We've encountered a problem!<br><br>
-        That page returned an error, and details have been emailed to site admins. <br>
+        <?php
+        $emailEnabledSetting = $iniArray['Email'] ?? 'enabled';
+        if ($emailEnabledSetting === 'enabled') :
+            echo "That page returned an error, and details have been emailed to site admins.";
+        else :
+            echo "That page returned an error. Email alerts are disabled in this environment,";
+            echo " so no notification was sent.";
+        endif;
+        ?><br>
         Please try again later.
         <br>
         &nbsp;

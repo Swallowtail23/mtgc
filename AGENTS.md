@@ -30,7 +30,8 @@
 - All file edits should increment file information header/version history (where present)
 - Do not split SQL statements with string concatenation; keep them as single literals (with embedded newlines if needed)
 - App is not namespaced. All classes are global.
-- phpcs / phpcbf can be used to find and automatically resolve simple style issues, e.g. indentation
+- All code changes should result in clean phpcs runs
+- phpcbf can be used to find and automatically resolve simple style issues, e.g. indentation
 
 ## Logging
 - Log file path is set in `/opt/mtg/mtg_new.ini`; ensure the process user can write to it.

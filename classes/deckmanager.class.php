@@ -120,7 +120,14 @@ class DeckManager
                 $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                 $subject = "Deck Import failures / warnings";
                 $message = "$warningHeading \n \n $warningSummary \n";
-                mail($this->userEmail, $subject, $message, $from);
+                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                    mail($this->userEmail, $subject, $message, $from);
+                else :
+                    $this->message->logMessage(
+                        '[NOTICE]',
+                        "Email disabled; deck import warnings not sent to {$this->userEmail}"
+                    );
+                endif;
                 $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningSummary'");
                 $quickAddResult = 'multierror';
             endif;
@@ -1293,20 +1300,28 @@ class DeckManager
                     unlink($tmpName);
                 endif;
             elseif ($format === "email") :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
-                $subject = "Deck export";
-                $emailbody = "Your deck export ($deckName) is attached.";
-                $emailaltbody = "Your deck export ($deckName) is attached.";
-                $mailresult = $mail->sendEmail(
-                    $this->userEmail,
-                    true,
-                    $subject,
-                    $emailbody,
-                    $emailaltbody,
-                    $tmpName,
-                    $filename
-                );
+                    $subject = "Deck export";
+                    $emailbody = "Your deck export ($deckName) is attached.";
+                    $emailaltbody = "Your deck export ($deckName) is attached.";
+                    $mailresult = $mail->sendEmail(
+                        $this->userEmail,
+                        true,
+                        $subject,
+                        $emailbody,
+                        $emailaltbody,
+                        $tmpName,
+                        $filename
+                    );
+                else :
+                    $this->message->logMessage(
+                        '[NOTICE]',
+                        "Email disabled; deck export email not sent to {$this->userEmail}"
+                    );
+                    $mailresult = false;
+                endif;
                 if (isset($tmpName)) :
                     unlink($tmpName);
                 endif;

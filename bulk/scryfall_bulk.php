@@ -92,9 +92,16 @@ if ($bulkInfo !== false) :
             // Email results
             $bulkResultMessage = scryfallImport($file_location, $type);
             $subject = "MTG bulk update completed ($type)";
-            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-            $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
-            $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+            if (isset($emailEnabled) && $emailEnabled === true) :
+                $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+                $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
+                $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+            else :
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; scryfall_bulk alert not sent for $type"
+                );
+            endif;
         endif;
     endif;
 else :

@@ -66,8 +66,16 @@ if (isset($argv[1])) :
         $subject = "MTG Images reloaded for $setcode";
         $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
             . "Failed: $fail_count";
-        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-        $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
+        if (isset($emailEnabled) && $emailEnabled === true) :
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
+        else :
+            $msg->logMessage(
+                '[NOTICE]',
+                "Email disabled; set image reload alert not sent for $setcode"
+            );
+            $mailresult = false;
+        endif;
         $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
     else :
         echo json_encode(["status" => "error", "message" => "SQL error"]);
