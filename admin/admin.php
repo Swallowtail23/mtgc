@@ -221,8 +221,9 @@ endif;
 
 $configEditUnlocked = false;
 $configAuthRequested = false;
-$configEditMessage = '';
+$configEditMessage = $_SESSION['config_save_message'] ?? '';
 $configEditError = '';
+$configEditErrorTarget = '';
 $configAuthWindowSeconds = 600;
 $configAction = filter_input(INPUT_POST, 'config_action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $timezoneList = timezone_identifiers_list();
@@ -240,8 +241,15 @@ $smtpPortIni = $iniArray['email']['Port'] ?? '';
 $smtpUserIni = $iniArray['email']['Username'] ?? '';
 $smtpPasswordIni = $iniArray['email']['Password'] ?? '';
 $smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
+$smtpSecureChoice = 'none';
+if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_SMTPS') :
+    $smtpSecureChoice = 'smtps';
+elseif ($smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS') :
+    $smtpSecureChoice = 'starttls';
+endif;
 $disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
 $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
+$smtpDebugEnabled = ($smtpDebugIni !== 'SMTP::DEBUG_OFF' && $smtpDebugIni !== '');
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -358,7 +366,14 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     // Email settings
     $updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
     $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
-    $updatedIni['email']['SMTPDebug'] = getPostedValue('email_smtp_debug', $smtpDebugIni);
+    $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugIni);
+    if ($smtpDebugChoice === 'enabled') :
+        $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_SERVER';
+    elseif ($smtpDebugChoice === 'disabled') :
+        $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_OFF';
+    else :
+        $updatedIni['email']['SMTPDebug'] = $smtpDebugIni;
+    endif;
     $updatedIni['email']['Host'] = getPostedValue('email_host', $smtpHostIni);
     $smtpPort = filter_input(INPUT_POST, 'email_port', FILTER_SANITIZE_NUMBER_INT);
     if ($smtpPort !== null && $smtpPort !== false && $smtpPort !== '') :
@@ -379,7 +394,16 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     if ($emailPasswordChanged === '1') :
         $updatedIni['email']['Password'] = getPostedValue('email_password', $smtpPasswordIni);
     endif;
-    $updatedIni['email']['SMTPSecure'] = getPostedValue('email_secure', $smtpSecureIni);
+    $smtpSecureChoice = getPostedValue('email_secure', $smtpSecureIni);
+    if ($smtpSecureChoice === 'smtps') :
+        $updatedIni['email']['SMTPSecure'] = 'PHPMailer::ENCRYPTION_SMTPS';
+    elseif ($smtpSecureChoice === 'starttls') :
+        $updatedIni['email']['SMTPSecure'] = 'PHPMailer::ENCRYPTION_STARTTLS';
+    elseif ($smtpSecureChoice === 'none') :
+        $updatedIni['email']['SMTPSecure'] = 'none';
+    else :
+        $updatedIni['email']['SMTPSecure'] = $smtpSecureIni;
+    endif;
 
     // Comment settings
     $commentsStatus = getPostedValue('comments_status', $iniArray['comments']['Disqus']);
@@ -391,10 +415,10 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
 
     $pathErrors = array();
     if (!isPathWritable($updatedIni['general']['ImgLocation'])) :
-        $pathErrors[] = 'Image file path is not writable.';
+        $pathErrors[] = array('field' => 'general_img_location', 'message' => 'Image file path is not writable.');
     endif;
     if (!isPathWritable($updatedIni['general']['Logfile'])) :
-        $pathErrors[] = 'Logfile path is not writable.';
+        $pathErrors[] = array('field' => 'general_logfile', 'message' => 'Logfile path is not writable.');
     endif;
 
     if (empty($pathErrors)) :
@@ -402,7 +426,9 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
 
         if ($iniSaveResult === true) :
             $msg->logMessage('[NOTICE]', "Configuration updated by $userName");
-            $configEditMessage = 'Configuration saved.';
+            $_SESSION['config_save_message'] = 'Configuration saved.';
+            header('Location: admin.php');
+            exit();
             // re-read ini file for updated values
             $ini = new INI("/opt/mtg/mtg_new.ini");
             $iniArray = $ini->data;
@@ -437,7 +463,13 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $configEditError = 'Saving configuration failed. Check ini file permissions.';
         endif;
     else :
-        $configEditError = implode(' ', $pathErrors);
+        $messages = array_map(function ($err) {
+            return $err['message'];
+        }, $pathErrors);
+        $configEditError = "<div class='alert-box error'><span>error: </span>"
+            . htmlspecialchars(implode(' ', $messages))
+            . "</div>";
+        $configEditErrorTarget = $pathErrors[0]['field'];
     endif;
 endif;
 
@@ -471,7 +503,7 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 <!DOCTYPE html>
 <head>
     <title><?php echo $siteTitle;?> - admin (site)</title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
@@ -482,9 +514,41 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
             opacity: 0.6;
             cursor: not-allowed;
         }
-    </style>
+        .field-error {
+            border: 2px solid red !important;
+        }
+            .disabled-field {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .config-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+            }
+        .config-grid .config-section {
+            flex: 1 1 calc(25% - 6px);
+            min-width: 220px;
+            max-width: calc(25% - 10px);
+        }
+</style>
     <script type="text/javascript">
         jQuery( function($) {
+            var configPasswordField = $('#config_password');
+            if (configPasswordField.length) {
+                configPasswordField.focus();
+            }
+            function markDisabledFields() {
+                $('input, select, button').each(function() {
+                    if ($(this).prop('disabled')) {
+                        $(this).addClass('disabled-field');
+                    } else {
+                        $(this).removeClass('disabled-field');
+                    }
+                });
+            }
+
             $('#newinfoupdate').submit(function() {
                 if(($('#updatetext').val() === '') || ($('#updatedate').val() === '')){
                     alert("You need to complete the date and update text fields");
@@ -507,19 +571,26 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 });
             }
 
-            function setupPasswordSection(toggleSelector, sectionSelector, flagSelector, cancelSelector) {
+            function setupPasswordSection(toggleSelector, sectionSelector, flagSelector, altTextOnShow) {
                 var toggle = $(toggleSelector);
                 var section = $(sectionSelector);
                 var flag = $(flagSelector);
+                var defaultLabel = toggle.text();
                 function hideSection() {
                     section.hide();
                     flag.val('0');
                     section.find('input[type="password"]').val('');
+                    if (altTextOnShow) {
+                        toggle.text(defaultLabel);
+                    }
                 }
                 function showSection() {
                     section.show();
                     flag.val('1');
                     section.find('input[type="password"]').first().focus();
+                    if (altTextOnShow) {
+                        toggle.text(altTextOnShow);
+                    }
                 }
                 toggle.on('click', function(event) {
                     event.preventDefault();
@@ -529,25 +600,19 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                         showSection();
                     }
                 });
-                if (cancelSelector) {
-                    $(cancelSelector).on('click', function(event) {
-                        event.preventDefault();
-                        hideSection();
-                    });
-                }
             }
 
             setupPasswordSection(
                 '#db_password_toggle',
                 '#db_password_section',
                 '#database_password_changed',
-                '#db_password_cancel'
+                'CANCEL'
             );
             setupPasswordSection(
                 '#email_password_toggle',
                 '#email_password_section',
                 '#email_password_changed',
-                null
+                'CANCEL'
             );
 
             toggleDependent(
@@ -573,6 +638,11 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 ['#email_username', '#email_password_toggle', '#email_secure'],
                 ['enabled']
             );
+            // Ensure SMTP auth-dependent fields respect initial state on load
+            if ($('#email_auth').val() !== 'enabled') {
+                $('#email_password_section').hide();
+                $('#email_password_changed').val('0');
+            }
             toggleDependent(
                 '#email_status',
                 [
@@ -588,6 +658,16 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 ],
                 ['enabled']
             );
+            toggleDependent(
+                '#email_auth',
+                ['#email_username', '#email_password_toggle', '#email_secure'],
+                ['enabled']
+            );
+            if ($('#email_auth').val() !== 'enabled') {
+                $('#email_password_section').hide();
+                $('#email_password_changed').val('0');
+            }
+            markDisabledFields();
             $('#email_auth').on('change', function() {
                 toggleDependent(
                     '#email_auth',
@@ -619,7 +699,49 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                     $('#email_password_section').hide();
                     $('#email_password_changed').val('0');
                 }
+                toggleDependent(
+                    '#email_auth',
+                    ['#email_username', '#email_password_toggle', '#email_secure'],
+                    ['enabled']
+                );
+                if ($('#email_auth').val() !== 'enabled') {
+                    $('#email_password_section').hide();
+                    $('#email_password_changed').val('0');
+                }
+                markDisabledFields();
             });
+            const turnstilePlaceholder = "N/A - Tier is 'dev'";
+            function toggleTierTurnstileFields() {
+                const isDevTier = $('#general_tier').val() === 'dev';
+                ['#security_turnstile_site_key', '#security_turnstile_secret_key'].forEach(function(selector) {
+                    const field = $(selector);
+                    if (isDevTier) {
+                        if (field.data('realvalue') === undefined || field.val() !== turnstilePlaceholder) {
+                            field.data('realvalue', field.val());
+                        }
+                        field.val(turnstilePlaceholder);
+                        field.prop('disabled', true);
+                    } else {
+                        if (field.val() === turnstilePlaceholder && field.data('realvalue') !== undefined) {
+                            field.val(field.data('realvalue'));
+                        }
+                        field.prop('disabled', $('#security_turnstile').val() !== 'enabled');
+                    }
+                });
+                markDisabledFields();
+            }
+            toggleTierTurnstileFields();
+            $('#general_tier').on('change', toggleTierTurnstileFields);
+
+            <?php if (!empty($configEditErrorTarget)) : ?>
+                alert("<?php echo addslashes(strip_tags($configEditError));?>");
+                var errorField = document.getElementsByName('<?php echo $configEditErrorTarget; ?>')[0]
+                    || document.getElementById('<?php echo $configEditErrorTarget; ?>');
+                if (errorField) {
+                    errorField.classList.add('field-error');
+                    errorField.focus();
+                }
+            <?php endif; ?>
         });
     </script>
 </head>
@@ -632,6 +754,12 @@ require('../includes/menu.php');
 ?>
 <div id='page'>
     <div class='staticpagecontent'>
+        <?php if (!empty($configEditMessage)) : ?>
+            <div class='alert-box success'>
+                <span>success: </span><?php echo htmlspecialchars($configEditMessage); ?>
+            </div>
+            <?php unset($_SESSION['config_save_message']); ?>
+        <?php endif; ?>
         <div>
             <h3>Add Info update</h3>
             <form id='newinfoupdate' action="?" method="POST">
@@ -665,14 +793,11 @@ require('../includes/menu.php');
                 <input name='name' type='hidden' value='<?php echo ucfirst($userName) ?>'/>
             </form>
 
-            <h3>Logging </h3>
-            <h4>Log file path</h4> <?php
-            $filepath = "$logfile";
-            echo 'Log file location: ' . $filepath . '<p>';
-            echo '<h4>Log file - recent</h4>';
+            <?php
             $logLinesToShow = 8;
-            $recentLogLines = getLogTailLines($filepath, $logLinesToShow);
-
+            $recentLogLines = getLogTailLines($logfile, $logLinesToShow); ?>
+            <h3>Logs - last <?php echo $logLinesToShow . " lines"; ?></h3>
+            <?php
             if (empty($recentLogLines)) :
                 echo 'No log entries available or log file could not be read.<br>';
             else :
@@ -719,71 +844,18 @@ require('../includes/menu.php');
             endif;
             $mtceStatus = mtceModeCheck($user); ?>
             <br>
+            <h3>Site administration</h3>
             <table>
                 <tbody>
-                    <tr>
-                        <td class="options_left">
-                            <h4>Log level</h4>
-                            If log level set fails, check permissions of web server to the ini file
-                        </td>
-                        <td>
-                            <form action="/admin/admin.php">
-                                <label class="radio">
-                                    <input type="radio" name="loglevel" value="1"
-                                        <?php
-                                        if ($logLevelIni === '1') :
-                                            echo 'checked="checked"';
-                                        endif;
-                                        ?>
-                                    >
-                                    <span class="outer">
-                                        <span class="inner">
-                                        </span>
-                                    </span>1 - Error;
-                                </label>
-                                <br>
-                                <label class="radio">
-                                    <input type="radio" name="loglevel" value="2"
-                                        <?php
-                                        if ($logLevelIni === '2') :
-                                            echo 'checked="checked"';
-                                        endif;
-                                        ?>
-                                    >
-                                    <span class="outer">
-                                        <span class="inner">
-                                        </span>
-                                    </span>2 - Notice;
-                                </label>
-                                <br>
-                                <label class="radio">
-                                    <input type="radio" name="loglevel" value="3"
-                                        <?php
-                                        if ($logLevelIni === '3') :
-                                            echo 'checked="checked"';
-                                        endif;
-                                        ?>
-                                    >
-                                    <span class="outer">
-                                        <span class="inner">
-                                        </span>
-                                    </span>3 - Debug;
-                                </label><br>
-                                <input class='profilebutton' type="submit" value="SET" />
-                            </form>
-                        </td>
-                    </tr>
                     <tr>
                         <td class="options_left">
                             <h4>CSS</h4>
                             <?php
                             if (strpos($cssver, "min") == true) :
-                                echo "Current CSS status: Minified <p>";
-                                echo "Un-minify to see results of editing CSS!!";
+                                echo "Current CSS status: Using minified";
                             else :
                                     echo
-                                        "Current CSS status: Not minified <p> Edit style$cssver.css, save, "
-                                        . "minify it to 'css/style-min.css', then 'publish'";
+                                        "Current CSS status: Using unminified";
                             endif;?>
                         </td>
                         <td>
@@ -804,11 +876,11 @@ require('../includes/menu.php');
                     <tr>
                         <td class="options_left">
                             <h4>Scryfall JSON</h4>
-                            Clear all Scryfall data from JSON table
+                            <span id="inisettings">Clear all Scryfall data from JSON table</span>
                         </td>
                         <td>
                             <form action="/admin/admin.php">
-                                <input class='profilebutton' type="submit" value="CLEAR JSON" />
+                                <input class='profilebutton' type="submit" value="WIPE JSON" />
                                 <input type="hidden" name="clearscryfalljson" value="y"/>
                             </form>
                         </td>
@@ -849,7 +921,7 @@ require('../includes/menu.php');
                     </tr>
                     <tr>
                         <td class="options_left">
-                            <h3 id="inisettings">Ini file settings</h3>
+                            <h3>Configuration settings</h3>
                         </td>
                         <td>
                             <?php
@@ -857,20 +929,30 @@ require('../includes/menu.php');
                                 echo '<div class="successmsg">'
                                     . htmlspecialchars($configEditMessage, ENT_QUOTES, 'UTF-8') . '</div>';
                             endif;
-                            if ($configEditError !== '') :
-                                echo '<div class="errormsg">'
-                                    . htmlspecialchars($configEditError, ENT_QUOTES, 'UTF-8') . '</div>';
-                            endif;
                             if ($configEditUnlocked) :
                                 if ($configEditExpiry) :
                                     echo '<div>Editing unlocked until ' . date('H:i', $configEditExpiry) . '</div>';
                                 endif; ?>
-                                <form method="post" action="#inisettings">
+                                <form
+                                    method="post"
+                                    action="admin.php#inisettings"
+                                    style="display:inline-block; margin-right: 10px;"
+                                >
                                     <input type="hidden" name="config_action" value="cancel_config_edit">
                                     <input class='profilebutton' type="submit" value="CANCEL" />
-                                </form> <?php
+                                </form>
+                                <?php if ($configEditUnlocked) : ?>
+                                    <button
+                                        class="profilebutton"
+                                        type="button"
+                                        onclick="document.getElementById('configedit').requestSubmit();"
+                                    >
+                                        SAVE
+                                    </button>
+                                <?php endif; ?>
+                                <?php
                             else : ?>
-                                <form method="post" action="#inisettings">
+                                <form method="post" action="admin.php#inisettings">
                                     <input type="hidden" name="config_action" value="start_reauth">
                                     <input class='profilebutton' type="submit" value="SHOW/EDIT" />
                                 </form> <?php
@@ -880,13 +962,14 @@ require('../includes/menu.php');
                     <?php if ($configAuthRequested && !$configEditUnlocked) : ?>
                     <tr>
                         <td class="options_left" colspan="2">
-                            <form method="post" action="#inisettings" class="config-reauth-form">
+                            <form method="post" action="admin.php#inisettings" class="config-reauth-form">
                                 <label>
                                     Re-authenticate to edit configuration<br>
                                     <input
                                         class="textinput"
                                         type="password"
                                         name="config_password"
+                                        id="config_password"
                                         autocomplete="current-password"
                                     >
                                 </label>
@@ -908,16 +991,13 @@ require('../includes/menu.php');
                     <?php endif; ?>
                     <tr>
                         <td colspan="2">
-                            <?php if (!$configEditUnlocked) : ?>
-                                <p>Enable config editing to view and update.</p>
-                            <?php else : ?>
-                                <?php
+                            <?php if ($configEditUnlocked) :
                                 $imgLocationValue = htmlspecialchars($iniArray['general']['ImgLocation']);
                                 $copyrightValue = htmlspecialchars($iniArray['general']['Copyright']);
                                 $dbServerValue = htmlspecialchars($iniArray['database']['DBServer']);
                                 $badLoginLimitValue = htmlspecialchars($iniArray['security']['Badloginlimit']);
                                 ?>
-                                <form id="configedit" method="post" action="admin.php#inisettings">
+                                <form id="configedit" method="post" action="admin.php">
                                     <input type="hidden" name="config_action" value="save_ini">
                                     <input
                                         type="hidden"
@@ -931,542 +1011,547 @@ require('../includes/menu.php');
                                         id="email_password_changed"
                                         value="0"
                                     >
-                                    <div class="config-section">
-                                        <h4>General settings</h4>
-                                        <label>Title<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_title"
-                                                <?php echo $configInputStyle;?>
-                                                title="Site title shown to users"
-                                                value="<?php echo htmlspecialchars($iniArray['general']['title']);?>"
-                                            >
-                                        </label><br>
-                                        <label>Tier<br>
-                                            <select
-                                                name="general_tier"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="dev uses built-in dev Turnstile keys; prod uses configured keys"
-                                            >
-                                                <option value="dev"
-                                                    <?php if ($iniArray['general']['tier'] === 'dev') :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >dev</option>
-                                                <option value="prod"
-                                                    <?php if ($iniArray['general']['tier'] === 'prod') :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >prod</option>
-                                            </select>
-                                        </label><br>
-                                        <label>Image file path<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_img_location"
-                                                <?php echo $configInputStyle;?>
-                                                title="Directory where card images are stored (must be writable)"
-                                                value="<?php echo $imgLocationValue;?>"
-                                            >
-                                        </label><br>
-                                        <label>Logfile path<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_logfile"
-                                                <?php echo $configInputStyle;?>
-                                                title="Full path to application logfile (must be writable)"
-                                                value="<?php echo htmlspecialchars($iniArray['general']['Logfile']);?>"
-                                            >
-                                        </label><br>
-                                        <label>Timezone<br>
-                                            <select
-                                                class="textinput"
-                                                name="general_timezone"
-                                                id="general_timezone"
-                                                <?php echo $configInputStyle;?>
-                                                title="Timezone for dates and logs"
-                                            >
-                                                <?php foreach ($timezoneList as $timezoneItem) : ?>
-                                                    <option
-                                                        value="<?php echo htmlspecialchars($timezoneItem);?>"
-                                                        <?php
-                                                        if ($timezoneItem === $iniArray['general']['Timezone']) :
+                                    <div class="config-grid">
+                                        <div class="config-section">
+                                            <h4>General settings</h4>
+                                            <label>Title<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="general_title"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Site title shown to users"
+                                                    value="<?php echo htmlspecialchars($iniArray['general']['title']);?>"
+                                                >
+                                            </label><br>
+                                            <label>Tier<br>
+                                                <select
+                                                    name="general_tier"
+                                                    id="general_tier"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="dev uses built-in dev Turnstile keys; prod uses configured keys"
+                                                >
+                                                    <option value="dev"
+                                                        <?php if ($iniArray['general']['tier'] === 'dev') :
                                                             echo 'selected';
-                                                        endif;
-                                                        ?>
-                                                    >
-                                                        <?php echo htmlspecialchars($timezoneItem);?>
-                                                    </option>
-                                                <?php endforeach;?>
-                                            </select>
-                                        </label><br>
-                                        <label>Locale<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_locale"
-                                                <?php echo $configInputStyle;?>
-                                                title="Locale used for formatting numbers and dates"
-                                                value="<?php echo htmlspecialchars($iniArray['general']['Locale']);?>"
-                                            >
-                                        </label><br>
-                                        <label>Copyright<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_copyright"
-                                                <?php echo $configInputStyle;?>
-                                                title="Copyright text shown in footer"
-                                                value="<?php echo $copyrightValue;?>"
-                                            >
-                                        </label><br>
-                                        <label>URL<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="general_url"
-                                                <?php echo $configInputStyle;?>
-                                                title="Base site URL"
-                                                value="<?php echo htmlspecialchars($iniArray['general']['URL']);?>"
-                                            >
-                                        </label><br>
-                                        <label>Log level<br>
-                                            <select
-                                                name="general_loglevel"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Controls verbosity of application logging"
-                                            >
-                                                <option value="1"
-                                                    <?php if ($logLevelIni == 1) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >1 - Error</option>
-                                                <option value="2"
-                                                    <?php if ($logLevelIni == 2) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >2 - Notice</option>
-                                                <option value="3"
-                                                    <?php if ($logLevelIni == 3) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >3 - Debug</option>
-                                            </select>
-                                        </label>
-                                    </div>
-                                    <div class="config-section">
-                                        <h4>Database settings</h4>
-                                        <label>Host<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="database_host"
-                                                <?php echo $configInputStyle;?>
-                                                title="Database host/server name"
-                                                value="<?php echo $dbServerValue;?>"
-                                            >
-                                        </label><br>
-                                        <label>Database<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="database_name"
-                                                <?php echo $configInputStyle;?>
-                                                title="Database name"
-                                                value="<?php echo htmlspecialchars($iniArray['database']['DBName']);?>"
-                                            >
-                                        </label><br>
-                                        <label>User<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="database_user"
-                                                <?php echo $configInputStyle;?>
-                                                title="Database user name"
-                                                value="<?php echo htmlspecialchars($iniArray['database']['DBUser']);?>"
-                                            >
-                                        </label><br>
-                                        <button id="db_password_toggle" type="button" class="profilebutton">
-                                            Change database password
-                                        </button>
-                                        <div id="db_password_section" style="display:none;">
-                                            <label>New password<br>
+                                                        endif;?>
+                                                    >dev</option>
+                                                    <option value="prod"
+                                                        <?php if ($iniArray['general']['tier'] === 'prod') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >prod</option>
+                                                </select>
+                                            </label><br>
+                                            <label>Image file path<br>
                                                 <input
                                                     class="textinput"
-                                                    type="password"
-                                                    name="database_dbpass"
-                                                    autocomplete="new-password"
+                                                    type="text"
+                                                    name="general_img_location"
                                                     <?php echo $configInputStyle;?>
-                                                    title="Set a new database password"
+                                                    title="Directory where card images are stored (must be writable)"
+                                                    value="<?php echo $imgLocationValue;?>"
                                                 >
+                                            </label><br>
+                                            <label>Logfile path<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="general_logfile"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Full path to application logfile (must be writable)"
+                                                    value="<?php echo htmlspecialchars($iniArray['general']['Logfile']);?>"
+                                                >
+                                            </label><br>
+                                            <label>Timezone<br>
+                                                <select
+                                                    class="textinput"
+                                                    name="general_timezone"
+                                                    id="general_timezone"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Timezone for dates and logs"
+                                                >
+                                                    <?php foreach ($timezoneList as $timezoneItem) : ?>
+                                                        <option
+                                                            value="<?php echo htmlspecialchars($timezoneItem);?>"
+                                                            <?php
+                                                            if ($timezoneItem === $iniArray['general']['Timezone']) :
+                                                                echo 'selected';
+                                                            endif;
+                                                            ?>
+                                                        >
+                                                            <?php echo htmlspecialchars($timezoneItem);?>
+                                                        </option>
+                                                    <?php endforeach;?>
+                                                </select>
+                                            </label><br>
+                                            <label>Locale<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="general_locale"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Locale used for formatting numbers and dates"
+                                                    value="<?php echo htmlspecialchars($iniArray['general']['Locale']);?>"
+                                                >
+                                            </label><br>
+                                            <label>Copyright<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="general_copyright"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Copyright text shown in footer"
+                                                    value="<?php echo $copyrightValue;?>"
+                                                >
+                                            </label><br>
+                                            <label>URL<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="general_url"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Base site URL"
+                                                    value="<?php echo htmlspecialchars($iniArray['general']['URL']);?>"
+                                                >
+                                            </label><br>
+                                            <label>Log level<br>
+                                                <select
+                                                    name="general_loglevel"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Controls verbosity of application logging"
+                                                >
+                                                    <option value="1"
+                                                        <?php if ($logLevelIni == 1) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >1 - Error</option>
+                                                    <option value="2"
+                                                        <?php if ($logLevelIni == 2) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >2 - Notice</option>
+                                                    <option value="3"
+                                                        <?php if ($logLevelIni == 3) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >3 - Debug</option>
+                                                </select>
                                             </label>
-                                            <button id="db_password_cancel" type="button" class="profilebutton">
-                                                Cancel
-                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="config-section">
-                                        <h4>Security settings</h4>
-                                        <label>Admin IP<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="security_admin_ip"
-                                                <?php echo $configInputStyle;?>
-                                                title="Restrict admin login to this IP (leave blank to disable check)"
-                                                value="<?php echo htmlspecialchars($iniArray['security']['AdminIP']);?>"
-                                            >
-                                        </label><br>
-                                        <label>Bad login limit<br>
-                                            <input
-                                                class="textinput"
-                                                type="number"
-                                                min="1"
-                                                name="security_badloginlimit"
-                                                <?php echo $configInputStyle;?>
-                                                title="Lock account after this many failed logins"
-                                                value="<?php echo $badLoginLimitValue;?>"
-                                            >
-                                        </label><br>
-                                        <label>Turnstile<br>
-                                            <select
-                                                name="security_turnstile"
-                                                id="security_turnstile"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Enable/disable Cloudflare Turnstile on login"
-                                            >
-                                                <option value="enabled"
-                                                    <?php if ($turnstileEnabled) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >enabled</option>
-                                                <option value="disabled"
-                                                    <?php if (!$turnstileEnabled) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >disabled</option>
-                                            </select>
-                                        </label><br>
-                                        <label>Turnstile site key<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="security_turnstile_site_key"
-                                                name="security_turnstile_site_key"
-                                                <?php echo $configInputStyle;?>
-                                                title="Turnstile site key (prod tier only)"
-                                                value="<?php echo htmlspecialchars($turnstileSiteKeyIni);?>"
-                                                <?php if (!$turnstileEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>Turnstile secret key<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="security_turnstile_secret_key"
-                                                name="security_turnstile_secret_key"
-                                                value=""
-                                                placeholder="Leave blank to keep existing"
-                                                <?php echo $configInputStyle;?>
-                                                title="Turnstile secret key (prod tier only)"
-                                                <?php if (!$turnstileEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>Trusted device duration (days)<br>
-                                            <input
-                                                class="textinput"
-                                                type="number"
-                                                min="1"
-                                                name="security_trust_duration"
-                                                <?php echo $configInputStyle;?>
-                                                title="How long trusted devices remain valid"
-                                                value="<?php echo htmlspecialchars($trustDurationIni);?>"
-                                            >
-                                        </label>
-                                        <p class="smallnote">
-                                            Note: When Tier is set to dev, built-in dev Turnstile keys are used instead
-                                            of the values above.
-                                        </p>
-                                    </div>
-                                    <div class="config-section">
-                                        <h4>FX settings</h4>
-                                        <label>Freecurrency API key<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="fx_api_key"
-                                                <?php echo $configInputStyle;?>
-                                                title="Freecurrency API key"
-                                                value="<?php echo htmlspecialchars($fxApiIni);?>"
-                                            >
-                                        </label><br>
-                                        <label>Freecurrency URL<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="fx_api_url"
-                                                <?php echo $configInputStyle;?>
-                                                title="Endpoint URL for Freecurrency API"
-                                                value="<?php echo htmlspecialchars($fxUrlIni);?>"
-                                            >
-                                        </label><br>
-                                        <label>Local currency<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                name="fx_target_currency"
-                                                <?php echo $configInputStyle;?>
-                                                title="Default local currency code"
-                                                value="<?php echo htmlspecialchars($fxTargetCurrencyIni);?>"
-                                            >
-                                        </label>
-                                    </div>
-                                    <div class="config-section">
-                                        <h4>Email settings</h4>
-                                        <label>Email status<br>
-                                            <select
-                                                name="email_status"
-                                                id="email_status"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Enable or disable all email sending"
-                                            >
-                                                <option value="enabled"
-                                                    <?php if ($emailEnabled) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >enabled</option>
-                                                <option value="disabled"
+                                        <div class="config-section">
+                                            <h4>Email settings</h4>
+                                            <label>Email status<br>
+                                                <select
+                                                    name="email_status"
+                                                    id="email_status"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Enable or disable all email sending"
+                                                >
+                                                    <option value="enabled"
+                                                        <?php if ($emailEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >enabled</option>
+                                                    <option value="disabled"
+                                                        <?php if (!$emailEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >disabled</option>
+                                                </select>
+                                            </label><br>
+                                            <label>Server email<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="email"
+                                                    id="email_server"
+                                                    name="email_server"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="From/Reply-To address used by emails"
+                                                    value="<?php echo htmlspecialchars($serverEmail);?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'selected';
+                                                        echo 'disabled';
                                                     endif;?>
-                                                >disabled</option>
-                                            </select>
-                                        </label><br>
-                                        <label>Server email<br>
-                                            <input
-                                                class="textinput"
-                                                type="email"
-                                                id="email_server"
-                                                name="email_server"
-                                                <?php echo $configInputStyle;?>
-                                                title="From/Reply-To address used by emails"
-                                                value="<?php echo htmlspecialchars($serverEmail);?>"
-                                                <?php if (!$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>Admin email<br>
-                                            <input
-                                                class="textinput"
-                                                type="email"
-                                                id="email_admin"
-                                                name="email_admin"
-                                                <?php echo $configInputStyle;?>
-                                                title="Administrative contact email"
-                                                value="<?php echo htmlspecialchars($adminEmail);?>"
-                                                <?php if (!$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>SMTP debug<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="email_smtp_debug"
-                                                name="email_smtp_debug"
-                                                <?php echo $configInputStyle;?>
-                                                title="PHPMailer debug level"
-                                                value="<?php echo htmlspecialchars($smtpParameters['SMTPDebug']);?>"
-                                                <?php if (!$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>SMTP host<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="email_host"
-                                                name="email_host"
-                                                <?php echo $configInputStyle;?>
-                                                title="SMTP server hostname"
-                                                value="<?php echo htmlspecialchars($smtpParameters['SMTPHost']);?>"
-                                                <?php if (!$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>SMTP port<br>
-                                            <input
-                                                class="textinput"
-                                                type="number"
-                                                id="email_port"
-                                                name="email_port"
-                                                <?php echo $configInputStyle;?>
-                                                title="SMTP server port"
-                                                value="<?php echo htmlspecialchars($smtpParameters['SMTPPort']);?>"
-                                            >
-                                        </label><br>
-                                        <label>SMTP auth<br>
-                                            <select
-                                                name="email_auth"
-                                                id="email_auth"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Enable SMTP authentication"
-                                                <?php if (!$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                                <option value="enabled"
-                                                    <?php if ($emailAuthEnabled) :
-                                                        echo 'selected';
+                                                >
+                                            </label><br>
+                                            <label>Admin email<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="email"
+                                                    id="email_admin"
+                                                    name="email_admin"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Administrative contact email"
+                                                    value="<?php echo htmlspecialchars($adminEmail);?>"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
                                                     endif;?>
-                                                >enabled</option>
-                                                <option value="disabled"
-                                                    <?php if (!$emailAuthEnabled) :
-                                                        echo 'selected';
+                                                >
+                                            </label><br>
+                                            <label>SMTP debug<br>
+                                                <select
+                                                    name="email_smtp_debug"
+                                                    id="email_smtp_debug"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="PHPMailer debug level"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
                                                     endif;?>
-                                                >disabled</option>
-                                            </select>
-                                        </label><br>
-                                        <label>SMTP username<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="email_username"
-                                                name="email_username"
-                                                <?php echo $configInputStyle;?>
-                                                title="SMTP username"
-                                                value="<?php echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
+                                                >
+                                                    <option value="enabled"
+                                                        <?php if ($smtpDebugEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >enabled</option>
+                                                    <option value="disabled"
+                                                        <?php if (!$smtpDebugEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >disabled</option>
+                                                </select>
+                                            </label><br>
+                                            <label>SMTP host<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="email_host"
+                                                    name="email_host"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="SMTP server hostname"
+                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPHost']);?>"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>SMTP port<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="number"
+                                                    id="email_port"
+                                                    name="email_port"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="SMTP server port"
+                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPPort']);?>"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>SMTP auth<br>
+                                                <select
+                                                    name="email_auth"
+                                                    id="email_auth"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Enable SMTP authentication"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                                    <option value="enabled"
+                                                        <?php if ($emailAuthEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >enabled</option>
+                                                    <option value="disabled"
+                                                        <?php if (!$emailAuthEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >disabled</option>
+                                                </select>
+                                            </label><br>
+                                            <label>SMTP username<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="email_username"
+                                                    name="email_username"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="SMTP username"
+                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
+                                                    <?php if (!$emailAuthEnabled || !$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>SMTP secure<br>
+                                                <select
+                                                    name="email_secure"
+                                                    id="email_secure"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="SMTP encryption mode"
+                                                    <?php if (!$emailAuthEnabled || !$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                                    <option value="smtps"
+                                                        <?php if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_SMTPS') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >SMTPS</option>
+                                                    <option value="starttls"
+                                                        <?php if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >STARTTLS</option>
+                                                    <option value="none"
+                                                        <?php if ($smtpSecureIni === 'none') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >None</option>
+                                                </select>
+                                            </label>
+                                            <button id="email_password_toggle" type="button" class="profilebutton"
                                                 <?php if (!$emailAuthEnabled || !$emailEnabled) :
                                                     echo 'disabled';
                                                 endif;?>
                                             >
-                                        </label><br>
-                                        <button id="email_password_toggle" type="button" class="profilebutton"
-                                            <?php if (!$emailAuthEnabled || !$emailEnabled) :
-                                                echo 'disabled';
-                                            endif;?>
-                                        >
-                                            Change SMTP password
-                                        </button>
-                                        <div id="email_password_section" style="display:none;">
-                                            <label>SMTP password<br>
+                                                SMTP PASS
+                                            </button>
+                                            <div id="email_password_section" style="display:none;">
+                                                <label>SMTP password<br>
+                                                    <input
+                                                        class="textinput"
+                                                        type="password"
+                                                        name="email_password"
+                                                        autocomplete="new-password"
+                                                        <?php echo $configInputStyle;?>
+                                                        title="SMTP password"
+                                                    >
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="config-section">
+                                            <h4>Security settings</h4>
+                                            <label>Admin IP<br>
                                                 <input
                                                     class="textinput"
-                                                    type="password"
-                                                    name="email_password"
-                                                    autocomplete="new-password"
+                                                    type="text"
+                                                    name="security_admin_ip"
                                                     <?php echo $configInputStyle;?>
-                                                    title="SMTP password"
+                                                    title="Restrict admin login to this IP (leave blank to disable check)"
+                                                    value="<?php echo htmlspecialchars($iniArray['security']['AdminIP']);?>"
+                                                >
+                                            </label><br>
+                                            <label>Bad login limit<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="number"
+                                                    min="1"
+                                                    name="security_badloginlimit"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Lock account after this many failed logins"
+                                                    value="<?php echo $badLoginLimitValue;?>"
+                                                >
+                                            </label><br>
+                                            <label>Turnstile<br>
+                                                <select
+                                                    name="security_turnstile"
+                                                    id="security_turnstile"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Enable/disable Cloudflare Turnstile on login"
+                                                >
+                                                    <option value="enabled"
+                                                        <?php if ($turnstileEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >enabled</option>
+                                                    <option value="disabled"
+                                                        <?php if (!$turnstileEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >disabled</option>
+                                                </select>
+                                            </label><br>
+                                            <label>Turnstile site key<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="security_turnstile_site_key"
+                                                    name="security_turnstile_site_key"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Turnstile site key (prod tier only)"
+                                                    value="<?php
+                                                    if ($iniArray['general']['tier'] === 'dev') :
+                                                        echo 'N/A - Tier is \'dev\'';
+                                                    else :
+                                                        echo htmlspecialchars($turnstileSiteKeyIni);
+                                                    endif;
+                                                    ?>"
+                                                    data-realvalue="<?php echo htmlspecialchars($turnstileSiteKeyIni);?>"
+                                                    <?php if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>Turnstile secret key<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="security_turnstile_secret_key"
+                                                    name="security_turnstile_secret_key"
+                                                    value="<?php
+                                                    if ($iniArray['general']['tier'] === 'dev') :
+                                                        echo 'N/A - Tier is \'dev\'';
+                                                    endif;
+                                                    ?>"
+                                                    placeholder="Leave blank to keep existing"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Turnstile secret key (prod tier only)"
+                                                    data-realvalue=""
+                                                    <?php if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>Trusted device duration (days)<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="number"
+                                                    min="1"
+                                                    name="security_trust_duration"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="How long trusted devices remain valid"
+                                                    value="<?php echo htmlspecialchars($trustDurationIni);?>"
+                                                >
+                                            </label>
+                                            <h4>Disqus settings</h4>
+                                            <label>Status<br>
+                                                <select
+                                                    name="comments_status"
+                                                    id="comments_status"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Enable or disable Disqus comments"
+                                                >
+                                                    <option value="enabled"
+                                                        <?php if ($commentsEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >enabled</option>
+                                                    <option value="disabled"
+                                                        <?php if (!$commentsEnabled) :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >disabled</option>
+                                                </select>
+                                            </label><br>
+                                            <label>Dev URL<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="comments_dev_url"
+                                                    name="comments_dev_url"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Disqus shortname/URL for dev tier"
+                                                    value="<?php echo htmlspecialchars($disqusDevUrlIni);?>"
+                                                    <?php if (!$commentsEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
+                                            <label>Prod URL<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="comments_prod_url"
+                                                    name="comments_prod_url"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Disqus shortname/URL for production tier"
+                                                    value="<?php echo htmlspecialchars($disqusProdUrlIni);?>"
+                                                    <?php if (!$commentsEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
                                                 >
                                             </label>
                                         </div>
-                                        <label>SMTP secure<br>
-                                            <select
-                                                name="email_secure"
-                                                id="email_secure"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Encryption method for SMTP"
-                                                <?php if (!$emailAuthEnabled || !$emailEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                            <option value="PHPMailer::ENCRYPTION_SMTPS"
-                                                <?php
-                                                if (
-                                                    $smtpParameters['SMTPSecure'] === 'PHPMailer::ENCRYPTION_SMTPS'
-                                                ) :
-                                                    echo 'selected';
-                                                endif;
-                                                ?>
-                                            >PHPMailer::ENCRYPTION_SMTPS</option>
-                                            <option value="PHPMailer::ENCRYPTION_STARTTLS"
-                                                <?php
-                                                if (
-                                                    $smtpParameters['SMTPSecure'] === 'PHPMailer::ENCRYPTION_STARTTLS'
-                                                ) :
-                                                    echo 'selected';
-                                                endif;
-                                                ?>
-                                            >PHPMailer::ENCRYPTION_STARTTLS</option>
-                                            <option value="none"
-                                                <?php
-                                                if ($smtpParameters['SMTPSecure'] === 'none') :
-                                                    echo 'selected';
-                                                endif;
-                                                ?>
-                                            >none</option>
-                                            </select>
-                                        </label>
+                                        <div class="config-section">
+                                            <h4>Database settings</h4>
+                                            <label>Host<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="database_host"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Database host/server name"
+                                                    value="<?php echo $dbServerValue;?>"
+                                                >
+                                            </label><br>
+                                            <label>Database<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="database_name"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Database name"
+                                                    value="<?php echo htmlspecialchars($iniArray['database']['DBName']);?>"
+                                                >
+                                            </label><br>
+                                            <label>User<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="database_user"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Database user name"
+                                                    value="<?php echo htmlspecialchars($iniArray['database']['DBUser']);?>"
+                                                >
+                                            </label><br>
+                                            <button id="db_password_toggle" type="button" class="profilebutton">
+                                                DB PASS
+                                            </button>
+                                            <div id="db_password_section" style="display:none;">
+                                                <label>New password<br>
+                                                    <input
+                                                        class="textinput"
+                                                        type="password"
+                                                        name="database_dbpass"
+                                                        autocomplete="new-password"
+                                                        <?php echo $configInputStyle;?>
+                                                        title="Set a new database password"
+                                                    >
+                                                </label>
+                                            </div>
+                                            <h4>FX settings</h4>
+                                            <label>Freecurrency API key<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="fx_api_key"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Freecurrency API key"
+                                                    value="<?php echo htmlspecialchars($fxApiIni);?>"
+                                                >
+                                            </label><br>
+                                            <label>Freecurrency URL<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="fx_api_url"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Endpoint URL for Freecurrency API"
+                                                    value="<?php echo htmlspecialchars($fxUrlIni);?>"
+                                                >
+                                            </label><br>
+                                            <label>Local currency<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    name="fx_target_currency"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Default local currency code"
+                                                    value="<?php echo htmlspecialchars($fxTargetCurrencyIni);?>"
+                                                >
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="config-section">
-                                        <h4>Disqus settings</h4>
-                                        <label>Status<br>
-                                            <select
-                                                name="comments_status"
-                                                id="comments_status"
-                                                class="textinput"
-                                                <?php echo $configInputStyle;?>
-                                                title="Enable or disable Disqus comments"
-                                            >
-                                                <option value="enabled"
-                                                    <?php if ($commentsEnabled) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >enabled</option>
-                                                <option value="disabled"
-                                                    <?php if (!$commentsEnabled) :
-                                                        echo 'selected';
-                                                    endif;?>
-                                                >disabled</option>
-                                            </select>
-                                        </label><br>
-                                        <label>Dev URL<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="comments_dev_url"
-                                                name="comments_dev_url"
-                                                <?php echo $configInputStyle;?>
-                                                title="Disqus shortname/URL for dev tier"
-                                                value="<?php echo htmlspecialchars($disqusDevUrlIni);?>"
-                                                <?php if (!$commentsEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label><br>
-                                        <label>Prod URL<br>
-                                            <input
-                                                class="textinput"
-                                                type="text"
-                                                id="comments_prod_url"
-                                                name="comments_prod_url"
-                                                <?php echo $configInputStyle;?>
-                                                title="Disqus shortname/URL for production tier"
-                                                value="<?php echo htmlspecialchars($disqusProdUrlIni);?>"
-                                                <?php if (!$commentsEnabled) :
-                                                    echo 'disabled';
-                                                endif;?>
-                                            >
-                                        </label>
-                                    </div>
-                                    <input class='profilebutton' type="submit" value="Save configuration" />
                                 </form>
                             <?php endif; ?>
                         </td>
