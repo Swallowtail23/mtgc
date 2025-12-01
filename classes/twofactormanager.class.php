@@ -109,8 +109,13 @@ class TwoFactorManager
             return false;
         endif;
 
-        if (!in_array($method, ['email', 'app'])) :
+        $emailEnabled = isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true;
+        if (!in_array($method, ['email', 'app'], true)) :
             $this->directLog('[ERROR]', "Invalid 2FA method: $method");
+            return false;
+        endif;
+        if (!$emailEnabled && $method === 'email') :
+            $this->directLog('[ERROR]', "Email 2FA requested but email is disabled for user ID: $user_id");
             return false;
         endif;
 
@@ -224,8 +229,16 @@ class TwoFactorManager
         endif;
 
         $method = $this->getMethod($user_id);
+        if ($method === 'email' && (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true)) :
+            $this->directLog('[NOTICE]', "Email 2FA method ignored because email is disabled; switching to app");
+            return false;
+        endif;
 
         if ($method === 'email') :
+            if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+                $this->directLog('[ERROR]', "Email 2FA requested for user ID but email is disabled: $user_id");
+                return false;
+            endif;
             $code = $this->generateCode();
             $expiry = time() + $this->code_expiry;
             $query = "INSERT INTO tfa_codes (user_id, code, expiry, attempts) VALUES (?, ?, ?, 0)
@@ -403,6 +416,11 @@ class TwoFactorManager
     {
         if (!$email || !$code) :
             $this->directLog('[ERROR]', "Invalid email or code");
+            return false;
+        endif;
+
+        if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+            $this->directLog('[ERROR]', "Email disabled; cannot send verification email to $email");
             return false;
         endif;
 

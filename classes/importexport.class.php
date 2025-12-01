@@ -126,62 +126,79 @@ class ImportExport
                 echo "\xEF\xBB\xBF"; // UTF-8 BOM
                 echo $out;
             elseif ($format === 'email') :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
-                $tempFile = tempnam(sys_get_temp_dir(), 'export_');
-                file_put_contents($tempFile, $out);
+                    $tempFile = tempnam(sys_get_temp_dir(), 'export_');
+                    file_put_contents($tempFile, $out);
 
-                $subject = "Collection export";
-                $emailbody = "Your $this->siteTitle export is attached. <br><br> Opt out of automated emails in your "
-                    . "profile at <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
-                $emailaltbody = "Your $this->siteTitle export is attached. \r\n\r\n Opt out of automated emails in "
-                    . "your profile at your $this->siteTitle profile page "
-                    . "($myURL/profile.php) \r\n\r\n";
-                $mailresult = $mail->sendEmail(
-                    $this->userEmail,
-                    true,
-                    $subject,
-                    $emailbody,
-                    $emailaltbody,
-                    $tempFile,
-                    $filename
-                );
-                if (isset($tempFile)) :
-                    unlink($tempFile);
-                endif;
-                if ($mailresult === true) :
-                    return true;
+                    $subject = "Collection export";
+                    $emailbody = "Your $this->siteTitle export is attached. <br><br>"
+                        . "Opt out of automated emails in your profile at "
+                        . "<a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                    $emailaltbody = "Your $this->siteTitle export is attached.\r\n\r\n"
+                        . "Opt out of automated emails in your profile at your $this->siteTitle profile page "
+                        . "($myURL/profile.php)\r\n\r\n";
+                    $mailresult = $mail->sendEmail(
+                        $this->userEmail,
+                        true,
+                        $subject,
+                        $emailbody,
+                        $emailaltbody,
+                        $tempFile,
+                        $filename
+                    );
+                    if (isset($tempFile)) :
+                        unlink($tempFile);
+                    endif;
+                    if ($mailresult === true) :
+                        return true;
+                    else :
+                        return false;
+                    endif;
                 else :
+                    $this->message->logMessage(
+                        '[NOTICE]',
+                        "Email disabled; collection export email not sent to {$this->userEmail}"
+                    );
                     return false;
                 endif;
             elseif ($format === 'weekly' && $userName !== '' && $userEmail !== '') :
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
-                $tempFile = tempnam(sys_get_temp_dir(), 'export_');
-                file_put_contents($tempFile, $out);
+                    $tempFile = tempnam(sys_get_temp_dir(), 'export_');
+                    file_put_contents($tempFile, $out);
 
-                $subject = "$this->siteTitle weekly collection export";
-                $emailbody = "Hi $userName, please see attached your weekly collection export from $this->siteTitle.
-                    <br><br> Opt out of automated emails in your profile at
-                    <a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
-                $emailaltbody = "Hi $userName, please see attached your weekly collection export from $this->siteTitle.
-                    \r\n\r\n Opt out of automated emails in your profile at your
-                    $this->siteTitle profile page ($myURL/profile.php) \r\n\r\n";
-                $mailresult = $mail->sendEmail(
-                    $userEmail,
-                    true,
-                    $subject,
-                    $emailbody,
-                    $emailaltbody,
-                    $tempFile,
-                    $filename
-                );
-                if (isset($tempFile)) :
-                    unlink($tempFile);
-                endif;
-                if ($mailresult === true) :
-                    return true;
+                    $subject = "$this->siteTitle weekly collection export";
+                    $emailbody = "Hi $userName, your weekly collection export from $this->siteTitle is attached."
+                        . "<br><br>Opt out of automated emails in your profile at "
+                        . "<a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                    $emailaltbody = "Hi $userName, please see attached your weekly collection export from "
+                        . "$this->siteTitle.\r\n\r\nOpt out of automated emails in your profile at your "
+                        . "$this->siteTitle profile page ($myURL/profile.php)\r\n\r\n";
+                    $mailresult = $mail->sendEmail(
+                        $userEmail,
+                        true,
+                        $subject,
+                        $emailbody,
+                        $emailaltbody,
+                        $tempFile,
+                        $filename
+                    );
+                    if (isset($tempFile)) :
+                        unlink($tempFile);
+                    endif;
+                    if ($mailresult === true) :
+                        return true;
+                    else :
+                        return false;
+                    endif;
                 else :
+                    $this->message->logMessage(
+                        '[NOTICE]',
+                        "Email disabled; weekly collection email not sent to $userEmail"
+                    );
                     return false;
                 endif;
             endif;
@@ -457,7 +474,14 @@ class ImportExport
         $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
         $subject = "Import failures / warnings";
         $message = "$warningSummary \n \n$summary";
-        mail($userEmail, $subject, $message, $from);
+        if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+            mail($userEmail, $subject, $message, $from);
+        else :
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Email disabled; import warning/summary email not sent to $userEmail"
+            );
+        endif;
                 $this->message->logMessage(
                     '[NOTICE]',
                     "Import process run with '$importType' ($actionedRows of $count card rows actioned, "

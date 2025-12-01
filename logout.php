@@ -8,7 +8,7 @@ Purpose:     Destroy the session, log it, and head to login.php.
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       
+To do:
 
 History:
     1.0         Initial version

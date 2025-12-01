@@ -21,7 +21,6 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 $msg   = new Message($logfile);
 $obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
-$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -73,7 +72,16 @@ while ($user = $usersExport->fetch_assoc()) :
             . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitle profile page</a>";
         $emailaltbody = "Hi $userName, please see attached your weekly decks export from $siteTitle. \r\n\r\n Opt "
             . "out of automated emails in your profile at your $siteTitle profile page ($myURL/profile.php) \r\n\r\n";
-        $mailresult = $mail->sendEmail($userEmail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
+        if (isset($emailEnabled) && $emailEnabled === true) :
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mailresult = $mail->sendEmail($userEmail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
+        else :
+            $msg->logMessage(
+                '[NOTICE]',
+                "Email disabled; weekly decks export not sent to $userEmail"
+            );
+            $mailresult = false;
+        endif;
         if (isset($zipFilePath)) :
             unlink($zipFilePath);
         endif;
@@ -86,5 +94,10 @@ endwhile;
 
 $subject = "$siteTitle weekly export user report";
 $emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
-$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-$mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
+if (isset($emailEnabled) && $emailEnabled === true) :
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
+else :
+    $msg->logMessage('[NOTICE]', 'Email disabled; weekly export admin summary not sent');
+    $mailresult = false;
+endif;

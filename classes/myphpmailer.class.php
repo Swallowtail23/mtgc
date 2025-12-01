@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        25/11/25
+Version:     1.4
+Date:        01/12/25
 Name:        myphpmailer.class.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -17,6 +17,7 @@ History:
     1.1 20/01/24 Move to logMessage
     1.2 25/11/25 Standard tidy-up
     1.3 25/11/25 Rename class to PascalCase
+    1.4 01/12/25 Respect email disabled setting
 */
 
 //Import PHPMailer classes into the global namespace
@@ -82,6 +83,14 @@ class MyPHPMailer extends PHPMailer
 
     public function sendEmail($recipient, $html, $subject, $body, $altbody = '', $attachment = '', $attachmentname = '')
     {
+        if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Email disabled; skipping send to $recipient with subject '$subject'"
+            );
+            return false;
+        endif;
+
         try {
             $this->addAddress($recipient);
             $this->Subject = $subject;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.3
-Date:        29/11/25
+Version:     13.4
+Date:        01/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -32,6 +32,7 @@ History:
     13.1 02/03/25 Display fixes, including MTGC-145
     13.2 25/11/25 Standard tidy-up
     13.3 29/11/25 Update forcePasswordChange reference in notes
+    13.4 01/12/25 Respect email disabled setting on collection actions
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -57,6 +58,7 @@ use OTPHP\TOTP;
 $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
+$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
 
 // Has DELETE collection been called?
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
@@ -350,7 +352,8 @@ endif;
                                             'password' => "$new_password"
                                         );
                                         $pwdchg = $db->execute_query(
-                                            "UPDATE users SET password = ? WHERE email = ?",
+                                            "UPDATE users SET password = ?, status = 'active', badlogins = 0 "
+                                                . "WHERE email = ?",
                                             [$new_password, $userEmail]
                                         );
                                         $msg->logMessage(
@@ -381,19 +384,12 @@ endif;
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
                                                     . "</div>";
-                                                // Clear the force password flag and session variable
-                                                $chgflagclear = $db->execute_query(
-                                                    "UPDATE users SET status = 'active' WHERE email = ?",
-                                                    [$userEmail]
-                                                );
-                                                if ($chgflagclear === false) :
-                                                    trigger_error(
-                                                        '[ERROR] profile.php: Error: ' . $db->error,
-                                                        E_USER_ERROR
-                                                    );
-                                                else :
-                                                    $_SESSION['chgpwd'] = '';
+                                                if (!class_exists('PasswordCheck')) :
+                                                    require_once('classes/passwordcheck.class.php');
                                                 endif;
+                                                (new PasswordCheck($db, $logfile, $siteTitle))
+                                                    ->clearResetForEmail($userEmail);
+                                                $_SESSION['chgpwd'] = false;
                                                 session_destroy();
                                                 echo "<meta http-equiv='refresh' content='4;url=login.php'>";
                                                 exit();
@@ -1008,10 +1004,17 @@ endif;
                                     document.body.style.cursor='wait';
                                 };
                                 function confirmDelete() {
-                    var firstConfirm = confirm(
-                        "Delete all cards from your collection? Selecting OK will send a CSV collection "
-                        + "export to your registered email address and then delete all cards."
-                    );
+                    var firstConfirm;
+                    if (<?php echo $emailEnabled ? 'true' : 'false'; ?>) {
+                        firstConfirm = confirm(
+                            "Delete all cards from your collection? Selecting OK will send a CSV collection "
+                            + "export to your registered email address and then delete all cards."
+                        );
+                    } else {
+                        firstConfirm = confirm(
+                            "Delete all cards from your collection? Email is disabled so no export will be sent."
+                        );
+                    }
 
                                     if (firstConfirm) {
                         var secondConfirm = confirm(
@@ -1188,7 +1191,11 @@ HTML;
                                     <b>Delete</b>
                                 </td>
                                 <td class="options_centre" colspan="2">
-                                     Email CSV and delete all cards in your collection
+                                    <?php if ($emailEnabled) : ?>
+                                        Email CSV and delete all cards in your collection
+                                    <?php else : ?>
+                                        Delete all cards in your collection
+                                    <?php endif; ?>
                                 </td>
                                 <td class="options_right">
                                     <form action="?"  method="GET" onsubmit="return confirmDelete()">
@@ -1324,11 +1331,15 @@ HTML;
                                     Email a CSV file with all cards in your collection to your email address
                                 </td>
                                 <td class="options_right">
-                                    <form action="csv.php"  method="GET">
-                                        <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL">
-                                        <input type='hidden' name='type' value='email'>
-                                        <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
-                                    </form>
+                                    <?php if ($emailEnabled) : ?>
+                                        <form action="csv.php"  method="GET">
+                                            <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL">
+                                            <input type='hidden' name='type' value='email'>
+                                            <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
+                                        </form>
+                                    <?php else : ?>
+                                        Email disabled
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <tr class="hoverhighlight">
@@ -1338,8 +1349,9 @@ HTML;
                                 <td class="options_centre" colspan="2">
                                     Weekly email to you with a CSV file of your collection
                                 </td>
-                                <td class="options_right"> <?php
-                                if ($current_weekly == 1) : ?>
+                                <td class="options_right">
+                                    <?php if ($emailEnabled) : ?>
+                                        <?php if ($current_weekly == 1) : ?>
                                         <label class="switch">
                                             <input
                                                 type="checkbox"
@@ -1349,8 +1361,8 @@ HTML;
                                                 value="on"
                                             />
                                         <div class="slider round"></div>
-                                        </label> <?php
-                                else : ?>
+                                        </label>
+                                        <?php else : ?>
                                         <label class="switch">
                                             <input
                                                 type="checkbox"
@@ -1359,8 +1371,11 @@ HTML;
                                                 value="off"
                                             />
                                         <div class="slider round"></div>
-                                        </label> <?php
-                                endif; ?>
+                                        </label>
+                                        <?php endif; ?>
+                                    <?php else : ?>
+                                        Email disabled
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         </table>

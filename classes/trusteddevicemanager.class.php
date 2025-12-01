@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        25/11/25
+Version:     1.4
+Date:        01/12/25
 Name:        trusteddevicemanager.class.php
 Purpose:     Manage trusted device tokens for extended session handling.
 Notes:       {none}
@@ -14,6 +14,8 @@ History:
     1.0         Initial version
     1.1 28/02/25 Security fixes: HMAC-SHA256, SQLi fix, cookie & logging improvements, better IP detection
     1.2 25/11/25 Standard tidy-up
+    1.3 01/12/25 CamelCase variables
+    1.4 01/12/25 Remove unused cookieLifetime
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -25,10 +27,9 @@ class TrustedDeviceManager
     private $db;
     private $logfile;
     private $msg;
-    private $token_length = 64;
-    private $cookie_name = 'mtgc_trusted_device';
-    private $cookie_lifetime = 604800; // 7 days in seconds
-    private $hmac_secret;
+    private $tokenLength = 64;
+    private $cookieName = 'mtgc_trusted_device';
+    private $hmacSecret;
 
     public function __construct($db, $logfile)
     {
@@ -36,7 +37,7 @@ class TrustedDeviceManager
         $this->logfile = $logfile;
 
         // Load HMAC secret from environment variable
-        $this->hmac_secret = getenv('HMAC_SECRET');
+        $this->hmacSecret = getenv('HMAC_SECRET');
 
         if (!class_exists('Message')) :
             require_once(__DIR__ . '/../classes/message.class.php');
@@ -70,17 +71,17 @@ class TrustedDeviceManager
 
     public function getCookieName()
     {
-        return $this->cookie_name;
+        return $this->cookieName;
     }
 
     private function generateToken()
     {
-        return bin2hex(random_bytes($this->token_length));
+        return bin2hex(random_bytes($this->tokenLength));
     }
 
     private function hashToken($token)
     {
-        return hash_hmac('sha256', $token, $this->hmac_secret);
+        return hash_hmac('sha256', $token, $this->hmacSecret);
     }
 
     public function getTokenHash($token)
@@ -99,19 +100,19 @@ class TrustedDeviceManager
         endif;
     }
 
-    public function createTrustedDevice($user_id, $days_valid = 7)
+    public function createTrustedDevice($userId, $daysValid = 7)
     {
         $token = $this->generateToken();
-        $token_hash = $this->hashToken($token);
+        $tokenHash = $this->hashToken($token);
 
-        $expires_timestamp = time() + ($days_valid * 86400);
-        $expires_formatted = date('Y-m-d H:i:s', $expires_timestamp);
+        $expiresTimestamp = time() + ($daysValid * 86400);
+        $expiresFormatted = date('Y-m-d H:i:s', $expiresTimestamp);
 
-        $device_name = isset($_SERVER['HTTP_USER_AGENT'])
+        $deviceName = isset($_SERVER['HTTP_USER_AGENT'])
             ? substr($_SERVER['HTTP_USER_AGENT'], 0, 255)
             : 'Unknown';
-        $ip_address = $this->getClientIP();
-        $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+        $ipAddress = $this->getClientIP();
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
         $query = "INSERT INTO trusted_devices (user_id, token_hash, device_name, ip_address,
                   user_agent, created, expires)
@@ -125,12 +126,12 @@ class TrustedDeviceManager
 
         $stmt->bind_param(
             "isssss",
-            $user_id,
-            $token_hash,
-            $device_name,
-            $ip_address,
-            $user_agent,
-            $expires_formatted
+            $userId,
+            $tokenHash,
+            $deviceName,
+            $ipAddress,
+            $userAgent,
+            $expiresFormatted
         );
 
         if (!$stmt->execute()) :
@@ -142,10 +143,10 @@ class TrustedDeviceManager
         $stmt->close();
 
         setcookie(
-            $this->cookie_name,
+            $this->cookieName,
             $token,
             [
-                'expires' => $expires_timestamp,
+                'expires' => $expiresTimestamp,
                 'path' => '/',
                 'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
                 'httponly' => true,
@@ -153,19 +154,19 @@ class TrustedDeviceManager
             ]
         );
 
-        $this->log('[NOTICE]', "Created trusted device for user $user_id");
+        $this->log('[NOTICE]', "Created trusted device for user $userId");
         return true;
     }
 
     public function validateTrustedDevice()
     {
-        if (!isset($_COOKIE[$this->cookie_name])) :
+        if (!isset($_COOKIE[$this->cookieName])) :
             $this->log('[DEBUG]', "Cookie not set");
             return false;
         endif;
 
-        $token = $_COOKIE[$this->cookie_name];
-        $hashed_token = $this->hashToken($token);
+        $token = $_COOKIE[$this->cookieName];
+        $hashedToken = $this->hashToken($token);
 
         $query = "SELECT id, user_id FROM trusted_devices WHERE token_hash = ? AND expires > NOW()";
         $stmt = $this->db->prepare($query);
@@ -174,25 +175,25 @@ class TrustedDeviceManager
             return false;
         endif;
 
-        $stmt->bind_param("s", $hashed_token);
+        $stmt->bind_param("s", $hashedToken);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows === 1) :
-            $stmt->bind_result($device_id, $user_id);
+            $stmt->bind_result($deviceId, $userId);
             $stmt->fetch();
 
             $update = "UPDATE trusted_devices SET last_used = NOW() WHERE id = ?";
-            $upd_stmt = $this->db->prepare($update);
-            if ($upd_stmt !== false) :
-                $upd_stmt->bind_param("i", $device_id);
-                $upd_stmt->execute();
-                $upd_stmt->close();
+            $updateStmt = $this->db->prepare($update);
+            if ($updateStmt !== false) :
+                $updateStmt->bind_param("i", $deviceId);
+                $updateStmt->execute();
+                $updateStmt->close();
             endif;
 
             $stmt->close();
-            $this->log('[NOTICE]', "Valid trusted device found for user $user_id");
-            return $user_id;
+            $this->log('[NOTICE]', "Valid trusted device found for user $userId");
+            return $userId;
         else :
             $this->log('[DEBUG]', "No record found");
         endif;
@@ -204,12 +205,12 @@ class TrustedDeviceManager
 
     public function removeTrustedDevice()
     {
-        if (!isset($_COOKIE[$this->cookie_name])) :
+        if (!isset($_COOKIE[$this->cookieName])) :
             return false;
         endif;
 
-        $token = $_COOKIE[$this->cookie_name];
-        $hashed_token = $this->hashToken($token);
+        $token = $_COOKIE[$this->cookieName];
+        $hashedToken = $this->hashToken($token);
 
         $query = "DELETE FROM trusted_devices WHERE token_hash = ?";
         $stmt = $this->db->prepare($query);
@@ -218,16 +219,16 @@ class TrustedDeviceManager
             return false;
         endif;
 
-        $stmt->bind_param("s", $hashed_token);
+        $stmt->bind_param("s", $hashedToken);
         $stmt->execute();
         $stmt->close();
 
-        setcookie($this->cookie_name, '', time() - 3600, '/');
+        setcookie($this->cookieName, '', time() - 3600, '/');
         $this->log('[NOTICE]', "Removed trusted device");
         return true;
     }
 
-    public function removeAllUserDevices($user_id)
+    public function removeAllUserDevices($userId)
     {
         $query = "DELETE FROM trusted_devices WHERE user_id = ?";
         $stmt = $this->db->prepare($query);
@@ -237,15 +238,15 @@ class TrustedDeviceManager
             return false;
         endif;
 
-        $stmt->bind_param("i", $user_id);
+        $stmt->bind_param("i", $userId);
         $success = $stmt->execute();
         $stmt->close();
 
         if ($success) :
-            $this->log('[NOTICE]', "Removed all trusted devices for user $user_id");
+            $this->log('[NOTICE]', "Removed all trusted devices for user $userId");
             return true;
         else :
-            $this->log('[ERROR]', "Failed to remove trusted devices for user $user_id");
+            $this->log('[ERROR]', "Failed to remove trusted devices for user $userId");
             return false;
         endif;
     }
@@ -268,10 +269,10 @@ class TrustedDeviceManager
     /**
      * Get all trusted devices for a user
      *
-     * @param int $user_id The user's ID
+     * @param int $userId The user's ID
      * @return array Array of device information
      */
-    public function getUserDevices($user_id)
+    public function getUserDevices($userId)
     {
         $query = "SELECT id, device_name, token_hash, ip_address, user_agent, last_used, created, expires 
                  FROM trusted_devices 
@@ -285,7 +286,7 @@ class TrustedDeviceManager
             return [];
         endif;
 
-        $stmt->bind_param("i", $user_id);
+        $stmt->bind_param("i", $userId);
 
         if (!$stmt->execute()) :
             $this->log('[ERROR]', "Failed to execute query: " . $stmt->error);
@@ -307,11 +308,11 @@ class TrustedDeviceManager
     /**
      * Remove a specific device by ID
      *
-     * @param int $device_id The device ID to remove
-     * @param int $user_id The user ID (for security verification)
+     * @param int $deviceId The device ID to remove
+     * @param int $userId The user ID (for security verification)
      * @return bool Success of operation
      */
-    public function removeDeviceById($device_id, $user_id)
+    public function removeDeviceById($deviceId, $userId)
     {
         $query = "DELETE FROM trusted_devices WHERE id = ? AND user_id = ?";
         $stmt = $this->db->prepare($query);
@@ -321,7 +322,7 @@ class TrustedDeviceManager
             return false;
         endif;
 
-        $stmt->bind_param("ii", $device_id, $user_id);
+        $stmt->bind_param("ii", $deviceId, $userId);
         $success = $stmt->execute();
 
         if (!$success) :
@@ -334,10 +335,10 @@ class TrustedDeviceManager
         $stmt->close();
 
         if ($affected > 0) :
-            $this->log('[NOTICE]', "Removed device ID $device_id for user $user_id");
+            $this->log('[NOTICE]', "Removed device ID $deviceId for user $userId");
             return true;
         else :
-            $this->log('[NOTICE]', "No device found with ID $device_id for user $user_id");
+            $this->log('[NOTICE]', "No device found with ID $deviceId for user $userId");
             return false;
         endif;
     }

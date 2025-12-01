@@ -17,6 +17,7 @@
     <exclude-pattern>storage/**</exclude-pattern>
     <exclude-pattern>*/storage/*</exclude-pattern>
     <exclude-pattern>*/storage/**</exclude-pattern>
+    <exclude-pattern>includes/analyticstracking.php</exclude-pattern>
 
     <!-- CLI scripts (bulk jobs, setup scripts, and any bin/cli/shell folders) -->
     <exclude-pattern>bulk/*</exclude-pattern>
@@ -35,5 +36,19 @@
         <!-- App is intentionally not namespaced; allow global classes and side-effect files -->
         <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
         <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
+    </rule>
+
+    <!-- Test fixtures use multiple inline stubs and mysqli-style method names; relax these sniffs for tests -->
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>tests/*</exclude-pattern>
+        <exclude-pattern>tests/**</exclude-pattern>
+    </rule>
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>tests/*</exclude-pattern>
+        <exclude-pattern>tests/**</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Files.LineLength">
+        <exclude-pattern>tests/*</exclude-pattern>
+        <exclude-pattern>tests/**</exclude-pattern>
     </rule>
 </ruleset>

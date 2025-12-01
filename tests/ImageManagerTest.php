@@ -120,29 +120,16 @@ class ImageManagerTest extends TestCase
         $fetch = new ReflectionMethod(ImageManager::class, 'fetchAndStoreImage');
         $fetch->setAccessible(true);
 
-        // Serve a local file over PHP's built-in server to satisfy curl
+        // Use a local file URL to avoid flaky network binding issues during tests
         $remoteDir = $this->tempDir . '/remote';
         mkdir($remoteDir, 0777, true);
         $remoteFile = $remoteDir . '/remote_front.jpg';
         file_put_contents($remoteFile, 'bytes');
 
-        $port = random_int(9000, 9999);
-        $cmd = sprintf('php -S 127.0.0.1:%d -t %s >/dev/null 2>&1', $port, $remoteDir);
-        $server = proc_open($cmd, [], $pipes);
-        // Give server a moment to start
-        usleep(200000);
+        $fileUrl = 'file://' . $remoteFile;
 
-        $fileUrl = "http://127.0.0.1:$port/remote_front.jpg";
-
-        $result = null;
-        try {
-            $this->assertTrue(checkRemoteFile($fileUrl));
-            $result = $fetch->invoke($manager, $fileUrl, $this->imgRoot, $setcode, $dest);
-        } finally {
-            if (is_resource($server)) {
-                proc_terminate($server);
-            }
-        }
+        $this->assertTrue(checkRemoteFile($fileUrl));
+        $result = $fetch->invoke($manager, $fileUrl, $this->imgRoot, $setcode, $dest);
 
         $this->assertFileExists($dest);
         $this->assertSame('cardimg/dir/new-card.jpg', $result);
@@ -150,7 +137,7 @@ class ImageManagerTest extends TestCase
 
     public function testDiffImageTouchOnMatch()
     {
-        $manager = new class(new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']) extends ImageManager {
+        $manager = new class (new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']) extends ImageManager {
             public function diffImage($remoteUrl, $localFilePath)
             {
                 clearstatcache(true, $localFilePath);
@@ -180,7 +167,7 @@ class ImageManagerTest extends TestCase
         file_put_contents($remoteFile, 'frontdata');
         $fileUrl = 'file://' . $remoteFile;
 
-        $db = new class($fileUrl) {
+        $db = new class ($fileUrl) {
             private $fileUrl;
             public function __construct($fileUrl)
             {
@@ -188,7 +175,7 @@ class ImageManagerTest extends TestCase
             }
             public function execute_query($sql, $params)
             {
-                return new class($this->fileUrl) {
+                return new class ($this->fileUrl) {
                     private $fileUrl;
                     public function __construct($fileUrl)
                     {

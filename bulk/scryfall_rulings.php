@@ -121,6 +121,16 @@ $msg->logMessage('[NOTICE]', "$total_count bulk rulings completed");
 // Email results
 $subject = "MTG rulings update completed";
 $body = "Total rulings: $total_count";
-$mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-$mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
-$msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+if (isset($emailEnabled) && $emailEnabled === true) :
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
+else :
+    $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_rulings alert');
+    $mailresult = false;
+endif;
+$msg->logMessage(
+    '[NOTICE]',
+    $mailresult === false
+        ? 'Email result: not sent (disabled or failure)'
+        : "Email result: $mailresult"
+);

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        29/11/25
+Version:     3.0
+Date:        01/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -16,6 +16,7 @@ History:
     2.1 25/11/25 Standard tidy-up
     2.2 28/11/25 Use PasswordCheck::passwordReset for reset requests
     2.3 29/11/25 Rename cssVersionCheck usage
+    3.0 01/12/25 Token-based password reset flow
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -48,27 +49,63 @@ $cssver = cssVersionCheck();
 <div id="loginheader">
     <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
 <?php
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') :
-        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-        $validEmail = filter_var($email, FILTER_VALIDATE_EMAIL);
-        if ($validEmail) :
-            $pwReset = new PasswordCheck($db, $logfile, $siteTitle);
-            $pwReset->passwordReset($validEmail, 1, $dbname);
-        endif;
-        echo "If the email address exists, a new temporary password has been sent.";
+$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
+$emailEnabledFlag = ($emailEnabledSetting === 'enabled');
+$token = $_GET['token'] ?? '';
+$tokenEmail = $_GET['email'] ?? '';
+$message = '';
+
+if (!$emailEnabledFlag) :
+    $message = "Password reset is unavailable because email is disabled.";
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $newPassword = trim($_POST['new_password'] ?? '');
+    if ($pwReset->completeReset($email, $_POST['token'], $newPassword)) :
+        session_destroy();
+        echo "Password updated. Please log in with your new password.";
         echo "<meta http-equiv='refresh' content='3;url=login.php'>";
+        exit;
     else :
-        ?>
-        <form  action="?" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="action" value="submit">
-            <br>Request password reset:<br><br>
-            <?php echo "<input class='textinput loginfield' name='email' type='email' "
-                       . "placeholder='EMAIL' size='30' required/><br>"; ?>
-            <input class='sendreset' type="submit" value="SEND"/>
-        </form>
-        <?php
+        $message = "Reset failed. The link may be invalid or expired.";
     endif;
-    ?>
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $pwReset->requestResetToken($email);
+    $message = "If the email address exists, a reset link has been sent.";
+endif;
+?>
+
+<?php if ($message !== '') : ?>
+    <div class="alert-box notice" style="margin: 20px;">
+        <?php echo htmlspecialchars($message); ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($emailEnabledFlag && !empty($token) && !empty($tokenEmail)) : ?>
+    <form  action="?" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token);?>">
+        <input type="hidden" name="email" value="<?php echo htmlspecialchars($tokenEmail);?>">
+        <br>Set a new password:<br><br>
+        <input
+            class='textinput loginfield'
+            name='new_password'
+            type='password'
+            placeholder='NEW PASSWORD'
+            size='30'
+            required
+        /><br>
+        <input class='sendreset' type="submit" value="UPDATE PASSWORD"/>
+    </form>
+<?php elseif ($emailEnabledFlag) : ?>
+    <form  action="?" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="submit">
+        <br>Request password reset:<br><br>
+        <?php echo "<input class='textinput loginfield' name='email' type='email' "
+                   . "placeholder='EMAIL' size='30' required/><br>"; ?>
+        <input class='sendreset' type="submit" value="SEND"/>
+    </form>
+<?php endif; ?>
 </div>
 </body>
 </html>

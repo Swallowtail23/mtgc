@@ -100,6 +100,9 @@ endif;
 // How long to trust trusted devices (in days)
 $trustDuration = $iniArray['security']['TrustDuration'];
 
+// Email enable/disable
+$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
+
 // Enable Disqus card commenting
 if ($iniArray['comments']['Disqus'] !== 'enabled') :
     $disqus = 0;
@@ -186,10 +189,6 @@ try {
         );
     endif;
     $db->set_charset('utf8mb4');
-//try {
-//    $db = new Mysqli_Manager();
-//    $db->conn(); // connect DB
-//    $db->set_charset("utf8mb4");
 } catch (Exception $err) {
     if (($fd = fopen($logfile, "a")) !== false) :
         $msg = "[ERROR] Fatal database exception: {$err->getMessage()}";
@@ -205,7 +204,15 @@ try {
     $from = "From: " . $serverEmail;
     $subject = "Fatal database exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
-    mail($adminEmail, $subject, $message, $from);
+    if ($emailEnabled) :
+        mail($adminEmail, $subject, $message, $from);
+    else :
+        $fallbackMsg = new Message($logfile);
+        $fallbackMsg->logMessage(
+            '[NOTICE]',
+            "Email disabled; fatal DB alert not sent to admin ({$err->getMessage()})"
+        );
+    endif;
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }

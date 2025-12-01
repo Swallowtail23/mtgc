@@ -171,7 +171,7 @@ $loginHandler->logPageLoad($_POST, $_SESSION);
                     };
                 })();
             </script>
-            <?php endif; ?>
+        <?php endif; ?>
     </div>
 </body>
 </html>

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        27/11/25
+Version:     2.4
+Date:        01/12/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
 Notes:       {none}
@@ -16,6 +16,7 @@ History:
     2.1 20/01/24 Move to logMessage
     2.2 25/11/25 Standard tidy-up
     2.3 27/11/25 Add email validation to newUser
+    2.4 01/12/25 Token-based password reset flow
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -38,6 +39,90 @@ class PasswordCheck
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
+    }
+
+    /**
+     * Request a password reset link (token sent via email if enabled).
+     */
+    public function requestResetToken($email, $forceChange = false)
+    {
+        global $serverEmail, $siteTitle, $myURL, $smtpParameters, $emailEnabled;
+        if (!$emailEnabled) :
+            $this->message->logMessage('[NOTICE]', 'Password reset request blocked; email disabled');
+            return false;
+        endif;
+
+        $email = trim($email);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) :
+            return true; // do not disclose validity
+        endif;
+
+        $user = $this->findUserByEmail($email);
+        if ($user === null) :
+            return true; // do not disclose validity
+        endif;
+
+        if ($forceChange) :
+            $this->updateUserStatus($email, 'chgpwd');
+        endif;
+
+        $this->ensureResetTable();
+        $this->clearExpiredResetTokens();
+        $token = bin2hex(random_bytes(16));
+        $tokenHash = password_hash($token, PASSWORD_DEFAULT);
+        $expires = date('Y-m-d H:i:s', time() + 3600);
+
+        if (!$this->persistResetToken($email, $tokenHash, $expires)) :
+            $this->message->logMessage('[ERROR]', "Failed to persist reset token for $email");
+            return false;
+        endif;
+
+        $link = rtrim($myURL, '/') . "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
+        return $this->sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters);
+    }
+
+    /**
+     * Complete password reset using token.
+     */
+    public function completeReset($email, $token, $newPassword)
+    {
+        global $emailEnabled;
+        if (!$emailEnabled) :
+            $this->message->logMessage('[NOTICE]', 'Complete reset blocked; email disabled');
+            return false;
+        endif;
+
+        $email = trim($email);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || empty($token) || empty($newPassword)) :
+            return false;
+        endif;
+
+        $record = $this->fetchResetRecord($email);
+        if ($record === null) :
+            $this->message->logMessage('[ERROR]', "No reset token found for $email");
+            return false;
+        endif;
+
+        if (strtotime($record['expires_at']) < time()) :
+            $this->message->logMessage('[ERROR]', "Reset token expired for $email");
+            $this->clearResetRecord($email);
+            return false;
+        endif;
+
+        if (!password_verify($token, $record['token_hash'])) :
+            $this->message->logMessage('[ERROR]', "Reset token verification failed for $email");
+            return false;
+        endif;
+
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        if (!$this->updateUserPassword($email, $hashedPassword, true)) :
+            $this->message->logMessage('[ERROR]', "Failed to update password for $email");
+            return false;
+        endif;
+
+        $this->clearResetRecord($email);
+        $this->clearExpiredResetTokens();
+        return true;
     }
 
     public function validatePassword($email, $password)
@@ -87,7 +172,7 @@ class PasswordCheck
 
     public function passwordReset($email, $admin, $dbname)
     {
-        global $serverEmail, $adminEmail, $siteTitle, $myURL;
+        global $serverEmail, $adminEmail, $siteTitle, $myURL, $emailEnabled;
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
             return 0;
@@ -96,6 +181,9 @@ class PasswordCheck
             $this->message->logMessage("[DEBUG]", "Called by non-admin user");
             return 0;
             exit;
+        elseif (!$emailEnabled) :
+            $this->message->logMessage("[NOTICE]", "Password reset requested but email disabled");
+            return 0;
         else :
             if (
                 $row = $this->db->execute_query(
@@ -121,12 +209,26 @@ class PasswordCheck
                                    . "Please login with this temporary password: $randompassword\n"
                                    . "You will need to then choose a new password.\n\n"
                                    . "If you did not request a new password at $siteTitle, you can ignore this email.";
-                        mail($email, $subject, $message, $from);
+                        if ($emailEnabled) :
+                            mail($email, $subject, $message, $from);
+                        else :
+                            $this->message->logMessage(
+                                '[NOTICE]',
+                                "Email disabled; password reset not emailed to $email"
+                            );
+                        endif;
                     elseif ($reset === 0) :
                         $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
                         $subject = "Password reset failed";
                         $message = "Password reset failed for $userName / $email";
-                        mail($adminEmail, $subject, $message, $from);
+                        if ($emailEnabled) :
+                            mail($adminEmail, $subject, $message, $from);
+                        else :
+                            $this->message->logMessage(
+                                '[NOTICE]',
+                                "Email disabled; admin reset failure email not sent for $email"
+                            );
+                        endif;
                     endif;
                 else :
                     trigger_error(
@@ -159,9 +261,184 @@ class PasswordCheck
         return $randomPassword;
     }
 
+    /**
+     * Look up a user by email, returning an array or null.
+     */
+    protected function findUserByEmail($email)
+    {
+        $query = "SELECT usernumber, email FROM users WHERE email = ? LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return null;
+        endif;
+        $stmt->bind_param("s", $email);
+        if (!$stmt->execute()) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->store_result();
+        if ($stmt->num_rows !== 1) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->bind_result($usernumber, $dbemail);
+        $stmt->fetch();
+        $stmt->close();
+        return ['usernumber' => $usernumber, 'email' => $dbemail];
+    }
+
+    /**
+     * Ensure password_resets table exists.
+     */
+    protected function ensureResetTable()
+    {
+        $create = "CREATE TABLE IF NOT EXISTS password_resets (
+            email VARCHAR(255) PRIMARY KEY,
+            token_hash VARCHAR(255) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME NOT NULL
+        )";
+        $this->db->query($create);
+    }
+
+    /**
+     * Store/reset token.
+     */
+    protected function persistResetToken($email, $tokenHash, $expires)
+    {
+        $query = "INSERT INTO password_resets (email, token_hash, expires_at, created_at)
+                  VALUES (?, ?, ?, NOW())
+                  ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash), expires_at=VALUES(expires_at),
+                  created_at=VALUES(created_at)";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return false;
+        endif;
+        $stmt->bind_param("sss", $email, $tokenHash, $expires);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+
+    /**
+     * Fetch stored reset token.
+     */
+    protected function fetchResetRecord($email)
+    {
+        $query = "SELECT token_hash, expires_at FROM password_resets WHERE email = ? LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return null;
+        endif;
+        $stmt->bind_param("s", $email);
+        if (!$stmt->execute()) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->store_result();
+        if ($stmt->num_rows !== 1) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->bind_result($tokenHash, $expires);
+        $stmt->fetch();
+        $stmt->close();
+        return ['token_hash' => $tokenHash, 'expires_at' => $expires];
+    }
+
+    /**
+     * Clear reset token.
+     */
+    protected function clearResetRecord($email)
+    {
+        $query = "DELETE FROM password_resets WHERE email = ?";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return;
+        endif;
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    /**
+     * Clear expired reset tokens.
+     */
+    protected function clearExpiredResetTokens()
+    {
+        $query = "DELETE FROM password_resets WHERE expires_at < NOW()";
+        $this->db->query($query);
+    }
+
+    /**
+     * Allow callers to clear reset token for an email.
+     */
+    public function clearResetForEmail($email)
+    {
+        $this->clearResetRecord($email);
+    }
+
+    /**
+     * Update user status helper.
+     */
+    protected function updateUserStatus($email, $status)
+    {
+        $query = "UPDATE users SET status = ?, badlogins = 0 WHERE email = ?";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return false;
+        endif;
+        $stmt->bind_param("ss", $status, $email);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+
+    /**
+     * Update user password.
+     */
+    protected function updateUserPassword($email, $hashedPassword, $setActive = false)
+    {
+        if ($setActive) :
+            $query = "UPDATE users SET password = ?, badlogins = 0, status = 'active' WHERE email = ?";
+        else :
+            $query = "UPDATE users SET password = ?, badlogins = 0 WHERE email = ?";
+        endif;
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return false;
+        endif;
+        $stmt->bind_param("ss", $hashedPassword, $email);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+
+    /**
+     * Send reset email via PHPMailer wrapper.
+     */
+    protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
+    {
+        if (!class_exists('MyPHPMailer')) :
+            $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
+            return false;
+        endif;
+
+        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $subject = "$siteTitle password reset";
+        $safeLink = htmlspecialchars($link);
+        $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"
+            . "$link\n\nIf you did not request this, you can ignore this email.";
+        $bodyHtml = "<p>A password reset was requested for your account.</p>"
+            . "<p><a href=\"{$safeLink}\">Click here to set a new password</a></p>"
+            . "<p>If you did not request this, you can ignore this email.</p>";
+
+        return $mail->sendEmail($email, true, $subject, $bodyHtml, $bodyText);
+    }
+
     public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
-        global $serverEmail, $adminEmail;
+        global $serverEmail, $adminEmail, $emailEnabled;
         $msg = new Message($this->logfile);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
@@ -276,7 +553,14 @@ class PasswordCheck
             $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
             $subject = "New account at $this->siteTitle";
             $message = "Your new password is $password";
-            mail($postemail, $subject, $message, $from);
+            if ($emailEnabled) :
+                mail($postemail, $subject, $message, $from);
+            else :
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; new account email not sent to $postemail"
+                );
+            endif;
         endif;
 
         if (($usersuccess === 1) && ($tablesuccess === 1)) :
