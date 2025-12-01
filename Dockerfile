@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.2-apache-bookworm
 
 # preseed timezone and suppress prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -32,8 +32,8 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/mtgnew
 RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot ${APACHE_DOCUMENT_ROOT}#' /etc/apache2/sites-available/000-default.conf \
     && sed -ri 's#/var/www/html#${APACHE_DOCUMENT_ROOT}#' /etc/apache2/apache2.conf
 
-# Ensure logs directory exists for mounting
-RUN mkdir -p /var/log/mtg && chown -R www-data:www-data /var/log/mtg
+# Ensure mount targets exist in the image; ownership is best-effort
+RUN mkdir -p /mnt/data/cardimg /var/log/mtg && chown -R www-data:www-data /mnt/data /var/log/mtg || true
 
 # Copy custom Apache configuration and enable required modules
 COPY setup/mtgc_ctr.conf /etc/apache2/sites-available/mtgc.conf

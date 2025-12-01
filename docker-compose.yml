@@ -1,0 +1,37 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ${BASE_DIR}/cardimg:/mnt/data/cardimg
+      - ${BASE_DIR}/config/mtg_new.ini:/opt/mtg/mtg_new.ini
+      - ${BASE_DIR}/logs:/var/log/mtg
+      - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
+      - ${BASE_DIR}/config/php_custom.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro
+    depends_on:
+      - db
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: mtg
+      MYSQL_USER: mtg
+      MYSQL_PASSWORD: mtgpass
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+volumes:
+  db-data:
