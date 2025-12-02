@@ -91,13 +91,13 @@ if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
     $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
-$csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
-if ($csvResult !== true) :
-    $msg->logMessage('[ERROR]', "CSV export email failed: $csvResult");
-    $_SESSION['csv_status'] = 'false';
-else :
-    $_SESSION['csv_status'] = 'true';
-endif;
+    $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
+    if ($csvResult !== true) :
+        $msg->logMessage('[ERROR]', "CSV export email failed: " . (is_string($csvResult) ? $csvResult : 'unknown'));
+        $_SESSION['csv_status'] = 'false';
+    else :
+        $_SESSION['csv_status'] = 'true';
+    endif;
     $msg->logMessage('[DEBUG]', "Truncating collection table...");
     if (!$db->execute_query("TRUNCATE TABLE `$mytable`")) :
         $msg->logMessage('[ERROR]', "Truncate table failed");

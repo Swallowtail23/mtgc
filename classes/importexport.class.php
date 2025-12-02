@@ -154,7 +154,7 @@ class ImportExport
                     if ($mailresult === true) :
                         return true;
                     else :
-                        return false;
+                        return $mailresult ?: false;
                     endif;
                 else :
                     $this->message->logMessage(
@@ -192,7 +192,7 @@ class ImportExport
                     if ($mailresult === true) :
                         return true;
                     else :
-                        return false;
+                        return $mailresult ?: false;
                     endif;
                 else :
                     $this->message->logMessage(

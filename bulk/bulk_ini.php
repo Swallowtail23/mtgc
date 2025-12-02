@@ -50,6 +50,7 @@ endif;
 
 //Logging levels
 $logLevelIni = $iniArray['general']['Loglevel'];
+$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
 
 //Email settings (PHPMailer, see https://github.com/PHPMailer/PHPMailer
 //Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $iniArray['general']['Loglevel'] = 3

@@ -29,9 +29,9 @@ include '../includes/colour.php';
 $msg = new Message($logfile);
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
+    header("Refresh: 2; url=login.php"); // redirect if not logged in
     // Return an error in JSON format
     echo json_encode(["status" => "error", "message" => "You are not logged in."]);
-    header("Refresh: 2; url=login.php"); // redirect if not logged in
     exit();
 else :
     if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) :
