@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.4
-Date:        29/11/25
+Version:     4.5
+Date:        02/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -19,6 +19,7 @@ History:
     4.2 29/05/24 Fix incorrect set ordering
     4.3 25/11/25 Standard tidy-up
     4.4 29/11/25 Rename forcePasswordChange usage
+    4.5 02/12/25 Guard empty set list and defer output until after redirects
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -34,6 +35,29 @@ require 'includes/secpagesetup.php';      // Setup page variables
 forcePasswordChange();                     // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$setsPerPage = 30;
+$range = 4;
+$totalSets = 0;
+$totalPages = 1;
+
+$totalSetsQuery = $db->query("SELECT COUNT(DISTINCT name) as totalSets FROM sets");
+if ($totalSetsQuery) :
+    $totalSetsRow = $totalSetsQuery->fetch_assoc();
+    if (is_array($totalSetsRow) && isset($totalSetsRow['totalSets'])) :
+        $totalSets = (int) $totalSetsRow['totalSets'];
+        $totalPages = max(1, (int) ceil($totalSets / $setsPerPage));
+    else :
+        $msg->logMessage('[DEBUG]', 'sets.php: total sets query returned no rows');
+    endif;
+else :
+    $msg->logMessage('[ERROR]', 'sets.php: failed to query total sets');
+endif;
+
+if ($totalSets > 0 && $page > $totalPages) :
+    header('Location: /sets.php?page=' . max(1, $totalPages));
+    exit;
+endif;
 ?>
 <!DOCTYPE html>
 
@@ -46,20 +70,6 @@ $msg = new Message($logfile);
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js"></script>
-    <?php
-    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $setsPerPage = 30;
-    $range = 4;
-
-    $totalSetsQuery = $db->query("SELECT COUNT(DISTINCT name) as totalSets FROM sets");
-    $totalSets = $totalSetsQuery->fetch_assoc()['totalSets'];
-    $totalPages = ceil($totalSets / $setsPerPage);
-
-    if ($page > $totalPages) :
-        header('Location: /sets.php?page=' . max(1, $totalPages));
-        exit;
-    endif;
-    ?>
     <script>
         const csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
 
@@ -331,15 +341,15 @@ require 'includes/menu.php';
                 ORDER BY 
                     setdate DESC, length(setcode) ASC, length(parent_set_code) ASC, parent_set_code DESC, setcode ASC
                 LIMIT ?";
-        $stmt = $db->prepare($sql);
         $msg->logMessage('[DEBUG]', "Query is: $sql");
-        $stmt->bind_param('i', $setsPerPage);
+        $stmt = $db->prepare($sql);
         if ($stmt === false) :
             trigger_error(
                 '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Preparing SQL: ' . $db->error,
                 E_USER_ERROR
             );
         endif;
+        $stmt->bind_param('i', $setsPerPage);
         $exec = $stmt->execute();
         if ($exec === false) :
             trigger_error(
@@ -349,10 +359,7 @@ require 'includes/menu.php';
         else :
             $result = $stmt->get_result();
             if ($result->num_rows === 0) :
-                trigger_error(
-                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__ . ': No results ' . $db->error,
-                    E_USER_ERROR
-                );
+                $msg->logMessage('[NOTICE]', 'sets.php: No sets found to display');
             endif;
         endif;
         ?>

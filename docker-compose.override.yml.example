@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  web:
+    # Example of custom ini file and card image path
+    volumes:
+      - /opt/mtg/mtg_new.ini:/opt/mtg/mtg_new.ini:ro
+      - /srv/cardimg:/mnt/data/cardimg
+    ports:
+      - "8080:80"
+  db:
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: mtg
+      MYSQL_USER: mtg
+      MYSQL_PASSWORD: changeme

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.7
-Date:        29/11/25
+Version:     8.0
+Date:        02/12/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -26,6 +26,7 @@ History:
     7.5 27/11/25 Enable login submit via JS when Turnstile disabled or success
     7.6 28/11/25 Extract login handling into LoginHandler class for clarity
     7.7 29/11/25 Rename cssVersionCheck usage
+    8.0 02/12/25 Adjust to prevent "Session headers already sent"
 */
 
 if (file_exists('includes/sessionname.local.php')) :

@@ -129,7 +129,7 @@ class SessionManager
             endif;
             $mytable = $userNumber . "collection";
 
-            if (isset($this->fxAPI) and $this->fxAPI !== null and $this->fxAPI !== "") :
+            if (isset($this->fxAPI) and $this->fxAPI !== null and $this->fxAPI !== "" and $this->fxAPI !== "disabled") :
                 $fx = true;
                 $defaultLocalCurrency = $this->fxLocal;
                 $userLocalCurrency = $currency;
@@ -148,6 +148,7 @@ class SessionManager
                     $this->message->logMessage('[DEBUG]', "No user currency set, using default: $defaultLocalCurrency");
                     $currencies = "usd_" . $defaultLocalCurrency;
                 else : // else disable fx
+                    $this->message->logMessage('[DEBUG]', "FX conversion disabled, no local currency required");
                     $fx = false;
                 endif;
                 list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
@@ -160,6 +161,8 @@ class SessionManager
             else :
                 $fx = false;
                 $this->message->logMessage('[DEBUG]', "FX conversion disabled (1)");
+                $targetCurrency = "usd";
+                $rate = false;
             endif;
             if (isset($fx) and $fx === true) :
                 $rate = $this->getRateForCurrencyPair($currencies);
