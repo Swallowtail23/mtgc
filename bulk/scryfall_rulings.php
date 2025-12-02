@@ -19,6 +19,7 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 $msg = new Message($logfile);
+ensureDirectoryExists($imgLocation . 'json');
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;

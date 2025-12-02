@@ -33,7 +33,8 @@ RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot ${APACHE_DOCUMENT_ROOT}#'
     && sed -ri 's#/var/www/html#${APACHE_DOCUMENT_ROOT}#' /etc/apache2/apache2.conf
 
 # Ensure mount targets exist in the image; ownership is best-effort
-RUN mkdir -p /mnt/data/cardimg /var/log/mtg && chown -R www-data:www-data /mnt/data /var/log/mtg || true
+RUN mkdir -p /mnt/data/cardimg /mnt/data/config /var/log/mtg /opt/mtg \
+    && chown -R www-data:www-data /mnt/data /var/log/mtg /opt/mtg || true
 
 # Copy custom Apache configuration and enable required modules
 COPY setup/mtgc_ctr.conf /etc/apache2/sites-available/mtgc.conf
@@ -43,11 +44,10 @@ RUN a2dissite 000-default.conf && a2ensite mtgc.conf \
 # Copy source
 COPY . /var/www/mtgnew
 
-# Copy setup scripts for container startup and cron use
-RUN mkdir -p /opt/mtg
-COPY setup/*.sh /opt/mtg/
-RUN find /opt/mtg -name "*.sh" -exec sed -i 's/\r$//' {} \;
-RUN chmod +x /opt/mtg/*.sh
+# Copy wait-for script into PATH so CMD can use it regardless of host mounts
+COPY setup/wait-for-mysql.sh /usr/local/bin/wait-for-mysql.sh
+RUN sed -i 's/\r$//' /usr/local/bin/wait-for-mysql.sh \
+    && chmod +x /usr/local/bin/wait-for-mysql.sh
 
 # Final working directory
 WORKDIR /var/www/mtgnew
@@ -60,7 +60,9 @@ RUN docker-php-ext-install gd mysqli
 
 # Optional: Set fallback ownership of important mount targets
 RUN chown -R www-data:www-data /mnt/data/cardimg || true \
- && chown -R www-data:www-data /opt/mtg || true
+ && chown -R www-data:www-data /mnt/data/config || true \
+ && chown -R www-data:www-data /var/log/mtg || true \
+ && chown -R www-data:www-data /opt/mtg || true 
 
 EXPOSE 80
 
@@ -69,4 +71,4 @@ COPY setup/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/opt/mtg/wait-for-mysql.sh", "db", "apache2-foreground"]
+CMD ["/usr/local/bin/wait-for-mysql.sh", "db", "apache2-foreground"]

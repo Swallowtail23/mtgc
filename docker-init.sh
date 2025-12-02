@@ -32,7 +32,7 @@ echo "[INFO] Using container command: ${DOCKER_CMD}"
 # Prompt for base directory
 # ─────────────────────────────────────────────
 
-read -rp "Enter base directory for data/config/logs (e.g. /home/username): " BASE_PARENT
+read -rp "Enter base directory for card images/config/logs (e.g. /home/username - recommend 25-40GB): " BASE_PARENT
 read -rp "Enter port for the web UI (e.g. 8082): " WEB_PORT
 
 # Validate base dir
@@ -131,6 +131,14 @@ fi
 ${COMPOSE_CMD} up --build -d
 
 # ─────────────────────────────────────────────
+# Reapply host-side write permissions for config file
+# ─────────────────────────────────────────────
+if [[ -f "$BASE_DIR/config/mtg_new.ini" ]]; then
+    chmod +w "$BASE_DIR/config/mtg_new.ini"
+fi
+chmod +w "$BASE_DIR/config"
+
+# ─────────────────────────────────────────────
 # Wait for MySQL
 # ─────────────────────────────────────────────
 echo "Waiting for MySQL to be available..."
@@ -140,6 +148,13 @@ until ${DOCKER_CMD} exec mtgc_web_1 mysqladmin ping -h"db" --silent; do
 done
 
 echo "MySQL is available."
+
+# ─────────────────────────────────────────────
+# Ensure runtime directories are owned by www-data inside the container
+# ─────────────────────────────────────────────
+echo "Applying container permissions to mounted directories..."
+${DOCKER_CMD} exec mtgc_web_1 bash -c \
+    "chown -R www-data:www-data /mnt/data/cardimg /var/log/mtg && chmod -R u+rwX /mnt/data/cardimg /var/log/mtg"
 
 # ─────────────────────────────────────────────
 # If new DB, do full setup
@@ -181,10 +196,6 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     fi
 else
     echo "MySQL is available. Skipping user/admin setup - database volume already exists."
-    if [[ ! -f "$MARKER_FILE" ]]; then
-        echo "Existing DB volume but no import marker - assuming import was already run."
-        echo "done" > "$MARKER_FILE"
-    fi
 fi
 
 # ─────────────────────────────────────────────
@@ -196,10 +207,17 @@ if [[ ! -f "$MARKER_FILE" ]]; then
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
-    echo "done" > "$MARKER_FILE"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/.scryfall_import_done"
 else
     echo "Bulk import already completed previously - skipping."
 fi
+
+# ─────────────────────────────────────────────
+# Hand config directory ownership back to container user
+# ─────────────────────────────────────────────
+echo "Finalising config directory ownership for container runtime..."
+${DOCKER_CMD} exec mtgc_web_1 bash -c \
+    "chown -R www-data:www-data /mnt/data/config && chmod -R u+rwX /mnt/data/config"
 
 # ─────────────────────────────────────────────
 # Clear maintenance mode

@@ -452,6 +452,26 @@ function loginStamp($userEmail)
     endif;
 }
 
+function ensureDirectoryExists($path)
+{
+    global $logfile;
+
+    if (is_dir($path)) :
+        return;
+    endif;
+
+    if (@mkdir($path, 0755, true)) :
+        $msg = new Message($logfile);
+        $msg->logMessage('[NOTICE]', "Created directory $path");
+        return;
+    endif;
+
+    $error = error_get_last();
+    $msg = new Message($logfile);
+    $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
+    trigger_error("[ERROR] Unable to create directory {$path}", E_USER_ERROR);
+}
+
 function downloadBulk($url, $dest)
 {
     global $db, $logfile;
