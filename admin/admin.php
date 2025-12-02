@@ -241,6 +241,8 @@ $smtpPortIni = $iniArray['email']['Port'] ?? '';
 $smtpUserIni = $iniArray['email']['Username'] ?? '';
 $smtpPasswordIni = $iniArray['email']['Password'] ?? '';
 $smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
+$smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? gethostname();
+$smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
 $smtpSecureChoice = 'none';
 if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_SMTPS') :
     $smtpSecureChoice = 'smtps';
@@ -250,6 +252,15 @@ endif;
 $disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
 $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 $smtpDebugEnabled = ($smtpDebugIni !== 'SMTP::DEBUG_OFF' && $smtpDebugIni !== '');
+$smtpParameters = [
+    'SMTPHost' => $smtpHostIni,
+    'SMTPPort' => $smtpPortIni,
+    'SMTPAuth' => $iniArray['email']['SMTPAuth'] ?? 0,
+    'SMTPUsername' => $smtpUserIni,
+    'SMTPSecure' => $smtpSecureIni,
+    'SMTPHelo' => $smtpHeloIni,
+    'SMTPVerifySSL' => $smtpVerifyIni
+];
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -375,6 +386,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         $updatedIni['email']['SMTPDebug'] = $smtpDebugIni;
     endif;
     $updatedIni['email']['Host'] = getPostedValue('email_host', $smtpHostIni);
+    $updatedIni['email']['SMTPHelo'] = getPostedValue('email_helo', $smtpHeloIni ?: gethostname());
     $smtpPort = filter_input(INPUT_POST, 'email_port', FILTER_SANITIZE_NUMBER_INT);
     if ($smtpPort !== null && $smtpPort !== false && $smtpPort !== '') :
         $updatedIni['email']['Port'] = $smtpPort;
@@ -403,6 +415,15 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         $updatedIni['email']['SMTPSecure'] = 'none';
     else :
         $updatedIni['email']['SMTPSecure'] = $smtpSecureIni;
+    endif;
+    $smtpVerifyChoice = getPostedValue(
+        'email_verify',
+        ($smtpVerifyIni && $smtpVerifyIni !== '0') ? 'verify' : 'allow'
+    );
+    if ($smtpVerifyChoice === 'allow') :
+        $updatedIni['email']['SMTPVerifySSL'] = 0;
+    else :
+        $updatedIni['email']['SMTPVerifySSL'] = 1;
     endif;
 
     // Comment settings
@@ -441,6 +462,8 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
                 'SMTPPassword' => $iniArray['email']['Password'],
                 'SMTPSecure' => $iniArray['email']['SMTPSecure'],
                 'SMTPPort' => $iniArray['email']['Port'],
+                'SMTPHelo' => $iniArray['email']['SMTPHelo'] ?? gethostname(),
+                'SMTPVerifySSL' => $iniArray['email']['SMTPVerifySSL'] ?? 1,
                 'globalDebug' => $logLevelIni
             ];
             $adminEmail = $iniArray['email']['AdminEmail'];
@@ -457,6 +480,8 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $smtpUserIni = $iniArray['email']['Username'] ?? '';
             $smtpPasswordIni = $iniArray['email']['Password'] ?? '';
             $smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
+            $smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? gethostname();
+            $smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
             $disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
             $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
         else :
@@ -496,6 +521,8 @@ $smtpPortIni = $iniArray['email']['Port'] ?? '';
 $smtpUserIni = $iniArray['email']['Username'] ?? '';
 $smtpPasswordIni = $iniArray['email']['Password'] ?? '';
 $smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
+$smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? '';
+$smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
 $disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
 $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 ?>
@@ -1209,6 +1236,23 @@ require('../includes/menu.php');
                                                     endif;?>
                                                 >
                                             </label><br>
+                                            <label>SMTP HELO name<br>
+                                                <input
+                                                    class="textinput"
+                                                    type="text"
+                                                    id="email_helo"
+                                                    name="email_helo"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="Hostname sent in SMTP HELO/EHLO"
+                                                    value="<?php
+                                                        echo htmlspecialchars(
+                                                            $smtpParameters['SMTPHelo'] ?? gethostname()
+                                                        );?>"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                            </label><br>
                                             <label>SMTP port<br>
                                                 <input
                                                     class="textinput"
@@ -1286,10 +1330,33 @@ require('../includes/menu.php');
                                                         endif;?>
                                                     >STARTTLS</option>
                                                     <option value="none"
-                                                        <?php if ($smtpSecureIni === 'none') :
+                                                    <?php if ($smtpSecureIni === 'none') :
                                                             echo 'selected';
                                                         endif;?>
                                                     >None</option>
+                                                </select>
+                                            </label><br>
+                                            <label>Certificate validation<br>
+                                                <select
+                                                    name="email_verify"
+                                                    id="email_verify"
+                                                    class="textinput"
+                                                    <?php echo $configInputStyle;?>
+                                                    title="TLS certificate validation behavior"
+                                                    <?php if (!$emailEnabled) :
+                                                        echo 'disabled';
+                                                    endif;?>
+                                                >
+                                                    <option value="verify"
+                                                        <?php if ($smtpVerifyIni && $smtpVerifyIni !== '0') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >Require valid certificate</option>
+                                                    <option value="allow"
+                                                        <?php if (!$smtpVerifyIni || $smtpVerifyIni === '0') :
+                                                            echo 'selected';
+                                                        endif;?>
+                                                    >Allow self-signed/invalid</option>
                                                 </select>
                                             </label>
                                             <button id="email_password_toggle" type="button" class="profilebutton"

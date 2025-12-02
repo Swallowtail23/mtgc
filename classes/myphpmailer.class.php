@@ -58,11 +58,22 @@ class MyPHPMailer extends PHPMailer
         $this->addReplyTo($this->serverEmail, $this->siteTitle);
         $this->isSMTP();
         $this->Host       = $smtpParameters['SMTPHost'];
+        $this->Helo       = $smtpParameters['SMTPHelo'] ?? gethostname();
         $this->Port       = $smtpParameters['SMTPPort'];
         $this->SMTPAuth   = $smtpParameters['SMTPAuth'];
         $this->Username   = $smtpParameters['SMTPUsername'];
         $this->Password   = $smtpParameters['SMTPPassword'];
         $this->SMTPSecure = $smtpParameters['SMTPSecure'];
+        $this->SMTPAutoTLS = true;
+        if (isset($smtpParameters['SMTPVerifySSL']) && !$smtpParameters['SMTPVerifySSL']) {
+            $this->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                ]
+            ];
+        }
 
         // Check if debugging is required
         if ($smtpParameters['SMTPDebug'] === 'SMTP::DEBUG_OFF') :

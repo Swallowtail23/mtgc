@@ -89,7 +89,9 @@ packages:
 - `[general]` section defines title, tier (`dev`/`prod` header colours),
   `ImgLocation`, `Logfile`, `Loglevel`.
 - Additional sections for SMTP/PHPMailer settings, Turnstile keys,
-  FreecurrencyAPI key, Disqus settings, FX defaults, etc.
+  FreecurrencyAPI key, Disqus settings, FX defaults, etc. SMTP configuration
+  includes host, port, authentication, HELO name, encryption mode, and whether
+  to enforce TLS certificate validation.
 - Web/container users must have read/write access; admin UI writes back changes.
 
 ### Shell/Bulk scripts

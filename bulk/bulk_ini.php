@@ -61,6 +61,8 @@ $smtpParameters =   [
                     'SMTPPassword' => $iniArray['email']['Password'],
                     'SMTPSecure' => $iniArray['email']['SMTPSecure'],
                     'SMTPPort' => $iniArray['email']['Port'],
+                    'SMTPHelo' => $iniArray['email']['SMTPHelo'] ?? gethostname(),
+                    'SMTPVerifySSL' => $iniArray['email']['SMTPVerifySSL'] ?? 1,
                     'globalDebug' => $logLevelIni
                     ];
 
