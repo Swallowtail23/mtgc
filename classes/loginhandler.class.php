@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        28/11/25
+Version:     1.3
+Date:        02/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -12,6 +12,8 @@ To do:       -
 History:
     1.0 28/11/25 Initial version - extracted login handling flow from login.php
     1.1 28/11/25 Add injectable terminator for improved testability
+    1.2 02/12/25 Render formatted page for login aborts
+    1.3 02/12/25 Catch additional unformatted exits
 */
 
 use andkab\Turnstile\Turnstile;
@@ -286,10 +288,12 @@ class LoginHandler
                 "Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}"
             );
             $badLogin->incrementBadLogin();
-            session_destroy();
-            echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-            echo 'Incorrect username/password. Please try again.';
-            $this->terminate();
+            $this->abortLogin(
+                'Incorrect username/password. Please try again.',
+                '[NOTICE]',
+                "Password check failed for $email from {$_SERVER['REMOTE_ADDR']}",
+                3
+            );
         endif;
 
         $userStatus = new UserStatus($this->db, $this->logfile, $email);
@@ -446,10 +450,9 @@ class LoginHandler
 
     private function abortLogin($message, $logLevel, $logMessage, $delaySeconds = 5)
     {
-        echo $message;
         $this->message->logMessage($logLevel, $logMessage);
         session_destroy();
-        echo "<meta http-equiv='refresh' content='{$delaySeconds};url=login.php'>";
+        $this->renderLoginErrorPage($message, $delaySeconds);
         $this->terminate();
     }
 
@@ -460,5 +463,36 @@ class LoginHandler
             return;
         endif;
         exit($code);
+    }
+
+    private function renderLoginErrorPage($message, $delaySeconds)
+    {
+        $cssver = function_exists('cssVersionCheck') ? cssVersionCheck() : '';
+        $safeTitle = htmlspecialchars($this->siteTitle);
+        $safeMessage = htmlspecialchars($message);
+        $delay = (int) $delaySeconds;
+        ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta http-equiv='refresh' content='<?php echo $delay; ?>;url=login.php'>
+    <meta
+        name='viewport'
+        content='initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no'
+    >
+    <title><?php echo $safeTitle; ?> - login</title>
+    <link rel='manifest' href='manifest.json' />
+    <link rel='stylesheet' type='text/css' href='css/style<?php echo $cssver; ?>.css'>
+    <?php include 'includes/googlefonts.php'; ?>
+</head>
+<body id='loginbody' class='body'>
+    <div id='loginheader'>
+        <h2 id='h2'><?php echo $safeTitle; ?></h2>
+        <p><?php echo $safeMessage; ?></p>
+    </div>
+</body>
+</html>
+        <?php
     }
 }

@@ -1,22 +1,27 @@
+name: mtgc
 services:
   web:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: mtgc_web
+    container_name: mtgc_web_1
     ports:
       - "${WEB_PORT:-8082}:80"
     volumes:
       - ${BASE_DIR}/cardimg:/mnt/data/cardimg
       - ${BASE_DIR}/config:/mnt/data/config
       - ${BASE_DIR}/logs:/var/log/mtg
-      - ./setup/mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
+      - ./mtgc_ctr.conf:/etc/apache2/sites-available/mtgc.conf:ro
       - ${BASE_DIR}/config/php_custom.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro
     depends_on:
       - db
   db:
     build:
-      context: .
-      dockerfile: Dockerfile.mysql
+      context: ..
+      dockerfile: docker/Dockerfile.mysql
+    image: mtgc_db
+    container_name: mtgc_db_1
     ports:
       - "3306:3306"
     environment:
@@ -26,7 +31,7 @@ services:
       MYSQL_PASSWORD: mtgpass
     volumes:
       - db-data:/var/lib/mysql
-      - ./setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro
+      - ../setup/mtg_new.sql:/docker-entrypoint-initdb.d/mtg_new.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

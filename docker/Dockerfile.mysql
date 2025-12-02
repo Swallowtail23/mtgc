@@ -1,0 +1,6 @@
+FROM docker.io/library/mysql:8.4
+
+RUN microdnf install -y tzdata
+
+COPY docker/my.cnf /etc/mysql/conf.d/custom.cnf
+RUN chmod 644 /etc/mysql/conf.d/custom.cnf

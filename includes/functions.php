@@ -525,7 +525,7 @@ function getBulkInfo($type)
         $url_all = $all_cards_url;
         $fileLocation_default = $imgLocation . 'json/bulk.json';
         $fileLocation_all = $imgLocation . 'json/bulk_all.json';
-    else :  // At the moment, else does a "standard" load only
+    else :  // At the moment, else does a "standard" load only - catches "default"
         $url = $default_cards_url;
         $fileLocation = $imgLocation . 'json/bulk.json';
     endif;

@@ -45,7 +45,7 @@ Install under a full-function web server (e.g. Apache)
 
 - e.g. git clone the master branch into /var/www/mtgc (I regularly break things in dev, and less regularly in master)
 - See setup/mtgc.conf for sample Apache configuration file
-- setup/mtgc_ctr.conf is a simplified variant used by the container setup
+- docker/mtgc_ctr.conf is a simplified variant used by the container setup
 - check and set all paths, names, IP addresses, certificates, etc.
 - IMPORTANT: Sample config restricts bulk and setup folders to localhost access
 
@@ -173,7 +173,7 @@ Post-install setup:
 
 ### Docker ###
 WORK IN PROGRESS
-A `Dockerfile` and `docker-compose.yml` are provided to run the site in containers. The image uses `setup/mtgc_ctr.conf` for Apache. Copy `setup/mtg_new.ini` to a host folder such as `/opt/mtg` and mount it into the `web` service. Ensure `/var/log/mtg` and the mounted `cardimg` directory are writable by Apache.
+A `docker/Dockerfile` and `docker/docker-compose.yml` are provided to run the site in containers. The image uses `docker/mtgc_ctr.conf` for Apache. Copy `setup/mtg_new.ini` to a host folder such as `/opt/mtg` and mount it into the `web` service. Ensure `/var/log/mtg` and the mounted `cardimg` directory are writable by Apache. The bootstrap script also copies the helper shell scripts from `setup/*.sh` into `${BASE_DIR}/config/scripts` (mounted inside the container as `/mnt/data/config/scripts`).
 
 Run the containers with:
 
@@ -287,7 +287,7 @@ Note 2G sizing is based on 4G or more server RAM.
 #### Initial database population ####
 Check you have required database setup, and that the database user can use the database.
 
-When using the provided `docker-compose.yml`, `setup/mtg_new.sql` is automatically loaded
+When using the provided `docker/docker-compose.yml`, `setup/mtg_new.sql` is automatically loaded
 into the MySQL container on first start. When running manually ensure the database user
 has permissions to create tables and that the schema is loaded.
 

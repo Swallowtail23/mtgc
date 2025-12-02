@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.4
-Date:        25/11/25
+Version:     2.5
+Date:        02/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -14,6 +14,7 @@ History:
     2.2 25/11/25 Formatting clean-up
     2.3 25/11/25 Wrapped long SQL/log strings
     2.4 25/11/25 Rename PHPMailer wrapper to PascalCase
+    2.5 02/12/25 Handle missing collection tables during safe delete checks
 */
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
@@ -151,6 +152,7 @@ function safeDeleteCheck($id)
     $result = $db->execute_query($sql);
     if ($result === false) :
         $safeScore = 20000;
+        $users = [];
     else :
         $users = [];
         while ($row = $result->fetch_assoc()) :
@@ -161,6 +163,16 @@ function safeDeleteCheck($id)
     //Find if it's in any user collections
     foreach ($users as $user) :
         $table = $user['usernumber'] . "collection";
+        $tableExistsSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() "
+            . "AND table_name = ?";
+        $tableExists = $db->execute_query($tableExistsSql, [$table]);
+        if ($tableExists === false || $tableExists->num_rows === 0) :
+            $msg->logMessage(
+                '[DEBUG]',
+                "Collection table {$table} missing; skipping safe-delete check for {$user['username']}"
+            );
+            continue;
+        endif;
         $sql = "SELECT SUM(COALESCE(`$table`.`normal`, 0) + COALESCE(`$table`.`foil`, 0) + "
             . "COALESCE(`$table`.`etched`, 0)) AS total FROM `$table` WHERE id = ?";
         $params = [$id];

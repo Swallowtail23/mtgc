@@ -2,6 +2,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+ENV_FILE="$SCRIPT_DIR/.env"
+ROOT_ENV_FILE="$PROJECT_ROOT/.env"
+
+cd "$PROJECT_ROOT"
+
 # ─────────────────────────────────────────────
 # Detect compose + container CLI (docker/podman)
 # ─────────────────────────────────────────────
@@ -27,6 +35,27 @@ fi
 
 echo "[INFO] Using compose command: ${COMPOSE_CMD}"
 echo "[INFO] Using container command: ${DOCKER_CMD}"
+
+restore_host_permissions() {
+    local target="$1"
+    if [[ ! -e "$target" ]]; then
+        return
+    fi
+    local owner group
+    owner=$(stat -c %u "$target" 2>/dev/null || echo "")
+    group=$(stat -c %g "$target" 2>/dev/null || echo "")
+    if [[ -z "$owner" || -z "$group" ]]; then
+        return
+    fi
+    if [[ "$owner" -ne "$(id -u)" || "$group" -ne "$(id -g)" ]]; then
+        echo "Adjusting ownership for $target back to $(id -u):$(id -g)"
+        if [[ "$DOCKER_CMD" == "podman" ]]; then
+            podman unshare chown -R 0:0 "$target"
+        else
+            chown -R "$(id -u):$(id -g)" "$target"
+        fi
+    fi
+}
 
 # ─────────────────────────────────────────────
 # Prompt for base directory
@@ -54,16 +83,22 @@ fi
 
 # Normalize path and append /mtgc
 BASE_DIR="${BASE_PARENT%/}/mtgc"
-MARKER_FILE="$BASE_DIR/logs/.scryfall_import_done"
+
+# Ensure host ownership is restored if directories already exist from rootless containers
+restore_host_permissions "$BASE_DIR"
+restore_host_permissions "$BASE_DIR/cardimg"
+restore_host_permissions "$BASE_DIR/config"
+restore_host_permissions "$BASE_DIR/logs"
+restore_host_permissions "$BASE_DIR/config/scripts"
 
 # Create required directories
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
 
-# Write .env file (both vars together)
-{
-    echo "BASE_DIR=$BASE_DIR"
-    echo "WEB_PORT=$WEB_PORT"
-} > .env
+# Write .env files for both compose contexts
+cat <<EOF | tee "$ENV_FILE" "$ROOT_ENV_FILE" >/dev/null
+BASE_DIR=$BASE_DIR
+WEB_PORT=$WEB_PORT
+EOF
 
 # ─────────────────────────────────────────────
 # Check if db-data volume exists (before containers start)
@@ -93,9 +128,9 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     # 3) Read DB settings from docker-compose.yml
     #    DBServer is the service name "db" from compose
     DB_SERVER="db"
-    DB_NAME=$(sed -n 's/^[[:space:]]*MYSQL_DATABASE:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
-    DB_USER=$(sed -n 's/^[[:space:]]*MYSQL_USER:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
-    DB_PASS=$(sed -n 's/^[[:space:]]*MYSQL_PASSWORD:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
+    DB_NAME=$(sed -n 's/^[[:space:]]*MYSQL_DATABASE:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
+    DB_USER=$(sed -n 's/^[[:space:]]*MYSQL_USER:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
+    DB_PASS=$(sed -n 's/^[[:space:]]*MYSQL_PASSWORD:[[:space:]]*"\?\([^"]*\)"\?/\1/p' "$COMPOSE_FILE" | head -n1)
 
     # Escape characters that are special to sed replacement
     ESC_DB_NAME=$(printf '%s\n' "$DB_NAME" | sed 's/[&/]/\\&/g')
@@ -120,6 +155,18 @@ if [[ ! -f "$BASE_DIR/config/php_custom.ini" ]]; then
     cp setup/php_custom.ini "$BASE_DIR/config/php_custom.ini"
 fi
 
+# Copy helper shell scripts for cron/bulk workflows
+SCRIPTS_DEST="$BASE_DIR/config/scripts"
+mkdir -p "$SCRIPTS_DEST"
+for helper in setup/*.sh; do
+    target="$SCRIPTS_DEST/$(basename "$helper")"
+    if [[ ! -f "$target" ]]; then
+        cp "$helper" "$target"
+    fi
+done
+restore_host_permissions "$SCRIPTS_DEST"
+chmod +x "$SCRIPTS_DEST"/*.sh
+
 # Make config editable if it exists
 if [[ -f "$BASE_DIR/config/mtg_new.ini" ]]; then
     chmod +w "$BASE_DIR/config/mtg_new.ini"
@@ -128,7 +175,11 @@ fi
 # ─────────────────────────────────────────────
 # Start containers via compose
 # ─────────────────────────────────────────────
-${COMPOSE_CMD} up --build -d
+export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mtgc}
+(
+    cd "$SCRIPT_DIR"
+    ${COMPOSE_CMD} up --build -d
+)
 
 # ─────────────────────────────────────────────
 # Reapply host-side write permissions for config file
@@ -159,27 +210,25 @@ ${DOCKER_CMD} exec mtgc_web_1 bash -c \
 # ─────────────────────────────────────────────
 # If new DB, do full setup
 # ─────────────────────────────────────────────
-if [[ "$DO_DB_SETUP" -eq 1 ]]; then
+run_user_setup() {
     echo "Starting initial DB setup..."
 
-    # Put DB into maintenance mode
     ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
         "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
-    # Prompt for user info
+    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e "TRUNCATE TABLE mtg_new.users;"
+
     read -rp "Enter email address for admin user: " email
     read -rp "Enter desired username (display only): " username
     read -rsp "Enter password: " password
     echo
 
-    # Update AdminEmail in mtg_new.ini
     INI_FILE="$BASE_DIR/config/mtg_new.ini"
     if [[ -f "$INI_FILE" ]]; then
         ESC_EMAIL=$(printf '%s\n' "$email" | sed 's/[&/]/\\&/g')
         sed -i -E "s/^AdminEmail[[:space:]]*=.*/AdminEmail     = \"${ESC_EMAIL}\"/" "$INI_FILE"
     fi
 
-    # Get hashed password from PHP script
     hashed=$(${DOCKER_CMD} exec mtgc_web_1 php /var/www/mtgnew/setup/initial.php "$username" "$password" \
         | grep "Hashed password:" | awk -F': ' '{print $2}' | xargs)
 
@@ -194,20 +243,33 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
         echo "[ERROR] Failed to get hashed password."
         exit 1
     fi
+}
+
+if [[ "$DO_DB_SETUP" -eq 1 ]]; then
+    run_user_setup
 else
     echo "MySQL is available. Skipping user/admin setup - database volume already exists."
+    read -rp "Do you want to re-run user setup anyway? (y/N): " rerun_reply
+    if [[ "$rerun_reply" =~ ^[Yy]$ ]]; then
+        run_user_setup
+    fi
 fi
 
 # ─────────────────────────────────────────────
 # Run bulk import if not already done
 # ─────────────────────────────────────────────
-if [[ ! -f "$MARKER_FILE" ]]; then
+marker_exists() {
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "[ -f /var/log/mtg/scryfall_import_done ]"
+}
+
+if ! marker_exists; then
     echo "Running bulk Scryfall import - this may take up to 2 hours..."
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php default"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
     ${DOCKER_CMD} exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"
-    ${DOCKER_CMD} exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/.scryfall_import_done"
+    ${DOCKER_CMD} exec mtgc_web_1 bash -c "printf 'done\n' > /var/log/mtg/scryfall_import_done"
 else
     echo "Bulk import already completed previously - skipping."
 fi
