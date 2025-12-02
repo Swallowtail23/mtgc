@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     24.9
-Date:        29/11/25
+Version:     25.0
+Date:        30/11/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -54,6 +54,7 @@ History:
     24.8 28/11/25 Use strtr map for symbolreplace to reduce passes
                   Rename input_interpreter to camelCase inputInterpreter
     24.9 29/11/25 Rename all non-camelCase functions
+    25.0 30/11/25 Avoid fatal when cssVersionCheck cannot reach database
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -72,12 +73,19 @@ function cssVersionCheck()
 {
     global $db, $logfile;
     $msg = new Message($logfile);
+    if (!is_object($db) or !method_exists($db, 'execute_query')) :
+        $msg->logMessage(
+            '[WARNING]',
+            "CSS version check skipped, defaulting to minified CSS: database unavailable"
+        );
+        return "-min";
+    endif;
     $sql = "SELECT usemin FROM admin LIMIT 1";
     $result = $db->execute_query($sql);
-    if ($result === false) :
+    if ($result === false or !is_object($result)) :
         $msg->logMessage(
             '[ERROR]',
-            "CSS version check failed, defaulting to minified CSS: " . $db->error
+            "CSS version check failed, defaulting to minified CSS: " . ($db->error ?? 'unknown error')
         );
         return "-min";
     else :
