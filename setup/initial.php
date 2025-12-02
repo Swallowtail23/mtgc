@@ -16,7 +16,7 @@ History:
     2.1 25/11/25 Standard tidy-up
 */
 
-include '../classes/ini.class.php';
+include __DIR__ . '/../classes/ini.class.php';
 $ini = new INI('/opt/mtg/mtg_new.ini');
 $iniArray = $ini->data;
 
