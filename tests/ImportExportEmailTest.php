@@ -1,14 +1,13 @@
 <?php
 
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../classes/importexport.class.php';
 
 class ImportExportEmailTest extends TestCase
 {
-    /**
-     * @runInSeparateProcess
-     */
+    #[RunInSeparateProcess]
     public function testExportEmailReturnsFalseWhenSendFails()
     {
         global $emailEnabled, $siteTitle, $logfile;

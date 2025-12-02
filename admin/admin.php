@@ -1244,10 +1244,12 @@ require('../includes/menu.php');
                                                     name="email_helo"
                                                     <?php echo $configInputStyle;?>
                                                     title="Hostname sent in SMTP HELO/EHLO"
-                                                    value="<?php
-                                                        echo htmlspecialchars(
-                                                            $smtpParameters['SMTPHelo'] ?? gethostname()
-                                                        );?>"
+                                                    value="
+                                                    <?php
+                                                    echo htmlspecialchars(
+                                                        $smtpParameters['SMTPHelo'] ?? gethostname()
+                                                    );
+                                                    ?>"
                                                     <?php if (!$emailEnabled) :
                                                         echo 'disabled';
                                                     endif;?>
@@ -1330,9 +1332,11 @@ require('../includes/menu.php');
                                                         endif;?>
                                                     >STARTTLS</option>
                                                     <option value="none"
-                                                    <?php if ($smtpSecureIni === 'none') :
-                                                            echo 'selected';
-                                                        endif;?>
+                                                    <?php
+                                                    if ($smtpSecureIni === 'none') :
+                                                        echo 'selected';
+                                                    endif;
+                                                    ?>
                                                     >None</option>
                                                 </select>
                                             </label><br>
