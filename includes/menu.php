@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        26/11/25
+Version:     2.3
+Date:        02/12/25
 Name:        menu.php
 Purpose:     PHP script to display menu
 Notes:       -
@@ -15,6 +15,7 @@ History:
     2.0         PHP 8.1 compatibility
     2.1 20/01/24 Move to logMessage
     2.2 26/11/25 Standard tidy-up
+    2.3 02/12/25 Guard missing update notices
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -40,20 +41,25 @@ endif;
         if (isset($db)) :
             if ($rowqry = $db->execute_query("SELECT date FROM updatenotices ORDER by date DESC LIMIT 1")) :
                 $row = $rowqry->fetch_assoc();
-                $latestupdate = strtotime($row['date']);
-                if ((time() - (60 * 60 * 24 * 7)) < $latestupdate) :
-                    ?>
-                    <div id='newcontent' display=block>
-                        <a href='info.php'><span></span></a>
-                        <div id='newlabel'>
-                            <a href='info.php'><span>NEW</span></a>
+                if (is_array($row) && isset($row['date'])) :
+                    $latestupdate = strtotime($row['date']);
+                    if ((time() - (60 * 60 * 24 * 7)) < $latestupdate) :
+                        ?>
+                        <div id='newcontent' display=block>
+                            <a href='info.php'><span></span></a>
+                            <div id='newlabel'>
+                                <a href='info.php'><span>NEW</span></a>
+                            </div>
                         </div>
-                    </div>
-                    <?php
+                        <?php
+                    endif;
+                else :
+                    $obj = new Message($logfile);
+                    $obj->logMessage('[DEBUG]', 'Menu updatenotices query returned no rows');
                 endif;
             else :
                 $obj = new Message($logfile);
-                $obj->logMessage('[DEBUG]', "No menu updates");
+                $obj->logMessage('[DEBUG]', 'Menu updatenotices query failed');
             endif;
         endif;
         ?>
