@@ -112,7 +112,7 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
 
     # Put DB into maintenance mode
     ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
-        "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
+        "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
     # Prompt for user info
     read -rp "Enter email address for admin user: " email
@@ -126,11 +126,11 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
 
     if [[ -n "$hashed" ]]; then
         ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
-            "INSERT INTO mtg.users (username, email, password, reg_date, status) VALUES ('$username', '$email', '$hashed', NOW(), 'active');"
+            "INSERT INTO mtg_new.users (username, email, password, reg_date, status) VALUES ('$username', '$email', '$hashed', NOW(), 'active');"
         ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
-            "UPDATE mtg.users SET admin=1 WHERE username='$username';"
+            "UPDATE mtg_new.users SET admin=1 WHERE username='$username';"
         ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
-            "INSERT INTO mtg.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
+            "INSERT INTO mtg_new.groups (groupnumber, groupname, owner) VALUES (1, 'Masters', 1) ON DUPLICATE KEY UPDATE groupname='Masters';"
     else
         echo "[ERROR] Failed to get hashed password."
         exit 1
