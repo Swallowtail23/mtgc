@@ -7,7 +7,7 @@ Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       Move style elements to CSS file
+To do:       -
 
 History:
     1.0         Initial version
