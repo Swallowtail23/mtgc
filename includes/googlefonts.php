@@ -22,7 +22,6 @@ endif;
 
 $msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
 $rcFontParameters  = "css?family=Roboto+Condensed:300,300italic%7CRoboto:400,300,300italic,500";
-?>
 
 echo "<link href='https://fonts.googleapis.com/{$rcFontParameters}' rel='stylesheet' type='text/css'>\n";
 echo "<link href='https://fonts.googleapis.com/{$msoFontParameters}' rel='stylesheet'>\n";
