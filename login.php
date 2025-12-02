@@ -94,6 +94,14 @@ endif;
 header('Cache-Control: max-age=0');
 
 $loginHandler->logPageLoad($_POST, $_SESSION);
+
+$loginHandler->handleTurnstileCheck($_POST, $_SERVER['REMOTE_ADDR']);
+$loginHandler->handleTurnstileFailureFlag($_GET);
+
+$loginData = $loginHandler->processLoginSubmission($_POST);
+if ($loginData !== null) :
+    $loginHandler->completeLogin($loginData, $_SESSION['redirect_url'] ?? 'index.php');
+endif;
 ?>
 <!DOCTYPE html>
 <html>
@@ -114,25 +122,18 @@ $loginHandler->logPageLoad($_POST, $_SESSION);
     <div id="loginheader">
         <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
         <?php
-        $loginHandler->handleTurnstileCheck($_POST, $_SERVER['REMOTE_ADDR']);
-        $loginHandler->handleTurnstileFailureFlag($_GET);
-
-        $loginData = $loginHandler->processLoginSubmission($_POST);
-        if ($loginData !== null) :
-            $loginHandler->completeLogin($loginData, $_SESSION['redirect_url'] ?? 'index.php');
-        else :
-            echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> ';
-            echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>";
-            echo "<br><br>";
-            echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
-            if ($turnstile === 1) :
-                echo "<br>";
-                echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' "
-                    . "data-theme='light' data-callback='onTurnstileSuccess' "
-                    . "data-error-callback='onTurnstileError' data-expired-callback='onTurnstileExpired'></div>";
-            endif;
-            echo '<input type="submit" id="loginsubmit" value="LOGIN" disabled="disabled" />';
-            echo '</form><br>'; ?>
+        echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> ';
+        echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>";
+        echo "<br><br>";
+        echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
+        if ($turnstile === 1) :
+            echo "<br>";
+            echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' "
+                . "data-theme='light' data-callback='onTurnstileSuccess' "
+                . "data-error-callback='onTurnstileError' data-expired-callback='onTurnstileExpired'></div>";
+        endif;
+        echo '<input type="submit" id="loginsubmit" value="LOGIN" disabled="disabled" />';
+        echo '</form><br>'; ?>
             <div class='loginpagebutton'>
                 <a href='reset.php'>RESET</a>
             </div>
@@ -171,7 +172,6 @@ $loginHandler->logPageLoad($_POST, $_SESSION);
                     };
                 })();
             </script>
-        <?php endif; ?>
     </div>
 </body>
 </html>

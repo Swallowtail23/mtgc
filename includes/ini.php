@@ -31,8 +31,8 @@ endif;
 $status = session_status();
 if ($status == PHP_SESSION_NONE) :
     //There is no active session
-    if (file_exists('sessionname.php')) :
-        require 'sessionname.php';
+    if (file_exists('sessionname.local.php')) :
+        require 'sessionname.local.php';
     else :
         require 'sessionname_template.php';
     endif;
@@ -52,6 +52,9 @@ function autoLoader($class_name)
     endif;
 }
 spl_autoload_register('autoLoader');
+
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\PHPMailer;
 
 // Set error reporting based on ini file's dev setting
 $ini = new INI("/opt/mtg/mtg_new.ini");
