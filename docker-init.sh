@@ -161,6 +161,6 @@ fi
 # Clear maintenance mode
 # ─────────────────────────────────────────────
 ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
-    "INSERT INTO mtg.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
+    "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 0) ON DUPLICATE KEY UPDATE mtce=0;"
 
 echo "✅ Setup complete. You can now log in via http://localhost:${WEB_PORT}"
