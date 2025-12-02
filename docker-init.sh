@@ -65,20 +65,6 @@ mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
     echo "WEB_PORT=$WEB_PORT"
 } > .env
 
-# Copy placeholder configs if not present
-if [[ ! -f "$BASE_DIR/config/mtg_new.ini" ]]; then
-    echo "Creating editable config file from template..."
-    cp setup/mtg_new.ini "$BASE_DIR/config/mtg_new.ini"
-fi
-
-if [[ ! -f "$BASE_DIR/config/php_custom.ini" ]]; then
-    echo "Creating php config file from template..."
-    cp setup/php_custom.ini "$BASE_DIR/config/php_custom.ini"
-fi
-
-# Make config editable
-chmod +w "$BASE_DIR/config/mtg_new.ini"
-
 # ─────────────────────────────────────────────
 # Check if db-data volume exists (before containers start)
 # ─────────────────────────────────────────────
@@ -86,6 +72,57 @@ DO_DB_SETUP=1
 if ${DOCKER_CMD} volume ls --format '{{.Name}}' | grep -qi 'mtgc_db-data'; then
     echo "Existing DB volume found."
     DO_DB_SETUP=0
+fi
+
+# ─────────────────────────────────────────────
+# Handle mtg_new.ini based on whether this is a fresh install
+# ─────────────────────────────────────────────
+if [[ "$DO_DB_SETUP" -eq 1 ]]; then
+    echo "Fresh install detected — generating mtg_new.ini from template..."
+    cp setup/mtg_new.ini "$BASE_DIR/config/mtg_new.ini"
+
+    INI_FILE="$BASE_DIR/config/mtg_new.ini"
+
+    # 1) Strip inline // comments that are preceded by whitespace
+    #    (keeps URLs like https:// intact)
+    sed -i -E 's/[[:space:]]+\/\/.*$//' "$INI_FILE"
+
+    # 2) Strip trailing whitespace
+    sed -i -E 's/[[:space:]]+$//' "$INI_FILE"
+
+    # 3) Read DB settings from docker-compose.yml
+    #    DBServer is the service name "db" from compose
+    DB_SERVER="db"
+    DB_NAME=$(sed -n 's/^[[:space:]]*MYSQL_DATABASE:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
+    DB_USER=$(sed -n 's/^[[:space:]]*MYSQL_USER:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
+    DB_PASS=$(sed -n 's/^[[:space:]]*MYSQL_PASSWORD:[[:space:]]*"\?\([^"]*\)"\?/\1/p' docker-compose.yml | head -n1)
+
+    # Escape characters that are special to sed replacement
+    ESC_DB_NAME=$(printf '%s\n' "$DB_NAME" | sed 's/[&/]/\\&/g')
+    ESC_DB_USER=$(printf '%s\n' "$DB_USER" | sed 's/[&/]/\\&/g')
+    ESC_DB_PASS=$(printf '%s\n' "$DB_PASS" | sed 's/[&/]/\\&/g')
+
+    # 4) Update [database] section
+    sed -i -E "s/^DBServer[[:space:]]*=.*/DBServer    = \"${DB_SERVER}\"/" "$INI_FILE"
+    sed -i -E "s/^DBUser[[:space:]]*=.*/DBUser      = \"${ESC_DB_USER}\"/" "$INI_FILE"
+    sed -i -E "s/^DBPass[[:space:]]*=.*/DBPass      = \"${ESC_DB_PASS}\"/" "$INI_FILE"
+    sed -i -E "s/^DBName[[:space:]]*=.*/DBName      = \"${ESC_DB_NAME}\"/" "$INI_FILE"
+
+    # 5) Force FreecurrencyAPI to be empty
+    sed -i -E 's/^FreecurrencyAPI[[:space:]]*=.*/FreecurrencyAPI = ""/' "$INI_FILE"
+else
+    echo "Existing install detected — keeping mtg_new.ini unchanged."
+fi
+
+# php_custom.ini: only create if not present
+if [[ ! -f "$BASE_DIR/config/php_custom.ini" ]]; then
+    echo "Creating php config file from template..."
+    cp setup/php_custom.ini "$BASE_DIR/config/php_custom.ini"
+fi
+
+# Make config editable if it exists
+if [[ -f "$BASE_DIR/config/mtg_new.ini" ]]; then
+    chmod +w "$BASE_DIR/config/mtg_new.ini"
 fi
 
 # ─────────────────────────────────────────────
@@ -119,6 +156,13 @@ if [[ "$DO_DB_SETUP" -eq 1 ]]; then
     read -rp "Enter desired username (display only): " username
     read -rsp "Enter password: " password
     echo
+
+    # Update AdminEmail in mtg_new.ini
+    INI_FILE="$BASE_DIR/config/mtg_new.ini"
+    if [[ -f "$INI_FILE" ]]; then
+        ESC_EMAIL=$(printf '%s\n' "$email" | sed 's/[&/]/\\&/g')
+        sed -i -E "s/^AdminEmail[[:space:]]*=.*/AdminEmail     = \"${ESC_EMAIL}\"/" "$INI_FILE"
+    fi
 
     # Get hashed password from PHP script
     hashed=$(${DOCKER_CMD} exec mtgc_web_1 php /var/www/mtgnew/setup/initial.php "$username" "$password" \
