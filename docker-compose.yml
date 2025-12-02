@@ -21,7 +21,7 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: mtg
+      MYSQL_DATABASE: mtg_new
       MYSQL_USER: mtg
       MYSQL_PASSWORD: mtgpass
     volumes:
