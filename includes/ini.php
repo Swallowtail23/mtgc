@@ -53,6 +53,9 @@ function autoLoader($class_name)
 }
 spl_autoload_register('autoLoader');
 
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\PHPMailer;
+
 // Set error reporting based on ini file's dev setting
 $ini = new INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
