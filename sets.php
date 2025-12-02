@@ -341,15 +341,15 @@ require 'includes/menu.php';
                 ORDER BY 
                     setdate DESC, length(setcode) ASC, length(parent_set_code) ASC, parent_set_code DESC, setcode ASC
                 LIMIT ?";
-        $stmt = $db->prepare($sql);
         $msg->logMessage('[DEBUG]', "Query is: $sql");
-        $stmt->bind_param('i', $setsPerPage);
+        $stmt = $db->prepare($sql);
         if ($stmt === false) :
             trigger_error(
                 '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Preparing SQL: ' . $db->error,
                 E_USER_ERROR
             );
         endif;
+        $stmt->bind_param('i', $setsPerPage);
         $exec = $stmt->execute();
         if ($exec === false) :
             trigger_error(
@@ -359,10 +359,7 @@ require 'includes/menu.php';
         else :
             $result = $stmt->get_result();
             if ($result->num_rows === 0) :
-                trigger_error(
-                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__ . ': No results ' . $db->error,
-                    E_USER_ERROR
-                );
+                $msg->logMessage('[NOTICE]', 'sets.php: No sets found to display');
             endif;
         endif;
         ?>
