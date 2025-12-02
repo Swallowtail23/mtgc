@@ -92,10 +92,10 @@ if ($deletecollection === 'DELETE') :
     $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
 $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
-if ($csvResult !== true) \:
+if ($csvResult !== true) :
     $msg->logMessage('[ERROR]', "CSV export email failed: $csvResult");
     $_SESSION['csv_status'] = 'false';
-else \:
+else :
     $_SESSION['csv_status'] = 'true';
 endif;
     $msg->logMessage('[DEBUG]', "Truncating collection table...");
