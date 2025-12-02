@@ -107,8 +107,17 @@ $name = ucfirst($userName);
                         $subject = "Message sent using your contact form";
                     endif;
                     if (isset($emailEnabled) && $emailEnabled === true) :
-                        mail($adminEmail, $subject, $message, $from);
-                        echo "Email sent!";
+                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+                        $mailResult = $mailer->sendEmail($adminEmail, false, $subject, $message, '', '', '');
+                        if ($mailResult === true) :
+                            echo "Email sent!";
+                        else :
+                            $msg->logMessage(
+                                '[ERROR]',
+                                "Help form email failed for $userEmail (subject: $subject)"
+                            );
+                            echo "Unable to send email; please try again later.";
+                        endif;
                     else :
                         $msg->logMessage(
                             '[NOTICE]',
