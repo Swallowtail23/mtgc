@@ -20,13 +20,9 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-$fontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
+$msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
+$rcFontParameters  = "css?family=Roboto+Condensed:300,300italic%7CRoboto:400,300,300italic,500";
 ?>
 
-<link
-    href='https://fonts.googleapis.com/css?family=Roboto+Condensed:300,300italic%7CRoboto:400,300,300italic,500'
-    rel='stylesheet'
-    type='text/css'>
-<link
-    href="https://fonts.googleapis.com/<?php echo $fontParameters; ?>"
-    rel="stylesheet" />
+echo "<link href='https://fonts.googleapis.com/{$rcFontParameters}' rel='stylesheet' type='text/css'>\n";
+echo "<link href='https://fonts.googleapis.com/{$msoFontParameters}' rel='stylesheet'>\n";
