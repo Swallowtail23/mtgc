@@ -64,14 +64,9 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
 $delcollresult = ''; // Variable to hold error message
 
-// If redirected back to this page after a successful CSV export
-if (isset($_GET['csvsuccess']) && $_GET['csvsuccess'] === 'true') :
-    $csvsuccess = 'true';
-elseif (isset($_GET['csvsuccess']) && $_GET['csvsuccess'] === 'false') :
-    $csvsuccess = 'true';
-else :
-    $csvsuccess = '';
-endif;
+// CSV export status (set via session after attempt)
+$csvsuccess = $_SESSION['csv_status'] ?? '';
+unset($_SESSION['csv_status']);
 
 if (isset($_GET['deckcreated'])) :
     $newdecksuccess = htmlspecialchars($_GET['deckcreated'], ENT_QUOTES, 'UTF-8');
@@ -96,7 +91,13 @@ if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
     $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
-    $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
+$csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
+if ($csvResult !== true) \:
+    $msg->logMessage('[ERROR]', "CSV export email failed: $csvResult");
+    $_SESSION['csv_status'] = 'false';
+else \:
+    $_SESSION['csv_status'] = 'true';
+endif;
     $msg->logMessage('[DEBUG]', "Truncating collection table...");
     if (!$db->execute_query("TRUNCATE TABLE `$mytable`")) :
         $msg->logMessage('[ERROR]', "Truncate table failed");
