@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.5
-Date:        28/11/25
+Version:     5.6
+Date:        02/12/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
 Notes:       {none}
@@ -22,6 +22,7 @@ History:
     5.3 25/11/25 Rename PHPMailer wrapper to PascalCase
     5.4 28/11/25 ImportCollectionRegex: declare global noQuickAddLayouts
     5.5 28/11/25 Rename inputInterpreter call
+    5.6 02/12/25 Allow alternative result drivers when fetching export headers
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -77,11 +78,18 @@ class ImportExport
                 E_USER_ERROR
             );
         else :
-            $fields_cnt = $result->field_count;
+            $fields = method_exists($result, 'fetch_fields') ? $result->fetch_fields() : [];
+            if (empty($fields)) :
+                $fields_cnt = $result->field_count;
+                for ($i = 0; $i < $fields_cnt; $i++) :
+                    $fields[] = mysqli_fetch_field_direct($result, $i);
+                endfor;
+            endif;
+
+            $fields_cnt = count($fields);
             $this->message->logMessage('[DEBUG]', "Number of fields: $fields_cnt");
             $schema_insert = '';
-            for ($i = 0; $i < $fields_cnt; $i++) :
-                $fieldinfo = mysqli_fetch_field_direct($result, $i);
+            foreach ($fields as $fieldinfo) :
                 $l = $csv_enclosed
                     . str_replace(
                         $csv_enclosed,
@@ -91,7 +99,7 @@ class ImportExport
                     . $csv_enclosed;
                 $schema_insert .= $l;
                 $schema_insert .= $csv_separator;
-            endfor;
+            endforeach;
 
             $out = trim(substr($schema_insert, 0, -1));
             $out .= $csv_terminated;
