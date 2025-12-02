@@ -35,6 +35,7 @@ else :
 endif;
 
 startCustomSession();
+ob_start();
 
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
@@ -175,3 +176,4 @@ endif;
     </div>
 </body>
 </html>
+<?php ob_end_flush(); ?>
