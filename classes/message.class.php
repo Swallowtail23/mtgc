@@ -28,11 +28,13 @@ endif;
 class Message
 {
     private $logfile;
+    private $logLevel;
     public $textstring;
 
-    public function __construct($logfile = null)
+    public function __construct($logfile = null, $logLevel = null)
     {
-        $this->logfile = $logfile ?: $GLOBALS['logfile'];
+        $this->logfile = $logfile ?: ($GLOBALS['logfile'] ?? '');
+        $this->logLevel = $logLevel ?? ($GLOBALS['logLevelIni'] ?? 3);
     }
 
     public function logMessage($errorlevel, $text, $logfile = '')
@@ -64,13 +66,9 @@ class Message
             $msglevel = 1;
         endif;
 
-        if (isset($GLOBALS['loglevelini'])) :
-            $loglevel = $GLOBALS['loglevelini'];
-        else :
-            $loglevel = 3;
-        endif;
+        $loglevel = (int) $this->logLevel;
 
-        if ($msglevel < ($loglevel + 1)) :
+        if ($msglevel <= $loglevel) :
             $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
             if (($fd = fopen($log, "a")) !== false) :
                 fwrite($fd, $str . "\n");

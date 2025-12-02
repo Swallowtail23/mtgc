@@ -25,6 +25,8 @@ clutter.
 
 ## Initial bootstrap (recommended)
 
+### Linux/macOS / WSL
+
 1. Ensure you are at the project root.
 2. Run the helper script:
 
@@ -46,34 +48,42 @@ clutter.
 3. When the script finishes it prints the login URL. Use the admin credentials
    you provided during the prompt.
 
-## Manual compose commands
+### Windows hosts
 
-If you prefer to manage containers yourself (or after the first run):
+1. Open **Command Prompt** (PowerShell works as well) and change to the project
+   root.
+2. Run the batch bootstrapper:
 
-```bash
-cd docker
+   ```bat
+   docker\docker-init.bat
+   ```
 
-# start or rebuild in the background
-docker compose up --build -d   # or: podman-compose up --build -d
+   - The script mirrors the Linux version: prompts for the base data directory
+     and HTTP port, generates the `.env` files, builds the containers via Docker
+     Desktop, waits for MySQL, runs the initial admin setup, and executes the
+     bulk import unless the marker already exists inside the container.
+3. When the batch script completes it prints the login URL.
 
-# stop containers
-docker compose down
+### Re-running the init scripts
 
-# tail logs
-docker compose logs -f web
-docker compose logs -f db
-```
+`docker/docker-init.sh` and `docker/docker-init.bat` are idempotent:
 
-Compose reads `docker/.env` automatically, and the bootstrap script mirrors the
-same values to the repository root `.env`. That means you can run compose
-commands from either the project root or the `docker/` directory without
-manually copying environment files. If you need to change the paths or port,
-edit either `.env` file and rerun `docker compose up -d` (or
-`podman-compose up -d`). On reruns, `docker-init.sh` also checks whether the
-mounted data directories are owned by the rootless container UID (e.g. 100032);
-if so it uses `podman unshare chown` (or `chown` when using Docker) to hand
-ownership back to your host user before continuing. This means you can rerun
-the script without manually fixing permissions.
+- They detect existing database volumes and skip destructive steps by default.
+- If a database already exists, the scripts prompt whether you want to rerun
+  the admin user setup; answering `y` truncates the `users` table and recreates
+  the admin account with your new credentials.
+- On reruns, the scripts restore ownership/permissions on the mounted folders
+  (using `podman unshare chown` under Podman or `chown` under Docker) so you
+  can rerun without manual permission fixes.
+- The Scryfall bulk import only runs if
+  `/var/log/mtg/scryfall_import_done` is missing inside the container, so
+  subsequent runs skip the lengthy import automatically.
+- Both scripts regenerate `docker/.env` so compose
+  commands always pick up the current `BASE_DIR`/`WEB_PORT`.
+
+Compose reads `docker/.env` automatically, so the containers always start with
+the desired paths/ports after each rerun. The init scripts regenerate that file
+for you; there is no longer a root-level `.env`.
 
 ## Host data directories
 

@@ -1092,7 +1092,7 @@ require('../includes/menu.php');
                                                     type="text"
                                                     name="general_url"
                                                     <?php echo $configInputStyle;?>
-                                                    title="Base site URL"
+                                                    title="Base site URL (no trailing slash!)"
                                                     value="<?php
                                                         echo htmlspecialchars($iniArray['general']['URL']);?>"
                                                 >

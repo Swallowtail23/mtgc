@@ -1785,12 +1785,13 @@ require('includes/menu.php'); //mobile menu
                                 ><span class="material-symbols-outlined">save</span></button>
                             </form>
                             <script>
-                                function submitForm() {
-                                    var notesTextarea = $('#cardnotes');
-                                    var saveButton = $('.save_icon');
+                                let initialNotesValue = document.getElementById('cardnotes').value;
+                                const notesTextarea = document.getElementById('cardnotes');
+                                const saveButton = document.querySelector('.save_icon');
 
-                                    const notes = notesTextarea.val();
-                                    const card = $('#updatenotesform').find('input[name="id"]').val();
+                                function submitForm() {
+                                    const notes = notesTextarea.value;
+                                    const card = document.querySelector('#updatenotesform input[name=\"id\"]').value;
 
                                     const data = new URLSearchParams();
                                     data.append('newnotes', notes);
@@ -1806,13 +1807,8 @@ require('includes/menu.php'); //mobile menu
                                     .then(response => response.json())
                                     .then(result => {
                                         if (result.success) {
-                                            // alert('Notes updated successfully');
-
-                                            // Reset the initial values to the newly saved content
-                                            initialNotesValue = notesTextarea.val();
-
-                                            // Disable the save button again
-                                            saveButton.prop('disabled', true);
+                                            initialNotesValue = notesTextarea.value;
+                                            saveButton.disabled = true;
                                         } else {
                                             alert('Error updating notes: ' + result.error);
                                         }
@@ -1822,6 +1818,14 @@ require('includes/menu.php'); //mobile menu
                                         alert('An error occurred while updating the notes.');
                                     });
                                 }
+
+                                notesTextarea.addEventListener('input', function() {
+                                    if (notesTextarea.value !== initialNotesValue) {
+                                        saveButton.disabled = false;
+                                    } else {
+                                        saveButton.disabled = true;
+                                    }
+                                });
                             </script>
                             <script>
                                 $(document).ready(function() {

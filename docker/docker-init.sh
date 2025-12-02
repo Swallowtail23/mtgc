@@ -6,7 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 ENV_FILE="$SCRIPT_DIR/.env"
-ROOT_ENV_FILE="$PROJECT_ROOT/.env"
 
 cd "$PROJECT_ROOT"
 
@@ -94,8 +93,8 @@ restore_host_permissions "$BASE_DIR/config/scripts"
 # Create required directories
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
 
-# Write .env files for both compose contexts
-cat <<EOF | tee "$ENV_FILE" "$ROOT_ENV_FILE" >/dev/null
+# Write .env file for compose
+cat <<EOF > "$ENV_FILE"
 BASE_DIR=$BASE_DIR
 WEB_PORT=$WEB_PORT
 EOF

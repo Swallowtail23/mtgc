@@ -32,6 +32,8 @@ $expectedReferringPages = [
     $myURL . '/deckdetail.php',
     $myURL . '/index.php',
 ];
+$msg->logMessage('[DEBUG]', "Called from $referringPage");
+$msg->logMessage('[DEBUG]', "My URL is $myURL");
 
 $normalizedReferringPage = str_replace('www.', '', $referringPage);
 $isValidReferrer = false;
