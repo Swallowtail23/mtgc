@@ -6,7 +6,7 @@ services:
       - /opt/mtg/mtg_new.ini:/opt/mtg/mtg_new.ini:ro
       - /srv/cardimg:/mnt/data/cardimg
     ports:
-      - "8080:80"
+      - "8082:80"
   db:
     environment:
       MYSQL_ROOT_PASSWORD: changeme
