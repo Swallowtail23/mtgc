@@ -12,6 +12,8 @@ Environment=COMPOSE_PROJECT_NAME=mtgc
 ExecStart=/usr/bin/podman-compose up -d
 ExecStop=/usr/bin/podman-compose down
 ExecReload=/usr/bin/podman-compose up -d
+Restart=on-failure
+RestartSec=5
 TimeoutStartSec=0
 
 [Install]

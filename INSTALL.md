@@ -23,6 +23,8 @@ Adjust paths/commands for your platform.
    php_admin_value[session.cookie_httponly] = 1
    php_admin_value[session.cookie_secure] = 1
    php_admin_value[session.cookie_samesite] = Strict
+   php_admin_value[upload_max_filesize] = 32M
+   php_admin_value[post_max_size] = 32M
    ```
 
    Optionally set a custom session name by copying
@@ -68,12 +70,9 @@ Adjust the frequency or retention as needed and run
 
 - Create the `mtg_new` database (see `setup/mtg_new.sql`).
 - Provision a MySQL user with appropriate privileges and update the ini with the
-  credentials/host.
+  database credentials/host.
 - Import `setup/mtg_new.sql` into the database.
 - Run the bulk scripts from the `bulk/` directory (in order) to populate data.
-  The double run of scryfall_bulk.php is required for initial setup;
-  The first `all` pass writes every card record; the second `default` pass
-  marks the primary language. See also Images section.
 
   ```bash
   php scryfall_bulk.php all
@@ -82,9 +81,15 @@ Adjust the frequency or retention as needed and run
   php scryfall_rulings.php
   php scryfall_migrations.php
   ```
+  The double run of scryfall_bulk.php is required for initial setup;
+  The first `all` pass writes every card record; the second `default` pass
+  marks the primary language. See also Images section.
+  The first `scryfall_bulk.php all` run can take a long time.
 
-  The first `scryfall_bulk.php all` run can take a long time; ensure `ImgLocation`
-  is writable and has ample space.
+## User setup
+
+- Add a first (admin) user in MySQL. setup/initial.php can be used to create a
+  hashed password.
 
 ## Composer dependencies
 
@@ -104,7 +109,8 @@ and PHPUnit (dev).
 - Enable Disqus by providing your shortname and enabling it in the ini.
 - Obtain Cloudflare Turnstile keys and set them in the ini to enable login
   protection (dev tier uses dummy keys).
-- Obtain a FreecurrencyAPI key (optional). Leaving the key blank disables FX.
+- Obtain a FreecurrencyAPI key (optional). Leaving the key blank or set to
+  'disabled' disables FX.
 
 ## Cron / scheduled tasks
 
@@ -147,6 +153,7 @@ log directory referenced in the cron file.
   downloading the ~90k images; the second pass (`php bulk/scryfall_bulk.php default`)
   marks the primary language and only downloads images for truly new rows.
   Subsequent bulk runs download images as new cards appear.
+- Image sets can be downloaded for specific sets from the Sets page.
 - Bare metal installs should follow the same command order above to avoid
   triggering a full image download. If you run only `php scryfall_bulk.php default`,
   on an empty database it will download images for all cards inserted during that run.

@@ -172,6 +172,28 @@ Container engine logs also need limits:
   Then run `sudo systemctl restart docker` and recreate the stack (`podman` is
   unaffected by this file).
 
+## Backups
+
+Recommended artifacts:
+
+- MySQL data (volume `mtgc_db-data`).
+- Host directories under `${BASE_DIR}` (`cardimg`, `config`, `logs`).
+
+Use `docker/backup.sh` as a starting point. It reads `docker/.env`, dumps the
+database via `podman exec mtgc_db_1 mysqldump`, and archives `${BASE_DIR}/config`
+and `${BASE_DIR}/logs` into `./backups/<timestamp>/`. Customize the script to
+include `cardimg` if you want full image backups (large). Example run:
+
+```bash
+cd docker
+./backup.sh
+```
+
+For Docker Engine replace `podman exec mtgc_db_1` with `docker exec mtgc_db_1`
+inside the script. Automate backups via cron/systemd timers as needed. When
+restoring, recreate the volumes, copy `${BASE_DIR}` folders back, then import
+`mtgc.sql.gz` into MySQL.
+
 ## Scheduled jobs
 
 The helper scripts copied to `${BASE_DIR}/config/scripts` cover recurring data
@@ -231,7 +253,72 @@ The unit uses `ExecStart=/usr/bin/podman-compose up -d` and
 reload mtgc-compose`) re-runs `up -d`, so rebuilds are as simple as
 `sudo systemctl reload mtgc-compose`. `systemctl status mtgc-compose` shows the
 last compose logs. Disable with `sudo systemctl disable --now mtgc-compose` if
-you no longer want it running automatically.
+you no longer want it running automatically. The unit ships with
+`Restart=on-failure`/`RestartSec=5`, so if compose exits unexpectedly systemd
+automatically re-runs `up -d`. Check uptime with `systemctl status
+mtgc-compose` or `journalctl -u mtgc-compose`.
+
+## Monitoring
+
+For lightweight monitoring, rely on the systemd unit above: enable it so the
+stack starts at boot and restarts on failure. Combine that with logrotate (see
+earlier section) plus a periodic `podman-compose ps` check via cron if desired.
+If you need richer telemetry later, add exporters or external health checks, but
+this setup provides automatic restarts with minimal configuration.
+
+## Security hardening
+
+- **Firewall rules:** expose only the HTTP(S) port you mapped via `WEB_PORT`.
+  Block database (`3306`) and other internal ports from the public Internet.
+  On Linux hosts use `firewalld`/`ufw` to allow `80/tcp` or `443/tcp` only.
+- **TLS termination:** run the stack behind a reverse proxy (nginx, Traefik,
+  Caddy) that terminates HTTPS and forwards traffic to the container's HTTP
+  port. Alternatively, edit `docker/mtgc_ctr.conf` to enable Apache's SSL vhost
+  and mount certificates into the container via a compose override, e.g.:
+
+  ```yaml
+  services:
+    web:
+      ports:
+        - "443:443"
+      volumes:
+        - /etc/letsencrypt/live/example/fullchain.pem:/etc/ssl/certs/mtgc.pem:ro
+        - /etc/letsencrypt/live/example/privkey.pem:/etc/ssl/private/mtgc.key:ro
+  ```
+
+  Update the Apache config accordingly and reload the containers.
+- **Updates:** pull security patches regularly:
+
+## Upgrade playbook
+
+Use this cadence when new commits land or PHP/MySQL security updates are
+released:
+
+1. **Back up** – run `docker/backup.sh` (or your own process) so you have current
+   DB/config copies.
+2. **Pull code** – `git pull` in the repo root.
+3. **Review config changes** – rerun `./docker/docker-init.sh` if prompts or
+   template files changed; it preserves existing volumes/configs.
+4. **Refresh Composer deps** – remove `${BASE_DIR}/config/composer_installed.flag`
+   or answer “yes” when the init script asks to rerun Composer, ensuring new
+   vendor updates are applied on next container start.
+5. **Rebuild containers** –
+
+   ```bash
+   cd docker
+   podman-compose build --pull web db
+   podman-compose up -d
+   ```
+
+   (Use `docker compose` if applicable.)
+6. **Run migrations/bulk scripts if needed** – `podman exec mtgc_web_1 php
+   bulk/scryfall_migrations.php` etc., or rely on cron if it will catch up.
+7. **Verify** – check `podman-compose logs web`/`db`, run smoke tests (login,
+   searches), and confirm scheduled jobs/cron markers still update.
+
+Repeat after major releases. For bare-metal installs follow the same order:
+back up, pull, rerun `INSTALL.md` steps where configs changed, rerun Composer,
+then restart Apache/PHP-FPM.
 
 Because the project name is forced to `mtgc`, container names stay consistent
 (`mtgc_web_1`, `mtgc_db_1`). This ensures helper scripts (`docker-init.sh`) and

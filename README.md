@@ -1,4 +1,4 @@
-# README (v 20/01/24)
+# README
 
 ![screenshot](images/home.png)
 
@@ -22,8 +22,8 @@ commenting integrations.
 
 The app relies on data provided by Scryfall (sets/cards/rulings/prices/images).
 While due care is taken, no security guarantees are provided. The site is
-currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from <10 GB to
->100 GB depending on downloaded images.
+currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
+100 GB depending on downloaded images.
 
 ## Install Options
 
@@ -46,9 +46,6 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from <10 GB to
 - Optional: php-fpm tuning as described in INSTALL.md.
 
 ### Composer packages
-
-Install as the web user (e.g. `sudo -Hu apache composer install`). Required
-packages:
 
 - `andkab/php-turnstile` (Cloudflare Turnstile)
 - `everapi/freecurrencyapi-php`
@@ -77,12 +74,10 @@ packages:
 ### File locations
 
 - Web root (e.g. `/var/www/mtgnew`).
-- Application config/scripts: `/opt/mtg` by default. Copy `setup/mtg_new.ini`
-  and `setup/*.sh` here, adjust script paths, and make them executable.
-- Logs under `/var/log/mtg` (e.g. `mtgapp.log`). Ensure the web user or
-  container user can write to them.
+- Application config/scripts: `/opt/mtg`
+- Logs under `/var/log/mtg` (e.g. `mtgapp.log`). Has to be writable.
 - `ImgLocation` (configured in the ini) stores card images and cached JSON; it
-  must exist, be writable, and include a writable `json` subfolder.
+  must exist and be writable.
 
 ### Ini file (`/opt/mtg/mtg_new.ini`)
 
@@ -97,7 +92,7 @@ packages:
 ### Shell/Bulk scripts
 
 - Sample scripts in `setup/*.sh` should be copied to `/opt/mtg/scripts` (or your
-  chosen location) and updated to point to the bulk directory.
+  chosen location), made executable and updated to point to the bulk directory.
 - Schedule via cron/Task Scheduler to keep data, prices, and weekly exports up
   to date.
 
