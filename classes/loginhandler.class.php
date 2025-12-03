@@ -390,15 +390,13 @@ class LoginHandler
 
         $mtceStatus = mtceModeCheck($userNumber);
         if ($mtceStatus == 1) :
-            echo "<br>Site is undergoing maintenance, please try again later...";
-            session_destroy();
-            echo "<meta http-equiv='refresh' content='5;url=login.php'>";
-            exit();
+            $noticeText = "Site is undergoing maintenance, please try again later...";
         else :
             $noticeText = $userStatusResult['admin'] == 1
                 ? 'You are logged in!'
                 : 'You are logged in';
             $_SESSION['admin'] = ($userStatusResult['admin'] == 1);
+        endif;
             ?>
 <!DOCTYPE html>
 <html>
@@ -417,12 +415,16 @@ class LoginHandler
 </body>
 </html>
             <?php
-        endif;
 
-        if (isset($_SESSION['chgpwd']) && $_SESSION['chgpwd'] === true) :
+        if (isset($mtceStatus) && $mtceStatus == 1) :
+            $this->message->logMessage('[DEBUG]', "Mtce mode on; $email being redirected to login.php");
+            session_destroy();
+            echo "<meta http-equiv='refresh' content='2;url=login.php'>";
+            $this->terminate();
+        elseif (isset($_SESSION['chgpwd']) && $_SESSION['chgpwd'] === true) :
             $this->message->logMessage('[DEBUG]', "User $email being redirected to profile.php for password change");
             echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
-            exit();
+            $this->terminate();
         endif;
 
         $this->message->logMessage('[DEBUG]', 'Showing trust device prompt');
