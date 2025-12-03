@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.0
-Date:        01/12/25
+Version:     3.1
+Date:        04/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -17,6 +17,7 @@ History:
     2.2 28/11/25 Use PasswordCheck::passwordReset for reset requests
     2.3 29/11/25 Rename cssVersionCheck usage
     3.0 01/12/25 Token-based password reset flow
+    3.1 04/12/25 Improve resilience and security around token management
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -40,8 +41,10 @@ $message = '';
 
 if (!empty($token) && !empty($tokenEmail)) :
     $record = $pwReset->fetchResetRecord($tokenEmail);
-    if ($record === null || $record['expires_at'] < date('Y-m-d H:i:s')
-        || !password_verify($token, $record['token_hash'])) :
+    if (
+        $record === null || $record['expires_at'] < date('Y-m-d H:i:s')
+        || !password_verify($token, $record['token_hash'])
+    ) :
         $message = "Reset link invalid or expired.";
         $token = '';
         $tokenEmail = '';

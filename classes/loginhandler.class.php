@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        02/12/25
+Version:     1.4
+Date:        04/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -14,6 +14,7 @@ History:
     1.1 28/11/25 Add injectable terminator for improved testability
     1.2 02/12/25 Render formatted page for login aborts
     1.3 02/12/25 Catch additional unformatted exits
+    1.4 04/12/25 More robust handling of resets and sessions
 */
 
 use andkab\Turnstile\Turnstile;
@@ -406,7 +407,7 @@ class LoginHandler
     <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
     <title><?php echo htmlspecialchars($this->siteTitle ?? 'MTG Collection'); ?></title>
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars(cssVersionCheck());?>.css">
-    <?php include 'includes/googlefonts.php'; ?>
+            <?php include 'includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
     <div id="loginheader">

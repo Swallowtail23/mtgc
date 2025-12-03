@@ -1283,9 +1283,12 @@ require('../includes/menu.php');
                                                     name="email_helo"
                                                     <?php echo $configInputStyle;?>
                                                     title="Hostname sent in SMTP HELO/EHLO"
-                                                    value="<?php echo htmlspecialchars(
+                                                    value="
+                                                    <?php
+                                                    echo htmlspecialchars(
                                                         $smtpParameters['SMTPHelo'] ?? gethostname()
-                                                    );?>"
+                                                    );
+                                                    ?>"
                                                     <?php if (!$emailEnabled) :
                                                         echo 'disabled';
                                                     endif;?>

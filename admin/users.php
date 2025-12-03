@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.7
-Date:        29/11/25
+Version:     6.0
+Date:        04/12/25
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -22,6 +22,7 @@ History:
     5.5 27/11/25 Validate email in new user flow
     5.6 28/11/25 Add To do line after copyright
     5.7 29/11/25 Rename forcePasswordChange usage
+    6.0 04/12/25 Align password set options to email availability
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -129,14 +130,14 @@ require('../includes/menu.php');
                 if ($newuserstatus === 2) :
                     echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail created, "
                          . "password successfully recorded and checked.</div>";
-                echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
-            elseif ($newuserstatus === 1) :
-                echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail password "
+                    echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
+                elseif ($newuserstatus === 1) :
+                    echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail password "
                      . "successfully recorded and checked.</div>";
-                echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
+                    echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                      . "already exists for this user.</div>";
-            elseif ($newuserstatus === 6) :
-                echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
+                elseif ($newuserstatus === 6) :
+                    echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
                 else :
                     echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
                 endif;
@@ -144,9 +145,9 @@ require('../includes/menu.php');
         endif;
 
         // Multiple user form update
-if ((isset($updateusers)) and ($updateusers === "yes")) :
-    $resetResults = [];
-    foreach ($updatearray[0]['id'] as $i => $id) :
+        if ((isset($updateusers)) and ($updateusers === "yes")) :
+            $resetResults = [];
+            foreach ($updatearray[0]['id'] as $i => $id) :
                 $sql_id = $db->real_escape_string($updatearray[0]['id'][$i]);
                 ${'sqlid' . $id} = $sql_id;
                 $sql_eml = $db->real_escape_string($updatearray[0]['eml'][$i]);
@@ -159,16 +160,16 @@ if ((isset($updateusers)) and ($updateusers === "yes")) :
                 if ($sql_fx === 'zzz') :
                     $sql_fx = null;
                 elseif (!in_array($sql_fx, array_column($currencies, 'code'))) :
-                    $sql_fx = null;
+                            $sql_fx = null;
                 endif;
-                ${'sqlfx' . $id} = $sql_fx;
-                $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
-                ${'sqladm' . $id} = $sql_adm;
-                //Simple update of fields
-                $query = "UPDATE users
+                        ${'sqlfx' . $id} = $sql_fx;
+                        $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
+                        ${'sqladm' . $id} = $sql_adm;
+                        //Simple update of fields
+                        $query = "UPDATE users
                           SET username = ?, email = ?, status = ?, admin = ?, currency = ?
                           WHERE usernumber = ?";
-                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
+                        $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
                 if ($result = $db->execute_query($query, $params)) :
                     $affected_rows = $db->affected_rows;
                     $msg->logMessage(
@@ -176,11 +177,11 @@ if ((isset($updateusers)) and ($updateusers === "yes")) :
                         "Update user query by $userEmail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows"
                     );
                 else :
-                    $msg->logMessage('[ERROR]', "Update user query unsuccessful");
+                            $msg->logMessage('[ERROR]', "Update user query unsuccessful");
                 endif;
-                $usertable = $sql_id . "collection";
-                // More complex updates
-                // - delete card collection for a user
+                        $usertable = $sql_id . "collection";
+                        // More complex updates
+                        // - delete card collection for a user
                 if (($updatearray[0]['actions'][$i]) == 'deletecards') :
                     $msg->logMessage('[ERROR]', "Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM $usertable")) :
@@ -198,7 +199,7 @@ if ((isset($updateusers)) and ($updateusers === "yes")) :
                     endif;
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser') :
-                    $msg->logMessage('[ERROR]', "Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}");
+                            $msg->logMessage('[ERROR]', "Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM users WHERE usernumber = ?", [$sql_id])) :
                         if (
                             $nukeuser = $db->execute_query(
@@ -217,38 +218,38 @@ if ((isset($updateusers)) and ($updateusers === "yes")) :
                             endif;
                         endif;
                     endif;
-                    $sqldrop = "DROP TABLE $usertable";
-                    $msg->logMessage('[ERROR]', "Running $sqldrop");
-                    $db->query($sqldrop);
-                    $queryexists = "SHOW TABLES LIKE '$usertable'";
-                    $stmt = $db->prepare($queryexists);
-                    $msg->logMessage('[ERROR]', "Checking if collection table still exists: $queryexists");
-                    $exec = $stmt->execute();
+                            $sqldrop = "DROP TABLE $usertable";
+                            $msg->logMessage('[ERROR]', "Running $sqldrop");
+                            $db->query($sqldrop);
+                            $queryexists = "SHOW TABLES LIKE '$usertable'";
+                            $stmt = $db->prepare($queryexists);
+                            $msg->logMessage('[ERROR]', "Checking if collection table still exists: $queryexists");
+                            $exec = $stmt->execute();
                     if ($exec === false) :
                         $msg->logMessage('[ERROR]', "Collection table check failed");
                     else :
-                        $stmt->store_result();
-                        $collection_exists = $stmt->num_rows;
-                           //$collection_exists now has qty of tables with collection name
-                        $stmt->close();
-                        $msg->logMessage('[ERROR]', "Collection table check returned $collection_exists rows");
+                                $stmt->store_result();
+                                $collection_exists = $stmt->num_rows;
+                                   //$collection_exists now has qty of tables with collection name
+                                $stmt->close();
+                                $msg->logMessage('[ERROR]', "Collection table check returned $collection_exists rows");
                         if ($collection_exists === 0) : //No existing collection table
                             echo "<div class='alert-box success'><span>success: "
                                  . "</span>Table dropped for $sql_name</div>";
                             $msg->logMessage('[ERROR]', "Collection table check shows 0");
                         elseif ($collection_exists == -1) :
-                            $msg->logMessage('[ERROR]', "Shouldn't be here...");
+                                    $msg->logMessage('[ERROR]', "Shouldn't be here...");
                         else : // There is still a table with this name
-                            echo "<div class='alert-box error'><span>error: "
-                                 . "</span>Table not dropped for $sql_name</div>";
-                            $msg->logMessage('[ERROR]', "Table still exists");
+                                    echo "<div class='alert-box error'><span>error: "
+                                         . "</span>Table not dropped for $sql_name</div>";
+                                    $msg->logMessage('[ERROR]', "Table still exists");
                         endif;
                     endif;
                 elseif (($updatearray[0]['actions'][$i]) == 'resetpassword') :
-                    $msg->logMessage(
-                        '[ERROR]',
-                        "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
-                    );
+                            $msg->logMessage(
+                                '[ERROR]',
+                                "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
+                            );
                     if ($emailEnabled) :
                         $obj = new PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
@@ -261,9 +262,10 @@ if ((isset($updateusers)) and ($updateusers === "yes")) :
                             $resetResults[$sql_id] = false;
                         endif;
                     else :
-                        echo "<div class='alert-box notice'><span>notice: </span>Email is disabled; reset links cannot "
-                             . "be sent.</div>";
-                        $resetResults[$sql_id] = false;
+                                echo "<div class='alert-box notice'>"
+                                     . "<span>notice: </span>Email is disabled; reset links cannot "
+                                     . "be sent.</div>";
+                                $resetResults[$sql_id] = false;
                     endif;
                 endif;
             endforeach;
