@@ -111,6 +111,7 @@ $date = $dateObject->getToday();
 $clearScryfallJson = isset($_GET['clearscryfalljson']) ? 'y' : '';
 $toggleCss = isset($_GET['togglecss']) ? 'y' : '';
 $publishCss = isset($_GET['publishcss']) ? 'y' : '';
+$testEmailResult = null;
 
 if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     $update = 1;
@@ -257,10 +258,32 @@ $smtpParameters = [
     'SMTPPort' => $smtpPortIni,
     'SMTPAuth' => $iniArray['email']['SMTPAuth'] ?? 0,
     'SMTPUsername' => $smtpUserIni,
+    'SMTPPassword' => $smtpPasswordIni,
     'SMTPSecure' => $smtpSecureIni,
     'SMTPHelo' => $smtpHeloIni,
-    'SMTPVerifySSL' => $smtpVerifyIni
+    'SMTPVerifySSL' => $smtpVerifyIni,
+    'SMTPDebug' => $smtpDebugIni,
+    'globalDebug' => $logLevelIni
 ];
+
+if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
+    if (!empty($serverEmail) && !empty($adminEmail)) :
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+        $subject = "Test email from {$siteTitle}";
+        $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
+        $bodyText = strip_tags($bodyHtml);
+        $testEmailResult = $mailer->sendEmail($adminEmail, true, $subject, $bodyHtml, $bodyText)
+            ? 'success'
+            : 'error';
+    else :
+        $testEmailResult = 'error';
+    endif;
+    $testMessage = ($testEmailResult === 'success')
+        ? 'Test email sent successfully.'
+        : 'Test email failed. Check SMTP settings.';
+    $_SESSION['config_save_message'] = $testMessage;
+    $configEditMessage = $testMessage;
+endif;
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -1150,7 +1173,23 @@ require('../includes/menu.php');
                                             </label>
                                         </div>
                                         <div class="config-section">
-                                            <h4>Email settings</h4>
+                                            <h4 class="email-settings-header">
+                                                <span>Email settings</span>
+                                                <form method="post" action="admin.php#inisettings" class="inline-test-email">
+                                                    <input type="hidden" name="test_email" value="send">
+                                                    <button class="profilebutton" type="submit">TEST</button>
+                                                </form>
+                                            </h4>
+                                            <?php if ($testEmailResult === 'success') : ?>
+                                                <div class="alert-box success" style="margin-top:10px;">
+                                                    <span>success: </span>Test email sent to
+                                                    <?php echo htmlspecialchars($adminEmail); ?>
+                                                </div>
+                                            <?php elseif ($testEmailResult === 'error') : ?>
+                                                <div class="alert-box error" style="margin-top:10px;">
+                                                    <span>error: </span>Test email failed. Check SMTP settings.
+                                                </div>
+                                            <?php endif; ?>
                                             <label>Email status<br>
                                                 <select
                                                     name="email_status"
