@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.0
-Date:        30/11/25
+Version:     5.1
+Date:        02/12/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
@@ -26,6 +26,7 @@ History:
     4.8 30/11/25 Hide ini settings until editing unlocked
     4.9 30/11/25 Add cancel to re-auth prompt
     5.0 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
+    5.1 04/12/25 Add email settings test
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -112,6 +113,7 @@ $clearScryfallJson = isset($_GET['clearscryfalljson']) ? 'y' : '';
 $toggleCss = isset($_GET['togglecss']) ? 'y' : '';
 $publishCss = isset($_GET['publishcss']) ? 'y' : '';
 $testEmailResult = null;
+$iniSaveResult = null;
 
 if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     $update = 1;
@@ -223,6 +225,10 @@ endif;
 $configEditUnlocked = false;
 $configAuthRequested = false;
 $configEditMessage = $_SESSION['config_save_message'] ?? '';
+$configEditMessageType = $_SESSION['config_save_status'] ?? 'success';
+if ($configEditMessageType !== 'error') :
+    $configEditMessageType = 'success';
+endif;
 $configEditError = '';
 $configEditErrorTarget = '';
 $configAuthWindowSeconds = 600;
@@ -283,6 +289,8 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
         : 'Test email failed. Check SMTP settings.';
     $_SESSION['config_save_message'] = $testMessage;
     $configEditMessage = $testMessage;
+    $configEditMessageType = ($testEmailResult === 'success') ? 'success' : 'error';
+    $_SESSION['config_save_status'] = $configEditMessageType;
 endif;
 
 if (isset($_SESSION['config_edit_expires'])) :
@@ -455,7 +463,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         $updatedIni['comments']['Disqus'] = $commentsStatus;
     endif;
     $updatedIni['comments']['DisqusDevURL'] = getPostedValue('comments_dev_url', $disqusDevUrlIni);
-    $updatedIni['comments']['DisqusProdURL'] = getPostedValue('comments_prod_url', $disqusProdUrlIni);
+        $updatedIni['comments']['DisqusProdURL'] = getPostedValue('comments_prod_url', $disqusProdUrlIni);
 
     $pathErrors = array();
     if (!isPathWritable($updatedIni['general']['ImgLocation'])) :
@@ -471,6 +479,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         if ($iniSaveResult === true) :
             $msg->logMessage('[NOTICE]', "Configuration updated by $userName");
             $_SESSION['config_save_message'] = 'Configuration saved.';
+            $_SESSION['config_save_status'] = 'success';
             header('Location: admin.php');
             exit();
             // re-read ini file for updated values
@@ -509,6 +518,8 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
         else :
             $configEditError = 'Saving configuration failed. Check ini file permissions.';
+            $configEditMessage = $configEditError;
+            $configEditMessageType = 'error';
         endif;
     else :
         $messages = array_map(function ($err) {
@@ -781,10 +792,12 @@ require('../includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <?php if (!empty($configEditMessage)) : ?>
-            <div class='alert-box success'>
-                <span>success: </span><?php echo htmlspecialchars($configEditMessage); ?>
+            <?php $messageClass = ($configEditMessageType === 'error') ? 'error' : 'success'; ?>
+            <div class='alert-box <?php echo $messageClass; ?>'>
+                <span><?php echo $messageClass; ?>: </span><?php echo htmlspecialchars($configEditMessage); ?>
             </div>
             <?php unset($_SESSION['config_save_message']); ?>
+            <?php unset($_SESSION['config_save_status']); ?>
         <?php endif; ?>
         <div>
             <h3>Add Info update</h3>
@@ -951,10 +964,6 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            if ($configEditMessage !== '') :
-                                echo '<div class="successmsg">'
-                                    . htmlspecialchars($configEditMessage, ENT_QUOTES, 'UTF-8') . '</div>';
-                            endif;
                             if ($configEditUnlocked) :
                                 if ($configEditExpiry) :
                                     echo '<div>Editing unlocked until ' . date('H:i', $configEditExpiry) . '</div>';
@@ -970,11 +979,11 @@ require('../includes/menu.php');
                                 <?php if ($configEditUnlocked) : ?>
                                     <button
                                         class="profilebutton"
-                                        type="button"
-                                        onclick="document.getElementById('configedit').requestSubmit();"
-                                    >
-                                        SAVE
-                                    </button>
+                                        type="submit"
+                                        form="configedit"
+                                        name="config_action"
+                                        value="save_ini"
+                                    >SAVE</button>
                                 <?php endif; ?>
                                 <?php
                             else : ?>
@@ -1024,7 +1033,6 @@ require('../includes/menu.php');
                                 $badLoginLimitValue = htmlspecialchars($iniArray['security']['Badloginlimit']);
                                 ?>
                                 <form id="configedit" method="post" action="admin.php">
-                                    <input type="hidden" name="config_action" value="save_ini">
                                     <input
                                         type="hidden"
                                         name="database_password_changed"
@@ -1175,21 +1183,13 @@ require('../includes/menu.php');
                                         <div class="config-section">
                                             <h4 class="email-settings-header">
                                                 <span>Email settings</span>
-                                                <form method="post" action="admin.php#inisettings" class="inline-test-email">
-                                                    <input type="hidden" name="test_email" value="send">
-                                                    <button class="profilebutton" type="submit">TEST</button>
-                                                </form>
+                                                <button
+                                                    class="profilebutton"
+                                                    type="submit"
+                                                    name="test_email"
+                                                    value="send"
+                                                >TEST</button>
                                             </h4>
-                                            <?php if ($testEmailResult === 'success') : ?>
-                                                <div class="alert-box success" style="margin-top:10px;">
-                                                    <span>success: </span>Test email sent to
-                                                    <?php echo htmlspecialchars($adminEmail); ?>
-                                                </div>
-                                            <?php elseif ($testEmailResult === 'error') : ?>
-                                                <div class="alert-box error" style="margin-top:10px;">
-                                                    <span>error: </span>Test email failed. Check SMTP settings.
-                                                </div>
-                                            <?php endif; ?>
                                             <label>Email status<br>
                                                 <select
                                                     name="email_status"
