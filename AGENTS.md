@@ -32,6 +32,7 @@
 - App is not namespaced. All classes are global.
 - All code changes should result in clean phpcs runs
 - phpcbf can be used to find and automatically resolve simple style issues, e.g. indentation
+- Code control structures should contain suitable DEBUG-level logging to track code flow
 
 ## Logging
 - Log file path is set in `/opt/mtg/mtg_new.ini`; ensure the process user can write to it.

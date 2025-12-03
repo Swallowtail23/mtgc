@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.0
+Version:     6.2
 Date:        04/12/25
 Name:        users.php
 Purpose:     User administrative tasks
@@ -23,6 +23,8 @@ History:
     5.6 28/11/25 Add To do line after copyright
     5.7 29/11/25 Rename forcePasswordChange usage
     6.0 04/12/25 Align password set options to email availability
+    6.1 04/12/25 Add DEBUG logging to control structures
+    6.2 04/12/25 Remove unnecessary real_escape_string usage before prepared queries
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -36,31 +38,49 @@ require('../includes/functions.php');      //Includes basic functions for non-se
 require('../includes/secpagesetup.php');       //Setup page variables
 forcePasswordChange();                          //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+$msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
+function shouldRequirePasswordForNewUser($emailEnabled)
+{
+    return $emailEnabled === false;
+}
 
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[ERROR]', "Admin page called by user $userName ($userEmail)");
 // Is admin running the page
 $msg->logMessage('[ERROR]', "Admin is $admin");
+$msg->logMessage('[DEBUG]', 'Validating admin access for user session');
 if ($admin !== 1) :
+    $msg->logMessage('[DEBUG]', 'User is not admin; redirecting to reject.php');
     require('reject.php');
 endif;
 
+$requirePassword = shouldRequirePasswordForNewUser($emailEnabled);
+$msg->logMessage(
+    '[DEBUG]',
+    'New user creation requires password: ' . ($requirePassword === true ? 'yes' : 'no')
+);
+
 
 if (isset($_POST['newuser'])) :
+    $msg->logMessage('[DEBUG]', 'New user form submission detected');
     $newuser = ($_POST['newuser'] == 'yes') ? 'yes' : '';
     if (isset($_POST['password'])) :
+        $msg->logMessage('[DEBUG]', 'New user password supplied in request');
         $password = $_POST['password'];
     endif;
     if (isset($_POST['email'])) :
         $postemail_raw = $_POST['email'];
         $postemail = htmlspecialchars($postemail_raw, ENT_QUOTES, 'UTF-8');
+        $msg->logMessage('[DEBUG]', "New user email captured for $postemail");
     endif;
     if (isset($_POST['username'])) :
         $username_raw = $_POST['username'];
         $userName = htmlspecialchars($username_raw, ENT_QUOTES, 'UTF-8');
+        $msg->logMessage('[DEBUG]', "New user username captured for $userName");
     endif;
 endif;
 if (isset($_POST['updateusers'])) :
+    $msg->logMessage('[DEBUG]', 'User table update request detected');
     $updateusers = ($_POST['updateusers'] == 'yes') ? 'yes' : '';
     $updatearray[] = filter_input_array(INPUT_POST);
 endif;
@@ -77,7 +97,7 @@ endif;
     <script src="../js/jquery.js"></script>
     <script type="text/javascript">
     jQuery(function($) {
-        const requirePassword = <?php echo $emailEnabled ? 'false' : 'true'; ?>;
+        const requirePassword = <?php echo $requirePassword ? 'true' : 'false'; ?>;
         $('#newuserform').on('submit', function(event) {
             const username = $('#username').val().trim();
             const email    = $('#email').val().trim();
@@ -115,12 +135,18 @@ require('../includes/menu.php');
         <?php
         // Generate new account or do password reset
         if ((isset($newuser)) and ($newuser === "yes")) :
+            $msg->logMessage('[DEBUG]', 'Entering new user creation flow');
             $password = isset($password) ? trim($password) : '';
-            if (!$emailEnabled && $password === '') :
+            if ($requirePassword && $password === '') :
+                $msg->logMessage('[DEBUG]', 'Password required for new user but not supplied');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
                 $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Attempting to create user $username_raw with email $postemail_raw"
+                );
                 $newuserstatus = $obj->newUser(
                     $username_raw,
                     $postemail_raw,
@@ -128,17 +154,21 @@ require('../includes/menu.php');
                     $dbname
                 ); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
                 if ($newuserstatus === 2) :
+                    $msg->logMessage('[DEBUG]', 'New user created with collection table initialised');
                     echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail created, "
                          . "password successfully recorded and checked.</div>";
                     echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
                 elseif ($newuserstatus === 1) :
+                    $msg->logMessage('[DEBUG]', 'New user created; collection table already existed');
                     echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail password "
                      . "successfully recorded and checked.</div>";
                     echo "<div class='alert-box notice'><span>notice: </span>No new collection table created, "
                      . "already exists for this user.</div>";
                 elseif ($newuserstatus === 6) :
+                    $msg->logMessage('[DEBUG]', 'New user creation failed: email validation error');
                     echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
                 else :
+                    $msg->logMessage('[DEBUG]', 'New user creation failed with unknown status');
                     echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
                 endif;
             endif;
@@ -146,30 +176,35 @@ require('../includes/menu.php');
 
         // Multiple user form update
         if ((isset($updateusers)) and ($updateusers === "yes")) :
+            $msg->logMessage('[DEBUG]', 'Entering user update flow');
             $resetResults = [];
             foreach ($updatearray[0]['id'] as $i => $id) :
-                $sql_id = $db->real_escape_string($updatearray[0]['id'][$i]);
+                $msg->logMessage('[DEBUG]', "Processing update for user id $id");
+                $sql_id = (int)$updatearray[0]['id'][$i];
                 ${'sqlid' . $id} = $sql_id;
-                $sql_eml = $db->real_escape_string($updatearray[0]['eml'][$i]);
+                $sql_eml = trim($updatearray[0]['eml'][$i]);
                 ${'sqleml' . $id} = $sql_eml;
-                $sql_name = $db->real_escape_string($updatearray[0]['name'][$i]);
+                $sql_name = trim($updatearray[0]['name'][$i]);
                 ${'sqlname' . $id} = $sql_name;
-                $sql_status = $db->real_escape_string($updatearray[0]['status'][$i]);
+                $sql_status = trim($updatearray[0]['status'][$i]);
                 ${'sqlstatus' . $id} = $sql_status;
-                $sql_fx = $db->real_escape_string($updatearray[0]['currency'][$i]);
+                $sql_fx = trim($updatearray[0]['currency'][$i]);
                 if ($sql_fx === 'zzz') :
+                    $msg->logMessage('[DEBUG]', "User $id currency set to default via placeholder");
                     $sql_fx = null;
                 elseif (!in_array($sql_fx, array_column($currencies, 'code'))) :
-                            $sql_fx = null;
+                    $msg->logMessage('[DEBUG]', "User $id currency not recognised; clearing to default");
+                    $sql_fx = null;
                 endif;
-                        ${'sqlfx' . $id} = $sql_fx;
-                        $sql_adm = $db->real_escape_string($updatearray[0]['adm'][$i]);
-                        ${'sqladm' . $id} = $sql_adm;
-                        //Simple update of fields
-                        $query = "UPDATE users
+                ${'sqlfx' . $id} = $sql_fx;
+                $sql_adm = (int)$updatearray[0]['adm'][$i];
+                ${'sqladm' . $id} = $sql_adm;
+                //Simple update of fields
+                $msg->logMessage('[DEBUG]', "Updating user record for $sql_name ($sql_id)");
+                $query = "UPDATE users
                           SET username = ?, email = ?, status = ?, admin = ?, currency = ?
                           WHERE usernumber = ?";
-                        $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
+                $params = [$sql_name, $sql_eml, $sql_status, $sql_adm, $sql_fx, $sql_id];
                 if ($result = $db->execute_query($query, $params)) :
                     $affected_rows = $db->affected_rows;
                     $msg->logMessage(
@@ -177,13 +212,13 @@ require('../includes/menu.php');
                         "Update user query by $userEmail from {$_SERVER['REMOTE_ADDR']} affected $affected_rows rows"
                     );
                 else :
-                            $msg->logMessage('[ERROR]', "Update user query unsuccessful");
+                    $msg->logMessage('[ERROR]', "Update user query unsuccessful");
                 endif;
-                        $usertable = $sql_id . "collection";
-                        // More complex updates
-                        // - delete card collection for a user
+                $usertable = $sql_id . "collection";
+                // More complex updates
+                // - delete card collection for a user
                 if (($updatearray[0]['actions'][$i]) == 'deletecards') :
-                    $msg->logMessage('[ERROR]', "Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}");
+                    $msg->logMessage('[DEBUG]', "Clearing collection for $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM $usertable")) :
                         if ($deletecards = $db->execute_query("SELECT * FROM $usertable")) :
                             if ($deletecards->num_rows == 0) :
@@ -199,7 +234,7 @@ require('../includes/menu.php');
                     endif;
                 // - delete user and collection
                 elseif (($updatearray[0]['actions'][$i]) == 'deleteuser') :
-                            $msg->logMessage('[ERROR]', "Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}");
+                    $msg->logMessage('[DEBUG]', "Nuking $sql_name from {$_SERVER['REMOTE_ADDR']}");
                     if ($db->execute_query("DELETE FROM users WHERE usernumber = ?", [$sql_id])) :
                         if (
                             $nukeuser = $db->execute_query(
@@ -242,14 +277,15 @@ require('../includes/menu.php');
                         else : // There is still a table with this name
                                     echo "<div class='alert-box error'><span>error: "
                                          . "</span>Table not dropped for $sql_name</div>";
-                                    $msg->logMessage('[ERROR]', "Table still exists");
+                                $msg->logMessage('[ERROR]', "Table still exists");
                         endif;
                     endif;
                 elseif (($updatearray[0]['actions'][$i]) == 'resetpassword') :
-                            $msg->logMessage(
-                                '[ERROR]',
-                                "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
-                            );
+                    $msg->logMessage('[DEBUG]', "Password reset requested for $sql_name ($sql_id)");
+                    $msg->logMessage(
+                        '[ERROR]',
+                        "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
+                    );
                     if ($emailEnabled) :
                         $obj = new PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
@@ -257,16 +293,21 @@ require('../includes/menu.php');
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent (if "
                                  . "user exists).</div>";
                             $resetResults[$sql_id] = true;
+                            $msg->logMessage('[DEBUG]', "Password reset email sent for $sql_name ($sql_id)");
                         else :
                             echo "<div class='alert-box error'><span>error: </span>Failed to send reset link.</div>";
                             $resetResults[$sql_id] = false;
+                            $msg->logMessage('[DEBUG]', "Password reset email failed for $sql_name ($sql_id)");
                         endif;
                     else :
                                 echo "<div class='alert-box notice'>"
                                      . "<span>notice: </span>Email is disabled; reset links cannot "
                                      . "be sent.</div>";
                                 $resetResults[$sql_id] = false;
+                                $msg->logMessage('[DEBUG]', "Email disabled; cannot send reset link to $sql_name");
                     endif;
+                else :
+                    $msg->logMessage('[DEBUG]', "No complex action selected for $sql_name ($sql_id)");
                 endif;
             endforeach;
         else :
