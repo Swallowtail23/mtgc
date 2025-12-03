@@ -16,7 +16,12 @@ fi
 chown www-data:www-data "$LOG_FILE"
 
 # Populate vendor volume on first boot or when check file is removed
-COMPOSER_CHECK="/mnt/data/config/.composer_installed"
+COMPOSER_CHECK="/mnt/data/config/composer_installed.flag"
+LEGACY_COMPOSER_CHECK="/mnt/data/config/.composer_installed"
+if [ -f "$LEGACY_COMPOSER_CHECK" ] && [ ! -f "$COMPOSER_CHECK" ]; then
+    mv "$LEGACY_COMPOSER_CHECK" "$COMPOSER_CHECK"
+fi
+
 if [ ! -f /var/www/mtgnew/vendor/autoload.php ] || [ ! -f "$COMPOSER_CHECK" ]; then
     echo "[entrypoint] Installing composer dependencies..."
     export COMPOSER_ALLOW_SUPERUSER=1

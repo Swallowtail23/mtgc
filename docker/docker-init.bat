@@ -42,9 +42,11 @@ call :EnsureDir "%BASE_DIR%\cardimg"
 call :EnsureDir "%BASE_DIR%\config"
 call :EnsureDir "%BASE_DIR%\logs"
 
-set "COMPOSER_CHECK=%BASE_DIR%\config\.composer_installed"
+set "COMPOSER_CHECK=%BASE_DIR%\config\composer_installed.flag"
 set "LEGACY_FORCE=%BASE_DIR%\config\.force_composer_install"
+set "LEGACY_COMPOSER=%BASE_DIR%\config\.composer_installed"
 if exist "%LEGACY_FORCE%" del "%LEGACY_FORCE%"
+if exist "%LEGACY_COMPOSER%" if not exist "%COMPOSER_CHECK%" move "%LEGACY_COMPOSER%" "%COMPOSER_CHECK%" >nul
 if not exist "%COMPOSER_CHECK%" (
     echo [INFO] Composer dependencies not yet installed ^- will run on next container start.
 ) else (

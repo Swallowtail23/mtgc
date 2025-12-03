@@ -106,8 +106,12 @@ restore_host_permissions "$BASE_DIR/config/scripts"
 # Create required directories
 mkdir -p "$BASE_DIR/cardimg" "$BASE_DIR/config" "$BASE_DIR/logs"
 
-COMPOSER_CHECK_FILE="$BASE_DIR/config/.composer_installed"
+COMPOSER_CHECK_FILE="$BASE_DIR/config/composer_installed.flag"
+LEGACY_COMPOSER_CHECK="$BASE_DIR/config/.composer_installed"
 rm -f "$BASE_DIR/config/.force_composer_install" 2>/dev/null || true
+if [[ -f "$LEGACY_COMPOSER_CHECK" && ! -f "$COMPOSER_CHECK_FILE" ]]; then
+    mv "$LEGACY_COMPOSER_CHECK" "$COMPOSER_CHECK_FILE"
+fi
 if [[ ! -f "$COMPOSER_CHECK_FILE" ]]; then
     echo "[INFO] Composer dependencies not yet installed — will run on next container start."
 else
