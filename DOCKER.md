@@ -57,6 +57,12 @@ compose definitions), keeping the project root clean of Docker-specific files.
 
 ## Initial bootstrap (recommended)
 
+Clone the repo to your local host:
+
+  ```bash
+  git clone https://github.com/Swallowtail23/mtgc/tree/master
+  ```
+
 ### Linux/macOS / WSL
 
 1. Ensure you are at the project root.
