@@ -7,6 +7,7 @@ for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
 set "COMPOSE_FILE=%SCRIPT_DIR%docker-compose.yml"
 set "ENV_FILE=%SCRIPT_DIR%.env"
 set "COMPOSE_FILES=-f docker-compose.yml"
+set "DEV_OVERRIDE=%SCRIPT_DIR%docker-compose.override.yml"
 
 call :DetectDocker
 call :DetectCompose
@@ -20,10 +21,14 @@ for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass
 if /I "%ANSWER%"=="Y" (
     echo [INFO] Using host web root bind-mount for development.
     set "COMPOSE_FILES=%COMPOSE_FILES% -f docker-compose.dev.yml"
+    copy /Y "%SCRIPT_DIR%docker-compose.dev.yml" "%DEV_OVERRIDE%" >nul
+    echo [INFO] Created docker-compose.override.yml for persistent dev bind-mount. Remove it to revert.
 ) else if /I "%ANSWER%"=="N" (
     echo [INFO] Using container's internal copy of the web root.
+    if exist "%DEV_OVERRIDE%" del "%DEV_OVERRIDE%"
 ) else (
     echo [WARN] Invalid choice, defaulting to container copy (no host bind-mount).
+    if exist "%DEV_OVERRIDE%" del "%DEV_OVERRIDE%"
 )
 
 set /p BASE_PARENT="Enter base directory for card images/config/logs (e.g. C:\\data - recommend 25-40GB): "

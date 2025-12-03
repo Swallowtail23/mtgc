@@ -7,6 +7,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 ENV_FILE="$SCRIPT_DIR/.env"
 COMPOSE_ARGS=(-f docker-compose.yml)
+DEV_OVERRIDE_FILE="$SCRIPT_DIR/docker-compose.override.yml"
 
 cd "$PROJECT_ROOT"
 
@@ -42,10 +43,19 @@ ANSWER=${ANSWER^^}
 if [[ "$ANSWER" == "Y" ]]; then
     echo "[INFO] Using host web root bind-mount for development."
     COMPOSE_ARGS+=(-f docker-compose.dev.yml)
+    cp "$SCRIPT_DIR/docker-compose.dev.yml" "$DEV_OVERRIDE_FILE"
+    echo "[INFO] Created docker-compose.override.yml for persistent dev bind-mount. Remove it to revert."
 elif [[ "$ANSWER" == "N" ]]; then
     echo "[INFO] Using container's internal copy of the web root."
+    if [[ -f "$DEV_OVERRIDE_FILE" ]]; then
+        rm -f "$DEV_OVERRIDE_FILE"
+        echo "[INFO] Removed docker-compose.override.yml (dev bind-mount disabled)."
+    fi
 else
     echo "[WARN] Invalid choice, defaulting to container copy (no host bind-mount)."
+    if [[ -f "$DEV_OVERRIDE_FILE" ]]; then
+        rm -f "$DEV_OVERRIDE_FILE"
+    fi
 fi
 
 restore_host_permissions() {

@@ -8,6 +8,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
        git unzip \
        libpng-dev \
+       libjpeg62-turbo-dev \
        tzdata \
        default-mysql-client \
        mailutils \
@@ -52,8 +53,9 @@ RUN sed -i 's/\r$//' /usr/local/bin/wait-for-mysql.sh \
 # Final working directory
 WORKDIR /var/www/mtgnew
 
-# Install required PHP extensions
-RUN docker-php-ext-install gd mysqli
+# Build GD with JPEG support, then install required PHP extensions
+RUN docker-php-ext-configure gd --with-jpeg \
+ && docker-php-ext-install exif gd mysqli
 
 # Optional: Set fallback ownership of important mount targets
 RUN chown -R www-data:www-data /mnt/data/cardimg || true \

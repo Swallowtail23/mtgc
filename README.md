@@ -39,7 +39,8 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
 ### Web stack
 
 - Web server (e.g. Apache) with CLI access and ability to configure PHP/MySQL.
-- PHP 8.2 with extensions: `mysqli`, `gd`, `mbstring`, `intl`, `curl`.
+- PHP 8.2 with extensions: `mysqli`, `gd` (with JPEG support), `exif`, `mbstring`,
+  `intl`, `curl`.
 - PHP settings: `upload_max_filesize`/`post_max_size` ≥ 25 M; secure session
   cookie settings (HTTPOnly, Secure, SameSite=Strict).
 - MySQL 8+ (InnoDB tables, proper indexing for performance).

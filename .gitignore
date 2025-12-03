@@ -16,3 +16,4 @@ vendor/
 .vscode/
 .env
 docker/.env
+docker/docker-compose.override.yml

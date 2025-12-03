@@ -36,7 +36,10 @@ compose definitions), keeping the project root clean of Docker-specific files.
   images (Debian bookworm + PHP 8.2).
 - `docker/docker-compose.yml` – base two-service stack; combine with
   `docker-compose.dev.yml` for host bind-mounts or
-  `docker-compose.override.yml.example` when extending the stack.
+  `docker-compose.override.yml.example` when extending the stack. The init
+  scripts can copy `docker-compose.dev.yml` to `docker-compose.override.yml`
+  when you opt into the dev bind-mount; remove that override to revert to the
+  container's internal copy.
 - `docker/docker-init.sh` / `docker/docker-init.bat` – bootstrap scripts for
   Linux/macOS/WSL and Windows respectively.
 - `docker/entrypoint.sh` – container init tasks (link config, log setup,
@@ -81,7 +84,10 @@ Clone the repo to your local host:
         `docker-compose.dev.yml`, letting you edit files on the host and see the
         changes live inside the container. Dependencies remain container-managed
         because a named `vendor-deps` volume is always mounted at
-        `/var/www/mtgnew/vendor`. The init script also looks for the
+        `/var/www/mtgnew/vendor`. Selecting `Y` copies the dev overlay to
+        `docker/docker-compose.override.yml`, so future `podman-compose up -d`
+        runs automatically reuse the bind-mount; delete that override file to
+        revert to the container copy. The init script also looks for the
         `composer_installed.flag` marker under your config directory: if it is
         missing (fresh install) it tells you Composer will run automatically on
         the next container start and create the file; if it exists, the script
@@ -109,7 +115,8 @@ Clone the repo to your local host:
 
     - The script mirrors the Linux version: prompts for the base data directory
       and HTTP port, an optional host bind-mount (`Y` attaches
-      `docker-compose.dev.yml` yet still layers the `vendor-deps` volume so
+      `docker-compose.dev.yml`, writes it to `docker/docker-compose.override.yml`
+      for persistence, yet still layers the `vendor-deps` volume so
       Composer output stays inside the container), and inspects the same
       `composer_installed.flag` marker. If the file is missing the script simply
       notes Composer will run automatically; if it exists, you can opt to delete
@@ -117,6 +124,9 @@ Clone the repo to your local host:
       files, builds the containers via Docker Desktop, waits for MySQL, runs the
       initial admin setup, and executes the bulk import unless the marker
       already exists inside the container.
+      - If you later disable the dev bind-mount, remove
+        `docker/docker-compose.override.yml` so compose stops layering the host
+        checkout automatically.
 3. When the batch script completes it prints the login URL.
 
 ### Re-running the init scripts
@@ -135,10 +145,26 @@ Clone the repo to your local host:
   subsequent runs skip the lengthy import automatically.
 - Both scripts regenerate `docker/.env` so compose
   commands always pick up the current `BASE_DIR`/`WEB_PORT`.
+- If you enable the dev bind-mount, the scripts leave
+  `docker/docker-compose.override.yml` in place. Delete that file to fall back
+  to the container copy of the source.
 
 Compose reads `docker/.env` automatically, so the containers always start with
 the desired paths/ports after each rerun. The init scripts regenerate that file
 for you; there is no longer a root-level `.env`.
+
+## Email configuration
+
+- Configure SMTP via `${BASE_DIR}/config/mtg_new.ini` (`[smtp]` section). Set
+  `EnableEmail = true`, supply host, port, username, password, and TLS mode.
+- Inside the Admin UI navigate to Settings → Email to toggle email features,
+  set the sender address, and test delivery once SMTP is configured.
+- For new-user onboarding, the admin workflow now sends a reset link (no
+  temporary password). Ensure email works so users can complete their account
+  setup promptly.
+- The init scripts leave `EnableEmail` disabled by default; after editing the
+  ini, restart the web container (`podman-compose restart web`) so PHP picks up
+  the changes. Monitor `podman-compose logs web` to debug PHPMailer output.
 
 ## Host data directories
 

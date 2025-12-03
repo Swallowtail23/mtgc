@@ -76,19 +76,23 @@ endif;
     <script src="../js/jquery.js"></script>
     <script type="text/javascript">
     jQuery(function($) {
+        const requirePassword = <?php echo $emailEnabled ? 'false' : 'true'; ?>;
         $('#newuserform').on('submit', function(event) {
             const username = $('#username').val().trim();
             const email    = $('#email').val().trim();
+            const password = $('#pword').length ? $('#pword').val().trim() : '';
             // Determine which field is missing
             let missingField = null;
             if (username === '') {
                 missingField = '#username';
             } else if (email === '') {
                 missingField = '#email';
+            } else if (requirePassword && password === '') {
+                missingField = '#pword';
             }
             if (missingField !== null) {
                 event.preventDefault();
-                alert("You need to complete all fields");
+                alert("You need to complete all required fields");
                 $(missingField).focus();
                 return false;
             }
@@ -110,16 +114,21 @@ require('../includes/menu.php');
         <?php
         // Generate new account or do password reset
         if ((isset($newuser)) and ($newuser === "yes")) :
-            $obj = new PasswordCheck($db, $logfile, $siteTitle);
-            $newuserstatus = $obj->newUser(
-                $username_raw,
-                $postemail_raw,
-                $password,
-                $dbname
-            ); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
-            if ($newuserstatus === 2) :
-                echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail created, "
-                     . "password successfully recorded and checked.</div>";
+            $password = isset($password) ? trim($password) : '';
+            if (!$emailEnabled && $password === '') :
+                echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
+                     . "temporary password.</div>";
+            else :
+                $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                $newuserstatus = $obj->newUser(
+                    $username_raw,
+                    $postemail_raw,
+                    $password,
+                    $dbname
+                ); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
+                if ($newuserstatus === 2) :
+                    echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail created, "
+                         . "password successfully recorded and checked.</div>";
                 echo "<div class='alert-box success'><span>success: </span>Writing table successful.</div>";
             elseif ($newuserstatus === 1) :
                 echo "<div class='alert-box success'><span>success: </span>User $userName / $postemail password "
@@ -128,14 +137,16 @@ require('../includes/menu.php');
                      . "already exists for this user.</div>";
             elseif ($newuserstatus === 6) :
                 echo "<div class='alert-box error'><span>error: </span>Email address validation failed.</div>";
-            else :
-                echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
+                else :
+                    echo "<div class='alert-box error'><span>error: </span>Something went wrong. Check logs.</div>";
+                endif;
             endif;
         endif;
 
         // Multiple user form update
-        if ((isset($updateusers)) and ($updateusers === "yes")) :
-            foreach ($updatearray[0]['id'] as $i => $id) :
+if ((isset($updateusers)) and ($updateusers === "yes")) :
+    $resetResults = [];
+    foreach ($updatearray[0]['id'] as $i => $id) :
                 $sql_id = $db->real_escape_string($updatearray[0]['id'][$i]);
                 ${'sqlid' . $id} = $sql_id;
                 $sql_eml = $db->real_escape_string($updatearray[0]['eml'][$i]);
@@ -244,12 +255,15 @@ require('../includes/menu.php');
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent (if "
                                  . "user exists).</div>";
+                            $resetResults[$sql_id] = true;
                         else :
                             echo "<div class='alert-box error'><span>error: </span>Failed to send reset link.</div>";
+                            $resetResults[$sql_id] = false;
                         endif;
                     else :
                         echo "<div class='alert-box notice'><span>notice: </span>Email is disabled; reset links cannot "
                              . "be sent.</div>";
+                        $resetResults[$sql_id] = false;
                     endif;
                 endif;
             endforeach;
@@ -258,12 +272,12 @@ require('../includes/menu.php');
         endif;?>
         <form id='newuserform' name="newuser" action="users.php" method="post" autocomplete="user-form">
             <h3> New user </h3>
-            Leave password blank to have a random password generated and sent to the new user's email address.<br>
-            <?php
-            if (!$emailEnabled) :
-                echo "<b>This system has global email functionality disabled. "
-                      . "Use this form to reset passwords.</b><br>";
-            endif;?>
+            <?php if ($emailEnabled) : ?>
+                Email is enabled. New users will receive a reset link and set their own passwords via email.<br>
+            <?php else : ?>
+                <b>Email is disabled.</b> Enter a temporary password below for new or existing users. They will be
+                forced to change it on next login.<br>
+            <?php endif; ?>
             <input type='hidden' name="newuser" value="yes">
             <input
                 class="textinput"
@@ -288,18 +302,20 @@ require('../includes/menu.php');
                 maxlength="64"
             >
             <br>
+            <?php if (!$emailEnabled) : ?>
             <input
                 class="textinput"
                 type="password"
                 id='pword'
-                title="Please Enter Your Password"
-                placeholder="Password"
+                title="Enter a temporary password"
+                placeholder="Temporary password"
                 size="20"
                 autocomplete="user-password-for-form"
                 name="password"
-                maxlength="20"
+                maxlength="64"
             >
             <br><br>
+            <?php endif; ?>
             <input class="profilebutton" type="submit" value="ADD USER" />
         </form>
 
@@ -419,22 +435,21 @@ require('../includes/menu.php');
                                     [$aur_usernumber]
                                 );
                                 $updateoutcome = $updatesql->fetch_assoc();
-                                if (
+                                $updatesMatched =
                                     ((string)$updateoutcome['username']
                                         === (string)${'sqlname' . $alluserresults['usernumber']})
                                     &&
                                     ((string)$updateoutcome['email']
                                         === (string)${'sqleml' . $alluserresults['usernumber']})
                                     &&
-                                    (
-                                        ((string)$updateoutcome['status']
-                                            === (string)${'sqlstatus' . $alluserresults['usernumber']})
-                                        ||
-                                        (isset($reset) && ($reset === 1 || $reset === 2))
-                                    )
-                                    && ((string)$updateoutcome['admin']
-                                        === (string)${'sqladm' . $alluserresults['usernumber']})
-                                ) : ?>
+                                    ((string)$updateoutcome['status']
+                                        === (string)${'sqlstatus' . $alluserresults['usernumber']})
+                                    &&
+                                    ((string)$updateoutcome['admin']
+                                        === (string)${'sqladm' . $alluserresults['usernumber']});
+                                $resetSuccess = isset($resetResults[$aur_usernumber])
+                                    && $resetResults[$aur_usernumber] === true;
+                                if ($updatesMatched || $resetSuccess) : ?>
                                     <img src='/images/success.png' alt='Success'>
                                 <?php else : ?>
                                     <img src='/images/error.png' alt='Failure'>
@@ -480,7 +495,7 @@ require('../includes/menu.php');
                 </select>
                 <br><br>
                 <input type='hidden' name='type' value='echo'>
-                <input class="profilebutton" type="submit" value="EXPORT CSV">
+                <input class="profilebutton" type="submit" value="EXPORT">
             </form>
         </div>
     </div>

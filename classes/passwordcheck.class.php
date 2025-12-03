@@ -323,7 +323,7 @@ class PasswordCheck
     /**
      * Fetch stored reset token.
      */
-    protected function fetchResetRecord($email)
+    public function fetchResetRecord($email)
     {
         $query = "SELECT token_hash, expires_at FROM password_resets WHERE email = ? LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -494,7 +494,7 @@ class PasswordCheck
             $stmt_select->bind_result($db_password, $db_username, $db_usernumber);
 
             if ($stmt_select->fetch()) :
-                if (password_verify($password, $db_password)) :
+                if (hash_equals($hashed_password, $db_password)) :
                     // User has been created OK
                     $msg->logMessage('[NOTICE]', "User creation successful, password matched");
                     $usersuccess = 1;
@@ -550,15 +550,13 @@ class PasswordCheck
         endif;
 
         if ($usersuccess === 1 && $noSuppliedPW === true) :
-            $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
-            $subject = "New account at $this->siteTitle";
-            $message = "Your new password is $password";
             if ($emailEnabled) :
-                mail($postemail, $subject, $message, $from);
+                $this->message->logMessage('[NOTICE]', "Triggering reset token for new user $postemail");
+                $this->requestResetToken($postemail, true);
             else :
                 $msg->logMessage(
                     '[NOTICE]',
-                    "Email disabled; new account email not sent to $postemail"
+                    "Email disabled; reset link not sent to $postemail"
                 );
             endif;
         endif;

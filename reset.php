@@ -31,7 +31,55 @@ require 'includes/functions.php';         // Includes basic functions for non-se
 
 $cssver = cssVersionCheck();
 
+$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
+$emailEnabledFlag = ($emailEnabledSetting === 'enabled');
+$token = $_GET['token'] ?? '';
+$tokenEmail = $_GET['email'] ?? '';
+$message = '';
+
+if (!empty($token) && !empty($tokenEmail)) :
+    $record = $pwReset->fetchResetRecord($tokenEmail);
+    if ($record === null || $record['expires_at'] < date('Y-m-d H:i:s')
+        || !password_verify($token, $record['token_hash'])) :
+        $message = "Reset link invalid or expired.";
+        $token = '';
+        $tokenEmail = '';
+        if (!empty($_SESSION)) :
+            $_SESSION = [];
+        endif;
+        if (session_status() === PHP_SESSION_ACTIVE) :
+            session_regenerate_id(true);
+        endif;
+    else :
+        if (!empty($_SESSION)) :
+            $_SESSION = [];
+        endif;
+        if (session_status() === PHP_SESSION_ACTIVE) :
+            session_regenerate_id(true);
+        endif;
+    endif;
+endif;
+
+if (!$emailEnabledFlag) :
+    $message = "Password reset is unavailable because email is disabled.";
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $newPassword = trim($_POST['new_password'] ?? '');
+    if ($pwReset->completeReset($email, $_POST['token'], $newPassword)) :
+        session_destroy();
+        $message = "Password updated. Please log in with your new password.";
+        $redirectLogin = true;
+    else :
+        $message = "Reset failed. The link may be invalid or expired.";
+    endif;
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
+    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+    $pwReset->requestResetToken($email);
+    $message = "If the email address exists, a reset link has been sent.";
+endif;
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -48,38 +96,14 @@ $cssver = cssVersionCheck();
 <body id="loginbody" class="body">
 <div id="loginheader">
     <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
-<?php
-$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
-$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
-$emailEnabledFlag = ($emailEnabledSetting === 'enabled');
-$token = $_GET['token'] ?? '';
-$tokenEmail = $_GET['email'] ?? '';
-$message = '';
-
-if (!$emailEnabledFlag) :
-    $message = "Password reset is unavailable because email is disabled.";
-elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
-    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $newPassword = trim($_POST['new_password'] ?? '');
-    if ($pwReset->completeReset($email, $_POST['token'], $newPassword)) :
-        session_destroy();
-        echo "Password updated. Please log in with your new password.";
-        echo "<meta http-equiv='refresh' content='3;url=login.php'>";
-        exit;
-    else :
-        $message = "Reset failed. The link may be invalid or expired.";
-    endif;
-elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
-    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $pwReset->requestResetToken($email);
-    $message = "If the email address exists, a reset link has been sent.";
-endif;
-?>
 
 <?php if ($message !== '') : ?>
     <div class="alert-box notice" style="margin: 20px;">
         <?php echo htmlspecialchars($message); ?>
     </div>
+    <?php if (!empty($redirectLogin)) : ?>
+        <meta http-equiv='refresh' content='3;url=login.php'>
+    <?php endif; ?>
 <?php endif; ?>
 
 <?php if ($emailEnabledFlag && !empty($token) && !empty($tokenEmail)) : ?>
@@ -95,7 +119,7 @@ endif;
             size='30'
             required
         /><br>
-        <input class='sendreset' type="submit" value="UPDATE PASSWORD"/>
+        <input class='sendreset' type="submit" value="SAVE"/>
     </form>
 <?php elseif ($emailEnabledFlag) : ?>
     <form  action="?" method="POST" enctype="multipart/form-data">
@@ -106,6 +130,15 @@ endif;
         <input class='sendreset' type="submit" value="SEND"/>
     </form>
 <?php endif; ?>
+<?php if (empty($redirectLogin)) : ?>
 </div>
+</div>
+</body>
+</html>
+<?php else : ?>
+</div>
+</body>
+</html>
+<?php endif; ?>
 </body>
 </html>
