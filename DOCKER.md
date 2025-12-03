@@ -311,8 +311,8 @@ released:
    ```
 
    (Use `docker compose` if applicable.)
-6. **Run migrations/bulk scripts if needed** – `podman exec mtgc_web_1 php
-   bulk/scryfall_migrations.php` etc., or rely on cron if it will catch up.
+6. **Run migrations/bulk scripts regularly** – `podman exec mtgc_web_1 php
+   bulk/scryfall_migrations.php` etc., or rely on cron.
 7. **Verify** – check `podman-compose logs web`/`db`, run smoke tests (login,
    searches), and confirm scheduled jobs/cron markers still update.
 
