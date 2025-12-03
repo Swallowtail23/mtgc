@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        25/11/25
+Version:     1.4
+Date:        04/12/25
 Name:        sessionmanager.class.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     1.1 27/11/23 Brought in fx logic to userinfo method, and renamed from checkLogged to getUserInfo
     1.2 20/01/24 Move to logMessage
     1.3 25/11/25 Standard tidy-up
+    1.4 04/12/25 Handle FX API timeouts gracefully and reuse cached rates
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -227,9 +228,12 @@ class SessionManager
             $age = time() - $lastUpdateTime;
             $this->message->logMessage('[DEBUG]', "Existing rate age is $age");
             if ($lastUpdateTime === null or $age > 3600) :
-                $rate = $this->updateFxRate($currencies);
+                $rate = $this->updateFxRate($currencies, $existingRate);
                 if ($rate === null) :
-                    $this->message->logMessage('[ERROR]', "API has not provided a rate");
+                    $this->message->logMessage(
+                        '[ERROR]',
+                        "API has not provided a rate and no cached rate available for $currencies"
+                    );
                     return $rate;
                 else :
                     $this->message->logMessage('[DEBUG]', "Updating... new rate is $rate");
@@ -253,13 +257,22 @@ class SessionManager
         return $rate;
     }
 
-    private function updateFxRate($currencies)
+    private function updateFxRate($currencies, $existingRate = null)
     {
         $freecurrencyapi = new \FreeCurrencyApi\FreeCurrencyApi\FreeCurrencyApiClient($this->fxAPI);
         list($baseCurrency, $targetCurrency) = array_map('strtoupper', explode('_', $currencies));
-        $freecurrencyData = $freecurrencyapi->latest(
-            ['base_currency' => "$baseCurrency", 'currencies' => "$targetCurrency",]
-        );
+        try {
+            $this->message->logMessage('[DEBUG]', "Requesting FX rate for $baseCurrency to $targetCurrency");
+            $freecurrencyData = $freecurrencyapi->latest(
+                ['base_currency' => "$baseCurrency", 'currencies' => "$targetCurrency",]
+            );
+        } catch (\Throwable $e) {
+            $this->message->logMessage(
+                '[ERROR]',
+                "FreecurrencyAPI call failed for $currencies, using cached rate if available: " . $e->getMessage()
+            );
+            return $existingRate;
+        }
         if (isset($freecurrencyData["data"][$targetCurrency])) :
             $fxResult = $freecurrencyData["data"]["$targetCurrency"];
             $this->message->logMessage(
