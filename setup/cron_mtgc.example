@@ -1,0 +1,26 @@
+# Example cron file for MTG Collection scheduled jobs
+# Copy to the account that owns the web files (e.g. `sudo crontab -u apache cron_mtgc.example`)
+# or drop into /etc/cron.d/mtgc and adjust the user, SCRIPT_ROOT, and LOG_ROOT paths.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+SCRIPT_ROOT=/opt/mtg/scripts
+LOG_ROOT=/var/log/mtg
+
+# Weekly "all cards" refresh (no image downloads)
+0 1 * * 0 "$SCRIPT_ROOT"/bulk_all.sh >> "$LOG_ROOT"/cron_bulk_all.log 2>&1
+
+# Daily Sets metadata refresh
+30 1 * * * "$SCRIPT_ROOT"/sets.sh >> "$LOG_ROOT"/cron_sets.log 2>&1
+
+# Daily migrations (backfill/emergency data fixes)
+0 2 * * * "$SCRIPT_ROOT"/migrations.sh >> "$LOG_ROOT"/cron_migrations.log 2>&1
+
+# Rulings from Scryfall (Mon/Wed/Fri)
+0 3 * * 1,3,5 "$SCRIPT_ROOT"/rulings.sh >> "$LOG_ROOT"/cron_rulings.log 2>&1
+
+# Nightly default bulk refresh (primary language, downloads new images)
+0 4 * * * "$SCRIPT_ROOT"/bulk.sh >> "$LOG_ROOT"/cron_bulk_default.log 2>&1
+
+# Weekly exports (CSV/email helpers)
+30 4 * * 0 "$SCRIPT_ROOT"/weekly.sh >> "$LOG_ROOT"/cron_weekly.log 2>&1

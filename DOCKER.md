@@ -116,6 +116,27 @@ The host paths defined during bootstrap contain persistent data:
 Keep backups of the database volume (`mtgc_db-data`) and these folders if you
 intend to migrate the installation.
 
+## Images and bulk imports
+
+When `docker/docker-init.sh` runs on a fresh database it executes:
+
+1. `php bulk/scryfall_bulk.php all`
+2. `php bulk/scryfall_bulk.php default`
+3. `php bulk/scryfall_sets.php`
+4. `php bulk/scryfall_rulings.php`
+5. `php bulk/scryfall_migrations.php`
+
+The two-step bulk run deliberately avoids downloading ~90k card images.
+The first `all` pass writes every card record but skips image downloads;
+the second `default` pass marks the primary language. A `default` run will only
+download an image when a new row is inserted; because the `all` pass already
+populated all cards, again, no images are fetched. Cards later viewed via the UI
+or added in future bulk runs download on demand, so storage grows gradually
+rather than all at once. Full image sets can be downloaded per set from the
+Sets page.
+Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
+pulling the full image set unnecessarily.
+
 ## Log rotation
 
 Application logs live at `${BASE_DIR}/logs` on the host (mounted inside the
@@ -150,6 +171,36 @@ Container engine logs also need limits:
 
   Then run `sudo systemctl restart docker` and recreate the stack (`podman` is
   unaffected by this file).
+
+## Scheduled jobs
+
+The helper scripts copied to `${BASE_DIR}/config/scripts` cover recurring data
+tasks. Recommended cadence:
+
+- `bulk_all.sh` – weekly; refreshes the Scryfall “all cards” dataset (no image
+  downloads) so the database stays current.
+- `sets.sh` – daily; pulls new/updated set metadata.
+- `migrations.sh` – daily; applies small data fixes shipped upstream.
+- `rulings.sh` – Monday/Wednesday/Friday; syncs oracle rulings.
+- `bulk.sh` – nightly; refreshes the default-language subset and downloads
+  images for any newly inserted records.
+- `weekly.sh` – weekly; runs the weekly exports helper.
+
+A cron template lives at `setup/cron_mtgc.example`. For Podman hosts you can
+adapt it by replacing `SCRIPT_ROOT` with `${BASE_DIR}/config/scripts` and
+wrapping the commands with `podman exec`. Example `/etc/cron.d/mtgc` entry:
+
+```
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+BASE_DIR=/home/you/mtgc
+
+0 1 * * 0 root podman exec mtgc_web_1 /mnt/data/config/scripts/bulk_all.sh >> /var/log/mtg/cron_bulk_all.log 2>&1
+```
+
+Repeat for each script using the schedule above. Docker users can swap
+`podman exec` for `docker compose exec`. Ensure the log files referenced in the
+cron entries exist and are rotated (see “Log rotation”).
 
 ## Using Podman
 

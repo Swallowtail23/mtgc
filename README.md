@@ -27,12 +27,12 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from <10 GB to
 
 ## Install Options
 
+- **Docker / Podman - RECOMMENDED** – See [DOCKER.md](DOCKER.md) for the
+  container workflow using `docker/docker-init.sh` (Linux/macOS/WSL) or 
+  `docker/docker-init.bat` (Windows). The scripts manage `.env`, permissions,
+  admin setup, and bulk data imports.
 - **Bare Metal / Native** – See [INSTALL.md](INSTALL.md) for Apache/PHP/MySQL
   deployment instructions (vhosts, php-fpm, cron jobs, etc.).
-- **Docker / Podman** – See [DOCKER.md](DOCKER.md) for the container workflow
-  using `docker/docker-init.sh` (Linux/macOS/WSL) or `docker/docker-init.bat`
-  (Windows). The scripts manage `.env`, permissions, admin setup, and bulk data
-  imports.
 
 ## Dependencies
 

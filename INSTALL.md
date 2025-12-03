@@ -1,3 +1,5 @@
+**NOTE: Docker/Podman is the recommended install - see DOCKER.md**
+
 # Bare Metal / Native Installation
 
 ## Overview
@@ -68,10 +70,14 @@ Adjust the frequency or retention as needed and run
 - Provision a MySQL user with appropriate privileges and update the ini with the
   credentials/host.
 - Import `setup/mtg_new.sql` into the database.
-- Run the bulk scripts from the `bulk/` directory (in order) to populate data:
+- Run the bulk scripts from the `bulk/` directory (in order) to populate data.
+  The double run of scryfall_bulk.php is required for initial setup;
+  The first `all` pass writes every card record; the second `default` pass
+  marks the primary language. See also Images section.
 
   ```bash
   php scryfall_bulk.php all
+  php scryfall_bulk.php default
   php scryfall_sets.php
   php scryfall_rulings.php
   php scryfall_migrations.php
@@ -102,9 +108,30 @@ and PHPUnit (dev).
 
 ## Cron / scheduled tasks
 
-- Schedule the helper scripts in `/opt/mtg/scripts` to run at desired intervals
-  (bulk refresh, weekly exports, etc.).
-- Ensure the cron user can access PHP, the web root, and `/opt/mtg`.
+Copy the helper scripts to `/opt/mtg/scripts` (as described earlier) and use the
+sample schedule in `setup/cron_mtgc.example` as a starting point. Recommended
+frequencies:
+
+- `bulk_all.sh` (weekly): refreshes the entire Scryfall dataset without
+  downloading images.
+- `sets.sh` (daily): syncs set metadata so new releases appear promptly.
+- `migrations.sh` (daily): applies incremental data fixes or extra inserts.
+- `rulings.sh` (3× weekly): updates oracle rulings from Scryfall.
+- `bulk.sh` (nightly): reprocesses the default-language subset and downloads
+  any new images.
+- `weekly.sh` (weekly): runs the weekly export helper scripts.
+
+Install the cron file (adjusting the user, script path, and log locations):
+
+```bash
+sudo cp setup/cron_mtgc.example /etc/cron.d/mtgc
+sudo sed -i 's|/opt/mtg|/your/script/path|' /etc/cron.d/mtgc
+sudo sed -i 's|/var/log/mtg|/your/log/path|' /etc/cron.d/mtgc
+sudo systemctl reload crond    # or cron service on your distro
+```
+
+Ensure the cron user can execute PHP, access `/var/www/mtgnew`, and write to the
+log directory referenced in the cron file.
 
 ## Final checks
 
@@ -113,3 +140,13 @@ and PHPUnit (dev).
 - Verify file permissions on card images and JSON cache directories.
 - Log in, configure the admin email/SMTP via the UI, and run through the initial
   bulk data validation.
+
+## Images
+
+- The first setup pass (`php bulk/scryfall_bulk.php all`) loads all cards without
+  downloading the ~90k images; the second pass (`php bulk/scryfall_bulk.php default`)
+  marks the primary language and only downloads images for truly new rows.
+  Subsequent bulk runs download images as new cards appear.
+- Bare metal installs should follow the same command order above to avoid
+  triggering a full image download. If you run only `php scryfall_bulk.php default`,
+  on an empty database it will download images for all cards inserted during that run.
