@@ -116,6 +116,41 @@ The host paths defined during bootstrap contain persistent data:
 Keep backups of the database volume (`mtgc_db-data`) and these folders if you
 intend to migrate the installation.
 
+## Log rotation
+
+Application logs live at `${BASE_DIR}/logs` on the host (mounted inside the
+containers at `/var/log/mtg`). Use the provided logrotate template to keep them
+trimmed:
+
+```bash
+BASE_DIR=$(grep BASE_DIR docker/.env | cut -d= -f2)
+sudo sed "s|__BASE_DIR__|$BASE_DIR|g" docker/logrotate-mtgc.conf \
+    | sudo tee /etc/logrotate.d/mtgc >/dev/null
+sudo logrotate -f /etc/logrotate.d/mtgc   # optional test run
+```
+
+The template rotates daily, keeps 14 compressed copies, and uses `copytruncate`
+so you do not need to signal Apache. Adjust the retention values as needed.
+
+Container engine logs also need limits:
+
+- **Podman (default):** container stdout/stderr entries are stored in
+  journald. Ensure `/etc/systemd/journald.conf` has sensible caps (e.g.
+  `SystemMaxUse=1G`) and reload with `sudo systemctl restart systemd-journald`.
+  Periodically prune with `journalctl --vacuum-size=1G` if desired.
+- **Docker:** configure the daemon's `json-file` rotation, for example in
+  `/etc/docker/daemon.json`:
+
+  ```json
+  {
+    "log-driver": "json-file",
+    "log-opts": { "max-size": "10m", "max-file": "5" }
+  }
+  ```
+
+  Then run `sudo systemctl restart docker` and recreate the stack (`podman` is
+  unaffected by this file).
+
 ## Using Podman
 
 `docker/docker-init.sh` auto-detects Podman/`podman-compose`. After the first

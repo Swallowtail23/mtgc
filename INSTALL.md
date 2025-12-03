@@ -40,6 +40,28 @@ Adjust paths/commands for your platform.
   `json` folder for Scryfall downloads. Many admins symlink this to a large
   storage volume.
 
+## Log rotation
+
+Rotate `/var/log/mtg/*.log` so the application logs do not fill the disk. A
+basic logrotate entry looks like:
+
+```bash
+sudo tee /etc/logrotate.d/mtgc >/dev/null <<'EOF'
+/var/log/mtg/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+}
+EOF
+```
+
+Adjust the frequency or retention as needed and run
+`sudo logrotate -f /etc/logrotate.d/mtgc` for an immediate rotation.
+
 ## Database setup
 
 - Create the `mtg_new` database (see `setup/mtg_new.sql`).
