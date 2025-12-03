@@ -290,8 +290,8 @@ require('../includes/menu.php');
                         $obj = new PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
-                            echo "<div class='alert-box success'><span>success: </span>Password reset link sent (if "
-                                 . "user exists).</div>";
+                            echo "<div class='alert-box success'><span>success: </span>Password reset link sent"
+                                 . "</div>";
                             $resetResults[$sql_id] = true;
                             $msg->logMessage('[DEBUG]', "Password reset email sent for $sql_name ($sql_id)");
                         else :
