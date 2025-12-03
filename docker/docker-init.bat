@@ -6,12 +6,25 @@ for %%I in ("%SCRIPT_DIR%.") do set "SCRIPT_DIR=%%~fI\"
 for %%I in ("%SCRIPT_DIR%..") do set "PROJECT_ROOT=%%~fI"
 set "COMPOSE_FILE=%SCRIPT_DIR%docker-compose.yml"
 set "ENV_FILE=%SCRIPT_DIR%.env"
+set "COMPOSE_FILES=-f docker-compose.yml"
 
 call :DetectDocker
 call :DetectCompose
 
 echo [INFO] Using compose command: %COMPOSE_CMD%
 echo [INFO] Using container command: docker
+
+set /p ANSWER="Do you want to mount host web root for direct access (Y) or use container copy (N)? [Y/N]: "
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "\"%ANSWER%\".ToUpperInvariant()"`) do set "ANSWER=%%I"
+
+if /I "%ANSWER%"=="Y" (
+    echo [INFO] Using host web root bind-mount for development.
+    set "COMPOSE_FILES=%COMPOSE_FILES% -f docker-compose.dev.yml"
+) else if /I "%ANSWER%"=="N" (
+    echo [INFO] Using container's internal copy of the web root.
+) else (
+    echo [WARN] Invalid choice, defaulting to container copy (no host bind-mount).
+)
 
 set /p BASE_PARENT="Enter base directory for card images/config/logs (e.g. C:\\data - recommend 25-40GB): "
 if "%BASE_PARENT%"=="" (
@@ -55,7 +68,7 @@ set DB_SERVER=db
 call :UpdateIni "%BASE_DIR%\config\mtg_new.ini" "%DB_SERVER%" "%DB_USER%" "%DB_PASS%" "%DB_NAME%"
 
 pushd "%SCRIPT_DIR%"
-    %COMPOSE_CMD% up --build -d
+    %COMPOSE_CMD% %COMPOSE_FILES% up --build -d
 popd
 
 echo Waiting for MySQL to be available...

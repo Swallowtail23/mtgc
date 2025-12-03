@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 ENV_FILE="$SCRIPT_DIR/.env"
+COMPOSE_ARGS=(-f docker-compose.yml)
 
 cd "$PROJECT_ROOT"
 
@@ -34,6 +35,18 @@ fi
 
 echo "[INFO] Using compose command: ${COMPOSE_CMD}"
 echo "[INFO] Using container command: ${DOCKER_CMD}"
+
+read -rp "Do you want to mount host web root for direct access (Y) or use container copy (N)? [Y/N]: " ANSWER
+ANSWER=${ANSWER^^}
+
+if [[ "$ANSWER" == "Y" ]]; then
+    echo "[INFO] Using host web root bind-mount for development."
+    COMPOSE_ARGS+=(-f docker-compose.dev.yml)
+elif [[ "$ANSWER" == "N" ]]; then
+    echo "[INFO] Using container's internal copy of the web root."
+else
+    echo "[WARN] Invalid choice, defaulting to container copy (no host bind-mount)."
+fi
 
 restore_host_permissions() {
     local target="$1"
@@ -177,7 +190,7 @@ fi
 export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mtgc}
 (
     cd "$SCRIPT_DIR"
-    ${COMPOSE_CMD} up --build -d
+    ${COMPOSE_CMD} "${COMPOSE_ARGS[@]}" up --build -d
 )
 
 # ─────────────────────────────────────────────

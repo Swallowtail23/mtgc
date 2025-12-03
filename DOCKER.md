@@ -38,6 +38,11 @@ clutter.
      - A base directory for card images/config/logs (e.g. `/srv/data`). The
        script appends `/mtgc` and creates `cardimg`, `config`, and `logs`.
      - The HTTP port to expose (default `8082`).
+     - Whether to bind-mount the local checkout (answers `Y`) or use the
+       container's internal copy (answers `N`). Choosing `Y` adds
+       `docker-compose.dev.yml`, letting you edit files on the host and see the
+       changes live inside the container. Invalid or empty responses default to
+       the container copy.
    - It creates `docker/.env` with those values, builds both images, starts the
      stack, and prompts for the first admin user credentials.
    - On a fresh database it runs all Scryfall bulk import scripts. Expect the
@@ -59,9 +64,11 @@ clutter.
    ```
 
    - The script mirrors the Linux version: prompts for the base data directory
-     and HTTP port, generates the `.env` files, builds the containers via Docker
-     Desktop, waits for MySQL, runs the initial admin setup, and executes the
-     bulk import unless the marker already exists inside the container.
+     and HTTP port, an optional host bind-mount (`Y` attaches
+     `docker-compose.dev.yml`), generates the `.env` files, builds the
+     containers via Docker Desktop, waits for MySQL, runs the initial admin
+     setup, and executes the bulk import unless the marker already exists
+     inside the container.
 3. When the batch script completes it prints the login URL.
 
 ### Re-running the init scripts
