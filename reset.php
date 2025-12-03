@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.2
+Version:     3.3
 Date:        04/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -19,6 +19,7 @@ History:
     3.0 01/12/25 Token-based password reset flow
     3.1 04/12/25 Improve resilience and security around token management
     3.2 04/12/25 Add cancel button to return to login
+    3.3 04/12/25 Hide reset form after password update message
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -110,7 +111,7 @@ endif;
     <?php endif; ?>
 <?php endif; ?>
 
-<?php if ($emailEnabledFlag && !empty($token) && !empty($tokenEmail)) : ?>
+<?php if ($emailEnabledFlag && empty($redirectLogin) && !empty($token) && !empty($tokenEmail)) : ?>
     <form  action="?" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="token" value="<?php echo htmlspecialchars($token);?>">
         <input type="hidden" name="email" value="<?php echo htmlspecialchars($tokenEmail);?>">
@@ -130,7 +131,7 @@ endif;
             onclick="window.location.href='login.php';"
         >CANCEL</button>
     </form>
-<?php elseif ($emailEnabledFlag) : ?>
+<?php elseif ($emailEnabledFlag && empty($redirectLogin)) : ?>
     <form  action="?" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="action" value="submit">
         <br>Request password reset:<br><br>
