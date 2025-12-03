@@ -24,6 +24,7 @@ class PasswordCheckStub extends PasswordCheckReal
     public $users = [];
     public $tokens = [];
     public $sentLinks = [];
+    public $statusUpdates = [];
 
     protected function findUserByEmail($email)
     {
@@ -40,7 +41,7 @@ class PasswordCheckStub extends PasswordCheckReal
         return true;
     }
 
-    protected function fetchResetRecord($email)
+    public function fetchResetRecord($email)
     {
         return $this->tokens[$email] ?? null;
     }
@@ -57,6 +58,12 @@ class PasswordCheckStub extends PasswordCheckReal
                 unset($this->tokens[$email]);
             }
         }
+    }
+
+    protected function updateUserStatus($email, $status)
+    {
+        $this->statusUpdates[] = ['email' => $email, 'status' => $status];
+        return true;
     }
 
     protected function updateUserPassword($email, $hashedPassword, $setActive = false)
@@ -158,5 +165,60 @@ class PasswordResetTest extends TestCase
         $this->checker->requestResetToken('user@example.test');
 
         $this->assertArrayNotHasKey('old@example.test', $this->checker->tokens);
+    }
+
+    public function testRequestResetWithInvalidEmailIsNonDestructive()
+    {
+        global $emailEnabled;
+        $emailEnabled = true;
+
+        $result = $this->checker->requestResetToken('not-an-email');
+
+        $this->assertTrue($result);
+        $this->assertEmpty($this->checker->tokens);
+        $this->assertEmpty($this->checker->sentLinks);
+    }
+
+    public function testRequestResetForUnknownUserDoesNotPersistToken()
+    {
+        global $emailEnabled;
+        $emailEnabled = true;
+
+        $result = $this->checker->requestResetToken('missing@example.test');
+
+        $this->assertTrue($result);
+        $this->assertArrayNotHasKey('missing@example.test', $this->checker->tokens);
+        $this->assertEmpty($this->checker->sentLinks);
+    }
+
+    public function testRequestResetWithForceChangeUpdatesStatus()
+    {
+        global $emailEnabled;
+        $emailEnabled = true;
+
+        $result = $this->checker->requestResetToken('user@example.test', true);
+
+        $this->assertTrue($result);
+        $this->assertEquals(
+            [['email' => 'user@example.test', 'status' => 'chgpwd']],
+            $this->checker->statusUpdates
+        );
+        $this->assertArrayHasKey('user@example.test', $this->checker->tokens);
+    }
+
+    public function testCompleteResetFailsWithInvalidToken()
+    {
+        global $emailEnabled;
+        $emailEnabled = true;
+        $this->checker->tokens['user@example.test'] = [
+            'token_hash' => password_hash('token123', PASSWORD_DEFAULT),
+            'expires_at' => date('Y-m-d H:i:s', time() + 3600),
+        ];
+
+        $result = $this->checker->completeReset('user@example.test', 'wrongtoken', 'newpass');
+
+        $this->assertFalse($result);
+        $this->assertArrayHasKey('user@example.test', $this->checker->tokens);
+        $this->assertArrayNotHasKey('password', $this->checker->users['user@example.test']);
     }
 }
