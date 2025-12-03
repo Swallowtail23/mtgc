@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.1
+Version:     5.2
 Date:        04/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -27,6 +27,7 @@ History:
     4.9 30/11/25 Add cancel to re-auth prompt
     5.0 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
     5.1 04/12/25 Add email settings test
+    5.2 04/12/25 Add Scryfall JSON wipe success message
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -291,6 +292,41 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     $configEditMessage = $testMessage;
     $configEditMessageType = ($testEmailResult === 'success') ? 'success' : 'error';
     $_SESSION['config_save_status'] = $configEditMessageType;
+endif;
+
+if ((isset($toggleCss)) and ($toggleCss == "y")) :
+    $msg->logMessage('[DEBUG]', "Turning off minimised CSS...");
+    $cssQuery = 0;
+    $query = 'UPDATE admin SET usemin=?';
+    if ($db->execute_query($query, [$cssQuery]) === true) :
+        $msg->logMessage('[NOTICE]', "Turned off minimised CSS");
+    else :
+        trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
+    endif;
+    $cssver = cssVersionCheck(); //run again
+endif;
+if ((isset($publishCss)) and ($publishCss == "y")) :
+    $msg->logMessage('[DEBUG]', "Turning on minimised CSS...");
+    $cssQuery = 1;
+    $query = 'UPDATE admin SET usemin=?';
+    if ($db->execute_query($query, [$cssQuery]) === true) :
+        $msg->logMessage('[NOTICE]', "Turned on minimised CSS");
+    else :
+        trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
+    endif;
+    $cssver = cssVersionCheck(); //run again
+endif;
+if ($clearScryfallJson === "y") :
+    if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
+        $msg->logMessage('[NOTICE]', "JSON data removed");
+        $_SESSION['config_save_message'] = 'Scryfall JSON data removed.';
+        $_SESSION['config_save_status'] = 'success';
+        $configEditMessage = $_SESSION['config_save_message'];
+        $configEditMessageType = 'success';
+    else :
+        trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
+    endif;
+    $cssver = cssVersionCheck(); //run again
 endif;
 
 if (isset($_SESSION['config_edit_expires'])) :
@@ -843,37 +879,6 @@ require('../includes/menu.php');
                 foreach ($recentLogLines as $line) :
                     echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "<br>";
                 endforeach;
-            endif;
-
-            if ((isset($toggleCss)) and ($toggleCss == "y")) :
-                $msg->logMessage('[DEBUG]', "Turning off minimised CSS...");
-                $cssQuery = 0;
-                $query = 'UPDATE admin SET usemin=?';
-                if ($db->execute_query($query, [$cssQuery]) === true) :
-                    $msg->logMessage('[NOTICE]', "Turned off minimised CSS");
-                else :
-                    trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
-                endif;
-                $cssver = cssVersionCheck(); //run again
-            endif;
-            if ((isset($publishCss)) and ($publishCss == "y")) :
-                $msg->logMessage('[DEBUG]', "Turning on minimised CSS...");
-                $cssQuery = 1;
-                $query = 'UPDATE admin SET usemin=?';
-                if ($db->execute_query($query, [$cssQuery]) === true) :
-                    $msg->logMessage('[NOTICE]', "Turned on minimised CSS");
-                else :
-                    trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
-                endif;
-                $cssver = cssVersionCheck(); //run again
-            endif;
-            if ((isset($clearScryfallJson)) and ($clearScryfallJson == "y")) :
-                if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
-                    $msg->logMessage('[NOTICE]', "JSON data removed");
-                else :
-                    trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
-                endif;
-                $cssver = cssVersionCheck(); //run again
             endif;
 
             if ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE ON')) :
