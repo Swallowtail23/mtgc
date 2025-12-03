@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.1
+Version:     3.2
 Date:        04/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -18,6 +18,7 @@ History:
     2.3 29/11/25 Rename cssVersionCheck usage
     3.0 01/12/25 Token-based password reset flow
     3.1 04/12/25 Improve resilience and security around token management
+    3.2 04/12/25 Add cancel button to return to login
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -123,6 +124,11 @@ endif;
             required
         /><br>
         <input class='sendreset' type="submit" value="SAVE"/>
+        <button
+            class='sendreset'
+            type="button"
+            onclick="window.location.href='login.php';"
+        >CANCEL</button>
     </form>
 <?php elseif ($emailEnabledFlag) : ?>
     <form  action="?" method="POST" enctype="multipart/form-data">
@@ -131,6 +137,11 @@ endif;
         <?php echo "<input class='textinput loginfield' name='email' type='email' "
                    . "placeholder='EMAIL' size='30' required/><br>"; ?>
         <input class='sendreset' type="submit" value="SEND"/>
+        <button
+            class='sendreset'
+            type="button"
+            onclick="window.location.href='login.php';"
+        >CANCEL</button>
     </form>
 <?php endif; ?>
 <?php if (empty($redirectLogin)) : ?>
