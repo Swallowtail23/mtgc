@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     4.10
+Version:     5.0
 Date:        30/11/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -25,7 +25,7 @@ History:
     4.7 30/11/25 Add re-auth gated ini editing UI
     4.8 30/11/25 Hide ini settings until editing unlocked
     4.9 30/11/25 Add cancel to re-auth prompt
-    4.10 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
+    5.0 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
