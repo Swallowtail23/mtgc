@@ -4,3 +4,4 @@ services:
   web:
     volumes:
       - ..:/var/www/mtgnew:Z
+      - vendor-deps:/var/www/mtgnew/vendor

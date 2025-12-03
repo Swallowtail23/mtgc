@@ -34,15 +34,21 @@ clutter.
    ./docker/docker-init.sh
    ```
 
-   - The script auto-detects Docker vs Podman/compose and prompts for:
-     - A base directory for card images/config/logs (e.g. `/srv/data`). The
-       script appends `/mtgc` and creates `cardimg`, `config`, and `logs`.
-     - The HTTP port to expose (default `8082`).
-     - Whether to bind-mount the local checkout (answers `Y`) or use the
-       container's internal copy (answers `N`). Choosing `Y` adds
-       `docker-compose.dev.yml`, letting you edit files on the host and see the
-       changes live inside the container. Invalid or empty responses default to
-       the container copy.
+    - The script auto-detects Docker vs Podman/compose and prompts for:
+      - A base directory for card images/config/logs (e.g. `/srv/data`). The
+        script appends `/mtgc` and creates `cardimg`, `config`, and `logs`.
+      - The HTTP port to expose (default `8082`).
+      - Whether to bind-mount the local checkout (answers `Y`) or use the
+        container's internal copy (answers `N`). Choosing `Y` adds
+        `docker-compose.dev.yml`, letting you edit files on the host and see the
+        changes live inside the container. Dependencies remain container-managed
+        because a named `vendor-deps` volume is always mounted at
+        `/var/www/mtgnew/vendor`. The init script also looks for the
+        `.composer_installed` marker under your config directory: if it is
+        missing (fresh install) it tells you Composer will run automatically on
+        the next container start and create the file; if it exists, the script
+        asks whether you want to delete it so the next start re-runs Composer.
+        Invalid or empty responses default to the container copy.
    - It creates `docker/.env` with those values, builds both images, starts the
      stack, and prompts for the first admin user credentials.
    - On a fresh database it runs all Scryfall bulk import scripts. Expect the
@@ -63,12 +69,16 @@ clutter.
    docker\docker-init.bat
    ```
 
-   - The script mirrors the Linux version: prompts for the base data directory
-     and HTTP port, an optional host bind-mount (`Y` attaches
-     `docker-compose.dev.yml`), generates the `.env` files, builds the
-     containers via Docker Desktop, waits for MySQL, runs the initial admin
-     setup, and executes the bulk import unless the marker already exists
-     inside the container.
+    - The script mirrors the Linux version: prompts for the base data directory
+      and HTTP port, an optional host bind-mount (`Y` attaches
+      `docker-compose.dev.yml` yet still layers the `vendor-deps` volume so
+      Composer output stays inside the container), and inspects the same
+      `.composer_installed` marker. If the file is missing the script simply
+      notes Composer will run automatically; if it exists, you can opt to delete
+      it to force a reinstall on the next start. It then generates the `.env`
+      files, builds the containers via Docker Desktop, waits for MySQL, runs the
+      initial admin setup, and executes the bulk import unless the marker
+      already exists inside the container.
 3. When the batch script completes it prints the login URL.
 
 ### Re-running the init scripts

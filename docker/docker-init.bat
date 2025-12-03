@@ -42,6 +42,18 @@ call :EnsureDir "%BASE_DIR%\cardimg"
 call :EnsureDir "%BASE_DIR%\config"
 call :EnsureDir "%BASE_DIR%\logs"
 
+set "COMPOSER_CHECK=%BASE_DIR%\config\.composer_installed"
+set "LEGACY_FORCE=%BASE_DIR%\config\.force_composer_install"
+if exist "%LEGACY_FORCE%" del "%LEGACY_FORCE%"
+if not exist "%COMPOSER_CHECK%" (
+    echo [INFO] Composer dependencies not yet installed ^- will run on next container start.
+) else (
+    set /p COMPOSER_RERUN="Existing Composer install detected. Re-run install? (y/N): "
+    if /I "%COMPOSER_RERUN%"=="Y" (
+        del "%COMPOSER_CHECK%"
+    )
+)
+
 call :WriteEnv "%ENV_FILE%"
 
 set DO_DB_SETUP=1

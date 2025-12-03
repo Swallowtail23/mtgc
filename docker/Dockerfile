@@ -52,9 +52,6 @@ RUN sed -i 's/\r$//' /usr/local/bin/wait-for-mysql.sh \
 # Final working directory
 WORKDIR /var/www/mtgnew
 
-# Install PHP dependencies
-RUN composer install --no-dev --no-interaction --prefer-dist
-
 # Install required PHP extensions
 RUN docker-php-ext-install gd mysqli
 
