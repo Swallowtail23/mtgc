@@ -127,6 +127,26 @@ podman-compose up -d
 podman-compose down
 ```
 
+## Running as a systemd service
+
+A sample unit file (`docker/mtgc-compose.service`) is provided if you want the
+stack to start at boot. Update the `WorkingDirectory` (defaults to the cloned
+repo under `/home/username/mtgnew/mtgc`) and swap `podman-compose` for
+`docker compose` if needed. Then install and enable:
+
+```bash
+sudo cp docker/mtgc-compose.service /etc/systemd/system/mtgc-compose.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now mtgc-compose.service
+```
+
+The unit uses `ExecStart=/usr/bin/podman-compose up -d` and
+`ExecStop=/usr/bin/podman-compose down`. Reloading the service (`systemctl
+reload mtgc-compose`) re-runs `up -d`, so rebuilds are as simple as
+`sudo systemctl reload mtgc-compose`. `systemctl status mtgc-compose` shows the
+last compose logs. Disable with `sudo systemctl disable --now mtgc-compose` if
+you no longer want it running automatically.
+
 Because the project name is forced to `mtgc`, container names stay consistent
 (`mtgc_web_1`, `mtgc_db_1`). This ensures helper scripts (`docker-init.sh`) and
 any manual `podman exec mtgc_web_1 ...` commands continue to work.

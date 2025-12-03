@@ -1,0 +1,18 @@
+[Unit]
+Description=MTG Collection stack (compose)
+Documentation=README.md
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/username/mtgnew/mtgc/docker
+Environment=COMPOSE_PROJECT_NAME=mtgc
+ExecStart=/usr/bin/podman-compose up -d
+ExecStop=/usr/bin/podman-compose down
+ExecReload=/usr/bin/podman-compose up -d
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
