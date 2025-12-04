@@ -63,7 +63,7 @@ compose definitions), keeping the project root clean of Docker-specific files.
 Clone the repo to your local host:
 
   ```bash
-  git clone https://github.com/Swallowtail23/mtgc/tree/master
+  git clone --branch master https://github.com/Swallowtail23/mtgc.git
   ```
 
 ### Linux/macOS / WSL
