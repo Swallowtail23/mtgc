@@ -330,6 +330,18 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php
+                if (
+                    isset($_POST['send_twofa_code'])
+                    && !empty($userHas2fa)
+                    && $userTwofaMethod === 'email'
+                ) :
+                    $tfaManager->startVerification($userId, $userEmail);
+                    echo "<div class='alert-box notice' id='pwdchange'>"
+                         . "<span>notice: </span>"
+                         . "Verification code sent to your email."
+                         . "</div>";
+                endif;
+
                 //Page PHP processing
 
                 //2. Has a password reset been called? Needs to be in DIV for error display
@@ -867,6 +879,18 @@ endif;
                                             >
                                             <span class="error2">*</span>
                                         </td>
+                                        <?php if (!empty($userHas2fa) && $userTwofaMethod === 'email') : ?>
+                                        <td>
+                                            <button
+                                                class="inline_button stdwidthbutton"
+                                                type="submit"
+                                                name="send_twofa_code"
+                                                value="send"
+                                            >
+                                                SEND CODE
+                                            </button>
+                                        </td>
+                                        <?php endif; ?>
                                     </tr>
                                     <?php endif; ?>
                                 </tbody>

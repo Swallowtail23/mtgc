@@ -177,7 +177,7 @@ endif;
 
         <div style="display: flex; justify-content: center; margin-top: 20px;">
             <form action="verify_2fa.php" method="post" style="margin-right: 10px;">
-                <input type="submit" name="resend" class="profilebutton" value="RESEND CODE" />
+                <input type="submit" name="resend" class="profilebutton" value="RESEND" />
             </form>
 
             <form action="verify_2fa.php" method="post">
