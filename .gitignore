@@ -17,3 +17,4 @@ vendor/
 .env
 docker/.env
 docker/docker-compose.override.yml
+scripts/

@@ -420,3 +420,53 @@ docker compose up -d
 
 The persistent MySQL volume keeps data intact, and the config/image/log mounts
 remain untouched.
+
+## Pinned releases (optional)
+
+By default, the instructions above assume you want to deploy the latest stable
+code from the `master` branch:
+
+    git clone --branch master https://github.com/Swallowtail23/mtgc.git
+
+This is the recommended approach, as it always provides the most recent stable
+fixes and improvements.
+
+If you prefer to deploy a specific tagged release (for example `v0.1.1`), you
+can do so by checking out the tag before running the init script:
+
+    git fetch --all --tags
+    git checkout v0.1.1
+    ./docker/docker-init.sh
+
+The init script and compose stack then build the containers from that exact
+release snapshot.
+
+### Upgrading to a newer tagged release
+
+To move an existing installation to a newer release:
+
+    cd /path/to/mtgc
+    git fetch --all --tags
+    git checkout v0.1.2
+    cd docker
+    podman-compose build web db     # or: docker compose build web db
+    podman-compose up -d            # or: docker compose up -d
+
+All persistent data remains in the volumes and `${BASE_DIR}` directories; only
+the application code inside the containers is replaced.
+
+### Rolling back to a previous release
+
+To revert to an earlier tag, repeat the same process using the desired version:
+
+    git checkout v0.1.0
+    cd docker
+    podman-compose build web db
+    podman-compose up -d
+
+This restores the containers to the exact code state of that release while
+preserving database and configuration data.
+
+Pinned releases are entirely optional; users who follow the default `master`
+flow do not need to apply any of these steps unless they want a reproducible,
+version-locked deployment.
