@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.4
-Date:        01/12/25
+Version:     2.7
+Date:        04/12/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
 Notes:       {none}
@@ -17,6 +17,8 @@ History:
     2.2 25/11/25 Standard tidy-up
     2.3 27/11/25 Add email validation to newUser
     2.4 01/12/25 Token-based password reset flow
+    2.6 04/12/25 Enforce complexity and difference checks for token resets
+    2.7 04/12/25 Notify user on password change
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -114,11 +116,23 @@ class PasswordCheck
             return false;
         endif;
 
+        if (!function_exists('validPass') || !validPass($newPassword)) :
+            $this->message->logMessage('[ERROR]', "Reset password does not meet complexity requirements for $email");
+            return false;
+        endif;
+
+        $currentPasswordHash = $this->getCurrentPasswordHash($email);
+        if (!empty($currentPasswordHash) && password_verify($newPassword, $currentPasswordHash)) :
+            $this->message->logMessage('[ERROR]', "Reset password matches existing password for $email");
+            return false;
+        endif;
+
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         if (!$this->updateUserPassword($email, $hashedPassword, true)) :
             $this->message->logMessage('[ERROR]', "Failed to update password for $email");
             return false;
         endif;
+        $this->sendPasswordChangeNotification($email);
 
         $this->clearResetRecord($email);
         $this->clearExpiredResetTokens();
@@ -318,6 +332,61 @@ class PasswordCheck
         $result = $stmt->execute();
         $stmt->close();
         return $result;
+    }
+
+    /**
+     * Notify user their password has changed (best-effort).
+     */
+    public function sendPasswordChangeNotification($email)
+    {
+        global $emailEnabled, $siteTitle, $serverEmail, $smtpParameters;
+        if (!$emailEnabled) :
+            $this->message->logMessage('[NOTICE]', "Password change notification suppressed; email disabled for $email");
+            return false;
+        endif;
+        if (!class_exists('MyPHPMailer')) :
+            $this->message->logMessage('[ERROR]', "MyPHPMailer class not available for password change notice");
+            return false;
+        endif;
+
+        $subject = "$siteTitle password changed";
+        $plain = "Your password on $siteTitle was changed. If this was not you, please reset your password immediately.";
+        $html = "<p>Your password on $siteTitle was changed.</p>"
+              . "<p>If this was not you, please reset your password immediately.</p>";
+
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
+            $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");
+            return true;
+        endif;
+        $this->message->logMessage('[ERROR]', "Password change notification failed to send to $email");
+        return false;
+    }
+
+    /**
+     * Fetch current password hash for a user.
+     */
+    protected function getCurrentPasswordHash($email)
+    {
+        $query = "SELECT password FROM users WHERE email = ? LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        if ($stmt === false) :
+            return null;
+        endif;
+        $stmt->bind_param("s", $email);
+        if (!$stmt->execute()) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->store_result();
+        if ($stmt->num_rows !== 1) :
+            $stmt->close();
+            return null;
+        endif;
+        $stmt->bind_result($hash);
+        $stmt->fetch();
+        $stmt->close();
+        return $hash;
     }
 
     /**

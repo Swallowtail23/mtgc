@@ -75,6 +75,16 @@ class PasswordCheckStub extends PasswordCheckReal
         return true;
     }
 
+    protected function getCurrentPasswordHash($email)
+    {
+        return $this->users[$email]['password'] ?? null;
+    }
+
+    public function sendPasswordChangeNotification($email)
+    {
+        return true;
+    }
+
     protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
     {
         $this->sentLinks[] = ['email' => $email, 'link' => $link];
@@ -132,11 +142,11 @@ class PasswordResetTest extends TestCase
             'expires_at' => date('Y-m-d H:i:s', time() + 3600),
         ];
 
-        $result = $this->checker->completeReset('user@example.test', 'token123', 'newpass');
+        $result = $this->checker->completeReset('user@example.test', 'token123', 'Newpass1');
 
         $this->assertTrue($result);
         $this->assertArrayNotHasKey('user@example.test', $this->checker->tokens);
-        $this->assertTrue(password_verify('newpass', $this->checker->users['user@example.test']['password']));
+        $this->assertTrue(password_verify('Newpass1', $this->checker->users['user@example.test']['password']));
     }
 
     public function testCompleteResetFailsWhenExpired()
@@ -148,7 +158,7 @@ class PasswordResetTest extends TestCase
             'expires_at' => date('Y-m-d H:i:s', time() - 10),
         ];
 
-        $result = $this->checker->completeReset('user@example.test', 'token123', 'newpass');
+        $result = $this->checker->completeReset('user@example.test', 'token123', 'Newpass1');
 
         $this->assertFalse($result);
     }
@@ -215,7 +225,7 @@ class PasswordResetTest extends TestCase
             'expires_at' => date('Y-m-d H:i:s', time() + 3600),
         ];
 
-        $result = $this->checker->completeReset('user@example.test', 'wrongtoken', 'newpass');
+        $result = $this->checker->completeReset('user@example.test', 'wrongtoken', 'Newpass1');
 
         $this->assertFalse($result);
         $this->assertArrayHasKey('user@example.test', $this->checker->tokens);

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.4
-Date:        01/12/25
+Version:     13.5
+Date:        04/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -33,6 +33,7 @@ History:
     13.2 25/11/25 Standard tidy-up
     13.3 29/11/25 Update forcePasswordChange reference in notes
     13.4 01/12/25 Respect email disabled setting on collection actions
+    13.5 04/12/25 Require 2FA for password changes and email notifications on change
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -319,6 +320,9 @@ endif;
         ) :
             $msg->logMessage('[DEBUG]', "SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
+            $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+            $userHas2fa = $tfaManager->isEnabled($userId);
+            $userTwofaMethod = $userHas2fa ? $tfaManager->getMethod($userId) : '';
         else :
             trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
         endif;  ?>
@@ -344,7 +348,30 @@ endif;
                             $msg->logMessage('[DEBUG]', "New passwords double type = match");
                             if (validPass($new_password)) :
                                 $msg->logMessage('[DEBUG]', "New password is a valid password");
-                                if ($new_password != $old_password) :
+                                $twofaVerified = ($userHas2fa !== true);
+                                if ($userHas2fa) :
+                                    $twofaCode = trim($_POST['twofa_code'] ?? '');
+                                    if ($userTwofaMethod === 'email' && $twofaCode === '') :
+                                        $tfaManager->startVerification($userId, $userEmail);
+                                        echo "<div class='alert-box error' id='pwdchange'>"
+                                             . "<span>error: </span>"
+                                             . "Enter the verification code emailed to you to change your password."
+                                             . "</div>";
+                                    elseif ($twofaCode === '') :
+                                        echo "<div class='alert-box error' id='pwdchange'>"
+                                             . "<span>error: </span>"
+                                             . "Enter your two-factor code to change your password."
+                                             . "</div>";
+                                    elseif (!$tfaManager->verify($userId, $twofaCode)) :
+                                        echo "<div class='alert-box error' id='pwdchange'>"
+                                             . "<span>error: </span>"
+                                             . "Invalid two-factor code. Please try again."
+                                             . "</div>";
+                                    else :
+                                        $twofaVerified = true;
+                                    endif;
+                                endif;
+                                if ($twofaVerified && $new_password != $old_password) :
                                     $msg->logMessage('[DEBUG]', "New password is different to old password");
                                     if (password_verify($old_password, $db_password)) :
                                         $msg->logMessage('[DEBUG]', "Old password is correct");
@@ -379,8 +406,8 @@ endif;
                                                     . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                                 // Removing all trusted devices
-                                                (new TrustedDeviceManager($db, $logfile))
-                                                    ->removeAllUserDevices($userId);
+                                                    (new TrustedDeviceManager($db, $logfile))
+                                                        ->removeAllUserDevices($userId);
                                                 echo "<div class='alert-box success' id='pwdchange'>"
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
@@ -388,8 +415,9 @@ endif;
                                                 if (!class_exists('PasswordCheck')) :
                                                     require_once('classes/passwordcheck.class.php');
                                                 endif;
-                                                (new PasswordCheck($db, $logfile, $siteTitle))
-                                                    ->clearResetForEmail($userEmail);
+                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck->clearResetForEmail($userEmail);
+                                                $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;
                                                 session_destroy();
                                                 echo "<meta http-equiv='refresh' content='4;url=login.php'>";
@@ -821,6 +849,26 @@ endif;
                                             <span class="error2">*</span>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($userHas2fa)) : ?>
+                                    <tr>
+                                        <td>
+                                            <input
+                                                style="font-size: 16px;"
+                                                class="profilepassword textinput"
+                                                tabindex="4"
+                                                type="text"
+                                                name="twofa_code"
+                                                placeholder="<?php
+                                                    echo ($userTwofaMethod === 'app')
+                                                        ? 'AUTHENTICATOR OR BACKUP CODE'
+                                                        : 'EMAIL CODE';
+                                                ?>"
+                                                autocomplete="one-time-code"
+                                            >
+                                            <span class="error2">*</span>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </form>
