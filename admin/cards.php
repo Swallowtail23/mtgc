@@ -213,7 +213,7 @@ endif;
 <!DOCTYPE html>
 <head>
     <title><?php echo $siteTitle;?> - admin (cards)</title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="../manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver ?>.css">
@@ -254,8 +254,8 @@ require('../includes/menu.php');
                                 name='deleteimg'
                                 type="submit"
                                 value="DELETEIMG"
-                                onclick="return confirm('Do you really want to delete this card image?');">
-                                DEL IMAGE
+                                onclick="return confirm('Do you really want to refresh this card image?');">
+                                <span class='material-symbols-outlined' style='font-size: 16px; text-align: center';>refresh</span> IMAGE
                             </button>
                         </form>
                     <?php

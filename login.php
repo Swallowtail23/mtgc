@@ -114,7 +114,7 @@ endif;
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
     <title><?php echo htmlspecialchars($siteTitle);?></title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
     <?php include 'includes/googlefonts.php'; ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

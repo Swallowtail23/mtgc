@@ -481,7 +481,7 @@ class LoginHandler
         content='initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no'
     >
     <title><?php echo $safeTitle; ?> - login</title>
-    <link rel='manifest' href='manifest.json' />
+    <link rel='manifest' href='/manifest.json' />
     <link rel='stylesheet' type='text/css' href='css/style<?php echo $cssver; ?>.css'>
         <?php include 'includes/googlefonts.php'; ?>
 </head>

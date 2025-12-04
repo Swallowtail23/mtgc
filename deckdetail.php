@@ -75,7 +75,7 @@ $uniquecard_ref = [];
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
     <title><?php echo htmlspecialchars($siteTitle); ?> - deck detail</title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver); ?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php'); ?>
