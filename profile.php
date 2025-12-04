@@ -163,10 +163,17 @@ endif;
                     : "none";
             }
             function toggleQRBox() {
-                var infoBox = document.getElementById("qrBox");
-                infoBox.style.display = (qrBox.style.display === "none" || qrBox.style.display === "")
-                    ? "block"
-                    : "none";
+                var qrBox = document.getElementById("qrBox");
+                var currentlyHidden = (qrBox.style.display === "none" || qrBox.style.display === "");
+                if (currentlyHidden) {
+                    qrBox.style.display = "block";
+                } else {
+                    qrBox.style.display = "none";
+                    // After user dismisses the backup/QR box, reload so UI updates (e.g., password change section)
+                    setTimeout(function() {
+                        window.location.href = "profile.php";
+                    }, 200);
+                }
             }
 
             function copySecretKey() {
