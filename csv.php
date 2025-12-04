@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.2
-Date:        25/11/25
+Version:     4.3
+Date:        05/12/25
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -17,6 +17,7 @@ History:
     4.0 13/01/24 Added PHPMailer capability
     4.1 14/01/24 Documentation tweaks; move to logMessage function
     4.2 25/11/25 Standard tidy-up
+    4.3 05/12/25 Persist email export success/failure for profile notification
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -60,8 +61,10 @@ if (isset($_GET['table'])) :
             $msg->logMessage('[DEBUG]', 'Not in SMTP/site debug, redirecting back to profile.php');
             // If the mailexport was successful
             if ($mailexport === true) :
+                $_SESSION['csv_status'] = 'true';
                 header('Location: profile.php?csvsuccess=true');
             else :
+                $_SESSION['csv_status'] = 'false';
                 header('Location: profile.php?csvsuccess=false');
             endif;
             exit;
