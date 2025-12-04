@@ -442,9 +442,9 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     endif;
 
     // Email settings
-$previousEmailStatus = $iniArray['email']['Email'] ?? 'enabled';
-$updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
-$updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
+    $previousEmailStatus = $iniArray['email']['Email'] ?? 'enabled';
+    $updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
+    $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
     $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugIni);
     if ($smtpDebugChoice === 'enabled') :
         $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_SERVER';
@@ -519,10 +519,12 @@ $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['em
             $_SESSION['config_save_status'] = 'success';
             if ($previousEmailStatus === 'enabled' && $updatedIni['email']['Email'] === 'disabled') :
                 $msg->logMessage('[NOTICE]', "Email disabled; clearing 2FA for all users");
-                if ($db->execute_query(
-                    "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL, "
-                    . "tfa_app_secret = NULL WHERE tfa_enabled = 1"
-                )) :
+                if (
+                    $db->execute_query(
+                        "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL, "
+                        . "tfa_app_secret = NULL WHERE tfa_enabled = 1"
+                    )
+                ) :
                     $cleared = $db->affected_rows;
                     $_SESSION['config_save_message'] .= " 2FA disabled for $cleared users.";
                 else :

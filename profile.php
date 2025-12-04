@@ -747,6 +747,24 @@ endif;
                         $disabled = $tfaManager->disable($userId);
                         if ($disabled) :
                             $tfa_enabled = false;
+                            echo "<script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var codeInputs = document.querySelectorAll(
+                                        'input[name=\"twofa_code\"], input[name=\"twofa_code_disable\"]'
+                                    );
+                                    codeInputs.forEach(function(inp) {
+                                        inp.style.display = 'none';
+                                        var star = inp.parentElement.querySelector('.error2');
+                                        if (star) {
+                                            star.style.display = 'none';
+                                        }
+                                    });
+                                    var sendButtons = document.querySelectorAll(
+                                        'button[name=\"send_twofa_code\"], button[name=\"send_disable_twofa_code\"]'
+                                    );
+                                    sendButtons.forEach(function(btn) { btn.style.display = 'none'; });
+                                });
+                            </script>";
                             echo "<div class='alert-box success' id='tfa_message'><span>success: </span>"
                                 . "Two-factor authentication disabled successfully.</div>";
                         else :
@@ -1175,7 +1193,7 @@ endif;
                                                     value="DISABLE"
                                                     onclick="
                                                         return confirm(
-                    'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
+                    'Disabling two-factor authentication will make your account less secure - are you sure?'
                                                         );
                                                     "
                                                 />
@@ -1236,7 +1254,9 @@ endif;
                                                 style="width: 85px;"
                                             >
                                                 <option value="disabled" selected>Disabled</option>
-                                                <option value="email" <?php if (!$emailEnabled) : ?>disabled<?php endif; ?>>
+                                                <option value="email" <?php if (!$emailEnabled) :
+                                                    ?>disabled<?php
+                                                                      endif; ?>>
                                                     Email
                                                 </option>
                                                 <option value="app">App</option>

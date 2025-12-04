@@ -341,7 +341,10 @@ class PasswordCheck
     {
         global $emailEnabled, $siteTitle, $serverEmail, $smtpParameters;
         if (!$emailEnabled) :
-            $this->message->logMessage('[NOTICE]', "Password change notification suppressed; email disabled for $email");
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Password change notification suppressed; email disabled for $email"
+            );
             return false;
         endif;
         if (!class_exists('MyPHPMailer')) :
@@ -350,7 +353,8 @@ class PasswordCheck
         endif;
 
         $subject = "$siteTitle password changed";
-        $plain = "Your password on $siteTitle was changed. If this was not you, please reset your password immediately.";
+        $plain = "Your password on $siteTitle was changed. "
+                  . "If this was not you, please reset your password immediately.";
         $html = "<p>Your password on $siteTitle was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 

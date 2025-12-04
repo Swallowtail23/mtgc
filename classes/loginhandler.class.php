@@ -397,7 +397,7 @@ class LoginHandler
                 : 'You are logged in';
             $_SESSION['admin'] = ($userStatusResult['admin'] == 1);
         endif;
-            ?>
+        ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -416,20 +416,23 @@ class LoginHandler
 </html>
             <?php
 
-        if (isset($mtceStatus) && $mtceStatus == 1) :
-            $this->message->logMessage('[DEBUG]', "Mtce mode on; $email being redirected to login.php");
-            session_destroy();
-            echo "<meta http-equiv='refresh' content='2;url=login.php'>";
-            $this->terminate();
-        elseif (isset($_SESSION['chgpwd']) && $_SESSION['chgpwd'] === true) :
-            $this->message->logMessage('[DEBUG]', "User $email being redirected to profile.php for password change");
-            echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
-            $this->terminate();
-        endif;
+            if (isset($mtceStatus) && $mtceStatus == 1) :
+                $this->message->logMessage('[DEBUG]', "Mtce mode on; $email being redirected to login.php");
+                session_destroy();
+                echo "<meta http-equiv='refresh' content='2;url=login.php'>";
+                $this->terminate();
+            elseif (isset($_SESSION['chgpwd']) && $_SESSION['chgpwd'] === true) :
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "User $email being redirected to profile.php for password change"
+                );
+                echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
+                $this->terminate();
+            endif;
 
-        $this->message->logMessage('[DEBUG]', 'Showing trust device prompt');
-        header('Location: trust_device.php?redirect_to=' . urlencode($redirectUrl ?? 'index.php'));
-        $this->terminate();
+            $this->message->logMessage('[DEBUG]', 'Showing trust device prompt');
+            header('Location: trust_device.php?redirect_to=' . urlencode($redirectUrl ?? 'index.php'));
+            $this->terminate();
     }
 
     public function isLoggedIn()

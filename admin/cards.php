@@ -255,7 +255,12 @@ require('../includes/menu.php');
                                 type="submit"
                                 value="DELETEIMG"
                                 onclick="return confirm('Do you really want to refresh this card image?');">
-                                <span class='material-symbols-outlined' style='font-size: 16px; text-align: center';>refresh</span> IMAGE
+                                <span 
+                                    class='material-symbols-outlined' 
+                                    style='font-size: 16px; text-align: center';
+                                >
+                                refresh
+                                </span> IMAGE
                             </button>
                         </form>
                     <?php
