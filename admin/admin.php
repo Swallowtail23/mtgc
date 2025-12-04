@@ -47,17 +47,42 @@ $msg = new Message($logfile);
 /**
  * Determine current version from git tags or commit hash.
  */
-function getGitVersion($fallback = 'v0.1.0')
+function getGitVersion($fallback = 'dev')
 {
-    $tag = trim((string) shell_exec('cd ' . escapeshellarg(__DIR__ . '/..') . ' && git describe --tags --abbrev=0 2>/dev/null'));
+    global $msg;
+    // Prefer env (for containers)
+    $envVersion = getenv('MTGC_VERSION');
+    if ($envVersion !== false && $envVersion !== '') :
+        $msg->logMessage('[DEBUG]', "Version (env): '$envVersion'");
+        return $envVersion;
+    endif;
+
+    // Then VERSION file (bare-metal or container with file baked in)
+    $versionFile = __DIR__ . '/../VERSION';
+    if (is_readable($versionFile)) :
+        $version = trim((string) file_get_contents($versionFile));
+        if ($version !== '') :
+            $msg->logMessage('[DEBUG]', "Version (VERSION): '$version'");
+            return $version;
+        endif;
+    endif;
+
+    // Last resort: git, if available
+    $repoDir = __DIR__ . '/..';
+    $cdCmd = 'cd ' . escapeshellarg($repoDir) . ' && ';
+
+    $tag = trim((string) shell_exec($cdCmd . 'git describe --tags --exact-match 2>/dev/null'));
     if ($tag !== '') :
+        $msg->logMessage('[DEBUG]', "Version (git tag exact): '$tag'");
         return $tag;
     endif;
 
-    $commit = trim((string) shell_exec('cd ' . escapeshellarg(__DIR__ . '/..') . ' && git rev-parse --short HEAD 2>/dev/null'));
-    if ($commit !== '') :
-        return 'commit ' . $commit;
+    $describe = trim((string) shell_exec($cdCmd . 'git describe --tags --always 2>/dev/null'));
+    if ($describe !== '') :
+        $msg->logMessage('[DEBUG]', "Version (git tag): '$describe'");
+        return $describe;
     endif;
+    $msg->logMessage('[DEBUG]', "Falling back to '$fallback'");
 
     return $fallback;
 }
