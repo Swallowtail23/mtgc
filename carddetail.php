@@ -79,7 +79,7 @@ else :
     $deckqty = filter_input(INPUT_GET, 'deckqty', FILTER_SANITIZE_NUMBER_INT);
 endif;
 
-$refreshimage = isset($_GET['refreshimage']) ? 'REFRESH' : '';
+$refreshimage = '';
 ?>
 
 <!DOCTYPE html>
@@ -1264,54 +1264,6 @@ require('includes/menu.php'); //mobile menu
                                         });
                                     };
                                 </script> <?php
-                                //else just show control to refresh the image(s) for the card
-                            else : ?>
-                                <tr>
-                                    <td colspan='4'>
-                                        <form
-                                            id="imgreplace"
-                                            action="?"
-                                            method="GET"
-                                            enctype="multipart/form-data"
-                                        >
-                                            <input
-                                                type='hidden'
-                                                name='setabbrv'
-                                                value="<?php echo $row['cs_setcode']; ?>"
-                                            >
-                                            <input type='hidden' name='id' value="<?php echo $row[0]; ?>">
-                                            <input type='hidden' name='number' value="<?php echo $row['number']; ?>">
-                                            <table>
-                                                <tr>
-                                                    <td class="imgreplace">
-                                                        <button
-                                                            class='importlabel'
-                                                            style="cursor: pointer;"
-                                                            id='refreshsubmit'
-                                                            type='submit'
-                                                            name='refreshimage'
-                                                            value='REFRESH'
-                                                        >
-                                                            <span
-                                                                title="Refresh image"
-                                                                onmouseover=""
-                                                                style="
-                                                                    cursor: pointer;
-                                                                    display:block;
-                                                                    text-align:center;
-                                                                    margin:0 auto;
-                                                                "
-                                                                class='material-symbols-outlined'>
-                                                                refresh
-                                                            </span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </form>
-                                    </td>
-                                </tr>
-                                    <?php
                             endif;
                             ?>
                         </table>
