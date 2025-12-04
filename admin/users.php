@@ -306,6 +306,23 @@ require('../includes/menu.php');
                                 $resetResults[$sql_id] = false;
                                 $msg->logMessage('[DEBUG]', "Email disabled; cannot send reset link to $sql_name");
                     endif;
+                elseif (($updatearray[0]['actions'][$i]) == 'disable2fa') :
+                    $msg->logMessage('[DEBUG]', "Disabling 2FA for $sql_name ($sql_id)");
+                    $disable2fa = $db->execute_query(
+                        "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL, "
+                        . "tfa_app_secret = NULL, status = 'chgpwd' WHERE usernumber = ?",
+                        [$sql_id]
+                    );
+                    if ($disable2fa) :
+                        echo "<div class='alert-box notice'><span>notice: </span>2FA disabled for $sql_name. "
+                             . "Password change required on next login.</div>";
+                        $msg->logMessage('[NOTICE]', "2FA disabled for $sql_name ($sql_id)");
+                        $resetResults[$sql_id] = '2fa_disabled';
+                    else :
+                        echo "<div class='alert-box error'><span>error: </span>Failed to disable 2FA for "
+                             . "$sql_name.</div>";
+                        $msg->logMessage('[ERROR]', "Disable 2FA failed for $sql_name ($sql_id)");
+                    endif;
                 else :
                     $msg->logMessage('[DEBUG]', "No complex action selected for $sql_name ($sql_id)");
                 endif;
@@ -367,8 +384,9 @@ require('../includes/menu.php');
             Note, default currency is set in ini file ([fx], TargetCurrency)
             <?php
             $allusertable = $db->execute_query(
-                "SELECT username, usernumber, email, badlogins, reg_date, lastlogin_date, status, admin, currency
-                 FROM users"
+                "SELECT username, usernumber, email, badlogins, reg_date, lastlogin_date, status, admin, currency, "
+                . "tfa_enabled, tfa_method "
+                . "FROM users"
             );
             ?>
             <form name="updateusers" action="users.php" method="post">
@@ -383,6 +401,7 @@ require('../includes/menu.php');
                         <th style="padding: 5px;">Bad logins</th>
                         <th style="padding: 5px;">Local FX</th>
                         <th style="padding: 5px;">Admin</th>
+                        <th style="padding: 5px;">2FA</th>
                         <?php if ($updateusers === 'yes') : ?>
                         <th style="padding: 5px;"></th>
                         <?php endif; ?>
@@ -465,6 +484,17 @@ require('../includes/menu.php');
                                                      endif; ?> >No</option>
                                 </select>
                             </td>
+                            <td style="padding: 5px;">
+                                <?php
+                                if ((int)$alluserresults['tfa_enabled'] !== 1) :
+                                    echo "Off";
+                                elseif ($alluserresults['tfa_method'] === 'app') :
+                                    echo "App";
+                                else :
+                                    echo "Email";
+                                endif;
+                                ?>
+                            </td>
 
                             <?php if ($updateusers === 'yes') : ?>
                             <td style="padding: 5px;">
@@ -492,7 +522,9 @@ require('../includes/menu.php');
                                         === (string)${'sqladm' . $alluserresults['usernumber']});
                                 $resetSuccess = isset($resetResults[$aur_usernumber])
                                     && $resetResults[$aur_usernumber] === true;
-                                if ($updatesMatched || $resetSuccess) : ?>
+                                $twofaDisabled = isset($resetResults[$aur_usernumber])
+                                    && $resetResults[$aur_usernumber] === '2fa_disabled';
+                                if ($updatesMatched || $resetSuccess || $twofaDisabled) : ?>
                                     <img src='/images/success.png' alt='Success'>
                                 <?php else : ?>
                                     <img src='/images/error.png' alt='Failure'>
@@ -511,6 +543,7 @@ require('../includes/menu.php');
                                         endif;
                                         ?>
                                     >Send reset link</option>
+                                    <option value="disable2fa">Disable 2FA</option>
                                 </select>
                             </td>
                         </tr>

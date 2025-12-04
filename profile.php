@@ -330,6 +330,7 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <?php
+                $disableTwofaNotice = '';
                 if (
                     isset($_POST['send_twofa_code'])
                     && !empty($userHas2fa)
@@ -340,6 +341,15 @@ endif;
                          . "<span>notice: </span>"
                          . "Verification code sent to your email."
                          . "</div>";
+                endif;
+                if (
+                    isset($_POST['send_disable_twofa_code'])
+                    && !empty($tfa_enabled)
+                    && $tfaManager->getMethod($userId) === 'email'
+                ) :
+                    $tfaManager->startVerification($userId, $userEmail);
+                    $disableTwofaNotice = "<div class='alert-box notice' id='tfa_message'><span>notice: </span>"
+                        . "Verification code sent to your email to disable two-factor authentication.</div>";
                 endif;
 
                 //Page PHP processing
@@ -671,6 +681,7 @@ endif;
                                         <br>
                                         <form method='post' action='profile.php' onsubmit='return'>
                                             <input type='hidden' name='disable_2fa' value='1'>
+                                            <input type='hidden' name='setup_cancel' value='1'>
                                             <button type='submit' class='ok-button profilebutton'>CANCEL</button>
                                         </form>
                                     `;
@@ -705,14 +716,36 @@ endif;
                             . "Failed to enable two-factor authentication.</div>";
                     endif;
                 elseif (isset($_POST['disable_2fa'])) :
-                    $disabled = $tfaManager->disable($userId);
-                    if ($disabled) :
-                        $tfa_enabled = false;
-                        echo "<div class='alert-box success' id='tfa_message'><span>success: </span>"
-                            . "Two-factor authentication disabled successfully.</div>";
-                    else :
+                    $setupCancel = isset($_POST['setup_cancel']) && $_POST['setup_cancel'] === '1';
+                    $twofaDisableCode = trim($_POST['twofa_code_disable'] ?? '');
+                    $tfa_method = $tfaManager->getMethod($userId);
+                    $verifiedForDisable = false;
+                    if ($setupCancel || isset($_POST['cancel_disable_2fa'])) :
+                        $verifiedForDisable = true; // allow immediate rollback of in-progress setup
+                    elseif ($tfa_method === 'email' && $twofaDisableCode === '') :
+                        $tfaManager->startVerification($userId, $userEmail);
+                        $disableTwofaNotice = "<div class='alert-box notice' id='tfa_message'><span>notice: </span>"
+                            . "Enter the verification code emailed to you to disable two-factor authentication.</div>";
+                    elseif ($twofaDisableCode === '') :
                         echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
-                            . "Failed to disable two-factor authentication.</div>";
+                            . "Enter your authenticator or backup code to disable two-factor authentication.</div>";
+                    elseif (!$tfaManager->verify($userId, $twofaDisableCode)) :
+                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
+                            . "Invalid two-factor code. Please try again.</div>";
+                    else :
+                        $verifiedForDisable = true;
+                    endif;
+
+                    if ($verifiedForDisable) :
+                        $disabled = $tfaManager->disable($userId);
+                        if ($disabled) :
+                            $tfa_enabled = false;
+                            echo "<div class='alert-box success' id='tfa_message'><span>success: </span>"
+                                . "Two-factor authentication disabled successfully.</div>";
+                        else :
+                            echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
+                                . "Failed to disable two-factor authentication.</div>";
+                        endif;
                     endif;
                 elseif (isset($_POST['regenerate_backup_codes'])) :
                     $new_codes = $tfaManager->regenerateBackupCodes($userId);
@@ -872,8 +905,8 @@ endif;
                                                 name="twofa_code"
                                                 placeholder="<?php
                                                     echo ($userTwofaMethod === 'app')
-                                                        ? 'AUTHENTICATOR OR BACKUP CODE'
-                                                        : 'EMAIL CODE';
+                                                        ? 'APP OR BACKUP CODE'
+                                                        : 'EMAIL OR BACKUP CODE';
                                                 ?>"
                                                 autocomplete="one-time-code"
                                             >
@@ -887,7 +920,7 @@ endif;
                                                 name="send_twofa_code"
                                                 value="send"
                                             >
-                                                SEND CODE
+                                                SEND
                                             </button>
                                         </td>
                                         <?php endif; ?>
@@ -1123,19 +1156,55 @@ endif;
                                 <td class="options_right"><?php
                                     // Show 2FA status and options
                                 if ($tfa_enabled) : ?>
-                                        <form action="profile.php" method="post">
-                                            <input
-                                                type="submit"
-                                                name="disable_2fa"
-                                                class="profilebutton"
-                                                value="DISABLE"
-                                                onclick="
-                                                    return confirm(
-            'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
-                                                    );
-                                                "
-                                            />
-                                        </form>
+                                        <?php if (!empty($disableTwofaNotice)) :
+                                            echo $disableTwofaNotice;
+                                        endif; ?>
+                                        <?php if (!isset($_POST['disable_2fa'])) : ?>
+                                            <form action="profile.php" method="post">
+                                                <input
+                                                    type="submit"
+                                                    name="disable_2fa"
+                                                    class="profilebutton"
+                                                    value="DISABLE"
+                                                    onclick="
+                                                        return confirm(
+                    'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
+                                                        );
+                                                    "
+                                                />
+                                            </form>
+                                        <?php else : ?>
+                                            <form action="profile.php" method="post" style="margin-top: 8px;">
+                                                <input
+                                                    style="font-size: 16px; width: 150px; margin-bottom: 6px;"
+                                                    class="profilepassword textinput"
+                                                    type="text"
+                                                    name="twofa_code_disable"
+                                                    placeholder="<?php
+                                                        echo ($tfaManager->getMethod($userId) === 'app')
+                                                            ? 'APP / BACKUP CODE'
+                                                            : 'EMAIL / BACKUP CODE';
+                                                    ?>"
+                                                    autocomplete="one-time-code"
+                                                ><br>
+                                                <button
+                                                    class="profilebutton"
+                                                    type="submit"
+                                                    name="disable_2fa"
+                                                    value="1"
+                                                >
+                                                    CONFIRM
+                                                </button>
+                                                <button
+                                                    class="profilebutton"
+                                                    type="submit"
+                                                    name="cancel_disable_2fa"
+                                                    value="1"
+                                                >
+                                                    CANCEL
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     <br>
                                         <form action="profile.php" method="post">
                                             <input
@@ -1160,8 +1229,10 @@ endif;
                                                 style="width: 85px;"
                                             >
                                                 <option value="disabled" selected>Disabled</option>
-                                                <option value="email">Enable: Email</option>
-                                                <option value="app">Enable: App</option>
+                                                <option value="email" <?php if (!$emailEnabled) : ?>disabled<?php endif; ?>>
+                                                    Email
+                                                </option>
+                                                <option value="app">App</option>
                                             </select>
                                             <input type="hidden" name="enable_2fa" value="1">
                                         </form><?php

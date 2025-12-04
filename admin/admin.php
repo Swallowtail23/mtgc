@@ -442,8 +442,9 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     endif;
 
     // Email settings
-    $updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
-    $updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
+$previousEmailStatus = $iniArray['email']['Email'] ?? 'enabled';
+$updatedIni['email']['ServerEmail'] = getPostedValue('email_server', $iniArray['email']['ServerEmail']);
+$updatedIni['email']['AdminEmail'] = getPostedValue('email_admin', $iniArray['email']['AdminEmail']);
     $smtpDebugChoice = getPostedValue('email_smtp_debug', $smtpDebugIni);
     if ($smtpDebugChoice === 'enabled') :
         $updatedIni['email']['SMTPDebug'] = 'SMTP::DEBUG_SERVER';
@@ -515,6 +516,20 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         if ($iniSaveResult === true) :
             $msg->logMessage('[NOTICE]', "Configuration updated by $userName");
             $_SESSION['config_save_message'] = 'Configuration saved.';
+            $_SESSION['config_save_status'] = 'success';
+            if ($previousEmailStatus === 'enabled' && $updatedIni['email']['Email'] === 'disabled') :
+                $msg->logMessage('[NOTICE]', "Email disabled; clearing 2FA for all users");
+                if ($db->execute_query(
+                    "UPDATE users SET tfa_enabled = 0, tfa_method = NULL, tfa_backup_codes = NULL, "
+                    . "tfa_app_secret = NULL WHERE tfa_enabled = 1"
+                )) :
+                    $cleared = $db->affected_rows;
+                    $_SESSION['config_save_message'] .= " 2FA disabled for $cleared users.";
+                else :
+                    $msg->logMessage('[ERROR]', "Failed to clear 2FA when disabling email: " . $db->error);
+                    $_SESSION['config_save_message'] .= " (2FA clear failed; check logs.)";
+                endif;
+            endif;
             $_SESSION['config_save_status'] = 'success';
             header('Location: admin.php');
             exit();
