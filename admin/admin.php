@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.3
+Version:     5.4
 Date:        04/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -29,6 +29,7 @@ History:
     5.1 04/12/25 Add email settings test
     5.2 04/12/25 Add Scryfall JSON wipe success message
     5.3 04/12/25 Display current application version
+    5.4 04/12/25 Trim SMTP HELO value whitespace
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -1327,12 +1328,9 @@ require('../includes/menu.php');
                                                     name="email_helo"
                                                     <?php echo $configInputStyle;?>
                                                     title="Hostname sent in SMTP HELO/EHLO"
-                                                    value="
-                                                    <?php
-                                                    echo htmlspecialchars(
+                                                    value="<?php echo htmlspecialchars(
                                                         $smtpParameters['SMTPHelo'] ?? gethostname()
-                                                    );
-                                                    ?>"
+                                                    ); ?>"
                                                     <?php if (!$emailEnabled) :
                                                         echo 'disabled';
                                                     endif;?>
