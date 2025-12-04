@@ -28,6 +28,8 @@ $msoIcons = [
     'help',
     'logout',
     'menu',
+    'navigate_before',
+    'navigate_next',
     'refresh',
     'save',
     'search',
