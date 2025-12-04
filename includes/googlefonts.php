@@ -22,6 +22,8 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 
 $msoIcons = [
+    'book_2',
+    'book_5',
     'close',
     'help',
     'logout',
@@ -30,13 +32,11 @@ $msoIcons = [
     'save',
     'search',
     'skip_next',
-    'skip_previous',
-    'book_5',
-    'book_2',
+    'skip_previous'
 ];
 $msoIconParam = urlencode(implode(',', $msoIcons));
 $msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-    . "&icon_names={$msoIconParam}";
+    . "&icon_names={$msoIconParam}&display=block";
 $rcFontParameters  = "css?family=Roboto+Condensed:300,300italic%7CRoboto:400,300,300italic,500";
 
 echo "<link href='https://fonts.googleapis.com/{$rcFontParameters}' rel='stylesheet' type='text/css'>\n";
