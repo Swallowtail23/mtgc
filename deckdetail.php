@@ -685,8 +685,8 @@ if (isset($_POST['import'])) :
         fclose($file);
 
         // Call the processInput method with the decknumber and file content
-        $deckManager->processInput($deckNumber, $fileContent);
-        $redirect = true;
+        $cardtoadd = $deckManager->processInput($deckNumber, $fileContent);
+        $redirect = ($cardtoadd === 'multierror') ? false : true;
     else :
         $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} failed");
     endif;
@@ -1103,7 +1103,8 @@ endwhile;
 // Next the main DIV section ?>
 <?php
 if (isset($cardtoadd) and ($cardtoadd == 'cardnotfound' or $cardtoadd == 'cardnotadded')) : ?>
-    <div class="msg-new error-new" onclick='closeMe(this)'><span>That didn't work... check card name</span>
+    <div class="msg-new error-new" onclick='closeMe(this)'>
+        <span>That didn't work... check card name</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>

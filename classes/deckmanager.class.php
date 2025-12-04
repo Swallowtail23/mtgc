@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.5
-Date:        28/11/25
+Version:     4.6
+Date:        04/12/25
 Name:        deckmanager.class.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -25,6 +25,7 @@ History:
     4.3 25/11/25 Standard tidy-up
     4.4 25/11/25 Rename PHPMailer wrapper to PascalCase
     4.5 28/11/25 Rename inputInterpreter call
+    4.6 04/12/25 Return multi-line quickadd errors to caller
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -146,9 +147,10 @@ class DeckManager
             $this->addDeckCardsBatch($deckNumber, $this->batchedCardIds);
             // Clear array after batch insert
             $this->batchedCardIds = [];
-            if (isset($quickAddResult) && $quickAddResult === 'multierror') :
-                return $quickAddResult;
-            endif;
+        endif;
+
+        if (isset($quickAddResult)) :
+            return $quickAddResult;
         endif;
     }
 

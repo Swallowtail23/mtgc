@@ -22,21 +22,33 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 
 $msoIcons = [
+    'add',
+    'arrow_downward',
+    'arrow_upward',
     'book_2',
     'book_5',
     'close',
+    'content_copy',
+    'delete',
+    'delete_forever',
     'done',
+    'edit',
+    'frame_reload',
     'help',
     'image',
     'logout',
     'menu',
     'navigate_before',
     'navigate_next',
+    'north_west',
+    'person',
     'refresh',
+    'remove',
     'save',
     'search',
     'skip_next',
-    'skip_previous'
+    'skip_previous',
+    'south_east'
 ];
 $msoIconParam = urlencode(implode(',', $msoIcons));
 $msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
