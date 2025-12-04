@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.2
+Version:     5.3
 Date:        04/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -28,6 +28,7 @@ History:
     5.0 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
     5.1 04/12/25 Add email settings test
     5.2 04/12/25 Add Scryfall JSON wipe success message
+    5.3 04/12/25 Display current application version
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -41,6 +42,26 @@ require('../includes/functions.php');       //Includes basic functions for non-s
 require('../includes/secpagesetup.php');    //Setup page variables
 forcePasswordChange();                      //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+
+/**
+ * Determine current version from git tags or commit hash.
+ */
+function getGitVersion($fallback = 'v0.1.0')
+{
+    $tag = trim((string) shell_exec('cd ' . escapeshellarg(__DIR__ . '/..') . ' && git describe --tags --abbrev=0 2>/dev/null'));
+    if ($tag !== '') :
+        return $tag;
+    endif;
+
+    $commit = trim((string) shell_exec('cd ' . escapeshellarg(__DIR__ . '/..') . ' && git rev-parse --short HEAD 2>/dev/null'));
+    if ($commit !== '') :
+        return 'commit ' . $commit;
+    endif;
+
+    return $fallback;
+}
+
+$currentVersion = getGitVersion();
 
 /**
  * Read the last N lines from a log file without loading it entirely.
@@ -852,6 +873,7 @@ require('../includes/menu.php');
             <?php unset($_SESSION['config_save_message']); ?>
             <?php unset($_SESSION['config_save_status']); ?>
         <?php endif; ?>
+        <p><strong>Current version:</strong> <?php echo htmlspecialchars($currentVersion); ?></p>
         <div>
             <h3>Add Info update</h3>
             <form id='newinfoupdate' action="?" method="POST">
