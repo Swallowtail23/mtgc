@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.7
-Date:        04/12/25
+Version:     2.8
+Date:        05/12/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
 Notes:       {none}
@@ -19,6 +19,7 @@ History:
     2.4 01/12/25 Token-based password reset flow
     2.6 04/12/25 Enforce complexity and difference checks for token resets
     2.7 04/12/25 Notify user on password change
+    2.8 05/12/25 Reduce reset token TTL to 10 minutes
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -72,7 +73,7 @@ class PasswordCheck
         $this->clearExpiredResetTokens();
         $token = bin2hex(random_bytes(16));
         $tokenHash = password_hash($token, PASSWORD_DEFAULT);
-        $expires = date('Y-m-d H:i:s', time() + 3600);
+        $expires = date('Y-m-d H:i:s', time() + 600);
 
         if (!$this->persistResetToken($email, $tokenHash, $expires)) :
             $this->message->logMessage('[ERROR]', "Failed to persist reset token for $email");

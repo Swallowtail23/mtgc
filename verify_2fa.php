@@ -45,6 +45,8 @@ $user_id = (int) $_SESSION['user_pending_2fa'];
 $email = $_SESSION['useremail_pending_2fa'];
 $is_admin = $_SESSION['admin_pending_2fa'] ?? false;
 $pwd_change_required = $_SESSION['chgpwd_pending_2fa'] ?? false;
+$tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+$tfa_method = $tfaManager->getMethod($user_id);
 
 if (!isset($db) || !$db instanceof mysqli) :
     $msg->logMessage('[ERROR]', 'Database connection is invalid in verify_2fa.php');
@@ -70,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
     if (empty($code)) :
         $verification_error = 'Please enter a verification code';
     else :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         if ($tfaManager->verify($user_id, $code)) :
             $msg->logMessage('[NOTICE]', "2FA verification successful for user ID: $user_id ($email)");
 
@@ -114,9 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
 endif;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) :
-    $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
-    $tfaManager->startVerification($user_id, $email);
-    $msg->logMessage('[NOTICE]', "Verification code resent for user ID: $user_id ($email)");
+    if ($tfa_method === 'email') :
+        $tfaManager->startVerification($user_id, $email);
+        $msg->logMessage('[NOTICE]', "Verification code resent for user ID: $user_id ($email)");
+    endif;
 endif;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel'])) :
@@ -148,11 +150,15 @@ endif;
 <body id="loginbody" class="body">
     <?php include_once 'includes/analyticstracking.php'; ?>
     <div id="loginheader">
-        <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?> - Verification</h2>
+    <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?> - Verification</h2>
 
         <div style="text-align: center; margin-bottom: 20px;">
-            <p>A verification code has been sent to your email address.</p>
-            <p>Please enter the code to complete your login.</p>
+            <?php if ($tfa_method === 'app') : ?>
+                <p>Enter the code from your authenticator app or a backup code.</p>
+            <?php else : ?>
+                <p>A verification code has been sent to your email address.</p>
+                <p>Please enter the code to complete your login.</p>
+            <?php endif; ?>
         </div>
 
         <?php if ($verification_attempted && !empty($verification_error)) : ?>
@@ -161,7 +167,7 @@ endif;
             </div>
         <?php endif; ?>
 
-        <form action="verify_2fa.php" method="post">
+        <form id="verifyform" action="verify_2fa.php" method="post">
             <input
                 class='textinput loginfield'
                 type='text'
@@ -172,18 +178,15 @@ endif;
             />
             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             <br><br>
-            <input type="submit" name="verify" id="loginsubmit" value="VERIFY" />
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <input type="submit" name="verify" id="loginsubmit" value="VERIFY" />
+                <input type="submit" name="cancel" id="loginsubmit" value="CANCEL" />
+                <?php if ($tfa_method === 'email') : ?>
+                    <input type="submit" name="resend" id="loginsubmit" value="RESEND" form="verifyform" />
+                <?php endif; ?>
+            </div>
         </form>
 
-        <div style="display: flex; justify-content: center; margin-top: 20px;">
-            <form action="verify_2fa.php" method="post" style="margin-right: 10px;">
-                <input type="submit" name="resend" class="profilebutton" value="RESEND" />
-            </form>
-
-            <form action="verify_2fa.php" method="post">
-                <input type="submit" name="cancel" class="profilebutton" value="CANCEL" />
-            </form>
-        </div>
     </div>
 </body>
 </html>

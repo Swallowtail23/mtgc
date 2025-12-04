@@ -35,8 +35,12 @@ startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
+require 'classes/message.class.php';
+require 'classes/twofactormanager.class.php';
 
 $cssver = cssVersionCheck();
+$msg = new Message($logfile);
+$msg->logMessage('[DEBUG]', 'reset.php loaded');
 
 $pwReset = new PasswordCheck($db, $logfile, $siteTitle);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
@@ -92,6 +96,26 @@ endif;
 if (!$emailEnabledFlag) :
     $message = "Password reset is unavailable because email is disabled.";
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
+    if (isset($_POST['send_twofa_code'])) :
+        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $sent = false;
+        if (!empty($resetUserId) && $twofaRequired && $twofaMethod === 'email') :
+            $sent = $tfaManager->startVerification($resetUserId, $tokenEmail);
+            $msg->logMessage(
+                '[DEBUG]',
+                "2FA code send requested during reset for $tokenEmail, result: " . ($sent ? 'sent' : 'failed')
+            );
+        endif;
+        header('Content-Type: text/html');
+        if ($sent) :
+            echo "<div class='alert-box notice' style='margin:20px;'><span>notice: </span>"
+                . "Verification code sent to your email.</div>";
+        else :
+            echo "<div class='alert-box error' style='margin:20px;'><span>error: </span>"
+                . "Failed to send verification code.</div>";
+        endif;
+        exit();
+    endif;
     $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
     $token = $_POST['token'] ?? $token;
     $tokenEmail = $email;
@@ -123,6 +147,10 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
     else :
         $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $twofaCode = trim($_POST['twofa_code'] ?? '');
+        if (isset($_POST['send_twofa_code']) && $twofaRequired && $twofaMethod === 'email') :
+            $tfaManager->startVerification($resetUserId, $email);
+            $message = "Verification code sent to your email.";
+        endif;
         if ($twofaRequired) :
             if ($twofaMethod === 'email' && $twofaCode === '') :
                 $tfaManager->startVerification($resetUserId, $email);
@@ -166,17 +194,17 @@ endif;
 <div id="loginheader">
     <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
 
-<?php if ($message !== '') : ?>
+    <?php if ($message !== '') : ?>
     <div class="alert-box notice" style="margin: 20px;">
         <?php echo htmlspecialchars($message); ?>
     </div>
-    <?php if (!empty($redirectLogin)) : ?>
+        <?php if (!empty($redirectLogin)) : ?>
         <meta http-equiv='refresh' content='3;url=login.php'>
+        <?php endif; ?>
     <?php endif; ?>
-<?php endif; ?>
 
 <?php if ($emailEnabledFlag && empty($redirectLogin) && !empty($token) && !empty($tokenEmail)) : ?>
-    <form  action="?" method="POST" enctype="multipart/form-data">
+    <form  id="resetform" action="?" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="token" value="<?php echo htmlspecialchars($token);?>">
         <input type="hidden" name="email" value="<?php echo htmlspecialchars($tokenEmail);?>">
         <br>Set a new password:<br><br>
@@ -189,14 +217,24 @@ endif;
             required
         /><br>
         <?php if ($twofaRequired) : ?>
-            <input
-                class='textinput loginfield'
-                name='twofa_code'
-                type='text'
-                placeholder='<?php echo ($twofaMethod === "app") ? "AUTHENTICATOR OR BACKUP CODE" : "EMAIL CODE"; ?>'
+        <input
+            class='textinput loginfield'
+            name='twofa_code'
+            type='text'
+            placeholder='<?php echo ($twofaMethod === "app") ? "AUTHENTICATOR OR BACKUP CODE" : "EMAIL CODE"; ?>'
                 size='30'
                 autocomplete='one-time-code'
             ><br>
+        <?php endif;
+        if ($twofaRequired && $twofaMethod === 'email') : ?>
+            <button
+                class="sendreset"
+                type="button"
+                name="send_twofa_code"
+                value="send"
+                style="width: 90px;"
+                id="send_twofa_code_btn"
+            >SEND CODE</button>
         <?php endif; ?>
         <input class='sendreset' type="submit" value="SAVE"/>
         <button
@@ -219,6 +257,43 @@ endif;
         >CANCEL</button>
     </form>
 <?php endif; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sendBtn = document.getElementById('send_twofa_code_btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function() {
+            const form = document.getElementById('resetform');
+            const token = form.querySelector('input[name="token"]').value;
+            const email = form.querySelector('input[name="email"]').value;
+            const data = new URLSearchParams();
+            data.append('send_twofa_code', 'send');
+            data.append('token', token);
+            data.append('email', email);
+            fetch('reset.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: data.toString()
+            })
+            .then(r => r.text())
+            .then((html) => {
+                const container = document.createElement('div');
+                container.innerHTML = html;
+                const msgBox = container.querySelector('.alert-box.notice, .alert-box.error');
+                if (msgBox) {
+                    document.querySelector('#loginheader').insertAdjacentHTML('afterbegin', msgBox.outerHTML);
+                }
+            })
+            .catch(() => {
+                document.querySelector('#loginheader').insertAdjacentHTML(
+                    'afterbegin',
+                    "<div class='alert-box error' style='margin:20px;'><span>error: </span>"
+                    + "Unable to send verification code right now.</div>"
+                );
+            });
+        });
+    }
+});
+</script>
 <?php if (empty($redirectLogin)) : ?>
 </div>
 </div>

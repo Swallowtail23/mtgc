@@ -734,7 +734,7 @@ endif;
                         $disableTwofaNotice = "<div class='alert-box notice' id='tfa_message'><span>notice: </span>"
                             . "Enter the verification code emailed to you to disable two-factor authentication.</div>";
                     elseif ($twofaDisableCode === '') :
-                        echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
+                        echo "<div class='alert-box notice' id='tfa_message'><span>notice: </span>"
                             . "Enter your authenticator or backup code to disable two-factor authentication.</div>";
                     elseif (!$tfaManager->verify($userId, $twofaDisableCode)) :
                         echo "<div class='alert-box error' id='tfa_message'><span>error: </span>"
