@@ -940,7 +940,7 @@ endif;
                                    href="profile.php?remove_device=<?php echo $device['id']; ?>"
                                    onclick="return confirm('Are you sure you want to remove this device?');"
                                    class="profilebutton"
-                                   style="padding: 3px 8px; width: 56px; display: inline-block;"
+                                   style="padding: 0px 0px; display: inline-block;"
                                 >REMOVE</a>
                             </td>
                         </tr> <?php
@@ -955,7 +955,7 @@ endif;
                                    onclick="return confirm('Are you sure you want to remove ALL trusted devices? '
                                         + 'You will need to log in again on all devices.');"
                                    class="profilebutton"
-                                   style="padding: 3px 8px; width: 56px; display: inline-block;">CLEAR
+                                   style="padding: 0px 0px; display: inline-block;">CLEAR
                                 </a>
                                 </p>
                             </td>
@@ -1091,7 +1091,7 @@ endif;
                                     $tfa_method = $tfaManager->getMethod($userId);?>
                     Two-factor authentication is currently <strong>enabled</strong> using
                     <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
-                                        <br>Click "NEW CODES" to generate new backup codes.<?php
+                                        <br>Click "CODES" to generate new backup codes.<?php
                                 else : ?>
                                         Require a verification code when you log in<?php
                                 endif; ?>
@@ -1104,7 +1104,7 @@ endif;
                                                 type="submit"
                                                 name="disable_2fa"
                                                 class="profilebutton"
-                                                value="DISABLE 2FA"
+                                                value="DISABLE"
                                                 onclick="
                                                     return confirm(
             'Are you sure you want to disable two-factor authentication? This will make your account less secure.'
@@ -1118,7 +1118,7 @@ endif;
                                                 type="submit"
                                                 name="regenerate_backup_codes"
                                                 class="profilebutton"
-                                                value="NEW CODES"
+                                                value="CODES"
                                                 onclick="
                                                     return confirm(
             'Are you sure you want to regenerate backup codes? This will invalidate all existing backup codes.'

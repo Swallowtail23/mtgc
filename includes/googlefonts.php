@@ -38,6 +38,7 @@ $msoIcons = [
     'image',
     'logout',
     'menu',
+    'menu_open',
     'navigate_before',
     'navigate_next',
     'north_west',
