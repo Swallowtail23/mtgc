@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        26/11/25
+Version:     1.3
+Date:        04/12/25
 Name:        googlefonts.php
 Purpose:     PHP script to link to Google Roboto fonts
 Notes:       -
@@ -14,13 +14,29 @@ History:
     1.0         Initial version
     1.1 26/11/25 Standard tidy-up
     1.2 26/11/25 Align header with standard format
+    1.3 04/12/25 Restrict Material Symbols to used icons
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-$msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
+$msoIcons = [
+    'close',
+    'help',
+    'logout',
+    'menu',
+    'refresh',
+    'save',
+    'search',
+    'skip_next',
+    'skip_previous',
+    'book_5',
+    'book_2',
+];
+$msoIconParam = urlencode(implode(',', $msoIcons));
+$msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    . "&icon_names={$msoIconParam}";
 $rcFontParameters  = "css?family=Roboto+Condensed:300,300italic%7CRoboto:400,300,300italic,500";
 
 echo "<link href='https://fonts.googleapis.com/{$rcFontParameters}' rel='stylesheet' type='text/css'>\n";
