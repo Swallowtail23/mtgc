@@ -1766,11 +1766,7 @@ require('includes/menu.php'); //mobile menu
                                 }
 
                                 notesTextarea.addEventListener('input', function() {
-                                    if (notesTextarea.value !== initialNotesValue) {
-                                        saveButton.disabled = false;
-                                    } else {
-                                        saveButton.disabled = true;
-                                    }
+                                    saveButton.disabled = (notesTextarea.value === initialNotesValue);
                                 });
                             </script>
                             <script>
