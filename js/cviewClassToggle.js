@@ -9,23 +9,25 @@ function toggleNoCollectionClass(cardid) {
     const imageID = (cardid + 'img');
     const image = document.getElementById(cardid + 'img');
     var checkBox = document.getElementById("float_cview");
+    if (!checkBox) {
+        console.error("ajaxUpdate/toggleNoCollectionClass: #float_cview not found");
+        return;
+    }
 
     // Check if the image element exists
-    if (image) {
-        if (totalCards > 0 && checkBox.checked === true) {
-            // Remove the 'none' and 'no_collection' classes
-            image.classList.remove('none', 'no_collection');
-        } else if (totalCards === 0 && checkBox.checked === true) {
-            // Add the 'none' and 'no_collection' classes
-            image.classList.add('none', 'no_collection');
-        } else if (totalCards > 0 && checkBox.checked === false) {
-            image.classList.remove('none');
-        } else if (totalCards === 0 && checkBox.checked === false) {
-            image.classList.add('none');
-        }
-    } else {
-        // Log an error if the image element is not found
-        console.error(`Image element with ID '${cardid}' not found.`);
+    if (!image || !checkBox) {
+        return;
+    }
+    if (totalCards > 0 && checkBox.checked === true) {
+        // Remove the 'none' and 'no_collection' classes
+        image.classList.remove('none', 'no_collection');
+    } else if (totalCards === 0 && checkBox.checked === true) {
+        // Add the 'none' and 'no_collection' classes
+        image.classList.add('none', 'no_collection');
+    } else if (totalCards > 0 && checkBox.checked === false) {
+        image.classList.remove('none');
+    } else if (totalCards === 0 && checkBox.checked === false) {
+        image.classList.add('none');
     }
 };
 

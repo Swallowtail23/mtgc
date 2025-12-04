@@ -1,19 +1,27 @@
-function ajaxUpdate(cardid, cellid, qty, flash, type) {
+// Update a card quantity for the given cell/card via AJAX.
+// Reads the current input value from DOM, posts it to ajaxgrid, and flashes status styles.
+function ajaxUpdate(cardid, cellid, flash, type) {
     var activeCell = $('#' + cellid);
     var activeFlash = $('#' + flash);
-    var poststring = type + '=' + activeCell.val() + '&cardid=' + cardid;
 
-    if (activeCell.val() === '') {
+    if (activeCell.length === 0 || activeFlash.length === 0) {
+        console.error('ajaxUpdate: missing element(s)', cellid, flash);
+        return false;
+    }
+
+    var currentValue = activeCell.val();
+
+    if (currentValue === '') {
         alert("Enter a number");
         activeCell.focus();
-    } else if (!isInteger(activeCell.val())) {
+    } else if (!isInteger(currentValue)) {
         alert("Enter an integer");
         activeCell.focus();
     } else {
         $.ajax({
             type: "POST",
             url: "ajax/ajaxgrid.php",
-            data: poststring,
+            data: { [type]: currentValue, cardid: cardid },
             success: function (data) {
                 activeFlash.removeClass(["bulksubmitsuccessfont", "bulksubmiterrorfont", "bulksubmitsuccessbg"])
                            .addClass(["bulksubmitnormalfont", "bulksubmitsuccessbg"]);
@@ -29,7 +37,11 @@ function ajaxUpdate(cardid, cellid, qty, flash, type) {
             },
             error: function (xhr, status, error) {
                 console.error("Error response:", xhr.responseText);
-                var response = JSON.parse(xhr.responseText);
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                } catch (parseError) {
+                    console.error("Failed to parse error response as JSON");
+                }
                 activeFlash.removeClass(["bulksubmitsuccessfont", "bulksubmitsuccessbg", "bulksubmitnormalfont"])
                            .addClass("bulksubmiterrorfont");
             }

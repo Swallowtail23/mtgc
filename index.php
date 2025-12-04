@@ -744,7 +744,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newfoil';
                                                 $foilInput = "Foil: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -752,7 +752,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -760,7 +760,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newqty';
                                                 $qtyInput = "Normal: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myqty' value='$myqty' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $qtyInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -780,7 +780,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_two' "
                                                     . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\","
                                                     . "\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -788,7 +788,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newfoil';
                                                 $foilInput = "Foil: <input class='bulkinput' id='$cellid_two' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\","
                                                     . "\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -800,8 +800,8 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_three' "
                                                     . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\","
-                                                    . "\"$cellid_three_flash\",\"$poststring\");'>";
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\","
+                                                    . "\"$cellid_three_flash\",\"$poststring\);'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
                                             else :
@@ -1098,7 +1098,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newfoil';
                                                 $foilInput = "Foil: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myfoil\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1106,7 +1106,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myetch\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1114,7 +1114,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newqty';
                                                 $qtyInput = "Normal: <input class='bulkinput' id='$cellid_one' "
                                                     . "type='number' step='1' min='0' name='myqty' value='$myqty' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\",\"$myqty\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_one\","
                                                     . "\"$cellid_one_flash\",\"$poststring\");'>";
                                                 echo $qtyInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1134,7 +1134,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_two' "
                                                     . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myetch\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\","
                                                     . "\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1142,7 +1142,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newfoil';
                                                 $foilInput = "Foil: <input class='bulkinput' id='$cellid_two' "
                                                     . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\",\"$myfoil\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_two\","
                                                     . "\"$cellid_two_flash\",\"$poststring\");'>";
                                                 echo $foilInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1154,7 +1154,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                                 $poststring = 'newetch';
                                                 $etchInput = "Etch: <input class='bulkinput' id='$cellid_three' "
                                                     . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\",\"$myetch\","
+                                                    . "onchange='ajaxUpdate(\"$scryid\",\"$cellid_three\","
                                                     . "\"$cellid_three_flash\",\"$poststring\");'>";
                                                 echo $etchInput;
                                                 echo "<input class='card' type='hidden' name='card' value='$scryid'>";
@@ -1211,22 +1211,23 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
               });
             };
 
-            document.getElementById("collQtyOp").addEventListener("change", function() {
-                let qtySelect = document.getElementById("collQtyValue");
-                let selectedOp = this.value;
+            var collQtyOp = document.getElementById("collQtyOp");
+            var collQtyValue = document.getElementById("collQtyValue");
+            if (collQtyOp && collQtyValue) {
+                collQtyOp.addEventListener("change", function() {
+                    let selectedOp = this.value;
 
-                // Loop through options in collQtyValue
-                for (let option of qtySelect.options) {
-                    if (option.value === "1") {
-                        option.disabled = (selectedOp === "ltn"); // Disable if "Less than" is selected
+                    for (let option of collQtyValue.options) {
+                        if (option.value === "1") {
+                            option.disabled = (selectedOp === "ltn"); // Disable if "Less than" is selected
+                        }
                     }
-                }
 
-                // Reset selection if the currently selected option is now disabled
-                if (qtySelect.value === "1" && selectedOp === "ltn") {
-                    qtySelect.value = ""; // Reset selection
-                }
-            });
+                    if (collQtyValue.value === "1" && selectedOp === "ltn") {
+                        collQtyValue.value = ""; // Reset selection
+                    }
+                });
+            }
 
             $(document).ready(function() {
                 function updateVisibility() {

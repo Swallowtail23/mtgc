@@ -1698,24 +1698,21 @@ require('includes/menu.php'); //mobile menu
                                             echo "Foil: <input class='bulkinputsmall foil' id='$cellid_one' "
                                                 . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$myfoil\","
-                                                . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         elseif ($cardtypes === 'etchedonly') :
                                             $poststring = 'newetch';
                                             echo "Etch: <input class='bulkinputsmall etch' id='$cellid_one' "
                                                 . "type='number' step='1' min='0' name='myetch' value='$myetch' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$myetch\","
-                                                . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             $poststring = 'newqty';
                                             echo "Normal: <input class='bulkinputsmall normal' id='$cellid_one' "
                                                 . "type='number' step='1' min='0' name='myqty' value='$myqty' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$myqty\","
-                                                . "\"$cellid_one_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1734,16 +1731,14 @@ require('includes/menu.php'); //mobile menu
                                             echo "Etch: <input class='bulkinputsmall etch' id='$cellid_two' "
                                                 . "type='number' step='1' min='0' name='myetch' value='$myetch' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_two\",\"$myetch\","
-                                                . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_two\",\"$cellid_two_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             $poststring = 'newfoil';
                                             echo "Foil: <input class='bulkinputsmall foil' id='$cellid_two' "
                                                 . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_two\",\"$myfoil\","
-                                                . "\"$cellid_two_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_two\",\"$cellid_two_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1754,8 +1749,7 @@ require('includes/menu.php'); //mobile menu
                                             echo "Etch: <input class='bulkinputsmall etch' id='$cellid_three' "
                                                 . "type='number' step='1' min='0' name='myetch' value='$myetch' "
                                                 . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_three\",\"$myetch\","
-                                                . "\"$cellid_three_flash\",\"$poststring\");'>";
+                                                . "\"$cellid_three\",\"$cellid_three_flash\",\"$poststring\");'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             echo "&nbsp;";
