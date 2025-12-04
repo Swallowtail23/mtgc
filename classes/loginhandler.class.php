@@ -209,7 +209,7 @@ class LoginHandler
 
         if (!$this->hasCredentials($post)) :
             $this->abortLogin(
-                'Incorrect data submitted. Returning to login...',
+                'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Failed logon attempt: Incorrect data sent from {$post['email']} "
                 . "from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)"
@@ -224,7 +224,7 @@ class LoginHandler
 
         if (empty($email) || empty($password)) :
             $this->abortLogin(
-                'Incorrect data submitted. Returning to login...',
+                'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Failed logon attempt: Incorrect data sent from '$email' "
                 . "from {$_SERVER['REMOTE_ADDR']} (email or password is empty)"
@@ -233,7 +233,7 @@ class LoginHandler
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) :
             $this->abortLogin(
-                'Incorrect data submitted. Returning to login...',
+                'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Failed logon attempt: Incorrect data sent from '$email' "
                 . "from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)"
@@ -244,7 +244,7 @@ class LoginHandler
         $badLoginResult = $badLogin->getBadLogin();
         if ($badLoginResult['count'] === null) :
             $this->abortLogin(
-                'Incorrect username/password. Please try again.',
+                'Incorrect username or password submitted. Returning to login...',
                 '[ERROR]',
                 "Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}",
                 3
@@ -254,7 +254,7 @@ class LoginHandler
         if ($badLoginResult['count'] >= $this->badLoginLimit) :
             $badLogin->triggerLocked();
             $this->abortLogin(
-                'Too many incorrect logins. Use the reset button to contact admin. Returning to login...',
+                'Your account is locked. Returning to login...',
                 '[NOTICE]',
                 "Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}"
             );
@@ -269,7 +269,7 @@ class LoginHandler
             );
             $badLogin->incrementBadLogin();
             $this->abortLogin(
-                'Incorrect username/password. Please try again.',
+                'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Password check failed for $email from {$_SERVER['REMOTE_ADDR']}",
                 3
