@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.6
-Date:        04/12/25
+Version:     3.7
+Date:        05/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -23,6 +23,7 @@ History:
     3.4 04/12/25 Enforce complexity and difference checks for token resets
     3.5 04/12/25 Require 2FA for password reset when enabled and notify user by email
     3.6 04/12/25 Keep token reset form visible after validation errors
+    3.7 05/12/25 Preserve token URL on complexity/duplication failures
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -42,10 +43,13 @@ $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
 $tokenEmail = $_POST['email'] ?? ($_GET['email'] ?? '');
+$message = $_SESSION['reset_message'] ?? '';
+if (!empty($_SESSION['reset_message'])) :
+    unset($_SESSION['reset_message']);
+endif;
 $resetUserId = null;
 $twofaRequired = false;
 $twofaMethod = '';
-$message = '';
 
 if (!empty($tokenEmail)) :
     $resetUserRow = $db->execute_query(
@@ -105,9 +109,17 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         $twofaMethod = $row['tfa_method'] ?? '';
     endif;
     if (!validPass($newPassword)) :
-        $message = "Password does not meet complexity requirements.";
+        $_SESSION['reset_message'] = "Password does not meet complexity requirements.";
+        header(
+            'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)
+        );
+        exit();
     elseif (!empty($currentHash) && password_verify($newPassword, $currentHash)) :
-        $message = "New password must be different from the current password.";
+        $_SESSION['reset_message'] = "New password must be different from the current password.";
+        header(
+            'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)
+        );
+        exit();
     else :
         $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $twofaCode = trim($_POST['twofa_code'] ?? '');
