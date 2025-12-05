@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.3
-Date:        26/11/25
+Version:     8.4
+Date:        05/12/25
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -27,6 +27,7 @@ History:
     8.1 02/03/25 Catch empty ability search
     8.2 05/04/25 MTGC-150 remove $nameexact, generating errors in header searches
     8.3 26/11/25 Standard tidy-up
+    8.4 05/12/25 Contract identical half splits (e.g. Sol Ring // Sol Ring)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -42,6 +43,13 @@ else :
         // Not an advanced search called
         if (strlen($name) > 2 || !empty($setcoderegexsearch)) : // Needs >2 chars to search
             if ($exact === "yes") :  // Used in 'Primary Printings' search from card_detail page
+                // Collapse "X // X" into "X" if X is identical both sides, e.g. Sol Ring // Sol Ring
+                if (strpos($name, ' // ') !== false) :
+                    [$left, $right] = explode(' // ', $name, 2);
+                    if (trim($left) === trim($right)) :
+                        $nametrim = $name = trim($left); // Set header-displayed search value and search parameter
+                    endif;
+                endif;
                 $criteria = "MATCH(cards_scry.name, cards_scry.f1_name, cards_scry.f2_name,
                                 cards_scry.printed_name, cards_scry.f1_printed_name, cards_scry.f2_printed_name,
                                 cards_scry.flavor_name, cards_scry.f1_flavor_name, cards_scry.f2_flavor_name)

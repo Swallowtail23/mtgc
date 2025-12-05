@@ -7,7 +7,7 @@ Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       -
+To do:       Add configurable and scrollable logfile box
 
 History:
     1.0         Initial version
