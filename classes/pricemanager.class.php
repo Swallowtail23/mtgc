@@ -552,79 +552,206 @@ class PriceManager
     }
 
 
-    public function updateCollectionValues($collection, $cardId = "")
-    {
-        $i = 0; // Counter for updated rows
-        $findcards = false; // Will store our result set
+public function updateCollectionValues($collection, $cardId = "")
+{
+    $i = 0; // Counter for updated rows
 
-        if ($cardId === "") : // Full collection value update (set-based)
-            // SQL-based update: compute normalrate, foilrate, etchedrate in SQL,
-            // then set topvalue = GREATEST(normalrate, foilrate, etchedrate)
-            $query = "
-                UPDATE `$collection` c
-                LEFT JOIN `cards_scry` cs ON c.id = cs.id
-                SET c.topvalue = GREATEST(
-                    /* normalrate */
-                    CASE
-                        WHEN (IFNULL(c.normal,0) * IFNULL(cs.price,0)) > 0
-                            THEN IFNULL(cs.price,0)
-                        ELSE 0
-                    END,
+    if ($cardId === "") : // Full collection value update (set-based)
+        // Wrap in a transaction for safety
+        if (!$this->db->begin_transaction()) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                    . ' Function ' . __FUNCTION__
+                    . ': Failed to start transaction: ' . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
 
-                    /* foilrate */
-                    CASE
-                        WHEN (
-                            IFNULL(c.foil,0) *
-                            CASE
-                                WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
-                                WHEN cs.price_foil IS NULL
-                                    AND cs.foil = 1
-                                    AND c.foil IS NOT NULL
-                                    AND c.foil > 0 THEN IFNULL(cs.price,0)
-                                ELSE 0
-                            END
-                        ) > 0
-                        THEN
-                            CASE
-                                WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
-                                WHEN cs.price_foil IS NULL
-                                    AND cs.foil = 1
-                                    AND c.foil IS NOT NULL
-                                    AND c.foil > 0 THEN IFNULL(cs.price,0)
-                                ELSE 0
-                            END
-                        ELSE 0
-                    END,
+        // SQL-based update: compute normalrate, foilrate, etchedrate in SQL,
+        // then set topvalue = GREATEST(normalrate, foilrate, etchedrate)
+        $query = "
+            UPDATE `$collection` AS c
+            LEFT JOIN `cards_scry` AS cs ON c.id = cs.id
+            SET c.topvalue = GREATEST(
+                /* normalrate: only if qty * price > 0 */
+                CASE
+                    WHEN (IFNULL(c.normal, 0) * IFNULL(cs.price, 0)) > 0
+                        THEN IFNULL(cs.price, 0)
+                    ELSE 0
+                END,
 
-                    /* etchedrate */
-                    CASE
-                        WHEN (
-                            IFNULL(c.etched,0) *
-                            CASE
-                                WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
-                                WHEN cs.price_etched IS NULL
-                                    AND c.etched IS NOT NULL
-                                    AND c.etched > 0 THEN IFNULL(cs.price,0)
-                                ELSE 0
-                            END
-                        ) > 0
-                        THEN
-                            CASE
-                                WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
-                                WHEN cs.price_etched IS NULL
-                                    AND c.etched IS NOT NULL
-                                    AND c.etched > 0 THEN IFNULL(cs.price,0)
-                                ELSE 0
-                            END
-                        ELSE 0
-                    END
-                )
-                WHERE c.qty_total > 0
-            ";
+                /* foilrate: only if qty * foilprice > 0, with original fallback logic */
+                CASE
+                    WHEN (
+                        IFNULL(c.foil, 0) *
+                        CASE
+                            WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
+                            WHEN cs.price_foil IS NULL
+                                 AND cs.foil = 1
+                                 AND c.foil IS NOT NULL
+                                 AND c.foil > 0 THEN IFNULL(cs.price, 0)
+                            ELSE 0
+                        END
+                    ) > 0
+                    THEN
+                        CASE
+                            WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
+                            WHEN cs.price_foil IS NULL
+                                 AND cs.foil = 1
+                                 AND c.foil IS NOT NULL
+                                 AND c.foil > 0 THEN IFNULL(cs.price, 0)
+                            ELSE 0
+                        END
+                    ELSE 0
+                END,
 
-            $result = $this->db->query($query);
+                /* etchedrate: only if qty * etchedprice > 0, with original fallback logic */
+                CASE
+                    WHEN (
+                        IFNULL(c.etched, 0) *
+                        CASE
+                            WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
+                            WHEN cs.price_etched IS NULL
+                                 AND c.etched IS NOT NULL
+                                 AND c.etched > 0 THEN IFNULL(cs.price, 0)
+                            ELSE 0
+                        END
+                    ) > 0
+                    THEN
+                        CASE
+                            WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
+                            WHEN cs.price_etched IS NULL
+                                 AND c.etched IS NOT NULL
+                                 AND c.etched > 0 THEN IFNULL(cs.price, 0)
+                            ELSE 0
+                        END
+                    ELSE 0
+                END
+            )
+            WHERE c.qty_total > 0
+        ";
 
-            if ($result === false) :
+        $start = microtime(true);
+        $result = $this->db->query($query);
+        $duration = microtime(true) - $start;
+
+        $this->message->logMessage(
+            '[DEBUG]',
+            'updateCollectionValues bulk SQL runtime: ' . number_format($duration, 6) . 's'
+        );
+
+        if ($result === false) :
+            $this->db->rollback();
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                    . ' Function ' . __FUNCTION__
+                    . ': SQL: ' . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
+
+        $i = $this->db->affected_rows;
+
+        if (!$this->db->commit()) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                    . ' Function ' . __FUNCTION__
+                    . ': Commit failed: ' . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
+
+        $this->message->logMessage('[NOTICE]', "Value update completed (rows affected: $i)");
+        return $i;
+
+    else : // Single-card update (set-based SQL)
+        if (!$this->db->begin_transaction()) :
+            trigger_error(
+                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                    . ' Function ' . __FUNCTION__
+                    . ': Failed to start transaction: ' . $this->db->error,
+                E_USER_ERROR
+            );
+        endif;
+
+        $query = "
+            UPDATE `$collection` AS c
+            LEFT JOIN `cards_scry` AS s
+                ON c.id = s.id
+            SET c.topvalue = GREATEST(
+                -- Normal rate: only if qty * price > 0
+                CASE
+                    WHEN (IFNULL(c.normal, 0) * IFNULL(s.price, 0)) > 0
+                        THEN IFNULL(s.price, 0)
+                    ELSE 0
+                END,
+                -- Foil rate: only if qty * foilprice > 0, with original fallback rules
+                CASE
+                    WHEN (
+                        IFNULL(c.foil, 0) *
+                        CASE
+                            WHEN s.price_foil IS NOT NULL THEN s.price_foil
+                            WHEN s.price_foil IS NULL
+                                 AND s.foil = 1
+                                 AND c.foil IS NOT NULL
+                                 AND c.foil > 0 THEN IFNULL(s.price, 0)
+                            ELSE 0
+                        END
+                    ) > 0
+                    THEN
+                        CASE
+                            WHEN s.price_foil IS NOT NULL THEN s.price_foil
+                            WHEN s.price_foil IS NULL
+                                 AND s.foil = 1
+                                 AND c.foil IS NOT NULL
+                                 AND c.foil > 0 THEN IFNULL(s.price, 0)
+                            ELSE 0
+                        END
+                    ELSE 0
+                END,
+                -- Etched rate: only if qty * etchedprice > 0, with original fallback rules
+                CASE
+                    WHEN (
+                        IFNULL(c.etched, 0) *
+                        CASE
+                            WHEN s.price_etched IS NOT NULL THEN s.price_etched
+                            WHEN s.price_etched IS NULL
+                                 AND c.etched IS NOT NULL
+                                 AND c.etched > 0 THEN IFNULL(s.price, 0)
+                            ELSE 0
+                        END
+                    ) > 0
+                    THEN
+                        CASE
+                            WHEN s.price_etched IS NOT NULL THEN s.price_etched
+                            WHEN s.price_etched IS NULL
+                                 AND c.etched IS NOT NULL
+                                 AND c.etched > 0 THEN IFNULL(s.price, 0)
+                            ELSE 0
+                        END
+                    ELSE 0
+                END
+            )
+            WHERE c.qty_total > 0
+              AND c.id = ?
+        ";
+
+        $stmt = $this->db->prepare($query);
+        if ($stmt) :
+            $stmt->bind_param("s", $cardId);
+
+            $start = microtime(true);
+            $exec = $stmt->execute();
+            $duration = microtime(true) - $start;
+
+            $this->message->logMessage(
+                '[DEBUG]',
+                'updateCollectionValues single-card SQL runtime: '
+                    . number_format($duration, 6) . 's'
+            );
+
+            if ($exec === false) :
+                $this->db->rollback();
                 trigger_error(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                         . ' Function ' . __FUNCTION__
@@ -633,101 +760,35 @@ class PriceManager
                 );
             endif;
 
-            $affected = $this->db->affected_rows;
-            $this->message->logMessage('[NOTICE]', "Value update completed (rows affected: $affected)");
-            return $affected;
-        else : // Single-card update
-            $query = "SELECT
-                        `$collection`.id AS id,
-                        IFNULL(`$collection`.normal,0) AS mynormal,
-                        IFNULL(`$collection`.foil, 0) AS myfoil,
-                        IFNULL(`$collection`.etched, 0) AS myetch,
-                        notes,
-                        topvalue,
-                        IFNULL(price, 0) AS normalprice,
-                        CASE 
-                            WHEN price_foil IS NOT NULL THEN price_foil
-                            WHEN price_foil IS NULL AND cards_scry.foil = 1 
-                                AND `$collection`.foil IS NOT NULL 
-                                AND `$collection`.foil > 0 THEN IFNULL(price, 0)
-                            ELSE 0
-                        END AS foilprice,
-                        CASE 
-                            WHEN price_etched IS NOT NULL THEN price_etched
-                            WHEN price_etched IS NULL 
-                                AND `$collection`.etched IS NOT NULL 
-                                AND `$collection`.etched > 0 THEN IFNULL(price, 0)
-                            ELSE 0
-                        END AS etchedprice
-                        FROM `$collection` LEFT JOIN `cards_scry` 
-                        ON `$collection`.id = `cards_scry`.id
-                        WHERE `$collection`.qty_total > 0
-                        AND `$collection`.id = ?";
-                    $stmt = $this->db->prepare($query);
-            if ($stmt) :
-                $stmt->bind_param("s", $cardId);
-                $stmt->execute();
-                $findcards = $stmt->get_result();
-                $stmt->close();
-            else :
+            $i = $this->db->affected_rows;
+            $stmt->close();
+
+            if (!$this->db->commit()) :
                 trigger_error(
-                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                        . ": SQL: " . $this->db->error,
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                        . ' Function ' . __FUNCTION__
+                        . ': Commit failed: ' . $this->db->error,
                     E_USER_ERROR
                 );
             endif;
-        endif;
-        if ($findcards) :
-            $this->message->logMessage('[DEBUG]', "SQL query succeeded");
-            while ($row = $findcards->fetch_array(MYSQLI_ASSOC)) :
-                $normalqty = $row['mynormal'];
-                $normalprice = $row['normalprice'];
-                $foilqty = $row['myfoil'];
-                $foilprice = $row['foilprice'];
-                $etchedqty = $row['myetch'];
-                $etchedprice = $row['etchedprice'];
-                if ($normalqty * $normalprice > 0) :
-                    $normalrate = $normalprice;
-                else :
-                    $normalrate = 0;
-                endif;
-                if ($foilqty * $foilprice > 0) :
-                    $foilrate = $foilprice;
-                else :
-                    $foilrate = 0;
-                endif;
-                if ($etchedqty * $etchedprice > 0) :
-                    $etchedrate = $etchedprice;
-                else :
-                    $etchedrate = 0;
-                endif;
-                $selectedrate = max($normalrate, $foilrate, $etchedrate);
-                $cardId = $this->db->real_escape_string($row['id']);
-                $updatemaxqry = "INSERT INTO `$collection` (topvalue,id)
-                    VALUES (?,?)
-                    ON DUPLICATE KEY UPDATE topvalue = ?";
-                $params = [$selectedrate,$cardId,$selectedrate];
-                if ($updatemax = $this->db->execute_query($updatemaxqry, $params)) :
-                    //succeeded
-                else :
-                    trigger_error(
-                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": SQL: " . $this->db->error,
-                        E_USER_ERROR
-                    );
-                endif;
-                $i++;
-            endwhile;
-            $this->message->logMessage('[NOTICE]', "Value update completed (row count: $i)");
+
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Value update completed for single card $cardId (rows affected: $i)"
+            );
+            return $i;
+
         else :
+            $this->db->rollback();
             trigger_error(
-                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL: " . $this->db->error,
+                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                    . ' Function ' . __FUNCTION__
+                    . ': Preparing SQL: ' . $this->db->error,
                 E_USER_ERROR
             );
         endif;
-        return $i;
-    }
+    endif;
+}
 
     public function __toString()
     {
