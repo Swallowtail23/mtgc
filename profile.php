@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.5
-Date:        04/12/25
+Version:     13.6
+Date:        06/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -34,6 +34,7 @@ History:
     13.3 29/11/25 Update forcePasswordChange reference in notes
     13.4 01/12/25 Respect email disabled setting on collection actions
     13.5 04/12/25 Require 2FA for password changes and email notifications on change
+    13.6 06/12/25 Async collection value refresh on profile
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -122,6 +123,28 @@ endif;
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
+        <style>
+            #mycollection {
+                position: relative;
+            }
+            #collection-refresh-overlay {
+                position: absolute;
+                top: 6px;
+                right: 8px;
+                display: none;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px;
+                color: #3f51b5;
+            }
+            #collection-refresh-icon {
+                animation: collection-spin 1s linear infinite;
+            }
+            @keyframes collection-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        </style>
         <script src="/js/jquery.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -189,6 +212,37 @@ endif;
                 obj.style.display = 'none';
                 window.location.href = "<?php echo $myURL; ?>/profile.php";
             }
+
+            function setCollectionRefreshing(state) {
+                var overlay = document.getElementById('collection-refresh-overlay');
+                if (!overlay) {
+                    return;
+                }
+                overlay.style.display = state ? 'flex' : 'none';
+            }
+
+            function refreshCollectionAsync() {
+                setCollectionRefreshing(true);
+                $.ajax({
+                    url: '/ajax/ajaxcollectionvalue.php',
+                    method: 'GET',
+                    dataType: 'json'
+                }).done(function(data) {
+                    if (data && data.success && data.html) {
+                        $('#collection-content').html(data.html);
+                    } else if (data && data.error) {
+                        console.error(data.error);
+                    }
+                }).fail(function(jqXHR, textStatus) {
+                    console.error('Collection refresh failed: ' + textStatus);
+                }).always(function() {
+                    setCollectionRefreshing(false);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                refreshCollectionAsync();
+            });
         </script>
     </head>
 
@@ -511,13 +565,7 @@ endif;
                 $msg->logMessage('[DEBUG]', "Weekly exports are set to '$current_weekly'");
 
             //8. Update pricing in case any new cards have been added to collection
-                //Make sure only number+collection is passed as table name
-                if (validTableName($mytable) !== false) :
-                    $obj = new PriceManager($db, $logfile, $userEmail);
-                    $obj->updateCollectionValues($mytable);
-                else :
-                    trigger_error("[ERROR] valueupdate.php: Invalid table format", E_USER_ERROR);
-                endif;
+                // Deferred to AJAX refresh for performance
 
                 //Get card total
                 if (
@@ -833,28 +881,36 @@ endif;
                     </div>
                     <div id="mycollection">
                         <h2 class='h2pad'>My Collection</h2>
-                        <?php
-                            $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                            $collectionmoney = $a->format($unformatted_value);
-                            $msg->logMessage('[DEBUG]', "Formatted value = $collectionmoney");
-                            $collectionvalue = "Collection tcgplayer market value <br>US " . $collectionmoney;
-                            $rowcounttotal = number_format($totalcardcount);
-                            $totalmrcardcount = number_format($totalmrcardcount);
-                        if (isset($rate) and $rate > 0) :
-                            $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                            $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
-                            $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
-                            $localvalue = $b->format($unformatted_value * $rate);
-                            echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards "
-                                . "($totalmrcardcount M/R).<br>";
-                        else :
-                                echo "$collectionvalue over $rowcounttotal cards.<br>";
-                        endif;
+                        <div id="collection-refresh-overlay">
+                            <span class="material-symbols-outlined refresh" id="collection-refresh-icon">
+                                refresh
+                            </span>
+                            <span aria-live="polite">Refreshing</span>
+                        </div>
+                        <div id="collection-content">
+                            <?php
+                                $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                                $collectionmoney = $a->format($unformatted_value);
+                                $msg->logMessage('[DEBUG]', "Formatted value = $collectionmoney");
+                                $collectionvalue = "Collection tcgplayer market value <br>US " . $collectionmoney;
+                                $rowcounttotal = number_format($totalcardcount);
+                                $totalmrcardcount = number_format($totalmrcardcount);
+                            if (isset($rate) and $rate > 0) :
+                                $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
+                                $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
+                                $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+                                $localvalue = $b->format($unformatted_value * $rate);
+                                echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards "
+                                    . "($totalmrcardcount M/R).<br>";
+                            else :
+                                    echo "$collectionvalue over $rowcounttotal cards.<br>";
+                            endif;
 
-                            echo "(Pricing via <a href='https://www.scryfall.com/' target='_blank'>";
-                            echo "scryfall.com</a>.)<br>";
-                            $rowcounttotal = number_format($totalcardcount);
-                        ?>
+                                echo "(Pricing via <a href='https://www.scryfall.com/' target='_blank'>";
+                                echo "scryfall.com</a>.)<br>";
+                                $rowcounttotal = number_format($totalcardcount);
+                            ?>
+                        </div>
                     </div>
                     <div id="changepassword">
                         <h2 class="h2pad">

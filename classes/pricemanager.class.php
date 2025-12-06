@@ -557,33 +557,86 @@ class PriceManager
         $i = 0; // Counter for updated rows
         $findcards = false; // Will store our result set
 
-        if ($cardId === "") : //Full collection value update
-            $query = "SELECT
-                        `$collection`.id AS id,
-                        IFNULL(`$collection`.normal,0) AS mynormal,
-                        IFNULL(`$collection`.foil, 0) AS myfoil,
-                        IFNULL(`$collection`.etched, 0) AS myetch,
-                        topvalue,
-                        IFNULL(price, 0) AS normalprice,
-                        CASE 
-                            WHEN price_foil IS NOT NULL THEN price_foil
-                            WHEN price_foil IS NULL AND cards_scry.foil = 1 
-                                AND `$collection`.foil IS NOT NULL 
-                                AND `$collection`.foil > 0 THEN IFNULL(price, 0)
-                            ELSE 0
-                        END AS foilprice,
-                        CASE 
-                            WHEN price_etched IS NOT NULL THEN price_etched
-                            WHEN price_etched IS NULL 
-                                AND `$collection`.etched IS NOT NULL 
-                                AND `$collection`.etched > 0 THEN IFNULL(price, 0)
-                            ELSE 0
-                        END AS etchedprice
-                        FROM `$collection` LEFT JOIN `cards_scry` 
-                        ON `$collection`.id = `cards_scry`.id
-                        WHERE `$collection`.qty_total > 0";
-            $findcards = $this->db->query($query); // Simple query execution
-        else :              // Single card value update
+        if ($cardId === "") : // Full collection value update (set-based)
+            // SQL-based update: compute normalrate, foilrate, etchedrate in SQL,
+            // then set topvalue = GREATEST(normalrate, foilrate, etchedrate)
+            $query = "
+                UPDATE `$collection` c
+                LEFT JOIN `cards_scry` cs ON c.id = cs.id
+                SET c.topvalue = GREATEST(
+                    /* normalrate */
+                    CASE
+                        WHEN (IFNULL(c.normal,0) * IFNULL(cs.price,0)) > 0
+                            THEN IFNULL(cs.price,0)
+                        ELSE 0
+                    END,
+
+                    /* foilrate */
+                    CASE
+                        WHEN (
+                            IFNULL(c.foil,0) *
+                            CASE
+                                WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
+                                WHEN cs.price_foil IS NULL
+                                    AND cs.foil = 1
+                                    AND c.foil IS NOT NULL
+                                    AND c.foil > 0 THEN IFNULL(cs.price,0)
+                                ELSE 0
+                            END
+                        ) > 0
+                        THEN
+                            CASE
+                                WHEN cs.price_foil IS NOT NULL THEN cs.price_foil
+                                WHEN cs.price_foil IS NULL
+                                    AND cs.foil = 1
+                                    AND c.foil IS NOT NULL
+                                    AND c.foil > 0 THEN IFNULL(cs.price,0)
+                                ELSE 0
+                            END
+                        ELSE 0
+                    END,
+
+                    /* etchedrate */
+                    CASE
+                        WHEN (
+                            IFNULL(c.etched,0) *
+                            CASE
+                                WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
+                                WHEN cs.price_etched IS NULL
+                                    AND c.etched IS NOT NULL
+                                    AND c.etched > 0 THEN IFNULL(cs.price,0)
+                                ELSE 0
+                            END
+                        ) > 0
+                        THEN
+                            CASE
+                                WHEN cs.price_etched IS NOT NULL THEN cs.price_etched
+                                WHEN cs.price_etched IS NULL
+                                    AND c.etched IS NOT NULL
+                                    AND c.etched > 0 THEN IFNULL(cs.price,0)
+                                ELSE 0
+                            END
+                        ELSE 0
+                    END
+                )
+                WHERE c.qty_total > 0
+            ";
+
+            $result = $this->db->query($query);
+
+            if ($result === false) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                        . ' Function ' . __FUNCTION__
+                        . ': SQL: ' . $this->db->error,
+                    E_USER_ERROR
+                );
+            endif;
+
+            $affected = $this->db->affected_rows;
+            $this->message->logMessage('[NOTICE]', "Value update completed (rows affected: $affected)");
+            return $affected;
+        else : // Single-card update
             $query = "SELECT
                         `$collection`.id AS id,
                         IFNULL(`$collection`.normal,0) AS mynormal,
