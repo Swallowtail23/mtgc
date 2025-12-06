@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        28/11/25
+Version:     1.6
+Date:        06/12/25
 Name:        pricemanager.class.php
 Purpose:     Price management class.
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     1.3 01/03/25 MTGC-124 - Move last price calc function here from functions file
     1.4 25/11/25 Standard tidy-up
     1.5 28/11/25 Remove unused status assignment
+    1.6 06/12/25 Use qty_total column for collection filtering
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -580,8 +581,7 @@ class PriceManager
                         END AS etchedprice
                         FROM `$collection` LEFT JOIN `cards_scry` 
                         ON `$collection`.id = `cards_scry`.id
-                        WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) 
-                            + IFNULL(`$collection`.etched,0) > 0";
+                        WHERE `$collection`.qty_total > 0";
             $findcards = $this->db->query($query); // Simple query execution
         else :              // Single card value update
             $query = "SELECT
@@ -608,8 +608,7 @@ class PriceManager
                         END AS etchedprice
                         FROM `$collection` LEFT JOIN `cards_scry` 
                         ON `$collection`.id = `cards_scry`.id
-                        WHERE IFNULL(`$collection`.normal,0) + IFNULL(`$collection`.foil,0) 
-                            + IFNULL(`$collection`.etched,0) > 0
+                        WHERE `$collection`.qty_total > 0
                         AND `$collection`.id = ?";
                     $stmt = $this->db->prepare($query);
             if ($stmt) :

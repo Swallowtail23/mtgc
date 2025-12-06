@@ -1,63 +1,15 @@
--- phpMyAdmin SQL Dump
--- version 5.0.1
--- https://www.phpmyadmin.net/
---
--- Host: localhost
--- Generation Time: Feb 03, 2022 at 02:21 PM
--- Server version: 8.0.26
--- PHP Version: 7.4.27
-
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Database: `mtg_new`
---
 CREATE DATABASE IF NOT EXISTS `mtg_new` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `mtg_new`;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `admin`
---
-
-DROP TABLE IF EXISTS `admin`;
-CREATE TABLE IF NOT EXISTS `admin` (
-  `key` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `admin` (
+  `key` int NOT NULL,
   `usemin` tinyint(1) NOT NULL,
-  `mtce` tinyint(1) NOT NULL,
-  PRIMARY KEY (`key`),
-  UNIQUE KEY `key` (`key`)
+  `mtce` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `fx`
---
-
-DROP TABLE IF EXISTS `fx`;
-CREATE TABLE `fx` (
-  `currencies` varchar(12) COLLATE utf8mb4_general_ci NOT NULL,
-  `updatetime` int NOT NULL,
-  `rate` decimal(6,2) NOT NULL,
-  UNIQUE KEY `currencies` (`currencies`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Table structure for table `cards_scry`
---
-
-DROP TABLE IF EXISTS `cards_scry`;
 CREATE TABLE `cards_scry` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `oracle_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -196,68 +148,57 @@ CREATE TABLE `cards_scry` (
   `date_added` date DEFAULT NULL,
   `is_paper` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"paper"')) VIRTUAL,
   `is_mtgo` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"mtgo"')) VIRTUAL,
-  `is_arena` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"arena"')) VIRTUAL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`),
-  KEY `oracle_id` (`oracle_id`),
-  KEY `release_date` (`release_date`),
-  KEY `setcode` (`setcode`),
-  KEY `primary_card` (`setcode`,`primary_card`) USING BTREE,
-  KEY `set_name` (`set_name`),
-  KEY `lang` (`lang`),
-  KEY `type_2` (`type`),
-  KEY `number` (`number`),
-  KEY `primary_card_2` (`primary_card`),
-  KEY `number_import` (`number_import`),
-  KEY `idx_is_paper` (`is_paper`),
-  KEY `idx_is_mtgo` (`is_mtgo`),
-  KEY `idx_is_arena` (`is_arena`)
+  `is_arena` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"arena"')) VIRTUAL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `collectionTemplate`
---
-
-DROP TABLE IF EXISTS `collectionTemplate`;
-CREATE TABLE IF NOT EXISTS `collectionTemplate` (
+CREATE TABLE `collectionTemplate` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `normal` tinyint DEFAULT NULL,
   `foil` tinyint DEFAULT NULL,
   `etched` tinyint DEFAULT NULL,
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `topvalue` decimal(8,2) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
+  `qty_total` smallint UNSIGNED GENERATED ALWAYS AS (((ifnull(`normal`,0) + ifnull(`foil`,0)) + ifnull(`etched`,0))) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `deckcards`
---
-
-DROP TABLE IF EXISTS `deckcards`;
-CREATE TABLE IF NOT EXISTS `deckcards` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `deckcards` (
+  `id` int NOT NULL,
   `decknumber` smallint NOT NULL,
   `cardnumber` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `cardqty` tinyint DEFAULT NULL,
   `sideqty` tinyint DEFAULT NULL,
-  `commander` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `DeckCardCombo` (`decknumber`,`cardnumber`)
+  `commander` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+CREATE TABLE `decks` (
+  `decknumber` int NOT NULL,
+  `owner` smallint NOT NULL,
+  `deckname` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `sidenotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Table structure for table `migrations`
---
+CREATE TABLE `decktypes` (
+  `typenumber` smallint NOT NULL,
+  `type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `cardcount` int NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-DROP TABLE IF EXISTS `migrations`;
-CREATE TABLE IF NOT EXISTS `migrations` (
+CREATE TABLE `fx` (
+  `currencies` varchar(12) COLLATE utf8mb4_general_ci NOT NULL,
+  `updatetime` int NOT NULL,
+  `rate` decimal(6,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `groups` (
+  `groupnumber` int NOT NULL,
+  `groupname` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `owner` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `migrations` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `performed_at` date NOT NULL,
   `object` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -272,140 +213,75 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `metadata_set_code` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `metadata_oracle_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `metadata_collector_number` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `db_match` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
+  `db_match` tinyint(1) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `decks`
---
-
-DROP TABLE IF EXISTS `decks`;
-CREATE TABLE IF NOT EXISTS `decks` (
-  `decknumber` int NOT NULL AUTO_INCREMENT,
-  `owner` smallint NOT NULL,
-  `deckname` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `sidenotes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  PRIMARY KEY (`decknumber`),
-  UNIQUE KEY `decknumber` (`decknumber`)
+CREATE TABLE `password_resets` (
+  `email` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `token_hash` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `decktypes`
---
-
-DROP TABLE IF EXISTS `decktypes`;
-CREATE TABLE IF NOT EXISTS `decktypes` (
-  `typenumber` smallint NOT NULL AUTO_INCREMENT,
-  `type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `cardcount` int NOT NULL,
-  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`typenumber`),
-  UNIQUE KEY `typenumber` (`typenumber`),
-  KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `groups`
---
-
-DROP TABLE IF EXISTS `groups`;
-CREATE TABLE IF NOT EXISTS `groups` (
-  `groupnumber` int NOT NULL AUTO_INCREMENT,
-  `groupname` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `owner` int NOT NULL,
-  PRIMARY KEY (`groupnumber`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `rulings_scry`
---
-
-DROP TABLE IF EXISTS `rulings_scry`;
-CREATE TABLE IF NOT EXISTS `rulings_scry` (
-  `id` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `rulings_scry` (
+  `id` int NOT NULL,
   `oracle_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `source` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `published_at` date NOT NULL,
-  `comment` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `oracle_id` (`oracle_id`)
+  `comment` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `scryfalljson`
---
-
-DROP TABLE IF EXISTS `scryfalljson`;
-CREATE TABLE IF NOT EXISTS `scryfalljson` (
+CREATE TABLE `scryfalljson` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `jsonupdatetime` int NOT NULL,
-  `tcg_buy_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  UNIQUE KEY `id` (`id`)
+  `tcg_buy_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `sets`
---
-
-DROP TABLE IF EXISTS `sets`;
-CREATE TABLE IF NOT EXISTS `sets` (
-  `id` varchar(36) COLLATE utf8mb4_general_ci NOT NULL,
-  `code` varchar(8) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `name` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `api_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `scryfall_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `search_uri` varchar(256) COLLATE utf8mb4_general_ci DEFAULT NULL,
+CREATE TABLE `sets` (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `code` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `api_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `scryfall_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `search_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `release_date` date DEFAULT NULL,
-  `set_type` varchar(64) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `set_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `card_count` int DEFAULT NULL,
-  `parent_set_code` varchar(8) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `parent_set_code` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `nonfoil_only` tinyint(1) DEFAULT NULL,
   `foil_only` tinyint(1) DEFAULT NULL,
-  `icon_svg_uri` varchar(256) COLLATE utf8mb4_general_ci NOT NULL,
-  UNIQUE KEY `id` (`id`)
+  `icon_svg_uri` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
+CREATE TABLE `tfa_codes` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `expiry` int NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Table structure for table `updatenotices`
---
+CREATE TABLE `trusted_devices` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `token_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `device_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `last_used` datetime DEFAULT NULL,
+  `created` datetime NOT NULL,
+  `expires` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-DROP TABLE IF EXISTS `updatenotices`;
-CREATE TABLE IF NOT EXISTS `updatenotices` (
-  `number` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `updatenotices` (
+  `number` int NOT NULL,
   `date` date NOT NULL,
   `update` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `author` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  PRIMARY KEY (`number`),
-  UNIQUE KEY `number` (`number`)
+  `author` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `usernumber` smallint NOT NULL AUTO_INCREMENT,
+CREATE TABLE `users` (
+  `usernumber` smallint NOT NULL,
   `username` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `password` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `email` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
@@ -419,25 +295,34 @@ CREATE TABLE IF NOT EXISTS `users` (
   `collection_view` tinyint NOT NULL DEFAULT '0',
   `currency` varchar(3) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `weeklyexport` tinyint NOT NULL DEFAULT '0',
-  `tfa_enabled` tinyint(1) NOT NULL DEFAULT '0',
-  `tfa_method` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tfa_backup_codes` text COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tfa_app_secret` varchar(128) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  PRIMARY KEY (`usernumber`),
-  UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `email` (`email`),
-  KEY `usernumber` (`usernumber`),
-  KEY `username_2` (`username`),
-  KEY `email_2` (`email`)
+  `tfa_enabled` tinyint NOT NULL DEFAULT '0',
+  `tfa_method` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tfa_backup_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `tfa_app_secret` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Indexes for dumped tables
---
 
---
--- Indexes for table `cards_scry`
---
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`key`),
+  ADD UNIQUE KEY `key` (`key`);
+
+ALTER TABLE `cards_scry`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `id` (`id`),
+  ADD KEY `oracle_id` (`oracle_id`),
+  ADD KEY `setcode` (`setcode`),
+  ADD KEY `primary_card` (`setcode`,`primary_card`) USING BTREE,
+  ADD KEY `lang` (`lang`),
+  ADD KEY `type_2` (`type`),
+  ADD KEY `set_name` (`set_name`),
+  ADD KEY `release_date` (`release_date`),
+  ADD KEY `number` (`number`),
+  ADD KEY `primary_card_2` (`primary_card`),
+  ADD KEY `number_import` (`number_import`),
+  ADD KEY `idx_price_fields` (`id`,`price`,`price_foil`,`price_etched`,`foil`),
+  ADD KEY `idx_is_paper` (`is_paper`),
+  ADD KEY `idx_is_mtgo` (`is_mtgo`),
+  ADD KEY `idx_is_arena` (`is_arena`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `ability` (`ability`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `name` (`name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `type` (`type`);
@@ -456,55 +341,104 @@ ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_flavor_name` (`f2_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_name_index` (`name`,`f1_name`,`f2_name`,`printed_name`,`f1_printed_name`,`f2_printed_name`,`flavor_name`,`f1_flavor_name`,`f2_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`f1_ability`,`f2_ability`);
 
---
--- Indexes for table `sets`
---
+ALTER TABLE `collectionTemplate`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_qty_total` (`qty_total`),
+  ADD KEY `idx_topvalue` (`topvalue`);
+
+ALTER TABLE `deckcards`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `DeckCardCombo` (`decknumber`,`cardnumber`);
+
+ALTER TABLE `decks`
+  ADD PRIMARY KEY (`decknumber`),
+  ADD UNIQUE KEY `decknumber` (`decknumber`);
+
+ALTER TABLE `decktypes`
+  ADD PRIMARY KEY (`typenumber`),
+  ADD UNIQUE KEY `typenumber` (`typenumber`),
+  ADD KEY `name` (`name`);
+
+ALTER TABLE `fx`
+  ADD UNIQUE KEY `currencies` (`currencies`);
+
+ALTER TABLE `groups`
+  ADD PRIMARY KEY (`groupnumber`);
+
+ALTER TABLE `migrations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `id` (`id`);
+
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`email`);
+
+ALTER TABLE `rulings_scry`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `oracle_id` (`oracle_id`);
+
+ALTER TABLE `scryfalljson`
+  ADD UNIQUE KEY `id` (`id`);
+
+ALTER TABLE `sets`
+  ADD UNIQUE KEY `id` (`id`),
+  ADD UNIQUE KEY `code_2` (`code`) USING BTREE,
+  ADD UNIQUE KEY `name_3` (`name`,`release_date`,`parent_set_code`) USING BTREE,
+  ADD KEY `release_date` (`release_date`),
+  ADD KEY `name` (`name`);
 ALTER TABLE `sets` ADD FULLTEXT KEY `code` (`code`);
+ALTER TABLE `sets` ADD FULLTEXT KEY `name_2` (`name`);
 
--- --------------------------------------------------------
+ALTER TABLE `tfa_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`),
+  ADD KEY `idx_tfa_user_id` (`user_id`);
 
---
--- Table structure for table `trusted_devices`
---
+ALTER TABLE `trusted_devices`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `token_hash` (`token_hash`),
+  ADD KEY `expires` (`expires`);
 
-DROP TABLE IF EXISTS `trusted_devices`;
-CREATE TABLE IF NOT EXISTS `trusted_devices` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
-  `token_hash` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `device_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `last_used` datetime DEFAULT NULL,
-  `created` datetime NOT NULL,
-  `expires` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `token_hash` (`token_hash`),
-  KEY `expires` (`expires`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE `updatenotices`
+  ADD PRIMARY KEY (`number`),
+  ADD UNIQUE KEY `number` (`number`);
 
--- --------------------------------------------------------
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`usernumber`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `usernumber` (`usernumber`),
+  ADD KEY `username_2` (`username`),
+  ADD KEY `email_2` (`email`);
 
---
--- Table structure for table `tfa_codes`
---
 
-DROP TABLE IF EXISTS `tfa_codes`;
-CREATE TABLE IF NOT EXISTS `tfa_codes` (
-  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `user_id` int NOT NULL,
-  `code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `expiry` int NOT NULL,
-  `attempts` int NOT NULL DEFAULT 0,
-  UNIQUE KEY(user_id),
-  KEY `idx_tfa_user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+ALTER TABLE `admin`
+  MODIFY `key` int NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `deckcards`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `decks`
+  MODIFY `decknumber` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `decktypes`
+  MODIFY `typenumber` smallint NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `groups`
+  MODIFY `groupnumber` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `rulings_scry`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `tfa_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `trusted_devices`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `updatenotices`
+  MODIFY `number` int NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `users`
+  MODIFY `usernumber` smallint NOT NULL AUTO_INCREMENT;
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
-
