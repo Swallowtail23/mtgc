@@ -29,6 +29,9 @@ endif;
 
 class PasswordCheck
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $message;
@@ -106,7 +109,8 @@ class PasswordCheck
             return false;
         endif;
 
-        if (strtotime($record['expires_at']) < time()) :
+        $expiresAt = $record['expires_at'] ?? null;
+        if ($expiresAt === null || strtotime($expiresAt) < time()) :
             $this->message->logMessage('[ERROR]', "Reset token expired for $email");
             $this->clearResetRecord($email);
             return false;

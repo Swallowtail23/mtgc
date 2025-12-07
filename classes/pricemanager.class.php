@@ -552,24 +552,24 @@ class PriceManager
     }
 
 
-public function updateCollectionValues($collection, $cardId = "")
-{
-    $i = 0; // Counter for updated rows
+    public function updateCollectionValues($collection, $cardId = "")
+    {
+        $i = 0; // Counter for updated rows
 
-    if ($cardId === "") : // Full collection value update (set-based)
-        // Wrap in a transaction for safety
-        if (!$this->db->begin_transaction()) :
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+        if ($cardId === "") : // Full collection value update (set-based)
+            // Wrap in a transaction for safety
+            if (!$this->db->begin_transaction()) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Failed to start transaction: ' . $this->db->error,
-                E_USER_ERROR
-            );
-        endif;
+                    E_USER_ERROR
+                );
+            endif;
 
-        // SQL-based update: compute normalrate, foilrate, etchedrate in SQL,
-        // then set topvalue = GREATEST(normalrate, foilrate, etchedrate)
-        $query = "
+            // SQL-based update: compute normalrate, foilrate, etchedrate in SQL,
+            // then set topvalue = GREATEST(normalrate, foilrate, etchedrate)
+            $query = "
             UPDATE `$collection` AS c
             LEFT JOIN `cards_scry` AS cs ON c.id = cs.id
             SET c.topvalue = GREATEST(
@@ -631,50 +631,49 @@ public function updateCollectionValues($collection, $cardId = "")
             WHERE c.qty_total > 0
         ";
 
-        $start = microtime(true);
-        $result = $this->db->query($query);
-        $duration = microtime(true) - $start;
+            $start = microtime(true);
+            $result = $this->db->query($query);
+            $duration = microtime(true) - $start;
 
-        $this->message->logMessage(
-            '[DEBUG]',
-            'updateCollectionValues bulk SQL runtime: ' . number_format($duration, 6) . 's'
-        );
+            $this->message->logMessage(
+                '[DEBUG]',
+                'updateCollectionValues bulk SQL runtime: ' . number_format($duration, 6) . 's'
+            );
 
-        if ($result === false) :
-            $this->db->rollback();
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+            if ($result === false) :
+                $this->db->rollback();
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': SQL: ' . $this->db->error,
-                E_USER_ERROR
-            );
-        endif;
+                    E_USER_ERROR
+                );
+            endif;
 
-        $i = $this->db->affected_rows;
+            $i = $this->db->affected_rows;
 
-        if (!$this->db->commit()) :
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+            if (!$this->db->commit()) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Commit failed: ' . $this->db->error,
-                E_USER_ERROR
-            );
-        endif;
+                    E_USER_ERROR
+                );
+            endif;
 
-        $this->message->logMessage('[NOTICE]', "Value update completed (rows affected: $i)");
-        return $i;
-
-    else : // Single-card update (set-based SQL)
-        if (!$this->db->begin_transaction()) :
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+            $this->message->logMessage('[NOTICE]', "Value update completed (rows affected: $i)");
+            return $i;
+        else : // Single-card update (set-based SQL)
+            if (!$this->db->begin_transaction()) :
+                trigger_error(
+                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Failed to start transaction: ' . $this->db->error,
-                E_USER_ERROR
-            );
-        endif;
+                    E_USER_ERROR
+                );
+            endif;
 
-        $query = "
+            $query = "
             UPDATE `$collection` AS c
             LEFT JOIN `cards_scry` AS s
                 ON c.id = s.id
@@ -736,59 +735,58 @@ public function updateCollectionValues($collection, $cardId = "")
               AND c.id = ?
         ";
 
-        $stmt = $this->db->prepare($query);
-        if ($stmt) :
-            $stmt->bind_param("s", $cardId);
+            $stmt = $this->db->prepare($query);
+            if ($stmt) :
+                $stmt->bind_param("s", $cardId);
 
-            $start = microtime(true);
-            $exec = $stmt->execute();
-            $duration = microtime(true) - $start;
+                $start = microtime(true);
+                $exec = $stmt->execute();
+                $duration = microtime(true) - $start;
 
-            $this->message->logMessage(
-                '[DEBUG]',
-                'updateCollectionValues single-card SQL runtime: '
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    'updateCollectionValues single-card SQL runtime: '
                     . number_format($duration, 6) . 's'
-            );
+                );
 
-            if ($exec === false) :
+                if ($exec === false) :
+                    $this->db->rollback();
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                        . ' Function ' . __FUNCTION__
+                        . ': SQL: ' . $this->db->error,
+                        E_USER_ERROR
+                    );
+                endif;
+
+                $i = $this->db->affected_rows;
+                $stmt->close();
+
+                if (!$this->db->commit()) :
+                    trigger_error(
+                        '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
+                        . ' Function ' . __FUNCTION__
+                        . ': Commit failed: ' . $this->db->error,
+                        E_USER_ERROR
+                    );
+                endif;
+
+                $this->message->logMessage(
+                    '[NOTICE]',
+                    "Value update completed for single card $cardId (rows affected: $i)"
+                );
+                return $i;
+            else :
                 $this->db->rollback();
                 trigger_error(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
-                        . ' Function ' . __FUNCTION__
-                        . ': SQL: ' . $this->db->error,
-                    E_USER_ERROR
-                );
-            endif;
-
-            $i = $this->db->affected_rows;
-            $stmt->close();
-
-            if (!$this->db->commit()) :
-                trigger_error(
-                    '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
-                        . ' Function ' . __FUNCTION__
-                        . ': Commit failed: ' . $this->db->error,
-                    E_USER_ERROR
-                );
-            endif;
-
-            $this->message->logMessage(
-                '[NOTICE]',
-                "Value update completed for single card $cardId (rows affected: $i)"
-            );
-            return $i;
-
-        else :
-            $this->db->rollback();
-            trigger_error(
-                '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Preparing SQL: ' . $this->db->error,
-                E_USER_ERROR
-            );
+                    E_USER_ERROR
+                );
+            endif;
         endif;
-    endif;
-}
+    }
 
     public function __toString()
     {

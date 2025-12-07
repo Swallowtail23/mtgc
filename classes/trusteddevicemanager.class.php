@@ -24,6 +24,9 @@ endif;
 
 class TrustedDeviceManager
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $msg;

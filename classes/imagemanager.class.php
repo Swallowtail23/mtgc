@@ -33,6 +33,9 @@ class ImageManager
     // Skip remote checks for images newer than this (in seconds)
     private const IMAGE_MAX_AGE = 604800; // 7 days
 
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $serverEmail;
@@ -196,7 +199,8 @@ class ImageManager
             else :
                 $this->message->logMessage(
                     '[NOTICE]',
-                    "Email disabled; missing image alert not sent for $remoteUrl"
+                    "Email disabled; image unlink failure alert not sent for "
+                    . "Front: $imagedelete; Back: $imagebackdelete"
                 );
             endif;
             return 'failure';
@@ -308,7 +312,7 @@ class ImageManager
             else :
                 $this->message->logMessage(
                     '[NOTICE]',
-                    "Email disabled; image unlink failure alert not sent for $imagebackurl"
+                    "Email disabled; image unlink failure alert not sent for $remoteUrl"
                 );
             endif;
             return 'error';

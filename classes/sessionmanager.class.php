@@ -25,6 +25,9 @@ endif;
 
 class SessionManager
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $adminip;
     private $session;
