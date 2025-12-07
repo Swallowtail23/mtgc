@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.0
-Date:        29/11/25
+Version:     13.1
+Date:        07/12/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
@@ -33,6 +33,7 @@ History:
     12.3 28/11/25 Update inputInterpreter call
     12.4 29/11/25 Rename forcePasswordChange usage
     13.0 29/11/25 Add async image checks
+    13.1 07/12/25 Display abilities for two-faced cards
 */
 
 // Call script initiation mechs
@@ -309,6 +310,8 @@ $selectAll = "SELECT
                 cards_scry.set_name,
                 type,
                 ability,
+                f1_ability,
+                f2_ability,
                 manacost,
                 layout,
                 p1_component,
@@ -653,6 +656,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) : //$row now contains all card info
+                            // $msg->logMessage('[DEBUG]', "Current card: ". json_encode($row));
                             $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']}");
                             $setcode = strtolower($row['setcode']);
                             $scryid = $row['cs_id'];
@@ -839,7 +843,8 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                     <div id='results' class='wrap'>
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) :
-                            $msg->logMessage('[DEBUG]', "Current card: {$row['cs_id']}");
+                            // $msg->logMessage('[DEBUG]', "Current card: ". json_encode($row));
+                            $msg->logMessage('[DEBUG]', "Current card: ". $row['cs_id']);
                             $scryid = $row['cs_id'];
                             $cardUrl = "carddetail.php?id=$scryid";
                             $onclick = "location.href='" . $cardUrl . "';"; ?>
@@ -883,6 +888,18 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                 else :
                                     $manac = null;
                                 endif;
+                                if (isset($row['ability']) and !empty($row['ability'])) :
+                                    $ability = symbolReplace($row['ability']);
+                                    $msg->logMessage('[DEBUG]', "Ability: $ability");
+                                endif;
+                                if (isset($row['f1_ability']) and !empty($row['f1_ability'])) :
+                                    $f1Ability = symbolReplace($row['f1_ability']);
+                                    $msg->logMessage('[DEBUG]', "F1 Ability: $f1Ability");
+                                endif;
+                                if (isset($row['f2_ability']) and !empty($row['f2_ability'])) :
+                                    $f2Ability = symbolReplace($row['f2_ability']);
+                                    $msg->logMessage('[DEBUG]', "F2 Ability: $f2Ability");
+                                endif;
                                 ?>
                                         <td class="valuerarity"> <?php echo ucfirst($row['rarity']); ?> </td>
                                         <td class="valueset"> <?php echo $row['set_name']; ?> </td>
@@ -896,9 +913,28 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                         </td>
                                         <td class="valueabilities">
                                             <?php
-                                            if (isset($row['ability']) and !empty($row['ability'])) :
-                                                $ability = symbolReplace($row['ability']);
-                                                echo $ability;
+                                            if (isset($ability) and !empty($ability)) :
+                                                echo $ability;                                            
+                                            elseif (
+                                                (isset($f1Ability) && !empty($f1Ability))
+                                                    &&
+                                                (!isset($f2Ability) || empty($f2Ability))
+                                                ) :
+                                                echo "$f1Ability";
+                                            elseif (
+                                                (isset($f2Ability) && !empty($f2Ability))
+                                                    &&
+                                                (!isset($f1Ability) || empty($f1Ability))
+                                                ) :
+                                                echo "$f2Ability";
+                                            elseif (
+                                                (isset($f1Ability) && !empty($f1Ability))
+                                                    &&
+                                                (isset($f2Ability) && !empty($f2Ability))
+                                                ) :
+                                                echo "$f1Ability // $f2Ability";
+                                            else:
+                                                echo "";
                                             endif;
                                             ?>
                                         </td>
