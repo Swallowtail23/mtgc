@@ -368,7 +368,16 @@ namespace {
         public function testProcessLoginSubmissionLockedAccountTriggersAbort()
         {
             $db = new FakeDb();
-            UserStatus::$badLoginResult = ['count' => 5, 'code' => 1];
+
+            // Simulate a user who is already locked
+            UserStatus::$badLoginResult    = ['count' => 5];
+            UserStatus::$userStatusResult  = [
+                'code'   => 2,   // locked
+                'number' => 123,
+                'admin'  => 0,
+            ];
+            PasswordCheck::$result = 10; // could be 10 or something else; it won't matter
+
             $handler = $this->buildHandler($db, function () {
                 throw new TerminateException();
             });
@@ -376,9 +385,9 @@ namespace {
             $this->expectException(TerminateException::class);
 
             $post = [
-            'ac' => 'log',
-            'email' => 'user@example.com',
-            'password' => 'secret'
+                'ac'       => 'log',
+                'email'    => 'user@example.com',
+                'password' => 'secret',
             ];
 
             $handler->processLoginSubmission($post);
