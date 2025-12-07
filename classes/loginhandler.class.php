@@ -18,6 +18,22 @@ History:
     1.5 05/12/25 Email user when account is locked for bad logins
     1.6 05/12/25 Include reset link in lock notification email
     1.7 05/12/25 CC admin on lock notifications
+
+Current flow:
+- Check it’s a login submission.
+- Check credentials exist (hasCredentials()).
+- Sanitize + validate email.
+- Create UserStatus once ($user).
+- Get bad login count, reject if user not found.
+- Get user status once, handle locked/disabled/invalid statuses.
+- Validate password.
+- If bad password:
+-- Increment bad login.
+-- If threshold reached, lock + notify.
+-- Abort with generic failure.
+- If password OK:
+-- If 2FA enabled → set pending 2FA session, clear bad login if needed, redirect to verify_2fa.
+-- Else → mark logged in, clear bad login if needed, return user info.
 */
 
 use andkab\Turnstile\Turnstile;
@@ -212,13 +228,15 @@ class LoginHandler
         if (!$this->isLoginSubmission($post)) :
             return null;
         endif;
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
 
         if (!$this->hasCredentials($post)) :
+            $emailForLog = isset($post['email']) ? $post['email'] : 'UNKNOWN';
             $this->abortLogin(
                 'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
-                "Failed logon attempt: Incorrect data sent from {$post['email']} "
-                . "from {$_SERVER['REMOTE_ADDR']} (email or password variables not set)"
+                "Failed logon attempt: Incorrect data sent from {$emailForLog} "
+                . "from $ip (email or password variables not set)"
             );
         endif;
 
@@ -226,14 +244,14 @@ class LoginHandler
         $password = $post['password'];
         $email = filter_var((trim($rawEmail)), FILTER_SANITIZE_EMAIL);
 
-        $this->message->logMessage('[NOTICE]', "Logon called for '$email' from {$_SERVER['REMOTE_ADDR']}");
+        $this->message->logMessage('[NOTICE]', "Logon called for '$email' from $ip");
 
         if (empty($email) || empty($password)) :
             $this->abortLogin(
                 'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Failed logon attempt: Incorrect data sent from '$email' "
-                . "from {$_SERVER['REMOTE_ADDR']} (email or password is empty)"
+                . "from $ip (email or password is empty)"
             );
         endif;
 
@@ -242,103 +260,133 @@ class LoginHandler
                 'Incorrect username or password submitted. Returning to login...',
                 '[NOTICE]',
                 "Failed logon attempt: Incorrect data sent from '$email' "
-                . "from {$_SERVER['REMOTE_ADDR']} (FILTER_VALIDATE_EMAIL failed)"
+                . "from $ip (FILTER_VALIDATE_EMAIL failed)"
             );
         endif;
 
-        $badLogin = new UserStatus($this->db, $this->logfile, $email);
-        $badLoginResult = $badLogin->getBadLogin();
-        if ($badLoginResult['count'] === null) :
+        // Create once — reuse for everything
+        $user = new UserStatus($this->db, $this->logfile, $email);
+
+        // Check bad login count
+        $badLoginResult = $user->getBadLogin();
+
+        if (
+            !is_array($badLoginResult)
+            ||
+            !array_key_exists('count', $badLoginResult)
+            ||
+            $badLoginResult['count'] === null
+        ) :
+            // No such user – generic failure
             $this->abortLogin(
                 'Incorrect username or password submitted. Returning to login...',
                 '[ERROR]',
-                "Failed logon attempt by invalid user $email from {$_SERVER['REMOTE_ADDR']}",
+                "Failed logon attempt by invalid user $email from $ip",
                 3
             );
         endif;
+        $badCount = (int) $badLoginResult['count'];
 
-        if ($badLoginResult['count'] >= $this->badLoginLimit) :
-            $badLogin->triggerLocked();
-            $this->sendLockNotification($email);
-            $this->abortLogin(
-                'Your account is locked. Returning to login page - reset password to regain access',
-                '[NOTICE]',
-                "Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}"
-            );
+        // Get current user status once and re-use it
+        $userStatusResult = $user->getUserStatus();
+        if (
+            !is_array($userStatusResult)
+            ||
+            !array_key_exists('code', $userStatusResult)
+            ||
+            !array_key_exists('number', $userStatusResult)
+            ||
+            !array_key_exists('admin', $userStatusResult)
+        ) :
+            trigger_error("[ERROR] Login.php: user status structure invalid", E_USER_ERROR);
+            return null;
         endif;
-
-        $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
-        $passwordResult = $passwordCheck->validatePassword($email, $password);
-        if ($passwordResult !== 10) :
-            $this->message->logMessage(
-                '[ERROR]',
-                "Failed logon attempt by valid user $email from {$_SERVER['REMOTE_ADDR']}"
-            );
-            $badLogin->incrementBadLogin();
-            $this->abortLogin(
-                'Incorrect username or password submitted. Returning to login...',
-                '[NOTICE]',
-                "Password check failed for $email from {$_SERVER['REMOTE_ADDR']}",
-                3
-            );
-        endif;
-
-        $userStatus = new UserStatus($this->db, $this->logfile, $email);
-        $userStatusResult = $userStatus->getUserStatus();
-        $this->message->logMessage('[DEBUG]', "UserStatus for $email is {$userStatusResult['code']}");
-
-        if ($userStatusResult['code'] === 0) :
+        $code  = (int) $userStatusResult['code'];
+        $id    = (int) $userStatusResult['number'];
+        $admin = (int) $userStatusResult['admin'];
+        $this->message->logMessage('[DEBUG]', "UserStatus for $email is {$code}");
+        if ($code === 0) : // An error has been returned - fail.
             trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
             return null;
         endif;
 
-        if ($userStatusResult['code'] === 2) :
+        // If account is already locked or disabled, block immediately
+        if ($code === 2) :
             $this->abortLogin(
                 'There is a problem with your account. Contact the administrator. Returning to login...',
                 '[ERROR]',
-                "Logon attempt for locked account $email from {$_SERVER['REMOTE_ADDR']}"
+                "Logon attempt for locked account $email from $ip"
             );
         endif;
 
-        if ($userStatusResult['code'] === 3) :
+        if ($code === 3) :
             $this->abortLogin(
                 'There is a problem with your account. Contact the administrator. Returning to login...',
                 '[ERROR]',
-                "Logon attempt for disabled account $email from {$_SERVER['REMOTE_ADDR']}"
+                "Logon attempt for disabled account $email from $ip"
             );
         endif;
 
-        if ($userStatusResult['code'] !== 1 && $userStatusResult['code'] !== 10) :
+        if ($code !== 1 && $code !== 10) : // Anything else, not right
             $this->abortLogin(
                 'There is a problem with your account. Contact the administrator. Returning to login...',
                 '[ERROR]',
-                "Failed logon attempt: Incorrect status for $email from {$_SERVER['REMOTE_ADDR']}"
+                "Failed logon attempt: Incorrect status for $email from $ip"
+            );
+        endif;
+
+        // At this point, account is in a "normal" status; now we check password
+        $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
+        $passwordResult = $passwordCheck->validatePassword($email, $password);
+
+        if ($passwordResult !== 10) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "Failed logon attempt by valid user $email from $ip"
+            );
+            $user->incrementBadLogin();
+            $currentCount = $badCount + 1;
+
+            if ($currentCount >= $this->badLoginLimit) :
+                $user->triggerLocked();
+                $this->sendLockNotification($email);
+                $this->abortLogin(
+                    'Incorrect username or password submitted. Returning to login...',
+                    '[NOTICE]',
+                    "Too many incorrect logins from $email from $ip"
+                );
+            endif;
+
+            $this->abortLogin(
+                'Incorrect username or password submitted. Returning to login...',
+                '[NOTICE]',
+                "Password check failed for $email from $ip",
+                3
             );
         endif;
 
         $tfaManager = new TwoFactorManager($this->db, $this->smtpParameters, $this->serverEmail, $this->logfile);
-        if ($tfaManager->isEnabled($userStatusResult['number'])) :
+        if ($tfaManager->isEnabled($id)) :
             session_regenerate_id(true);
-            $_SESSION['user_pending_2fa'] = $userStatusResult['number'];
+            $_SESSION['user_pending_2fa'] = $id;
             $_SESSION['useremail_pending_2fa'] = $email;
-            $_SESSION['admin_pending_2fa'] = $userStatusResult['admin'] == 1;
-            $_SESSION['chgpwd_pending_2fa'] = $userStatusResult['code'] === 1;
+            $_SESSION['admin_pending_2fa'] = ($admin === 1);
+            $_SESSION['chgpwd_pending_2fa'] = ($code === 1);
 
-            if ($badLoginResult['count'] != 0) :
+            if ($badCount != 0) :
                 $this->message->logMessage(
                     '[NOTICE]',
                     "Logon (first factor) ok for $email, clearing non-zero "
-                    . "bad login count ({$badLoginResult['count']})"
+                    . "bad login count ({$badCount})"
                 );
-                $zeroBadLogin = new UserStatus($this->db, $this->logfile, $email);
-                $zeroBadLogin->zeroBadLogin();
+                $user->zeroBadLogin();
             endif;
 
             if (isset($_SESSION['redirect_url'])) :
                 $_SESSION['redirect_url_after_2fa'] = $_SESSION['redirect_url'];
             endif;
 
-            $tfaManager->startVerification($userStatusResult['number'], $email);
+            $tfaManager->startVerification($id, $email);
             $this->message->logMessage(
                 '[NOTICE]',
                 "Password validated for $email, redirecting to 2FA verification"
@@ -350,31 +398,30 @@ class LoginHandler
         $this->message->logMessage('[NOTICE]', 'Regenerating session ID after successful login');
         session_regenerate_id(true);
         $_SESSION['logged'] = true;
-        $_SESSION['user'] = $userStatusResult['number'];
+        $_SESSION['user'] = $id;
         $_SESSION['useremail'] = $email;
 
-        if ($userStatusResult['code'] === 1) :
+        if ($code === 1) :
             $_SESSION['chgpwd'] = true;
             $_SESSION['just_logged_in'] = true;
         endif;
 
         $this->message->logMessage(
             '[NOTICE]',
-            "Logon validated for $email from {$_SERVER['REMOTE_ADDR']}"
+            "Logon validated for $email from $ip"
         );
-        if ($badLoginResult['count'] != 0) :
+        if ($badCount != 0) :
             $this->message->logMessage(
                 '[NOTICE]',
                 "Logon ok for $email, clearing non-zero bad login "
-                . "count ({$badLoginResult['count']})"
+                . "count ({$badCount})"
             );
-            $zeroBadLogin = new UserStatus($this->db, $this->logfile, $email);
-            $zeroBadLogin->zeroBadLogin();
+            $user->zeroBadLogin();
         endif;
 
         return [
             'email' => $email,
-            'usernumber' => $userStatusResult['number'],
+            'usernumber' => $id,
             'userstat_result' => $userStatusResult
         ];
     }
@@ -399,10 +446,10 @@ class LoginHandler
         if ($mtceStatus == 1) :
             $noticeText = "Site is undergoing maintenance, please try again later...";
         else :
-            $noticeText = $userStatusResult['admin'] == 1
+            $noticeText = $userStatusResult['admin'] === 1
                 ? 'You are logged in!'
                 : 'You are logged in';
-            $_SESSION['admin'] = ($userStatusResult['admin'] == 1);
+            $_SESSION['admin'] = ($userStatusResult['admin'] === 1);
         endif;
         ?>
 <!DOCTYPE html>
