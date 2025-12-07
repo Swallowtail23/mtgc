@@ -276,6 +276,7 @@ tasks. Recommended cadence:
 - `bulk.sh` – nightly; refreshes the default-language subset and downloads
   images for any newly inserted records.
 - `weekly.sh` – weekly; runs the weekly exports helper.
+- `collection_snapshots.sh` – daily; records collection value history for charts.
 - `cleanup_tokens.sh` - daily; clears expired device trust tokens.
 
 A cron template lives at `setup/cron_mtgc.example`. For Podman hosts you can

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        06/12/25
+Version:     1.1
+Date:        08/12/25
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -12,6 +12,7 @@ To do:       -
 
 History:
     1.0 06/12/25 Initial version
+    1.1 08/12/25 Allow collection tab, reuse CollectionStats
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -29,6 +30,7 @@ $msg = new Message($logfile);
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $expectedReferringPages = [
     $myURL . '/profile.php',
+    $myURL . '/collection.php',
 ];
 
 // Normalize the referring page URL
@@ -78,79 +80,25 @@ $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for ta
 $priceManager = new PriceManager($db, $logfile, $userEmail);
 $updatedRows = $priceManager->updateCollectionValues($mytable);
 
-// Get card totals
-$rowcount = 0;
-$totalmrcardcount = 0;
-$unformatted_value = 0;
+$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$stats = $statsHelper->getStats($user, $mytable, $targetCurrency);
 
-$totalcount = $db->query(
-    "SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) AS TOTAL
-     FROM `$mytable`"
-);
-if ($totalcount !== false) :
-    $rowcountdata = $totalcount->fetch_array(MYSQLI_ASSOC);
-    $rowcount = (int) ($rowcountdata['TOTAL'] ?? 0);
-else :
-    trigger_error('[ERROR] ajaxcollectionvalue.php: Error: ' . $db->error, E_USER_ERROR);
-endif;
-
-$totalmrcount = $db->query(
-    "SELECT
-      SUM(IFNULL(`$mytable`.normal, 0))
-      +
-      SUM(IFNULL(`$mytable`.foil, 0))
-      +
-      SUM(IFNULL(`$mytable`.etched, 0))
-     AS TOTALMR
-     FROM `$mytable`
-     LEFT JOIN cards_scry
-     ON `$mytable`.id = cards_scry.id
-     WHERE rarity IN ('mythic', 'rare');"
-);
-if ($totalmrcount !== false) :
-    $rowmrcount = $totalmrcount->fetch_array(MYSQLI_ASSOC);
-    $totalmrcardcount = (int) ($rowmrcount['TOTALMR'] ?? 0);
-else :
-    trigger_error('[ERROR] ajaxcollectionvalue.php: Error: ' . $db->error, E_USER_ERROR);
-endif;
-
-$sqlvalue = "SELECT (
-                COALESCE(SUM(`$mytable`.normal * price),0)
-                +
-                COALESCE(SUM(`$mytable`.foil *
-                    CASE
-                        WHEN price_foil IS NOT NULL AND price_foil > 0 THEN price_foil
-                        WHEN price IS NOT NULL AND price > 0 THEN price
-                        ELSE 0
-                    END), 0)
-                +
-                COALESCE(SUM(`$mytable`.etched *
-                    CASE
-                        WHEN price_etched IS NOT NULL AND price_etched > 0 THEN price_etched
-                        WHEN price IS NOT NULL AND price > 0 THEN price
-                        ELSE 0
-                    END), 0)
-                )
-                as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
-$totalvalue = $db->query($sqlvalue);
-if ($totalvalue !== false) :
-    $rowvalue = $totalvalue->fetch_assoc();
-    $unformatted_value = $rowvalue['TOTAL'] ?? 0;
-else :
-    trigger_error('[ERROR] ajaxcollectionvalue.php: Error: ' . $db->error, E_USER_ERROR);
-endif;
+$unformatted_value = $stats['value_usd'];
+$rowcount = $stats['card_count'];
+$totalmrcardcount_fmt = number_format($stats['mr_count']);
+$localValueStr = '';
+$localCurrency = $stats['local_currency'];
+$rateUsed = $stats['rate_used'];
 
 $a = new \NumberFormatter('en-US', \NumberFormatter::CURRENCY);
 $collectionmoney = $a->format($unformatted_value);
 $collectionvalue = "Collection tcgplayer market value <br>US " . $collectionmoney;
 $rowcounttotal = number_format($rowcount);
-$totalmrcardcount_fmt = number_format($totalmrcardcount);
-$localValueStr = '';
 
-if (isset($rate) && $rate > 0) :
+if ($localCurrency !== null && $rateUsed !== null && $stats['value_local'] !== null) :
     $b = new \NumberFormatter('en-US', \NumberFormatter::CURRENCY);
-    $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
-    $localValueStr = $b->format($unformatted_value * $rate);
+    $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $localCurrency);
+    $localValueStr = $b->format($stats['value_local']);
 endif;
 
 ob_start();

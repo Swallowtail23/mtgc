@@ -126,6 +126,7 @@ frequencies:
 - `bulk.sh` (nightly): reprocesses the default-language subset and downloads
   any new images.
 - `weekly.sh` (weekly): runs the weekly export helper scripts.
+- `collection_snapshots.sh` (daily): records collection value history for charts.
 
 Install the cron file (adjusting the user, script path, and log locations):
 

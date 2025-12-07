@@ -106,9 +106,9 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
         require 'includes/overlays.php';
         require 'includes/header.php';
         require 'includes/menu.php';
-        if (empty($_SESSION["chgpwd"])) :
-            require 'includes/profilemenus.php';
-        endif; ?>
+    if (empty($_SESSION["chgpwd"])) :
+        require 'includes/profilemenus.php';
+    endif; ?>
 
         <!-- QR / 2FA box -->
         <div class="qr-box" id="qrBox" style="display:none">

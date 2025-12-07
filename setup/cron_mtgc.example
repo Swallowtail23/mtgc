@@ -24,3 +24,6 @@ LOG_ROOT=/var/log/mtg
 
 # Weekly exports (CSV/email helpers)
 30 4 * * 0 "$SCRIPT_ROOT"/weekly.sh >> "$LOG_ROOT"/cron_weekly.log 2>&1
+
+# Daily collection value snapshots
+15 5 * * * "$SCRIPT_ROOT"/collection_snapshots.sh >> "$LOG_ROOT"/cron_collection_snapshots.log 2>&1

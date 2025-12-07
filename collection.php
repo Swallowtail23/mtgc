@@ -131,6 +131,7 @@ endif;
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script src="/js/jquery.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -278,6 +279,96 @@ endif;
                     });
                 });
             });
+
+            let collectionChart = null;
+
+            function fetchHistory(range) {
+                $('#history-range button').removeClass('active');
+                $('#btn-range-' + range).addClass('active');
+                $('#history-status').text('Loading...');
+                $.getJSON('/ajax/ajaxcollectionhistory.php', {range: range})
+                    .done(function (resp) {
+                        if (!resp || resp.success !== true) {
+                            $('#history-status').text('Unable to load history');
+                            return;
+                        }
+                        renderHistoryChart(resp.data || []);
+                        $('#history-status').text('');
+                    })
+                    .fail(function () {
+                        $('#history-status').text('Unable to load history');
+                    });
+            }
+
+            function renderHistoryChart(data) {
+                const chartEl = document.getElementById('collectionHistoryChart');
+                chartEl.height = 200; // stabilise height across redraws
+                const ctx = chartEl.getContext('2d');
+                const labels = data.map(p => p.t);
+                const usdData = data.map(p => p.usd);
+                const localData = data.map(p => p.local);
+                const cardCounts = data.map(p => p.cards);
+
+                if (collectionChart !== null) {
+                    collectionChart.destroy();
+                }
+
+                collectionChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'USD',
+                                data: usdData,
+                                borderColor: '#3f51b5',
+                                backgroundColor: 'rgba(63,81,181,0.08)',
+                                tension: 0.2
+                            },
+                            {
+                                label: 'Local',
+                                data: localData,
+                                borderColor: '#26a69a',
+                                backgroundColor: 'rgba(38,166,154,0.08)',
+                                tension: 0.2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function (items) {
+                                        const idx = items[0].dataIndex;
+                                        const cards = cardCounts[idx] ?? 0;
+                                        return 'Cards: ' + cards;
+                                    }
+                                }
+                            },
+                            legend: {
+                                labels: {
+                                    usePointStyle: true
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    },
+                    maintainAspectRatio: false
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                fetchHistory('30d');
+            });
         </script>
     </head>
 
@@ -366,12 +457,25 @@ endif;
             <div class='staticpagecontent'>
                 <div class="profile-container">
                     <?php require 'includes/profile_collection.php'; ?>
-
-                    <br>
-                    <table class="profile_options" style="width: 100%; margin-top: 20px;">
+                    <div id="collection-history" class="collection-history">
+                        <div class="history-header">
+                            <h3 class="history-title">Value history</h3>
+                            <div id="history-range" class="history-range">
+                                <button id="btn-range-30d" class="profilebutton" type="button" onclick="fetchHistory('30d')">30d</button>
+                                <button id="btn-range-90d" class="profilebutton" type="button" onclick="fetchHistory('90d')">90d</button>
+                                <button id="btn-range-1y" class="profilebutton" type="button" onclick="fetchHistory('1y')">1y</button>
+                                <button id="btn-range-all" class="profilebutton" type="button" onclick="fetchHistory('all')">All</button>
+                            </div>
+                            <span id="history-status" class="history-status"></span>
+                        </div>
+                        <div class="history-canvas">
+                            <canvas id="collectionHistoryChart"></canvas>
+                        </div>
+                    </div>
+                    <table class="profile_options" style="width: 100%;">
                         <tr>
-                            <td colspan="4" style="border-width: 1px 0px;">
-                                <h2 class='h2pad'>Collection management</h2>
+                            <td colspan="4" style="border-width: 0px 0px 1px;">
+                                <h2 class='h2pad'>Collection Management</h2>
                             </td>
                         </tr>
                         <tr class="hoverhighlight">

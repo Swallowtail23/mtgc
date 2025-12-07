@@ -1837,7 +1837,6 @@ table
 }
 
 #userdetails,
-#mycollection,
 #changepassword
 {
     padding-bottom: 15px;
@@ -3096,6 +3095,44 @@ td.columnhide
 @keyframes collection-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+.collection-history {
+    margin-top: 20px;
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.history-title {
+    margin: 0;
+}
+
+.history-range {
+    display: flex;
+    gap: 6px;
+}
+
+.history-status {
+    font-size: 12px;
+    color: #555;
+}
+
+.history-canvas {
+    margin-top: 10px;
+    width: 100%;
+    max-width: 900px;
+}
+
+#collectionHistoryChart {
+    min-height: 180px;
+    max-height: 260px;
+    min-width: 180px;
+    max-width: 850px;
 }
 #profiletab
 {

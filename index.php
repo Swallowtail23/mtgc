@@ -844,7 +844,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                         <?php
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                             // $msg->logMessage('[DEBUG]', "Current card: ". json_encode($row));
-                            $msg->logMessage('[DEBUG]', "Current card: ". $row['cs_id']);
+                            $msg->logMessage('[DEBUG]', "Current card: " . $row['cs_id']);
                             $scryid = $row['cs_id'];
                             $cardUrl = "carddetail.php?id=$scryid";
                             $onclick = "location.href='" . $cardUrl . "';"; ?>
@@ -914,26 +914,26 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                         <td class="valueabilities">
                                             <?php
                                             if (isset($ability) and !empty($ability)) :
-                                                echo $ability;                                            
+                                                echo $ability;
                                             elseif (
                                                 (isset($f1Ability) && !empty($f1Ability))
                                                     &&
                                                 (!isset($f2Ability) || empty($f2Ability))
-                                                ) :
+                                            ) :
                                                 echo "$f1Ability";
                                             elseif (
                                                 (isset($f2Ability) && !empty($f2Ability))
                                                     &&
                                                 (!isset($f1Ability) || empty($f1Ability))
-                                                ) :
+                                            ) :
                                                 echo "$f2Ability";
                                             elseif (
                                                 (isset($f1Ability) && !empty($f1Ability))
                                                     &&
                                                 (isset($f2Ability) && !empty($f2Ability))
-                                                ) :
+                                            ) :
                                                 echo "$f1Ability // $f2Ability";
-                                            else:
+                                            else :
                                                 echo "";
                                             endif;
                                             ?>

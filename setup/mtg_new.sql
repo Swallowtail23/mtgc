@@ -301,6 +301,22 @@ CREATE TABLE `users` (
   `tfa_app_secret` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE `collection_values` (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `usernumber` smallint NOT NULL,
+  `collected_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `value_usd` decimal(15,2) NOT NULL DEFAULT 0,
+  `value_local` decimal(15,2) DEFAULT NULL,
+  `local_currency` varchar(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `rate_used` decimal(12,6) DEFAULT NULL,
+  `card_count` int UNSIGNED NOT NULL DEFAULT 0,
+  `mr_count` int UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_collected` (`usernumber`,`collected_at`),
+  CONSTRAINT `fk_collection_values_user`
+    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`key`),
@@ -441,4 +457,5 @@ ALTER TABLE `updatenotices`
 
 ALTER TABLE `users`
   MODIFY `usernumber` smallint NOT NULL AUTO_INCREMENT;
+
 COMMIT;
