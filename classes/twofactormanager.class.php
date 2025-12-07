@@ -27,6 +27,9 @@ use OTPHP\TOTP;
 
 class TwoFactorManager
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $log;

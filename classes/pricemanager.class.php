@@ -27,6 +27,9 @@ endif;
 
 class PriceManager
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $userEmail;

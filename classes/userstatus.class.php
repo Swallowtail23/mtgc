@@ -25,6 +25,9 @@ endif;
 
 class UserStatus
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $message;

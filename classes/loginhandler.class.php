@@ -25,6 +25,9 @@ endif;
 
 class LoginHandler
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $message;

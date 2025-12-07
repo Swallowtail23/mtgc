@@ -35,6 +35,9 @@ endif;
 
 class DeckManager
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $batchedCardIds = []; // Array to store batched cards to add

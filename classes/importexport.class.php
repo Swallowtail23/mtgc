@@ -32,6 +32,9 @@ endif;
 
 class ImportExport
 {
+    /**
+    * @var mysqli
+    */
     private $db;
     private $logfile;
     private $userEmail;
