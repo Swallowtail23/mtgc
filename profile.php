@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     13.6
+Version:     13.8
 Date:        06/12/25
 Name:        profile.php
 Purpose:     User profile page.
@@ -35,6 +35,8 @@ History:
     13.4 01/12/25 Respect email disabled setting on collection actions
     13.5 04/12/25 Require 2FA for password changes and email notifications on change
     13.6 06/12/25 Async collection value refresh on profile
+    13.7 06/12/25 Add profile/collection tabs and shared collection section
+    13.8 06/12/25 Move collection management to collection tab
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -62,56 +64,6 @@ $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
 
-// Has DELETE collection been called?
-$deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
-$delcollresult = ''; // Variable to hold error message
-
-// CSV export status (set via session after attempt)
-$csvsuccess = $_SESSION['csv_status'] ?? '';
-unset($_SESSION['csv_status']);
-
-if (isset($_GET['deckcreated'])) :
-    $newdecksuccess = htmlspecialchars($_GET['deckcreated'], ENT_QUOTES, 'UTF-8');
-    $msg->logMessage('[DEBUG]', "New deck name $newdecksuccess");
-else :
-    $newdecksuccess = '';
-endif;
-if (isset($_GET['decknumber'])) :
-    $newdecknumber = filter_input(INPUT_GET, 'decknumber', FILTER_VALIDATE_INT);
-    $msg->logMessage('[DEBUG]', "New deck number $newdecknumber");
-    if ($newdecknumber === false) :
-        $newdecknumber = ''; // If not a valid integer, reset to empty string
-    endif;
-else :
-    $newdecknumber = '';
-endif;
-if ($newdecksuccess === '' or $newdecknumber === '') :
-    $newdecksuccess = $newdecknumber = '';
-endif;
-
-if ($deletecollection === 'DELETE') :
-    $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
-    $msg->logMessage('[DEBUG]', "Exporting collection to email...");
-    $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
-    if ($csvResult !== true) :
-        $msg->logMessage('[ERROR]', "CSV export email failed: " . (is_string($csvResult) ? $csvResult : 'unknown'));
-        $_SESSION['csv_status'] = 'false';
-    else :
-        $_SESSION['csv_status'] = 'true';
-    endif;
-    $msg->logMessage('[DEBUG]', "Truncating collection table...");
-    if (!$db->execute_query("TRUNCATE TABLE `$mytable`")) :
-        $msg->logMessage('[ERROR]', "Truncate table failed");
-        $delcollresult = "Error: Failed to delete collection";
-    else :
-        $msg->logMessage('[DEBUG]', "PRG with success parameter...");
-        $delcollresult = "Success: Deleted collection";
-    endif;
-else :
-    $msg->logMessage('[DEBUG]', "Normal page load...");
-endif;
-
 ?>
 
 <!DOCTYPE html>
@@ -123,68 +75,8 @@ endif;
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
-        <style>
-            #mycollection {
-                position: relative;
-            }
-            #collection-refresh-overlay {
-                position: absolute;
-                top: 6px;
-                right: 8px;
-                display: none;
-                align-items: center;
-                gap: 4px;
-                font-size: 12px;
-                color: #3f51b5;
-            }
-            #collection-refresh-icon {
-                animation: collection-spin 1s linear infinite;
-            }
-            @keyframes collection-spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        </style>
         <script src="/js/jquery.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var csvSuccess = "<?php echo $csvsuccess; ?>";
-                if (csvSuccess === 'true') {
-                    document.getElementById('csvsuccess').style.display = 'block';
-                }
-                else if (csvSuccess === 'false') {
-                    document.getElementById('csvfailure').style.display = 'block';
-                }
-            });
-            document.addEventListener('DOMContentLoaded', function() {
-                var delcollresult = "<?php echo isset($delcollresult) ? $delcollresult : ''; ?>";
-                if (delcollresult !== '') {
-                    document.getElementById('delcollresult').style.display = 'block';
-                }
-            });
-            document.addEventListener('DOMContentLoaded', function() {
-                var newdecksuccess = "<?php echo isset($newdecksuccess) ? $newdecksuccess : ''; ?>";
-                if (newdecksuccess !== '') {
-                    document.getElementById('newdecksuccess').style.display = 'block';
-                }
-            });
-            document.addEventListener('DOMContentLoaded', function() {
-                document.getElementById('importScopeSelect').addEventListener('change', function() {
-                    var addDeckRow = document.getElementById('addDeckRow');
-                    if (this.value === 'replace' || this.value === 'subtract') {
-                        addDeckRow.style.display = 'none';
-                    } else {
-                        addDeckRow.style.display = '';
-                    }
-                });
-            });
-            // Function to toggle the visibility of the info box
-            function toggleInfoBox() {
-                var infoBox = document.getElementById("infoBox");
-                infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "")
-                    ? "block"
-                    : "none";
-            }
             function toggleQRBox() {
                 var qrBox = document.getElementById("qrBox");
                 var currentlyHidden = (qrBox.style.display === "none" || qrBox.style.display === "");
@@ -206,43 +98,6 @@ endif;
                 document.execCommand("copy");
                 alert("Secret key copied to clipboard");
             };
-
-            function closeMe( obj )
-            {
-                obj.style.display = 'none';
-                window.location.href = "<?php echo $myURL; ?>/profile.php";
-            }
-
-            function setCollectionRefreshing(state) {
-                var overlay = document.getElementById('collection-refresh-overlay');
-                if (!overlay) {
-                    return;
-                }
-                overlay.style.display = state ? 'flex' : 'none';
-            }
-
-            function refreshCollectionAsync() {
-                setCollectionRefreshing(true);
-                $.ajax({
-                    url: '/ajax/ajaxcollectionvalue.php',
-                    method: 'GET',
-                    dataType: 'json'
-                }).done(function(data) {
-                    if (data && data.success && data.html) {
-                        $('#collection-content').html(data.html);
-                    } else if (data && data.error) {
-                        console.error(data.error);
-                    }
-                }).fail(function(jqXHR, textStatus) {
-                    console.error('Collection refresh failed: ' + textStatus);
-                }).always(function() {
-                    setCollectionRefreshing(false);
-                });
-            }
-
-            document.addEventListener('DOMContentLoaded', function() {
-                refreshCollectionAsync();
-            });
         </script>
     </head>
 
@@ -250,105 +105,17 @@ endif;
         include_once 'includes/analyticstracking.php';
         require 'includes/overlays.php';
         require 'includes/header.php';
-        require 'includes/menu.php'; ?>
+        require 'includes/menu.php';
+        if (empty($_SESSION["chgpwd"])) :
+            require 'includes/profilemenus.php';
+        endif; ?>
 
-        <!-- Info box -->
-        <div id="csvsuccess" class="msg-new" onclick='closeMe(this)' style="display: none;">
-            <span>CSV email send was successful</span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <div id="csvfailure" class="msg-new error-new" onclick='closeMe(this)' style="display: none;">
-            <span>CSV email send was NOT successful</span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <div id="delcollresult" class="msg-new" onclick='closeMe(this)' style="display: none;">
-            <span><?php echo $delcollresult; ?></span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <div id="newdecksuccess" class="msg-new" onclick='closeMe(this)' style="display: none;">
-            <span>
-                Deck
-                <i>
-                    <a href='deckdetail.php?deck=<?php echo $newdecknumber ?>'>
-                        "<?php echo $newdecksuccess; ?>"
-                    </a>
-                </i>
-                created
-            </span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <div class="info-box" id="infoBox" style="display:none">
-            <span class="close-button-profile material-symbols-outlined" onclick="toggleInfoBox()">close</span>
-            <div class="info-box-inner">
-                <h2 class="h2-no-top-margin">Import help</h2>
-                <ul>
-                    <li>Select 'Add a deck' to create a deck with cards in this import</li>
-                    <li>
-                        Select Import type 'Add', 'Replace' or 'Remove' to add to existing, replace existing, or remove
-                        cards
-                    </li>
-                    <li>Import file can be a MTGC CSV, e.g.:</li>
-                </ul>
-                <pre>
-          setcode,number,name,lang,normal,foil,etched,id
-          LTR,3,Bill the Pony,en,5,0,0,{Scryfall id}</pre>
-                <ul>
-                    <li>Delver Lens lists can be imported in the CSV export format of</li>
-                </ul>
-                <pre>
-          'Edition code','Collector's number','Name',
-          'Non-foil quantity','Foil quantity','Scryfall ID'</pre>
-                <ul>
-                    <li>
-                        <u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards
-                        instead of variations of a card
-                    </li>
-                    <li>
-                        <u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate
-                        (e.g. Planeswalker-stamped promos, The List, etc.
-                    </li>
-                    <li>Files can also be decklists (MTGC or Moxfield)</li>
-                    <li>
-                        If "id" is a valid Scryfall UUID value, the line will be imported as that id
-                        <i>without checking anything else</i>
-                    </li>
-                    <li>
-                        If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number/language
-                        match or skip the row
-                    </li>
-                    <li>If language is unspecified, the primary version is imported (usually English)</li>
-                    <li>Set codes and collector numbers must be as <a href='sets.php'> here </a>for success</li>
-                    <li>For a format example: export first, use that file as a template</li>
-                    <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
-                    <li>You will be emailed a list of import failures/warnings</li>
-                </ul>
-            </div>
-        </div>
         <!-- QR / 2FA box -->
         <div class="qr-box" id="qrBox" style="display:none">
             <div class="qr-box-inner">
             </div>
         </div>
         <?php
-
-        $import = isset($_POST['import']) ? 'yes' : '';
-        $adddeck = isset($_POST['adddeck']) ? 'yes' : '';
-
-        $valid_importType = ['add','replace','subtract'];
-        $importType = isset($_POST['importscope']) ? "{$_POST['importscope']}" : '';
-        if (!in_array($importType, $valid_importType)) :
-            $importType = '';
-        endif;
-
-        $valid_format = ['mtgc','delverlens','regex'];
-        $importFormat = isset($_POST['format']) ? $_POST['format'] : '';
-        if (!in_array($importFormat, $valid_format)) :
-            $importFormat = '';
-        endif;
 
         // Does the user have a collection table?
         $tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
@@ -560,84 +327,7 @@ endif;
                 $current_currency = $row['currency'];
                 $msg->logMessage('[DEBUG]', "Current currency is '$current_currency'");
 
-            //7. Weekly exports
-                $current_weekly = $row['weeklyexport'];
-                $msg->logMessage('[DEBUG]', "Weekly exports are set to '$current_weekly'");
-
-            //8. Update pricing in case any new cards have been added to collection
-                // Deferred to AJAX refresh for performance
-
-                //Get card total
-                if (
-                    $totalcount = $db->query(
-                        "SELECT sum(IFNULL(normal, 0)) + sum(IFNULL(foil, 0)) + sum(IFNULL(etched, 0)) AS TOTAL
-                         FROM `$mytable`"
-                    )
-                ) :
-                    $rowcount = $totalcount->fetch_array(MYSQLI_ASSOC);
-                else :
-                    trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
-                endif;
-                if (is_null($rowcount['TOTAL'])) :
-                    $totalcardcount = 0;
-                else :
-                    $totalcardcount = $rowcount['TOTAL'];
-                endif;
-                $msg->logMessage('[DEBUG]', "Total card count = $totalcardcount");
-                if (
-                    $totalmrcount = $db->query(
-                        "SELECT
-                          SUM(IFNULL(`$mytable`.normal, 0))
-                          +
-                          SUM(IFNULL(`$mytable`.foil, 0))
-                          +
-                          SUM(IFNULL(`$mytable`.etched, 0))
-                         AS TOTALMR
-                         FROM `$mytable`
-                         LEFT JOIN cards_scry
-                         ON `$mytable`.id = cards_scry.id
-                         WHERE rarity IN ('mythic', 'rare');"
-                    )
-                ) :
-                    $rowmrcount = $totalmrcount->fetch_array(MYSQLI_ASSOC);
-                else :
-                    trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
-                endif;
-                if (is_null($rowmrcount['TOTALMR'])) :
-                    $totalmrcardcount = 0;
-                else :
-                    $totalmrcardcount = $rowmrcount['TOTALMR'];
-                endif;
-                $msg->logMessage('[DEBUG]', "Total mythics and rares count = $totalmrcardcount");
-
-                // Get total values
-                $sqlvalue = "SELECT (
-                                COALESCE(SUM(`$mytable`.normal * price),0)
-                                +
-                                COALESCE(SUM(`$mytable`.foil *
-                                    CASE
-                                        WHEN price_foil IS NOT NULL AND price_foil > 0 THEN price_foil
-                                        WHEN price IS NOT NULL AND price > 0 THEN price
-                                        ELSE 0
-                                    END), 0)
-                                +
-                                COALESCE(SUM(`$mytable`.etched *
-                                    CASE
-                                        WHEN price_etched IS NOT NULL AND price_etched > 0 THEN price_etched
-                                        WHEN price IS NOT NULL AND price > 0 THEN price
-                                        ELSE 0
-                                    END), 0)
-                                )
-                                as TOTAL FROM `$mytable` LEFT JOIN cards_scry ON `$mytable`.id = cards_scry.id";
-                if ($totalvalue = $db->query($sqlvalue)) :
-                    $rowvalue = $totalvalue->fetch_assoc();
-                    $unformatted_value = $rowvalue['TOTAL'];
-                    $msg->logMessage('[DEBUG]', "Unformatted value = $unformatted_value");
-                else :
-                    trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
-                endif;
-
-            //9. 2FA Section
+            //7. 2FA Section
                 // Get 2FA status for this user
                 $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
                 $tfa_enabled = $tfaManager->isEnabled($userId);
@@ -879,39 +569,6 @@ endif;
                         <b>Account status: </b> <?php echo $row['status']; ?> <br>
                         <b>Registered date: </b> <?php echo $row['reg_date']; ?>
                     </div>
-                    <div id="mycollection">
-                        <h2 class='h2pad'>My Collection</h2>
-                        <div id="collection-refresh-overlay">
-                            <span class="material-symbols-outlined refresh" id="collection-refresh-icon">
-                                refresh
-                            </span>
-                            <span aria-live="polite">Refreshing</span>
-                        </div>
-                        <div id="collection-content">
-                            <?php
-                                $a = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                                $collectionmoney = $a->format($unformatted_value);
-                                $msg->logMessage('[DEBUG]', "Formatted value = $collectionmoney");
-                                $collectionvalue = "Collection tcgplayer market value <br>US " . $collectionmoney;
-                                $rowcounttotal = number_format($totalcardcount);
-                                $totalmrcardcount = number_format($totalmrcardcount);
-                            if (isset($rate) and $rate > 0) :
-                                $b = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
-                                $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
-                                $currencySymbol = $b->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
-                                $localvalue = $b->format($unformatted_value * $rate);
-                                echo "$collectionvalue ($localvalue) <br>over $rowcounttotal cards "
-                                    . "($totalmrcardcount M/R).<br>";
-                            else :
-                                    echo "$collectionvalue over $rowcounttotal cards.<br>";
-                            endif;
-
-                                echo "(Pricing via <a href='https://www.scryfall.com/' target='_blank'>";
-                                echo "scryfall.com</a>.)<br>";
-                                $rowcounttotal = number_format($totalcardcount);
-                            ?>
-                        </div>
-                    </div>
                     <div id="changepassword">
                         <h2 class="h2pad">
                           Change my password
@@ -1141,19 +798,6 @@ endif;
                                         });
                                     });
 
-                                    // Toggle weekly export
-                                    $('#weekly_toggle').on('change', function () {
-                                        var weekly = this.checked ? "TURN ON" : "TURN OFF";
-                                        $.ajax({
-                                            url: "/ajax/ajaxweekly.php",
-                                            method: "POST",
-                                            data: { "weekly": weekly },
-                                            error: function (jqXHR, textStatus, errorThrown) {
-                                                console.error("AJAX error: " + textStatus + " - " + errorThrown);
-                                            }
-                                        });
-                                    });
-
                                     // Flash effect for currency select
                                     $('#currencySelect').on('change', function () {
                                         var selectedCurrency = $(this).val();
@@ -1174,45 +818,7 @@ endif;
                                             }
                                         });
                                     });
-
-                                    $("#importfileProfile").change(function() {
-                                        if ($(this).val()){
-                                            $("#submitfile").attr("style", "display: inline");
-                                            $("#importsubmit").attr("style", "box-shadow: none");
-                                        }
-                                        else {
-                                            $("#submitfile").attr("style", "display: none");
-                                        }
-                                    });
                                 });
-
-                                function importPrep() {
-                                    // alert('Import can take several minutes, please be patient...');
-                                    document.body.style.cursor='wait';
-                                };
-                                function confirmDelete() {
-                    var firstConfirm;
-                    if (<?php echo $emailEnabled ? 'true' : 'false'; ?>) {
-                        firstConfirm = confirm(
-                            "Delete all cards from your collection? Selecting OK will send a CSV collection "
-                            + "export to your registered email address and then delete all cards."
-                        );
-                    } else {
-                        firstConfirm = confirm(
-                            "Delete all cards from your collection? Email is disabled so no export will be sent."
-                        );
-                    }
-
-                                    if (firstConfirm) {
-                        var secondConfirm = confirm(
-                            "This action is irreversible. Are you absolutely sure you want to delete all cards "
-                            + "from your collection?"
-                        );
-                                        return secondConfirm;
-                                    }
-
-                                    return false;
-                                };
                             </script>
                             <tr>
                                 <td colspan="4" style="border-width: 1px 0px;">
@@ -1327,7 +933,7 @@ endif;
                                     <b>Collection view</b>
                                 </td>
                                 <td class="options_centre" colspan="2">
-                                    Cards you do not own show in B&W in grid view
+                                    Show cards you do not own in B&W in grid view
                                 </td>
                                 <td class="options_right"> <?php
                                 if ($current_coll_view == 1) : ?>
@@ -1408,292 +1014,11 @@ HTML;
                                     </select>
                                 </td>
                             </tr>
-                            <tr>
-                                <td colspan="4" style="border-width: 1px 0px;">
-                                    <h2 class='h2pad'>Collection management</h2>
-                                </td>
-                            </tr>
-                            <tr class="hoverhighlight">
-                                <td class="options_left">
-                                    <b>Delete</b>
-                                </td>
-                                <td class="options_centre" colspan="2">
-                                    <?php if ($emailEnabled) : ?>
-                                        Email CSV and delete all cards in your collection
-                                    <?php else : ?>
-                                        Delete all cards in your collection
-                                    <?php endif; ?>
-                                </td>
-                                <td class="options_right">
-                                    <form action="?"  method="GET" onsubmit="return confirmDelete()">
-                                        <input
-                                            id='delCollection'
-                                            name='deletecollection'
-                                            class='profilebutton'
-                                            type="submit"
-                                            value="DELETE"
-                                        >
-                                        <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
-                                    </form>
-                                </td>
-                            </tr>
-                            <script>
-                                function displayFileName() {
-                                    var input = document.getElementById('importfileProfile');
-                                    var fileNameSpan = document.getElementById('fileNameSpan');
-                                    if (input.files.length > 0) {
-                                        var fileName = input.files[0].name;
-                                        fileNameSpan.textContent = fileName;
-                                        document.getElementById('submitfile').style.display = 'block';
-                                    } else {
-                                        fileNameSpan.textContent = '';
-                                        document.getElementById('submitfile').style.display = 'none';
-                                    }
-                                }
-                            </script>
-                            <tr class="hoverhighlight">
-                                <td class="options_left" style="padding-top: 10px;">
-                                    <b>Import</b>
-                                </td>
-                                <td class="options_centre" colspan="2">
-                                    Import cards to your collection&nbsp;
-                                    <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">
-                                        help
-                                    </span>
-                                </td>
-                                <td class="options_right">
-                                    <form enctype='multipart/form-data' action='?' method='post'>
-                                        <label class='profilelabel'>
-                                            <input
-                                                id='importfileProfile'
-                                                type='file'
-                                                name='filename'
-                                                onchange='displayFileName()'
-                                            >
-                                            <span>SELECT</span>
-                                        </label><br>
-                                        <div id='submitfile' style="display: none;">
-                                            <label id='profilefilelabel'>
-                                                <input
-                                                    id='importsubmit'
-                                                    class='importlabel'
-                                                    type='submit'
-                                                    name='import'
-                                                    value='IMPORT'
-                                                    onclick='importPrep()';>
-                                                <input type="hidden" name="format" value="regex">
-                                            </label>
-                                            <table>
-                                                <tr title='Selected file name'>
-                                                    <td style='text-align: left'>
-                                                        <b>Selected:&nbsp;</b>
-                                                    </td>
-                                                    <td>
-                                                        <span id='fileNameSpan'></span>
-                                                    </td>
-                                                </tr>
-                                                <tr
-                                                    title="Add, replace, or remove cards from your collection"
-                                                >
-                                                    <td style='text-align: left'>
-                                                        <b>Action:</b>
-                                                    </td>
-                                                    <td>
-                                                        <select
-                                                            class="dropdown"
-                                                            name='importscope'
-                                                            id='importScopeSelect'
-                                                        >
-                                                            <option value='add'>Add</option>
-                                                            <option value='replace'>Replace</option>
-                                                            <option value='subtract'>Remove</option>
-                                                        </select>
-                                                    </td>
-                                                </tr>
-                                                <tr title='Add a new deck with these imported cards' id='addDeckRow'>
-                                                    <td style='text-align: left'>
-                                                        <b>Deck:</b>
-                                                    </td>
-                                                    <td>
-                                                        <span class="checkbox-group">
-                                                            <input
-                                                                id="adddeck"
-                                                                type="checkbox"
-                                                                class="checkbox"
-                                                                name="adddeck"
-                                                                value="yes"
-                                                            >
-                                                            <label for='adddeck'>
-                                                                <span class="check"></span>
-                                                                <span class="box"></span>
-                                                            </label>
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </form>
-                                </td>
-                            </tr>
-                            <tr class="hoverhighlight">
-                                <td class="options_left">
-                                    <b>Export</b>
-                                </td>
-                                <td class="options_centre" colspan="2">
-                                     Download a CSV file with all cards in your collection
-                                </td>
-                                <td class="options_right">
-                                    <form action="csv.php"  method="GET">
-                                        <input id='exportsubmit' class='profilebutton' type="submit" value="EXPORT">
-                                        <input type='hidden' name='type' value='echo'>
-                                        <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
-                                    </form>
-                                </td>
-                            </tr>
-                            <tr class="hoverhighlight">
-                                <td class="options_left">
-                                    &nbsp;
-                                </td>
-                                <td class="options_centre" colspan="2">
-                                    Email a CSV file with all cards in your collection to your email address
-                                </td>
-                                <td class="options_right">
-                                    <?php if ($emailEnabled) : ?>
-                                        <form action="csv.php"  method="GET">
-                                            <input id='emailsubmit' class='profilebutton' type="submit" value="EMAIL">
-                                            <input type='hidden' name='type' value='email'>
-                                            <?php echo "<input type='hidden' name='table' value='$mytable'>"; ?>
-                                        </form>
-                                    <?php else : ?>
-                                        Email disabled
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <tr class="hoverhighlight">
-                                <td class="options_left">
-                                    <b>&nbsp;</b>
-                                </td>
-                                <td class="options_centre" colspan="2">
-                                    Weekly email to you with a CSV file of your collection
-                                </td>
-                                <td class="options_right">
-                                    <?php if ($emailEnabled) : ?>
-                                        <?php if ($current_weekly == 1) : ?>
-                                        <label class="switch">
-                                            <input
-                                                type="checkbox"
-                                                id="weekly_toggle"
-                                                class="option_toggle"
-                                                checked="true"
-                                                value="on"
-                                            />
-                                        <div class="slider round"></div>
-                                        </label>
-                                        <?php else : ?>
-                                        <label class="switch">
-                                            <input
-                                                type="checkbox"
-                                                id="weekly_toggle"
-                                                class="option_toggle"
-                                                value="off"
-                                            />
-                                        <div class="slider round"></div>
-                                        </label>
-                                        <?php endif; ?>
-                                    <?php else : ?>
-                                        Email disabled
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
                         </table>
 
                         <?php
-                        if ($import === 'yes' && $importType !== '' && $importFormat !== '') :
-                            $msg->logMessage('[DEBUG]', "Import called, checking file uploaded...");
-                            if (is_uploaded_file($_FILES['filename']['tmp_name'])) :
-                                echo "<br><h4>" . "File " . $_FILES['filename']['name']
-                                    . " uploaded successfully. Processing..." . "</h4>";
-                                $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} uploaded");
-                            else :
-                                echo "<br><h4>" . "File " . $_FILES['filename']['name']
-                                    . " did not upload successfully. Exiting..." . "</h4>";
-                                $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} failed");
-                                exit;
-                            endif;
-                            $importfile = $_FILES['filename']['tmp_name'];
-                            $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
-                            $importcards = $obj->importCollectionRegex(
-                                $importfile,
-                                $mytable,
-                                $importType,
-                                $userEmail,
-                                $serverEmail
-                            );
-                            if ($importcards === 'emptyfile') :
-                                echo "<h4>File contains no card data</h4>";
-                                exit;
-                            else :
-                                if ($adddeck === 'yes') :
-                                    $currentDateTime = date("j F Y, g:i:sa");
-                                    $tmpdeckname = $currentDateTime;
-                                    $obj = new DeckManager(
-                                        $db,
-                                        $logfile,
-                                        $userEmail,
-                                        $serverEmail,
-                                        $importLinestoIgnore,
-                                        $nonPreferredSetCodes
-                                    );
-                                    $msg->logMessage(
-                                        '[DEBUG]',
-                                        "Import called with 'add deck' option, $tmpdeckname to be created..."
-                                    );
-                                    // returns array with success flag, and deck number if success
-                                    $decksuccess = $obj->addDeck($userId, $tmpdeckname);
-                                    if ($decksuccess['flag'] === 1) :
-                                        $deckNumber = $decksuccess['decknumber'];
-                                        $msg->logMessage(
-                                            '[DEBUG]',
-                                            "Deck created, $tmpdeckname created, deck number is $deckNumber"
-                                        );
-                                        echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
-                                            . "var deckCreated = true;</script>";
-                                        $file = fopen($_FILES['filename']['tmp_name'], 'r');
-                                        $deckManager = new DeckManager(
-                                            $db,
-                                            $logfile,
-                                            $userEmail,
-                                            $serverEmail,
-                                            $importLinestoIgnore,
-                                            $nonPreferredSetCodes
-                                        );
-                                        // Read the entire file content into a variable
-                                        $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
-                                        fclose($file);
-
-                                        // Call the processInput method with the decknumber and file content
-                                        $deckManager->processInput($deckNumber, $fileContent);
-                                    else :
-                                        $msg->logMessage('[ERROR]', "Deck NOT created");
-                                    endif;
-                                    $msg->logMessage(
-                                        '[DEBUG]',
-                                        "redirecting to profile.php?deckcreated=$tmpdeckname&decknumber=$deckNumber"
-                                    );
-                                    echo "<meta http-equiv='refresh' "
-                                        . "content='0;url=profile.php?deckcreated=$tmpdeckname";
-                                    echo "&decknumber=$deckNumber'>";
-                                else :
-                                    $msg->logMessage('[DEBUG]', "adddeck is not 'yes', skipping deck creation.");
-                                    echo "<meta http-equiv='refresh' content='0;url=profile.php'>";
-                                endif;
-                            endif;
-                        elseif ($import === 'yes' && ($importType === '' or $importFormat === '')) :
-                            $msg->logMessage('[ERROR]', "Import called without valid importType");
-                            echo "<h4>Invalid parameters</h4>";
-                            echo "<meta http-equiv='refresh' content='2;url=profile.php'>";
-                        else :
-                        endif; ?>
+                        // Collection management now handled on collection tab
+                        ?>
                     </div>
                     <br>&nbsp; <?php
                 endif; ?>

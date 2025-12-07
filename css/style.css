@@ -1270,6 +1270,7 @@ table
 
 .submitbutton 
 { 
+    appearance: none;
     -webkit-appearance: none;
     display: block; 
     background:transparent url('/images/tick_white.png') center no-repeat;
@@ -1473,21 +1474,25 @@ table
     display: block;
 }
 
-#page, #menu {
-
--webkit-backface-visibility: hidden;
--webkit-perspective: 1000;
+#page, #menu 
+{
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000;
+    -webkit-perspective: 1000;
 }
-.animating #menu, .menu-visible #menu {
-  display: block;
+.animating #menu, .menu-visible #menu 
+{
+    display: block;
 }
  /***
  * If the animating class is present then apply
  * the CSS transition to #page over 250ms.
  */
-.animating #page {
-  transition: transform .25s ease-in-out;
-  -webkit-transition: -webkit-transform .25s ease-in-out;
+.animating #page 
+{
+    transition: transform .25s ease-in-out;
+    -webkit-transition: -webkit-transform .25s ease-in-out;
 }
 /***
  * If the left class is present then transform
@@ -3072,6 +3077,37 @@ td.columnhide
     color: white;
 }
 
+#mycollection {
+    position: relative;
+}
+#collection-refresh-overlay {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    display: none;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #3f51b5;
+}
+#collection-refresh-icon {
+    animation: collection-spin 1s linear infinite;
+}
+@keyframes collection-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+#profiletab
+{
+    left:230px;
+    width:60px;
+}
+#collectiontab
+{ 
+    left:298px;
+    width:60px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
@@ -3224,6 +3260,16 @@ td.columnhide
     #setlist
     {
         max-width: 100%;
+    }
+    #profiletab
+    {
+        left:150px;
+        width:60px;
+    }
+    #collectiontab
+    { 
+        left:218px;
+        width:60px;
     }
 }
 @media (max-width: 682px)

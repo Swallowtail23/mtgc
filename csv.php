@@ -57,15 +57,16 @@ if (isset($_GET['table'])) :
         if ($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3) :
             $msg->logMessage('[DEBUG]', 'In debug, not redirecting');
         else :
-            // If not in debug mode, redirect back to profile.php
-            $msg->logMessage('[DEBUG]', 'Not in SMTP/site debug, redirecting back to profile.php');
+            // If not in debug mode, redirect back to the calling page
+            $msg->logMessage('[DEBUG]', 'Not in SMTP/site debug, redirecting back to referrer');
+            $returnUrl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'profile.php';
             // If the mailexport was successful
             if ($mailexport === true) :
                 $_SESSION['csv_status'] = 'true';
-                header('Location: profile.php?csvsuccess=true');
+                header("Location: {$returnUrl}?csvsuccess=true");
             else :
                 $_SESSION['csv_status'] = 'false';
-                header('Location: profile.php?csvsuccess=false');
+                header("Location: {$returnUrl}?csvsuccess=false");
             endif;
             exit;
         endif;
