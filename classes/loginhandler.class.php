@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        04/12/25
+Version:     1.7
+Date:        05/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -15,6 +15,9 @@ History:
     1.2 02/12/25 Render formatted page for login aborts
     1.3 02/12/25 Catch additional unformatted exits
     1.4 04/12/25 More robust handling of resets and sessions
+    1.5 05/12/25 Email user when account is locked for bad logins
+    1.6 05/12/25 Include reset link in lock notification email
+    1.7 05/12/25 CC admin on lock notifications
 */
 
 use andkab\Turnstile\Turnstile;
@@ -256,8 +259,9 @@ class LoginHandler
 
         if ($badLoginResult['count'] >= $this->badLoginLimit) :
             $badLogin->triggerLocked();
+            $this->sendLockNotification($email);
             $this->abortLogin(
-                'Your account is locked. Returning to login...',
+                'Your account is locked. Returning to login page - reset password to regain access',
                 '[NOTICE]',
                 "Too many incorrect logins from $email from {$_SERVER['REMOTE_ADDR']}"
             );
@@ -496,8 +500,47 @@ class LoginHandler
         <h2 id='h2'><?php echo $safeTitle; ?></h2>
         <p><?php echo $safeMessage; ?></p>
     </div>
-</body>
-</html>
+    </body>
+    </html>
         <?php
+    }
+
+    private function sendLockNotification($email)
+    {
+        global $myURL, $adminEmail;
+        if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+            $this->message->logMessage('[NOTICE]', "Lock notice suppressed; email disabled for $email");
+            return false;
+        endif;
+        if (!class_exists('MyPHPMailer')) :
+            $this->message->logMessage('[ERROR]', "Lock notice failed; MyPHPMailer not available for $email");
+            return false;
+        endif;
+
+        $resetLink = (isset($myURL) && $myURL !== '')
+            ? rtrim($myURL, '/') . '/reset.php'
+            : '/reset.php';
+        $subject = "{$this->siteTitle} account locked";
+        $plain = "Your account on {$this->siteTitle} has been locked after too many incorrect logins.\n"
+               . "If this was not you, please reset your password here: {$resetLink}\n"
+               . "Alternatively, contact the administrator.\n"
+               . "Resetting your password will unlock your account.";
+        $html = "<p>Your account on {$this->siteTitle} has been locked after too many incorrect logins.</p>"
+              . "<p>If this was not you, please <a href='{$resetLink}'>reset your password</a> "
+              . "or contact the administrator.</p>"
+              . "<p>Resetting your password will unlock your account.</p>";
+
+        $mailer = new MyPHPMailer(true, $this->smtpParameters, $this->serverEmail, $this->logfile, $this->siteTitle);
+        if (isset($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) :
+            $mailer->addCC($adminEmail);
+        else :
+            $this->message->logMessage('[NOTICE]', "Admin CC skipped; invalid adminEmail: " . ($adminEmail ?? 'unset'));
+        endif;
+        if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
+            $this->message->logMessage('[NOTICE]', "Lock notice sent to $email");
+            return true;
+        endif;
+        $this->message->logMessage('[ERROR]', "Lock notice failed to send to $email");
+        return false;
     }
 }
