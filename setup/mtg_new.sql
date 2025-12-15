@@ -424,12 +424,6 @@ ALTER TABLE `users`
   ADD KEY `username_2` (`username`),
   ADD KEY `email_2` (`email`);
 
-ALTER TABLE `collection_values`
-  ADD CONSTRAINT `fk_collection_values_user`
-    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
-    ON DELETE CASCADE;
-
-
 ALTER TABLE `admin`
   MODIFY `key` int NOT NULL AUTO_INCREMENT;
 
@@ -459,5 +453,10 @@ ALTER TABLE `updatenotices`
 
 ALTER TABLE `users`
   MODIFY `usernumber` smallint NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `collection_values`
+  ADD CONSTRAINT `fk_collection_values_user`
+    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
+    ON DELETE CASCADE;
 
 COMMIT;
