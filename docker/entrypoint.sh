@@ -21,7 +21,9 @@ fi
 LOGROTATE_SRC="/mnt/data/config/logrotate-mtgc.conf"
 if [ -f "$LOGROTATE_SRC" ]; then
     mkdir -p /etc/logrotate.d
-    ln -sfn "$LOGROTATE_SRC" /etc/logrotate.d/mtgc
+    cp -f "$LOGROTATE_SRC" /etc/logrotate.d/mtgc
+    chown root:root /etc/logrotate.d/mtgc
+    chmod 644 /etc/logrotate.d/mtgc
 fi
 
 # Ensure log file exists and has correct ownership
