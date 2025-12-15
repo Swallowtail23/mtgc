@@ -171,10 +171,11 @@ for you; there is no longer a root-level `.env`.
 The host paths defined during bootstrap contain persistent data:
 
 - `${BASE_DIR}/cardimg` – bulk JSON cache plus card images (can be tens of GBs).
-- `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, and helper
-  shell scripts under `config/scripts`. These are copied from `setup/*.sh` on
-  the first run so you can schedule cron jobs. Inside the container they are
-  available at `/mnt/data/config/scripts` (and `/opt/mtg/scripts` via symlink).
+- `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, the cron
+  template `cron_mtgc`, and helper shell scripts under `config/scripts`. These
+  are copied from `setup/*.sh` on the first run so you can schedule cron jobs.
+  Inside the container they are available at `/mnt/data/config/scripts` (and
+  `/opt/mtg/scripts` via symlink).
 - `${BASE_DIR}/logs` – application logs, including the Scryfall import marker.
 
 Keep backups of the database volume (`mtgc_db-data`) and these folders if you
@@ -266,7 +267,12 @@ restoring, recreate the volumes, copy `${BASE_DIR}` folders back, then import
 ## Scheduled jobs
 
 The helper scripts copied to `${BASE_DIR}/config/scripts` cover recurring data
-tasks. Recommended cadence:
+tasks. A cron template is copied to `${BASE_DIR}/config/cron_mtgc` during
+bootstrap; the container entrypoint symlinks `/opt/mtg/scripts` to the mounted
+`${BASE_DIR}/config/scripts`, installs that cron file into root's crontab, and
+starts `cron` so the jobs run automatically after `docker/docker-init.sh`.
+Edit the `cron_mtgc` file on the host and restart the web container to reload
+the schedule. Recommended cadence:
 
 - `bulk_all.sh` – weekly; refreshes the Scryfall “all cards” dataset (no image
   downloads) so the database stays current.
@@ -279,20 +285,13 @@ tasks. Recommended cadence:
 - `collection_snapshots.sh` – daily; records collection value history for charts.
 - `cleanup_tokens.sh` - daily; clears expired device trust tokens.
 
-A cron template lives at `setup/cron_mtgc.example`. For Podman hosts you can
-adapt it by replacing `SCRIPT_ROOT` with `${BASE_DIR}/config/scripts` and
-wrapping the commands with `podman exec`. Example `/etc/cron.d/mtgc` entry:
-
-```
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-BASE_DIR=/home/you/mtgc
-
-0 1 * * 0 root podman exec mtgc_web_1 /mnt/data/config/scripts/bulk_all.sh >> /var/log/mtg/cron_bulk_all.log 2>&1
-```
-
-Repeat for each script using the schedule above. Docker users can swap
-`podman exec` for `docker compose exec`. Ensure the log files referenced in the
+The template shipped at `setup/cron_mtgc.example` is copied to
+`${BASE_DIR}/config/cron_mtgc` by the init script; customise it there if you
+want to adjust schedules or log locations. Cron entries use
+`SCRIPT_ROOT=/opt/mtg/scripts` (the entrypoint creates that symlink) and
+`LOG_ROOT=/var/log/mtg` (the mounted logs directory). After editing the file,
+restart the web container (`podman-compose restart web` or `docker compose
+restart web`) so the crontab reloads. Ensure the log files referenced in the
 cron entries exist and are rotated (see “Log rotation”).
 
 ## Using Podman
@@ -359,8 +358,6 @@ this setup provides automatic restarts with minimal configuration.
 
   Update the Apache config accordingly and reload the containers.
 - **Updates:** pull security patches regularly:
-
-## Upgrade playbook
 
 ## Upgrade playbook
 

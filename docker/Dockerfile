@@ -6,6 +6,7 @@ ENV TZ=Australia/Hobart
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+       cron \
        git unzip \
        libpng-dev \
        libjpeg62-turbo-dev \

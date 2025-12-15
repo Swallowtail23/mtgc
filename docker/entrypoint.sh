@@ -8,6 +8,15 @@ if [ -f "$CONFIG_SRC" ]; then
     ln -sf "$CONFIG_SRC" "$CONFIG_DEST"
 fi
 
+# Expose helper scripts at /opt/mtg/scripts for cron compatibility
+SCRIPTS_SRC="/mnt/data/config/scripts"
+SCRIPTS_DEST="/opt/mtg/scripts"
+if [ -d "$SCRIPTS_SRC" ]; then
+    mkdir -p /opt/mtg
+    ln -sfn "$SCRIPTS_SRC" "$SCRIPTS_DEST"
+    chmod +x "$SCRIPTS_SRC"/*.sh 2>/dev/null
+fi
+
 # Ensure log file exists and has correct ownership
 LOG_FILE="/var/log/mtg/mtgapp.log"
 if [ ! -f "$LOG_FILE" ]; then
@@ -28,6 +37,13 @@ if [ ! -f /var/www/mtgnew/vendor/autoload.php ] || [ ! -f "$COMPOSER_CHECK" ]; t
     export COMPOSER_HOME=/tmp/composer
     composer install --no-dev --no-interaction --prefer-dist
     touch "$COMPOSER_CHECK"
+fi
+
+# Install cron schedule if present
+CRON_FILE="/mnt/data/config/cron_mtgc"
+if [ -f "$CRON_FILE" ]; then
+    crontab "$CRON_FILE"
+    service cron start
 fi
 
 # Now run the original CMD

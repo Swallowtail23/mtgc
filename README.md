@@ -94,6 +94,9 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
 
 - Sample scripts in `setup/*.sh` should be copied to `/opt/mtg/scripts` (or your
   chosen location), made executable and updated to point to the bulk directory.
+- Cron template `setup/cron_mtgc.example` should live at `/opt/mtg/cron_mtgc`;
+  load it with `sudo crontab /opt/mtg/cron_mtgc` (Docker init handles this
+  automatically). Adjust paths if your install differs.
 - Schedule via cron/Task Scheduler to keep data, prices, weekly exports, and
   collection value snapshots up to date.
 

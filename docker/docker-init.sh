@@ -201,6 +201,10 @@ for helper in setup/*.sh; do
         cp "$helper" "$target"
     fi
 done
+CRON_TEMPLATE_DEST="$BASE_DIR/config/cron_mtgc"
+if [[ ! -f "$CRON_TEMPLATE_DEST" ]]; then
+    cp setup/cron_mtgc.example "$CRON_TEMPLATE_DEST"
+fi
 restore_host_permissions "$SCRIPTS_DEST"
 chmod +x "$SCRIPTS_DEST"/*.sh
 

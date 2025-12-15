@@ -151,6 +151,7 @@ if not exist "%SCRIPTS_DEST%" mkdir "%SCRIPTS_DEST%"
 for %%F in ("%PROJECT_ROOT%\setup\*.sh") do (
     if not exist "%SCRIPTS_DEST%\%%~nxF" copy /Y "%%~F" "%SCRIPTS_DEST%\%%~nxF" >nul
 )
+if not exist "%BASE_DIR%\config\cron_mtgc" copy /Y "%PROJECT_ROOT%\setup\cron_mtgc.example" "%BASE_DIR%\config\cron_mtgc" >nul
 for %%F in ("%SCRIPTS_DEST%\*.sh") do attrib -R "%%~F"
 exit /b 0
 
