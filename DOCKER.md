@@ -72,7 +72,7 @@ Clone the repo to your local host:
 2. Run the helper script:
 
    ```bash
-   ./docker/docker-init.sh
+   bash docker/docker-init.sh
    ```
 
     - The script auto-detects Docker vs Podman/compose and prompts for:

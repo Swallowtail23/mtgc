@@ -312,10 +312,7 @@ CREATE TABLE `collection_values` (
   `card_count` int UNSIGNED NOT NULL DEFAULT 0,
   `mr_count` int UNSIGNED NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `idx_user_collected` (`usernumber`,`collected_at`),
-  CONSTRAINT `fk_collection_values_user`
-    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
-    ON DELETE CASCADE
+  KEY `idx_user_collected` (`usernumber`,`collected_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE `admin`
@@ -426,6 +423,11 @@ ALTER TABLE `users`
   ADD KEY `usernumber` (`usernumber`),
   ADD KEY `username_2` (`username`),
   ADD KEY `email_2` (`email`);
+
+ALTER TABLE `collection_values`
+  ADD CONSTRAINT `fk_collection_values_user`
+    FOREIGN KEY (`usernumber`) REFERENCES `users` (`usernumber`)
+    ON DELETE CASCADE;
 
 
 ALTER TABLE `admin`
