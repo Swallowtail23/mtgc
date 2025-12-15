@@ -38,7 +38,7 @@ if (empty($_GET)) :
     $validsearch = "";
 else :
     $params = [];
-    if ($adv != "yes") :
+    if ($adv != "yes" || empty($sortBy)) :
         $msg->logMessage('[DEBUG]', "Not advanced search called");
         // Not an advanced search called
         if (strlen($name) > 2 || !empty($setcoderegexsearch)) : // Needs >2 chars to search
