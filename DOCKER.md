@@ -212,7 +212,9 @@ Application logs live at `${BASE_DIR}/logs` on the host (mounted inside the
 containers at `/var/log/mtg`). `docker-init` writes a container-ready
 logrotate config to `${BASE_DIR}/config/logrotate-mtgc.conf` (paths set to
 `/var/log/mtg`) and the entrypoint copies it into `/etc/logrotate.d/mtgc`
-inside the container with root ownership (required by logrotate). The shared
+inside the container with root ownership (required by logrotate). The template
+ships with `su www-data www-data` to satisfy logrotate’s secure-dir checks
+because `/var/log/mtg` is writable by the web user. The shared
 `cron_mtgc` file includes a daily logrotate line so rotation runs automatically
 once the stack is up. To refresh the crontab after edits, restart the web
 container.
