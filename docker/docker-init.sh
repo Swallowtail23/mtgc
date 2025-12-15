@@ -205,6 +205,11 @@ CRON_TEMPLATE_DEST="$BASE_DIR/config/cron_mtgc"
 if [[ ! -f "$CRON_TEMPLATE_DEST" ]]; then
     cp setup/cron_mtgc.example "$CRON_TEMPLATE_DEST"
 fi
+
+LOGROTATE_DEST="$BASE_DIR/config/logrotate-mtgc.conf"
+if [[ ! -f "$LOGROTATE_DEST" ]]; then
+    sed "s|__BASE_DIR__|/var/log/mtg|g" docker/logrotate-mtgc.conf > "$LOGROTATE_DEST"
+fi
 restore_host_permissions "$SCRIPTS_DEST"
 chmod +x "$SCRIPTS_DEST"/*.sh
 

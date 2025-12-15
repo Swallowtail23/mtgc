@@ -64,7 +64,12 @@ EOF
 ```
 
 Adjust the frequency or retention as needed and run
-`sudo logrotate -f /etc/logrotate.d/mtgc` for an immediate rotation.
+`sudo logrotate -f /etc/logrotate.d/mtgc` for an immediate rotation. Schedule
+it (root crontab) to mirror the container defaults:
+
+```
+5 0 * * * /usr/sbin/logrotate /etc/logrotate.d/mtgc
+```
 
 ## Database setup
 
@@ -128,6 +133,7 @@ Recommended frequencies:
   any new images.
 - `weekly.sh` (weekly): runs the weekly export helper scripts.
 - `collection_snapshots.sh` (daily): records collection value history for charts.
+- `logrotate` (daily): rotates `/var/log/mtg/*.log` using `/etc/logrotate.d/mtgc`.
 
 Install the cron file (adjusting the user, script path, and log locations):
 

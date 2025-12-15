@@ -7,6 +7,9 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 SCRIPT_ROOT=/opt/mtg/scripts
 LOG_ROOT=/var/log/mtg
 
+# Daily log rotation (container installs logrotate config at /etc/logrotate.d/mtgc)
+5 0 * * * /usr/sbin/logrotate /etc/logrotate.d/mtgc
+
 # Weekly "all cards" refresh (no image downloads)
 0 1 * * 0 "$SCRIPT_ROOT"/bulk_all.sh >> "$LOG_ROOT"/cron_bulk_all.log 2>&1
 

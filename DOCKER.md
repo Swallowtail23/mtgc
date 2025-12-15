@@ -209,18 +209,22 @@ pulling the full image set unnecessarily.
 ## Log rotation
 
 Application logs live at `${BASE_DIR}/logs` on the host (mounted inside the
-containers at `/var/log/mtg`). Use the provided logrotate template to keep them
-trimmed:
+containers at `/var/log/mtg`). `docker-init` writes a container-ready
+logrotate config to `${BASE_DIR}/config/logrotate-mtgc.conf` (paths set to
+`/var/log/mtg`) and the entrypoint links it into `/etc/logrotate.d/mtgc`
+inside the container. The shared `cron_mtgc` file includes a daily logrotate
+line so rotation runs automatically once the stack is up. To refresh the
+crontab after edits, restart the web container.
 
 ```bash
 BASE_DIR=$(grep BASE_DIR docker/.env | cut -d= -f2)
-sudo sed "s|__BASE_DIR__|$BASE_DIR|g" docker/logrotate-mtgc.conf \
-    | sudo tee /etc/logrotate.d/mtgc >/dev/null
-sudo logrotate -f /etc/logrotate.d/mtgc   # optional test run
+sudo logrotate -f "${BASE_DIR}/config/logrotate-mtgc.conf"   # optional host-side test
 ```
 
 The template rotates daily, keeps 14 compressed copies, and uses `copytruncate`
-so you do not need to signal Apache. Adjust the retention values as needed.
+so you do not need to signal Apache. Adjust the retention values as needed. If
+you change ownership on `${BASE_DIR}/logs`, edit the `su` line in
+`${BASE_DIR}/config/logrotate-mtgc.conf` to match.
 
 Container engine logs also need limits:
 

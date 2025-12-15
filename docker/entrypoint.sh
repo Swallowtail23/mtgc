@@ -17,6 +17,13 @@ if [ -d "$SCRIPTS_SRC" ]; then
     chmod +x "$SCRIPTS_SRC"/*.sh 2>/dev/null
 fi
 
+# Install logrotate config if provided
+LOGROTATE_SRC="/mnt/data/config/logrotate-mtgc.conf"
+if [ -f "$LOGROTATE_SRC" ]; then
+    mkdir -p /etc/logrotate.d
+    ln -sfn "$LOGROTATE_SRC" /etc/logrotate.d/mtgc
+fi
+
 # Ensure log file exists and has correct ownership
 LOG_FILE="/var/log/mtg/mtgapp.log"
 if [ ! -f "$LOG_FILE" ]; then

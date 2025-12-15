@@ -80,6 +80,10 @@ if not exist "%BASE_DIR%\config\php_custom.ini" (
 
 call :CopyScripts
 
+if not exist "%BASE_DIR%\config\logrotate-mtgc.conf" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%PROJECT_ROOT%\docker\logrotate-mtgc.conf') -replace '__BASE_DIR__','/var/log/mtg' | Set-Content '%BASE_DIR%\config\logrotate-mtgc.conf'"
+)
+
 call :GetComposeValue MYSQL_DATABASE DB_NAME
 call :GetComposeValue MYSQL_USER DB_USER
 call :GetComposeValue MYSQL_PASSWORD DB_PASS
