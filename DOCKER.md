@@ -291,6 +291,7 @@ the schedule. Recommended cadence:
 - `weekly.sh` – weekly; runs the weekly exports helper.
 - `collection_snapshots.sh` – daily; records collection value history for charts.
 - `cleanup_tokens.sh` - daily; clears expired device trust tokens.
+- `logrotate` - daily; rotates container logs via `/etc/logrotate.d/mtgc` (cron entry included in `cron_mtgc`).
 
 The template shipped at `setup/cron_mtgc.example` is copied to
 `${BASE_DIR}/config/cron_mtgc` by the init script; customise it there if you
