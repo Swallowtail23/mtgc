@@ -30,3 +30,6 @@ LOG_ROOT=/var/log/mtg
 
 # Daily collection value snapshots
 15 5 * * * "$SCRIPT_ROOT"/collection_snapshots.sh >> "$LOG_ROOT"/cron_collection_snapshots.log 2>&1
+
+# Nightly cleanup of expired trusted device tokens
+0 6 * * * "$SCRIPT_ROOT"/cleanup_tokens.sh >> "$LOG_ROOT"/cron_cleanup_tokens.log 2>&1
