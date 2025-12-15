@@ -257,7 +257,8 @@ run_user_setup() {
     ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
         "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 
-    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e "TRUNCATE TABLE mtg_new.users;"
+    ${DOCKER_CMD} exec mtgc_db_1 mysql -u root -prootpass -e \
+        "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
 
     read -rp "Enter email address for admin user: " email
     read -rp "Enter desired username (display only): " username
