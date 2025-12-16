@@ -1,6 +1,5 @@
 # Example cron file for MTG Collection scheduled jobs
-# Copy to the account that owns the web files (e.g. `sudo crontab -u apache cron_mtgc.example`)
-# or drop into /etc/cron.d/mtgc and adjust the user, SCRIPT_ROOT, and LOG_ROOT paths.
+# installed into crontab by docker init
 
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

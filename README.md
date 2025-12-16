@@ -90,17 +90,6 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
   to enforce TLS certificate validation.
 - Web/container users must have read/write access; admin UI writes back changes.
 
-### Shell/Bulk scripts
-
-- Sample scripts in `setup/*.sh` should be copied to `/opt/mtg/scripts` (or your
-  chosen location), made executable and updated to point to the bulk directory.
-- Cron template `setup/cron_mtgc.example` should live at `/opt/mtg/cron_mtgc`;
-  load it with `sudo crontab /opt/mtg/cron_mtgc` (Docker init handles this
-  automatically). Adjust paths if your install differs. The template also
-  includes log rotation and trusted-device cleanup jobs.
-- Schedule via cron/Task Scheduler to keep data, prices, weekly exports, and
-  collection value snapshots up to date.
-
 ## Work In Progress
 
 - Further automation/simplification of admin flows

@@ -1,0 +1,16 @@
+# Cron.d-ready version (includes user column: root)
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+SCRIPT_ROOT=/opt/mtg/scripts
+LOG_ROOT=/var/log/mtg
+
+5 0 * * * root /usr/sbin/logrotate /etc/logrotate.d/mtgc
+0 1 * * 0 root "$SCRIPT_ROOT"/bulk_all.sh >> "$LOG_ROOT"/cron_bulk_all.log 2>&1
+30 1 * * * root "$SCRIPT_ROOT"/sets.sh >> "$LOG_ROOT"/cron_sets.log 2>&1
+0 2 * * * root "$SCRIPT_ROOT"/migrations.sh >> "$LOG_ROOT"/cron_migrations.log 2>&1
+0 3 * * 1,3,5 root "$SCRIPT_ROOT"/rulings.sh >> "$LOG_ROOT"/cron_rulings.log 2>&1
+0 4 * * * root "$SCRIPT_ROOT"/bulk.sh >> "$LOG_ROOT"/cron_bulk_default.log 2>&1
+30 4 * * 0 root "$SCRIPT_ROOT"/weekly.sh >> "$LOG_ROOT"/cron_weekly.log 2>&1
+15 5 * * * root "$SCRIPT_ROOT"/collection_snapshots.sh >> "$LOG_ROOT"/cron_collection_snapshots.log 2>&1
+0 6 * * * root "$SCRIPT_ROOT"/cleanup_tokens.sh >> "$LOG_ROOT"/cron_cleanup_tokens.log 2>&1

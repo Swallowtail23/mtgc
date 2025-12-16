@@ -48,6 +48,7 @@ compose definitions), keeping the project root clean of Docker-specific files.
 - `docker/mtgc_ctr.conf` – Apache vhost used inside the web image.
 - `docker/my.cnf` – MySQL server config baked into the DB image.
 - `docker/logrotate-mtgc.conf` – logrotate template for `${BASE_DIR}/logs`.
+- `docker/cron_mtgc.example` – cron template used in the container (installed via `docker-init`).
 - `docker/backup.sh` – mysqldump + tar helper for quick backups.
 - `docker/mtgc-compose.service` – systemd unit example to auto-start/restart
   the stack.
@@ -293,7 +294,7 @@ the schedule. Recommended cadence:
 - `cleanup_tokens.sh` - daily; clears expired device trust tokens.
 - `logrotate` - daily; rotates container logs via `/etc/logrotate.d/mtgc` (cron entry included in `cron_mtgc`).
 
-The template shipped at `setup/cron_mtgc.example` is copied to
+The template shipped at `docker/cron_mtgc.example` is copied to
 `${BASE_DIR}/config/cron_mtgc` by the init script; customise it there if you
 want to adjust schedules or log locations. Cron entries use
 `SCRIPT_ROOT=/opt/mtg/scripts` (the entrypoint creates that symlink) and

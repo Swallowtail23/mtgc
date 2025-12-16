@@ -120,8 +120,7 @@ and PHPUnit (dev).
 ## Cron / scheduled tasks
 
 Copy the helper scripts to `/opt/mtg/scripts` (as described earlier) and use the
-sample schedule in `setup/cron_mtgc.example` as a starting point. Keep the
-canonical copy under `/opt/mtg/cron_mtgc` so updates are easy to apply.
+sample schedule in `setup/cron_mtgc.crond` as a starting point.
 Recommended frequencies:
 
 - `bulk_all.sh` (weekly): refreshes the entire Scryfall dataset without
@@ -138,12 +137,11 @@ Recommended frequencies:
 Install the cron file (adjusting the user, script path, and log locations):
 
 ```bash
-sudo cp setup/cron_mtgc.example /opt/mtg/cron_mtgc
+sudo cp setup/cron_mtgc.crond /opt/mtg/cron_mtgc
 sudo sed -i 's|/opt/mtg|/your/script/path|' /opt/mtg/cron_mtgc
 sudo sed -i 's|/var/log/mtg|/your/log/path|' /opt/mtg/cron_mtgc
-sudo crontab /opt/mtg/cron_mtgc          # loads into root's crontab
-# Alternatively, symlink for cron.d installations (file must contain a user column):
-# sudo ln -sf /opt/mtg/cron_mtgc /etc/cron.d/mtgc && sudo systemctl reload crond
+sudo mv /opt/mtg/cron_mtgc /etc/cron.d/mtgc
+sudo systemctl reload crond    # or the cron service on your distro
 ```
 
 Ensure the cron user can execute PHP, access `/var/www/mtgnew`, and write to the
