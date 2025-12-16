@@ -1,13 +1,13 @@
 <?php
 /*
-Version:     6.0
+Version:     6.1
 Date:        16/12/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:       Add configurable and scrollable logfile box
+To do:       -
 
 History:
     1.0         Initial version
@@ -31,6 +31,7 @@ History:
     5.3 04/12/25 Display current application version
     5.4 04/12/25 Trim SMTP HELO value whitespace
     6.0 16/12/25 Improve escaping and variable usage, refactor flow and PRGs
+    6.1          Add scrollable/selectable log display
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -1058,19 +1059,44 @@ require('../includes/menu.php');
             </form>
 
             <?php
-            $logLinesToShow = 8;
+            $logLinesRequested = filter_input(INPUT_GET, 'log_lines', FILTER_SANITIZE_NUMBER_INT);
+            $logLinesToShow = ($logLinesRequested !== null && $logLinesRequested !== false && $logLinesRequested > 0)
+                ? (int) $logLinesRequested
+                : 10;
             $recentLogLines = getLogTailLines($logfile, $logLinesToShow); ?>
-            <h3>Logs - last <?php echo $logLinesToShow . " lines"; ?></h3>
-            <?php
-            if (empty($recentLogLines)) :
-                echo 'No log entries available or log file could not be read.<br>';
-            else :
-                foreach ($recentLogLines as $line) :
-                    echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "<br>";
-                endforeach;
-            endif;
+            <h3 id="logs">Logs</h3>
+            <form action="admin.php#logs" method="get" style="margin-bottom: 8px;">
+                <label for="log_lines">
+                    Show last
+                    <select
+                        id="log_lines"
+                        name="log_lines"
+                        onchange="this.form.submit();"
+                    >
+                        <?php
+                        $logOptions = array(10, 25, 50, 100, 200);
+                        foreach ($logOptions as $opt) :
+                            $selected = ($opt === $logLinesToShow) ? 'selected' : '';
+                            echo "<option value=\"" . (int) $opt . "\" $selected>$opt</option>";
+                        endforeach;
+                        ?>
+                    </select>
+                    lines
+                </label>
+            </form>
+            <div id='logbox'>
+                <?php
+                if (empty($recentLogLines)) :
+                    echo 'No log entries available or log file could not be read.<br>';
+                else :
+                    foreach ($recentLogLines as $line) :
+                        echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . "<br>";
+                    endforeach;
+                endif;
+                ?>
+            </div>
 
-            $mtceStatus = mtceModeCheck($user); ?>
+            <?php $mtceStatus = mtceModeCheck($user); ?>
             <br>
             <h3>Site administration</h3>
             <table>

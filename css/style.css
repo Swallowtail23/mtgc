@@ -3145,6 +3145,15 @@ td.columnhide
     width:60px;
 }
 
+#logbox {
+    height: 10em;
+    overflow: auto;
+    border: 1px solid #ccc;
+    padding: 6px;
+    max-width: 1200px;
+    margin-right: 25px;
+}
+
 /* Media Queries from here  */
 @media (max-width: 351px) 
 {
