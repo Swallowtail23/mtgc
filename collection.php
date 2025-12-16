@@ -461,10 +461,18 @@ endif;
                         <div class="history-header">
                             <h3 class="history-title">Value history</h3>
                             <div id="history-range" class="history-range">
-                                <button id="btn-range-30d" class="profilebutton" type="button" onclick="fetchHistory('30d')">30d</button>
-                                <button id="btn-range-90d" class="profilebutton" type="button" onclick="fetchHistory('90d')">90d</button>
-                                <button id="btn-range-1y" class="profilebutton" type="button" onclick="fetchHistory('1y')">1y</button>
-                                <button id="btn-range-all" class="profilebutton" type="button" onclick="fetchHistory('all')">All</button>
+                                <button id="btn-range-30d" class="profilebutton" 
+                                    type="button" onclick="fetchHistory('30d')">30d
+                                </button>
+                                <button id="btn-range-90d" class="profilebutton" 
+                                    type="button" onclick="fetchHistory('90d')">90d
+                                </button>
+                                <button id="btn-range-1y" class="profilebutton" 
+                                    type="button" onclick="fetchHistory('1y')">1y
+                                </button>
+                                <button id="btn-range-all" class="profilebutton"
+                                    type="button" onclick="fetchHistory('all')">All
+                                </button>
                             </div>
                             <span id="history-status" class="history-status"></span>
                         </div>
