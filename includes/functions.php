@@ -101,32 +101,55 @@ function cssVersionCheck()
     endif;
 }
 
-function setMtceMode($toggle)
+function setMtceMode($toggle): bool
 {
     global $db, $logfile;
+
     $msg = new Message($logfile);
-    if ($toggle == 'off') :
+
+    $toggle = strtolower(trim((string) $toggle));
+
+    if ($toggle === 'off') :
         $msg->logMessage('[NOTICE]', "Setting maintenance mode off");
         $mtcequery = 0;
-    elseif ($toggle == 'on') :
+    elseif ($toggle === 'on') :
         $msg->logMessage('[NOTICE]', "Setting maintenance mode on");
         $mtcequery = 1;
+    else :
+        $msg->logMessage('[ERROR]', "Invalid maintenance mode toggle: '{$toggle}'");
+        return false;
     endif;
-        $query = 'UPDATE admin SET mtce=?';
-        $stmt = $db->prepare($query);
-        $stmt->bind_param('i', $mtcequery);
+
+    $query = 'UPDATE admin SET mtce=?';
+
+    $stmt = $db->prepare($query);
     if ($stmt === false) :
         trigger_error(
-            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                . ": Binding SQL: " . $db->error,
+            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                . ": Prepare SQL failed: " . $db->error,
             E_USER_ERROR
         );
     endif;
-        $exec = $stmt->execute();
+
+    $bound = $stmt->bind_param('i', $mtcequery);
+    if ($bound === false) :
+        $stmt->close();
+        trigger_error(
+            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                . ": Bind SQL failed: " . $stmt->error,
+            E_USER_ERROR
+        );
+    endif;
+
+    $exec = $stmt->execute();
     if ($exec === false) :
-        $msg->logMessage('[NOTICE]', "Setting mtce mode to $mtcequery failed");
+        $msg->logMessage('[ERROR]', "Setting mtce mode to {$mtcequery} failed: " . $stmt->error);
+        $stmt->close();
+        return false;
     else :
-            $msg->logMessage('[NOTICE]', "Set mtce mode to $mtcequery");
+        $msg->logMessage('[NOTICE]', "Set mtce mode to {$mtcequery}");
+        $stmt->close();
+        return true;
     endif;
 }
 

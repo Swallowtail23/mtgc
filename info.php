@@ -80,18 +80,19 @@ require('includes/menu.php');
         trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
     else :
         while ($row = $result->fetch_assoc()) :
+            $updateText = htmlspecialchars($row['update'] ?? '', ENT_NOQUOTES, 'UTF-8');
             if (!isset($date)) :
                 $date = $row['date'];
                 $formatteddate = date_format(new DateTime($date), "d F Y");
                 echo "<b>" . $formatteddate . "</b><br><ul>";
-                echo "<li>" . $row['update'] . "</li>";
+                echo "<li>" . $updateText . "</li>";
             elseif ($row['date'] != $date) :
                 $date = $row['date'];
                 $formatteddate = date_format(new DateTime($date), "d F Y");
                 echo "</ul><b>" . $formatteddate . "</b><br><ul>";
-                echo "<li>" . $row['update'] . "</li>";
+                echo "<li>" . $updateText . "</li>";
             else :
-                echo "<li>" . $row['update'] . "</li>";
+                echo "<li>" . $updateText . "</li>";
             endif;
         endwhile;
     endif;

@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.5
+Version:     6.0
 Date:        16/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -30,7 +30,7 @@ History:
     5.2 04/12/25 Add Scryfall JSON wipe success message
     5.3 04/12/25 Display current application version
     5.4 04/12/25 Trim SMTP HELO value whitespace
-    5.5 16/12/25 Improve escaping and variable usage
+    6.0 16/12/25 Improve escaping and variable usage, refactor flow and PRGs
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -48,7 +48,7 @@ require('../includes/secpagesetup.php');    //Setup page variables
 forcePasswordChange();                      //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
 
-function requireCsrfToken() : void
+function requireCsrfToken(): void
 {
     $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
     $token  = $_SESSION['csrf_token'] ?? '';
@@ -59,49 +59,55 @@ function requireCsrfToken() : void
 }
 
 /**
- * Determine current version from git tags or commit hash.
+ * Determine current version from env or VERSION file.
  */
-function getGitVersion($fallback = 'dev')
+function getAppVersion(string $fallback = 'dev'): string
 {
     global $msg;
-    // Prefer env (for containers)
+
+    $sanitize = function (string $value): string {
+        $value = trim($value);
+
+        // remove control chars (prevents log/HTML weirdness)
+        $value = preg_replace('/[\x00-\x1F\x7F]/u', '', $value) ?? '';
+
+        // keep version chars conservative
+        $value = preg_replace('/[^A-Za-z0-9.\-_+]/', '', $value) ?? '';
+
+        // keep it short
+        if (strlen($value) > 64) :
+            $value = substr($value, 0, 64);
+        endif;
+
+        return $value;
+    };
+
+    // Prefer env (containers/CI)
     $envVersion = getenv('MTGC_VERSION');
     if ($envVersion !== false && $envVersion !== '') :
-        $msg->logMessage('[DEBUG]', "Version (env): '$envVersion'");
-        return $envVersion;
-    endif;
-
-    // Then VERSION file (bare-metal or container with file baked in)
-    $versionFile = __DIR__ . '/../VERSION';
-    if (is_readable($versionFile)) :
-        $version = trim((string) file_get_contents($versionFile));
-        if ($version !== '') :
-            $msg->logMessage('[DEBUG]', "Version (VERSION): '$version'");
-            return $version;
+        $envVersion = $sanitize((string) $envVersion);
+        if ($envVersion !== '') :
+            $msg->logMessage('[DEBUG]', "Version (env): '$envVersion'");
+            return $envVersion;
         endif;
     endif;
 
-    // Last resort: git, if available
-    $repoDir = __DIR__ . '/..';
-    $cdCmd = 'cd ' . escapeshellarg($repoDir) . ' && ';
-
-    $tag = trim((string) shell_exec($cdCmd . 'git describe --tags --exact-match 2>/dev/null'));
-    if ($tag !== '') :
-        $msg->logMessage('[DEBUG]', "Version (git tag exact): '$tag'");
-        return $tag;
+    // Then VERSION file (normal)
+    $versionFile = __DIR__ . '/../VERSION';
+    if (is_readable($versionFile)) :
+        $fileVersion = $sanitize((string) file_get_contents($versionFile));
+        if ($fileVersion !== '') :
+            $msg->logMessage('[DEBUG]', "Version (VERSION): '$fileVersion'");
+            return $fileVersion;
+        endif;
     endif;
 
-    $describe = trim((string) shell_exec($cdCmd . 'git describe --tags --always 2>/dev/null'));
-    if ($describe !== '') :
-        $msg->logMessage('[DEBUG]', "Version (git tag): '$describe'");
-        return $describe;
-    endif;
-    $msg->logMessage('[DEBUG]', "Falling back to '$fallback'");
-
-    return $fallback;
+    $fallback = $sanitize($fallback);
+    $msg->logMessage('[DEBUG]', "Version fallback: '$fallback'");
+    return $fallback !== '' ? $fallback : 'dev';
 }
 
-$currentVersion = getGitVersion();
+$currentVersion = getAppVersion();
 
 /**
  * Read the last N lines from a log file without loading it entirely.
@@ -149,23 +155,41 @@ function getLogTailLines($filepath, $maxLines = 8)
 
     // Split on any newline type
     $allLines = preg_split("/\r\n|\n|\r/", $output);
+    if (!is_array($allLines)) :
+        return [];
+    endif;
 
     return array_slice($allLines, -$maxLines);
 }
 
 function isPathWritable($path)
 {
-    if ($path === null || $path === '') :
+    if (!is_string($path)) :
         return false;
     endif;
-    if (file_exists($path)) :
+
+    $path = trim($path);
+    if ($path === '') :
+        return false;
+    endif;
+
+    // If it's an existing directory, check writability directly
+    if (is_dir($path)) :
         return is_writable($path);
     endif;
+
+    // If it's an existing file, check writability directly
+    if (is_file($path)) :
+        return is_writable($path);
+    endif;
+
+    // Otherwise, treat it as a file that may not exist yet
     $directory = dirname($path);
-    if ($directory === '.' || $directory === '') :
+    if ($directory === '.' || $directory === '' || !is_dir($directory)) :
         return false;
     endif;
-    return is_dir($directory) && is_writable($directory);
+
+    return is_writable($directory);
 }
 
 //Check if user is logged in, if not redirect to login.php
@@ -211,16 +235,26 @@ if ($cssAction !== null) :
 
     if ($cssQuery !== null) :
         $query = 'UPDATE admin SET usemin=?';
+
         if ($db->execute_query($query, [$cssQuery]) === true) :
             $msg->logMessage('[NOTICE]', 'CSS minification state updated');
+            $_SESSION['config_save_message'] = 'CSS setting updated.';
+            $_SESSION['config_save_status'] = 'success';
         else :
-            trigger_error(
-                "[ERROR] admin.php: CSS toggle failed: " . $db->error,
-                E_USER_ERROR
-            );
+            $msg->logMessage('[ERROR]', 'CSS toggle failed: ' . $db->error);
+            $_SESSION['config_save_message'] = 'CSS setting update failed. Check logs.';
+            $_SESSION['config_save_status'] = 'error';
         endif;
 
-        $cssver = cssVersionCheck(); // refresh version
+        // Redirect to avoid resubmission on refresh
+        header('Location: admin.php');
+        exit();
+    else :
+        // Unknown action - treat as error and redirect
+        $_SESSION['config_save_message'] = 'Invalid CSS action.';
+        $_SESSION['config_save_status'] = 'error';
+        header('Location: admin.php');
+        exit();
     endif;
 endif;
 
@@ -229,19 +263,25 @@ $mtceAction = filter_input(INPUT_POST, 'mtce_action', FILTER_UNSAFE_RAW);
 if ($mtceAction !== null) :
     requireCsrfToken();
 
+    $ok = false;
+
     if ($mtceAction === 'on') :
-        setMtceMode('on');
+        $ok = setMtceMode('on');
     elseif ($mtceAction === 'off') :
-        setMtceMode('off');
+        $ok = setMtceMode('off');
     endif;
 
-    // Optional: redirect to avoid resubmission on refresh
+    if ($ok) :
+        $_SESSION['config_save_message'] = 'Maintenance mode updated.';
+        $_SESSION['config_save_status']  = 'success';
+    else :
+        $_SESSION['config_save_message'] = 'Maintenance mode update failed. Check logs.';
+        $_SESSION['config_save_status']  = 'error';
+    endif;
+
     header('Location: admin.php');
     exit();
 endif;
-
-$testEmailResult = null;
-$iniSaveResult = null;
 
 if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     requireCsrfToken();
@@ -260,25 +300,40 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     $name = strtolower(trim((string) $userName));
 
     // Update text
-    $updateText = (string) filter_input(
-        INPUT_POST,
-        'updatetext',
-        FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-        FILTER_FLAG_NO_ENCODE_QUOTES
-    );
+    $updateText = trim((string) filter_input(INPUT_POST, 'updatetext', FILTER_UNSAFE_RAW));
+
+    if ($updateText === '') :
+        $_SESSION['config_save_message'] = 'Update notice cannot be empty.';
+        $_SESSION['config_save_status'] = 'error';
+        header('Location: admin.php');
+        exit();
+    endif;
+
+    if (strlen($updateText) > 1000) :
+        $updateText = substr($updateText, 0, 1000);
+    endif;
 
     $stmt = $db->prepare(
         "INSERT INTO updatenotices (`date`, `author`, `update`) VALUES (?, ?, ?)"
     );
 
     if ($stmt) :
-        $stmt->bind_param("sss", $date, $name, $updateText);
-        if ($stmt->execute()) :
+        $bound = $stmt->bind_param("sss", $date, $name, $updateText);
+        if ($bound === false) :
+            $stmt->close();
+            trigger_error("[ERROR] admin.php: bind failed: " . $stmt->error, E_USER_ERROR);
+        endif;
+        $exec = $stmt->execute();
+        if ($exec === true) :
             $msg->logMessage(
                 '[NOTICE]',
                 "Adding update notice: Insert ID: " . $stmt->insert_id
                 . " Author (session): " . $name
             );
+            $_SESSION['config_save_message'] = 'Update notice added.';
+            $_SESSION['config_save_status'] = 'success';
+            header('Location: admin.php');
+            exit();
         else :
             trigger_error(
                 "[ERROR] admin.php: Adding update notice: failed " . $stmt->error,
@@ -294,59 +349,120 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
     endif;
 endif;
 
-if ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'DELETE')) :
+$deleteMode = filter_input(INPUT_POST, 'deleteMigrations', FILTER_UNSAFE_RAW);
+
+if ($deleteMode === 'TEST' || $deleteMode === 'DELETE') :
     requireCsrfToken();
-    $msg->logMessage('[DEBUG]', "Delete all migrations called");
 
-    // Delete records from cards_scry table
-    $deleteSql = "DELETE cards_scry
-                      FROM cards_scry
-                      INNER JOIN migrations
-                      ON cards_scry.id = migrations.old_scryfall_id
-                      WHERE migrations.db_match = 1";
-    $deleteResult = $db->query($deleteSql);
-    if ($deleteResult !== false) :
-        // Log the total number of rows deleted in migrations
-        $msg->logMessage('[NOTICE]', "Deleted {$db->affected_rows} rows in cards_scry");
+    $msg->logMessage('[DEBUG]', "Migrations {$deleteMode} requested");
+
+    /*
+     * Analyse what WOULD be affected
+     * - how many migration rows are marked db_match=1
+     * - how many matching cards_scry rows actually exist
+     */
+    $analysisSql = "
+        SELECT
+            COUNT(DISTINCT m.old_scryfall_id) AS migration_count,
+            COUNT(DISTINCT c.id) AS cards_scry_count
+        FROM migrations m
+        LEFT JOIN cards_scry c
+            ON c.id = m.old_scryfall_id
+        WHERE m.db_match = 1
+    ";
+
+    $analysisResult = $db->query($analysisSql);
+    if ($analysisResult === false) :
+        trigger_error(
+            "[ERROR] admin.php: Migration analysis failed: " . $db->error,
+            E_USER_ERROR
+        );
     endif;
-    // Update records in migrations table
-    $updateSql = "UPDATE migrations set db_match = 0 WHERE db_match = 1";
-    $updateResult = $db->query($updateSql);
-    if ($updateResult !== false) :
-        // Log the total number of rows deleted in migrations
-        $msg->logMessage('[NOTICE]', "Updated {$db->affected_rows} rows in migrations");
+
+    $analysis = $analysisResult->fetch_assoc();
+    $analysisResult->free();
+
+    $migrationCount = (int) $analysis['migration_count'];
+    $cardsScryCount = (int) $analysis['cards_scry_count'];
+
+    $msg->logMessage(
+        '[NOTICE]',
+        "Migration analysis: migrations={$migrationCount}, cards_scry={$cardsScryCount}"
+    );
+
+    if ($deleteMode === 'TEST') :
+        $_SESSION['migrations_test_count'] = $cardsScryCount;
+
+        $_SESSION['config_save_message'] =
+            "TEST result: {$migrationCount} migrations matched, "
+            . "{$cardsScryCount} cards_scry rows would be deleted.";
+        $_SESSION['config_save_status'] = 'success';
+
+        header('Location: admin.php#migrationcards');
+        exit();
     endif;
-elseif ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'TEST')) :
-    requireCsrfToken();
-    $msg->logMessage('[DEBUG]', "Test delete migrations called");
 
-    $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
-    $result = $db->query($sql);
+    if ($deleteMode === 'DELETE') :
+        if ($migrationCount === 0) :
+            $_SESSION['config_save_message'] = 'No migrations to delete.';
+            $_SESSION['config_save_status'] = 'success';
+            header('Location: admin.php');
+            exit();
+        endif;
 
-    if ($result !== false) :
-        $totalMatchesInCardsScry = 0; // Initialize a counter
+        $db->begin_transaction();
 
-        while ($row = $result->fetch_assoc()) :
-            $oldScryfallId = $row['old_scryfall_id'];
-
-            // Count the matching records in cards_scry table (for testing)
-            $countSql = "SELECT COUNT(*) FROM cards_scry WHERE id = ?";
-            $countResult = $db->execute_query($countSql, [$oldScryfallId]);
-
-            if ($countResult !== false) :
-                $rowCount = $countResult->fetch_row();
-                $totalMatchesInCardsScry += $rowCount[0];
-            else :
-                // Handle count error if needed
-                trigger_error(
-                    "[ERROR] cards.php: Counting matches in cards_scry: Wrong SQL: ($countSql) Error: " . $db->error,
-                    E_USER_ERROR
-                );
+        try {
+            // 1) Delete matching cards_scry rows
+            $deleteSql = "
+                DELETE c
+                FROM cards_scry c
+                INNER JOIN migrations m
+                    ON c.id = m.old_scryfall_id
+                WHERE m.db_match = 1
+            ";
+            if ($db->query($deleteSql) === false) :
+                throw new RuntimeException("cards_scry delete failed: " . $db->error);
             endif;
-        endwhile;
+            $deletedCards = $db->affected_rows;
 
-        // Log the total number of matches found in cards_scry (for testing)
-        $msg->logMessage('[NOTICE]', "Total matches found in cards_scry (TEST): $totalMatchesInCardsScry");
+            // 2) Mark migrations as processed
+            $updateSql = "UPDATE migrations SET db_match = 0 WHERE db_match = 1";
+            if ($db->query($updateSql) === false) :
+                throw new RuntimeException("migrations update failed: " . $db->error);
+            endif;
+            $updatedMigrations = $db->affected_rows;
+
+            $db->commit();
+
+            $msg->logMessage(
+                '[NOTICE]',
+                "Migrations delete committed: "
+                . "deleted cards_scry={$deletedCards}, "
+                . "updated migrations={$updatedMigrations}"
+            );
+
+            $_SESSION['config_save_message'] =
+                "Deleted {$deletedCards} cards and cleared {$updatedMigrations} migrations.";
+            $_SESSION['config_save_status'] = 'success';
+
+            header('Location: admin.php');
+            exit();
+        } catch (Throwable $e) {
+            $db->rollback();
+
+            $msg->logMessage(
+                '[ERROR]',
+                "Migrations delete rolled back: " . $e->getMessage()
+            );
+
+            $_SESSION['config_save_message'] =
+                'Delete failed; no changes applied. Check logs.';
+            $_SESSION['config_save_status'] = 'error';
+
+            header('Location: admin.php');
+            exit();
+        }
     endif;
 endif;
 
@@ -401,28 +517,7 @@ $smtpParameters = [
     'globalDebug' => $logLevelIni
 ];
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-
-if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
-    requireCsrfToken();
-    if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
-        $subject = "Test email from {$siteTitleEsc}";
-        $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
-        $bodyText = strip_tags($bodyHtml);
-        $testEmailResult = $mailer->sendEmail($adminEmail, true, $subject, $bodyHtml, $bodyText)
-            ? 'success'
-            : 'error';
-    else :
-        $testEmailResult = 'error';
-    endif;
-    $testMessage = ($testEmailResult === 'success')
-        ? 'Test email sent successfully.'
-        : 'Test email failed. Check SMTP settings.';
-    $_SESSION['config_save_message'] = $testMessage;
-    $configEditMessage = $testMessage;
-    $configEditMessageType = ($testEmailResult === 'success') ? 'success' : 'error';
-    $_SESSION['config_save_status'] = $configEditMessageType;
-endif;
+$titleValue = $iniArray['general']['title'] ?? '';
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -430,6 +525,35 @@ if (isset($_SESSION['config_edit_expires'])) :
     else :
         unset($_SESSION['config_edit_expires']);
     endif;
+endif;
+
+if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
+    if (!$configEditUnlocked) :
+        $_SESSION['config_save_message'] = 'Unlock config editing to run test email.';
+        $_SESSION['config_save_status'] = 'error';
+        header('Location: admin.php#inisettings');
+        exit();
+    endif;
+    requireCsrfToken();
+
+    if (!empty($serverEmail) && !empty($adminEmail)) :
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
+        $subject = "Test email from {$siteTitleEsc}";
+        $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
+        $bodyText = strip_tags($bodyHtml);
+
+        $testOk = $mailer->sendEmail($adminEmail, true, $subject, $bodyHtml, $bodyText);
+    else :
+        $testOk = false;
+    endif;
+
+    $_SESSION['config_save_message'] = $testOk
+        ? 'Test email sent successfully.'
+        : 'Test email failed. Check SMTP settings.';
+    $_SESSION['config_save_status'] = $testOk ? 'success' : 'error';
+
+    header('Location: admin.php#inisettings');
+    exit();
 endif;
 
 if ($configAction !== null) :
@@ -702,7 +826,7 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
             }
 
             $('#newinfoupdate').submit(function() {
-                if(($('#updatetext').val() === '') || ($('#updatedate').val() === '')){
+                if (($('#updatetext').val() === '') || ($('#updatedate').val() === '')) {
                     alert("You need to complete the date and update text fields");
                     return false;
                 }
@@ -785,53 +909,12 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                 toggleDependent('#comments_status', ['#comments_dev_url', '#comments_prod_url'], ['enabled']);
             });
 
-            toggleDependent(
-                '#email_auth',
-                ['#email_username', '#email_password_toggle', '#email_secure'],
-                ['enabled']
-            );
-            // Ensure SMTP auth-dependent fields respect initial state on load
-            if ($('#email_auth').val() !== 'enabled') {
-                $('#email_password_section').hide();
-                $('#email_password_changed').val('0');
-            }
-            toggleDependent(
-                '#email_status',
-                [
-                    '#email_server',
-                    '#email_admin',
-                    '#email_smtp_debug',
-                    '#email_host',
-                    '#email_port',
-                    '#email_auth',
-                    '#email_username',
-                    '#email_password_toggle',
-                    '#email_secure'
-                ],
-                ['enabled']
-            );
-            toggleDependent(
-                '#email_auth',
-                ['#email_username', '#email_password_toggle', '#email_secure'],
-                ['enabled']
-            );
-            if ($('#email_auth').val() !== 'enabled') {
-                $('#email_password_section').hide();
-                $('#email_password_changed').val('0');
-            }
-            markDisabledFields();
-            $('#email_auth').on('change', function() {
-                toggleDependent(
-                    '#email_auth',
-                    ['#email_username', '#email_password_toggle', '#email_secure'],
-                    ['enabled']
-                );
-                if ($(this).val() !== 'enabled') {
-                    $('#email_password_section').hide();
-                    $('#email_password_changed').val('0');
-                }
-            });
-            $('#email_status').on('change', function() {
+            // --- Email UI: single source of truth ---
+            function applyEmailUiState() {
+                var emailEnabled = ($('#email_status').val() === 'enabled');
+                var authEnabled  = ($('#email_auth').val() === 'enabled');
+
+                // 1) Fields controlled by email status
                 toggleDependent(
                     '#email_status',
                     [
@@ -839,29 +922,44 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
                         '#email_admin',
                         '#email_smtp_debug',
                         '#email_host',
+                        '#email_helo',
                         '#email_port',
                         '#email_auth',
                         '#email_username',
                         '#email_password_toggle',
-                        '#email_secure'
+                        '#email_secure',
+                        '#email_verify'
                     ],
                     ['enabled']
                 );
-                if ($(this).val() !== 'enabled') {
-                    $('#email_password_section').hide();
-                    $('#email_password_changed').val('0');
-                }
+
+                // 2) Fields controlled by SMTP auth (but also respect email status)
                 toggleDependent(
                     '#email_auth',
                     ['#email_username', '#email_password_toggle', '#email_secure'],
                     ['enabled']
                 );
-                if ($('#email_auth').val() !== 'enabled') {
+
+                if (!emailEnabled) {
+                    $('#email_username, #email_password_toggle, #email_secure').prop('disabled', true);
+                }
+
+                // 3) Password section visibility + changed flag hygiene
+                if (!emailEnabled || !authEnabled) {
                     $('#email_password_section').hide();
                     $('#email_password_changed').val('0');
+                    $('#email_password_section').find('input[type="password"]').val('');
                 }
                 markDisabledFields();
-            });
+            }
+
+            // Run once on load after setupPasswordSection is configured
+            applyEmailUiState();
+
+            // Then wire to both controllers
+            $('#email_auth').on('change', applyEmailUiState);
+            $('#email_status').on('change', applyEmailUiState);
+
             const turnstilePlaceholder = "N/A - Tier is 'dev'";
             function toggleTierTurnstileFields() {
                 const isDevTier = $('#general_tier').val() === 'dev';
@@ -902,6 +1000,7 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
             <?php endif; ?>
         });
     </script>
+
 </head>
 <body id="body" class="body">
 
@@ -1024,7 +1123,7 @@ require('../includes/menu.php');
                         <td class="options_left">
                             <h4>Maintenance Mode</h4>
                             Current Maintenance mode status: <?php
-                            if (($mtceStatus == 1) or ($mtceStatus == 2)) :
+                            if (($mtceStatus == 1) || ($mtceStatus == 2)) :
                                 echo "On";
                             else :
                                 echo "Off";
@@ -1032,19 +1131,19 @@ require('../includes/menu.php');
                         </td>
                         <td> <?php
                             $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8');
-                            if (($mtceStatus == 1) or ($mtceStatus == 2)) : ?>
-                                <form action="/admin/admin.php" method="post">
-                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
-                                    <input type="hidden" name="mtce_action" value="off">
-                                    <input class="profilebutton" id="mtce" type="submit" value="MTCE OFF">
-                                </form>
-                            <?php else : ?>
-                                <form action="/admin/admin.php" method="post">
-                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
-                                    <input type="hidden" name="mtce_action" value="on">
-                                    <input class="profilebutton" id="mtce" type="submit" value="MTCE ON">
-                                </form>
-                            <?php endif; ?>
+                        if (($mtceStatus == 1) || ($mtceStatus == 2)) : ?>
+                            <form action="/admin/admin.php" method="post">
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                <input type="hidden" name="mtce_action" value="off">
+                                <input class="profilebutton" id="mtce" type="submit" value="MTCE OFF">
+                            </form>
+                        <?php else : ?>
+                            <form action="/admin/admin.php" method="post">
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                <input type="hidden" name="mtce_action" value="on">
+                                <input class="profilebutton" id="mtce" type="submit" value="MTCE ON">
+                            </form>
+                        <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
@@ -1163,6 +1262,12 @@ require('../includes/menu.php');
                                         <div class="config-section">
                                             <h4>General settings</h4>
                                             <label>Title<br>
+                                                <?php $titleValueEsc = htmlspecialchars(
+                                                    $titleValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1170,7 +1275,7 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Site title shown to users"
                                                     value="<?php
-                                                        echo $siteTitleEsc; ?>"
+                                                        echo $titleValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Tier<br>
@@ -1911,8 +2016,8 @@ require('../includes/menu.php');
                 </tbody>
             </table>
 
-            <h3>Migration cards (Scryfall corrections)</h3> <?php
-            $stmt = $db->execute_query(
+            <h3 id="migrationcards">Migration cards (Scryfall corrections)</h3> <?php
+            $migrationsResult = $db->execute_query(
                 "SELECT
                     old_scryfall_id,
                     object,
@@ -1926,13 +2031,13 @@ require('../includes/menu.php');
                 FROM migrations
                 WHERE db_match = 1"
             );
-            if ($stmt != true) :
+            if ($migrationsResult === false) :
                 trigger_error(
-                    "[ERROR] Class: " . __METHOD__ . " " . __LINE__ . " - SQL failure: Error: " . $db->error,
+                    "[ERROR] admin.php:" . __LINE__ . " - SQL failure: " . $db->error,
                     E_USER_ERROR
                 );
             else :
-                if ($stmt->num_rows > 0) : 
+                if ($migrationsResult->num_rows > 0) :
                     // Load users once (used for owned-card checks)
                     $userResultArray = array();
                     $sql3 = "SELECT usernumber, username FROM users";
@@ -1949,7 +2054,7 @@ require('../includes/menu.php');
                         $stmt3->close();
                     else :
                         trigger_error(
-                            "[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error,
+                            "[ERROR] admin.php: Wrong SQL: ($sql3) Error: " . $db->error,
                             E_USER_ERROR
                         );
                     endif; ?>
@@ -1973,36 +2078,40 @@ require('../includes/menu.php');
                     </script>
                     <!-- Conditional display of buttons based on the $countSql variable -->
                     <?php
-                    if (isset($totalMatchesInCardsScry) && $totalMatchesInCardsScry > 0) : ?>
-                        <!-- Display the quantity of rows found in the test -->
-                        <p>Rows found in test: <?php echo $totalMatchesInCardsScry; ?></p>
+                        $totalMatchesInCardsScry = (int) ($_SESSION['migrations_test_count'] ?? 0);
+                        unset($_SESSION['migrations_test_count']);
+                    if ($totalMatchesInCardsScry > 0) : ?>
+                            <!-- Display the quantity of rows found in the test -->
+                            <p>Rows that would be deleted: <?php echo $totalMatchesInCardsScry; ?></p>
 
-                        <!-- Display the DELETE button -->
-                        <form id="deleteForm" method="post" action="/admin/admin.php">
-                            <input type="hidden" name="deleteMigrations" value="DELETE">
-                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
-                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
-                            <button
-                                type="button"
-                                onclick="confirmDelete()"
-                            >
-                                Delete ALL migrations (<?php echo $totalMatchesInCardsScry; ?>)
-                            </button>
-                        </form>
-                    <?php else : ?>
-                        <!-- Display the TEST DELETE button with the $countSql variable -->
-                        <form id="testDeleteForm" method="post" action="/admin/admin.php">
-                            <input type="hidden" name="deleteMigrations" value="TEST">
-                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
-                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
-                            <button 
-                                type="button"
-                                onclick="confirmTestDelete()"
-                            >
-                                Test migrations deletion
-                            </button>
-                        </form>
-                    <?php endif; ?>
+                            <!-- Display the DELETE button -->
+                            <form id="deleteForm" method="post" action="/admin/admin.php">
+                                <input type="hidden" name="deleteMigrations" value="DELETE">
+                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                <button
+                                    type="button"
+                                    onclick="confirmDelete()"
+                                >
+                                    Delete ALL migrations (<?php echo $totalMatchesInCardsScry; ?>)
+                                </button>
+                            </form>
+                            <?php
+                    else : ?>
+                            <!-- Display the TEST DELETE button with the $countSql variable -->
+                            <form id="testDeleteForm" method="post" action="/admin/admin.php">
+                                <input type="hidden" name="deleteMigrations" value="TEST">
+                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                <button 
+                                    type="button"
+                                    onclick="confirmTestDelete()"
+                                >
+                                    Test migrations deletion
+                                </button>
+                            </form>
+                            <?php
+                    endif; ?>
 
                 <table border="1">
                     <tr style="font-weight: bold;">
@@ -2018,10 +2127,9 @@ require('../includes/menu.php');
                         <th>Decks</th>
                         <th>Owned</th>
                     </tr>
-                    <tr>
                     <?php
                     $rowNumber = 0;
-                    while ($row = $stmt->fetch_assoc()) :
+                    while ($row = $migrationsResult->fetch_assoc()) :
                         $rowNumber = $rowNumber + 1;
 
                         // Find decks and owners of cards needing migration
@@ -2037,7 +2145,7 @@ require('../includes/menu.php');
                             $stmt2->execute();
                             $stmt2->bind_result($deckName, $deckOwner);
                         else :
-                            trigger_error("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
+                            trigger_error("[ERROR] admin.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
                         endif;
                         while ($stmt2->fetch()) :
                             $resultArray[] = array('deckname' => $deckName, 'deckowner' => $deckOwner);
@@ -2063,7 +2171,7 @@ require('../includes/menu.php');
                             if ($stmt4) :
                                 $stmt4->bind_param("s", $row['old_scryfall_id']);
                                 if ($stmt4->error) :
-                                    trigger_error("[ERROR] Bind error: " . $stmt4->error, E_USER_ERROR);
+                                    trigger_error("[ERROR] admin.php: Bind error: " . $stmt4->error, E_USER_ERROR);
                                 endif;
                                 $stmt4->execute();
                                 $stmt4->bind_result($total);
@@ -2196,8 +2304,8 @@ require('../includes/menu.php');
                             </td>
                         </tr>
                         <?php
-                    endwhile; ?>
-                    </tr>
+                    endwhile;
+                    $migrationsResult->free(); ?>
                 </table>
                 &nbsp; <?php
                 else :
