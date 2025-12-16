@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.4
-Date:        04/12/25
+Version:     5.5
+Date:        16/12/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
@@ -30,6 +30,7 @@ History:
     5.2 04/12/25 Add Scryfall JSON wipe success message
     5.3 04/12/25 Display current application version
     5.4 04/12/25 Trim SMTP HELO value whitespace
+    5.5 16/12/25 Improve escaping and variable usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -37,12 +38,25 @@ else :
     require('../includes/sessionname_template.php');
 endif;
 startCustomSession();
+if (empty($_SESSION['csrf_token'])) :
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+endif;
 require('../includes/ini.php');             //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
 forcePasswordChange();                      //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+
+function requireCsrfToken() : void
+{
+    $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
+    $token  = $_SESSION['csrf_token'] ?? '';
+    if ($posted === '' || !hash_equals($token, $posted)) :
+        http_response_code(403);
+        die('CSRF check failed');
+    endif;
+}
 
 /**
  * Determine current version from git tags or commit hash.
@@ -127,7 +141,14 @@ function getLogTailLines($filepath, $maxLines = 8)
 
     fclose($handle);
 
-    $allLines = explode("\n", trim($output));
+    // Remove trailing newlines.
+    $output = rtrim($output, "\r\n");
+    if ($output === '') :
+        return [];
+    endif;
+
+    // Split on any newline type
+    $allLines = preg_split("/\r\n|\n|\r/", $output);
 
     return array_slice($allLines, -$maxLines);
 }
@@ -157,52 +178,124 @@ endif;
 $dateObject = new DateYMD();
 $date = $dateObject->getToday();
 
-$clearScryfallJson = isset($_GET['clearscryfalljson']) ? 'y' : '';
-$toggleCss = isset($_GET['togglecss']) ? 'y' : '';
-$publishCss = isset($_GET['publishcss']) ? 'y' : '';
+$scryAction = filter_input(INPUT_POST, 'scryfalljson_action', FILTER_UNSAFE_RAW);
+
+if ($scryAction === 'wipe') :
+    requireCsrfToken();
+
+    if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
+        $msg->logMessage('[NOTICE]', "JSON data removed");
+        $_SESSION['config_save_message'] = 'Scryfall JSON data removed.';
+        $_SESSION['config_save_status'] = 'success';
+        header('Location: admin.php');
+        exit();
+    else :
+        trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
+    endif;
+endif;
+
+$cssAction = filter_input(INPUT_POST, 'css_action', FILTER_UNSAFE_RAW);
+
+if ($cssAction !== null) :
+    requireCsrfToken();
+
+    if ($cssAction === 'unminify') :
+        $msg->logMessage('[DEBUG]', 'Turning off minimised CSS...');
+        $cssQuery = 0;
+    elseif ($cssAction === 'minify') :
+        $msg->logMessage('[DEBUG]', 'Turning on minimised CSS...');
+        $cssQuery = 1;
+    else :
+        $cssQuery = null;
+    endif;
+
+    if ($cssQuery !== null) :
+        $query = 'UPDATE admin SET usemin=?';
+        if ($db->execute_query($query, [$cssQuery]) === true) :
+            $msg->logMessage('[NOTICE]', 'CSS minification state updated');
+        else :
+            trigger_error(
+                "[ERROR] admin.php: CSS toggle failed: " . $db->error,
+                E_USER_ERROR
+            );
+        endif;
+
+        $cssver = cssVersionCheck(); // refresh version
+    endif;
+endif;
+
+$mtceAction = filter_input(INPUT_POST, 'mtce_action', FILTER_UNSAFE_RAW);
+
+if ($mtceAction !== null) :
+    requireCsrfToken();
+
+    if ($mtceAction === 'on') :
+        setMtceMode('on');
+    elseif ($mtceAction === 'off') :
+        setMtceMode('off');
+    endif;
+
+    // Optional: redirect to avoid resubmission on refresh
+    header('Location: admin.php');
+    exit();
+endif;
+
 $testEmailResult = null;
 $iniSaveResult = null;
 
 if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
+    requireCsrfToken();
+
     $update = 1;
-    if (isset($_POST['date'])) :
-        $date = filter_input(INPUT_POST, 'date', FILTER_SANITIZE_NUMBER_INT);
-    endif;
-    if (isset($_POST['name'])) :
-        $name = strtolower(
-            filter_input(
-                INPUT_POST,
-                'name',
-                FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-                FILTER_FLAG_NO_ENCODE_QUOTES
-            )
-        );
-    endif;
-    if (isset($_POST['updatetext'])) :
-        $updateText = filter_input(
-            INPUT_POST,
-            'updatetext',
-            FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            FILTER_FLAG_NO_ENCODE_QUOTES
-        );
+
+    // Date (allow override but validate)
+    $dateRaw = trim((string) filter_input(INPUT_POST, 'date', FILTER_UNSAFE_RAW));
+    if ($dateRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateRaw)) :
+        $date = $dateRaw;
+    else :
+        $date = $dateObject->getToday();
     endif;
 
-    $stmt = $db->prepare("INSERT INTO updatenotices (`date`, `author`, `update`) VALUES (?, ?, ?)");
+    // Author: ALWAYS from session/user context (not POST)
+    $name = strtolower(trim((string) $userName));
+
+    // Update text
+    $updateText = (string) filter_input(
+        INPUT_POST,
+        'updatetext',
+        FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+        FILTER_FLAG_NO_ENCODE_QUOTES
+    );
+
+    $stmt = $db->prepare(
+        "INSERT INTO updatenotices (`date`, `author`, `update`) VALUES (?, ?, ?)"
+    );
 
     if ($stmt) :
         $stmt->bind_param("sss", $date, $name, $updateText);
         if ($stmt->execute()) :
-            $msg->logMessage('[NOTICE]', "Adding update notice: Insert ID: " . $stmt->insert_id);
+            $msg->logMessage(
+                '[NOTICE]',
+                "Adding update notice: Insert ID: " . $stmt->insert_id
+                . " Author (session): " . $name
+            );
         else :
-            trigger_error("[ERROR] admin.php: Adding update notice: failed " . $stmt->error, E_USER_ERROR);
+            trigger_error(
+                "[ERROR] admin.php: Adding update notice: failed " . $stmt->error,
+                E_USER_ERROR
+            );
         endif;
         $stmt->close();
     else :
-        trigger_error("[ERROR] admin.php: Adding update notice: failed (prepare statement)" . $db->error, E_USER_ERROR);
+        trigger_error(
+            "[ERROR] admin.php: Adding update notice: failed (prepare statement) " . $db->error,
+            E_USER_ERROR
+        );
     endif;
 endif;
 
 if ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'DELETE')) :
+    requireCsrfToken();
     $msg->logMessage('[DEBUG]', "Delete all migrations called");
 
     // Delete records from cards_scry table
@@ -224,6 +317,7 @@ if ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'DELET
         $msg->logMessage('[NOTICE]', "Updated {$db->affected_rows} rows in migrations");
     endif;
 elseif ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'TEST')) :
+    requireCsrfToken();
     $msg->logMessage('[DEBUG]', "Test delete migrations called");
 
     $sql = "SELECT old_scryfall_id FROM migrations WHERE db_match = 1";
@@ -256,20 +350,6 @@ elseif ((isset($_POST['deleteMigrations'])) && ($_POST['deleteMigrations'] == 'T
     endif;
 endif;
 
-if (isset($_GET['loglevel'])) :
-    $newloglevel = filter_input(INPUT_GET, 'loglevel', FILTER_SANITIZE_NUMBER_INT);
-    $ini->data['general']['Loglevel'] = "$newloglevel";
-    $msg->logMessage('[NOTICE]', "Log level change by user $userName to $newloglevel");
-    $ini->write();
-    //re-read ini file
-    $ini = new INI("/opt/mtg/mtg_new.ini");
-    $iniArray = $ini->data;
-    $logLevelIni = $iniArray['general']['Loglevel'];
-    if ($logLevelIni == $newloglevel) :
-        $msg->logMessage('[NOTICE]', "Log level change success to $newloglevel");
-    endif;
-endif;
-
 $configEditUnlocked = false;
 $configAuthRequested = false;
 $configEditMessage = $_SESSION['config_save_message'] ?? '';
@@ -281,6 +361,7 @@ $configEditError = '';
 $configEditErrorTarget = '';
 $configAuthWindowSeconds = 600;
 $configAction = filter_input(INPUT_POST, 'config_action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+$logLevelIni = $iniArray['general']['Loglevel'];
 $timezoneList = timezone_identifiers_list();
 sort($timezoneList);
 $configInputStyle = 'style="width:220px"';
@@ -319,11 +400,13 @@ $smtpParameters = [
     'SMTPDebug' => $smtpDebugIni,
     'globalDebug' => $logLevelIni
 ];
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
+    requireCsrfToken();
     if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
-        $subject = "Test email from {$siteTitle}";
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
+        $subject = "Test email from {$siteTitleEsc}";
         $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
         $bodyText = strip_tags($bodyHtml);
         $testEmailResult = $mailer->sendEmail($adminEmail, true, $subject, $bodyHtml, $bodyText)
@@ -341,41 +424,6 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     $_SESSION['config_save_status'] = $configEditMessageType;
 endif;
 
-if ((isset($toggleCss)) and ($toggleCss == "y")) :
-    $msg->logMessage('[DEBUG]', "Turning off minimised CSS...");
-    $cssQuery = 0;
-    $query = 'UPDATE admin SET usemin=?';
-    if ($db->execute_query($query, [$cssQuery]) === true) :
-        $msg->logMessage('[NOTICE]', "Turned off minimised CSS");
-    else :
-        trigger_error("[ERROR] admin.php: Turning off minimised CSS: Failed: " . $db->error, E_USER_ERROR);
-    endif;
-    $cssver = cssVersionCheck(); //run again
-endif;
-if ((isset($publishCss)) and ($publishCss == "y")) :
-    $msg->logMessage('[DEBUG]', "Turning on minimised CSS...");
-    $cssQuery = 1;
-    $query = 'UPDATE admin SET usemin=?';
-    if ($db->execute_query($query, [$cssQuery]) === true) :
-        $msg->logMessage('[NOTICE]', "Turned on minimised CSS");
-    else :
-        trigger_error("[ERROR] admin.php: Turning on minimised CSS: Failed: " . $db->error, E_USER_ERROR);
-    endif;
-    $cssver = cssVersionCheck(); //run again
-endif;
-if ($clearScryfallJson === "y") :
-    if ($db->query('TRUNCATE TABLE scryfalljson') === true) :
-        $msg->logMessage('[NOTICE]', "JSON data removed");
-        $_SESSION['config_save_message'] = 'Scryfall JSON data removed.';
-        $_SESSION['config_save_status'] = 'success';
-        $configEditMessage = $_SESSION['config_save_message'];
-        $configEditMessageType = 'success';
-    else :
-        trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
-    endif;
-    $cssver = cssVersionCheck(); //run again
-endif;
-
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
         $configEditUnlocked = true;
@@ -384,11 +432,15 @@ if (isset($_SESSION['config_edit_expires'])) :
     endif;
 endif;
 
+if ($configAction !== null) :
+    requireCsrfToken();
+endif;
+
 if ($configAction === 'start_reauth') :
     $configAuthRequested = true;
 elseif ($configAction === 'reauth_submit') :
     $reauthPassword = filter_input(INPUT_POST, 'config_password', FILTER_UNSAFE_RAW);
-    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitleEsc);
     $reauthResult = $passwordCheck->validatePassword($userEmail, $reauthPassword);
     if ($reauthResult === 10) :
         $_SESSION['config_edit_expires'] = time() + $configAuthWindowSeconds;
@@ -416,20 +468,8 @@ function getPostedValue($name, $default = '')
 }
 
 if ($configEditUnlocked && $configAction === 'save_ini') :
+    // Start from current config and selectively overwrite from POST below
     $updatedIni = $iniArray;
-    $updatedIni['security']['Turnstile_site_key'] = $turnstileSiteKeyIni;
-    $updatedIni['security']['Turnstile_secret_key'] = $turnstileSecretKeyIni;
-    $updatedIni['security']['TrustDuration'] = $trustDurationIni;
-    $updatedIni['fx']['FreecurrencyAPI'] = $fxApiIni;
-    $updatedIni['fx']['FreecurrencyURL'] = $fxUrlIni;
-    $updatedIni['fx']['TargetCurrency'] = $fxTargetCurrencyIni;
-    $updatedIni['email']['SMTPDebug'] = $smtpDebugIni;
-    $updatedIni['email']['Host'] = $smtpHostIni;
-    $updatedIni['email']['Port'] = $smtpPortIni;
-    $updatedIni['email']['Username'] = $smtpUserIni;
-    $updatedIni['email']['SMTPSecure'] = $smtpSecureIni;
-    $updatedIni['comments']['DisqusDevURL'] = $disqusDevUrlIni;
-    $updatedIni['comments']['DisqusProdURL'] = $disqusProdUrlIni;
 
     // General settings
     $updatedIni['general']['title'] = getPostedValue('general_title', $iniArray['general']['title']);
@@ -452,8 +492,8 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     $updatedIni['database']['DBServer'] = getPostedValue('database_host', $iniArray['database']['DBServer']);
     $updatedIni['database']['DBName'] = getPostedValue('database_name', $iniArray['database']['DBName']);
     $updatedIni['database']['DBUser'] = getPostedValue('database_user', $iniArray['database']['DBUser']);
-    $dbPasswordChanged = filter_input(INPUT_POST, 'database_password_changed', FILTER_SANITIZE_NUMBER_INT);
-    if ($dbPasswordChanged === '1') :
+    $dbPasswordChanged = filter_input(INPUT_POST, 'database_password_changed', FILTER_VALIDATE_INT);
+    if ($dbPasswordChanged === 1) :
         $updatedIni['database']['DBPass'] = getPostedValue('database_dbpass', $iniArray['database']['DBPass']);
     endif;
 
@@ -467,12 +507,13 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     if (in_array($turnstileChoice, array('enabled', 'disabled'), true)) :
         $updatedIni['security']['Turnstile'] = $turnstileChoice;
     endif;
+    $turnstilePlaceholder = "N/A - Tier is 'dev'";
     $turnstileSiteKey = getPostedValue('security_turnstile_site_key', $turnstileSiteKeyIni);
-    if ($turnstileSiteKey !== '') :
+    if ($turnstileSiteKey !== '' && $turnstileSiteKey !== $turnstilePlaceholder) :
         $updatedIni['security']['Turnstile_site_key'] = $turnstileSiteKey;
     endif;
     $turnstileSecretKey = getPostedValue('security_turnstile_secret_key', $turnstileSecretKeyIni);
-    if ($turnstileSecretKey !== '') :
+    if ($turnstileSecretKey !== '' && $turnstileSecretKey !== $turnstilePlaceholder) :
         $updatedIni['security']['Turnstile_secret_key'] = $turnstileSecretKey;
     endif;
     $trustDuration = filter_input(INPUT_POST, 'security_trust_duration', FILTER_SANITIZE_NUMBER_INT);
@@ -517,11 +558,11 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         $updatedIni['email']['SMTPAuth'] = 0;
     endif;
     $updatedIni['email']['Username'] = getPostedValue('email_username', $smtpUserIni);
-    $emailPasswordChanged = filter_input(INPUT_POST, 'email_password_changed', FILTER_SANITIZE_NUMBER_INT);
-    if ($emailPasswordChanged === '1') :
+    $emailPasswordChanged = filter_input(INPUT_POST, 'email_password_changed', FILTER_VALIDATE_INT);
+    if ($emailPasswordChanged === 1) :
         $updatedIni['email']['Password'] = getPostedValue('email_password', $smtpPasswordIni);
     endif;
-    $smtpSecureChoice = getPostedValue('email_secure', $smtpSecureIni);
+    $smtpSecureChoice = getPostedValue('email_secure', $smtpSecureChoice);
     if ($smtpSecureChoice === 'smtps') :
         $updatedIni['email']['SMTPSecure'] = 'PHPMailer::ENCRYPTION_SMTPS';
     elseif ($smtpSecureChoice === 'starttls') :
@@ -547,7 +588,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
         $updatedIni['comments']['Disqus'] = $commentsStatus;
     endif;
     $updatedIni['comments']['DisqusDevURL'] = getPostedValue('comments_dev_url', $disqusDevUrlIni);
-        $updatedIni['comments']['DisqusProdURL'] = getPostedValue('comments_prod_url', $disqusProdUrlIni);
+    $updatedIni['comments']['DisqusProdURL'] = getPostedValue('comments_prod_url', $disqusProdUrlIni);
 
     $pathErrors = array();
     if (!isPathWritable($updatedIni['general']['ImgLocation'])) :
@@ -579,43 +620,13 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
                     $_SESSION['config_save_message'] .= " (2FA clear failed; check logs.)";
                 endif;
             endif;
-            $_SESSION['config_save_status'] = 'success';
+            // Update runtime values to reflect saved config for the next request
+            $iniArray = $updatedIni;
+            $logfile = $updatedIni['general']['Logfile'];
+            $logLevelIni = $updatedIni['general']['Loglevel'] ?? $logLevelIni;
+            $msg = new Message($logfile);
             header('Location: admin.php');
             exit();
-            // re-read ini file for updated values
-            $ini = new INI("/opt/mtg/mtg_new.ini");
-            $iniArray = $ini->data;
-            $logLevelIni = $iniArray['general']['Loglevel'];
-            $smtpParameters = [
-                'SMTPDebug' => $iniArray['email']['SMTPDebug'],
-                'SMTPHost' => $iniArray['email']['Host'],
-                'SMTPAuth' => $iniArray['email']['SMTPAuth'],
-                'SMTPUsername' => $iniArray['email']['Username'],
-                'SMTPPassword' => $iniArray['email']['Password'],
-                'SMTPSecure' => $iniArray['email']['SMTPSecure'],
-                'SMTPPort' => $iniArray['email']['Port'],
-                'SMTPHelo' => $iniArray['email']['SMTPHelo'] ?? gethostname(),
-                'SMTPVerifySSL' => $iniArray['email']['SMTPVerifySSL'] ?? 1,
-                'globalDebug' => $logLevelIni
-            ];
-            $adminEmail = $iniArray['email']['AdminEmail'];
-            $serverEmail = $iniArray['email']['ServerEmail'];
-            $turnstileSiteKeyIni = $iniArray['security']['Turnstile_site_key'] ?? '';
-            $turnstileSecretKeyIni = $iniArray['security']['Turnstile_secret_key'] ?? '';
-            $trustDurationIni = $iniArray['security']['TrustDuration'] ?? '';
-            $fxApiIni = $iniArray['fx']['FreecurrencyAPI'] ?? '';
-            $fxUrlIni = $iniArray['fx']['FreecurrencyURL'] ?? '';
-            $fxTargetCurrencyIni = $iniArray['fx']['TargetCurrency'] ?? '';
-            $smtpDebugIni = $iniArray['email']['SMTPDebug'] ?? '';
-            $smtpHostIni = $iniArray['email']['Host'] ?? '';
-            $smtpPortIni = $iniArray['email']['Port'] ?? '';
-            $smtpUserIni = $iniArray['email']['Username'] ?? '';
-            $smtpPasswordIni = $iniArray['email']['Password'] ?? '';
-            $smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
-            $smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? gethostname();
-            $smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
-            $disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
-            $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
         else :
             $configEditError = 'Saving configuration failed. Check ini file permissions.';
             $configEditMessage = $configEditError;
@@ -626,7 +637,11 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             return $err['message'];
         }, $pathErrors);
         $configEditError = "<div class='alert-box error'><span>error: </span>"
-            . htmlspecialchars(implode(' ', $messages))
+            . htmlspecialchars(
+                implode(' ', $messages),
+                ENT_NOQUOTES,
+                'UTF-8'
+            )
             . "</div>";
         $configEditErrorTarget = $pathErrors[0]['field'];
     endif;
@@ -663,7 +678,7 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 
 <!DOCTYPE html>
 <head>
-    <title><?php echo $siteTitle;?> - admin (site)</title>
+    <title><?php echo $siteTitleEsc;?> - admin (site)</title>
     <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -871,7 +886,13 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
             $('#general_tier').on('change', toggleTierTurnstileFields);
 
             <?php if (!empty($configEditErrorTarget)) : ?>
-                alert("<?php echo addslashes(strip_tags($configEditError));?>");
+                alert(
+                    <?php echo json_encode(
+                        strip_tags($configEditError),
+                        JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+                    );
+                    ?>
+                );
                 var errorField = document.getElementsByName('<?php echo $configEditErrorTarget; ?>')[0]
                     || document.getElementById('<?php echo $configEditErrorTarget; ?>');
                 if (errorField) {
@@ -892,14 +913,17 @@ require('../includes/menu.php');
 <div id='page'>
     <div class='staticpagecontent'>
         <?php if (!empty($configEditMessage)) : ?>
-            <?php $messageClass = ($configEditMessageType === 'error') ? 'error' : 'success'; ?>
-            <div class='alert-box <?php echo $messageClass; ?>'>
-                <span><?php echo $messageClass; ?>: </span><?php echo htmlspecialchars($configEditMessage); ?>
+            <?php
+            $messageClass = ($configEditMessageType === 'error') ? 'error' : 'success';
+            ?>
+            <div class="alert-box <?php echo htmlspecialchars($messageClass, ENT_QUOTES, 'UTF-8'); ?>">
+                <span><?php echo htmlspecialchars($messageClass, ENT_NOQUOTES, 'UTF-8'); ?>: </span>
+                <?php echo htmlspecialchars($configEditMessage, ENT_NOQUOTES, 'UTF-8'); ?>
             </div>
             <?php unset($_SESSION['config_save_message']); ?>
             <?php unset($_SESSION['config_save_status']); ?>
         <?php endif; ?>
-        <p><strong>Current version:</strong> <?php echo htmlspecialchars($currentVersion); ?></p>
+        <p><strong>Current version:</strong> <?php echo htmlspecialchars($currentVersion, ENT_NOQUOTES, 'UTF-8'); ?></p>
         <div>
             <h3>Add Info update</h3>
             <form id='newinfoupdate' action="?" method="POST">
@@ -926,11 +950,12 @@ require('../includes/menu.php');
                             <textarea class='textinput' id='updatetext' name='updatetext' rows='8'></textarea>
                         </td>
                         <td>
+                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                             <input class='profilebutton' name='update' type="submit" value="ADD">
                         </td>
                     </tr>
                 </table>
-                <input name='name' type='hidden' value='<?php echo ucfirst($userName) ?>'/>
             </form>
 
             <?php
@@ -946,11 +971,6 @@ require('../includes/menu.php');
                 endforeach;
             endif;
 
-            if ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE ON')) :
-                setMtceMode('on');
-            elseif ((isset($_GET['mtce'])) and ($_GET['mtce'] == 'MTCE OFF')) :
-                setMtceMode('off');
-            endif;
             $mtceStatus = mtceModeCheck($user); ?>
             <br>
             <h3>Site administration</h3>
@@ -960,7 +980,7 @@ require('../includes/menu.php');
                         <td class="options_left">
                             <h4>CSS</h4>
                             <?php
-                            if (strpos($cssver, "min") == true) :
+                            if (strpos($cssver, "min") !== false) :
                                 echo "Current CSS status: Using minified";
                             else :
                                     echo
@@ -969,17 +989,21 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            if (strpos($cssver, "min") == true) : ?>
-                                <form action="/admin/admin.php">
-                                    <input class='profilebutton' type="submit" value="UNMINIFY" />
-                                    <input type="hidden" name="togglecss" value="y"/>
-                                </form> <?php
-                            else : ?>
-                                <form action="/admin/admin.php">
-                                    <input class='profilebutton' type="submit" value="MINIFY" />
-                                    <input type="hidden" name="publishcss" value="y"/>
-                                </form> <?php
-                            endif;?>
+                            $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8');
+                            ?>
+                            <?php if (strpos($cssver, 'min') !== false) : ?>
+                                <form action="/admin/admin.php" method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                    <input type="hidden" name="css_action" value="unminify">
+                                    <input class="profilebutton" type="submit" value="UNMINIFY">
+                                </form>
+                            <?php else : ?>
+                                <form action="/admin/admin.php" method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                    <input type="hidden" name="css_action" value="minify">
+                                    <input class="profilebutton" type="submit" value="MINIFY">
+                                </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
@@ -988,9 +1012,11 @@ require('../includes/menu.php');
                             <span id="inisettings">Clear all Scryfall data from JSON table</span>
                         </td>
                         <td>
-                            <form action="/admin/admin.php">
+                            <form action="/admin/admin.php" method="post">
+                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                <input type="hidden" name="scryfalljson_action" value="wipe">
                                 <input class='profilebutton' type="submit" value="WIPE JSON" />
-                                <input type="hidden" name="clearscryfalljson" value="y"/>
                             </form>
                         </td>
                     </tr>
@@ -1005,27 +1031,20 @@ require('../includes/menu.php');
                             endif; ?>
                         </td>
                         <td> <?php
-                        if (($mtceStatus == 1) or ($mtceStatus == 2)) : ?>
-                                <form action='admin.php' method='GET'>
-                                    <input
-                                        class='profilebutton'
-                                        id='mtce'
-                                        type='submit'
-                                        value='MTCE OFF'
-                                        name='mtce'
-                                    />
-                                </form> <?php
-                        else : ?>
-                                <form action='admin.php' method='GET'>
-                                    <input
-                                        class='profilebutton'
-                                        id='mtce'
-                                        type='submit'
-                                        value='MTCE ON'
-                                        name='mtce'
-                                    />
-                                </form> <?php
-                        endif; ?>
+                            $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8');
+                            if (($mtceStatus == 1) or ($mtceStatus == 2)) : ?>
+                                <form action="/admin/admin.php" method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                    <input type="hidden" name="mtce_action" value="off">
+                                    <input class="profilebutton" id="mtce" type="submit" value="MTCE OFF">
+                                </form>
+                            <?php else : ?>
+                                <form action="/admin/admin.php" method="post">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                                    <input type="hidden" name="mtce_action" value="on">
+                                    <input class="profilebutton" id="mtce" type="submit" value="MTCE ON">
+                                </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
@@ -1040,9 +1059,11 @@ require('../includes/menu.php');
                                 endif; ?>
                                 <form
                                     method="post"
-                                    action="admin.php#inisettings"
+                                    action="/admin/admin.php#inisettings"
                                     style="display:inline-block; margin-right: 10px;"
                                 >
+                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                     <input type="hidden" name="config_action" value="cancel_config_edit">
                                     <input class='profilebutton' type="submit" value="CANCEL" />
                                 </form>
@@ -1057,7 +1078,9 @@ require('../includes/menu.php');
                                 <?php endif; ?>
                                 <?php
                             else : ?>
-                                <form method="post" action="admin.php#inisettings">
+                                <form method="post" action="/admin/admin.php#inisettings">
+                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                     <input type="hidden" name="config_action" value="start_reauth">
                                     <input class='profilebutton' type="submit" value="SHOW/EDIT" />
                                 </form> <?php
@@ -1067,7 +1090,9 @@ require('../includes/menu.php');
                     <?php if ($configAuthRequested && !$configEditUnlocked) : ?>
                     <tr>
                         <td class="options_left" colspan="2">
-                            <form method="post" action="admin.php#inisettings" class="config-reauth-form">
+                            <form method="post" action="/admin/admin.php#inisettings" class="config-reauth-form">
+                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                 <label>
                                     Re-authenticate to edit configuration<br>
                                     <input
@@ -1079,7 +1104,12 @@ require('../includes/menu.php');
                                     >
                                 </label>
                                 <br>
-                                <button class='profilebutton' type="submit" name="config_action" value="reauth_submit">
+                                <button 
+                                    class='profilebutton'
+                                    type="submit"
+                                    name="config_action"
+                                    value="reauth_submit"
+                                >
                                     CONFIRM
                                 </button>
                                 <button
@@ -1097,12 +1127,26 @@ require('../includes/menu.php');
                     <tr>
                         <td colspan="2">
                             <?php if ($configEditUnlocked) :
-                                $imgLocationValue = htmlspecialchars($iniArray['general']['ImgLocation']);
-                                $copyrightValue = htmlspecialchars($iniArray['general']['Copyright']);
-                                $dbServerValue = htmlspecialchars($iniArray['database']['DBServer']);
-                                $badLoginLimitValue = htmlspecialchars($iniArray['security']['Badloginlimit']);
+                                $imgLocationValue    = $iniArray['general']['ImgLocation'] ?? '';
+                                $copyrightValue      = $iniArray['general']['Copyright'] ?? '';
+                                $tierValue           = $iniArray['general']['tier'] ?? '';
+                                $logfileValue        = $iniArray['general']['Logfile'] ?? '';
+                                $timezoneValue       = $iniArray['general']['Timezone'] ?? '';
+                                $localeValue         = $iniArray['general']['Locale'] ?? '';
+                                $urlValue            = $iniArray['general']['URL'] ?? '';
+                                $dbServerValue       = $iniArray['database']['DBServer'] ?? '';
+                                $dbNameValue         = $iniArray['database']['DBName']   ?? '';
+                                $dbUserValue         = $iniArray['database']['DBUser']   ?? '';
+                                $badLoginLimitValue  = $iniArray['security']['Badloginlimit'] ?? '';
+                                $adminIpValue        = $iniArray['security']['AdminIP'] ?? '';
                                 ?>
-                                <form id="configedit" method="post" action="admin.php">
+                                <form id="configedit" method="post" action="/admin/admin.php">
+                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?php echo $csrfEsc; ?>"
+                                    >
                                     <input
                                         type="hidden"
                                         name="database_password_changed"
@@ -1126,7 +1170,7 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Site title shown to users"
                                                     value="<?php
-                                                        echo htmlspecialchars($iniArray['general']['title']); ?>"
+                                                        echo $siteTitleEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Tier<br>
@@ -1135,40 +1179,50 @@ require('../includes/menu.php');
                                                     id="general_tier"
                                                     class="textinput"
                                                     <?php echo $configInputStyle;?>
-                                                    title="dev uses built-in dev Turnstile keys; "
-                                                           . "prod uses configured keys"
+                                                    title="dev uses fixed dev Turnstile keys; prod uses configured keys"
                                                 >
                                                     <option value="dev"
-                                                        <?php if ($iniArray['general']['tier'] === 'dev') :
-                                                            echo 'selected';
+                                                        <?php if ($tierValue === 'dev') :
+                                                            echo ' selected';
                                                         endif;?>
                                                     >dev</option>
                                                     <option value="prod"
-                                                        <?php if ($iniArray['general']['tier'] === 'prod') :
-                                                            echo 'selected';
+                                                        <?php if ($tierValue === 'prod') :
+                                                            echo ' selected';
                                                         endif;?>
                                                     >prod</option>
                                                 </select>
                                             </label><br>
                                             <label>Image file path<br>
+                                                <?php $imgLocationEsc = htmlspecialchars(
+                                                    $imgLocationValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="general_img_location"
                                                     <?php echo $configInputStyle;?>
                                                     title="Directory where card images are stored (must be writable)"
-                                                    value="<?php echo $imgLocationValue;?>"
+                                                    value="<?php echo $imgLocationEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Logfile path<br>
+                                                <?php $logfileValueEsc = htmlspecialchars(
+                                                    $logfileValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="general_logfile"
                                                     <?php echo $configInputStyle;?>
                                                     title="Full path to application logfile (must be writable)"
-                                                    value="<?php
-                                                        echo htmlspecialchars($iniArray['general']['Logfile']);?>"
+                                                    value="<?php echo $logfileValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Timezone<br>
@@ -1179,21 +1233,33 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Timezone for dates and logs"
                                                 >
-                                                    <?php foreach ($timezoneList as $timezoneItem) : ?>
+                                                    <?php foreach ($timezoneList as $timezoneItem) :
+                                                        $timezoneItemEsc = htmlspecialchars(
+                                                            $timezoneItem,
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
+                                                        );
+                                                        ?>
                                                         <option
-                                                            value="<?php echo htmlspecialchars($timezoneItem);?>"
+                                                            value="<?php echo $timezoneItemEsc;?>"
                                                             <?php
-                                                            if ($timezoneItem === $iniArray['general']['Timezone']) :
-                                                                echo 'selected';
+                                                            if ($timezoneItem === $timezoneValue) :
+                                                                echo ' selected';
                                                             endif;
                                                             ?>
                                                         >
-                                                            <?php echo htmlspecialchars($timezoneItem);?>
+                                                            <?php echo $timezoneItemEsc;?>
                                                         </option>
                                                     <?php endforeach;?>
                                                 </select>
                                             </label><br>
                                             <label>Locale<br>
+                                                <?php $localeValueEsc = htmlspecialchars(
+                                                    $localeValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1201,20 +1267,32 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Locale used for formatting numbers and dates"
                                                     value="<?php
-                                                     echo htmlspecialchars($iniArray['general']['Locale']);?>"
+                                                     echo $localeValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Copyright<br>
+                                                <?php $copyrightValueEsc = htmlspecialchars(
+                                                    $copyrightValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="general_copyright"
                                                     <?php echo $configInputStyle;?>
                                                     title="Copyright text shown in footer"
-                                                    value="<?php echo $copyrightValue;?>"
+                                                    value="<?php echo $copyrightValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>URL<br>
+                                                <?php $urlValueEsc = htmlspecialchars(
+                                                    $urlValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1222,7 +1300,7 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Base site URL (no trailing slash!)"
                                                     value="<?php
-                                                        echo htmlspecialchars($iniArray['general']['URL']);?>"
+                                                        echo $urlValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Log level<br>
@@ -1234,17 +1312,17 @@ require('../includes/menu.php');
                                                 >
                                                     <option value="1"
                                                         <?php if ($logLevelIni == 1) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >1 - Error</option>
                                                     <option value="2"
                                                         <?php if ($logLevelIni == 2) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >2 - Notice</option>
                                                     <option value="3"
                                                         <?php if ($logLevelIni == 3) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >3 - Debug</option>
                                                 </select>
@@ -1270,17 +1348,23 @@ require('../includes/menu.php');
                                                 >
                                                     <option value="enabled"
                                                         <?php if ($emailEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >enabled</option>
                                                     <option value="disabled"
                                                         <?php if (!$emailEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
                                             <label>Server email<br>
+                                                <?php $serverEmailEsc = htmlspecialchars(
+                                                    $serverEmail,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="email"
@@ -1288,13 +1372,19 @@ require('../includes/menu.php');
                                                     name="email_server"
                                                     <?php echo $configInputStyle;?>
                                                     title="From/Reply-To address used by emails"
-                                                    value="<?php echo htmlspecialchars($serverEmail);?>"
+                                                    value="<?php echo $serverEmailEsc; ?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
                                             <label>Admin email<br>
+                                                <?php $adminEmailEsc = htmlspecialchars(
+                                                    $adminEmail,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="email"
@@ -1302,9 +1392,9 @@ require('../includes/menu.php');
                                                     name="email_admin"
                                                     <?php echo $configInputStyle;?>
                                                     title="Administrative contact email"
-                                                    value="<?php echo htmlspecialchars($adminEmail);?>"
+                                                    value="<?php echo $adminEmailEsc; ?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
@@ -1316,22 +1406,28 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="PHPMailer debug level"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                                     <option value="enabled"
                                                         <?php if ($smtpDebugEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >enabled</option>
                                                     <option value="disabled"
                                                         <?php if (!$smtpDebugEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
                                             <label>SMTP host<br>
+                                                <?php $smtpHostEsc = htmlspecialchars(
+                                                    $smtpParameters['SMTPHost'],
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1339,13 +1435,20 @@ require('../includes/menu.php');
                                                     name="email_host"
                                                     <?php echo $configInputStyle;?>
                                                     title="SMTP server hostname"
-                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPHost']);?>"
+                                                    value="<?php echo $smtpHostEsc; ?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
                                             <label>SMTP HELO name<br>
+                                            <?php
+                                            $smtpHeloValue = htmlspecialchars(
+                                                $smtpParameters['SMTPHelo'] ?? gethostname(),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
+                                            ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1353,15 +1456,19 @@ require('../includes/menu.php');
                                                     name="email_helo"
                                                     <?php echo $configInputStyle;?>
                                                     title="Hostname sent in SMTP HELO/EHLO"
-                                                    value="<?php echo htmlspecialchars(
-                                                            $smtpParameters['SMTPHelo'] ?? gethostname()
-                                                    );?>"
+                                                    value="<?php echo $smtpHeloValue; ?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
                                             <label>SMTP port<br>
+                                                <?php $smtpPortEsc = htmlspecialchars(
+                                                    $smtpParameters['SMTPPort'],
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="number"
@@ -1369,9 +1476,9 @@ require('../includes/menu.php');
                                                     name="email_port"
                                                     <?php echo $configInputStyle;?>
                                                     title="SMTP server port"
-                                                    value="<?php echo htmlspecialchars($smtpParameters['SMTPPort']);?>"
+                                                    value="<?php echo $smtpPortEsc; ?>"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
@@ -1383,22 +1490,28 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Enable SMTP authentication"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                                     <option value="enabled"
                                                         <?php if ($emailAuthEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >enabled</option>
                                                     <option value="disabled"
                                                         <?php if (!$emailAuthEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
                                             <label>SMTP username<br>
+                                                <?php $smtpUsernameEsc = htmlspecialchars(
+                                                    $smtpParameters['SMTPUsername'],
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1407,9 +1520,9 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="SMTP username"
                                                     value="<?php
-                                                        echo htmlspecialchars($smtpParameters['SMTPUsername']);?>"
+                                                        echo $smtpUsernameEsc; ?>"
                                                     <?php if (!$emailAuthEnabled || !$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
@@ -1421,12 +1534,12 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="SMTP encryption mode"
                                                     <?php if (!$emailAuthEnabled || !$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                                     <option value="smtps"
                                                         <?php if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_SMTPS') :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >SMTPS</option>
                                                     <option value="starttls"
@@ -1434,13 +1547,13 @@ require('../includes/menu.php');
                                                         if (
                                                             $smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS'
                                                         ) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >STARTTLS</option>
                                                     <option value="none"
                                                     <?php
                                                     if ($smtpSecureIni === 'none') :
-                                                        echo 'selected';
+                                                        echo ' selected';
                                                     endif;
                                                     ?>
                                                     >None</option>
@@ -1454,24 +1567,24 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="TLS certificate validation behavior"
                                                     <?php if (!$emailEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                                     <option value="verify"
                                                         <?php if ($smtpVerifyIni && $smtpVerifyIni !== '0') :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >Require valid certificate</option>
                                                     <option value="allow"
                                                         <?php if (!$smtpVerifyIni || $smtpVerifyIni === '0') :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >Allow self-signed/invalid</option>
                                                 </select>
                                             </label>
                                             <button id="email_password_toggle" type="button" class="profilebutton"
                                                 <?php if (!$emailAuthEnabled || !$emailEnabled) :
-                                                    echo 'disabled';
+                                                    echo ' disabled';
                                                 endif;?>
                                             >
                                                 SMTP PASS
@@ -1492,6 +1605,12 @@ require('../includes/menu.php');
                                         <div class="config-section">
                                             <h4>Security settings</h4>
                                             <label>Admin IP<br>
+                                                <?php $AdminIpValueEsc = htmlspecialchars(
+                                                    $adminIpValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1499,10 +1618,16 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Restrict admin login to this IP (disabled if empty)"
                                                     value="<?php
-                                                        echo htmlspecialchars($iniArray['security']['AdminIP']);?>"
+                                                        echo $AdminIpValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Bad login limit<br>
+                                                <?php $badLoginLimitValueEsc = htmlspecialchars(
+                                                    $badLoginLimitValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="number"
@@ -1510,7 +1635,7 @@ require('../includes/menu.php');
                                                     name="security_badloginlimit"
                                                     <?php echo $configInputStyle;?>
                                                     title="Lock account after this many failed logins"
-                                                    value="<?php echo $badLoginLimitValue;?>"
+                                                    value="<?php echo $badLoginLimitValueEsc;?>"
                                                 >
                                             </label><br>
                                             <label>Turnstile<br>
@@ -1523,17 +1648,23 @@ require('../includes/menu.php');
                                                 >
                                                     <option value="enabled"
                                                         <?php if ($turnstileEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >enabled</option>
                                                     <option value="disabled"
                                                         <?php if (!$turnstileEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
                                             <label>Turnstile site key<br>
+                                                <?php $turnstileSiteKeyIniEsc = htmlspecialchars(
+                                                    $turnstileSiteKeyIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1542,17 +1673,17 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Turnstile site key (prod tier only)"
                                                     value="<?php
-                                                    if ($iniArray['general']['tier'] === 'dev') :
+                                                    if ($tierValue === 'dev') :
                                                         echo 'N/A - Tier is \'dev\'';
                                                     else :
-                                                        echo htmlspecialchars($turnstileSiteKeyIni);
+                                                        echo $turnstileSiteKeyIniEsc;
                                                     endif;
                                                     ?>"
                                                     data-realvalue="<?php
-                                                        echo htmlspecialchars($turnstileSiteKeyIni);?>"
+                                                        echo $turnstileSiteKeyIniEsc; ?>"
                                                     <?php
-                                                    if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
-                                                        echo 'disabled';
+                                                    if (!$turnstileEnabled || $tierValue === 'dev') :
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
@@ -1563,21 +1694,26 @@ require('../includes/menu.php');
                                                     id="security_turnstile_secret_key"
                                                     name="security_turnstile_secret_key"
                                                     value="<?php
-                                                    if ($iniArray['general']['tier'] === 'dev') :
+                                                    if ($tierValue === 'dev') :
                                                         echo 'N/A - Tier is \'dev\'';
                                                     endif;
                                                     ?>"
                                                     placeholder="Leave blank to keep existing"
                                                     <?php echo $configInputStyle;?>
                                                     title="Turnstile secret key (prod tier only)"
-                                                    data-realvalue=""
                                                     <?php
-                                                    if (!$turnstileEnabled || $iniArray['general']['tier'] === 'dev') :
-                                                        echo 'disabled';
+                                                    if (!$turnstileEnabled || $tierValue === 'dev') :
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
                                             <label>Trusted device duration (days)<br>
+                                                <?php $trustDurationIniEsc = htmlspecialchars(
+                                                    $trustDurationIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="number"
@@ -1585,7 +1721,7 @@ require('../includes/menu.php');
                                                     name="security_trust_duration"
                                                     <?php echo $configInputStyle;?>
                                                     title="How long trusted devices remain valid"
-                                                    value="<?php echo htmlspecialchars($trustDurationIni);?>"
+                                                    value="<?php echo $trustDurationIniEsc;?>"
                                                 >
                                             </label>
                                             <h4>Disqus settings</h4>
@@ -1599,17 +1735,23 @@ require('../includes/menu.php');
                                                 >
                                                     <option value="enabled"
                                                         <?php if ($commentsEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >enabled</option>
                                                     <option value="disabled"
                                                         <?php if (!$commentsEnabled) :
-                                                            echo 'selected';
+                                                            echo ' selected';
                                                         endif;?>
                                                     >disabled</option>
                                                 </select>
                                             </label><br>
                                             <label>Dev URL<br>
+                                                <?php $disqusDevUrlIniEsc = htmlspecialchars(
+                                                    $disqusDevUrlIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1617,13 +1759,19 @@ require('../includes/menu.php');
                                                     name="comments_dev_url"
                                                     <?php echo $configInputStyle;?>
                                                     title="Disqus shortname/URL for dev tier"
-                                                    value="<?php echo htmlspecialchars($disqusDevUrlIni);?>"
+                                                    value="<?php echo $disqusDevUrlIniEsc; ?>"
                                                     <?php if (!$commentsEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label><br>
                                             <label>Prod URL<br>
+                                                <?php $disqusProdUrlIniEsc = htmlspecialchars(
+                                                    $disqusProdUrlIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1631,9 +1779,9 @@ require('../includes/menu.php');
                                                     name="comments_prod_url"
                                                     <?php echo $configInputStyle;?>
                                                     title="Disqus shortname/URL for production tier"
-                                                    value="<?php echo htmlspecialchars($disqusProdUrlIni);?>"
+                                                    value="<?php echo $disqusProdUrlIniEsc; ?>"
                                                     <?php if (!$commentsEnabled) :
-                                                        echo 'disabled';
+                                                        echo ' disabled';
                                                     endif;?>
                                                 >
                                             </label>
@@ -1641,16 +1789,28 @@ require('../includes/menu.php');
                                         <div class="config-section">
                                             <h4>Database settings</h4>
                                             <label>Host<br>
+                                                <?php $dbServerValueEsc = htmlspecialchars(
+                                                    $dbServerValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="database_host"
                                                     <?php echo $configInputStyle;?>
                                                     title="Database host/server name"
-                                                    value="<?php echo $dbServerValue;?>"
+                                                    value="<?php echo $dbServerValueEsc;?>"
                                                 >
                                             </label><br>
                                             <label>Database<br>
+                                                <?php $dbNameValueEsc = htmlspecialchars(
+                                                    $dbNameValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1658,10 +1818,16 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Database name"
                                                     value="<?php
-                                                        echo htmlspecialchars($iniArray['database']['DBName']);?>"
+                                                        echo $dbNameValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>User<br>
+                                                <?php $dbUserValueEsc = htmlspecialchars(
+                                                    $dbUserValue,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
@@ -1669,7 +1835,7 @@ require('../includes/menu.php');
                                                     <?php echo $configInputStyle;?>
                                                     title="Database user name"
                                                     value="<?php
-                                                        echo htmlspecialchars($iniArray['database']['DBUser']);?>"
+                                                        echo $dbUserValueEsc; ?>"
                                                 >
                                             </label><br>
                                             <button id="db_password_toggle" type="button" class="profilebutton">
@@ -1689,33 +1855,51 @@ require('../includes/menu.php');
                                             </div>
                                             <h4>FX settings</h4>
                                             <label>Freecurrency API key<br>
+                                                <?php $fxApiIniEsc = htmlspecialchars(
+                                                    $fxApiIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="fx_api_key"
                                                     <?php echo $configInputStyle;?>
                                                     title="Freecurrency API key"
-                                                    value="<?php echo htmlspecialchars($fxApiIni);?>"
+                                                    value="<?php echo $fxApiIniEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Freecurrency URL<br>
+                                                <?php $fxUrlIniEsc = htmlspecialchars(
+                                                    $fxUrlIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="fx_api_url"
                                                     <?php echo $configInputStyle;?>
                                                     title="Endpoint URL for Freecurrency API"
-                                                    value="<?php echo htmlspecialchars($fxUrlIni);?>"
+                                                    value="<?php echo $fxUrlIniEsc; ?>"
                                                 >
                                             </label><br>
                                             <label>Local currency<br>
+                                                <?php $fxTargetCurrencyIniEsc = htmlspecialchars(
+                                                    $fxTargetCurrencyIni,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                );
+                                                ?>
                                                 <input
                                                     class="textinput"
                                                     type="text"
                                                     name="fx_target_currency"
                                                     <?php echo $configInputStyle;?>
                                                     title="Default local currency code"
-                                                    value="<?php echo htmlspecialchars($fxTargetCurrencyIni);?>"
+                                                    value="<?php echo $fxTargetCurrencyIniEsc; ?>"
                                                 >
                                             </label>
                                         </div>
@@ -1744,12 +1928,31 @@ require('../includes/menu.php');
             );
             if ($stmt != true) :
                 trigger_error(
-                    "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                    " - SQL failure: Error: " . $db->error,
+                    "[ERROR] Class: " . __METHOD__ . " " . __LINE__ . " - SQL failure: Error: " . $db->error,
                     E_USER_ERROR
                 );
             else :
-                if ($stmt->num_rows > 0) : ?>
+                if ($stmt->num_rows > 0) : 
+                    // Load users once (used for owned-card checks)
+                    $userResultArray = array();
+                    $sql3 = "SELECT usernumber, username FROM users";
+                    $stmt3 = $db->prepare($sql3);
+                    if ($stmt3) :
+                        $stmt3->execute();
+                        $stmt3->bind_result($userNumberRow, $userNameRow);
+                        while ($stmt3->fetch()) :
+                            $userResultArray[] = array(
+                                'usernumber' => $userNumberRow,
+                                'username'   => $userNameRow
+                            );
+                        endwhile;
+                        $stmt3->close();
+                    else :
+                        trigger_error(
+                            "[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error,
+                            E_USER_ERROR
+                        );
+                    endif; ?>
                     <script>
                         function confirmTestDelete() {
                             // Display a confirmation dialog
@@ -1759,7 +1962,15 @@ require('../includes/menu.php');
                             }
                         }
                     </script>
-
+                    <script>
+                        function confirmDelete() {
+                            // Display a confirmation dialog
+                            if (confirm("Are you sure you want to delete all migrations?")) {
+                                // If the user confirms, submit the form
+                                document.getElementById("deleteForm").submit();
+                            }
+                        }
+                    </script>
                     <!-- Conditional display of buttons based on the $countSql variable -->
                     <?php
                     if (isset($totalMatchesInCardsScry) && $totalMatchesInCardsScry > 0) : ?>
@@ -1767,21 +1978,29 @@ require('../includes/menu.php');
                         <p>Rows found in test: <?php echo $totalMatchesInCardsScry; ?></p>
 
                         <!-- Display the DELETE button -->
-                        <form id="deleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                        <form id="deleteForm" method="post" action="/admin/admin.php">
+                            <input type="hidden" name="deleteMigrations" value="DELETE">
+                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                             <button
-                                type="submit"
-                                name="deleteMigrations"
-                                value="DELETE"
+                                type="button"
                                 onclick="confirmDelete()"
                             >
-                            Delete ALL migrations (<?php echo $totalMatchesInCardsScry; ?>)
+                                Delete ALL migrations (<?php echo $totalMatchesInCardsScry; ?>)
                             </button>
                         </form>
                     <?php else : ?>
                         <!-- Display the TEST DELETE button with the $countSql variable -->
-                        <form id="testDeleteForm" method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                        <form id="testDeleteForm" method="post" action="/admin/admin.php">
                             <input type="hidden" name="deleteMigrations" value="TEST">
-                            <button type="button" onclick="confirmTestDelete()">Test migrations deletion</button>
+                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                            <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
+                            <button 
+                                type="button"
+                                onclick="confirmTestDelete()"
+                            >
+                                Test migrations deletion
+                            </button>
                         </form>
                     <?php endif; ?>
 
@@ -1801,12 +2020,12 @@ require('../includes/menu.php');
                     </tr>
                     <tr>
                     <?php
-                    $rowNumber = 1;
+                    $rowNumber = 0;
                     while ($row = $stmt->fetch_assoc()) :
                         $rowNumber = $rowNumber + 1;
 
                         // Find decks and owners of cards needing migration
-                        $userResultArray = $collectionResultArray = $resultArray = array();
+                        $collectionResultArray = $resultArray = array();
                         $sql2 = "SELECT deckname, username FROM decks
                             LEFT JOIN users ON decks.owner = users.usernumber
                             LEFT JOIN deckcards ON decks.decknumber = deckcards.decknumber
@@ -1825,21 +2044,8 @@ require('../includes/menu.php');
                         endwhile;
                         $stmt2->close();
 
-                        $sql3 = "SELECT usernumber,username FROM users";
-                        $stmt3 = $db->prepare($sql3);
-                        if ($stmt3) :
-                            $stmt3->execute();
-                            $stmt3->bind_result($userNumber, $userName);
-                        else :
-                            trigger_error("[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error, E_USER_ERROR);
-                        endif;
-                        while ($stmt3->fetch()) :
-                            $userResultArray[] = array('usernumber' => $userNumber, 'username' => $userName);
-                        endwhile;
-                        $stmt3->close();
-
                         foreach ($userResultArray as $userArray) :
-                            $table = $userArray['usernumber'] . "collection";
+                            $table = (int) $userArray['usernumber'] . "collection";
                             $sql4 = "SELECT
                                          SUM(
                                              COALESCE(`$table`.`normal`, 0)
@@ -1856,9 +2062,9 @@ require('../includes/menu.php');
                             // Check if the statement was prepared successfully
                             if ($stmt4) :
                                 $stmt4->bind_param("s", $row['old_scryfall_id']);
-                                if ($stmt4->error) {
+                                if ($stmt4->error) :
                                     trigger_error("[ERROR] Bind error: " . $stmt4->error, E_USER_ERROR);
-                                }
+                                endif;
                                 $stmt4->execute();
                                 $stmt4->bind_result($total);
                             else :
@@ -1886,39 +2092,74 @@ require('../includes/menu.php');
                         <tr>
                             <td><?php echo($rowNumber);?></td>
                             <td><?php
-                                echo(
-                                    "<a href=$myURL/carddetail.php?id="
-                                    . "{$row['old_scryfall_id']}>{$row['old_scryfall_id']}</a>"
+                                $oldId = $row['old_scryfall_id'] ?? '';
+                                $oldIdText = htmlspecialchars($oldId, ENT_NOQUOTES, 'UTF-8');
+                                $oldIdHref = htmlspecialchars(
+                                    $myURL . '/carddetail.php?id=' . rawurlencode($oldId),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                );
+                                ?>
+                                <a href="<?php echo $oldIdHref; ?>"><?php echo $oldIdText; ?></a>
+                            </td>
+                            <td><?php echo htmlspecialchars($row['object'], ENT_NOQUOTES, 'UTF-8'); ?></td>
+
+                            <td><?php
+                                $cardToEdit = $row['old_scryfall_id'] ?? '';
+                                $migrationStrategy = $row['migration_strategy'] ?? '';
+
+                                $cardToEditText = htmlspecialchars($migrationStrategy, ENT_NOQUOTES, 'UTF-8');
+                                $cardToEditHref = htmlspecialchars(
+                                    $myURL . '/admin/cards.php?cardtoedit=' . rawurlencode($cardToEdit),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                );
+                                ?>
+                                <a href="<?php echo $cardToEditHref; ?>"><?php echo $cardToEditText; ?></a>
+                            </td>
+
+                            <td><?php echo htmlspecialchars($row['metadata_name'], ENT_NOQUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($row['metadata_set_code'], ENT_NOQUOTES, 'UTF-8'); ?></td>
+                            <td>
+                                <?php echo htmlspecialchars(
+                                    $row['metadata_collector_number'],
+                                    ENT_NOQUOTES,
+                                    'UTF-8'
                                 );
                                 ?>
                             </td>
-                            <td><?php echo($row['object']);?></td>
+                            <td><?php echo htmlspecialchars($row['note'], ENT_NOQUOTES, 'UTF-8'); ?></td>
+
                             <td><?php
-                                echo(
-                                    "<a href=$myURL/admin/cards.php?cardtoedit="
-                                    . "{$row['old_scryfall_id']}>{$row['migration_strategy']}</a>"
+                                $newId = $row['new_scryfall_id'] ?? '';
+
+                                $newIdText = htmlspecialchars($newId, ENT_NOQUOTES, 'UTF-8');
+                                $newIdHref = htmlspecialchars(
+                                    $myURL . '/carddetail.php?id=' . rawurlencode($newId),
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 );
                                 ?>
-                            </td>
-                            <td><?php echo($row['metadata_name']);?></td>
-                            <td><?php echo($row['metadata_set_code']);?></td>
-                            <td><?php echo($row['metadata_collector_number']);?></td>
-                            <td><?php echo($row['note']);?></td>
-                            <td><?php
-                                echo(
-                                    "<a href=$myURL/carddetail.php?id="
-                                    . "{$row['new_scryfall_id']}>{$row['new_scryfall_id']}</a>"
-                                );
-                                ?>
+                                <a href="<?php echo $newIdHref; ?>"><?php echo $newIdText; ?></a>
                             </td>
                             <td><?php
                             if (!empty($resultArray)) :
                                 echo '<table border="1">';
                                 echo '<tr><th>Deck Name</th><th>Owner</th></tr>';
                                 foreach ($resultArray as $deckresult) :
+                                    $deckResultName = htmlspecialchars(
+                                        $deckresult['deckname'],
+                                        ENT_NOQUOTES,
+                                        'UTF-8'
+                                    );
+                                    $deckResultOwner = htmlspecialchars(
+                                        $deckresult['deckowner'] ?? '',
+                                        ENT_NOQUOTES,
+                                        'UTF-8'
+                                    );
                                     echo '<tr>';
-                                    echo '<td>' . $deckresult['deckname'] . '</td>';
-                                    echo '<td>' . $deckresult['deckowner'] . '</td>';
+                                    echo '<td>' . $deckResultName . '</td>';
+                                    echo '<td>' . $deckResultOwner . '</td>';
                                     echo '</tr>';
                                 endforeach;
                                 echo '</table>';
@@ -1932,9 +2173,19 @@ require('../includes/menu.php');
                                 echo '<table border="1">';
                                 echo '<tr><th>Owner</th><th>Total</th></tr>';
                                 foreach ($collectionResultArray as $userresult) :
+                                    $userResultOwner = htmlspecialchars(
+                                        $userresult['owner'] ?? '',
+                                        ENT_NOQUOTES,
+                                        'UTF-8'
+                                    );
+                                    $userResultTotal = htmlspecialchars(
+                                        (string) ($userresult['total'] ?? 0),
+                                        ENT_NOQUOTES,
+                                        'UTF-8'
+                                    );
                                     echo '<tr>';
-                                    echo '<td>' . $userresult['owner'] . '</td>';
-                                    echo '<td>' . $userresult['total'] . '</td>';
+                                    echo '<td>' . $userResultOwner . '</td>';
+                                    echo '<td>' . $userResultTotal . '</td>';
                                     echo '</tr>';
                                 endforeach;
                                 echo '</table>';
