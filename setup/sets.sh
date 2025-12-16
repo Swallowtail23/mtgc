@@ -17,7 +17,9 @@ fi
 
 WEB_GROUP="$(id -gn "$WEB_USER")"
 
+echo "[$(date -Is)] sets.sh started"
 cd /var/www/mtgnew/bulk
 php ./scryfall_sets.php
 
 chown -R "$WEB_USER:$WEB_GROUP" /opt/mtg/cardimg
+echo "[$(date -Is)] sets.sh started"
