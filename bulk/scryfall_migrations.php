@@ -377,6 +377,9 @@ foreach ($result_files as $data) :
 endforeach;
 
 $msg->logMessage('[NOTICE]', "$total_count bulk migrations completed, $need_action actions needed");
+if (php_sapi_name() == 'cli') :
+    echo "Migrations: $total_count bulk migrations completed, $need_action actions needed\n";
+endif;
 
 // Email results
 $subject = "MTG migrations update completed";

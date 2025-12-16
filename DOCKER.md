@@ -186,15 +186,14 @@ intend to migrate the installation.
 
 When `docker/docker-init.sh` runs on a fresh database it executes:
 
-1. `php bulk/scryfall_bulk.php all`
-2. `php bulk/scryfall_bulk.php default`
-3. `php bulk/scryfall_sets.php`
-4. `php bulk/scryfall_rulings.php`
-5. `php bulk/scryfall_migrations.php`
+1. `php bulk/scryfall_bulk.php refresh`
+2. `php bulk/scryfall_sets.php`
+3. `php bulk/scryfall_rulings.php`
+4. `php bulk/scryfall_migrations.php`
 
-The two-step bulk run deliberately avoids downloading ~90k card images.
-The first `all` pass writes every card record but skips image downloads;
-the second `default` pass marks the primary language. A `default` run will only
+The 'refresh'' bulk run deliberately avoids downloading ~90k card images.
+A first `all` pass writes every card record but skips image downloads;
+a second `default` pass marks the primary language. A `default` run will only
 download an image when a new row is inserted; because the `all` pass already
 populated all cards, again, no images are fetched. Cards later viewed via the UI
 or added in future bulk runs download on demand, so storage grows gradually

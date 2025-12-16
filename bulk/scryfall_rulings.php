@@ -118,6 +118,9 @@ foreach ($data as $key => $value) :
     $stmt->close();
 endforeach;
 $msg->logMessage('[NOTICE]', "$total_count bulk rulings completed");
+if (php_sapi_name() == 'cli') :
+    echo "Rulings: $total_count bulk rulings completed\n";
+endif;
 
 // Email results
 $subject = "MTG rulings update completed";

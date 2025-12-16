@@ -33,7 +33,7 @@ ensureDirectoryExists($imgLocation . 'json');
 
 /// Call without parameters does a 'default' file update only
 /// Call with 'all' gets the all cards file
-/// Call with 'refresh' gets fresh copies of BOTH files
+/// Call with 'refresh' gets fresh copies of BOTH files (run by docker install for initial setup)
 
 if (isset($argv[1])) :
     if ($argv[1] == "all") :
@@ -71,8 +71,14 @@ if ($bulkInfo !== false) :
             );
             exit;
         else :
-            scryfallImport($file_location_all, 'all');
-            scryfallImport($file_location_default, 'default');
+            $bulkResultAll = scryfallImport($file_location_all, 'all');
+            if (php_sapi_name() == 'cli') :
+                echo "Scryfall Bulk API: $subject, $bulkResultAll\n";
+            endif;            
+            $bulkResultDefault = scryfallImport($file_location_default, 'default');
+            if (php_sapi_name() == 'cli') :
+                echo "Scryfall Bulk API: $subject, $bulkResultDefault\n";
+            endif; 
         endif;
     else :
         $bulk_uri = $bulkInfo['bulkUrl'];
@@ -83,6 +89,9 @@ if ($bulkInfo !== false) :
         if ($get_json === false) :
             $msg->logMessage('[ERROR]', "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri");
             exit;
+            if (php_sapi_name() == 'cli') :
+                echo "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri\n";
+            endif;
         else :
             if ($file_location === $imgLocation . 'json/bulk.json') :
                 $type = 'default';
@@ -103,9 +112,15 @@ if ($bulkInfo !== false) :
                     "Email disabled; scryfall_bulk alert not sent for $type"
                 );
             endif;
+            if (php_sapi_name() == 'cli') :
+                echo "Scryfall Bulk API: $subject, $bulkResultMessage\n";
+            endif;
         endif;
     endif;
 else :
     $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: bulk_info function failed to return usable results");
     exit;
+    if (php_sapi_name() == 'cli') :
+        echo "Scryfall Bulk API: Download URI: bulk_info function failed to return usable results\n";
+    endif;
 endif;

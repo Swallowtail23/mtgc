@@ -96,8 +96,16 @@ while ($user = $users->fetch_assoc()) :
             '[NOTICE]',
             "Snapshot stored for $userEmail: USD {$valueUsd}, local {$localValue} {$localCurrency}"
         );
+        if (php_sapi_name() == 'cli') :
+            echo "Snapshot stored for $userEmail: USD {$valueUsd}, local {$localValue} {$localCurrency}\n";
+        endif;
     endif;
     $insert->close();
 endwhile;
 
 $msg->logMessage('[NOTICE]', 'Collection value snapshot run completed');
+
+// If running from CLI, output result
+if (php_sapi_name() == 'cli') :
+    echo "Collection value snapshot run completed\n";
+endif;

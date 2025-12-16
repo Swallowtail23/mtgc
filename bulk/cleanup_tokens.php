@@ -34,6 +34,6 @@ $cleanedCount = $deviceManager->cleanupExpiredTokens();
 $msg->logMessage('[NOTICE]', "Trusted device token cleanup complete. Removed $cleanedCount expired tokens");
 
 // If running from CLI, output result
-if (php_sapi_name() == 'cli') {
+if (php_sapi_name() == 'cli') :
     echo "Trusted device token cleanup complete. Removed $cleanedCount expired tokens\n";
-}
+endif;

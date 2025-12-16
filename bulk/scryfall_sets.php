@@ -163,6 +163,9 @@ foreach ($data as $key => $value) :
     endif;
 endforeach;
 $msg->logMessage('[NOTICE]', "$total_count bulk sets completed");
+if (php_sapi_name() == 'cli') :
+    echo "Sets: $total_count bulk sets completed\n";
+endif;
 
 // Email results
 $subject = "MTG sets update completed";

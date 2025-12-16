@@ -201,7 +201,7 @@ docker exec mtgc_web_1 bash -c "test -f /var/log/mtg/scryfall_import_done" >nul 
     exit /b 0
 )
 echo Running bulk Scryfall import - this may take up to 2 hours...
-docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php all"
+docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_bulk.php refresh"
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_sets.php"
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_rulings.php"
 docker exec mtgc_web_1 bash -c "cd /var/www/mtgnew/bulk && php scryfall_migrations.php"

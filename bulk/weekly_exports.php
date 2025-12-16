@@ -101,3 +101,6 @@ else :
     $msg->logMessage('[NOTICE]', 'Email disabled; weekly export admin summary not sent');
     $mailresult = false;
 endif;
+if (php_sapi_name() == 'cli') :
+    echo "Weekly collection export from $siteTitle have been run for:\n$list\n";
+endif;
