@@ -1,4 +1,4 @@
-FROM docker.io/library/mysql:8.4
+FROM docker.io/library/mysql:9.5
 
 RUN microdnf install -y tzdata
 
