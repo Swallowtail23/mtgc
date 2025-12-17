@@ -65,6 +65,7 @@ require('includes/secpagesetup.php');       //Setup page variables
 require('includes/colour.php');
 forcePasswordChange();                       //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $uniquecard_ref = [];
 ?>
@@ -74,7 +75,7 @@ $uniquecard_ref = [];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo htmlspecialchars($siteTitle); ?> - deck detail</title>
+    <title><?php echo $siteTitleEsc; ?> - deck detail</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver); ?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -1153,7 +1154,7 @@ m13,12,"Fog",en,1,0,0,{id}
     <div class="staticpagecontent">
         <div id="decklist">
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png"> <?php echo $siteTitle;?>
+                <img src="images/white_m.png"> <?php echo $siteTitleEsc;?>
             </span>
             <form id="deletedeck" action="decks.php" method="POST">
                 <input type='hidden' name="deletedeck" value="yes">

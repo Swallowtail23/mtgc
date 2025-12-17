@@ -92,6 +92,7 @@ if ($trust_choice !== 'none') :
     exit();
 else :
     $msg->logMessage('[DEBUG]', 'Trust choice not yet set, display the trust form');
+    $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     ?>
 <!DOCTYPE html>
     <head>
@@ -100,7 +101,7 @@ else :
             name="viewport"
             content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
         >
-        <title><?php echo htmlspecialchars($siteTitle);?> - Trust Device</title>
+        <title><?php echo $siteTitleEsc;?> - Trust Device</title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
         <?php include 'includes/googlefonts.php'; ?>
@@ -108,7 +109,7 @@ else :
     <body id="loginbody" class="body">
         <?php include_once 'includes/analyticstracking.php'; ?>
         <div id="loginheader">
-            <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
+            <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
                 <p>You are logged in<?php echo isset($_SESSION['admin']) && $_SESSION['admin'] ? '!' : ''; ?></p>
             <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
                 <form action="trust_device.php" method="post">

@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     20.0
-Date:        29/11/25
+Version:     20.1
+Date:        17/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -40,6 +40,7 @@ History:
     19.4 25/11/25 Standard tidy-up and long-line wraps
     19.5 29/11/25 Rename forcePasswordChange usage
     20.0 29/11/25 Add async image checks
+    20.1 17/12/25 Escape sitetitle variable
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -80,6 +81,8 @@ else :
 endif;
 
 $refreshimage = '';
+
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -87,7 +90,7 @@ $refreshimage = '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo $siteTitle;?> - card details</title>
+    <title><?php echo $siteTitleEsc;?> - card details</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -315,7 +318,7 @@ require('includes/menu.php'); //mobile menu
         exit;
     endif; ?>
         <div id="printtitle" class="headername">
-            <img src="images/white_m.png"><?php echo $siteTitle;?>
+            <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
         </div>
     <?php
     // Does the user have a collection table?

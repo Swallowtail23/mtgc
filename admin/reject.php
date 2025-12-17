@@ -21,10 +21,11 @@ History:
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;?>
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 <!DOCTYPE html>
     <head>
-        <title><?php echo $siteTitle;?> - admin (reject)</title>
+        <title><?php echo $siteTitleEsc;?> - admin (reject)</title>
         <link rel="manifest" href="/manifest.json" />
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">

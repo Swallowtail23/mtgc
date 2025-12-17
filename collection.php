@@ -56,10 +56,11 @@ endif;
 if ($newdecksuccess === '' or $newdecknumber === '') :
     $newdecksuccess = $newdecknumber = '';
 endif;
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     if ($csvResult !== true) :
@@ -127,7 +128,7 @@ endif;
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <title><?php echo $siteTitle;?> - collection</title>
+        <title><?php echo $siteTitleEsc;?> - collection</title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
@@ -680,7 +681,7 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,

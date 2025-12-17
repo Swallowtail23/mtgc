@@ -63,7 +63,7 @@ $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
-
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -71,7 +71,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <title><?php echo $siteTitle;?> - profile</title>
+        <title><?php echo $siteTitleEsc;?> - profile</title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
@@ -265,7 +265,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                                                 if (!class_exists('PasswordCheck')) :
                                                     require_once('classes/passwordcheck.class.php');
                                                 endif;
-                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitleEsc);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;

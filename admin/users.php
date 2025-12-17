@@ -84,11 +84,12 @@ if (isset($_POST['updateusers'])) :
     $updateusers = ($_POST['updateusers'] == 'yes') ? 'yes' : '';
     $updatearray[] = filter_input_array(INPUT_POST);
 endif;
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
 <head>
-    <title><?php echo $siteTitle;?> - admin (users)</title>
+    <title><?php echo $siteTitleEsc;?> - admin (users)</title>
     <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -142,7 +143,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
-                $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                $obj = new PasswordCheck($db, $logfile, $siteTitleEsc);
                 $msg->logMessage(
                     '[DEBUG]',
                     "Attempting to create user $username_raw with email $postemail_raw"
@@ -287,7 +288,7 @@ require('../includes/menu.php');
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
-                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                        $obj = new PasswordCheck($db, $logfile, $siteTitleEsc);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent"

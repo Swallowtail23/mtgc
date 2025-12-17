@@ -36,13 +36,14 @@ require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new Message($logfile);
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 // Page content starts here
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

@@ -41,8 +41,9 @@ require 'classes/twofactormanager.class.php';
 $cssver = cssVersionCheck();
 $msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$pwReset = new PasswordCheck($db, $logfile, $siteTitleEsc);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
@@ -185,14 +186,14 @@ endif;
         name="viewport"
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
-    <title><?php echo htmlspecialchars($siteTitle);?> - reset</title>
+    <title><?php echo $siteTitleEsc;?> - reset</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
     <?php include 'includes/googlefonts.php';?>
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">
-    <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
+    <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
 
     <?php if ($message !== '') : ?>
     <div class="alert-box notice" style="margin: 20px;">

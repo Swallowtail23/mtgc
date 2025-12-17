@@ -44,13 +44,14 @@ $deletedeck = isset($_POST['deletedeck']) ? 'yes' : '';
 $decktodelete = isset($_POST['decktodelete'])
     ? filter_input(INPUT_POST, 'decktodelete', FILTER_SANITIZE_NUMBER_INT)
     : '';
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title> <?php echo $siteTitle;?> - decks</title>
+    <title> <?php echo $siteTitleEsc;?> - decks</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>

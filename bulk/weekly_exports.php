@@ -20,7 +20,8 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 $msg   = new Message($logfile);
-$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitleEsc);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -67,11 +68,11 @@ while ($user = $usersExport->fetch_assoc()) :
                 endif;
             endif;
         endwhile;
-        $subject = "$siteTitle weekly decks export";
-        $emailbody = "Hi $userName, please see attached your weekly decks export from $siteTitle. <br><br> Opt out "
-            . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitle profile page</a>";
-        $emailaltbody = "Hi $userName, please see attached your weekly decks export from $siteTitle. \r\n\r\n Opt "
-            . "out of automated emails in your profile at your $siteTitle profile page ($myURL/profile.php) \r\n\r\n";
+        $subject = "$siteTitleEsc weekly decks export";
+        $emailbody = "Hi $userName, please see attached your weekly decks export from $siteTitleEsc. <br><br> Opt out "
+            . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
+        $emailaltbody = "Hi $userName, please see attached your weekly decks export from $siteTitleEsc. \r\n\r\n Opt "
+            . "out of automated emails in your profile at your $siteTitleEsc profile page ($myURL/profile.php) \r\n\r\n";
         if (isset($emailEnabled) && $emailEnabled === true) :
             $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
             $mailresult = $mail->sendEmail($userEmail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
@@ -92,8 +93,8 @@ while ($user = $usersExport->fetch_assoc()) :
     $list .= "$userName ($userEmail)\r\n";
 endwhile;
 
-$subject = "$siteTitle weekly export user report";
-$emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
+$subject = "$siteTitleEsc weekly export user report";
+$emailbody = "Weekly collection export from $siteTitleEsc have been run for:\r\n\r\n$list";
 if (isset($emailEnabled) && $emailEnabled === true) :
     $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
@@ -102,5 +103,5 @@ else :
     $mailresult = false;
 endif;
 if (php_sapi_name() == 'cli') :
-    echo "Weekly collection export from $siteTitle have been run for:\n$list\n";
+    echo "Weekly collection export from $siteTitleEsc have been run for:\n$list\n";
 endif;

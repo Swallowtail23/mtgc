@@ -387,13 +387,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
 
 // Page layout starts here
 $msg->logMessage('[DEBUG]', "Loading page layout");
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="initial-scale=1">
-        <title> <?php echo $siteTitle;?> </title>
+        <title> <?php echo $siteTitleEsc;?> </title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
@@ -648,7 +649,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
         ?>
         <div id='page'>
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png"><?php echo $siteTitle;?>
+                <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
             </span>
             <?php
             if ((isset($qtyresults)) and ( $qtyresults != 0)) :

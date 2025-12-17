@@ -41,6 +41,7 @@ ob_start();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $msg = new Message($logfile);
 $loginHandler = new LoginHandler(
@@ -49,7 +50,7 @@ $loginHandler = new LoginHandler(
     $turnstile,
     $turnstile_secret_key,
     $Badloglimit,
-    $siteTitle,
+    $siteTitleEsc,
     $smtpParameters,
     $serverEmail
 );
@@ -79,7 +80,7 @@ endif;
 
 if ($loginHandler->isLoggedIn()) :
     $msg->logMessage('[DEBUG]', 'User already logged in, showing already logged in page');
-    $loginHandler->renderAlreadyLoggedInPage($siteTitle, $cssver, $trustedDeviceResult['trusted_login']);
+    $loginHandler->renderAlreadyLoggedInPage($siteTitleEsc, $cssver, $trustedDeviceResult['trusted_login']);
 endif;
 
 session_destroy();
@@ -113,7 +114,7 @@ endif;
         name="viewport"
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
-    <title><?php echo htmlspecialchars($siteTitle);?></title>
+    <title><?php echo $siteTitleEsc;?></title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
     <?php include 'includes/googlefonts.php'; ?>
@@ -122,7 +123,7 @@ endif;
 <body id="loginbody" class="body">
 <?php include_once 'includes/analyticstracking.php'; ?>
     <div id="loginheader">
-        <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
+        <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
         <?php
         echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> ';
         echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>";

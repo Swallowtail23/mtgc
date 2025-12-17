@@ -207,12 +207,12 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $obj->refreshImage($id);
 endif;
-
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
 <head>
-    <title><?php echo $siteTitle;?> - admin (cards)</title>
+    <title><?php echo $siteTitleEsc;?> - admin (cards)</title>
     <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
