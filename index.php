@@ -581,7 +581,9 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         include_once("includes/analyticstracking.php");
         $getString = getStringParameters($_GET, 'page'); ?>
         <div class="top"> <?php
-            echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
+            echo "<a id='prevlink' href='index.php"
+                . htmlspecialchars($getString . '&page=1', ENT_QUOTES, 'UTF-8')
+                . "'>&nbsp;</a>"; ?>
         </div>
         <?php
         require('includes/overlays.php'); //menus
@@ -824,10 +826,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <!--page navigation--> <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>
@@ -949,10 +954,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>
@@ -1209,10 +1217,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>

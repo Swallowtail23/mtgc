@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.0
-Date:        30/11/25
+Version:     25.1
+Date:        17/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -55,6 +55,7 @@ History:
                   Rename input_interpreter to camelCase inputInterpreter
     24.9 29/11/25 Rename all non-camelCase functions
     25.0 30/11/25 Avoid fatal when cssVersionCheck cannot reach database
+    25.1 17/12/25 Simplify getstring function
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -373,54 +374,35 @@ function checkRemoteFile($url)
 
 function getStringParameters($input, $ignore1, $ignore2 = '')
 {
-    // This function takes a parsed GET string, passes back with SET sub-arrays included and a specified KEY excluded
-    $output = "";
+    $params = array();
+
     foreach ($input as $key => $value) :
-        if ((isset($input['set'])) and (is_array($input['set']))) :
-            $sets = filter_var_array($input['set'], FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+        if ($key === $ignore1 || $key === $ignore2) :
+            continue;
         endif;
-        if ($key === "set") :
-            foreach ($sets as $keys => $values) :
-                if (empty($output)) :
-                    $output .= '?set%5B%5D=' . htmlspecialchars($values, ENT_COMPAT, 'UTF-8');
-                else :
-                    $output .= '&amp;set%5B%5D=' . htmlspecialchars($values, ENT_COMPAT, 'UTF-8');
-                endif;
-            endforeach;
-        elseif (($key === $ignore1) or ($key === $ignore2)) :
-            // don't do anything!
-        elseif ($key === 'name') :
-            if (empty($output)) :
-                $output .= '?' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            else :
-                $output .= '&amp;' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            endif;
-        elseif ($key === 'layout') :
-            $validlayouts = array('grid','list','bulk','');
-            if (!in_array($value, $validlayouts)) :
+
+        if ($key === 'layout') :
+            $validlayouts = array('grid', 'list', 'bulk', '');
+            if (!in_array($value, $validlayouts, true)) :
                 $value = 'grid';
             endif;
-            if (empty($output)) :
-                $output .= '?' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            else :
-                $output .= '&amp;' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-            endif;
+            $params[$key] = (string) $value;
+
+        elseif ($key === 'set' && is_array($value)) :
+            // keep set[] as array
+            $params['set'] = array_values($value);
+
         else :
-            if (empty($output)) :
-                $output .= '?' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_COMPAT, 'UTF-8');
-            else :
-                $output .= '&amp;' . htmlspecialchars($key, ENT_COMPAT, 'UTF-8')
-                    . '=' . htmlspecialchars($value, ENT_COMPAT, 'UTF-8');
-            endif;
+            $params[$key] = (string) $value;
+
         endif;
     endforeach;
 
-    return $output;
+    if (empty($params)) :
+        return '';
+    endif;
+
+    return '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 }
 
 function validPass($candidate)
