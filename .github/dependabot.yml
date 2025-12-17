@@ -14,3 +14,13 @@ updates:
     directory: "/docker"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "php"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
+
+      - dependency-name: "library/mysql"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
