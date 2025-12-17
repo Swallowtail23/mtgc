@@ -1,4 +1,4 @@
-FROM php:8.2-apache-bookworm
+FROM php:8.5-apache-bookworm
 
 # preseed timezone and suppress prompts
 ENV DEBIAN_FRONTEND=noninteractive
