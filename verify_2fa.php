@@ -145,7 +145,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
     <title><?php echo $siteTitleEsc;?> - Verification</title>
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+    >
     <?php include 'includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
@@ -164,7 +168,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
         <?php if ($verification_attempted && !empty($verification_error)) : ?>
             <div style="color: red; margin-bottom: 15px;">
-                <?php echo htmlspecialchars($verification_error); ?>
+                <?php echo htmlspecialchars($verification_error, ENT_QUOTES, 'UTF-8'); ?>
             </div>
         <?php endif; ?>
 

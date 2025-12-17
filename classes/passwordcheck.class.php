@@ -227,9 +227,9 @@ class PasswordCheck
                         $subject = "Password reset";
                         $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         $message = "A new password was requested for your email at $siteTitleEsc ($myURL)\n\n"
-                                   . "Please login with this temporary password: $randompassword\n"
-                                   . "You will need to then choose a new password.\n\n"
-                                   . "If you did not request a new password at $siteTitleEsc, you can ignore this email.";
+                            . "Please login with this temporary password: $randompassword\n"
+                            . "You will need to then choose a new password.\n\n"
+                            . "If you did not request a new password at $siteTitleEsc, you can ignore this email.";
                         if ($emailEnabled) :
                             mail($email, $subject, $message, $from);
                         else :
@@ -505,10 +505,10 @@ class PasswordCheck
             return false;
         endif;
 
-        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');                
+        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitleEsc);
         $subject = "$siteTitleEsc password reset";
-        $safeLink = htmlspecialchars($link);
+        $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
         $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"
             . "$link\n\nIf you did not request this, you can ignore this email.";
         $bodyHtml = "<p>A password reset was requested for your account.</p>"

@@ -344,7 +344,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
                         if (!empty($backup_codes)) :
                             foreach ($backup_codes as $code) :
-                                $backupHtml .= htmlspecialchars($code) . "<br>";
+                                $backupHtml .= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . "<br>";
                             endforeach;
                             $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
                         else :
@@ -516,7 +516,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     if (!empty($new_codes)) :
                         // Build the backup codes HTML outside the JavaScript block:
                         foreach ($new_codes as $new_code) :
-                            $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
+                            $newCodesHtml .= htmlspecialchars($new_code, ENT_QUOTES, 'UTF-8') . "<br>";
                         endforeach;
                         $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
                         // Inject JavaScript to update the div dynamically
@@ -719,7 +719,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         </tr> <?php
                         foreach ($devices as $device) : ?>
                         <tr class="hoverhighlight">
-                            <td><?php echo htmlspecialchars($device['device_name']);
+                            <td><?php echo htmlspecialchars($device['device_name'], ENT_QUOTES, 'UTF-8');
                             // If the current device hash matches the device token hash, flag it.
                             if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']) :
                                 echo " <strong>(This device)</strong>";
@@ -834,7 +834,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 if ($tfa_enabled) :
                                     $tfa_method = $tfaManager->getMethod($userId);?>
                     Two-factor authentication is currently <strong>enabled</strong> using
-                    <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
+                    <strong><?php echo htmlspecialchars(ucfirst($tfa_method), ENT_QUOTES, 'UTF-8'); ?></strong>.
                                         <br>Click "CODES" to generate new backup codes.<?php
                                 else : ?>
                                         Require a verification code when you log in<?php

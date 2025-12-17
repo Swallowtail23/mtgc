@@ -1590,7 +1590,7 @@ function inputInterpreter($input_string)
     $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
-    $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES);
+    $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
 
     // Define is_csv as a closure
     $is_csv = function ($string) use ($logfile) {

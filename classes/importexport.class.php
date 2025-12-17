@@ -239,7 +239,7 @@ class ImportExport
         foreach ($lines as $line) :
             $rowNumber = $i + 1;
             $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Reviewing line");
-            $linestring = htmlspecialchars($line, ENT_NOQUOTES);
+            $linestring = htmlspecialchars($line, ENT_NOQUOTES, 'UTF-8');
             $interpretedString = inputInterpreter($linestring);
             if ($interpretedString === 'header') :
                 $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Header row");

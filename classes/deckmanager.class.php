@@ -168,7 +168,7 @@ class DeckManager
             '[NOTICE]',
             "Quick add interpreter called for deck $deckNumber with '$getString' (batch mode '$batch')"
         );
-        $quickAddString = htmlspecialchars($getString, ENT_NOQUOTES);
+        $quickAddString = htmlspecialchars($getString, ENT_NOQUOTES, 'UTF-8');
         $interpretedString = inputInterpreter($quickAddString);
         if ($interpretedString !== false) :
             // UUID

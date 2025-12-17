@@ -101,7 +101,7 @@ $perpage = (int) $perpage;
 $start_from = ($page - 1) * $perpage;
 $start_from = (int) $start_from;
 if (isset($_GET['name']) and $_GET['name'] !== "") :
-    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES);
+    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES, 'UTF-8');
     $msg->logMessage('[DEBUG]', "Name in GET is $nameget");
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
     $msg->logMessage('[DEBUG]', "Name after trimming is $nametrim");
@@ -1108,7 +1108,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
                                     echo $flipButton;
                                 endif;
-                                $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
+                                $setname = htmlspecialchars($row['set_name'], ENT_QUOTES, 'UTF-8');
                                 $number_import = $row['number_import'];
                                 $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
                                     . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
