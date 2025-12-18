@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.4
-Date:        25/11/25
+Version:     9.0
+Date:        18/12/25
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
 Notes:       {none}
@@ -21,6 +21,7 @@ History:
     8.2 25/11/25 Formatting clean-up
     8.3 25/11/25 Wrapped long log strings
     8.4 25/11/25 Rename PHPMailer wrapper to PascalCase
+    9.0 18/12/25 Improve logic and robustness
 */
 
 require('bulk_ini.php');
@@ -35,92 +36,138 @@ ensureDirectoryExists($imgLocation . 'json');
 /// Call with 'all' gets the all cards file
 /// Call with 'refresh' gets fresh copies of BOTH files (run by docker install for initial setup)
 
-if (isset($argv[1])) :
-    if ($argv[1] == "all") :
-        $type = "all";
-    elseif ($argv[1] == "refresh") :
-        $type = "refresh";
-    else :
-        $type = "default";
-    endif;
+$arg1 = $argv[1] ?? '';
+$arg1 = strtolower(trim($arg1));
+
+if ($arg1 === 'all') :
+    $type = 'all';
+elseif ($arg1 === 'refresh') :
+    $type = 'refresh';
 else :
-    $type = "default";
+    $type = 'default';
 endif;
+
 
 // Get info on required files to download and their local locations
 $bulkInfo = getBulkInfo($type);
+if ($type === 'refresh') :
+    $required = array('bulkUrlAll','bulkUrlDefault','fileLocationAll','fileLocationDefault');
+else :
+    $required = array('bulkUrl', 'fileLocation');
+endif;
 
-if ($bulkInfo !== false) :
-    if ($type === "refresh") :
-        $bulk_uri_all = $bulkInfo['bulkUrlAll'];
-        $bulk_uri_default = $bulkInfo['bulkUrlDefault'];
-        $file_location_all = $bulkInfo['fileLocationAll'];
-        $file_location_default = $bulkInfo['fileLocationDefault'];
-        $msg->logMessage(
-            '[NOTICE]',
-            "Scryfall Bulk API: Download URIs: $bulk_uri_all / $bulk_uri_default; File locations: "
-            . "$file_location_all / $file_location_default"
-        );
-        $max_fileage = 0;
-        $get_all = getBulkJson($bulk_uri_all, $file_location_all, $max_fileage);
-        $get_default = getBulkJson($bulk_uri_default, $file_location_default, $max_fileage);
-        if ($get_all === false || $get_default === false) :
-            $msg->logMessage(
-                '[ERROR]',
-                "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri_all / $bulk_uri_default"
-            );
-            exit;
-        else :
-            $bulkResultAll = scryfallImport($file_location_all, 'all');
-            if (php_sapi_name() == 'cli') :
-                echo "Scryfall Bulk API: $subject, $bulkResultAll\n";
-            endif;            
-            $bulkResultDefault = scryfallImport($file_location_default, 'default');
-            if (php_sapi_name() == 'cli') :
-                echo "Scryfall Bulk API: $subject, $bulkResultDefault\n";
-            endif; 
+if ($bulkInfo === false || !is_array($bulkInfo)) :
+    $text = "Scryfall Bulk API: Download URI: bulk_info function failed to return usable results";
+    $msg->logMessage('[ERROR]', $text);
+    if (PHP_SAPI === 'cli') :
+        fwrite(STDERR, $text . PHP_EOL);
+    endif;
+    exit(1);
+endif;
+
+foreach ($required as $k) :
+    if (!isset($bulkInfo[$k]) || $bulkInfo[$k] === '') :
+        $text = "Scryfall Bulk API: bulkInfo missing key '$k'";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
         endif;
+        exit(1);
+    endif;
+endforeach;
+
+if ($type === "refresh") :
+    $bulkUrlAll = $bulkInfo['bulkUrlAll'];
+    $bulkUrlDefault = $bulkInfo['bulkUrlDefault'];
+    $fileLocationAll = $bulkInfo['fileLocationAll'];
+    $fileLocationDefault = $bulkInfo['fileLocationDefault'];
+    $msg->logMessage(
+        '[NOTICE]',
+        "Scryfall Bulk API: Download URIs: $bulkUrlAll / $bulkUrlDefault; File locations: "
+        . "$fileLocationAll / $fileLocationDefault"
+    );
+    $maxFileAge = 0;
+    $get_all = getBulkJson($bulkUrlAll, $fileLocationAll, $maxFileAge);
+    $get_default = getBulkJson($bulkUrlDefault, $fileLocationDefault, $maxFileAge);
+    if ($get_all === false) :
+        $text = "Scryfall Bulk API: getBulkJson (all) returned error for $bulkUrlAll";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    elseif ($get_default === false) :
+        $text = "Scryfall Bulk API: getBulkJson (default) returned error for $bulkUrlDefault";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);        
     else :
-        $bulk_uri = $bulkInfo['bulkUrl'];
-        $file_location = $bulkInfo['fileLocation'];
-        $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: $bulk_uri; File location: $file_location");
-        $max_fileage = 23 * 3600;
-        $get_json = getBulkJson($bulk_uri, $file_location, $max_fileage);
-        if ($get_json === false) :
-            $msg->logMessage('[ERROR]', "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri");
-            exit;
-            if (php_sapi_name() == 'cli') :
-                echo "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulk_uri\n";
+        // Run 1 - 'all', no images
+        $bulkResultAll = scryfallImport($fileLocationAll, 'all');
+        if ($bulkResultAll === false) :
+            $text = "Scryfall Bulk API: scryfallImport from $fileLocationAll failed for type 'all'";
+            $msg->logMessage('[ERROR]', $text);
+            if (PHP_SAPI === 'cli') :
+                fwrite(STDERR, $text . PHP_EOL);
             endif;
-        else :
-            if ($file_location === $imgLocation . 'json/bulk.json') :
-                $type = 'default';
-            elseif ($file_location === $imgLocation . 'json/bulk_all.json') :
-                $type = 'all';
-            endif;
-
-            // Email results
-            $bulkResultMessage = scryfallImport($file_location, $type);
-            $subject = "MTG bulk update completed ($type)";
-            if (isset($emailEnabled) && $emailEnabled === true) :
-                $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-                $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
-                $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
-            else :
-                $msg->logMessage(
-                    '[NOTICE]',
-                    "Email disabled; scryfall_bulk alert not sent for $type"
-                );
-            endif;
-            if (php_sapi_name() == 'cli') :
-                echo "Scryfall Bulk API: $subject, $bulkResultMessage\n";
-            endif;
+            exit(1);
         endif;
+        if (PHP_SAPI === 'cli') :
+            echo "Scryfall Bulk API: MTG bulk update completed (all), $bulkResultAll\n";
+        endif;            
+        // Run 2 - 'default', assigns primary language
+        $bulkResultDefault = scryfallImport($fileLocationDefault, 'default');
+        if ($bulkResultDefault === false) :
+            $text = "Scryfall Bulk API: scryfallImport from $fileLocationDefault failed for type 'default'";
+            $msg->logMessage('[ERROR]', $text);
+            if (PHP_SAPI === 'cli') :
+                fwrite(STDERR, $text . PHP_EOL);
+            endif;
+            exit(1);
+        endif;
+        if (PHP_SAPI === 'cli') :
+            echo "Scryfall Bulk API: MTG bulk update completed (default), $bulkResultDefault\n";
+        endif; 
     endif;
 else :
-    $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: bulk_info function failed to return usable results");
-    exit;
-    if (php_sapi_name() == 'cli') :
-        echo "Scryfall Bulk API: Download URI: bulk_info function failed to return usable results\n";
+    $bulkUrl = $bulkInfo['bulkUrl'];
+    $fileLocation = $bulkInfo['fileLocation'];
+    $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: $bulkUrl; File location: $fileLocation");
+    $maxFileAge = 23 * 3600;
+    $get_json = getBulkJson($bulkUrl, $fileLocation, $maxFileAge);
+    if ($get_json === false) :
+        $text = "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulkUrl";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    else :
+        $bulkResultMessage = scryfallImport($fileLocation, $type);
+        if ($bulkResultMessage === false) :
+            $text = "Scryfall Bulk API: scryfallImport from $fileLocation failed for type '$type'";
+            $msg->logMessage('[ERROR]', $text);
+            if (PHP_SAPI === 'cli') :
+                fwrite(STDERR, $text . PHP_EOL);
+            endif;
+            exit(1);
+        endif;
+        $subject = "MTG bulk update completed ($type)";
+        if (!empty($emailEnabled)) :
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
+            $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
+        else :
+            $msg->logMessage(
+                '[NOTICE]',
+                "Email disabled; scryfall_bulk alert not sent for $type"
+            );
+        endif;
+        if (PHP_SAPI === 'cli') :
+            echo "Scryfall Bulk API: $subject, $bulkResultMessage\n";
+        endif;
     endif;
 endif;
+exit(0);

@@ -165,8 +165,8 @@ $layouts_to_skip = [];
 $games_to_include = ['paper','arena'];
 
 // Where to get URL of latest bulk downloads
-$default_cards_url = "https://api.scryfall.com/bulk-data/default-cards";
-$all_cards_url = "https://api.scryfall.com/bulk-data/all-cards";
+$defaultCardsUrl = "https://api.scryfall.com/bulk-data/default-cards";
+$allCardsUrl = "https://api.scryfall.com/bulk-data/all-cards";
 
 $importLinestoIgnore = array(
                     "Creatures",

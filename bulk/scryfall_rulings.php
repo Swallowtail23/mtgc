@@ -72,11 +72,11 @@ if (file_exists($file_location)) :
     endif;
 else :
     $download = 1;
-    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: No file at ($file_location), downloading: $url");
+    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: No file at ($file_location), downloading: $rulings_uri");
 endif;
 if ($download > 0) :
-    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $url");
-    $rulingreturn = downloadBulk($rulings_uri, $file_location);
+    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $rulings_uri");
+    $rulingreturn = downloadBulk($rulings_uri, $page, $msg, 'Scryfall rulings data download', false);
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 
