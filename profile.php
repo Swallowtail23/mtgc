@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.8
-Date:        06/12/25
+Version:     13.9
+Date:        18/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -37,6 +37,7 @@ History:
     13.6 06/12/25 Async collection value refresh on profile
     13.7 06/12/25 Add profile/collection tabs and shared collection section
     13.8 06/12/25 Move collection management to collection tab
+    13.9 18/12/25 Disable currency selection when FX disabled
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -326,6 +327,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             //6. Currency
                 $current_currency = $row['currency'];
                 $msg->logMessage('[DEBUG]', "Current currency is '$current_currency'");
+                $currencySelectEnabled = ($fx === true);
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Currency selector available: " . ($currencySelectEnabled ? 'enabled' : 'disabled')
+                );
 
             //7. 2FA Section
                 // Get 2FA status for this user
@@ -799,25 +805,28 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                     });
 
                                     // Flash effect for currency select
-                                    $('#currencySelect').on('change', function () {
-                                        var selectedCurrency = $(this).val();
-                                        $.ajax({
-                                            url: "/ajax/ajaxcurrency.php",
-                                            method: "GET",
-                                            data: { "currency": selectedCurrency },
-                                            success: function (data) {
-                                                var response = JSON.parse(data);
-                                                console.log(response);
-                                                $('#currencySelect').addClass('flash-success');
-                                                setTimeout(function () {
-                                                    $('#currencySelect').removeClass('flash-success');
-                                                }, 1000);
-                                            },
-                                            error: function (jqXHR, textStatus, errorThrown) {
-                                                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                                            }
+                                    var currencySelect = $('#currencySelect');
+                                    if (currencySelect.length && !currencySelect.prop('disabled')) {
+                                        currencySelect.on('change', function () {
+                                            var selectedCurrency = $(this).val();
+                                            $.ajax({
+                                                url: "/ajax/ajaxcurrency.php",
+                                                method: "GET",
+                                                data: { "currency": selectedCurrency },
+                                                success: function (data) {
+                                                    var response = JSON.parse(data);
+                                                    console.log(response);
+                                                    currencySelect.addClass('flash-success');
+                                                    setTimeout(function () {
+                                                        currencySelect.removeClass('flash-success');
+                                                    }, 1000);
+                                                },
+                                                error: function (jqXHR, textStatus, errorThrown) {
+                                                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                                                }
+                                            });
                                         });
-                                    });
+                                    }
                                 });
                             </script>
                             <tr>
@@ -999,10 +1008,19 @@ HTML;
                                     <b>Local currency</b>
                                 </td>
                                 <td class="options_centre" colspan="2">
-                                    Currency to use for localised pricing
+                                    Currency to use for localised pricing<?php
+                                    if (!$currencySelectEnabled) :
+                                        echo " (FX disabled)";
+                                    endif; ?>
                                 </td>
                                 <td class="options_right">
-                                    <select class="dropdown" name='currency' id='currencySelect' style="width: 85px;">
+                                    <select
+                                        class="dropdown"
+                                        name='currency'
+                                        id='currencySelect'
+                                        style="width: 85px;"
+                                        <?php if (!$currencySelectEnabled) : ?>disabled<?php endif; ?>
+                                    >
                                         <?php foreach ($currencies as $currency) : ?>
                                             <option value='<?php echo $currency['code']; ?>'
                                                 <?php if ($current_currency === $currency['db']) :
