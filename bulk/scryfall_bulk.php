@@ -99,6 +99,9 @@ if ($type === "refresh") :
         $msg->logMessage('[NOTICE]', sprintf('Time after bulk files obtained: %.2f seconds', $elapsed));
         // Run 1 - 'all', no images
         $bulkResultAll = scryfallImport($fileLocationAll, 'all');
+        // Tag time progress after import finished
+        $elapsed = microtime(true) - $start;
+        $msg->logMessage('[NOTICE]', sprintf('Time after "all" import completed: %.2f seconds', $elapsed));
         if ($bulkResultAll === false) :
             $text = "Scryfall Bulk API: scryfallImport from $fileLocationAll failed for type 'all'";
             $msg->logMessage('[ERROR]', $text);
@@ -112,6 +115,9 @@ if ($type === "refresh") :
         endif;            
         // Run 2 - 'default', assigns primary language
         $bulkResultDefault = scryfallImport($fileLocationDefault, 'default');
+        // Tag time progress after import finished
+        $elapsed = microtime(true) - $start;
+        $msg->logMessage('[NOTICE]', sprintf('Time after "default" import completed: %.2f seconds', $elapsed));
         if ($bulkResultDefault === false) :
             $text = "Scryfall Bulk API: scryfallImport from $fileLocationDefault failed for type 'default'";
             $msg->logMessage('[ERROR]', $text);

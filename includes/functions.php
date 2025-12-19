@@ -741,6 +741,7 @@ function scryfallImport($file_location, $type)
         $twoCardDetailSections;
     $msg = new Message($logfile);
 
+    // Check and write columns for hashes (remove after done)
     $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
     $contentHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'content_hash'");
     if ($contentHashResult === false) :
@@ -801,15 +802,13 @@ function scryfallImport($file_location, $type)
     $date = date('Y-m-d');
     $timeslice_start = microtime(true);
     $batch_size = 5000;
-    $log_interval = 1000;
+    $log_interval = 2500;
 
     if ($type === 'default') :
         $primary = 1;
 
         // By default, set to TRUE. This will download all images for cards in the Default Cards file when run
         // with an empty database (about 90,000 images, i.e. potentially about 20GB)
-        // Swap these next two lines if needed on a database re-population to prevent ALL images being downloaded
-        // $imageDownloads = FALSE;
         $imageDownloads = true;
     elseif ($type === 'all') :
         $primary = 0;
@@ -1803,7 +1802,7 @@ function scryfallImport($file_location, $type)
                     $coll_no = str_replace('†', '', $coll_no);
                     $coll_no = str_replace('U', '', $coll_no);
 
-                    // For cards with collector number "sXXX", turn into "5XXX"
+                    // For cards with collector number "XXXs", turn into "5XXX"
                     // so they go to the end of the series
                     if (substr($coll_no, strlen($coll_no) - 1) === 's') :
                         $coll_no = str_replace('s', '', $coll_no);
