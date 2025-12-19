@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     26.6
+Version:     26.8
 Date:        19/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -163,6 +163,10 @@ function mtceModeCheck($user)
 
 function symbolReplace($str)
 {
+    if ($str === null) :
+        return null;
+    endif;
+
     static $symbols = [
         '{E}'      => '<img src="images/e.png" alt="{E}" class="manaimg">',
         '{T}'      => '<img src="images/t.png" alt="{T}" class="manaimg">',
@@ -1666,12 +1670,56 @@ function scryfallImport($file_location, $type)
                         if (isset($value3["name"])) :
                             ${'name_' . $face_loop} = $value3["name"];
                         endif;
-                        // ... keep the rest identical ...
+                        if (isset($value3["printed_name"])) :
+                            ${'printed_name_' . $face_loop} = $value3["printed_name"];
+                        endif;
+                        if (isset($value3["flavor_name"])) :
+                            ${'flavor_name_' . $face_loop} = $value3["flavor_name"];
+                        endif;
+                        if (isset($value3["mana_cost"])) :
+                            ${'manacost_' . $face_loop} = $value3["mana_cost"];
+                        endif;
+                        if (isset($value3["power"])) :
+                            ${'power_' . $face_loop} = $value3["power"];
+                        endif;
+                        if (isset($value3["toughness"])) :
+                            ${'toughness_' . $face_loop} = $value3["toughness"];
+                        elseif (isset($value3["defense"])) :
+                            ${'toughness_' . $face_loop} = $value3["defense"];
+                        endif;
+                        if (isset($value3["loyalty"])) :
+                            ${'loyalty_' . $face_loop} = $value3["loyalty"];
+                        endif;
+                        if (isset($value3["type_line"])) :
+                            ${'type_' . $face_loop} = $value3["type_line"];
+                        endif;
+                        if (isset($value3["oracle_text"])) :
+                            ${'ability_' . $face_loop} = $value3["oracle_text"];
+                        endif;
+                        if (isset($value3["colors"])) :
+                            ${'colour_' . $face_loop} = json_encode($value3["colors"]);
+                        endif;
+                        if (isset($value3["artist"])) :
+                            ${'artist_' . $face_loop} = $value3["artist"];
+                        endif;
+                        if (isset($value3["flavor_text"])) :
+                            ${'flavor_' . $face_loop} = $value3["flavor_text"];
+                        endif;
+                        if (isset($value3["image_uris"]["normal"])) :
+                            ${'image_' . $face_loop} = $value3["image_uris"]["normal"];
+                        endif;
+                        if (isset($value3["cmc"])) :
+                            ${'cmc_' . $face_loop} = $value3["cmc"];
+                        endif;
                         $face_loop = $face_loop + 1;
                         if ($face_loop > 2) :
                             break;
                         endif;
                     endforeach;
+                    $msg->logMessage(
+                        '[DEBUG]',
+                        "Scryfall bulk API ($type), Record $id: $total_count - finished face loops"
+                    );
                 endif;
 
                 $allParts = $value['all_parts'] ?? array();
@@ -1679,7 +1727,21 @@ function scryfallImport($file_location, $type)
                     $all_parts_loop = 1;
                     foreach ($allParts as $value4) :
                         if (isset($value4["component"]) and $value4["component"] != "combo_piece") :
-                            // ... keep identical ...
+                            if (isset($value4["id"])) :
+                                ${'id_p' . $all_parts_loop} = $value4["id"];
+                            endif;
+                            if (isset($value4["component"])) :
+                                ${'component_p' . $all_parts_loop} = $value4["component"];
+                            endif;
+                            if (isset($value4["name"])) :
+                                ${'name_p' . $all_parts_loop} = $value4["name"];
+                            endif;
+                            if (isset($value4["type_line"])) :
+                                ${'type_line_p' . $all_parts_loop} = $value4["type_line"];
+                            endif;
+                            if (isset($value4["uri"])) :
+                                ${'uri_p' . $all_parts_loop} = $value4["uri"];
+                            endif;
                             $all_parts_loop = $all_parts_loop + 1;
                             if ($all_parts_loop > 7) :
                                 break;
