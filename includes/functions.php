@@ -1,63 +1,14 @@
 <?php
 
 /*
-Version:     26.0
-Date:        18/12/26
+Version:     26.6
+Date:        19/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Added Custom error handling routine
-    3.0         Updated for classes and Mysqli_Manager including merging basicfunc and functions files
-                Updated deckcard functions to use mysqli / $db
-    4.0         Added Function to see if an Admin user is running the page
-    5.0         Added functions in tidying up image routines, removing code from carddetail page.
-                Also added better flip image handling, and a function to get the main image name
-    5.1         Added filter for # in symbolreplace function
-    6.0         Added login stamp to database to track last logged in date
-    7.0         Added Scyfall JSON code
-    7.1         Added override for Scryfall JSON function (works with scrynameoverride column in cards table)
-    7.2         Corrected incorrect detection of null in scryfall data fetch
-    8.0         Moved from writelog to Message class
-    9.0         Marking tcgplayer function to be deprecated; improving scryfall image function (+ get by set and number)
-    10.0        Refactoring for cards_scry
-    11.0        PHP 8.1 compatibility
-    12.0        Add flip image capability for battle cards
-    13.0        Deck card adding rewrite for Commander, etc.
-    14.0        Add function to get decks with a card
-    15.0        Functions to delete a deck and rename a deck
-    16.0        Added handling for etched cards
-    17.0        Review and improve Scryfall price routine
-    18.0 25/11/23 Migrate more to prepared statements, and add collector number to Quick Add
-    18.1 11/12/23 Move deck, price, import/export, image functions to respective classes
-    19.0 02/01/24 Move bulk functions into this file
-    20.0 13/01/24 Move import/export function to just return message instead of emailing
-    21.0 20/01/24 Move to logMessage method
-    22.0 06/06/24 Move search interpreter to global function instead of individually on each page and deck add.
-                  Also aligns process with deck add interptation
-    23.0 09/06/24 Add CSV functions for deck/card add interpretation
-    24.0 05/07/24 Changes to input_interpreter to cater for import rewrite
-    24.1 06/07/24 Add moxfield decklist interpreter; MTGC-100; Improve shortcut searching
-    24.2 07/07/24 Improve input interpretation rigour and flexibility, including bracketed names
-    24.3 08/07/24 Ignore deck import lines with just titles MTGC-105
-    24.4 23/08/24 MTGC-123 Use normal price for topvalue if needed
-    24.5 25/11/25 Update PHPMailer class name to PascalCase
-    24.6 26/11/25 Standard tidy-up (header/whitespace)
-    24.7 26/11/25 Improve cssver - gentler failure, more robust check
-                  Remove redundant check_input function
-                  Remove unneeded $db call from validUUID()
-    24.8 28/11/25 Use strtr map for symbolreplace to reduce passes
-                  Rename input_interpreter to camelCase inputInterpreter
-    24.9 29/11/25 Rename all non-camelCase functions
-    25.0 30/11/25 Avoid fatal when cssVersionCheck cannot reach database
-    25.1 17/12/25 Simplify getstring function
-    25.2 18/12/26 More robust getBulkInfo
-    26.0 18/12/26 Rewrite of bulk data routines
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -790,6 +741,55 @@ function scryfallImport($file_location, $type)
         $twoCardDetailSections;
     $msg = new Message($logfile);
 
+    $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
+    $contentHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'content_hash'");
+    if ($contentHashResult === false) :
+        trigger_error(
+            '[ERROR] scryfall_bulk.php: Checking cards_scry content_hash column: ' . $db->error,
+            E_USER_ERROR
+        );
+    elseif ($contentHashResult->num_rows === 0) :
+        $msg->logMessage('[NOTICE]', 'cards_scry content_hash column missing; adding column');
+        $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `content_hash` CHAR(40) NULL");
+        if ($alterResult === false) :
+            trigger_error(
+                '[ERROR] scryfall_bulk.php: Adding cards_scry content_hash column: ' . $db->error,
+                E_USER_ERROR
+            );
+        else :
+            $msg->logMessage('[DEBUG]', 'cards_scry content_hash column added');
+        endif;
+    else :
+        $msg->logMessage('[DEBUG]', 'cards_scry content_hash column present');
+    endif;
+    if ($contentHashResult !== false) :
+        $contentHashResult->free();
+    endif;
+
+    $priceHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'price_hash'");
+    if ($priceHashResult === false) :
+        trigger_error(
+            '[ERROR] scryfall_bulk.php: Checking cards_scry price_hash column: ' . $db->error,
+            E_USER_ERROR
+        );
+    elseif ($priceHashResult->num_rows === 0) :
+        $msg->logMessage('[NOTICE]', 'cards_scry price_hash column missing; adding column');
+        $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `price_hash` CHAR(40) NULL");
+        if ($alterResult === false) :
+            trigger_error(
+                '[ERROR] scryfall_bulk.php: Adding cards_scry price_hash column: ' . $db->error,
+                E_USER_ERROR
+            );
+        else :
+            $msg->logMessage('[DEBUG]', 'cards_scry price_hash column added');
+        endif;
+    else :
+        $msg->logMessage('[DEBUG]', 'cards_scry price_hash column present');
+    endif;
+    if ($priceHashResult !== false) :
+        $priceHashResult->free();
+    endif;
+
     // Initiate counters at zero
     $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
 
@@ -799,6 +799,9 @@ function scryfallImport($file_location, $type)
     );
 
     $date = date('Y-m-d');
+    $timeslice_start = microtime(true);
+    $batch_size = 5000;
+    $log_interval = 1000;
 
     if ($type === 'default') :
         $primary = 1;
@@ -848,141 +851,375 @@ function scryfallImport($file_location, $type)
                             p6_component, p6_name, p6_type_line, p6_uri, p7_id,
                             p7_component, p7_name, p7_type_line, p7_uri, maxpower,
                             minpower, maxtoughness, mintoughness, maxloyalty, minloyalty,
-                            price_sort, date_added, primary_card
+                            price_sort, content_hash, price_hash, date_added, primary_card
                             )
                         VALUES(
                             ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                             ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                             ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
-                            ?,?,?,?,?
+                            ?,?,?,?,?,?,?
                         )
                         ON DUPLICATE KEY UPDATE
-                            id = VALUES(id),
-                            oracle_id = VALUES(oracle_id),
-                            tcgplayer_id = VALUES(tcgplayer_id),
-                            multiverse = VALUES(multiverse),
-                            multiverse2 = VALUES(multiverse2),
-                            name = VALUES(name),
-                            printed_name = VALUES(printed_name),
-                            flavor_name = VALUES(flavor_name),
-                            lang = VALUES(lang),
-                            release_date = VALUES(release_date),
-                            api_uri = VALUES(api_uri),
-                            scryfall_uri = VALUES(scryfall_uri),
-                            layout = VALUES(layout),
-                            image_uri = VALUES(image_uri),
-                            manacost = VALUES(manacost),
-                            cmc = VALUES(cmc),
-                            type = VALUES(type),
-                            ability = VALUES(ability),
-                            power = VALUES(power),
-                            toughness = VALUES(toughness),
-                            loyalty = VALUES(loyalty),
-                            color = VALUES(color),
-                            color_identity = VALUES(color_identity),
-                            keywords = VALUES(keywords),
-                            generatedmana = VALUES(generatedmana),
-                            legalitystandard = VALUES(legalitystandard),
-                            legalitypioneer = VALUES(legalitypioneer),
-                            legalitymodern = VALUES(legalitymodern),
-                            legalitylegacy = VALUES(legalitylegacy),
-                            legalitypauper = VALUES(legalitypauper),
-                            legalityvintage = VALUES(legalityvintage),
-                            legalitycommander = VALUES(legalitycommander),
-                            legalityalchemy = VALUES(legalityalchemy),
-                            legalityhistoric = VALUES(legalityhistoric),
-                            reserved = VALUES(reserved),
-                            foil = VALUES(foil),
-                            nonfoil = VALUES(nonfoil),
-                            oversized = VALUES(oversized),
-                            promo = VALUES(promo),
-                            set_id = VALUES(set_id),
-                            game_types = VALUES(game_types),
-                            finishes = VALUES(finishes),
-                            promo_types = VALUES(promo_types),
-                            setcode = VALUES(setcode),
-                            set_name = VALUES(set_name),
-                            number = VALUES(number),
-                            number_import = VALUES(number_import),
-                            rarity = VALUES(rarity),
-                            flavor = VALUES(flavor),
-                            backid = VALUES(backid),
-                            artist = VALUES(artist),
-                            price = VALUES(price),
-                            price_foil = VALUES(price_foil),
-                            price_etched = VALUES(price_etched),
-                            gatherer_uri = VALUES(gatherer_uri),
-                            updatetime = VALUES(updatetime),
-                            f1_name = VALUES(f1_name),
-                            f1_manacost = VALUES(f1_manacost),
-                            f1_power = VALUES(f1_power),
-                            f1_toughness = VALUES(f1_toughness),
-                            f1_loyalty = VALUES(f1_loyalty),
-                            f1_type = VALUES(f1_type),
-                            f1_ability = VALUES(f1_ability),
-                            f1_colour = VALUES(f1_colour),
-                            f1_artist = VALUES(f1_artist),
-                            f1_flavor = VALUES(f1_flavor),
-                            f1_image_uri = VALUES(f1_image_uri),
-                            f1_cmc = VALUES(f1_cmc),
-                            f1_printed_name = VALUES(f1_printed_name),
-                            f1_flavor_name = VALUES(f1_flavor_name),
-                            f2_name = VALUES(f2_name),
-                            f2_manacost = VALUES(f2_manacost),
-                            f2_power = VALUES(f2_power),
-                            f2_toughness = VALUES(f2_toughness),
-                            f2_loyalty = VALUES(f2_loyalty),
-                            f2_type = VALUES(f2_type),
-                            f2_ability = VALUES(f2_ability),
-                            f2_colour = VALUES(f2_colour),
-                            f2_artist = VALUES(f2_artist),
-                            f2_flavor = VALUES(f2_flavor),
-                            f2_image_uri = VALUES(f2_image_uri),
-                            f2_cmc = VALUES(f2_cmc),
-                            f2_printed_name = VALUES(f2_printed_name),
-                            f2_flavor_name = VALUES(f2_flavor_name),
-                            p1_id = VALUES(p1_id),
-                            p1_component = VALUES(p1_component),
-                            p1_name = VALUES(p1_name),
-                            p1_type_line = VALUES(p1_type_line),
-                            p1_uri = VALUES(p1_uri),
-                            p2_id = VALUES(p2_id),
-                            p2_component = VALUES(p2_component),
-                            p2_name = VALUES(p2_name),
-                            p2_type_line = VALUES(p2_type_line),
-                            p2_uri = VALUES(p2_uri),
-                            p3_id = VALUES(p3_id),
-                            p3_component = VALUES(p3_component),
-                            p3_name = VALUES(p3_name),
-                            p3_type_line = VALUES(p3_type_line),
-                            p3_uri = VALUES(p3_uri),
-                            p4_id = VALUES(p4_id),
-                            p4_component = VALUES(p4_component),
-                            p4_name = VALUES(p4_name),
-                            p4_type_line = VALUES(p4_type_line),
-                            p4_uri = VALUES(p4_uri),
-                            p5_id = VALUES(p5_id),
-                            p5_component = VALUES(p5_component),
-                            p5_name = VALUES(p5_name),
-                            p5_type_line = VALUES(p5_type_line),
-                            p5_uri = VALUES(p5_uri),
-                            p6_id = VALUES(p6_id),
-                            p6_component = VALUES(p6_component),
-                            p6_name = VALUES(p6_name),
-                            p6_type_line = VALUES(p6_type_line),
-                            p6_uri = VALUES(p6_uri),
-                            p7_id = VALUES(p7_id),
-                            p7_component = VALUES(p7_component),
-                            p7_name = VALUES(p7_name),
-                            p7_type_line = VALUES(p7_type_line),
-                            p7_uri = VALUES(p7_uri),
-                            maxpower = VALUES(maxpower),
-                            minpower = VALUES(minpower),
-                            maxtoughness = VALUES(maxtoughness),
-                            mintoughness = VALUES(mintoughness),
-                            maxloyalty = VALUES(maxloyalty),
-                            minloyalty = VALUES(minloyalty),
-                            price_sort = VALUES(price_sort),
+                            id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(id), id),
+                            oracle_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(oracle_id), oracle_id),
+                            tcgplayer_id = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(tcgplayer_id),
+                                tcgplayer_id
+                            ),
+                            multiverse = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(multiverse),
+                                multiverse
+                            ),
+                            multiverse2 = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(multiverse2),
+                                multiverse2
+                            ),
+                            name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(name), name),
+                            printed_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(printed_name),
+                                printed_name
+                            ),
+                            flavor_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(flavor_name),
+                                flavor_name
+                            ),
+                            lang = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(lang), lang),
+                            release_date = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(release_date),
+                                release_date
+                            ),
+                            api_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(api_uri), api_uri),
+                            scryfall_uri = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(scryfall_uri),
+                                scryfall_uri
+                            ),
+                            layout = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(layout), layout),
+                            image_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(image_uri), image_uri),
+                            manacost = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(manacost), manacost),
+                            cmc = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(cmc), cmc),
+                            type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(type), type),
+                            ability = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(ability), ability),
+                            power = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(power), power),
+                            toughness = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(toughness), toughness),
+                            loyalty = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(loyalty), loyalty),
+                            color = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(color), color),
+                            color_identity = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(color_identity),
+                                color_identity
+                            ),
+                            keywords = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(keywords), keywords),
+                            generatedmana = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(generatedmana),
+                                generatedmana
+                            ),
+                            legalitystandard = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitystandard),
+                                legalitystandard
+                            ),
+                            legalitypioneer = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitypioneer),
+                                legalitypioneer
+                            ),
+                            legalitymodern = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitymodern),
+                                legalitymodern
+                            ),
+                            legalitylegacy = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitylegacy),
+                                legalitylegacy
+                            ),
+                            legalitypauper = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitypauper),
+                                legalitypauper
+                            ),
+                            legalityvintage = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalityvintage),
+                                legalityvintage
+                            ),
+                            legalitycommander = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalitycommander),
+                                legalitycommander
+                            ),
+                            legalityalchemy = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalityalchemy),
+                                legalityalchemy
+                            ),
+                            legalityhistoric = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(legalityhistoric),
+                                legalityhistoric
+                            ),
+                            reserved = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(reserved), reserved),
+                            foil = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(foil), foil),
+                            nonfoil = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(nonfoil), nonfoil),
+                            oversized = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(oversized), oversized),
+                            promo = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(promo), promo),
+                            set_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(set_id), set_id),
+                            game_types = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(game_types),
+                                game_types
+                            ),
+                            finishes = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(finishes), finishes),
+                            promo_types = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(promo_types),
+                                promo_types
+                            ),
+                            setcode = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(setcode), setcode),
+                            set_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(set_name), set_name),
+                            number = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(number), number),
+                            number_import = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(number_import),
+                                number_import
+                            ),
+                            rarity = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(rarity), rarity),
+                            flavor = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(flavor), flavor),
+                            backid = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(backid), backid),
+                            artist = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(artist), artist),
+                            price = IF(NOT (price_hash <=> VALUES(price_hash)), VALUES(price), price),
+                            price_foil = IF(NOT (price_hash <=> VALUES(price_hash)), VALUES(price_foil), price_foil),
+                            price_etched = IF(
+                                NOT (price_hash <=> VALUES(price_hash)),
+                                VALUES(price_etched),
+                                price_etched
+                            ),
+                            price_sort = IF(NOT (price_hash <=> VALUES(price_hash)), VALUES(price_sort), price_sort),
+                            gatherer_uri = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(gatherer_uri),
+                                gatherer_uri
+                            ),
+                            updatetime = IF(
+                                NOT (content_hash <=> VALUES(content_hash)) OR NOT (price_hash <=> VALUES(price_hash)),
+                                VALUES(updatetime),
+                                updatetime
+                            ),
+                            f1_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_name), f1_name),
+                            f1_manacost = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_manacost),
+                                f1_manacost
+                            ),
+                            f1_power = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_power), f1_power),
+                            f1_toughness = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_toughness),
+                                f1_toughness
+                            ),
+                            f1_loyalty = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_loyalty),
+                                f1_loyalty
+                            ),
+                            f1_type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_type), f1_type),
+                            f1_ability = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_ability),
+                                f1_ability
+                            ),
+                            f1_colour = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_colour), f1_colour),
+                            f1_artist = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_artist), f1_artist),
+                            f1_flavor = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_flavor), f1_flavor),
+                            f1_image_uri = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_image_uri),
+                                f1_image_uri
+                            ),
+                            f1_cmc = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_cmc), f1_cmc),
+                            f1_printed_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_printed_name),
+                                f1_printed_name
+                            ),
+                            f1_flavor_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f1_flavor_name),
+                                f1_flavor_name
+                            ),
+                            f2_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_name), f2_name),
+                            f2_manacost = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_manacost),
+                                f2_manacost
+                            ),
+                            f2_power = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_power), f2_power),
+                            f2_toughness = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_toughness),
+                                f2_toughness
+                            ),
+                            f2_loyalty = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_loyalty),
+                                f2_loyalty
+                            ),
+                            f2_type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_type), f2_type),
+                            f2_ability = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_ability),
+                                f2_ability
+                            ),
+                            f2_colour = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_colour), f2_colour),
+                            f2_artist = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_artist), f2_artist),
+                            f2_flavor = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_flavor), f2_flavor),
+                            f2_image_uri = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_image_uri),
+                                f2_image_uri
+                            ),
+                            f2_cmc = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_cmc), f2_cmc),
+                            f2_printed_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_printed_name),
+                                f2_printed_name
+                            ),
+                            f2_flavor_name = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(f2_flavor_name),
+                                f2_flavor_name
+                            ),
+                            p1_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p1_id), p1_id),
+                            p1_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p1_component),
+                                p1_component
+                            ),
+                            p1_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p1_name), p1_name),
+                            p1_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p1_type_line),
+                                p1_type_line
+                            ),
+                            p1_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p1_uri), p1_uri),
+                            p2_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p2_id), p2_id),
+                            p2_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p2_component),
+                                p2_component
+                            ),
+                            p2_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p2_name), p2_name),
+                            p2_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p2_type_line),
+                                p2_type_line
+                            ),
+                            p2_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p2_uri), p2_uri),
+                            p3_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p3_id), p3_id),
+                            p3_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p3_component),
+                                p3_component
+                            ),
+                            p3_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p3_name), p3_name),
+                            p3_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p3_type_line),
+                                p3_type_line
+                            ),
+                            p3_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p3_uri), p3_uri),
+                            p4_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p4_id), p4_id),
+                            p4_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p4_component),
+                                p4_component
+                            ),
+                            p4_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p4_name), p4_name),
+                            p4_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p4_type_line),
+                                p4_type_line
+                            ),
+                            p4_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p4_uri), p4_uri),
+                            p5_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p5_id), p5_id),
+                            p5_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p5_component),
+                                p5_component
+                            ),
+                            p5_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p5_name), p5_name),
+                            p5_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p5_type_line),
+                                p5_type_line
+                            ),
+                            p5_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p5_uri), p5_uri),
+                            p6_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p6_id), p6_id),
+                            p6_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p6_component),
+                                p6_component
+                            ),
+                            p6_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p6_name), p6_name),
+                            p6_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p6_type_line),
+                                p6_type_line
+                            ),
+                            p6_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p6_uri), p6_uri),
+                            p7_id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p7_id), p7_id),
+                            p7_component = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p7_component),
+                                p7_component
+                            ),
+                            p7_name = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p7_name), p7_name),
+                            p7_type_line = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(p7_type_line),
+                                p7_type_line
+                            ),
+                            p7_uri = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(p7_uri), p7_uri),
+                            maxpower = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(maxpower), maxpower),
+                            minpower = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(minpower), minpower),
+                            maxtoughness = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(maxtoughness),
+                                maxtoughness
+                            ),
+                            mintoughness = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(mintoughness),
+                                mintoughness
+                            ),
+                            maxloyalty = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(maxloyalty),
+                                maxloyalty
+                            ),
+                            minloyalty = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(minloyalty),
+                                minloyalty
+                            ),
+                            content_hash = IF(
+                                NOT (content_hash <=> VALUES(content_hash)),
+                                VALUES(content_hash),
+                                content_hash
+                            ),
+                            price_hash = IF(
+                                NOT (price_hash <=> VALUES(price_hash)),
+                                VALUES(price_hash),
+                                price_hash
+                            ),
                             primary_card = IF(?, 1, primary_card)
                         ");
     if ($stmt === false) :
@@ -1103,11 +1340,13 @@ function scryfallImport($file_location, $type)
     $minloyalty = null;
 
     $price_sort = null;
+    $content_hash = null;
+    $price_hash = null;
     $primary = (int) $primary;
 
     $bind = $stmt->bind_param(
         "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
-        . "ssssssssssssssssssssssssssssssssssssssssssssssii",
+        . "ssssssssssssssssssssssssssssssssssssssssssssssssii",
         $id,
         $oracle_id,
         $tcgplayer_id,
@@ -1234,6 +1473,8 @@ function scryfallImport($file_location, $type)
         $maxloyalty,
         $minloyalty,
         $price_sort,
+        $content_hash,
+        $price_hash,
         $date,
         $primary,
         $primary
@@ -1245,15 +1486,50 @@ function scryfallImport($file_location, $type)
     $lastGoodId = null;
     $lastGoodCount = 0;
 
+    $msg->logMessage('[DEBUG]', 'Starting bulk import transaction batch');
+    $batchStart = $db->begin_transaction();
+    if ($batchStart === false) :
+        trigger_error('[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error, E_USER_ERROR);
+    endif;
+
     try {
         foreach ($data as $key => $value) :
             $total_count = $total_count + 1;
+            $commit_due = ($total_count % $batch_size === 0);
+            $log_due = ($total_count % $log_interval === 0);
 
             // Bind vars that always exist
             $id = $value["id"] ?? null;
             if ($id === null) :
                 $count_skip = $count_skip + 1;
                 $msg->logMessage('[WARNING]', "Skipping record {$total_count}: missing id");
+                if ($commit_due) :
+                    $commitResult = $db->commit();
+                    if ($commitResult === false) :
+                        trigger_error(
+                            '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
+                            E_USER_ERROR
+                        );
+                    endif;
+                    $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
+                    $batchStart = $db->begin_transaction();
+                    if ($batchStart === false) :
+                        trigger_error(
+                            '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
+                            E_USER_ERROR
+                        );
+                    endif;
+                endif;
+                if ($log_due) :
+                    $timeslice = microtime(true) - $timeslice_start;
+                    $commit_note = $commit_due ? '; batch committed' : '';
+                    $msg->logMessage(
+                        '[NOTICE]',
+                        "Scryfall bulk API ($type) progress: $total_count records processed; timeslice: "
+                        . sprintf('%.2f', $timeslice) . "s{$commit_note}"
+                    );
+                    $timeslice_start = microtime(true);
+                endif;
                 continue;
             endif;
 
@@ -1296,6 +1572,8 @@ function scryfallImport($file_location, $type)
             $maxpower = $minpower = $maxtoughness = $mintoughness = null;
             $maxloyalty = $minloyalty = null;
             $price_sort = null;
+            $content_hash = null;
+            $price_hash = null;
 
             /* New bind vars that replace direct $value[...] usage */
             $oracle_id = $value["oracle_id"] ?? null;
@@ -1541,6 +1819,149 @@ function scryfallImport($file_location, $type)
                     $number_int = (int) $coll_no;
                 endif;
 
+                $contentHashData = array(
+                    $id,
+                    $oracle_id,
+                    $tcgplayer_id,
+                    $multi_1,
+                    $multi_2,
+                    $name,
+                    $printed_name,
+                    $flavor_name,
+                    $lang,
+                    $released_at,
+                    $uri,
+                    $scryfall_uri,
+                    $layout,
+                    $image_uri,
+                    $mana_cost,
+                    $cmc,
+                    $type_line,
+                    $oracle_text,
+                    $power,
+                    $toughness,
+                    $loyalty,
+                    $colors,
+                    $color_identity,
+                    $keywords,
+                    $produced_mana,
+                    $legality_standard,
+                    $legality_pioneer,
+                    $legality_modern,
+                    $legality_legacy,
+                    $legality_pauper,
+                    $legality_vintage,
+                    $legality_commander,
+                    $legality_alchemy,
+                    $legality_historic,
+                    $reserved,
+                    $foil,
+                    $nonfoil,
+                    $oversized,
+                    $promo,
+                    $set_id,
+                    $game_types,
+                    $finishes,
+                    $promo_types,
+                    $set_code,
+                    $set_name,
+                    $number_int,
+                    $collector_number,
+                    $rarity,
+                    $flavor_text,
+                    $card_back_id,
+                    $artist,
+                    $gatherer_uri,
+                    $name_1,
+                    $manacost_1,
+                    $power_1,
+                    $toughness_1,
+                    $loyalty_1,
+                    $type_1,
+                    $ability_1,
+                    $colour_1,
+                    $artist_1,
+                    $flavor_1,
+                    $image_1,
+                    $cmc_1,
+                    $printed_name_1,
+                    $flavor_name_1,
+                    $name_2,
+                    $manacost_2,
+                    $power_2,
+                    $toughness_2,
+                    $loyalty_2,
+                    $type_2,
+                    $ability_2,
+                    $colour_2,
+                    $artist_2,
+                    $flavor_2,
+                    $image_2,
+                    $cmc_2,
+                    $printed_name_2,
+                    $flavor_name_2,
+                    $id_p1,
+                    $component_p1,
+                    $name_p1,
+                    $type_line_p1,
+                    $uri_p1,
+                    $id_p2,
+                    $component_p2,
+                    $name_p2,
+                    $type_line_p2,
+                    $uri_p2,
+                    $id_p3,
+                    $component_p3,
+                    $name_p3,
+                    $type_line_p3,
+                    $uri_p3,
+                    $id_p4,
+                    $component_p4,
+                    $name_p4,
+                    $type_line_p4,
+                    $uri_p4,
+                    $id_p5,
+                    $component_p5,
+                    $name_p5,
+                    $type_line_p5,
+                    $uri_p5,
+                    $id_p6,
+                    $component_p6,
+                    $name_p6,
+                    $type_line_p6,
+                    $uri_p6,
+                    $id_p7,
+                    $component_p7,
+                    $name_p7,
+                    $type_line_p7,
+                    $uri_p7,
+                    $maxpower,
+                    $minpower,
+                    $maxtoughness,
+                    $mintoughness,
+                    $maxloyalty,
+                    $minloyalty
+                );
+                $contentPayload = json_encode($contentHashData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                if ($contentPayload === false) :
+                    $msg->logMessage('[WARNING]', "Failed to JSON encode content_hash data for $id");
+                    $contentPayload = '';
+                endif;
+                $content_hash = sha1($contentPayload);
+
+                $priceHashData = array(
+                    $price_usd,
+                    $price_usd_foil,
+                    $price_usd_etched,
+                    $price_sort
+                );
+                $pricePayload = json_encode($priceHashData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                if ($pricePayload === false) :
+                    $msg->logMessage('[WARNING]', "Failed to JSON encode price_hash data for $id");
+                    $pricePayload = '';
+                endif;
+                $price_hash = sha1($pricePayload);
+
                 // Execute using already-bound params
                 $exec = $stmt->execute();
 
@@ -1576,6 +1997,33 @@ function scryfallImport($file_location, $type)
                     endif;
                 endif;
             endif;
+            if ($commit_due) :
+                $commitResult = $db->commit();
+                if ($commitResult === false) :
+                    trigger_error(
+                        '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
+                        E_USER_ERROR
+                    );
+                endif;
+                $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
+                $batchStart = $db->begin_transaction();
+                if ($batchStart === false) :
+                    trigger_error(
+                        '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
+                        E_USER_ERROR
+                    );
+                endif;
+            endif;
+            if ($log_due) :
+                $timeslice = microtime(true) - $timeslice_start;
+                $commit_note = $commit_due ? '; batch committed' : '';
+                $msg->logMessage(
+                    '[NOTICE]',
+                    "Scryfall bulk API ($type) progress: $total_count records processed; timeslice: "
+                    . sprintf('%.2f', $timeslice) . "s{$commit_note}"
+                );
+                $timeslice_start = microtime(true);
+            endif;
         endforeach;
     } catch (Throwable $e) {
         $msg->logMessage(
@@ -1583,16 +2031,23 @@ function scryfallImport($file_location, $type)
             "Bulk import aborted (likely truncated JSON). Last good: {$lastGoodId} at {$lastGoodCount}. "
             . "File: {$file_location}. Error: " . $e->getMessage()
         );
+        $db->rollback();
 
         $badPath = $file_location . '.bad-' . date('Ymd-His');
-        @rename($file_location, $badPath);
+        $renamed = @rename($file_location, $badPath);
         $msg->logMessage(
             $renamed ? '[NOTICE]' : '[WARNING]',
-            $renamed ? "Quarantined bad JSON to {$badPath}" : "Failed to quarantine JSON from {$file_location} to {$badPath}"
+            $renamed
+                ? "Quarantined bad JSON to {$badPath}"
+                : "Failed to quarantine JSON from {$file_location} to {$badPath}"
         );
 
         return "FAILED: aborted at {$lastGoodCount} (id {$lastGoodId}). Quarantined to {$badPath}";
     }
+    $commitResult = $db->commit();
+    if ($commitResult === false) :
+        trigger_error('[ERROR] scryfall_bulk.php: Final commit failed: ' . $db->error, E_USER_ERROR);
+    endif;
     $stmt->close();
 
     $msg->logMessage(
