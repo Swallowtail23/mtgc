@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - Fixed: corrected an inaccurate log message in bulk scripts to reflect the correct workflow step.
 - Fixed: set the JSON quarantine rename result before logging to avoid incorrect error reporting.
 - Infrastructure: documented changelog update requirements in `AGENTS.md`.
-- Changed: added NOTICE-level progress logging every 1,000 records during Scryfall bulk imports.
+- Changed: added NOTICE-level progress logging every 2,500 records during Scryfall bulk imports.
 - Infrastructure: batch Scryfall bulk imports in 5,000-row transactions and log batch commits.
 - Changed: bulk import uses content/price hashes with conditional updates to skip full writes when card content is unchanged.
 - Infrastructure: added content_hash/price_hash columns in `setup/mtg_new.sql` and on-demand schema checks in bulk import.
