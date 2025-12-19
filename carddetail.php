@@ -8,39 +8,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Added legality
-    3.0         Added Admin replace image function
-    4.0         Fixed Kamigawa flip bugs
-    4.1         Added call to symbolreplace for # removal in flavor text (Ixalan)
-    5.0         Move image routines to Scryfall
-    5.1         Text edit - remove magiccards.info -> scryfall
-    5.2         Use Scryfall for legalities, fallback to DB if scryfall errors
-    6.0         Move from writelog to Message class
-    7.0         Extensive rewrite - mysqli, comments, logging, escaping, etc.
-    8.0         Fixes for PHP7.4 and MySQL8
-    9.0         Moving price away from TCGPlayer partner API to use Scryfall-provided pricing
-    10.0        Refactoring for new database
-    11.0        Add extra card parts (related cards) handling, up to 7
-    12.0        Add Arena legalities
-    13.0        PHP 8.1 compatibility
-    14.0        Add flip capability for battle cards
-    15.0        Add check for decks with card; move to auto-update for card quantity changes; modernize error messaging
-    16.0        Show thick card promo type for Commander proxy cards; improve price handling to ensure latest price
-                shown
-    16.1        Show serialised promo type
-    17.0 27/11/23 Added display of secondary currency to prices
-    18.0 10/12/23 SQL parameterised query fixes
-    19.0 02/01/24 Correctly interpret language codes to 'pretty' descriptions
-    19.1 20/01/24 Move session.name to include and use logMessage
-    19.2 22/01/24 Add revised sorting for PLST and SLD cards, per criteria.php
-    19.3 11/08/24 Update notes and refresh image via AJAX
-    19.4 25/11/25 Standard tidy-up and long-line wraps
-    19.5 29/11/25 Rename forcePasswordChange usage
-    20.0 29/11/25 Add async image checks
-    20.1 17/12/25 Escape sitetitle variable
 */
 
 if (file_exists('includes/sessionname.local.php')) :
