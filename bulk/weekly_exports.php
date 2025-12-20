@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.4
+Version:     2.6
 Date:        20/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -15,6 +15,8 @@ History:
     2.2 25/11/25 Wrapped long SQL/email strings
     2.3 25/11/25 Rename PHPMailer wrapper to PascalCase
     2.4 20/12/25 Add weekly value history export
+    2.5 20/12/25 Attach value history CSV to weekly collection export email
+    2.6 20/12/25 Consolidate weekly exports into a single email
 */
 
 require('bulk_ini.php');
@@ -36,6 +38,7 @@ while ($user = $usersExport->fetch_assoc()) :
     $userEmail = $user['email'];
     $decks = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
     // Decks
+    $deckZipPath = '';
     $query = 'SELECT decknumber FROM decks WHERE owner=?';
     $stmt = $db->execute_query($query, [$userNumber]);
     if ($stmt === false) :
@@ -55,58 +58,96 @@ while ($user = $usersExport->fetch_assoc()) :
             if ($decksProcessed === 0) :
                 $decksProcessed = $decksProcessed + 1;
                 $msg->logMessage('[DEBUG]', "Processing deck $decksProcessed/$qtyDecks");
-                $zipFilePath = $decks->exportDeck($deckNumber, "bulk");
-                if ($zipFilePath === false) :
+                $deckZipPath = $decks->exportDeck($deckNumber, "bulk");
+                if ($deckZipPath === false) :
                     $msg->logMessage('[ERROR]', "Error returned from deckManager");
                     exit;
                 endif;
             else :
                 $decksProcessed = $decksProcessed + 1;
                 $msg->logMessage('[DEBUG]', "Processing deck $decksProcessed/$qtyDecks");
-                $addnext = $decks->exportDeck($deckNumber, "bulk", $zipFilePath);
+                $addnext = $decks->exportDeck($deckNumber, "bulk", $deckZipPath);
                 if ($addnext === false) :
                     $msg->logMessage('[ERROR]', "Error returned from deckManager");
                     exit;
                 endif;
             endif;
         endwhile;
-        $subject = "$siteTitleEsc weekly decks export";
-        $emailbody = "Hi $userName, please see attached your weekly decks export from $siteTitleEsc. <br><br> Opt out "
-            . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
-        $emailaltbody = "Hi $userName, please see attached your weekly decks export from $siteTitleEsc. \r\n\r\n Opt "
-            . "out of automated emails in your profile at your $siteTitleEsc profile page ($myURL/profile.php) \r\n\r\n";
-        if (isset($emailEnabled) && $emailEnabled === true) :
-            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
-            $mailresult = $mail->sendEmail($userEmail, true, $subject, $emailbody, $emailaltbody, $zipFilePath);
-        else :
-            $msg->logMessage(
-                '[NOTICE]',
-                "Email disabled; weekly decks export not sent to $userEmail"
-            );
-            $mailresult = false;
-        endif;
-        if (isset($zipFilePath)) :
-            unlink($zipFilePath);
-        endif;
     endif;
 
     // Collection
-    $obj->exportCollectionToCsv($usertable, $myURL, $smtpParameters, 'weekly', 'export.csv', $userName, $userEmail);
-    $msg->logMessage('[DEBUG]', "Weekly value history export for $userEmail");
-    $historyResult = $historyExporter->emailHistoryCsv(
-        $userNumber,
-        $myURL,
-        $smtpParameters,
-        'all',
-        'value_history.csv',
-        $userName,
-        $userEmail
-    );
-    if ($historyResult === true) :
-        $msg->logMessage('[DEBUG]', "Weekly value history export sent to $userEmail");
+    $attachments = [];
+    $cleanupFiles = [];
+
+    $msg->logMessage('[DEBUG]', "Preparing weekly collection export for $userEmail");
+    $collectionCsv = $obj->buildCollectionCsv($usertable);
+    if ($collectionCsv === false) :
+        $msg->logMessage('[ERROR]', "Weekly collection export failed for $userEmail");
+        $collectionTempFile = '';
     else :
-        $msg->logMessage('[NOTICE]', "Weekly value history export not sent to $userEmail");
+        $collectionTempFile = tempnam(sys_get_temp_dir(), 'export_');
+        file_put_contents($collectionTempFile, $collectionCsv);
+        $cleanupFiles[] = $collectionTempFile;
     endif;
+
+    $msg->logMessage('[DEBUG]', "Preparing weekly value history attachment for $userEmail");
+    $historyData = $historyExporter->getHistoryData($userNumber, 'all');
+    if ($historyData === false) :
+        $msg->logMessage('[ERROR]', "Weekly value history export failed for $userEmail");
+    else :
+        $historyCsv = $historyExporter->buildCsv($historyData);
+        if ($historyCsv === '') :
+            $msg->logMessage('[ERROR]', "Weekly value history CSV build failed for $userEmail");
+        else :
+            $historyTempFile = tempnam(sys_get_temp_dir(), 'history_');
+            file_put_contents($historyTempFile, $historyCsv);
+            $attachments[] = ['path' => $historyTempFile, 'name' => 'value_history.csv'];
+            $cleanupFiles[] = $historyTempFile;
+            $msg->logMessage('[DEBUG]', "Weekly value history attachment ready for $userEmail");
+        endif;
+    endif;
+
+    if ($deckZipPath !== '') :
+        $attachments[] = ['path' => $deckZipPath, 'name' => basename($deckZipPath)];
+        $cleanupFiles[] = $deckZipPath;
+    endif;
+
+    $subject = "$siteTitleEsc weekly export";
+    $emailbody = "Hi $userName, please see attached your weekly export from $siteTitleEsc. <br><br> Opt out "
+        . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
+    $emailaltbody = "Hi $userName, please see attached your weekly export from $siteTitleEsc. \r\n\r\n Opt out "
+        . "of automated emails in your profile at your $siteTitleEsc profile page ($myURL/profile.php) \r\n\r\n";
+
+    if (isset($emailEnabled) && $emailEnabled === true) :
+        if ($collectionTempFile !== '') :
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mailresult = $mail->sendEmail(
+                $userEmail,
+                true,
+                $subject,
+                $emailbody,
+                $emailaltbody,
+                $collectionTempFile,
+                'export.csv',
+                $attachments
+            );
+        else :
+            $msg->logMessage('[ERROR]', "Weekly export not sent to $userEmail (missing collection export)");
+            $mailresult = false;
+        endif;
+    else :
+        $msg->logMessage(
+            '[NOTICE]',
+            "Email disabled; weekly export not sent to $userEmail"
+        );
+        $mailresult = false;
+    endif;
+
+    foreach ($cleanupFiles as $cleanupFile) :
+        if (is_string($cleanupFile) && $cleanupFile !== '' && file_exists($cleanupFile)) :
+            unlink($cleanupFile);
+        endif;
+    endforeach;
     $list .= "$userName ($userEmail)\r\n";
 endwhile;
 

@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.
+- Changed: weekly value history export now attaches to the weekly collection export email.
+- Changed: weekly collection, value history, and deck exports are delivered in one email.
 
 ## [v0.1.3] - 2025-12-16
 

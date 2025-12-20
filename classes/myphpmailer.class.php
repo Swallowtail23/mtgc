@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        01/12/25
+Version:     1.5
+Date:        20/12/25
 Name:        myphpmailer.class.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -18,6 +18,7 @@ History:
     1.2 25/11/25 Standard tidy-up
     1.3 25/11/25 Rename class to PascalCase
     1.4 01/12/25 Respect email disabled setting
+    1.5 20/12/25 Support multiple attachments
 */
 
 //Import PHPMailer classes into the global namespace
@@ -92,7 +93,16 @@ class MyPHPMailer extends PHPMailer
         endif;
     }
 
-    public function sendEmail($recipient, $html, $subject, $body, $altbody = '', $attachment = '', $attachmentname = '')
+    public function sendEmail(
+        $recipient,
+        $html,
+        $subject,
+        $body,
+        $altbody = '',
+        $attachment = '',
+        $attachmentname = '',
+        $attachments = []
+    )
     {
         if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
             $this->message->logMessage(
@@ -116,6 +126,19 @@ class MyPHPMailer extends PHPMailer
 
             if ($attachment !== '') :
                 $this->addAttachment($attachment, $attachmentname);
+            endif;
+            if (!empty($attachments)) :
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Adding " . count($attachments) . " additional attachments for $recipient"
+                );
+                foreach ($attachments as $extra) :
+                    $path = $extra['path'] ?? ($extra[0] ?? '');
+                    $name = $extra['name'] ?? ($extra[1] ?? '');
+                    if ($path !== '') :
+                        $this->addAttachment($path, $name);
+                    endif;
+                endforeach;
             endif;
 
             // Send

@@ -106,6 +106,9 @@ class ImportExportEmailTest extends TestCase
             $siteTitle
         );
 
+        $extraAttachments = [
+            ['path' => '/tmp/extra.csv', 'name' => 'extra.csv']
+        ];
         $result = $exporter->exportCollectionToCsv(
             'mytable',
             'http://example.com',
@@ -120,14 +123,100 @@ class ImportExportEmailTest extends TestCase
                 'SMTPDebug' => 'SMTP::DEBUG_OFF',
                 'globalDebug' => 3
             ],
-            'email'
+            'email',
+            'export.csv',
+            '',
+            '',
+            $extraAttachments
         );
 
         $this->assertFalse($result);
         $this->assertNotEmpty(MyPHPMailer::$calls);
+        $lastCall = end(MyPHPMailer::$calls);
+        $this->assertArrayHasKey('sendEmail', $lastCall);
+        $sendArgs = $lastCall['sendEmail'];
+        $this->assertSame($extraAttachments, $sendArgs[7] ?? null);
 
         if ($logfile && file_exists($logfile)) {
             unlink($logfile);
         }
+    }
+
+    public function testBuildCollectionCsvReturnsCsvString()
+    {
+        $db = new class {
+            public function real_escape_string($table)
+            {
+                return $table;
+            }
+
+            public function query($sql)
+            {
+                $fields = [
+                    'setcode',
+                    'number_import',
+                    'name',
+                    'lang',
+                    'normal',
+                    'foil',
+                    'etched',
+                    'scryfall_id'
+                ];
+                $rows = [
+                    ['SET', '123', 'Card Name', 'EN', 1, 0, 0, 'abcd1234']
+                ];
+
+                return new class ($fields, $rows) {
+                    private $fields;
+                    private $rows;
+                    private $index = 0;
+                    public $field_count;
+
+                    public function __construct($fields, $rows)
+                    {
+                        $this->fields = $fields;
+                        $this->rows = $rows;
+                        $this->field_count = count($fields);
+                    }
+
+                    public function fetch_fields()
+                    {
+                        return array_map(
+                            function ($name) {
+                                $field = new stdClass();
+                                $field->name = $name;
+                                return $field;
+                            },
+                            $this->fields
+                        );
+                    }
+
+                    public function fetch_row()
+                    {
+                        if ($this->index >= count($this->rows)) {
+                            return null;
+                        }
+                        return array_values($this->rows[$this->index++]);
+                    }
+                };
+            }
+        };
+
+        $exporter = new ImportExport(
+            $db,
+            null,
+            'user@example.com',
+            'server@example.com',
+            'MTG Test'
+        );
+
+        $csv = $exporter->buildCollectionCsv('mytable');
+
+        $this->assertIsString($csv);
+        $this->assertStringContainsString(
+            '"setcode","number_import","name","lang","normal","foil","etched","scryfall_id"',
+            $csv
+        );
+        $this->assertStringContainsString('"SET","123","Card Name","EN","1","0","0","abcd1234"', $csv);
     }
 }
