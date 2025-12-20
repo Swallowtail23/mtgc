@@ -6,7 +6,6 @@ nbdist/
 .nb-gradle/
 cardimg/
 .idea/
-./well-known
 /.well-known/
 /vendor
 /includes/sessionname.local.php
