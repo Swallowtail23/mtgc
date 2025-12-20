@@ -1,45 +1,13 @@
 <?php
 /*
-Version:     20.0
-Date:        29/11/25
+Version:     20.3
+Date:        19/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Added legality
-    3.0         Added Admin replace image function
-    4.0         Fixed Kamigawa flip bugs
-    4.1         Added call to symbolreplace for # removal in flavor text (Ixalan)
-    5.0         Move image routines to Scryfall
-    5.1         Text edit - remove magiccards.info -> scryfall
-    5.2         Use Scryfall for legalities, fallback to DB if scryfall errors
-    6.0         Move from writelog to Message class
-    7.0         Extensive rewrite - mysqli, comments, logging, escaping, etc.
-    8.0         Fixes for PHP7.4 and MySQL8
-    9.0         Moving price away from TCGPlayer partner API to use Scryfall-provided pricing
-    10.0        Refactoring for new database
-    11.0        Add extra card parts (related cards) handling, up to 7
-    12.0        Add Arena legalities
-    13.0        PHP 8.1 compatibility
-    14.0        Add flip capability for battle cards
-    15.0        Add check for decks with card; move to auto-update for card quantity changes; modernize error messaging
-    16.0        Show thick card promo type for Commander proxy cards; improve price handling to ensure latest price
-                shown
-    16.1        Show serialised promo type
-    17.0 27/11/23 Added display of secondary currency to prices
-    18.0 10/12/23 SQL parameterised query fixes
-    19.0 02/01/24 Correctly interpret language codes to 'pretty' descriptions
-    19.1 20/01/24 Move session.name to include and use logMessage
-    19.2 22/01/24 Add revised sorting for PLST and SLD cards, per criteria.php
-    19.3 11/08/24 Update notes and refresh image via AJAX
-    19.4 25/11/25 Standard tidy-up and long-line wraps
-    19.5 29/11/25 Rename forcePasswordChange usage
-    20.0 29/11/25 Add async image checks
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -80,6 +48,8 @@ else :
 endif;
 
 $refreshimage = '';
+
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -87,7 +57,7 @@ $refreshimage = '';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo $siteTitle;?> - card details</title>
+    <title><?php echo $siteTitleEsc;?> - card details</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
@@ -315,7 +285,7 @@ require('includes/menu.php'); //mobile menu
         exit;
     endif; ?>
         <div id="printtitle" class="headername">
-            <img src="images/white_m.png"><?php echo $siteTitle;?>
+            <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
         </div>
     <?php
     // Does the user have a collection table?
@@ -1339,7 +1309,7 @@ require('includes/menu.php'); //mobile menu
                                 else :
                                         echo "Common";
                                 endif;
-                                    echo "<br>";
+                                echo "<br>";
                                 if (validateTrueDecimal($row['cmc']) === false) :
                                     $msg->logMessage('[DEBUG]', "Trying to round cmc {$row['cmc']}");
                                     $row['cmc'] = round($row['cmc']);
@@ -1350,26 +1320,32 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                             endif;
                             if (in_array($row["layout"], $layouts_double)) :
-                                if (isset($row['f1_flavor_name']) and $row['f1_flavor_name'] !== '') :
+                                if (
+                                    isset($row['f1_flavor_name'])
+                                    and $row['f1_flavor_name'] !== null
+                                    and $row['f1_flavor_name'] !== ''
+                                ) :
                                     echo "<b>Name: </b>{$row['f1_flavor_name']} <i>({$row['f1_name']})</i>";
                                 else :
                                     echo "<b>Name: </b>" . $row['f1_name'];
                                 endif;
                                 echo "<br>";
                                 if ($row['layout'] === 'reversible_card') :
-                                    if (validateTrueDecimal($row['f1_cmc']) === false) :
-                                        $msg->logMessage('[DEBUG]', "Trying to round f1_cmc {$row['f1_cmc']}");
-                                        $row['f1_cmc'] = round($row['f1_cmc']);
+                                    if ($row['f1_cmc'] !== null) :
+                                        if (validateTrueDecimal($row['f1_cmc']) === false) :
+                                            $msg->logMessage('[DEBUG]', "Trying to round f1_cmc {$row['f1_cmc']}");
+                                            $row['f1_cmc'] = round($row['f1_cmc']);
+                                        endif;
+                                        echo "<b>Mana value: </b>" . $row['f1_cmc'];
+                                        echo "<br>";
                                     endif;
-                                    echo "<b>Mana value: </b>" . $row['f1_cmc'];
-                                    echo "<br>";
                                 endif;
                                 $manacost = symbolReplace($row['f1_manacost']);
-                                if ($manacost !== '') :
+                                if ($manacost !== null and $manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f1_type']) and $row['f1_type'] != '') :
+                                if (isset($row['f1_type']) and $row['f1_type'] !== null and $row['f1_type'] != '') :
                                     echo "<b>Type: </b>" . $row['f1_type'];
                                     echo "<br>";
                                 endif;
@@ -1377,17 +1353,17 @@ require('includes/menu.php'); //mobile menu
                                     echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
-                                if ($row['f1_ability'] != '') :
+                                if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
                                     echo "<b>Abilities: </b>" . symbolReplace($row['f1_ability']);
                                     echo "<br>";
                                 endif;
-                                if (strpos($row['f1_type'], 'reature') !== false) :
+                                if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>" . $row['f1_power'] . "/" . $row['f1_toughness'];
                                     echo "<br>";
-                                elseif (strpos($row['f1_type'], 'laneswalker') !== false) :
+                                elseif ($row['f1_type'] !== null and strpos($row['f1_type'], 'laneswalker') !== false) :
                                     echo "<b>Loyalty: </b>" . $row['f1_loyalty'];
                                     echo "<br>";
-                                elseif (strpos($row['f1_type'], 'attle') !== false) :
+                                elseif ($row['f1_type'] !== null and strpos($row['f1_type'], 'attle') !== false) :
                                     echo "<b>Defense: </b>" . $row['f1_toughness'];
                                     echo "<br>";
                                 endif;
@@ -2583,27 +2559,33 @@ require('includes/menu.php'); //mobile menu
                         <div id="carddetailflipinfo">
                             <h3 class="shallowh3">Flip details</h3>
                                 <?php
-                                if (isset($row['f2_flavor_name']) and $row['f2_flavor_name'] !== '') :
+                                if (
+                                    isset($row['f2_flavor_name'])
+                                    and $row['f2_flavor_name'] !== null
+                                    and $row['f2_flavor_name'] !== ''
+                                ) :
                                     echo "<b>Name: </b>{$row['f2_flavor_name']} <i>({$row['f2_name']})</i>";
                                 else :
                                     echo "<b>Name: </b>" . $row['f2_name'];
                                 endif;
                                 echo "<br>";
-                                if (isset($row['f2_cmc']) and validateTrueDecimal($row['f2_cmc']) === false) :
-                                    $msg->logMessage('[DEBUG]', "Trying to round f2_cmc {$row['f2_cmc']}");
-                                    $row['f2_cmc'] = round($row['f2_cmc']);
-                                    echo "<b>Mana value: </b>" . $row['f2_cmc'];
-                                    echo "<br>";
-                                elseif (isset($row['f2_cmc']) and validateTrueDecimal($row['f2_cmc']) === true) :
-                                    echo "<b>Mana value: </b>" . $row['f2_cmc'];
-                                    echo "<br>";
+                                if (isset($row['f2_cmc']) and $row['f2_cmc'] !== null) :
+                                    if (validateTrueDecimal($row['f2_cmc']) === false) :
+                                        $msg->logMessage('[DEBUG]', "Trying to round f2_cmc {$row['f2_cmc']}");
+                                        $row['f2_cmc'] = round($row['f2_cmc']);
+                                        echo "<b>Mana value: </b>" . $row['f2_cmc'];
+                                        echo "<br>";
+                                    elseif (validateTrueDecimal($row['f2_cmc']) === true) :
+                                        echo "<b>Mana value: </b>" . $row['f2_cmc'];
+                                        echo "<br>";
+                                    endif;
                                 endif;
                                 $flipmanacost = symbolReplace($row['f2_manacost']);
-                                if ($flipmanacost !== '') :
+                                if ($flipmanacost !== null and $flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f2_type']) and $row['f2_type'] != '') :
+                                if (isset($row['f2_type']) and $row['f2_type'] !== null and $row['f2_type'] != '') :
                                     echo "<b>Type: </b>" . $row['f2_type'];
                                     echo "<br>";
                                 endif;
@@ -2611,19 +2593,19 @@ require('includes/menu.php'); //mobile menu
                                     echo "<b>Lang: </b>" . langReplace($card_lang);
                                     echo "<br>";
                                 endif;
-                                if (isset($flipability) and $flipability != '') :
+                                if (isset($flipability) and $flipability !== null and $flipability != '') :
                                     $flipability = symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
-                                if (strpos($row['f2_type'], 'reature') !== false) :
+                                if ($row['f2_type'] !== null and strpos($row['f2_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>" . $row['f1_power'] . "/" . $row['f2_toughness'];
                                     echo "<br>";
-                                elseif (strpos($row['f2_type'], 'laneswalker') !== false) :
+                                elseif ($row['f2_type'] !== null and strpos($row['f2_type'], 'laneswalker') !== false) :
                                     echo "<b>Loyalty: </b>" . $row['f2_loyalty'];
                                     echo "<br>";
                                 endif;
-                                if ($row['f2_artist'] != '') :
+                                if ($row['f2_artist'] !== null and $row['f2_artist'] != '') :
                                     echo "<b>Art by: </b>" . $row['f2_artist'] . "<br>";
                                 endif;
                                 ?>

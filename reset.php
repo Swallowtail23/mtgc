@@ -41,8 +41,9 @@ require 'classes/twofactormanager.class.php';
 $cssver = cssVersionCheck();
 $msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$pwReset = new PasswordCheck($db, $logfile, $siteTitleEsc);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
@@ -185,18 +186,22 @@ endif;
         name="viewport"
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
-    <title><?php echo htmlspecialchars($siteTitle);?> - reset</title>
+    <title><?php echo $siteTitleEsc;?> - reset</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+    >
     <?php include 'includes/googlefonts.php';?>
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">
-    <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
+    <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
 
     <?php if ($message !== '') : ?>
     <div class="alert-box notice" style="margin: 20px;">
-        <?php echo htmlspecialchars($message); ?>
+        <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
     </div>
         <?php if (!empty($redirectLogin)) : ?>
         <meta http-equiv='refresh' content='3;url=login.php'>
@@ -205,8 +210,8 @@ endif;
 
 <?php if ($emailEnabledFlag && empty($redirectLogin) && !empty($token) && !empty($tokenEmail)) : ?>
     <form  id="resetform" action="?" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token);?>">
-        <input type="hidden" name="email" value="<?php echo htmlspecialchars($tokenEmail);?>">
+        <input type="hidden" name="token" value="<?php echo htmlspecialchars($token, ENT_NOQUOTES, 'UTF-8');?>">
+        <input type="hidden" name="email" value="<?php echo htmlspecialchars($tokenEmail, ENT_NOQUOTES, 'UTF-8');?>">
         <br>Set a new password:<br><br>
         <input
             class='textinput loginfield'

@@ -1,18 +1,14 @@
 <?php
 
 /*
-Version:     2.3
-Date:        25/11/25
+Version:     2.4
+Date:        19/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       {none}
-
-History:
-    1.0         Downloads Scryfall rulings file, wipes and writes rulings_scry table
-    2.0 13/01/24 Move to PHPMailer for email output
-    2.1 25/11/25 Formatting clean-up
-    2.2 25/11/25 Wrapped long log strings
-    2.3 25/11/25 Rename PHPMailer wrapper to PascalCase
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+History:     See git history / CHANGELOG.md
 */
 
 require('bulk_ini.php');
@@ -72,11 +68,11 @@ if (file_exists($file_location)) :
     endif;
 else :
     $download = 1;
-    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: No file at ($file_location), downloading: $url");
+    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: No file at ($file_location), downloading: $rulings_uri");
 endif;
 if ($download > 0) :
-    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $url");
-    $rulingreturn = downloadBulk($rulings_uri, $file_location);
+    $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $rulings_uri");
+    $rulingreturn = downloadBulk($rulings_uri, $file_location, $msg, 'Scryfall rulings data download', false);
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 

@@ -145,6 +145,8 @@ CREATE TABLE `cards_scry` (
   `price_foil` decimal(8,2) DEFAULT NULL,
   `price_etched` decimal(8,2) DEFAULT NULL,
   `price_sort` decimal(8,2) DEFAULT NULL,
+  `content_hash` char(40) DEFAULT NULL,
+  `price_hash` char(40) DEFAULT NULL,
   `date_added` date DEFAULT NULL,
   `is_paper` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"paper"')) VIRTUAL,
   `is_mtgo` tinyint(1) GENERATED ALWAYS AS (json_contains(`game_types`,_utf8mb4'"mtgo"')) VIRTUAL,

@@ -29,13 +29,14 @@ require('includes/error_handling.php');
 require('includes/functions.php');     //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');      //Setup page variables
 forcePasswordChange();                      //Check if user is disabled or needs to change password
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo $siteTitle;?> - help</title>
+    <title><?php echo $siteTitleEsc;?> - help</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
@@ -53,7 +54,7 @@ $name = ucfirst($userName);
 <div id='page'>
     <div class='staticpagecontent'>
             <div id="printtitle" class="headername">
-                <img src="images/white_m.png"><?php echo $siteTitle;?>
+                <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
             </div>
             <h2 class='h2pad'>Contact or report an issue</h2>
             <?php
@@ -107,7 +108,7 @@ $name = ucfirst($userName);
                         $subject = "Message sent using your contact form";
                     endif;
                     if (isset($emailEnabled) && $emailEnabled === true) :
-                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
                         $mailResult = $mailer->sendEmail($adminEmail, false, $subject, $message, '', '', '');
                         if ($mailResult === true) :
                             echo "Email sent!";

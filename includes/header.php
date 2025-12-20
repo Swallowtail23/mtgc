@@ -180,13 +180,14 @@ if (
 elseif ($adminpages !== false) :
     include 'adminmenus.php';
 endif;
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <div class='image'>
 </div>
 <div id="headerdivider">
 </div>
 <div id="title">
-    <a class="headername" href="/index.php"><?php echo $siteTitle;?> </a>
+    <a class="headername" href="/index.php"><?php echo $siteTitleEsc;?> </a>
 </div>
 <div <?php
 if ($tier == 'dev') :

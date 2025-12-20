@@ -65,6 +65,7 @@ require('includes/secpagesetup.php');       //Setup page variables
 require('includes/colour.php');
 forcePasswordChange();                       //Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $uniquecard_ref = [];
 ?>
@@ -74,9 +75,13 @@ $uniquecard_ref = [];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo htmlspecialchars($siteTitle); ?> - deck detail</title>
+    <title><?php echo $siteTitleEsc; ?> - deck detail</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver); ?>.css">
+    <link 
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css"
+    >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php'); ?>
     <script src="/js/jquery.js"></script>
@@ -1153,7 +1158,7 @@ m13,12,"Fog",en,1,0,0,{id}
     <div class="staticpagecontent">
         <div id="decklist">
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png"> <?php echo $siteTitle;?>
+                <img src="images/white_m.png"> <?php echo $siteTitleEsc;?>
             </span>
             <form id="deletedeck" action="decks.php" method="POST">
                 <input type='hidden' name="deletedeck" value="yes">
@@ -1187,10 +1192,10 @@ m13,12,"Fog",en,1,0,0,{id}
                 <span
                     title="Duplicate"
                     onclick="duplicateDeck(
-                        '<?php echo htmlspecialchars($user, ENT_QUOTES); ?>',
-                        '<?php echo htmlspecialchars($deckName, ENT_QUOTES); ?>',
-                        '<?php echo htmlspecialchars($deckNumber, ENT_QUOTES); ?>',
-                        '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES) : ''; ?>'
+                        '<?php echo htmlspecialchars($user, ENT_QUOTES, 'UTF-8'); ?>',
+                        '<?php echo htmlspecialchars($deckName, ENT_QUOTES, 'UTF-8'); ?>',
+                        '<?php echo htmlspecialchars($deckNumber, ENT_QUOTES, 'UTF-8'); ?>',
+                        '<?php echo !empty($decktype) ? htmlspecialchars($decktype, ENT_QUOTES, 'UTF-8') : ''; ?>'
                     )"
                     onmouseover=""
                     style="cursor: pointer;"
@@ -3405,8 +3410,8 @@ m13,12,"Fog",en,1,0,0,{id}
                     </tr>
                     <?php
                     if ($requiredlist != '') :
-                        $requiredlist = htmlspecialchars($requiredlist, ENT_QUOTES);
-                        $requiredbuy = htmlspecialchars($requiredbuy, ENT_QUOTES);
+                        $requiredlist = htmlspecialchars($requiredlist, ENT_QUOTES, 'UTF-8');
+                        $requiredbuy = htmlspecialchars($requiredbuy, ENT_QUOTES, 'UTF-8');
                         $filename_missing = preg_replace('/[^\w]/', '', $deckName . '_missing');
                         $msg->logMessage('[DEBUG]', "Required list = $requiredlist");
                         $msg->logMessage('[DEBUG]', "Missing filename = $filename_missing");?>

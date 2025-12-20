@@ -101,7 +101,7 @@ $perpage = (int) $perpage;
 $start_from = ($page - 1) * $perpage;
 $start_from = (int) $start_from;
 if (isset($_GET['name']) and $_GET['name'] !== "") :
-    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES);
+    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES, 'UTF-8');
     $msg->logMessage('[DEBUG]', "Name in GET is $nameget");
     $nametrim = trim($nameget, " \t\n\r\0\x0B");
     $msg->logMessage('[DEBUG]', "Name after trimming is $nametrim");
@@ -387,13 +387,14 @@ $getstringbulk = getStringParameters($_GET, 'layout', 'page');
 
 // Page layout starts here
 $msg->logMessage('[DEBUG]', "Loading page layout");
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="initial-scale=1">
-        <title> <?php echo $siteTitle;?> </title>
+        <title> <?php echo $siteTitleEsc;?> </title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
@@ -580,7 +581,9 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
         include_once("includes/analyticstracking.php");
         $getString = getStringParameters($_GET, 'page'); ?>
         <div class="top"> <?php
-            echo "<a id='prevlink' href='index.php{$getString}&amp;page=1'>&nbsp;</a>"; ?>
+            echo "<a id='prevlink' href='index.php"
+                . htmlspecialchars($getString . '&page=1', ENT_QUOTES, 'UTF-8')
+                . "'>&nbsp;</a>"; ?>
         </div>
         <?php
         require('includes/overlays.php'); //menus
@@ -648,7 +651,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
         ?>
         <div id='page'>
             <span id="printtitle" class="headername">
-                <img src="images/white_m.png"><?php echo $siteTitle;?>
+                <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
             </span>
             <?php
             if ((isset($qtyresults)) and ( $qtyresults != 0)) :
@@ -823,10 +826,13 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                         <!--page navigation--> <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>
@@ -948,10 +954,13 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                         <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>
@@ -1107,7 +1116,7 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                                         . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
                                     echo $flipButton;
                                 endif;
-                                $setname = htmlspecialchars($row['set_name'], ENT_QUOTES);
+                                $setname = htmlspecialchars($row['set_name'], ENT_QUOTES, 'UTF-8');
                                 $number_import = $row['number_import'];
                                 $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
                                     . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
@@ -1208,10 +1217,13 @@ $msg->logMessage('[DEBUG]', "Loading page layout");
                         <?php
                         if (isset($next)) :
                             $getString = getStringParameters($_GET, 'page');
+                            $href = 'index.php' . $getString . '&page=' . (int) $next;
+                            $nextLink = "<a href='"
+                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
+                                . "' class='next'>Next</a>";
                             ?>
                             <div class="pagination">
                                 <?php
-                                $nextLink = "<a href='index.php{$getString}&amp;page=$next' class='next'>Next</a>";
                                 echo $nextLink;
                                 ?>
                             </div>

@@ -27,6 +27,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
 forcePasswordChange();
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -34,9 +35,13 @@ forcePasswordChange();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo htmlspecialchars($siteTitle);?> - template</title>
+    <title><?php echo $siteTitleEsc;?> - template</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+    >
     <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js"></script>
 </head>

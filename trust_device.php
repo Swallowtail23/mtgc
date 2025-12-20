@@ -92,6 +92,7 @@ if ($trust_choice !== 'none') :
     exit();
 else :
     $msg->logMessage('[DEBUG]', 'Trust choice not yet set, display the trust form');
+    $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     ?>
 <!DOCTYPE html>
     <head>
@@ -100,25 +101,31 @@ else :
             name="viewport"
             content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
         >
-        <title><?php echo htmlspecialchars($siteTitle);?> - Trust Device</title>
+        <title><?php echo $siteTitleEsc;?> - Trust Device</title>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+        >
         <?php include 'includes/googlefonts.php'; ?>
     </head>
     <body id="loginbody" class="body">
         <?php include_once 'includes/analyticstracking.php'; ?>
         <div id="loginheader">
-            <h2 id="h2"><?php echo htmlspecialchars($siteTitle);?></h2>
+            <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
                 <p>You are logged in<?php echo isset($_SESSION['admin']) && $_SESSION['admin'] ? '!' : ''; ?></p>
             <div id="trust-device-prompt" style="text-align: center; margin-top: 20px;">
                 <form action="trust_device.php" method="post">
                     <p>Would you like to trust this device for <?php echo $trustDuration; ?> days?</p>
                     <p><small>Clicking the site's logout button will cancel this device trust</small></p>
-
                     <input type="hidden" name="trust_device" value="yes">
-                    <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirect_to); ?>">
+                    <input
+                        type="hidden"
+                        name="redirect_to"
+                        value="<?php echo htmlspecialchars($redirect_to, ENT_NOQUOTES, 'UTF-8'); ?>"
+                    >
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-
                     <button
                         type="submit"
                         class="profilebutton"
@@ -128,9 +135,12 @@ else :
 
                 <form action="trust_device.php" method="post" style="margin-top: 10px;">
                     <input type="hidden" name="trust_device" value="no">
-                    <input type="hidden" name="redirect_to" value="<?php echo htmlspecialchars($redirect_to); ?>">
+                    <input
+                        type="hidden"
+                        name="redirect_to"
+                        value="<?php echo htmlspecialchars($redirect_to, ENT_NOQUOTES, 'UTF-8'); ?>"
+                    >
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-
                     <button type="submit" class="profilebutton" style="margin-right: 10px;">NOT NOW</button>
                 </form>
             </div>

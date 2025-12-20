@@ -84,7 +84,8 @@ class PasswordCheck
         endif;
 
         $link = rtrim($myURL, '/') . "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
-        return $this->sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters);
+        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+        return $this->sendResetEmail($email, $link, $siteTitleEsc, $serverEmail, $smtpParameters);
     }
 
     /**
@@ -224,10 +225,11 @@ class PasswordCheck
                     if ($reset === 1) :
                         $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
                         $subject = "Password reset";
-                        $message = "A new password was requested for your email at $siteTitle ($myURL)\n\n"
-                                   . "Please login with this temporary password: $randompassword\n"
-                                   . "You will need to then choose a new password.\n\n"
-                                   . "If you did not request a new password at $siteTitle, you can ignore this email.";
+                        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+                        $message = "A new password was requested for your email at $siteTitleEsc ($myURL)\n\n"
+                            . "Please login with this temporary password: $randompassword\n"
+                            . "You will need to then choose a new password.\n\n"
+                            . "If you did not request a new password at $siteTitleEsc, you can ignore this email.";
                         if ($emailEnabled) :
                             mail($email, $subject, $message, $from);
                         else :
@@ -357,13 +359,14 @@ class PasswordCheck
             return false;
         endif;
 
-        $subject = "$siteTitle password changed";
-        $plain = "Your password on $siteTitle was changed. "
+        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+        $subject = "$siteTitleEsc password changed";
+        $plain = "Your password on $siteTitleEsc was changed. "
                   . "If this was not you, please reset your password immediately.";
-        $html = "<p>Your password on $siteTitle was changed.</p>"
+        $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitleEsc);
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");
             return true;
@@ -502,9 +505,10 @@ class PasswordCheck
             return false;
         endif;
 
-        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
-        $subject = "$siteTitle password reset";
-        $safeLink = htmlspecialchars($link);
+        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitleEsc);
+        $subject = "$siteTitleEsc password reset";
+        $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
         $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"
             . "$link\n\nIf you did not request this, you can ignore this email.";
         $bodyHtml = "<p>A password reset was requested for your account.</p>"

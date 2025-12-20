@@ -30,6 +30,7 @@ require 'includes/functions.php';         // Includes basic functions for non-se
 
 $msg = new Message($logfile);
 $cssver = cssVersionCheck();
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html>
@@ -39,13 +40,17 @@ $cssver = cssVersionCheck();
         name="viewport"
         content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no"
     >
-    <title><?php echo htmlspecialchars($siteTitle);?> - logged out</title>
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+    <title><?php echo $siteTitleEsc;?> - logged out</title>
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css"
+    >
     <?php include 'includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
     <div id="loginheader">
-        <h2 id="h2"><?php echo htmlspecialchars($siteTitle); ?></h2>
+        <h2 id="h2"><?php echo $siteTitleEsc; ?></h2>
         You have been logged out. <a href="login.php">Click here to log back in</a>
     </div>
 </body>

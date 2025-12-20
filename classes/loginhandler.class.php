@@ -159,7 +159,11 @@ class LoginHandler
             ? 'Welcome back! You\'ve been automatically signed in using a trusted device.'
             : 'You are already logged in!';
         echo "<meta http-equiv='refresh' content='2;url=index.php'>";
-        echo "<div class='alert-box notice' style='margin:20px;'>" . htmlspecialchars($message) . "</div>";
+        echo "<div class='alert-box notice' style='margin:20px;'>" . htmlspecialchars(
+            $message,
+            ENT_QUOTES,
+            'UTF-8'
+        ) . "</div>";
         $this->terminate();
     }
 
@@ -457,14 +461,20 @@ class LoginHandler
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no">
-    <title><?php echo htmlspecialchars($this->siteTitle ?? 'MTG Collection'); ?></title>
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars(cssVersionCheck());?>.css">
-            <?php include 'includes/googlefonts.php'; ?>
+    <title><?php echo htmlspecialchars($this->siteTitle ?? 'MTG Collection', ENT_QUOTES, 'UTF-8'); ?></title>
+    <link 
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars(cssVersionCheck(), ENT_QUOTES, 'UTF-8');?>.css"
+    >
+        <?php include 'includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
     <div id="loginheader">
-        <h2 id="h2"><?php echo htmlspecialchars($this->siteTitle ?? 'MTG Collection'); ?></h2>
-        <div class='alert-box notice' style='margin:20px;'><?php echo htmlspecialchars($noticeText); ?></div>
+        <h2 id="h2"><?php echo htmlspecialchars($this->siteTitle ?? 'MTG Collection', ENT_QUOTES, 'UTF-8'); ?></h2>
+        <div class='alert-box notice' style='margin:20px;'>
+            <?php echo htmlspecialchars($noticeText, ENT_QUOTES, 'UTF-8'); ?>
+        </div>
     </div>
 </body>
 </html>
@@ -524,8 +534,8 @@ class LoginHandler
     private function renderLoginErrorPage($message, $delaySeconds)
     {
         $cssver = function_exists('cssVersionCheck') ? cssVersionCheck() : '';
-        $safeTitle = htmlspecialchars($this->siteTitle);
-        $safeMessage = htmlspecialchars($message);
+        $safeTitle = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
+        $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         $delay = (int) $delaySeconds;
         ?>
 <!DOCTYPE html>

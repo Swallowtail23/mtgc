@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.8
-Date:        06/12/25
+Version:     13.9
+Date:        18/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -37,6 +37,7 @@ History:
     13.6 06/12/25 Async collection value refresh on profile
     13.7 06/12/25 Add profile/collection tabs and shared collection section
     13.8 06/12/25 Move collection management to collection tab
+    13.9 18/12/25 Disable currency selection when FX disabled
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -63,7 +64,7 @@ $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
-
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>
@@ -71,7 +72,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <title><?php echo $siteTitle;?> - profile</title>
+        <title><?php echo $siteTitleEsc;?> - profile</title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
@@ -265,7 +266,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                                                 if (!class_exists('PasswordCheck')) :
                                                     require_once('classes/passwordcheck.class.php');
                                                 endif;
-                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitleEsc);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;
@@ -326,6 +327,11 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
             //6. Currency
                 $current_currency = $row['currency'];
                 $msg->logMessage('[DEBUG]', "Current currency is '$current_currency'");
+                $currencySelectEnabled = ($fx === true);
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Currency selector available: " . ($currencySelectEnabled ? 'enabled' : 'disabled')
+                );
 
             //7. 2FA Section
                 // Get 2FA status for this user
@@ -344,7 +350,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                         $backupHtml = "<span style='font-family: monospace; margin-left: 20px;'><br>";
                         if (!empty($backup_codes)) :
                             foreach ($backup_codes as $code) :
-                                $backupHtml .= htmlspecialchars($code) . "<br>";
+                                $backupHtml .= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . "<br>";
                             endforeach;
                             $backupHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
                         else :
@@ -516,7 +522,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                     if (!empty($new_codes)) :
                         // Build the backup codes HTML outside the JavaScript block:
                         foreach ($new_codes as $new_code) :
-                            $newCodesHtml .= htmlspecialchars($new_code) . "<br>";
+                            $newCodesHtml .= htmlspecialchars($new_code, ENT_QUOTES, 'UTF-8') . "<br>";
                         endforeach;
                         $newCodesHtml .= "</span><br><strong>Keep these codes safe and private!</strong></br>";
                         // Inject JavaScript to update the div dynamically
@@ -719,7 +725,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                         </tr> <?php
                         foreach ($devices as $device) : ?>
                         <tr class="hoverhighlight">
-                            <td><?php echo htmlspecialchars($device['device_name']);
+                            <td><?php echo htmlspecialchars($device['device_name'], ENT_QUOTES, 'UTF-8');
                             // If the current device hash matches the device token hash, flag it.
                             if ($currentDeviceHash !== null && $currentDeviceHash === $device['token_hash']) :
                                 echo " <strong>(This device)</strong>";
@@ -799,25 +805,28 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                                     });
 
                                     // Flash effect for currency select
-                                    $('#currencySelect').on('change', function () {
-                                        var selectedCurrency = $(this).val();
-                                        $.ajax({
-                                            url: "/ajax/ajaxcurrency.php",
-                                            method: "GET",
-                                            data: { "currency": selectedCurrency },
-                                            success: function (data) {
-                                                var response = JSON.parse(data);
-                                                console.log(response);
-                                                $('#currencySelect').addClass('flash-success');
-                                                setTimeout(function () {
-                                                    $('#currencySelect').removeClass('flash-success');
-                                                }, 1000);
-                                            },
-                                            error: function (jqXHR, textStatus, errorThrown) {
-                                                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                                            }
+                                    var currencySelect = $('#currencySelect');
+                                    if (currencySelect.length && !currencySelect.prop('disabled')) {
+                                        currencySelect.on('change', function () {
+                                            var selectedCurrency = $(this).val();
+                                            $.ajax({
+                                                url: "/ajax/ajaxcurrency.php",
+                                                method: "GET",
+                                                data: { "currency": selectedCurrency },
+                                                success: function (data) {
+                                                    var response = JSON.parse(data);
+                                                    console.log(response);
+                                                    currencySelect.addClass('flash-success');
+                                                    setTimeout(function () {
+                                                        currencySelect.removeClass('flash-success');
+                                                    }, 1000);
+                                                },
+                                                error: function (jqXHR, textStatus, errorThrown) {
+                                                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                                                }
+                                            });
                                         });
-                                    });
+                                    }
                                 });
                             </script>
                             <tr>
@@ -834,7 +843,7 @@ $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
                                 if ($tfa_enabled) :
                                     $tfa_method = $tfaManager->getMethod($userId);?>
                     Two-factor authentication is currently <strong>enabled</strong> using
-                    <strong><?php echo htmlspecialchars(ucfirst($tfa_method)); ?></strong>.
+                    <strong><?php echo htmlspecialchars(ucfirst($tfa_method), ENT_QUOTES, 'UTF-8'); ?></strong>.
                                         <br>Click "CODES" to generate new backup codes.<?php
                                 else : ?>
                                         Require a verification code when you log in<?php
@@ -999,10 +1008,19 @@ HTML;
                                     <b>Local currency</b>
                                 </td>
                                 <td class="options_centre" colspan="2">
-                                    Currency to use for localised pricing
+                                    Currency to use for localised pricing<?php
+                                    if (!$currencySelectEnabled) :
+                                        echo " (FX disabled)";
+                                    endif; ?>
                                 </td>
                                 <td class="options_right">
-                                    <select class="dropdown" name='currency' id='currencySelect' style="width: 85px;">
+                                    <select
+                                        class="dropdown"
+                                        name='currency'
+                                        id='currencySelect'
+                                        style="width: 85px;"
+                                        <?php if (!$currencySelectEnabled) : ?>disabled<?php endif; ?>
+                                    >
                                         <?php foreach ($currencies as $currency) : ?>
                                             <option value='<?php echo $currency['code']; ?>'
                                                 <?php if ($current_currency === $currency['db']) :

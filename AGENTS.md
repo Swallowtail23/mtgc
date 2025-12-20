@@ -27,7 +27,12 @@
 - Mobile-responsive design uses jQuery on the frontend.
 - Follow existing PSR-12-ish formatting and class/function placement conventions.
 - Exception to PSR-12 formatting: Always use if/else/endif, while/endwhile, foreach/endforeach formats
-- All file edits should increment file information header/version history (where present)
+- All file edits should increment file information header version
+- Changes should also check that header is standardised (see ## Header section)
+- Changes should be tracked in CHANGELOG.md, with the following rules:
+-- Do not track minor typo fixes or other changes which do not alter flow, logic, behaviour or function
+-- Classify changes as Added / Changed / Fixed / Removed / Security / Infrastructure / Deprecated
+-- If someone asked “what changed since last time?” — would this help them? If yes, include it
 - Do not split SQL statements with string concatenation; keep them as single literals (with embedded newlines if needed)
 - App is not namespaced. All classes are global.
 - All code changes should result in clean phpcs runs
@@ -46,7 +51,10 @@
 ## AI actions
 - Standard Tidyup: No approval needed. Remove end of line whitespaces, apply phpcs automatic tidyup, split long lines to be <=120 characters, apply standard header format (see below). Do not change logic, program flow, or control structures. Must not change output.
 - Advanced Tidyup: Standard Tidyup plus also conduct a basic review of logic and possible optimisation. Make no logic code changes or optimisation without approval.
-- Standard Header format example:
+
+## Header
+Standard Header format example:
+
 /*
 Version:     2.2
 Date:        25/11/25
@@ -56,10 +64,4 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Removed database call (secpagesetup provides all the info needed)
-    2.1 25/11/25 Formatting clean-up
-    2.2 25/11/25 Standard tidy-up
 */

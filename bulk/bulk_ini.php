@@ -113,11 +113,7 @@ try {
         throw new Exception('Failed to connect to MySQL Database <br /> Error Info : ' . $db->connect_error);
     endif;
     $db->set_charset('utf8mb4');
-//
-//try {
-//    $db = new Mysqli_Manager();
-//    $db->conn(); // connect DB
-//    $db->set_charset("utf8mb4");
+
 } catch (Exception $err) {
     if (($fd = fopen($logfile, "a")) !== false) :
         $msg = "[ERROR] Fatal database exception: {$err->getMessage()}";
@@ -165,8 +161,8 @@ $layouts_to_skip = [];
 $games_to_include = ['paper','arena'];
 
 // Where to get URL of latest bulk downloads
-$default_cards_url = "https://api.scryfall.com/bulk-data/default-cards";
-$all_cards_url = "https://api.scryfall.com/bulk-data/all-cards";
+$defaultCardsUrl = "https://api.scryfall.com/bulk-data/default-cards";
+$allCardsUrl = "https://api.scryfall.com/bulk-data/all-cards";
 
 $importLinestoIgnore = array(
                     "Creatures",

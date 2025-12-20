@@ -36,8 +36,9 @@ Adjust paths/commands for your platform.
 - Create `/opt/mtg` (or your preferred config location).
 - Copy `setup/mtg_new.ini` to `/opt/mtg/mtg_new.ini` and edit per your
   environment (see README for key settings).
-- Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/` and
-  update bulk script paths (default `/var/www/mtgnew/bulk`).
+- Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/`,
+  update bulk script paths (default `/var/www/mtgnew/bulk`), update web server
+  user in sets.sh.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
 - Ensure `ImgLocation` (in the ini) exists, is writable, and contains a writable

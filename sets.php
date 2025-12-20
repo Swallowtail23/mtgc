@@ -34,6 +34,7 @@ require 'includes/functions.php';         // Includes basic functions for non-se
 require 'includes/secpagesetup.php';      // Setup page variables
 forcePasswordChange();                     // Check if user is disabled or needs to change password
 $msg = new Message($logfile);
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $setsPerPage = 30;
@@ -64,9 +65,13 @@ endif;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
-    <title><?php echo htmlspecialchars($siteTitle);?> - sets</title>
+    <title><?php echo $siteTitleEsc;?> - sets</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo htmlspecialchars($cssver);?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+    >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js"></script>
