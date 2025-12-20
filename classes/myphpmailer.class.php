@@ -102,8 +102,7 @@ class MyPHPMailer extends PHPMailer
         $attachment = '',
         $attachmentname = '',
         $attachments = []
-    )
-    {
+    ) {
         if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
             $this->message->logMessage(
                 '[NOTICE]',

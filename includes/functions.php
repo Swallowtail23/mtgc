@@ -344,14 +344,11 @@ function getStringParameters($input, $ignore1, $ignore2 = '')
                 $value = 'grid';
             endif;
             $params[$key] = (string) $value;
-
         elseif ($key === 'set' && is_array($value)) :
             // keep set[] as array
             $params['set'] = array_values($value);
-
         else :
             $params[$key] = (string) $value;
-
         endif;
     endforeach;
 
@@ -1657,7 +1654,6 @@ function scryfallImport($file_location, $type)
             // Only proceed if not to be skipped
             if ($skip === 1) :
                 $count_skip = $count_skip + 1;
-
             elseif ($skip === 0) :
                 $time = time();
                 $count_inc = $count_inc + 1;
@@ -2028,7 +2024,6 @@ function scryfallImport($file_location, $type)
 
                 if ($exec === false) :
                     trigger_error("[ERROR] scryfall_bulk.php: Writing new card details: " . $db->error, E_USER_ERROR);
-
                 else :
                     $lastGoodId = $id;
                     $lastGoodCount = $total_count;
@@ -2047,11 +2042,9 @@ function scryfallImport($file_location, $type)
                                 $twoCardDetailSections
                             );
                         endif;
-
                     elseif ($status === 2) :
                         $count_update = $count_update + 1;
                         $msg->logMessage('[DEBUG]', "Updated card - no error returned; return code: $status");
-
                     else :
                         $count_other = $count_other + 1;
                         $msg->logMessage('[DEBUG]', "No change - no error returned; return code: $status");
