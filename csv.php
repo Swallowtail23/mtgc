@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.3
-Date:        05/12/25
+Version:     4.4
+Date:        21/12/25
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -18,6 +18,7 @@ History:
     4.1 14/01/24 Documentation tweaks; move to logMessage function
     4.2 25/11/25 Standard tidy-up
     4.3 05/12/25 Persist email export success/failure for profile notification
+    4.4 21/12/25 Keep site title raw in email exports
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -36,14 +37,13 @@ require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new Message($logfile);
-$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 // Page content starts here
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

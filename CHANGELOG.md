@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Fixed: guard null `f1_` fields in card detail rendering to avoid errors.
 - Fixed: guard null `f2_` fields in card detail rendering to avoid errors.
 - Fixed: restore card face and all_parts field mapping during Scryfall bulk import.
+- Fixed: escape site title in collection history HTML email content.
+- Fixed: keep site title raw in email subjects and plain-text bodies.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.

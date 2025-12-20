@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.2
-Date:        04/12/25
+Version:     6.4
+Date:        21/12/25
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -25,6 +25,8 @@ History:
     6.0 04/12/25 Align password set options to email availability
     6.1 04/12/25 Add DEBUG logging to control structures
     6.2 04/12/25 Remove unnecessary real_escape_string usage before prepared queries
+    6.3 21/12/25 Keep site title raw in email subjects
+    6.4 21/12/25 Simplify site title usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -143,7 +145,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
-                $obj = new PasswordCheck($db, $logfile, $siteTitleEsc);
+                $obj = new PasswordCheck($db, $logfile, $siteTitle);
                 $msg->logMessage(
                     '[DEBUG]',
                     "Attempting to create user $username_raw with email $postemail_raw"
@@ -288,7 +290,7 @@ require('../includes/menu.php');
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
-                        $obj = new PasswordCheck($db, $logfile, $siteTitleEsc);
+                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent"

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        20/12/25
+Version:     1.4
+Date:        21/12/25
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -14,6 +14,8 @@ History:
     1.0         Initial version
     1.1 06/12/25 Add collection management actions and messaging
     1.2 20/12/25 Add value history CSV export
+    1.3 21/12/25 Keep site title raw in email exports
+    1.4 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -61,7 +63,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     if ($csvResult !== true) :
@@ -699,7 +701,7 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitleEsc);
+                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,

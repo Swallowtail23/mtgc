@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.6
-Date:        20/12/25
+Version:     2.8
+Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
 Notes:       Exports csv card collections where users are active and have opted in
@@ -17,6 +17,8 @@ History:
     2.4 20/12/25 Add weekly value history export
     2.5 20/12/25 Attach value history CSV to weekly collection export email
     2.6 20/12/25 Consolidate weekly exports into a single email
+    2.7 21/12/25 Keep site title raw in email subjects and plain text
+    2.8 21/12/25 Simplify site title usage
 */
 
 require('bulk_ini.php');
@@ -24,8 +26,8 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 $msg   = new Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitleEsc);
-$historyExporter = new CollectionHistory($db, $logfile, $siteTitleEsc);
+$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
+$historyExporter = new CollectionHistory($db, $logfile, $siteTitle);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -112,11 +114,11 @@ while ($user = $usersExport->fetch_assoc()) :
         $cleanupFiles[] = $deckZipPath;
     endif;
 
-    $subject = "$siteTitleEsc weekly export";
+    $subject = "$siteTitle weekly export";
     $emailbody = "Hi $userName, please see attached your weekly export from $siteTitleEsc. <br><br> Opt out "
         . "of automated emails in your profile at <a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
-    $emailaltbody = "Hi $userName, please see attached your weekly export from $siteTitleEsc. \r\n\r\n Opt out "
-        . "of automated emails in your profile at your $siteTitleEsc profile page ($myURL/profile.php) \r\n\r\n";
+    $emailaltbody = "Hi $userName, please see attached your weekly export from $siteTitle. \r\n\r\n Opt out "
+        . "of automated emails in your profile at your $siteTitle profile page ($myURL/profile.php) \r\n\r\n";
 
     if (isset($emailEnabled) && $emailEnabled === true) :
         if ($collectionTempFile !== '') :
@@ -151,8 +153,8 @@ while ($user = $usersExport->fetch_assoc()) :
     $list .= "$userName ($userEmail)\r\n";
 endwhile;
 
-$subject = "$siteTitleEsc weekly export user report";
-$emailbody = "Weekly collection export from $siteTitleEsc have been run for:\r\n\r\n$list";
+$subject = "$siteTitle weekly export user report";
+$emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
 if (isset($emailEnabled) && $emailEnabled === true) :
     $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
@@ -161,5 +163,5 @@ else :
     $mailresult = false;
 endif;
 if (php_sapi_name() == 'cli') :
-    echo "Weekly collection export from $siteTitleEsc have been run for:\n$list\n";
+    echo "Weekly collection export from $siteTitle have been run for:\n$list\n";
 endif;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.9
-Date:        18/12/25
+Version:     14.1
+Date:        21/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -38,6 +38,8 @@ History:
     13.7 06/12/25 Add profile/collection tabs and shared collection section
     13.8 06/12/25 Move collection management to collection tab
     13.9 18/12/25 Disable currency selection when FX disabled
+    14.0 21/12/25 Keep site title raw in email subjects
+    14.1 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -266,7 +268,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                 if (!class_exists('PasswordCheck')) :
                                                     require_once('classes/passwordcheck.class.php');
                                                 endif;
-                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitleEsc);
+                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;
@@ -1019,7 +1021,9 @@ HTML;
                                         name='currency'
                                         id='currencySelect'
                                         style="width: 85px;"
-                                        <?php if (!$currencySelectEnabled) : ?>disabled<?php endif; ?>
+                                        <?php if (!$currencySelectEnabled) :
+                                            ?>disabled<?php
+                                        endif; ?>
                                     >
                                         <?php foreach ($currencies as $currency) : ?>
                                             <option value='<?php echo $currency['code']; ?>'

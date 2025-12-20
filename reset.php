@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.7
-Date:        05/12/25
+Version:     3.9
+Date:        21/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -24,6 +24,8 @@ History:
     3.5 04/12/25 Require 2FA for password reset when enabled and notify user by email
     3.6 04/12/25 Keep token reset form visible after validation errors
     3.7 05/12/25 Preserve token URL on complexity/duplication failures
+    3.8 21/12/25 Keep site title raw in email subjects
+    3.9 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -43,7 +45,7 @@ $msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new PasswordCheck($db, $logfile, $siteTitleEsc);
+$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');

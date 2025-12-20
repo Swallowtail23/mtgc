@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.8
-Date:        20/12/25
+Version:     5.9
+Date:        21/12/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
 Notes:       {none}
@@ -25,6 +25,7 @@ History:
     5.6 02/12/25 Allow alternative result drivers when fetching export headers
     5.7 20/12/25 Allow additional attachments in export emails
     5.8 20/12/25 Expose collection CSV builder for bulk exports
+    5.9 21/12/25 Escape site title in HTML emails only
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -90,10 +91,11 @@ class ImportExport
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
 
+                $siteTitleEsc = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
                 $subject = "Collection export";
-                $emailbody = "Your $this->siteTitle export is attached. <br><br>"
+                $emailbody = "Your $siteTitleEsc export is attached. <br><br>"
                     . "Opt out of automated emails in your profile at "
-                    . "<a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                    . "<a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
                 $emailaltbody = "Your $this->siteTitle export is attached.\r\n\r\n"
                     . "Opt out of automated emails in your profile at your $this->siteTitle profile page "
                     . "($myURL/profile.php)\r\n\r\n";
@@ -135,10 +137,11 @@ class ImportExport
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
 
+                $siteTitleEsc = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
                 $subject = "$this->siteTitle weekly collection export";
-                $emailbody = "Hi $userName, your weekly collection export from $this->siteTitle is attached."
+                $emailbody = "Hi $userName, your weekly collection export from $siteTitleEsc is attached."
                     . "<br><br>Opt out of automated emails in your profile at "
-                    . "<a href='$myURL/profile.php'>your $this->siteTitle profile page</a>";
+                    . "<a href='$myURL/profile.php'>your $siteTitleEsc profile page</a>";
                 $emailaltbody = "Hi $userName, please see attached your weekly collection export from "
                     . "$this->siteTitle.\r\n\r\nOpt out of automated emails in your profile at your "
                     . "$this->siteTitle profile page ($myURL/profile.php)\r\n\r\n";

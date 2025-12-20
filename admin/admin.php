@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.1
-Date:        16/12/25
+Version:     6.3
+Date:        21/12/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
@@ -32,6 +32,8 @@ History:
     5.4 04/12/25 Trim SMTP HELO value whitespace
     6.0 16/12/25 Improve escaping and variable usage, refactor flow and PRGs
     6.1          Add scrollable/selectable log display
+    6.2 21/12/25 Keep site title raw in email subjects
+    6.3 21/12/25 Simplify site title usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -538,8 +540,8 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     requireCsrfToken();
 
     if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
-        $subject = "Test email from {$siteTitleEsc}";
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+        $subject = "Test email from {$siteTitle}";
         $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
         $bodyText = strip_tags($bodyHtml);
 
@@ -565,7 +567,7 @@ if ($configAction === 'start_reauth') :
     $configAuthRequested = true;
 elseif ($configAction === 'reauth_submit') :
     $reauthPassword = filter_input(INPUT_POST, 'config_password', FILTER_UNSAFE_RAW);
-    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitleEsc);
+    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
     $reauthResult = $passwordCheck->validatePassword($userEmail, $reauthPassword);
     if ($reauthResult === 10) :
         $_SESSION['config_edit_expires'] = time() + $configAuthWindowSeconds;

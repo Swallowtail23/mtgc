@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        29/11/25
+Version:     2.5
+Date:        21/12/25
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
 Notes:       {none}
@@ -16,6 +16,8 @@ History:
     2.1 25/11/25 Formatting clean-up
     2.2 25/11/25 Standard tidy-up
     2.3 29/11/25 Rename forcePasswordChange usage
+    2.4 21/12/25 Keep site title raw in email subjects
+    2.5 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -108,7 +110,7 @@ $name = ucfirst($userName);
                         $subject = "Message sent using your contact form";
                     endif;
                     if (isset($emailEnabled) && $emailEnabled === true) :
-                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitleEsc);
+                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
                         $mailResult = $mailer->sendEmail($adminEmail, false, $subject, $message, '', '', '');
                         if ($mailResult === true) :
                             echo "Email sent!";
