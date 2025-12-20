@@ -47,6 +47,7 @@
 - PHPUnit suite: `vendor/bin/phpunit` (requires composer install).
 - PHPUnit test directory: `tests`
 - Point `/opt/mtg/mtg_new.ini` to a test database/config when running tests to avoid clobbering production data.
+- New functions added to the app should, where possible, be object-oriented to allow for new tests to be written easily.
 
 ## AI actions
 - Standard Tidyup: No approval needed. Remove end of line whitespaces, apply phpcs automatic tidyup, split long lines to be <=120 characters, apply standard header format (see below). Do not change logic, program flow, or control structures. Must not change output.

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        25/11/25
+Version:     2.4
+Date:        20/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
 Notes:       Exports csv card collections where users are active and have opted in
@@ -14,6 +14,7 @@ History:
     2.1 25/11/25 Formatting clean-up
     2.2 25/11/25 Wrapped long SQL/email strings
     2.3 25/11/25 Rename PHPMailer wrapper to PascalCase
+    2.4 20/12/25 Add weekly value history export
 */
 
 require('bulk_ini.php');
@@ -22,6 +23,7 @@ require('../includes/functions.php');
 $msg   = new Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitleEsc);
+$historyExporter = new CollectionHistory($db, $logfile, $siteTitleEsc);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -90,6 +92,21 @@ while ($user = $usersExport->fetch_assoc()) :
 
     // Collection
     $obj->exportCollectionToCsv($usertable, $myURL, $smtpParameters, 'weekly', 'export.csv', $userName, $userEmail);
+    $msg->logMessage('[DEBUG]', "Weekly value history export for $userEmail");
+    $historyResult = $historyExporter->emailHistoryCsv(
+        $userNumber,
+        $myURL,
+        $smtpParameters,
+        'all',
+        'value_history.csv',
+        $userName,
+        $userEmail
+    );
+    if ($historyResult === true) :
+        $msg->logMessage('[DEBUG]', "Weekly value history export sent to $userEmail");
+    else :
+        $msg->logMessage('[NOTICE]', "Weekly value history export not sent to $userEmail");
+    endif;
     $list .= "$userName ($userEmail)\r\n";
 endwhile;
 

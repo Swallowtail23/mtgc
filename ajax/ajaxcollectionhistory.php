@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        08/12/25
+Version:     1.2
+Date:        20/12/25
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
 Notes:       -
@@ -12,6 +12,7 @@ To do:       -
 
 History:
     1.0 08/12/25 Initial version
+    1.2 20/12/25 Add CSV export support and shared history class
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -36,63 +37,43 @@ endif;
 
 $userId = (int) $_SESSION['user'];
 
-$range = isset($_GET['range']) ? strtolower(trim($_GET['range'])) : '30d';
-$validRanges = ['30d', '90d', '1y', 'all'];
-if (!in_array($range, $validRanges, true)) :
-    $range = '30d';
-endif;
-$msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: user {$userId}, range {$range}");
-
-$where = "usernumber = ?";
-$params = [$userId];
-$types = "i";
-if ($range === '30d') :
-    $where .= " AND collected_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
-elseif ($range === '90d') :
-    $where .= " AND collected_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)";
-elseif ($range === '1y') :
-    $where .= " AND collected_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)";
+$range = isset($_GET['range']) ? trim($_GET['range']) : '30d';
+$format = isset($_GET['format']) ? strtolower(trim($_GET['format'])) : 'json';
+if (!in_array($format, ['json', 'csv'], true)) :
+    $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: invalid format '$format', defaulting to json");
+    $format = 'json';
 endif;
 
-$query = "
-    SELECT collected_at, value_usd, value_local, rate_used, card_count
-    FROM collection_values
-    WHERE $where
-    ORDER BY collected_at ASC
-";
-
-$stmt = $db->prepare($query);
-if ($stmt === false) :
-    $msg->logMessage('[ERROR]', "ajaxcollectionhistory.php prepare failed: " . $db->error);
+$msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: user {$userId}, range {$range}, format {$format}");
+$history = new CollectionHistory($db, $logfile, $siteTitle);
+$data = $history->getHistoryData($userId, $range);
+if ($data === false) :
+    $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: unable to fetch history');
     http_response_code(500);
     echo json_encode(['error' => 'Query failed']);
     exit();
 endif;
 
-$stmt->bind_param($types, ...$params);
-if (!$stmt->execute()) :
-    $msg->logMessage('[ERROR]', "ajaxcollectionhistory.php execute failed: " . $stmt->error);
-    http_response_code(500);
-    echo json_encode(['error' => 'Query failed']);
-    $stmt->close();
+if ($format === 'csv') :
+    $csv = $history->buildCsv($data);
+    if ($csv === '') :
+        $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: CSV build failed');
+        http_response_code(500);
+        echo json_encode(['error' => 'CSV build failed']);
+        exit();
+    endif;
+
+    $filename = "value_history_{$range}.csv";
+    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+    header("Content-Length: " . strlen($csv));
+    header("Content-type: text/csv; charset=UTF-8");
+    header("Content-Disposition: attachment; filename=$filename");
+    echo "\xEF\xBB\xBF"; // UTF-8 BOM
+    echo $csv;
     exit();
 endif;
 
-$result = $stmt->get_result();
-$data = [];
-while ($row = $result->fetch_assoc()) :
-    $collectedAt = date('Y-m-d', strtotime($row['collected_at']));
-    $data[] = [
-        't' => $collectedAt,
-        'usd' => (float) $row['value_usd'],
-        'local' => ($row['value_local'] === null ? null : (float) $row['value_local']),
-        'rate' => ($row['rate_used'] === null ? null : (float) $row['rate_used']),
-        'cards' => (int) $row['card_count'],
-    ];
-endwhile;
-$stmt->close();
 $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: returned " . count($data) . " rows");
-
 header('Content-Type: application/json');
 echo json_encode(['success' => true, 'data' => $data]);
 exit();

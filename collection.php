@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        06/12/25
+Version:     1.2
+Date:        20/12/25
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 History:
     1.0         Initial version
     1.1 06/12/25 Add collection management actions and messaging
+    1.2 20/12/25 Add value history CSV export
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -282,8 +283,10 @@ endif;
             });
 
             let collectionChart = null;
+            let currentHistoryRange = '30d';
 
             function fetchHistory(range) {
+                currentHistoryRange = range;
                 $('#history-range button').removeClass('active');
                 $('#btn-range-' + range).addClass('active');
                 $('#history-status').text('Loading...');
@@ -365,6 +368,13 @@ endif;
                     },
                     maintainAspectRatio: false
                 });
+            }
+
+            function exportHistory() {
+                const range = currentHistoryRange || '30d';
+                window.location = '/ajax/ajaxcollectionhistory.php?range='
+                    + encodeURIComponent(range)
+                    + '&format=csv';
             }
 
             document.addEventListener('DOMContentLoaded', function() {
@@ -472,10 +482,18 @@ endif;
                                     type="button" onclick="fetchHistory('1y')">1y
                                 </button>
                                 <button id="btn-range-all" class="profilebutton"
-                                    type="button" onclick="fetchHistory('all')">All
+                                    type="button" onclick="fetchHistory('all')">ALL
                                 </button>
                             </div>
                             <span id="history-status" class="history-status"></span>
+                            <button
+                                id="history-export"
+                                class="profilebutton"
+                                type="button"
+                                onclick="exportHistory()"
+                            >
+                                EXPORT
+                            </button>
                         </div>
                         <div class="history-canvas">
                             <canvas id="collectionHistoryChart"></canvas>
