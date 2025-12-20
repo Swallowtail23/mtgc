@@ -8,6 +8,10 @@ updates:
       - dependency-name: "phpunit/phpunit"
         update-types:
           - "version-update:semver-major"
+      - dependency-name: "endroid/qr-code"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"
