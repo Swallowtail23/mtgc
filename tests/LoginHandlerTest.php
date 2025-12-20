@@ -231,11 +231,15 @@ namespace {
 
     class LoginHandlerTest extends TestCase
     {
+        private $obLevel = 0;
+
         protected function setUp(): void
         {
             if (session_status() === PHP_SESSION_ACTIVE) {
                 session_destroy();
             }
+            $this->obLevel = ob_get_level();
+            ob_start();
             session_save_path(sys_get_temp_dir());
             session_id(bin2hex(random_bytes(8)));
             $_SESSION = [];
@@ -248,6 +252,9 @@ namespace {
             \andkab\Turnstile\Turnstile::$verifyResult = null;
             if (session_status() === PHP_SESSION_ACTIVE) {
                 session_destroy();
+            }
+            while (ob_get_level() > $this->obLevel) {
+                ob_end_clean();
             }
         }
 
