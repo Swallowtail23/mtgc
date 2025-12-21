@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Fixed: keep site title raw in email subjects and plain-text bodies.
 - Fixed: replace E_USER_ERROR trigger_error usage with exceptions for PHP 8.4 compatibility.
 - Fixed: pass explicit CSV escape characters for fputcsv/str_getcsv to avoid future default changes.
+- Infrastructure: Docker now builds on PHP 8.4 with composer platform pinned to PHP 8.2.30, and docker-init pulls base images on rebuild.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.

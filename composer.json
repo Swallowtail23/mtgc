@@ -16,6 +16,9 @@
         "phpcompatibility/php-compatibility": "^10.0@dev"
     },
     "config": {
+        "platform": {
+            "php": "8.2.30"
+        },
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }

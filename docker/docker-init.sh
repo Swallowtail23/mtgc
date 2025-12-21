@@ -224,6 +224,7 @@ fi
 export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-mtgc}
 (
     cd "$SCRIPT_DIR"
+    ${COMPOSE_CMD} "${COMPOSE_ARGS[@]}" build --pull
     ${COMPOSE_CMD} "${COMPOSE_ARGS[@]}" up --build -d
 )
 
