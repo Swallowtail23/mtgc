@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        25/11/25
+Version:     1.6
+Date:        21/12/25
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     1.3 06/10/24 MTGC-131 - fix path comparison to work with URL parameters
     1.4 13/10/24 MTGC-132 - standardise Ajax page calling check code
     1.5 25/11/25 Standard tidy-up
+    1.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -67,7 +68,7 @@ if ($isValidReferrer) :
             echo 'Image not found';
         endif;
     else :
-        trigger_error("[ERROR] deckimage.php: Called with no parameters", E_USER_ERROR);
+        throw new Exception("[ERROR] deckimage.php: Called with no parameters");
     endif;
 else :
     // Otherwise forbid access

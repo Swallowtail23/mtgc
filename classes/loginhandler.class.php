@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        05/12/25
+Version:     1.8
+Date:        21/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -34,6 +34,7 @@ Current flow:
 - If password OK:
 -- If 2FA enabled → set pending 2FA session, clear bad login if needed, redirect to verify_2fa.
 -- Else → mark logged in, clear bad login if needed, return user info.
+    1.8 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 use andkab\Turnstile\Turnstile;
@@ -302,7 +303,7 @@ class LoginHandler
             ||
             !array_key_exists('admin', $userStatusResult)
         ) :
-            trigger_error("[ERROR] Login.php: user status structure invalid", E_USER_ERROR);
+            throw new Exception("[ERROR] Login.php: user status structure invalid");
             return null;
         endif;
         $code  = (int) $userStatusResult['code'];
@@ -310,7 +311,7 @@ class LoginHandler
         $admin = (int) $userStatusResult['admin'];
         $this->message->logMessage('[DEBUG]', "UserStatus for $email is {$code}");
         if ($code === 0) : // An error has been returned - fail.
-            trigger_error("[ERROR] Login.php: user status check failure", E_USER_ERROR);
+            throw new Exception("[ERROR] Login.php: user status check failure");
             return null;
         endif;
 

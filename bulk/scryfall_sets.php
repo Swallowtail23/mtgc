@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.5
-Date:        25/11/25
+Version:     2.6
+Date:        21/12/25
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     2.3 25/11/25 Formatting clean-up
     2.4 25/11/25 Wrapped long SQL string
     2.5 25/11/25 Rename PHPMailer wrapper to PascalCase
+    2.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');
@@ -88,7 +89,7 @@ $data = Items::fromFile($imgLocation . 'json/sets.json', ['decoder' => new ExtJs
 if ($result = $db->query('TRUNCATE TABLE sets')) :
     $msg->logMessage('[NOTICE]', "Scryfall Sets API: sets table cleared");
 else :
-    trigger_error('[ERROR] scryfall_sets.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+    throw new Exception('[ERROR] scryfall_sets.php: Preparing SQL: ' . $db->error);
 endif;
 foreach ($data as $key => $value) :
     if ($key == 'data') :
@@ -120,7 +121,7 @@ foreach ($data as $key => $value) :
                             (?,?,?,?,?,?,?,?,?,?,?,?,?)"
                 );
                 if ($stmt === false) :
-                    trigger_error('[ERROR] scryfall_sets: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                    throw new Exception('[ERROR] scryfall_sets: Preparing SQL: ' . $db->error);
                 endif;
                 $stmt->bind_param(
                     "ssssssssisiis",
@@ -139,10 +140,10 @@ foreach ($data as $key => $value) :
                     $icon_svg_uri
                 );
                 if ($stmt === false) :
-                    trigger_error('[ERROR] scryfall_sets: Binding parameters: ' . $db->error, E_USER_ERROR);
+                    throw new Exception('[ERROR] scryfall_sets: Binding parameters: ' . $db->error);
                 endif;
                 if (!$stmt->execute()) :
-                    trigger_error("[ERROR] scryfall_sets: Writing new ruling details: " . $db->error, E_USER_ERROR);
+                    throw new Exception("[ERROR] scryfall_sets: Writing new ruling details: " . $db->error);
                 else :
                     $msg->logMessage('[DEBUG]', "Add sets $total_count - no error returned ");
                     $total_count = $total_count + 1;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        28/11/25
+Version:     1.3
+Date:        21/12/25
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -14,6 +14,7 @@ History:
     1.0 11/08/24 Initial version
     1.1 25/11/25 Standard tidy-up
     1.2 28/11/25 Add To do line after copyright
+    1.3 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -80,7 +81,7 @@ if ($isValidReferrer) :
                 echo json_encode(['success' => false]);
             endif;
         } catch (Exception $e) {
-            trigger_error("[ERROR] ajaxcardrefreshimg.php: " . $e->getMessage(), E_USER_ERROR);
+            throw new Exception("[ERROR] ajaxcardrefreshimg.php: " . $e->getMessage());
             http_response_code(400);
             echo json_encode(['error' => 'Unknown error']);
         }

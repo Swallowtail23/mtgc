@@ -452,9 +452,8 @@ require('includes/menu.php'); //mobile menu
         if ($result = $db->execute_query($searchqry, $params)) :
             $msg->logMessage('[DEBUG]', "SQL query succeeded");
         else :
-                trigger_error(
-                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error,
-                    E_USER_ERROR
+                throw new Exception(
+                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
                 );
         endif;
             $qtyresults = $result->num_rows;
@@ -2029,9 +2028,8 @@ require('includes/menu.php'); //mobile menu
                             if ($sqlusergrp = $db->execute_query($usergrprowqry, $usergrprowparams)) :
                                 $msg->logMessage('[DEBUG]', "SQL query succeeded");
                             else :
-                                trigger_error(
-                                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error,
-                                    E_USER_ERROR
+                                throw new Exception(
+                                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
                                 );
                             endif;
                             $usergrprow = $sqlusergrp->fetch_array(MYSQLI_ASSOC);
@@ -2045,10 +2043,9 @@ require('includes/menu.php'); //mobile menu
                                 if ($sqluserqry = $db->execute_query($grpquery, $grpparams)) :
                                     $msg->logMessage('[DEBUG]', "SQL query succeeded");
                                 else :
-                                    trigger_error(
+                                    throw new Exception(
                                         "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: "
-                                            . $db->error,
-                                        E_USER_ERROR
+                                            . $db->error
                                     );
                                 endif;
                                 $others = 0;
@@ -2071,10 +2068,9 @@ require('includes/menu.php'); //mobile menu
                                                 "SQL query succeeded for {$userrow['username']}, $row[0]"
                                             );
                                         else :
-                                            trigger_error(
+                                            throw new Exception(
                                                 "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: "
-                                                    . $db->error,
-                                                E_USER_ERROR
+                                                    . $db->error
                                             );
                                         endif;
                                         if ($sqlqtyqry->num_rows !== 0) :
@@ -2230,7 +2226,7 @@ require('includes/menu.php'); //mobile menu
                                             else :
                                                     $errmsg = "[ERROR]" . basename(__FILE__) . " " . __LINE__
                                                         . ": SQL failure: " . $db->error;
-                                                    trigger_error($errmsg, E_USER_ERROR);
+                                                    throw new Exception($errmsg);
                                             endif;
                                         elseif ($decksuccess['flag'] === 1) :
                                                 $cardchecksuccess = 2;
@@ -2449,23 +2445,20 @@ require('includes/menu.php'); //mobile menu
                         $stmt = $db->prepare($ruling_sql);
                         $ruling = '';
                         if ($stmt === false) :
-                            trigger_error(
-                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Preparing SQL: " . $db->error,
-                                E_USER_ERROR
+                            throw new Exception(
+                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Preparing SQL: " . $db->error
                             );
                         endif;
                         $bind = $stmt->bind_param('s', $row['oracle_id']);
                         if ($bind === false) :
-                            trigger_error(
-                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Binding SQL: " . $db->error,
-                                E_USER_ERROR
+                            throw new Exception(
+                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Binding SQL: " . $db->error
                             );
                         endif;
                         $exec = $stmt->execute();
                         if ($exec === false) :
-                            trigger_error(
-                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Executing SQL: " . $db->error,
-                                E_USER_ERROR
+                            throw new Exception(
+                                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": Executing SQL: " . $db->error
                             );
                         else :
                             $result = $stmt->get_result();

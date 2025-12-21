@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        07/12/25
+Version:     1.2
+Date:        21/12/25
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
 Notes:       Uses collection_values table to store historical values.
@@ -13,6 +13,7 @@ To do:       -
 History:
     1.0 07/12/25 Initial version
     1.1 07/12/25 Use CollectionStats helper
+    1.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');
@@ -32,7 +33,7 @@ $users = $db->execute_query(
     "SELECT usernumber, username, email, status, currency FROM users WHERE status = 'active'"
 );
 if ($users === false) :
-    trigger_error('[ERROR] collection_snapshots.php: Failed to fetch users', E_USER_ERROR);
+    throw new Exception('[ERROR] collection_snapshots.php: Failed to fetch users');
 endif;
 
 while ($user = $users->fetch_assoc()) :

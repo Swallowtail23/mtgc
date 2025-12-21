@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        21/12/25
 Name:        collectionhistory.class.php
 Purpose:     Collection value history retrieval and export helpers.
@@ -113,7 +113,7 @@ class CollectionHistory
             return '';
         endif;
 
-        fputcsv($handle, ['collected_at', 'value_usd', 'value_local', 'rate_used', 'card_count']);
+        fputcsv($handle, ['collected_at', 'value_usd', 'value_local', 'rate_used', 'card_count'], ',', '"', '\\');
         foreach ($data as $row) :
             fputcsv(
                 $handle,
@@ -123,7 +123,10 @@ class CollectionHistory
                     $row['local'],
                     $row['rate'],
                     $row['cards']
-                ]
+                ],
+                ',',
+                '"',
+                '\\'
             );
         endforeach;
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     3.0
 Date:        21/12/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
@@ -21,6 +21,7 @@ History:
     2.7 04/12/25 Notify user on password change
     2.8 05/12/25 Reduce reset token TTL to 10 minutes
     2.9 21/12/25 Avoid HTML-escaping site title in email subjects and plain text
+    3.0 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -174,16 +175,14 @@ class PasswordCheck
                     endif;
                     //endif;
                 else :
-                    trigger_error(
-                        "[ERROR] Class Passwords: PasswordValidate - Other failure: Error: " . $this->db->error,
-                        E_USER_ERROR
+                    throw new Exception(
+                        "[ERROR] Class Passwords: PasswordValidate - Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->passwordvalidate = 0;
-                trigger_error(
-                    "[ERROR] Class Passwords: PasswordValidate - SQL failure: Error: " . $this->db->error,
-                    E_USER_ERROR
+                throw new Exception(
+                    "[ERROR] Class Passwords: PasswordValidate - SQL failure: Error: " . $this->db->error
                 );
             endif;
         endif;
@@ -251,17 +250,15 @@ class PasswordCheck
                         endif;
                     endif;
                 else :
-                    trigger_error(
-                        "[ERROR] Class Passwords: passwordReset - Other failure: Error: " . $this->db->error,
-                        E_USER_ERROR
+                    throw new Exception(
+                        "[ERROR] Class Passwords: passwordReset - Other failure: Error: " . $this->db->error
                     );
                     return 0;
                     exit;
                 endif;
             else :
-                trigger_error(
-                    "[ERROR] Class Passwords: passwordReset - SQL failure: Error: " . $this->db->error,
-                    E_USER_ERROR
+                throw new Exception(
+                    "[ERROR] Class Passwords: passwordReset - SQL failure: Error: " . $this->db->error
                 );
                 return 0;
                 exit;
@@ -550,14 +547,13 @@ class PasswordCheck
                     "New user query from " . $_SERVER['REMOTE_ADDR'] . " affected $affected_rows rows"
                 );
             else :
-                trigger_error("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error, E_USER_ERROR);
+                throw new Exception("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error);
             endif;
             $stmt->close();
         else :
-                trigger_error(
+                throw new Exception(
                     "[ERROR] Class Passwords: newUser: New user query failed to prepare statement "
-                        . $this->db->error,
-                    E_USER_ERROR
+                        . $this->db->error
                 );
         endif;
 

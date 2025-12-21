@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.3
-Date:        25/11/25
+Version:     3.4
+Date:        21/12/25
 Name:        userstatus.class.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
 Notes:       {none}
@@ -17,6 +17,7 @@ History:
     3.1 20/01/24 Move to logMessage
     3.2 25/11/25 Standard tidy-up
     3.3 25/11/25 Rename methods to camelCase
+    3.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -89,18 +90,16 @@ class UserStatus
                         $this->status['code'] = 0;
                     endif;
                 else :
-                    trigger_error(
+                    throw new Exception(
                         "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                        " - Other failure: Error: " . $this->db->error,
-                        E_USER_ERROR
+                        " - Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->status = 0;
-                trigger_error(
+                throw new Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                    " - SQL failure: Error: " . $this->db->error,
-                    E_USER_ERROR
+                    " - SQL failure: Error: " . $this->db->error
                 );
             endif;
         endif;
@@ -131,18 +130,16 @@ class UserStatus
                         "Called: $this->email has {$row['badlogins']} bad logins"
                     );
                 else :
-                    trigger_error(
+                    throw new Exception(
                         "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                        "- Other failure: Error: " . $this->db->error,
-                        E_USER_ERROR
+                        "- Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->status = 0;
-                trigger_error(
+                throw new Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                    "- SQL failure: Error: " . $this->db->error,
-                    E_USER_ERROR
+                    "- SQL failure: Error: " . $this->db->error
                 );
             endif;
         endif;
@@ -160,10 +157,9 @@ class UserStatus
                                                END
                     WHERE email=?";
         if ($this->db->execute_query($query, [$this->email]) !== true) :
-            trigger_error(
+            throw new Exception(
                 "[ERROR] Class " . __METHOD__ . " " . __LINE__,
-                " - SQL failure: Error: " . $this->db->error,
-                E_USER_ERROR
+                " - SQL failure: Error: " . $this->db->error
             );
         else :
             $this->message->logMessage('[DEBUG]', "...sql result: {$this->db->info}");

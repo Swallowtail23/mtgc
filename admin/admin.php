@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.3
+Version:     6.4
 Date:        21/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -34,6 +34,7 @@ History:
     6.1          Add scrollable/selectable log display
     6.2 21/12/25 Keep site title raw in email subjects
     6.3 21/12/25 Simplify site title usage
+    6.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -217,7 +218,7 @@ if ($scryAction === 'wipe') :
         header('Location: admin.php');
         exit();
     else :
-        trigger_error("[ERROR] admin.php: JSON removal failed: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] admin.php: JSON removal failed: " . $db->error);
     endif;
 endif;
 
@@ -324,7 +325,7 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
         $bound = $stmt->bind_param("sss", $date, $name, $updateText);
         if ($bound === false) :
             $stmt->close();
-            trigger_error("[ERROR] admin.php: bind failed: " . $stmt->error, E_USER_ERROR);
+            throw new Exception("[ERROR] admin.php: bind failed: " . $stmt->error);
         endif;
         $exec = $stmt->execute();
         if ($exec === true) :
@@ -338,16 +339,14 @@ if (isset($_POST['update']) && $_POST['update'] === 'ADD') :
             header('Location: admin.php');
             exit();
         else :
-            trigger_error(
-                "[ERROR] admin.php: Adding update notice: failed " . $stmt->error,
-                E_USER_ERROR
+            throw new Exception(
+                "[ERROR] admin.php: Adding update notice: failed " . $stmt->error
             );
         endif;
         $stmt->close();
     else :
-        trigger_error(
-            "[ERROR] admin.php: Adding update notice: failed (prepare statement) " . $db->error,
-            E_USER_ERROR
+        throw new Exception(
+            "[ERROR] admin.php: Adding update notice: failed (prepare statement) " . $db->error
         );
     endif;
 endif;
@@ -376,9 +375,8 @@ if ($deleteMode === 'TEST' || $deleteMode === 'DELETE') :
 
     $analysisResult = $db->query($analysisSql);
     if ($analysisResult === false) :
-        trigger_error(
-            "[ERROR] admin.php: Migration analysis failed: " . $db->error,
-            E_USER_ERROR
+        throw new Exception(
+            "[ERROR] admin.php: Migration analysis failed: " . $db->error
         );
     endif;
 
@@ -2060,9 +2058,8 @@ require('../includes/menu.php');
                 WHERE db_match = 1"
             );
             if ($migrationsResult === false) :
-                trigger_error(
-                    "[ERROR] admin.php:" . __LINE__ . " - SQL failure: " . $db->error,
-                    E_USER_ERROR
+                throw new Exception(
+                    "[ERROR] admin.php:" . __LINE__ . " - SQL failure: " . $db->error
                 );
             else :
                 if ($migrationsResult->num_rows > 0) :
@@ -2081,9 +2078,8 @@ require('../includes/menu.php');
                         endwhile;
                         $stmt3->close();
                     else :
-                        trigger_error(
-                            "[ERROR] admin.php: Wrong SQL: ($sql3) Error: " . $db->error,
-                            E_USER_ERROR
+                        throw new Exception(
+                            "[ERROR] admin.php: Wrong SQL: ($sql3) Error: " . $db->error
                         );
                     endif; ?>
                     <script>
@@ -2173,7 +2169,7 @@ require('../includes/menu.php');
                             $stmt2->execute();
                             $stmt2->bind_result($deckName, $deckOwner);
                         else :
-                            trigger_error("[ERROR] admin.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
+                            throw new Exception("[ERROR] admin.php: Wrong SQL: ($sql2) Error: " . $db->error);
                         endif;
                         while ($stmt2->fetch()) :
                             $resultArray[] = array('deckname' => $deckName, 'deckowner' => $deckOwner);
@@ -2199,14 +2195,13 @@ require('../includes/menu.php');
                             if ($stmt4) :
                                 $stmt4->bind_param("s", $row['old_scryfall_id']);
                                 if ($stmt4->error) :
-                                    trigger_error("[ERROR] admin.php: Bind error: " . $stmt4->error, E_USER_ERROR);
+                                    throw new Exception("[ERROR] admin.php: Bind error: " . $stmt4->error);
                                 endif;
                                 $stmt4->execute();
                                 $stmt4->bind_result($total);
                             else :
-                                trigger_error(
-                                    "[ERROR] cards.php: Wrong SQL: ($sql4) Error: " . $db->error,
-                                    E_USER_ERROR
+                                throw new Exception(
+                                    "[ERROR] cards.php: Wrong SQL: ($sql4) Error: " . $db->error
                                 );
                             endif;
                             while ($stmt4->fetch()) :

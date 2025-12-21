@@ -1,54 +1,49 @@
 <?xml version="1.0"?>
 <ruleset name="MTG Collection PHPCS">
     <description>
-        PSR-12 baseline for a non-namespaced, global-class legacy app, with
-        template-style control structure allowance and ignores for vendor,
-        storage, and CLI-oriented paths.
+        PSR-12 baseline for a non-namespaced legacy app,
+        with PHP 8.3 compatibility checks and global exclusions.
     </description>
 
-    <!-- Scan the whole project by default -->
+    <!-- Scan the whole project -->
     <file>.</file>
-    <arg name="extensions" value="php"/>
 
-    <!-- Global ignores -->
-    <exclude-pattern>vendor/*</exclude-pattern>
-    <exclude-pattern>vendor/**</exclude-pattern>
-    <exclude-pattern>storage/*</exclude-pattern>
-    <exclude-pattern>storage/**</exclude-pattern>
+    <!-- File extensions -->
+    <arg name="extensions" value="php,inc,phtml"/>
+
+    <!-- Global excludes -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/storage/*</exclude-pattern>
-    <exclude-pattern>*/storage/**</exclude-pattern>
     <exclude-pattern>includes/analyticstracking.php</exclude-pattern>
 
-    <!-- CLI scripts (bulk jobs, setup scripts, and any bin/cli/shell folders) -->
-    <exclude-pattern>bulk/*</exclude-pattern>
-    <exclude-pattern>setup/*</exclude-pattern>
+    <!-- CLI / maintenance paths -->
+    <exclude-pattern>*/bulk/*</exclude-pattern>
+    <exclude-pattern>*/setup/*</exclude-pattern>
     <exclude-pattern>*/cli/*</exclude-pattern>
     <exclude-pattern>*/bin/*</exclude-pattern>
     <exclude-pattern>*/scripts/*</exclude-pattern>
     <exclude-pattern>*/console/*</exclude-pattern>
 
-    <!-- Base standard -->
+    <!-- Base coding standard -->
     <rule ref="PSR12">
-        <!-- Allow template-style alternative control structures (if/else/endif blocks) -->
         <exclude name="Generic.ControlStructures.AlternativeControlStructure.NotAllowed"/>
         <exclude name="Generic.ControlStructures.InlineControlStructure.NotAllowed"/>
-
-        <!-- App is intentionally not namespaced; allow global classes and side-effect files -->
         <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
         <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
     </rule>
 
-    <!-- Test fixtures use multiple inline stubs and mysqli-style method names; relax these sniffs for tests -->
+    <!-- Relax test fixtures -->
     <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
-        <exclude-pattern>tests/*</exclude-pattern>
-        <exclude-pattern>tests/**</exclude-pattern>
+        <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
     <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
-        <exclude-pattern>tests/*</exclude-pattern>
-        <exclude-pattern>tests/**</exclude-pattern>
+        <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
     <rule ref="Generic.Files.LineLength">
-        <exclude-pattern>tests/*</exclude-pattern>
-        <exclude-pattern>tests/**</exclude-pattern>
+        <exclude-pattern>*/tests/*</exclude-pattern>
     </rule>
+
+    <!-- PHP compatibility -->
+    <rule ref="PHPCompatibility"/>
+    <config name="testVersion" value="8.2-8.4"/>
 </ruleset>

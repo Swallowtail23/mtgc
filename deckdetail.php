@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.0
-Date:        29/11/25
+Version:     25.1
+Date:        21/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -50,6 +50,7 @@ History:
     24.2 25/11/25 Standard tidy-up; Remove legacy $missing code; fixed sideboard only card display bug
     24.3 29/11/25 Rename forcePasswordChange usage
     25.0 29/11/25 Add async image checks
+    25.1 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -602,7 +603,7 @@ if (isset($updatetype)) :
         $msg->logMessage('[DEBUG]', "Updating deck type to '$updatetype'");
         $setdecktype = $obj->setDeckType($deckNumber, $updatetype);
         if ($setdecktype !== 0) :
-            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": Deck type change failed ", E_USER_ERROR);
+            throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": Deck type change failed ");
         else :
             if (!in_array($updatetype, $commander_decktypes)) :
                 if (
@@ -611,15 +612,14 @@ if (isset($updatetype)) :
                         [$deckNumber]
                     ) === false
                 ) :
-                    trigger_error(
-                        "[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error,
-                        E_USER_ERROR
+                    throw new Exception(
+                        "[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error
                     );
                 endif;
             endif;
         endif;
     else :
-        trigger_error("[ERROR] deckdetail.php " . __LINE__ . ": Error: Invalid deck type", E_USER_ERROR);
+        throw new Exception("[ERROR] deckdetail.php " . __LINE__ . ": Error: Invalid deck type");
     endif;
 
     // Set quantities to 1 for commander decks
@@ -629,19 +629,19 @@ if (isset($updatetype)) :
             AND cards_scry.type NOT LIKE 'Basic Land%'";
         $msg->logMessage('[DEBUG]', "Updating deck type to a Commander type, setting quantities to 1");
         if ($db->execute_query($query, [1, $deckNumber]) != true) :
-            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty=? WHERE (decknumber = ? AND (cardqty IS NULL or cardqty = 0) )';
         if ($db->execute_query($query, [1, $deckNumber]) != true) :
-            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
         if ($db->execute_query($query, [$deckNumber]) != true) :
-            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
@@ -650,7 +650,7 @@ if (isset($updatetype)) :
         $query = 'UPDATE deckcards SET sideqty = NULL WHERE (decknumber = ? AND cardqty > 0)';
         $msg->logMessage('[DEBUG]', "Updating deck type to a Wishlist, deleting sideboard cards");
         if ($db->execute_query($query, [$deckNumber]) != true) :
-            trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
         else :
             $msg->logMessage('[DEBUG]', "...sql result: {$db->info}");
         endif;
@@ -710,7 +710,7 @@ if (
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
 else :
-    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+    throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;
 
 // Get relevant db_field with legality
@@ -787,7 +787,7 @@ $mainquery = ("SELECT *,cards_scry.id AS cardsid
 $msg->logMessage('[DEBUG]', "$mainquery");
 $result = $db->execute_query($mainquery, [$deckNumber]);
 if ($result != true) :
-    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+    throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;
 
 $sidequery = ("SELECT *,cards_scry.id AS cardsid
@@ -797,7 +797,7 @@ $sidequery = ("SELECT *,cards_scry.id AS cardsid
                     WHERE decknumber = ? AND sideqty > 0 ORDER BY name");
 $sideresult = $db->execute_query($sidequery, [$deckNumber]);
 if ($sideresult != true) :
-    trigger_error("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error, E_USER_ERROR);
+    throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;
 
 //Initialise variables to 0

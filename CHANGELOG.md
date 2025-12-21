@@ -26,6 +26,8 @@ All notable changes to this project will be documented in this file.
 - Fixed: restore card face and all_parts field mapping during Scryfall bulk import.
 - Fixed: escape site title in collection history HTML email content.
 - Fixed: keep site title raw in email subjects and plain-text bodies.
+- Fixed: replace E_USER_ERROR trigger_error usage with exceptions for PHP 8.4 compatibility.
+- Fixed: pass explicit CSV escape characters for fputcsv/str_getcsv to avoid future default changes.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.

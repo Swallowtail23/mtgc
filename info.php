@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        29/11/25
+Version:     2.3
+Date:        21/12/25
 Name:        info.php
 Purpose:     Site information page.
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     2.0         Mysqli_Manager migration completed.
     2.1 25/11/25 Standard tidy-up
     2.2 29/11/25 Rename forcePasswordChange usage
+    2.3 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -78,7 +79,7 @@ require('includes/menu.php');
     $date = null;
     $result = $db->execute_query('SELECT `date`,`update`,`author` FROM updatenotices ORDER by date DESC');
     if (($result === false) or ($result === null)) :
-        trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
     else :
         while ($row = $result->fetch_assoc()) :
             $updateText = htmlspecialchars($row['update'] ?? '', ENT_NOQUOTES, 'UTF-8');

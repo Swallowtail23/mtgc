@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.5
-Date:        02/12/25
+Version:     4.6
+Date:        21/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -20,6 +20,7 @@ History:
     4.3 25/11/25 Standard tidy-up
     4.4 29/11/25 Rename forcePasswordChange usage
     4.5 02/12/25 Guard empty set list and defer output until after redirects
+    4.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -349,17 +350,15 @@ require 'includes/menu.php';
         $msg->logMessage('[DEBUG]', "Query is: $sql");
         $stmt = $db->prepare($sql);
         if ($stmt === false) :
-            trigger_error(
-                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Preparing SQL: ' . $db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Preparing SQL: ' . $db->error
             );
         endif;
         $stmt->bind_param('i', $setsPerPage);
         $exec = $stmt->execute();
         if ($exec === false) :
-            trigger_error(
-                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Executing SQL: ' . $db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] ' . basename(__FILE__) . ' ' . __LINE__ . ', Executing SQL: ' . $db->error
             );
         else :
             $result = $stmt->get_result();

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.4
+Version:     4.5
 Date:        21/12/25
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -19,6 +19,7 @@ History:
     4.2 25/11/25 Standard tidy-up
     4.3 05/12/25 Persist email export success/failure for profile notification
     4.4 21/12/25 Keep site title raw in email exports
+    4.5 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -73,9 +74,9 @@ if (isset($_GET['table'])) :
         endif;
     else :
         $msg->logMessage('[DEBUG]', "csv.php called for '$table', output type unclear ('{$_GET['type']}')");
-        trigger_error("[ERROR] csv.php: Called with incorrect parameters", E_USER_ERROR);
+        throw new Exception("[ERROR] csv.php: Called with incorrect parameters");
     endif;
 else :
     $msg->logMessage('[DEBUG]', 'csv.php running, failed');
-    trigger_error("[ERROR] csv.php: Called with no parameters", E_USER_ERROR);
+    throw new Exception("[ERROR] csv.php: Called with no parameters");
 endif;

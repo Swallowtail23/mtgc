@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        25/11/25
+Version:     1.6
+Date:        21/12/25
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -15,6 +15,7 @@ History:
     1.3 25/11/25 Formatting clean-up
     1.4 25/11/25 Wrapped long log/email strings
     1.5 25/11/25 Rename PHPMailer wrapper to PascalCase
+    1.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');
@@ -79,7 +80,7 @@ if (isset($argv[1])) :
         $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
     else :
         echo json_encode(["status" => "error", "message" => "SQL error"]);
-        trigger_error('[ERROR] ajaxsetimg.php: Error: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] ajaxsetimg.php: Error: ' . $db->error);
     endif;
 else :
     $msg->logMessage('[ERROR]', "Not called with setcode");

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     26.8
-Date:        19/12/25
+Version:     27.0
+Date:        21/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -78,20 +78,18 @@ function setMtceMode($toggle): bool
 
     $stmt = $db->prepare($query);
     if ($stmt === false) :
-        trigger_error(
+        throw new Exception(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
-                . ": Prepare SQL failed: " . $db->error,
-            E_USER_ERROR
+                . ": Prepare SQL failed: " . $db->error
         );
     endif;
 
     $bound = $stmt->bind_param('i', $mtcequery);
     if ($bound === false) :
         $stmt->close();
-        trigger_error(
+        throw new Exception(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
-                . ": Bind SQL failed: " . $stmt->error,
-            E_USER_ERROR
+                . ": Bind SQL failed: " . $stmt->error
         );
     endif;
 
@@ -116,10 +114,9 @@ function mtceModeCheck($user)
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
     $result1 = $db->execute_query($sql1);
     if ($result1 === false) :
-        trigger_error(
+        throw new Exception(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                . ": SQL failure: " . $db->error,
-            E_USER_ERROR
+                . ": SQL failure: " . $db->error
         );
     else :
         $row1 = $result1->fetch_assoc();
@@ -128,10 +125,9 @@ function mtceModeCheck($user)
             $sql2 = "SELECT admin FROM users WHERE usernumber = ?";
             $result2 = $db->execute_query($sql2, [$user]);
             if ($result2 === false) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                        . ": SQL failure: " . $db->error,
-                    E_USER_ERROR
+                        . ": SQL failure: " . $db->error
                 );
             else :
                 $row2 = $result2->fetch_assoc();
@@ -147,10 +143,9 @@ function mtceModeCheck($user)
                         return 1;
                     endif;
                 else :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": SQL failure: " . $db->error,
-                        E_USER_ERROR
+                            . ": SQL failure: " . $db->error
                     );
                 endif;
             endif;
@@ -436,7 +431,7 @@ function ensureDirectoryExists($path)
     $error = error_get_last();
     $msg = new Message($logfile);
     $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
-    trigger_error("[ERROR] Unable to create directory {$path}", E_USER_ERROR);
+    throw new Exception("[ERROR] Unable to create directory {$path}");
 }
 
 function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
@@ -746,17 +741,15 @@ function scryfallImport($file_location, $type)
     $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
     $contentHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'content_hash'");
     if ($contentHashResult === false) :
-        trigger_error(
-            '[ERROR] scryfall_bulk.php: Checking cards_scry content_hash column: ' . $db->error,
-            E_USER_ERROR
+        throw new Exception(
+            '[ERROR] scryfall_bulk.php: Checking cards_scry content_hash column: ' . $db->error
         );
     elseif ($contentHashResult->num_rows === 0) :
         $msg->logMessage('[NOTICE]', 'cards_scry content_hash column missing; adding column');
         $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `content_hash` CHAR(40) NULL");
         if ($alterResult === false) :
-            trigger_error(
-                '[ERROR] scryfall_bulk.php: Adding cards_scry content_hash column: ' . $db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] scryfall_bulk.php: Adding cards_scry content_hash column: ' . $db->error
             );
         else :
             $msg->logMessage('[DEBUG]', 'cards_scry content_hash column added');
@@ -770,17 +763,15 @@ function scryfallImport($file_location, $type)
 
     $priceHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'price_hash'");
     if ($priceHashResult === false) :
-        trigger_error(
-            '[ERROR] scryfall_bulk.php: Checking cards_scry price_hash column: ' . $db->error,
-            E_USER_ERROR
+        throw new Exception(
+            '[ERROR] scryfall_bulk.php: Checking cards_scry price_hash column: ' . $db->error
         );
     elseif ($priceHashResult->num_rows === 0) :
         $msg->logMessage('[NOTICE]', 'cards_scry price_hash column missing; adding column');
         $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `price_hash` CHAR(40) NULL");
         if ($alterResult === false) :
-            trigger_error(
-                '[ERROR] scryfall_bulk.php: Adding cards_scry price_hash column: ' . $db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] scryfall_bulk.php: Adding cards_scry price_hash column: ' . $db->error
             );
         else :
             $msg->logMessage('[DEBUG]', 'cards_scry price_hash column added');
@@ -1223,7 +1214,7 @@ function scryfallImport($file_location, $type)
                             primary_card = IF(?, 1, primary_card)
                         ");
     if ($stmt === false) :
-        trigger_error('[ERROR] cards.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] cards.php: Preparing SQL: ' . $db->error);
     endif;
 
     // Initialise all variables for binding
@@ -1481,7 +1472,7 @@ function scryfallImport($file_location, $type)
     );
 
     if ($bind === false) :
-        trigger_error('[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, E_USER_ERROR);
+        mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, __FILE__, __LINE__);
     endif;
     $lastGoodId = null;
     $lastGoodCount = 0;
@@ -1489,7 +1480,12 @@ function scryfallImport($file_location, $type)
     $msg->logMessage('[DEBUG]', 'Starting bulk import transaction batch');
     $batchStart = $db->begin_transaction();
     if ($batchStart === false) :
-        trigger_error('[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error, E_USER_ERROR);
+        mtgError(
+            E_USER_ERROR,
+            '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
+            __FILE__,
+            __LINE__
+        );
     endif;
 
     try {
@@ -1506,17 +1502,21 @@ function scryfallImport($file_location, $type)
                 if ($commit_due) :
                     $commitResult = $db->commit();
                     if ($commitResult === false) :
-                        trigger_error(
+                        mtgError(
+                            E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
-                            E_USER_ERROR
+                            __FILE__,
+                            __LINE__
                         );
                     endif;
                     $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
                     $batchStart = $db->begin_transaction();
                     if ($batchStart === false) :
-                        trigger_error(
+                        mtgError(
+                            E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
-                            E_USER_ERROR
+                            __FILE__,
+                            __LINE__
                         );
                     endif;
                 endif;
@@ -2023,7 +2023,12 @@ function scryfallImport($file_location, $type)
                 $exec = $stmt->execute();
 
                 if ($exec === false) :
-                    trigger_error("[ERROR] scryfall_bulk.php: Writing new card details: " . $db->error, E_USER_ERROR);
+                    mtgError(
+                        E_USER_ERROR,
+                        "[ERROR] scryfall_bulk.php: Writing new card details: " . $db->error,
+                        __FILE__,
+                        __LINE__
+                    );
                 else :
                     $lastGoodId = $id;
                     $lastGoodCount = $total_count;
@@ -2054,17 +2059,21 @@ function scryfallImport($file_location, $type)
             if ($commit_due) :
                 $commitResult = $db->commit();
                 if ($commitResult === false) :
-                    trigger_error(
+                    mtgError(
+                        E_USER_ERROR,
                         '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
-                        E_USER_ERROR
+                        __FILE__,
+                        __LINE__
                     );
                 endif;
                 $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
                 $batchStart = $db->begin_transaction();
                 if ($batchStart === false) :
-                    trigger_error(
+                    mtgError(
+                        E_USER_ERROR,
                         '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
-                        E_USER_ERROR
+                        __FILE__,
+                        __LINE__
                     );
                 endif;
             endif;
@@ -2100,7 +2109,7 @@ function scryfallImport($file_location, $type)
     }
     $commitResult = $db->commit();
     if ($commitResult === false) :
-        trigger_error('[ERROR] scryfall_bulk.php: Final commit failed: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] scryfall_bulk.php: Final commit failed: ' . $db->error);
     endif;
     $stmt->close();
 
@@ -2202,10 +2211,9 @@ function deckLegalList($deckNumber, $deck_type, $db_field)
     $msg->logMessage('[DEBUG]', "Looking up SQL: $sql");
     $sqlresult = $db->execute_query($sql, [$deckNumber]);
     if ($sqlresult === false) :
-        trigger_error(
+        throw new Exception(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                . ": SQL failure: " . $db->error,
-            E_USER_ERROR
+                . ": SQL failure: " . $db->error
         );
     else :
         $i = 0;
@@ -2221,10 +2229,9 @@ function deckLegalList($deckNumber, $deck_type, $db_field)
         $sql2 = "SELECT $db_field FROM cards_scry WHERE id = ? LIMIT 1";
         $sqlresult2 = $db->execute_query($sql2, [$value]);
         if ($sqlresult2 === false) :
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $db->error,
-                E_USER_ERROR
+                    . ": SQL failure: " . $db->error
             );
         else :
             $row2 = $sqlresult2->fetch_array(MYSQLI_ASSOC);
@@ -2357,7 +2364,7 @@ function inputInterpreter($input_string)
         endif;
 
         // Check if the string can be parsed into fields
-        $fields = str_getcsv($string);
+        $fields = str_getcsv($string, ',', '"', '\\');
 
         // If str_getcsv returns an array with more than one element, it's likely a CSV
         $fieldcount = count($fields);
@@ -2370,7 +2377,7 @@ function inputInterpreter($input_string)
         $msg = new Message($logfile);
 
         // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
-        $fields = str_getcsv($line);
+        $fields = str_getcsv($line, ',', '"', '\\');
         $qtyFields = count($fields);
 
         if ($qtyFields === 6 || $qtyFields === 8) : // Only check if it has 6 or 8 fields, otherwise don't bother

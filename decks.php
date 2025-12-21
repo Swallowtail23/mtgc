@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.3
-Date:        29/11/25
+Version:     5.4
+Date:        21/12/25
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -20,6 +20,7 @@ History:
     5.1 20/01/24 Move to logMessage
     5.2 25/11/25 Standard tidy-up
     5.3 29/11/25 Rename forcePasswordChange usage
+    5.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -212,7 +213,7 @@ require('includes/menu.php'); //mobile menu
             <br> &nbsp;
             <?php
         else :
-            trigger_error('[ERROR] decks.php: List decks SQL error', E_USER_ERROR);
+            throw new Exception('[ERROR] decks.php: List decks SQL error');
         endif;
         ?>
         </div>

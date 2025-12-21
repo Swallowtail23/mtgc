@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.9
 Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -19,6 +19,7 @@ History:
     2.6 20/12/25 Consolidate weekly exports into a single email
     2.7 21/12/25 Keep site title raw in email subjects and plain text
     2.8 21/12/25 Simplify site title usage
+    2.9 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');
@@ -44,10 +45,9 @@ while ($user = $usersExport->fetch_assoc()) :
     $query = 'SELECT decknumber FROM decks WHERE owner=?';
     $stmt = $db->execute_query($query, [$userNumber]);
     if ($stmt === false) :
-        trigger_error(
+        throw new Exception(
             '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__ . ": SQL failure: "
-            . $db->error,
-            E_USER_ERROR
+            . $db->error
         );
     elseif ($stmt->num_rows < 1) :
         $msg->logMessage('[ERROR]', "No decks for user '$userEmail'");

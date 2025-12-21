@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.5
-Date:        29/11/25
+Version:     5.6
+Date:        21/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
 Notes:       -
@@ -22,6 +22,7 @@ History:
     5.3 26/11/25 Standard tidy-up
     5.4 28/11/25 Update inputInterpreter reference
     5.5 29/11/25 Remove unused reference to $mtgprice
+    5.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

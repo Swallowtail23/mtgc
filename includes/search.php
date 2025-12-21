@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.1
-Date:        26/11/25
+Version:     6.2
+Date:        21/12/25
 Name:        search.php
 Purpose:     Layout for search on index.php
 Notes:       -
@@ -20,6 +20,7 @@ History:
     5.2 10/06/24 Add AND / OR to type searches
     6.0 01/03/25 Add Name exact
     6.1 26/11/25 Standard tidy-up
+    6.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -201,7 +202,7 @@ endif;
                             release_date DESC, parent_set_code DESC'
                 );
                 if ($result === false) :
-                    trigger_error("[ERROR] search.php: Sets list: Error: " . $db->error, E_USER_ERROR);
+                    throw new Exception("[ERROR] search.php: Sets list: Error: " . $db->error);
                 else :
                     $currentblock = $currentyear = null;
                     while ($row = $result->fetch_assoc()) :

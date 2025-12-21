@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        29/11/25
+Version:     1.5
+Date:        21/12/25
 Name:        imagemanager.class.php
 Purpose:     Local image management class.
 Notes:       {none}
@@ -15,6 +15,8 @@ History:
     1.1 25/11/25 Standard tidy-up
     1.2 29/11/25 Add remote/local diff check and refresh
     1.3 29/11/25 Move refresh to async path; add image check endpoint support
+    1.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
+    1.5 21/12/25 Preserve fatal unlink handling without trigger_error
 */
 
 /*
@@ -159,7 +161,7 @@ class ImageManager
                 try {
                     if (!unlink($imageUrl)) :
                         $this->message->logMessage('[ERROR]', "Failed to unlink $imageUrl");
-                        throw new Exception('Failed to unlink image');
+                        mtgError(E_USER_ERROR, 'Failed to unlink image', __FILE__, __LINE__);
                     endif;
                     $imagedelete = 'success';
                 } catch (Exception $e) {
@@ -179,7 +181,7 @@ class ImageManager
                 try {
                     if (!unlink($imagebackurl)) :
                         $this->message->logMessage('[ERROR]', "Failed to unlink $imagebackurl");
-                        throw new Exception('Failed to unlink back image');
+                        mtgError(E_USER_ERROR, 'Failed to unlink back image', __FILE__, __LINE__);
                     endif;
                     $imagebackdelete = 'success';
                 } catch (Exception $e) {
@@ -253,10 +255,9 @@ class ImageManager
         $result = $this->db->execute_query($sql, [$cardId]);
 
         if ($result === false) :
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL error: " . $this->db->error,
-                E_USER_ERROR
+                    . ": SQL error: " . $this->db->error
             );
         endif;
 

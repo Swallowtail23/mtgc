@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.6
-Date:        29/11/25
+Version:     5.7
+Date:        21/12/25
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -21,6 +21,7 @@ History:
     5.4 25/11/25 Header tidy and metadata standardization
     5.5 28/11/25 Add To do line after copyright
     5.6 29/11/25 Rename forcePasswordChange usage
+    5.7 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -51,7 +52,7 @@ if (isset($_GET['cardtoedit'])) :
     $id = validUUID($_GET['cardtoedit']);
     if ($id === false) :
         $msg->logMessage('[ERROR]', "Admin card page called without valid UUID");
-        trigger_error("[ERROR] cards.php: Invalid UUID", E_USER_ERROR);
+        throw new Exception("[ERROR] cards.php: Invalid UUID");
         exit;
     endif;
 
@@ -66,7 +67,7 @@ if (isset($_GET['cardtoedit'])) :
         $stmt->execute();
         $stmt->bind_result($deckName, $deckOwner);
     else :
-        trigger_error("[ERROR] cards.php: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] cards.php: Wrong SQL: ($sql) Error: " . $db->error);
     endif;
     while ($stmt->fetch()) :
         $resultArray[] = array('deckname' => $deckName, 'deckowner' => $deckOwner);
@@ -79,7 +80,7 @@ if (isset($_GET['cardtoedit'])) :
         $stmt->execute();
         $stmt->bind_result($userNumber, $userName);
     else :
-        trigger_error("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] cards.php: Wrong SQL: ($sql2) Error: " . $db->error);
     endif;
     while ($stmt->fetch()) :
         $userResultArray[] = array('usernumber' => $userNumber, 'username' => $userName);
@@ -105,12 +106,12 @@ if (isset($_GET['cardtoedit'])) :
         if ($stmt) :
             $stmt->bind_param("s", $id);
             if ($stmt->error) {
-                trigger_error("[ERROR] Bind error: " . $stmt->error, E_USER_ERROR);
+                throw new Exception("[ERROR] Bind error: " . $stmt->error);
             }
             $stmt->execute();
             $stmt->bind_result($total);
         else :
-            trigger_error("[ERROR] cards.php: Wrong SQL: ($sql) Error: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] cards.php: Wrong SQL: ($sql) Error: " . $db->error);
         endif;
         while ($stmt->fetch()) :
             if ($total !== null and $total != 0) :
@@ -135,7 +136,7 @@ if (isset($_GET['cardtoedit'])) :
     if ($stmt) :
         $stmt->bind_param("s", $id);
         if ($stmt->error) {
-            trigger_error("[ERROR] Bind error: " . $stmt->error, E_USER_ERROR);
+            throw new Exception("[ERROR] Bind error: " . $stmt->error);
         }
             $stmt->execute();
         $stmt->bind_result(
@@ -149,7 +150,7 @@ if (isset($_GET['cardtoedit'])) :
             $db_match
         );
     else :
-        trigger_error("[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] cards.php: Wrong SQL: ($sql3) Error: " . $db->error);
     endif;
     while ($stmt->fetch()) :
         $migrationResultArray[] = array(
@@ -177,7 +178,7 @@ if ((isset($_GET['delete'])) and ($_GET['delete'] == 'DELETE')) :
         $stmt->bind_param("s", $id);
         $result = $stmt->execute();
         if ($result === false) :
-            trigger_error("[ERROR] cards.php: Deleting card: " . $db->error, E_USER_ERROR);
+            throw new Exception("[ERROR] cards.php: Deleting card: " . $db->error);
         else :
             // Check if delete was successful
             $stmt = $db->prepare("SELECT id FROM cards_scry WHERE id = ?");
@@ -191,7 +192,7 @@ if ((isset($_GET['delete'])) and ($_GET['delete'] == 'DELETE')) :
             endif;
         endif;
     else :
-        trigger_error("[ERROR] cards.php: Preparing SQL: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] cards.php: Preparing SQL: " . $db->error);
     endif;
 
     // Delete from migrations

@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.1
-Date:        25/11/25
+Version:     6.2
+Date:        21/12/25
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -19,6 +19,7 @@ History:
     5.1 20/01/24 Include sessionname.php and move to logMessage
     6.0 07/07/24 Improved resilience and search options, including () and [], cards with part-names in brackets, etc
     6.1 25/11/25 Standard tidy-up
+    6.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -186,9 +187,8 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
             );
 
             if ($stmt->error) :
-                trigger_error(
-                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $stmt->error,
-                    E_USER_ERROR
+                throw new Exception(
+                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $stmt->error
                 );
             else : ?>
                 <table class='ajaxshow'> <?php
@@ -227,9 +227,8 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                     $params = [$id];
                     $result = $db->execute_query($query, $params);
                     if ($result === false) :
-                        trigger_error(
-                            "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error,
-                            E_USER_ERROR
+                        throw new Exception(
+                            "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
                         );
                     else :
                         $row = $result->fetch_assoc();

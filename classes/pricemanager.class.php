@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        06/12/25
+Version:     1.7
+Date:        21/12/25
 Name:        pricemanager.class.php
 Purpose:     Price management class.
 Notes:       {none}
@@ -18,6 +18,7 @@ History:
     1.4 25/11/25 Standard tidy-up
     1.5 28/11/25 Remove unused status assignment
     1.6 06/12/25 Use qty_total column for collection filtering
+    1.7 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -73,10 +74,9 @@ class PriceManager
             endif;
         else :
             $this->message->logMessage('[ERROR]', "Scryfall API error");
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $this->db->error,
-                E_USER_ERROR
+                    . ": SQL failure: " . $this->db->error
             );
         endif;
 
@@ -126,10 +126,9 @@ class PriceManager
                 );
             endif;
         else :
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $this->db->error,
-                E_USER_ERROR
+                    . ": SQL failure: " . $this->db->error
             );
         endif;
 
@@ -255,19 +254,17 @@ class PriceManager
                 $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri = ?,jsonupdatetime = ? WHERE id = ?';
                 $stmt = $this->db->prepare($update_tcg_uri);
                 if ($stmt === false) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": Preparing SQL: " . $this->db->error,
-                        E_USER_ERROR
+                            . ": Preparing SQL: " . $this->db->error
                     );
                 endif;
                 $this->message->logMessage('[NOTICE]', "$update_tcg_uri");
                 $stmt->bind_param('sss', $tcg_buy_uri, $time, $cardId);
                 if ($stmt === false) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": Binding SQL: " . $this->db->error,
-                        E_USER_ERROR
+                            . ": Binding SQL: " . $this->db->error
                     );
                 endif;
                 $exec = $stmt->execute();
@@ -284,19 +281,17 @@ class PriceManager
                     WHERE id = ?';
                 $stmt = $this->db->prepare($update_prices);
                 if ($stmt === false) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": Preparing SQL: " . $this->db->error,
-                        E_USER_ERROR
+                            . ": Preparing SQL: " . $this->db->error
                     );
                 endif;
                 $this->message->logMessage('[NOTICE]', "$update_prices");
                 $stmt->bind_param('sssss', $price, $price_foil, $price_etched, $price_sort, $cardId);
                 if ($stmt === false) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": Binding SQL: " . $this->db->error,
-                        E_USER_ERROR
+                            . ": Binding SQL: " . $this->db->error
                     );
                 endif;
                 $exec = $stmt->execute();
@@ -490,19 +485,17 @@ class PriceManager
             $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
             $stmt = $this->db->prepare($query);
             if ($stmt === false) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                        . ": Preparing SQL: " . $this->db->error,
-                    E_USER_ERROR
+                        . ": Preparing SQL: " . $this->db->error
                 );
             endif;
             $this->message->logMessage('[DEBUG]', "$query");
             $stmt->bind_param('sss', $cardId, $time, $tcg_buy_uri);
             if ($stmt === false) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                        . ": Binding SQL: " . $this->db->error,
-                    E_USER_ERROR
+                        . ": Binding SQL: " . $this->db->error
                 );
             endif;
             $exec = $stmt->execute();
@@ -524,10 +517,9 @@ class PriceManager
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param('ssss', $price, $price_foil, $price_sort, $cardId);
                 if ($stmt === false) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                            . ": Binding SQL: " . $this->db->error,
-                        E_USER_ERROR
+                            . ": Binding SQL: " . $this->db->error
                     );
                 endif;
                 $exec = $stmt->execute();
@@ -562,11 +554,10 @@ class PriceManager
         if ($cardId === "") : // Full collection value update (set-based)
             // Wrap in a transaction for safety
             if (!$this->db->begin_transaction()) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
-                    . ': Failed to start transaction: ' . $this->db->error,
-                    E_USER_ERROR
+                    . ': Failed to start transaction: ' . $this->db->error
                 );
             endif;
 
@@ -645,22 +636,20 @@ class PriceManager
 
             if ($result === false) :
                 $this->db->rollback();
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
-                    . ': SQL: ' . $this->db->error,
-                    E_USER_ERROR
+                    . ': SQL: ' . $this->db->error
                 );
             endif;
 
             $i = $this->db->affected_rows;
 
             if (!$this->db->commit()) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
-                    . ': Commit failed: ' . $this->db->error,
-                    E_USER_ERROR
+                    . ': Commit failed: ' . $this->db->error
                 );
             endif;
 
@@ -668,11 +657,10 @@ class PriceManager
             return $i;
         else : // Single-card update (set-based SQL)
             if (!$this->db->begin_transaction()) :
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
-                    . ': Failed to start transaction: ' . $this->db->error,
-                    E_USER_ERROR
+                    . ': Failed to start transaction: ' . $this->db->error
                 );
             endif;
 
@@ -754,11 +742,10 @@ class PriceManager
 
                 if ($exec === false) :
                     $this->db->rollback();
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                         . ' Function ' . __FUNCTION__
-                        . ': SQL: ' . $this->db->error,
-                        E_USER_ERROR
+                        . ': SQL: ' . $this->db->error
                     );
                 endif;
 
@@ -766,11 +753,10 @@ class PriceManager
                 $stmt->close();
 
                 if (!$this->db->commit()) :
-                    trigger_error(
+                    throw new Exception(
                         '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                         . ' Function ' . __FUNCTION__
-                        . ': Commit failed: ' . $this->db->error,
-                        E_USER_ERROR
+                        . ': Commit failed: ' . $this->db->error
                     );
                 endif;
 
@@ -781,11 +767,10 @@ class PriceManager
                 return $i;
             else :
                 $this->db->rollback();
-                trigger_error(
+                throw new Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
-                    . ': Preparing SQL: ' . $this->db->error,
-                    E_USER_ERROR
+                    . ': Preparing SQL: ' . $this->db->error
                 );
             endif;
         endif;

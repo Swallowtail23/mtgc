@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.1
-Date:        07/12/25
+Version:     13.2
+Date:        21/12/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
@@ -34,6 +34,7 @@ History:
     12.4 29/11/25 Rename forcePasswordChange usage
     13.0 29/11/25 Add async image checks
     13.1 07/12/25 Display abilities for two-faced cards
+    13.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // Call script initiation mechs
@@ -362,7 +363,7 @@ if ($validsearch === "true") :
             endif;
         else :
             $error = "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error;
-            trigger_error($error, E_USER_ERROR);
+            throw new Exception($error);
         endif;
     endif;
 else :

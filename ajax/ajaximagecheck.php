@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        29/11/25
+Version:     1.1
+Date:        21/12/25
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
 Notes:       Lightweight head/refresh; relies on ImageManager.
@@ -12,6 +12,7 @@ To do:       -
 
 History:
     1.0 29/11/25 Initial version
+    1.1 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -79,7 +80,7 @@ try {
         'back' => $result['back'],
     ]);
 } catch (Exception $e) {
-    trigger_error("[ERROR] ajaximagecheck.php: " . $e->getMessage(), E_USER_ERROR);
+    throw new Exception("[ERROR] ajaximagecheck.php: " . $e->getMessage());
     http_response_code(400);
     echo json_encode(['error' => 'Unknown error']);
 }

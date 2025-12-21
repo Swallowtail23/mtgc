@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.5
-Date:        02/12/25
+Version:     2.6
+Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -15,6 +15,7 @@ History:
     2.3 25/11/25 Wrapped long SQL/log strings
     2.4 25/11/25 Rename PHPMailer wrapper to PascalCase
     2.5 02/12/25 Handle missing collection tables during safe delete checks
+    2.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
@@ -100,7 +101,7 @@ function clearDBMigrations()
     if ($result = $db->query('TRUNCATE TABLE migrations')) :
         $msg->logMessage('[NOTICE]', "Scryfall migrations API: migrations table cleared");
     else :
-        trigger_error('[ERROR] scryfall_migrations.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] scryfall_migrations.php: Preparing SQL: ' . $db->error);
     endif;
 }
 function getRowCount($file)
@@ -274,7 +275,7 @@ foreach ($result_files as $data) :
                 endif;
                 $stmt = $db->execute_query('SELECT id from cards_scry WHERE id = ?', [$old_scryfall_id]);
                 if ($stmt === false) :
-                    trigger_error('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                    throw new Exception('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error);
                 else :
                     $deleteCheck = safeDeleteCheck($old_scryfall_id);
                     if ($stmt->num_rows > 0 && $deleteCheck > 10000) :
@@ -338,7 +339,7 @@ foreach ($result_files as $data) :
                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
                 );
                 if ($stmt === false) :
-                    trigger_error('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error, E_USER_ERROR);
+                    throw new Exception('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error);
                 endif;
                 $stmt->bind_param(
                     "sssssssssssssss",
@@ -359,12 +360,11 @@ foreach ($result_files as $data) :
                     $db_match
                 );
                 if ($stmt === false) :
-                    trigger_error('[ERROR] scryfall_migrations: Binding parameters: ' . $db->error, E_USER_ERROR);
+                    throw new Exception('[ERROR] scryfall_migrations: Binding parameters: ' . $db->error);
                 endif;
                 if (!$stmt->execute()) :
-                    trigger_error(
-                        "[ERROR] scryfall_migrations: Writing new migration details: " . $db->error,
-                        E_USER_ERROR
+                    throw new Exception(
+                        "[ERROR] scryfall_migrations: Writing new migration details: " . $db->error
                     );
                 else :
                     $msg->logMessage('[DEBUG]', "Add migrations $total_count - no error returned");

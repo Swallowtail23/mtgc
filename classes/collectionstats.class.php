@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        08/12/25
+Version:     1.1
+Date:        21/12/25
 Name:        collectionstats.class.php
 Purpose:     Compute collection totals and values for a user.
 Notes:       -
@@ -12,6 +12,7 @@ To do:       -
 
 History:
     1.0 08/12/25 Initial version
+    1.1 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -92,9 +93,8 @@ class CollectionStats
         ";
         $result = $this->db->query($query);
         if ($result === false) :
-            trigger_error(
-                '[ERROR] collectionstats.class.php: total count query failed: ' . $this->db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] collectionstats.class.php: total count query failed: ' . $this->db->error
             );
         endif;
         $row = $result->fetch_array(MYSQLI_ASSOC);
@@ -120,9 +120,8 @@ class CollectionStats
         ";
         $result = $this->db->query($query);
         if ($result === false) :
-            trigger_error(
-                '[ERROR] collectionstats.class.php: M/R count query failed: ' . $this->db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] collectionstats.class.php: M/R count query failed: ' . $this->db->error
             );
         endif;
         $row = $result->fetch_array(MYSQLI_ASSOC);
@@ -154,9 +153,8 @@ class CollectionStats
                 FROM `$tableName` LEFT JOIN cards_scry ON `$tableName`.id = cards_scry.id";
         $result = $this->db->query($query);
         if ($result === false) :
-            trigger_error(
-                '[ERROR] collectionstats.class.php: Value query failed: ' . $this->db->error,
-                E_USER_ERROR
+            throw new Exception(
+                '[ERROR] collectionstats.class.php: Value query failed: ' . $this->db->error
             );
         endif;
         $row = $result->fetch_assoc();

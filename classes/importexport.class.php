@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.9
+Version:     6.0
 Date:        21/12/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
@@ -26,6 +26,7 @@ History:
     5.7 20/12/25 Allow additional attachments in export emails
     5.8 20/12/25 Expose collection CSV builder for bulk exports
     5.9 21/12/25 Escape site title in HTML emails only
+    6.0 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -188,10 +189,9 @@ class ImportExport
         // Gets the data from the database
         $result = $this->db->query($sql);
         if ($result === false) :
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $this->db->error,
-                E_USER_ERROR
+                    . ": SQL failure: " . $this->db->error
             );
             return false;
         else :
@@ -712,10 +712,9 @@ class ImportExport
         if ($query = $this->db->execute_query($queryString)) :
             $this->message->logMessage('[NOTICE]', "Deleted {$this->db->affected_rows} orphan rows");
         else :
-            trigger_error(
+            throw new Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $this->db->error,
-                E_USER_ERROR
+                    . ": SQL failure: " . $this->db->error
             );
         endif;
     }

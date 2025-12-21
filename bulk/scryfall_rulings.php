@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.4
-Date:        19/12/25
+Version:     2.5
+Date:        21/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       {none}
@@ -80,7 +80,7 @@ $data = Items::fromFile($imgLocation . 'json/rulings.json', ['decoder' => new Ex
 if ($result = $db->query('TRUNCATE TABLE rulings_scry')) :
     $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Old rulings cleared");
 else :
-    trigger_error('[ERROR] scryfall_rulings.php: Preparing SQL: ' . $db->error, E_USER_ERROR);
+    throw new Exception('[ERROR] scryfall_rulings.php: Preparing SQL: ' . $db->error);
 endif;
 foreach ($data as $key => $value) :
     $oracle_id = $value["oracle_id"];
@@ -93,7 +93,7 @@ foreach ($data as $key => $value) :
                             VALUES
                                 (?,?,?,?)");
     if ($stmt === false) :
-        trigger_error('[ERROR] scryfall_rulings: Preparing SQL: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] scryfall_rulings: Preparing SQL: ' . $db->error);
     endif;
     $stmt->bind_param(
         "ssss",
@@ -103,10 +103,10 @@ foreach ($data as $key => $value) :
         $comment
     );
     if ($stmt === false) :
-        trigger_error('[ERROR] scryfall_rulings: Binding parameters: ' . $db->error, E_USER_ERROR);
+        throw new Exception('[ERROR] scryfall_rulings: Binding parameters: ' . $db->error);
     endif;
     if (!$stmt->execute()) :
-        trigger_error("[ERROR] scryfall_rulings: Writing new ruling details: " . $db->error, E_USER_ERROR);
+        throw new Exception("[ERROR] scryfall_rulings: Writing new ruling details: " . $db->error);
     else :
         $msg->logMessage('[DEBUG]', "Add ruling $total_count - no error returned ");
         $total_count = $total_count + 1;

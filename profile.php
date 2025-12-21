@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.1
+Version:     14.2
 Date:        21/12/25
 Name:        profile.php
 Purpose:     User profile page.
@@ -40,6 +40,7 @@ History:
     13.9 18/12/25 Disable currency selection when FX disabled
     14.0 21/12/25 Keep site title raw in email subjects
     14.1 21/12/25 Simplify site title usage
+    14.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -155,7 +156,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             $userHas2fa = $tfaManager->isEnabled($userId);
             $userTwofaMethod = $userHas2fa ? $tfaManager->getMethod($userId) : '';
         else :
-            trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
+            throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
         endif;  ?>
 
         <div id='page'>
@@ -242,14 +243,14 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                             "Password change call for $userEmail from {$_SERVER['REMOTE_ADDR']}"
                                         );
                                         if ($pwdchg === false) :
-                                            trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
+                                            throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
                                         endif;
                                         $pwdvalidateqry = $db->execute_query(
                                             "SELECT password FROM users WHERE email = ?",
                                             [$userEmail]
                                         );
                                         if ($pwdvalidateqry === false) :
-                                            trigger_error('[ERROR] profile.php: Error: ' . $db->error, E_USER_ERROR);
+                                            throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
                                         else :
                                             $pwdvalidate = $pwdvalidateqry->fetch_assoc();
                                             if ($pwdvalidate['password'] == $new_password) :

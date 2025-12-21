@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        25/11/25
+Version:     1.5
+Date:        21/12/25
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
 Notes:       Currently called after import function is run.
@@ -16,6 +16,7 @@ History:
     1.2 20/01/24 Move to logMessage
     1.3 25/11/25 Formatting clean-up
     1.4 25/11/25 Standard tidy-up
+    1.5 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -39,8 +40,8 @@ if (isset($_GET['table'])) :
         $obj = new PriceManager($db, $logfile, $userEmail);
         $obj->updateCollectionValues($table);
     else :
-        trigger_error('[ERROR] valueupdate.php: Invalid table format', E_USER_ERROR);
+        throw new Exception('[ERROR] valueupdate.php: Invalid table format');
     endif;
 else :
-    trigger_error('[ERROR] valueupdate.php: Called with no parameters', E_USER_ERROR);
+    throw new Exception('[ERROR] valueupdate.php: Called with no parameters');
 endif;

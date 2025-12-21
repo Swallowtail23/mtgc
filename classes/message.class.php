@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.1
-Date:        25/11/25
+Version:     4.2
+Date:        21/12/25
 Name:        message.class.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -18,6 +18,7 @@ History:
     3.0 14/01/24 Bring 'source' into the message function - all calls to be migrated
     4.0 28/02/25 Moved writelog() here from error_handling.php
     4.1 25/11/25 Standard tidy-up
+    4.2 21/12/25 Avoid argument mutation in backtraces
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
@@ -39,12 +40,12 @@ class Message
 
     public function logMessage($errorlevel, $text, $logfile = '')
     {
-        $logfile = $logfile ?: $this->logfile;
-        $backtrace = debug_backtrace();
+        $effectiveLogfile = $logfile ?: $this->logfile;
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $caller_info = $this->findCallerInfo($backtrace);
 
         $this->textstring = "$errorlevel {$caller_info}: $text";
-        $this->writelog($this->textstring, $logfile);
+        $this->writelog($this->textstring, $effectiveLogfile);
     }
 
     private function writelog($msg, $log = '')
