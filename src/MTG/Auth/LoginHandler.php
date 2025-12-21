@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     2.1
+Version:     1.0
 Date:        21/12/25
-Name:        loginhandler.class.php
+Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
 Author:      Simon Wilson
@@ -27,6 +27,8 @@ Current flow:
 -- Else → mark logged in, clear bad login if needed, return user info.
     1.8 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
+
+namespace MTG\Auth;
 
 use andkab\Turnstile\Turnstile;
 
@@ -89,7 +91,7 @@ class LoginHandler
             '[DEBUG]',
             'Checking for trusted device cookie with db connection: ' . (isset($this->db) ? 'valid' : 'missing')
         );
-        $deviceManager = new TrustedDeviceManager($this->db, $this->logfile);
+        $deviceManager = new \MTG\Auth\TrustedDeviceManager($this->db, $this->logfile);
 
         $trustedDeviceUser = $deviceManager->validateTrustedDevice();
         $trustedDeviceUser = (int) $trustedDeviceUser;
@@ -257,7 +259,7 @@ class LoginHandler
         endif;
 
         // Create once — reuse for everything
-        $user = new UserStatus($this->db, $this->logfile, $email);
+        $user = new \MTG\Auth\UserStatus($this->db, $this->logfile, $email);
 
         // Check bad login count
         $badLoginResult = $user->getBadLogin();
@@ -290,7 +292,7 @@ class LoginHandler
             ||
             !array_key_exists('admin', $userStatusResult)
         ) :
-            throw new Exception("[ERROR] Login.php: user status structure invalid");
+            throw new \Exception("[ERROR] Login.php: user status structure invalid");
             return null;
         endif;
         $code  = (int) $userStatusResult['code'];
@@ -298,7 +300,7 @@ class LoginHandler
         $admin = (int) $userStatusResult['admin'];
         $this->message->logMessage('[DEBUG]', "UserStatus for $email is {$code}");
         if ($code === 0) : // An error has been returned - fail.
-            throw new Exception("[ERROR] Login.php: user status check failure");
+            throw new \Exception("[ERROR] Login.php: user status check failure");
             return null;
         endif;
 
@@ -562,8 +564,11 @@ class LoginHandler
             $this->message->logMessage('[NOTICE]', "Lock notice suppressed; email disabled for $email");
             return false;
         endif;
-        if (!class_exists('MyPHPMailer')) :
-            $this->message->logMessage('[ERROR]', "Lock notice failed; MyPHPMailer not available for $email");
+        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "Lock notice failed; MyPHPMailer not available for $email"
+            );
             return false;
         endif;
 
@@ -580,7 +585,13 @@ class LoginHandler
               . "or contact the administrator.</p>"
               . "<p>Resetting your password will unlock your account.</p>";
 
-        $mailer = new MyPHPMailer(true, $this->smtpParameters, $this->serverEmail, $this->logfile, $this->siteTitle);
+        $mailer = new \MTG\Core\MyPHPMailer(
+            true,
+            $this->smtpParameters,
+            $this->serverEmail,
+            $this->logfile,
+            $this->siteTitle
+        );
         if (isset($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) :
             $mailer->addCC($adminEmail);
         else :

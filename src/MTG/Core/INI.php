@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     1.1
-Date:        25/11/25
-Name:        ini.class.php
+Version:     1.4
+Date:        21/12/25
+Name:        INI.php
 Purpose:     Simple PHP class to manage INI files (read/write).
 Notes:       Third-party code from IT-radionica.com.
 Author:      Radovan Janjic <rade@it-radionica.com>
@@ -15,7 +15,7 @@ To do:       -
 Examples
 
 // Parse config.ini
-$ini = new INI('config.ini');
+$ini = new \MTG\Core\INI('config.ini');
 
 echo '<pre>';
 echo 'Content of: config.ini' . PHP_EOL;
@@ -60,7 +60,8 @@ echo '<hr>Content of: config-3.ini' . PHP_EOL;
 print_r($ini->data);
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace
+namespace MTG\Core;
+
 class INI
 {
     /** INI file path @var string */
@@ -147,4 +148,3 @@ class INI
         return $written ? true : false;
     }
 }
-// phpcs:enable

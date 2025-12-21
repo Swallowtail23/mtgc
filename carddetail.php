@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     20.4
+Version:     20.6
 Date:        19/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -308,7 +308,7 @@ require('includes/menu.php'); //mobile menu
     endif;
 
     // Check/update/populate JSON data
-    $obj = new PriceManager($db, $logfile, $userEmail);
+    $obj = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
     $msg->logMessage('[DEBUG]', "Is card ID provided, does card exist? If yes ensure latest price");
     if (
         (isset($_GET["id"]) or isset($_POST["id"]))
@@ -577,7 +577,7 @@ require('includes/menu.php'); //mobile menu
                     '[DEBUG]',
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
-                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                 $imageFunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],
@@ -2147,7 +2147,7 @@ require('includes/menu.php'); //mobile menu
                                             '[NOTICE]',
                                             "Calling Deckmanager->addDeck: '$user/$newdeckname'"
                                         );
-                                        $obj = new DeckManager(
+                                        $obj = new \MTG\Cards\DeckManager(
                                             $db,
                                             $logfile,
                                             $userEmail,
@@ -2163,7 +2163,7 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                     else :
                                             // Check that the proposed deck exists and belongs to owner.
-                                            $obj = new DeckManager(
+                                            $obj = new \MTG\Cards\DeckManager(
                                                 $db,
                                                 $logfile,
                                                 $userEmail,
@@ -2236,7 +2236,7 @@ require('includes/menu.php'); //mobile menu
                                             $deckqty = (int)$deckqty;
 
                                             //Call add card function
-                                            $obj = new DeckManager(
+                                            $obj = new \MTG\Cards\DeckManager(
                                                 $db,
                                                 $logfile,
                                                 $userEmail,
@@ -2302,7 +2302,7 @@ require('includes/menu.php'); //mobile menu
                                     endif;
                                 endif;
                                 $msg->logMessage('[NOTICE]', "Checking to see if $cardId is in any owned decks");
-                                $obj = new DeckManager(
+                                $obj = new \MTG\Cards\DeckManager(
                                     $db,
                                     $logfile,
                                     $userEmail,
@@ -2331,7 +2331,7 @@ require('includes/menu.php'); //mobile menu
                                         $grpuserid = $grpuser[$t]['id'];
                                         $grpusername = ucfirst($grpuser[$t]['name']);
                                         $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
-                                        $obj = new DeckManager(
+                                        $obj = new \MTG\Cards\DeckManager(
                                             $db,
                                             $logfile,
                                             $userEmail,

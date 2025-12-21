@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.7
 Date:        21/12/25
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -101,7 +101,7 @@ $name = ucfirst($userName);
                         $subject = "Message sent using your contact form";
                     endif;
                     if (isset($emailEnabled) && $emailEnabled === true) :
-                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+                        $mailer = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
                         $mailResult = $mailer->sendEmail($adminEmail, false, $subject, $message, '', '', '');
                         if ($mailResult === true) :
                             echo "Email sent!";

@@ -1,15 +1,17 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.6
 Date:        07/12/25
-Name:        classname.class.php
+Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
 Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+namespace MTG\Core;
 
 class ClassName
 {
@@ -18,35 +20,35 @@ class ClassName
      *
      * @var mysqli
      */
-    private mysqli $db;
+    private $db;
 
     /**
      * Path to the log file.
      *
      * @var string
      */
-    private string $logfile;
+    private $logfile;
 
     /**
      * Message logger instance.
      *
      * @var Message
      */
-    private Message $message;
+    private $message;
 
     /**
      * Any per-instance identifier, e.g. email/ID/usernumber.
      *
      * @var string|null
      */
-    private ?string $identifier = null;
+    private $identifier = null;
 
     /**
      * Example public state storage (adjust/remove as needed).
      *
      * @var array<string,mixed>
      */
-    public array $state = [];
+    public $state = [];
 
     /**
      * Constructor.
@@ -55,7 +57,7 @@ class ClassName
      * @param string      $logfile    Log file path.
      * @param string|null $identifier Optional per-instance identifier (e.g. user email).
      */
-    public function __construct(mysqli $db, string $logfile, ?string $identifier = null)
+    public function __construct($db, $logfile, $identifier = null)
     {
         $this->db         = $db;
         $this->logfile    = $logfile;

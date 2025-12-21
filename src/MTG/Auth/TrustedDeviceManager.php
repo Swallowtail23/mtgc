@@ -1,15 +1,17 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.0
 Date:        21/12/25
-Name:        trusteddevicemanager.class.php
+Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+namespace MTG\Auth;
 
 class TrustedDeviceManager
 {
@@ -32,7 +34,7 @@ class TrustedDeviceManager
         $this->hmacSecret = getenv('HMAC_SECRET');
 
         if (!class_exists(\MTG\Core\Message::class)) :
-            $autoload = __DIR__ . '/../vendor/autoload.php';
+            $autoload = __DIR__ . '/../../../vendor/autoload.php';
             if (file_exists($autoload)) :
                 require_once $autoload;
             endif;
@@ -40,7 +42,7 @@ class TrustedDeviceManager
 
         try {
             $this->msg = new \MTG\Core\Message($this->logfile);
-        } catch (Error $e) {
+        } catch (\Error $e) {
             $this->msg = null; // Ensure it's null if instantiation fails
             $this->log('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');
         }
@@ -175,6 +177,10 @@ class TrustedDeviceManager
         $stmt->store_result();
 
         if ($stmt->num_rows === 1) :
+            /** @var int $deviceId */
+            $deviceId = 0;
+            /** @var int $userId */
+            $userId = 0;
             $stmt->bind_result($deviceId, $userId);
             $stmt->fetch();
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        25/11/25
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
@@ -37,7 +37,7 @@ else :
     endif;
 
     // Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

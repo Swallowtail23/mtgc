@@ -35,6 +35,10 @@ All notable changes to this project will be documented in this file.
 - Fixed: correct namespace resolution for Exception/MyPHPMailer usage in `\MTG\Auth\PasswordCheck`.
 - Changed: update TwoFactorManager usage to the namespaced `\MTG\Auth\TwoFactorManager` class after relocating it to `src/MTG`.
 - Changed: update DateYMD usage to the namespaced `\MTG\Core\DateYMD` class after relocating it to `src/MTG`.
+- Changed: update CollectionHistory usage to the namespaced `\MTG\Cards\CollectionHistory` class after relocating it to `src/MTG`.
+- Changed: update CollectionStats usage to the namespaced `\MTG\Cards\CollectionStats` class after relocating it to `src/MTG`.
+- Changed: update UserStatus usage to the namespaced `\MTG\Auth\UserStatus` class after relocating it to `src/MTG`.
+- Changed: move remaining legacy classes into `src/MTG` namespaces and update all call sites/tests accordingly.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.
 - Changed: weekly value history export now attaches to the weekly collection export email.

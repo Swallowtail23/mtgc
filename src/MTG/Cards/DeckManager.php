@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     4.8
+Version:     1.0
 Date:        21/12/25
-Name:        deckmanager.class.php
+Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
 Author:      Simon Wilson
@@ -11,8 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Cards;
 
 class DeckManager
 {
@@ -395,7 +394,7 @@ class DeckManager
         $sql = "SELECT deckname, owner FROM decks WHERE decknumber = ? LIMIT 1";
         $result = $this->db->execute_query($sql, [$deck]);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -433,7 +432,7 @@ class DeckManager
                 WHERE cardnumber = ? AND owner = ?";
         $result = $this->db->execute_query($sql, [$card, $user]);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -469,7 +468,7 @@ class DeckManager
         $result = $this->db->execute_query($cardnamequery, [$card]);
         $cardname = $result->fetch_assoc();
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 "[ERROR] Class " . __METHOD__ . " " . __LINE__
                     . " - SQL failure: Error: " . $this->db->error
             );
@@ -623,7 +622,7 @@ class DeckManager
                         $status = "+newside";
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": SQL failure: " . $this->db->error
                     );
@@ -654,7 +653,7 @@ class DeckManager
                         $status = "+newmain";
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": SQL failure: " . $this->db->error
                     );
@@ -665,7 +664,7 @@ class DeckManager
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 return $status;
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -715,7 +714,7 @@ class DeckManager
                         $params = [];
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": SQL failure: " . $this->db->error
                     );
@@ -746,7 +745,7 @@ class DeckManager
                         $params = [];
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": SQL failure: " . $this->db->error
                     );
@@ -760,7 +759,7 @@ class DeckManager
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 //ran ok
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -782,7 +781,7 @@ class DeckManager
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
                 //ran ok
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -807,7 +806,7 @@ class DeckManager
             if ($removeCommanderStmt->execute()) :
                 $this->message->logMessage('[NOTICE]', "Old Commander removed");
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -824,7 +823,7 @@ class DeckManager
             $this->message->logMessage('[NOTICE]', "Add Commander run: $addCommanderQuery, status is $status");
             return $status;
         else :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -847,7 +846,7 @@ class DeckManager
             ) :
                 $this->message->logMessage('[NOTICE]', "Old Partner removed");
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -863,7 +862,7 @@ class DeckManager
             $this->message->logMessage('[NOTICE]', "Add Partner run, status is $status");
             return $status;
         else :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -887,7 +886,7 @@ class DeckManager
                 $this->message->logMessage('[NOTICE]', "Remove Commander called, status is $status");
                 return $status;
             else :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -902,21 +901,21 @@ class DeckManager
         $this->message->logMessage('[NOTICE]', "Delete deck called: deck $decktodelete");
         $stmt = $this->db->prepare("DELETE FROM decks WHERE decknumber = ?");
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Preparing SQL failure: " . $this->db->error
             );
         endif;
         $bind = $stmt->bind_param("i", $decktodelete);
         if ($bind === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Binding SQL failure: " . $this->db->error
             );
         endif;
         $exec = $stmt->execute();
         if ($exec === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Deleting deck: " . $this->db->error
             );
@@ -933,21 +932,21 @@ class DeckManager
         $stmt->close();
         $stmt = $this->db->prepare("DELETE FROM deckcards WHERE decknumber = ?");
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Preparing SQL failure: " . $this->db->error
             );
         endif;
         $bind = $stmt->bind_param("i", $decktodelete);
         if ($bind === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Binding SQL failure: " . $this->db->error
             );
         endif;
         $exec = $stmt->execute();
         if ($exec === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": Deleting deck cards: " . $this->db->error
             );
@@ -995,7 +994,7 @@ class DeckManager
                     "SQL deck insert succeeded for user: $user, deckname: '$newdeckname'"
                 );
             else :
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error
                 );
             endif;
@@ -1021,7 +1020,7 @@ class DeckManager
                 <?php
                 $decksuccess['flag'] = 10; //set flag so we know to break.
             else :
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error
                 );
             endif;
@@ -1033,7 +1032,7 @@ class DeckManager
             </div> <?php
             $decksuccess['flag'] = 10; //set flag so we know to break.
         else :
-            throw new Exception(
+            throw new \Exception(
                 "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $this->db->error
             );
         endif;
@@ -1051,7 +1050,7 @@ class DeckManager
         $query = 'SELECT decknumber FROM decks WHERE deckname=? AND owner=?';
         $stmt = $this->db->execute_query($query, [$newname,$user]);
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -1071,7 +1070,7 @@ class DeckManager
         $query = 'UPDATE decks SET deckname=? WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$newname,$deck]);
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -1097,7 +1096,7 @@ class DeckManager
         $query = 'UPDATE decks set type = ? WHERE decknumber = ?';
         $stmt = $this->db->execute_query($query, [$decktype,$deck]);
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -1131,7 +1130,7 @@ class DeckManager
         $query = 'SELECT * FROM decks WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$deckNumber]);
         if ($stmt === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -1153,7 +1152,7 @@ class DeckManager
             $detailstmt = $this->db->execute_query($detailquery, [$deckNumber]);
             $emptyDeck = false;
             if ($detailstmt === false) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
@@ -1258,7 +1257,7 @@ class DeckManager
                 endif;
             elseif ($format === "email") :
                 if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                     $subject = "Deck export";
                     $emailbody = "Your deck export ($deckName) is attached.";
@@ -1295,10 +1294,10 @@ class DeckManager
                     $zipFilename = "Decks-{$sanitizedEmail}-{$currentDate}.zip";
                     $zipFilePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $zipFilename;
                 endif;
-                $zip = new ZipArchive();
+                $zip = new \ZipArchive();
 
                 // Open the zip archive
-                if ($zip->open($zipFilePath, ZipArchive::CREATE) !== true) {
+                if ($zip->open($zipFilePath, \ZipArchive::CREATE) !== true) {
                     $this->message->logMessage('[ERROR]', "Cannot create or open ZIP file $zipFilePath");
                     return false;
                 }

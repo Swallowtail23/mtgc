@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.3
+Version:     1.0
 Date:        21/12/25
 Name:        Password.php
 Purpose:     Password validation class.
@@ -338,7 +338,7 @@ class PasswordCheck
             );
             return false;
         endif;
-        if (!class_exists(\MyPHPMailer::class)) :
+        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available for password change notice");
             return false;
         endif;
@@ -350,7 +350,13 @@ class PasswordCheck
         $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 
-        $mailer = new \MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $mailer = new \MTG\Core\MyPHPMailer(
+            true,
+            $smtpParameters,
+            $serverEmail,
+            $this->logfile,
+            $siteTitle
+        );
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");
             return true;
@@ -490,12 +496,18 @@ class PasswordCheck
      */
     protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
     {
-        if (!class_exists(\MyPHPMailer::class)) :
+        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
-        $mail = new \MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $mail = new \MTG\Core\MyPHPMailer(
+            true,
+            $smtpParameters,
+            $serverEmail,
+            $this->logfile,
+            $siteTitle
+        );
         $subject = "$siteTitle password reset";
         $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
         $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"

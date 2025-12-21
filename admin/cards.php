@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.8
+Version:     5.10
 Date:        21/12/25
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -191,7 +191,7 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $obj->refreshImage($id);
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

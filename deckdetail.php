@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.2
+Version:     25.4
 Date:        21/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -518,7 +518,7 @@ endif;
 
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
-$obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+$obj = new \MTG\Cards\DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
 if ($obj->deckOwnerCheck($deckNumber, $user) == false) : ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -533,7 +533,14 @@ endif;
 // Update name if called before reading info (we've already checked ownership)
 if (isset($_POST['newname'])) :
     $msg->logMessage('[DEBUG]', "Renaming deck to $newname");
-    $obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $obj = new \MTG\Cards\DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
     $renameresult = $obj->renameDeck($deckNumber, $newname, $user);
     $msg->logMessage('[DEBUG]', "Renaming deck result: $renameresult");
     if ($renameresult == 2) :
@@ -618,7 +625,7 @@ endif;
 
 //Carry out quick add requests
 if (isset($_GET["quickadd"])) :
-    $deckManager = new DeckManager(
+    $deckManager = new \MTG\Cards\DeckManager(
         $db,
         $logfile,
         $userEmail,
@@ -635,7 +642,7 @@ if (isset($_POST['import'])) :
     if (is_uploaded_file($_FILES['filename']['tmp_name'])) :
         $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} uploaded");
         $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new DeckManager(
+        $deckManager = new \MTG\Cards\DeckManager(
             $db,
             $logfile,
             $userEmail,
@@ -687,7 +694,7 @@ else :
 endif;
 
 // Add / delete, before calling the deck list
-$obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+$obj = new \MTG\Cards\DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
 
 if ($deletemain == 'yes') :
     $obj->subtractDeckCard($deckNumber, $cardtoaction, "main", "all");
@@ -1003,7 +1010,7 @@ while ($row = $result->fetch_assoc()) :
     ) :
         $planes = $planes + $row['cardqty'];
     endif;
-    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
@@ -1045,7 +1052,7 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
-    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
@@ -1295,7 +1302,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                 $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
@@ -1460,7 +1467,12 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $cardId = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
-                                    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                                    $imageManager = new \MTG\Cards\ImageManager(
+                                        $db,
+                                        $logfile,
+                                        $serverEmail,
+                                        $adminEmail
+                                    );
                                     $imageFunction = $imageManager->getImage(
                                         $cardset,
                                         $cardId,
@@ -1627,7 +1639,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1890,7 +1902,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2129,7 +2141,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2431,7 +2443,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2659,7 +2671,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                 $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
@@ -2817,7 +2829,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,

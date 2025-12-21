@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.3
+Version:     6.5
 Date:        21/12/25
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -34,7 +34,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
         exit();
     else :
         //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];

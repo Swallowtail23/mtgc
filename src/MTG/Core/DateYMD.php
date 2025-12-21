@@ -3,9 +3,9 @@
 /*
 Version:     1.2
 Date:        25/11/25
-Name:        dateymd.class.php
+Name:        DateYMD.php
 Purpose:     Simple date class for date format as required by admin pages.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

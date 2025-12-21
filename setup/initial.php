@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.1
+Version:     2.4
 Date:        25/11/25
 Name:        initial.php
 Purpose:     Generate a usable password without site access.
@@ -16,8 +16,8 @@ History:
     2.1 25/11/25 Standard tidy-up
 */
 
-include __DIR__ . '/../classes/ini.class.php';
-$ini = new INI('/opt/mtg/mtg_new.ini');
+require_once __DIR__ . '/../src/MTG/Core/INI.php';
+$ini = new \MTG\Core\INI('/opt/mtg/mtg_new.ini');
 $iniArray = $ini->data;
 
 if (!isset($argv[0]) || !isset($argv[1]) || !isset($argv[2]) || isset($argv[3])) :

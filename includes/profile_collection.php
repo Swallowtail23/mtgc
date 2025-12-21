@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.2
+Version:     1.5
 Date:        07/12/25
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
@@ -17,7 +17,7 @@ if (!isset($msg) || !($msg instanceof Message)) :
     $msg = new \MTG\Core\Message($logfile ?? null);
 endif;
 
-$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$statsHelper = new \MTG\Cards\CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
 $stats = $statsHelper->getStats($user, $mytable, $targetCurrency ?? null);
 
 $valueUsd = $stats['value_usd'];

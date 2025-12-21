@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        25/11/25
+Version:     1.0
+Date:        21/12/25
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
 Notes:       -
@@ -417,13 +417,18 @@ class TwoFactorManager
             return false;
         endif;
 
-        if (!class_exists('MyPHPMailer')) :
+        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
             $this->directLog('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
         try {
-            $mail = new \MyPHPMailer(true, $this->smtp_parameters, $this->serverEmail, $this->logfile);
+            $mail = new \MTG\Core\MyPHPMailer(
+                true,
+                $this->smtp_parameters,
+                $this->serverEmail,
+                $this->logfile
+            );
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\n"
                 . "If you did not request this code, please ignore this email.";

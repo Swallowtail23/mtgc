@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.7
+Version:     6.9
 Date:        21/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -511,7 +511,7 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     requireCsrfToken();
 
     if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+        $mailer = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
         $subject = "Test email from {$siteTitle}";
         $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
         $bodyText = strip_tags($bodyHtml);

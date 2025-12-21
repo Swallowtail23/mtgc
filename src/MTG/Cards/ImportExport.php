@@ -1,18 +1,17 @@
 <?php
 
 /*
-Version:     6.1
+Version:     1.0
 Date:        21/12/25
-Name:        importexport.class.php
+Name:        ImportExport.php
 Purpose:     Import/export management class.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Cards;
 
 class ImportExport
 {
@@ -67,7 +66,7 @@ class ImportExport
                         "Adding " . count($extraAttachments) . " extra attachments to collection export email"
                     );
                 endif;
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -113,7 +112,7 @@ class ImportExport
                         "Adding " . count($extraAttachments) . " extra attachments to weekly export email"
                     );
                 endif;
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -169,7 +168,7 @@ class ImportExport
         // Gets the data from the database
         $result = $this->db->query($sql);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -692,7 +691,7 @@ class ImportExport
         if ($query = $this->db->execute_query($queryString)) :
             $this->message->logMessage('[NOTICE]', "Deleted {$this->db->affected_rows} orphan rows");
         else :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );

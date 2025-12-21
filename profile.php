@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.5
+Version:     14.10
 Date:        21/12/25
 Name:        profile.php
 Purpose:     User profile page.
@@ -229,15 +229,12 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                     . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                                 // Removing all trusted devices
-                                                    (new TrustedDeviceManager($db, $logfile))
+                                                    (new \MTG\Auth\TrustedDeviceManager($db, $logfile))
                                                         ->removeAllUserDevices($userId);
                                                 echo "<div class='alert-box success' id='pwdchange'>"
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
                                                     . "</div>";
-                                                if (!class_exists(\MTG\Auth\PasswordCheck::class)) :
-                                                    require_once('classes/passwordcheck.class.php');
-                                                endif;
                                                 $passwordCheck = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
@@ -649,8 +646,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 </div> <?php
 
                 // Get trusted devices for this user
-                require_once('classes/trusteddevicemanager.class.php');
-                $deviceManager = new TrustedDeviceManager($db, $logfile);
+                $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
                 // Get the current device's token hash, if the cookie is set.
                 $currentDeviceHash = null;
                 if (isset($_COOKIE[$deviceManager->getCookieName()])) :

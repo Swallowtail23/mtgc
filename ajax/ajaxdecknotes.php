@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        21/12/25
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -48,7 +48,7 @@ if ($isValidReferrer) :
         exit();
     else :
         //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];

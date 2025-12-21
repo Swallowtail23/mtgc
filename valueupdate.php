@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        21/12/25
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
@@ -29,7 +29,7 @@ $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     if (validTableName($table) !== false) :
-        $obj = new PriceManager($db, $logfile, $userEmail);
+        $obj = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
         $obj->updateCollectionValues($table);
     else :
         throw new Exception('[ERROR] valueupdate.php: Invalid table format');

@@ -3,7 +3,7 @@
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../classes/importexport.class.php';
+require_once __DIR__ . '/../src/MTG/Cards/ImportExport.php';
 
 class ImportExportEmailTest extends TestCase
 {
@@ -15,9 +15,10 @@ class ImportExportEmailTest extends TestCase
         $siteTitle = 'MTG Test';
         $logfile = tempnam(sys_get_temp_dir(), 'impexp_');
 
-        if (!class_exists('MyPHPMailer')) {
+        if (!class_exists(\MTG\Core\MyPHPMailer::class, false)) {
             eval(
-                'class MyPHPMailer
+                'namespace MTG\Core;
+                class MyPHPMailer
                 {
                     public static $calls = [];
 
@@ -98,7 +99,7 @@ class ImportExportEmailTest extends TestCase
             }
         };
 
-        $exporter = new ImportExport(
+        $exporter = new \MTG\Cards\ImportExport(
             $db,
             $logfile,
             'user@example.com',
@@ -131,8 +132,8 @@ class ImportExportEmailTest extends TestCase
         );
 
         $this->assertFalse($result);
-        $this->assertNotEmpty(MyPHPMailer::$calls);
-        $lastCall = end(MyPHPMailer::$calls);
+        $this->assertNotEmpty(\MTG\Core\MyPHPMailer::$calls);
+        $lastCall = end(\MTG\Core\MyPHPMailer::$calls);
         $this->assertArrayHasKey('sendEmail', $lastCall);
         $sendArgs = $lastCall['sendEmail'];
         $this->assertSame($extraAttachments, $sendArgs[7] ?? null);
@@ -202,7 +203,7 @@ class ImportExportEmailTest extends TestCase
             }
         };
 
-        $exporter = new ImportExport(
+        $exporter = new \MTG\Cards\ImportExport(
             $db,
             null,
             'user@example.com',

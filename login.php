@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.1
+Version:     8.3
 Date:        02/12/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -26,7 +26,7 @@ require 'includes/functions.php';         // Includes basic functions for non-se
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $msg = new \MTG\Core\Message($logfile);
-$loginHandler = new LoginHandler(
+$loginHandler = new \MTG\Auth\LoginHandler(
     $db,
     $logfile,
     $turnstile,

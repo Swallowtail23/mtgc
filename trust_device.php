@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        29/11/25
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -66,7 +66,7 @@ if ($trust_choice !== 'none') :
         try {
             $user_id = (int) $_SESSION['user'];
             $msg->logMessage('[DEBUG]', "Creating trusted device for user $user_id");
-            $deviceManager = new TrustedDeviceManager($db, $logfile);
+            $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
             $result = $deviceManager->createTrustedDevice($user_id, $trustDuration);
             $msg->logMessage(
                 '[NOTICE]',

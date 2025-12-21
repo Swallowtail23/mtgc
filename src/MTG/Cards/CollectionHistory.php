@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.1
 Date:        21/12/25
-Name:        collectionhistory.class.php
+Name:        CollectionHistory.php
 Purpose:     Collection value history retrieval and export helpers.
 Notes:       -
 Author:      Simon Wilson
@@ -11,7 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
+namespace MTG\Cards;
 
 class CollectionHistory
 {
@@ -158,7 +158,12 @@ class CollectionHistory
         endif;
 
         if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-            $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+            $mail = new \MTG\Core\MyPHPMailer(
+                true,
+                $smtpParameters,
+                $this->serverEmail,
+                $this->logfile
+            );
 
             $tempFile = tempnam(sys_get_temp_dir(), 'history_');
             file_put_contents($tempFile, $csv);
@@ -230,7 +235,7 @@ class CollectionHistory
             $days = 365;
         endif;
 
-        $start = new DateTimeImmutable('now');
+        $start = new \DateTimeImmutable('now');
         $start = $start->modify("-$days days");
 
         return $start->format('Y-m-d H:i:s');

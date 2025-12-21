@@ -1,18 +1,17 @@
 <?php
 
 /*
-Version:     1.5
-Date:        04/12/25
-Name:        sessionmanager.class.php
+Version:     1.0
+Date:        21/12/25
+Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Auth;
 
 class SessionManager
 {
@@ -78,6 +77,20 @@ class SessionManager
             $this->message->logMessage('[DEBUG]', "No records found for usernumber: $userNumber");
             return false;
         endif;
+        /** @var string $status */
+        $status = '';
+        /** @var string $userName */
+        $userName = '';
+        /** @var int $adminDb */
+        $adminDb = 0;
+        /** @var string|null $grpinout */
+        $grpinout = null;
+        /** @var int|null $groupid */
+        $groupid = null;
+        /** @var string|null $collection_view */
+        $collection_view = null;
+        /** @var string|null $currency */
+        $currency = null;
         $stmt->bind_result($status, $userName, $adminDb, $grpinout, $groupid, $collection_view, $currency);
         if ($stmt->fetch()) :
             $this->message->logMessage(
@@ -216,6 +229,10 @@ class SessionManager
         $rate = null; // Default rate value
 
         if ($stmt->num_rows > 0) :
+            /** @var float|string|null $existingRate */
+            $existingRate = null;
+            /** @var int|null $lastUpdateTime */
+            $lastUpdateTime = null;
             $stmt->bind_result($existingRate, $lastUpdateTime);
             $stmt->fetch();
             // If the timestamp is more than an hour old, proceed with the update
@@ -316,4 +333,3 @@ class SessionManager
         return "Called as a string";
     }
 }
-// phpcs:enable

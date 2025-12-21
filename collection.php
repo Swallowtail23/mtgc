@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        21/12/25
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -56,7 +56,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     if ($csvResult !== true) :
@@ -694,7 +694,7 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+                        $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,
@@ -709,7 +709,7 @@ endif;
                             if ($adddeck === 'yes') :
                                 $currentDateTime = date("j F Y, g:i:sa");
                                 $tmpdeckname = $currentDateTime;
-                                $obj = new DeckManager(
+                                $obj = new \MTG\Cards\DeckManager(
                                     $db,
                                     $logfile,
                                     $userEmail,
@@ -732,7 +732,7 @@ endif;
                                     echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
                                         . "var deckCreated = true;</script>";
                                     $file = fopen($_FILES['filename']['tmp_name'], 'r');
-                                    $deckManager = new DeckManager(
+                                    $deckManager = new \MTG\Cards\DeckManager(
                                         $db,
                                         $logfile,
                                         $userEmail,

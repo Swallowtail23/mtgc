@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        28/11/25
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -48,7 +48,7 @@ if ($isValidReferrer) :
         returnResponse();
     else :
         // Need to run these as secpagesetup is not run (see page notes)
-        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
@@ -85,7 +85,7 @@ if ($isValidReferrer) :
             } while ($result !== false && $result->num_rows > 0);
 
             // Instantiate the DeckManager
-            $obj = new DeckManager(
+            $obj = new \MTG\Cards\DeckManager(
                 $db,
                 $logfile,
                 $userEmail,

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.6
 Date:        20/12/25
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -41,7 +41,7 @@ if (!in_array($format, ['json', 'csv'], true)) :
 endif;
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: user {$userId}, range {$range}, format {$format}");
-$history = new CollectionHistory($db, $logfile, $siteTitle);
+$history = new \MTG\Cards\CollectionHistory($db, $logfile, $siteTitle);
 $data = $history->getHistoryData($userId, $range);
 if ($data === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: unable to fetch history');

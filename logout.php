@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.2
+Version:     2.4
 Date:        25/11/25
 Name:        logout.php
 Purpose:     Destroy the session, log it, and head to login.php.
@@ -33,7 +33,7 @@ $msg->logMessage('[NOTICE]', "User $userEmail logging out from {$_SERVER['REMOTE
 // Remove trusted device token
 if ($db && $userId > 0 && $removeTrusted === 1) :
     try {
-        $deviceManager = new TrustedDeviceManager($db, $logfile);
+        $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
 
         $msg->logMessage('[DEBUG]', 'Attempting to remove trusted device');
         $deviceManager->removeTrustedDevice();

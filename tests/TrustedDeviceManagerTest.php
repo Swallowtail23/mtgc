@@ -6,7 +6,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 function getRealTrustedDeviceManagerClass(): string
 {
-    if (class_exists('TrustedDeviceManagerReal')) :
+    if (class_exists('TrustedDeviceManagerReal', false)) :
         return 'TrustedDeviceManagerReal';
     endif;
 
@@ -14,8 +14,9 @@ function getRealTrustedDeviceManagerClass(): string
     if (!isset($_SERVER['PHP_SELF'])) {
         $_SERVER['PHP_SELF'] = __FILE__;
     }
-    $source = file_get_contents(__DIR__ . '/../classes/trusteddevicemanager.class.php');
+    $source = file_get_contents(__DIR__ . '/../src/MTG/Auth/TrustedDeviceManager.php');
     $source = preg_replace('/^<\\?php\\s*/', '', $source, 1);
+    $source = preg_replace('/^\\s*namespace\\s+MTG\\\\Auth;\\s*/m', '', $source, 1);
     $source = preg_replace('/class\\s+TrustedDeviceManager/', 'class TrustedDeviceManagerReal', $source, 1);
 
     eval($source);

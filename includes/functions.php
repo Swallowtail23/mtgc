@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     27.1
+Version:     27.3
 Date:        21/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -812,7 +812,7 @@ function scryfallImport($file_location, $type)
 
     $imageManager = null;
     if ($imageDownloads === true) :
-        $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+        $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     endif;
 
     $stmt = $db->prepare("INSERT INTO

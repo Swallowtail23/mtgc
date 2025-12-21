@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.6
+Version:     4.8
 Date:        21/12/25
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -33,7 +33,7 @@ if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

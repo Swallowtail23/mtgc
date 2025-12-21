@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.4
 Date:        21/12/25
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -67,7 +67,7 @@ endif;
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
 
 try {
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $result = $obj->checkAndRefreshImage($cardUUID);
 
     echo json_encode([

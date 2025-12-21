@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.7
 Date:        29/11/25
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -22,7 +22,7 @@ if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     exit();
 else :
     // Session information \\
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     if ($userArray !== false) :
         $user = $userArray['usernumber'];

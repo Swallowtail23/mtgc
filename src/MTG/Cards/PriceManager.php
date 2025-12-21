@@ -1,18 +1,17 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.0
 Date:        21/12/25
-Name:        pricemanager.class.php
+Name:        PriceManager.php
 Purpose:     Price management class.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Cards;
 
 class PriceManager
 {
@@ -62,7 +61,7 @@ class PriceManager
             endif;
         else :
             $this->message->logMessage('[ERROR]', "Scryfall API error");
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -114,7 +113,7 @@ class PriceManager
                 );
             endif;
         else :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
@@ -242,7 +241,7 @@ class PriceManager
                 $update_tcg_uri = 'UPDATE scryfalljson SET tcg_buy_uri = ?,jsonupdatetime = ? WHERE id = ?';
                 $stmt = $this->db->prepare($update_tcg_uri);
                 if ($stmt === false) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": Preparing SQL: " . $this->db->error
                     );
@@ -250,7 +249,7 @@ class PriceManager
                 $this->message->logMessage('[NOTICE]', "$update_tcg_uri");
                 $stmt->bind_param('sss', $tcg_buy_uri, $time, $cardId);
                 if ($stmt === false) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": Binding SQL: " . $this->db->error
                     );
@@ -269,7 +268,7 @@ class PriceManager
                     WHERE id = ?';
                 $stmt = $this->db->prepare($update_prices);
                 if ($stmt === false) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": Preparing SQL: " . $this->db->error
                     );
@@ -277,7 +276,7 @@ class PriceManager
                 $this->message->logMessage('[NOTICE]', "$update_prices");
                 $stmt->bind_param('sssss', $price, $price_foil, $price_etched, $price_sort, $cardId);
                 if ($stmt === false) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": Binding SQL: " . $this->db->error
                     );
@@ -473,7 +472,7 @@ class PriceManager
             $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
             $stmt = $this->db->prepare($query);
             if ($stmt === false) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": Preparing SQL: " . $this->db->error
                 );
@@ -481,7 +480,7 @@ class PriceManager
             $this->message->logMessage('[DEBUG]', "$query");
             $stmt->bind_param('sss', $cardId, $time, $tcg_buy_uri);
             if ($stmt === false) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": Binding SQL: " . $this->db->error
                 );
@@ -505,7 +504,7 @@ class PriceManager
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param('ssss', $price, $price_foil, $price_sort, $cardId);
                 if ($stmt === false) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                             . ": Binding SQL: " . $this->db->error
                     );
@@ -542,7 +541,7 @@ class PriceManager
         if ($cardId === "") : // Full collection value update (set-based)
             // Wrap in a transaction for safety
             if (!$this->db->begin_transaction()) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Failed to start transaction: ' . $this->db->error
@@ -624,7 +623,7 @@ class PriceManager
 
             if ($result === false) :
                 $this->db->rollback();
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': SQL: ' . $this->db->error
@@ -634,7 +633,7 @@ class PriceManager
             $i = $this->db->affected_rows;
 
             if (!$this->db->commit()) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Commit failed: ' . $this->db->error
@@ -645,7 +644,7 @@ class PriceManager
             return $i;
         else : // Single-card update (set-based SQL)
             if (!$this->db->begin_transaction()) :
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Failed to start transaction: ' . $this->db->error
@@ -730,7 +729,7 @@ class PriceManager
 
                 if ($exec === false) :
                     $this->db->rollback();
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                         . ' Function ' . __FUNCTION__
                         . ': SQL: ' . $this->db->error
@@ -741,7 +740,7 @@ class PriceManager
                 $stmt->close();
 
                 if (!$this->db->commit()) :
-                    throw new Exception(
+                    throw new \Exception(
                         '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                         . ' Function ' . __FUNCTION__
                         . ': Commit failed: ' . $this->db->error
@@ -755,7 +754,7 @@ class PriceManager
                 return $i;
             else :
                 $this->db->rollback();
-                throw new Exception(
+                throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . ' ' . __LINE__
                     . ' Function ' . __FUNCTION__
                     . ': Preparing SQL: ' . $this->db->error

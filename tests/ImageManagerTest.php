@@ -1,9 +1,10 @@
 <?php
 
+use MTG\Cards\ImageManager;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/../classes/imagemanager.class.php';
+require_once __DIR__ . '/../src/MTG/Cards/ImageManager.php';
 
 class FakeDbForImages
 {

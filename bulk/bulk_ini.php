@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     3.3
+Version:     3.6
 Date:        25/11/25
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -17,6 +17,7 @@ endif;
 // Class autoloading
 // Composer
 $root = realpath($_SERVER["DOCUMENT_ROOT"] ?? (__DIR__ . '/..'));
+$GLOBALS['root'] = $root;
 require_once $root . "/vendor/autoload.php";
 
 // Other classes
@@ -37,7 +38,7 @@ function autoLoader($class_name)
 spl_autoload_register('autoLoader');
 
 //Set error reporting based on ini file's dev setting
-$ini = new INI("/opt/mtg/mtg_new.ini");
+$ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
 if ($iniArray['general']['tier'] === 'dev') :
     $tier = 'dev';

@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.0
 Date:        21/12/25
-Name:        imagemanager.class.php
+Name:        ImageManager.php
 Purpose:     Local image management class.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -13,12 +13,11 @@ To do:       -
 
 /*
 Example usage:
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $result = $obj->getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections);
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Cards;
 
 class ImageManager
 {
@@ -126,7 +125,7 @@ class ImageManager
         $this->message->logMessage('[DEBUG]', "Refresh image called for $cardId");
 
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-            throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+            throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
         });
 
         $sql = "SELECT id,setcode,layout FROM cards_scry WHERE id = ? LIMIT 1";
@@ -154,7 +153,7 @@ class ImageManager
                         mtgError(E_USER_ERROR, 'Failed to unlink image', __FILE__, __LINE__);
                     endif;
                     $imagedelete = 'success';
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     $this->message->logMessage('[ERROR]', "Failed to unlink $imageUrl");
                     $imagedelete = 'failure';
                 } finally {
@@ -174,7 +173,7 @@ class ImageManager
                         mtgError(E_USER_ERROR, 'Failed to unlink back image', __FILE__, __LINE__);
                     endif;
                     $imagebackdelete = 'success';
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     $this->message->logMessage('[ERROR]', "Failed to unlink $imagebackurl");
                     $imagebackdelete = 'failure';
                     restore_error_handler();
@@ -245,7 +244,7 @@ class ImageManager
         $result = $this->db->execute_query($sql, [$cardId]);
 
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL error: " . $this->db->error
             );

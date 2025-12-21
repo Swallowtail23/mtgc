@@ -1,26 +1,27 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.9
 Date:        20/12/25
-Name:        myphpmailer.class.php
+Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
-                 $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+                 $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
                  $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
+namespace MTG\Core;
+
 //Import PHPMailer classes into the global namespace
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
-require __DIR__ . "/../vendor/autoload.php";
+require __DIR__ . "/../../../vendor/autoload.php";
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
 class MyPHPMailer extends PHPMailer
 {
     /**

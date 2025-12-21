@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.8
+Version:     5.10
 Date:        21/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -48,11 +48,8 @@ function autoLoader($class_name)
 }
 spl_autoload_register('autoLoader');
 
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\PHPMailer;
-
 // Set error reporting based on ini file's dev setting
-$ini = new INI("/opt/mtg/mtg_new.ini");
+$ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
 $myURL = $iniArray['general']['URL'];
 $siteTitle = $iniArray['general']['title'];

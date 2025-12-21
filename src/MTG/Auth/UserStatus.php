@@ -1,15 +1,17 @@
 <?php
 
 /*
-Version:     3.5
+Version:     1.1
 Date:        21/12/25
-Name:        userstatus.class.php
+Name:        UserStatus.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+namespace MTG\Auth;
 
 class UserStatus
 {
@@ -77,14 +79,14 @@ class UserStatus
                         $this->status['code'] = 0;
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                         " - Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->status = 0;
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                     " - SQL failure: Error: " . $this->db->error
                 );
@@ -117,14 +119,14 @@ class UserStatus
                         "Called: $this->email has {$row['badlogins']} bad logins"
                     );
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                         "- Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->status = 0;
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                     "- SQL failure: Error: " . $this->db->error
                 );
@@ -144,7 +146,7 @@ class UserStatus
                                                END
                     WHERE email=?";
         if ($this->db->execute_query($query, [$this->email]) !== true) :
-            throw new Exception(
+            throw new \Exception(
                 "[ERROR] Class " . __METHOD__ . " " . __LINE__,
                 " - SQL failure: Error: " . $this->db->error
             );

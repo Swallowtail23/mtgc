@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        21/12/25
 Name:        ajaxgroup.php
 Purpose:     PHP script to turn ajax group on/off
@@ -48,7 +48,7 @@ if ($isValidReferrer) :
         exit();
     else :
         //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];

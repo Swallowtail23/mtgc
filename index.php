@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     13.2
+Version:     13.4
 Date:        21/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -305,7 +305,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') and ( $scope == 'mycollection')) :
     $msg->logMessage('[NOTICE]', "My Collection / Price query called, updating collection pricing");
-    $obj = new PriceManager($db, $logfile, $userEmail);
+    $obj = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
@@ -1019,7 +1019,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],

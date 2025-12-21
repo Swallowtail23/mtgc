@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        25/11/25
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
@@ -49,7 +49,7 @@ if ($isValidReferrer) :
         exit();
     else :
         //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];

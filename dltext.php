@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.2
+Version:     4.4
 Date:        29/11/25
 Name:        dltext.php
 Purpose:     Text file export page.
@@ -31,7 +31,14 @@ if (isset($_POST['decknumber'])) :
         FILTER_FLAG_NO_ENCODE_QUOTES
     );
     $deckNumber = htmlspecialchars_decode($deckNumber, ENT_QUOTES);
-    $obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $obj = new \MTG\Cards\DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
     $obj->exportDeck($deckNumber, "download");
 elseif (isset($_POST['text'])) :
     $textdata = filter_input(
@@ -52,7 +59,14 @@ elseif (isset($_POST['text'])) :
         : 'dltext.txt';
 
     // Instantiate DeckManager and use the exportMissing function to handle the export
-    $obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $obj = new \MTG\Cards\DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
     $obj->exportMissing($textdata, $filename);
 else :
     trigger_error('[ERROR] dltext.php: Error, no POST data', E_USER_WARNING);

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.9
 Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -378,7 +378,7 @@ endif;
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_migrations alert');

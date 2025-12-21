@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.5
 Date:        25/11/25
-Name:        inidebug.class.php
+Name:        IniDebug.php
 Purpose:     Pre-database debugging; logs messages to logfiles or syslog when enabled.
 Notes:       Not currently used in code.
 Author:      Simon Wilson
@@ -11,8 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
+namespace MTG\Core;
 
 class IniDebug
 {
@@ -46,4 +45,3 @@ class IniDebug
         return "Called as a string";
     }
 }
-// phpcs:enable

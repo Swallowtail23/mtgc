@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.4
 Date:        21/12/25
-Name:        collectionstats.class.php
+Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
 Notes:       -
 Author:      Simon Wilson
@@ -11,7 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
+namespace MTG\Cards;
 
 class CollectionStats
 {
@@ -49,7 +49,7 @@ class CollectionStats
         $targetCurrency = strtoupper(trim((string) $targetCurrency));
 
         if (!empty($targetCurrency) && $targetCurrency !== 'USD' && !empty($this->fxAPI)) :
-            $sessionManager = new SessionManager(
+            $sessionManager = new \MTG\Auth\SessionManager(
                 $this->db,
                 $this->adminip,
                 [],
@@ -86,7 +86,7 @@ class CollectionStats
         ";
         $result = $this->db->query($query);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR] collectionstats.class.php: total count query failed: ' . $this->db->error
             );
         endif;
@@ -113,7 +113,7 @@ class CollectionStats
         ";
         $result = $this->db->query($query);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR] collectionstats.class.php: M/R count query failed: ' . $this->db->error
             );
         endif;
@@ -146,7 +146,7 @@ class CollectionStats
                 FROM `$tableName` LEFT JOIN cards_scry ON `$tableName`.id = cards_scry.id";
         $result = $this->db->query($query);
         if ($result === false) :
-            throw new Exception(
+            throw new \Exception(
                 '[ERROR] collectionstats.class.php: Value query failed: ' . $this->db->error
             );
         endif;
@@ -156,4 +156,3 @@ class CollectionStats
         return $value;
     }
 }
-// phpcs:enable

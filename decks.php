@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.5
+Version:     5.7
 Date:        21/12/25
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -116,7 +116,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
             else :
                         $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckName'");
-                        $obj = new DeckManager(
+                        $obj = new \MTG\Cards\DeckManager(
                             $db,
                             $logfile,
                             $userEmail,
@@ -132,7 +132,7 @@ require('includes/menu.php'); //mobile menu
         // Delete a deck
         if ($deletedeck == "yes") :
             $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
-            $obj = new DeckManager(
+            $obj = new \MTG\Cards\DeckManager(
                 $db,
                 $logfile,
                 $userEmail,

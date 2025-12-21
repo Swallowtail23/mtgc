@@ -1,8 +1,9 @@
 <?php
 
+use MTG\Cards\CollectionHistory;
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../classes/collectionhistory.class.php';
+require_once __DIR__ . '/../src/MTG/Cards/CollectionHistory.php';
 
 class CollectionHistoryTest extends TestCase
 {
