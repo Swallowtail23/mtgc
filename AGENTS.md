@@ -1,7 +1,10 @@
 # MTG Collection App - Developer Guidelines
 
 ## Setup Requirements
-- PHP 8.2 and MySQL 8+.
+- Minimum:
+-- PHP 8.2 and MySQL 8+.
+- Docker install:
+-- PHP 8.4 and MySQL 8+.
 - PHP extensions: mysqli, mbstring, intl, gd, curl.
 - CLI tools: git and composer installed and on PATH.
 - Critical app config lives in `/opt/mtg/mtg_new.ini` (contains secrets). Keep it out of VCS; use a local copy or a sample template and never commit real values.
@@ -21,7 +24,7 @@
 - Shared functions belong in `includes/functions.php`.
 
 ## Code Style Guidelines
-- PHP 8.2 with direct `mysqli` queries (no ORM).
+- PHP 8.4 with direct `mysqli` queries (no ORM).
 - Session handling through `sessionmanager.class.php`.
 - Error handling: use `mtgError` for user-facing errors and `mtgException` for exception paths/logging.
 - Mobile-responsive design uses jQuery on the frontend.
@@ -34,8 +37,8 @@
 -- Classify changes as Added / Changed / Fixed / Removed / Security / Infrastructure / Deprecated
 -- If someone asked “what changed since last time?” — would this help them? If yes, include it
 - Do not split SQL statements with string concatenation; keep them as single literals (with embedded newlines if needed)
-- App is not namespaced. All classes are global.
-- All code changes should result in clean phpcs runs
+- App is not namespaced, all classes are global
+- All code changes should result in clean phpcs runs with PHP 8.4 compatibility
 - phpcbf can be used to find and automatically resolve simple style issues, e.g. indentation
 - Code control structures should contain suitable DEBUG-level logging to track code flow
 
