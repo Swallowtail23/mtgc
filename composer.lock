@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "677889f14d789ec49062e958c78c5f41",
+    "content-hash": "298d91d54d71a8641d4201819564a42b",
     "packages": [
         {
             "name": "andkab/php-turnstile",
@@ -3366,5 +3366,8 @@
     "prefer-lowest": false,
     "platform": {},
     "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.2.30"
+    },
     "plugin-api-version": "2.9.0"
 }
