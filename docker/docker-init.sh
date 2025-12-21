@@ -200,6 +200,9 @@ for helper in setup/*.sh; do
     if [[ ! -f "$target" ]]; then
         cp "$helper" "$target"
     fi
+    if [[ "$(basename "$helper")" == "sets.sh" ]]; then
+        sed -i "s|/opt/mtg/cardimg|$BASE_DIR/cardimg|g" "$target"
+    fi
 done
 CRON_TEMPLATE_DEST="$BASE_DIR/config/cron_mtgc"
 if [[ ! -f "$CRON_TEMPLATE_DEST" ]]; then
