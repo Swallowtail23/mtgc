@@ -39,6 +39,7 @@ All notable changes to this project will be documented in this file.
 - Changed: update CollectionStats usage to the namespaced `\MTG\Cards\CollectionStats` class after relocating it to `src/MTG`.
 - Changed: update UserStatus usage to the namespaced `\MTG\Auth\UserStatus` class after relocating it to `src/MTG`.
 - Changed: move remaining legacy classes into `src/MTG` namespaces and update all call sites/tests accordingly.
+- Infrastructure: update docs to reflect namespaced `src/MTG` class layout and Composer autoloading.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.
 - Changed: weekly value history export now attaches to the weekly collection export email.
