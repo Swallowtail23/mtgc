@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.10
+Version:     5.11
 Date:        21/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -30,23 +30,6 @@ endif;
 // Composer
 $root = realpath($_SERVER["DOCUMENT_ROOT"]);
 require_once "$root/vendor/autoload.php";
-
-// Other classes
-function autoLoader($class_name)
-{
-    // If it's namespaced, let Composer handle it
-    if (strpos($class_name, '\\') !== false) :
-        return;
-    endif;
-
-    $class_name_lwr = strtolower($class_name);
-    $path = $_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php';
-
-    if (file_exists($path)) :
-        require_once $path;
-    endif;
-}
-spl_autoload_register('autoLoader');
 
 // Set error reporting based on ini file's dev setting
 $ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
