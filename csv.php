@@ -9,17 +9,6 @@ Notes:       Redirects to profile.php if not in SMTP debug, with flag on success
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Migrated to Mysqli_Manager
-    3.0         PHP 8.1 compatibility; primarily logic, see class/functions
-    4.0 13/01/24 Added PHPMailer capability
-    4.1 14/01/24 Documentation tweaks; move to logMessage function
-    4.2 25/11/25 Standard tidy-up
-    4.3 05/12/25 Persist email export success/failure for profile notification
-    4.4 21/12/25 Keep site title raw in email exports
-    4.5 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

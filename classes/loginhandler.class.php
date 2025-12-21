@@ -9,15 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-History:
-    1.0 28/11/25 Initial version - extracted login handling flow from login.php
-    1.1 28/11/25 Add injectable terminator for improved testability
-    1.2 02/12/25 Render formatted page for login aborts
-    1.3 02/12/25 Catch additional unformatted exits
-    1.4 04/12/25 More robust handling of resets and sessions
-    1.5 05/12/25 Email user when account is locked for bad logins
-    1.6 05/12/25 Include reset link in lock notification email
-    1.7 05/12/25 CC admin on lock notifications
 
 Current flow:
 - Check it’s a login submission.

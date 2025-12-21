@@ -9,15 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Removed database call (secpagesetup provides all the info needed)
-    2.1 25/11/25 Formatting clean-up
-    2.2 25/11/25 Standard tidy-up
-    2.3 29/11/25 Rename forcePasswordChange usage
-    2.4 21/12/25 Keep site title raw in email subjects
-    2.5 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

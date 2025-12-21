@@ -9,11 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 28/02/25 First release
-    1.1 25/11/25 Rename PHPMailer wrapper to PascalCase
-    1.2 25/11/25 Standard tidy-up
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

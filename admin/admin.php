@@ -8,33 +8,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Mysqli_Manager
-    3.0         Moved from writelog to Message class
-    4.0         PHP 8.1 compatibility
-    4.1         Fixed error on unminifying CSS
-    4.2 20/01/24 Move to include sessionname and logMessage
-    4.3 24/11/25 Code tidy (phpcs)
-    4.4 24/11/25 Add bounded log tail reader to avoid loading full log file
-    4.5 25/11/25 Header tidy and metadata standardization
-    4.6 29/11/25 Rename forcePasswordChange() usage
-                 Rename cssVersionCheck() usage
-                 Rename setMtceMode() usage
-    4.7 30/11/25 Add re-auth gated ini editing UI
-    4.8 30/11/25 Hide ini settings until editing unlocked
-    4.9 30/11/25 Add cancel to re-auth prompt
-    5.0 30/11/25 Tooltips, wider inputs, writable path checks, timezone select, extra cancel on DB password
-    5.1 04/12/25 Add email settings test
-    5.2 04/12/25 Add Scryfall JSON wipe success message
-    5.3 04/12/25 Display current application version
-    5.4 04/12/25 Trim SMTP HELO value whitespace
-    6.0 16/12/25 Improve escaping and variable usage, refactor flow and PRGs
-    6.1          Add scrollable/selectable log display
-    6.2 21/12/25 Keep site title raw in email subjects
-    6.3 21/12/25 Simplify site title usage
-    6.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');

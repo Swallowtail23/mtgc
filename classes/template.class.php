@@ -9,9 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 07/12/25 Initial version
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

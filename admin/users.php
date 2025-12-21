@@ -8,25 +8,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Mysqli_Manager
-    3.0         Migrate from writelog to message class
-    4.0         PHP 8.1 compatibility
-    5.0 17/12/2023 Add local currency control
-    5.1 20/01/24 Move to include sessionname and logMessage
-    5.2 24/11/25 PHPCS cleaning
-    5.3 25/11/25 Header tidy and metadata standardization
-    5.4 26/11/25 Escape new user inputs for output
-    5.5 27/11/25 Validate email in new user flow
-    5.6 28/11/25 Add To do line after copyright
-    5.7 29/11/25 Rename forcePasswordChange usage
-    6.0 04/12/25 Align password set options to email availability
-    6.1 04/12/25 Add DEBUG logging to control structures
-    6.2 04/12/25 Remove unnecessary real_escape_string usage before prepared queries
-    6.3 21/12/25 Keep site title raw in email subjects
-    6.4 21/12/25 Simplify site title usage
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');

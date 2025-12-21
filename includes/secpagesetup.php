@@ -9,14 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Add collection view check
-    2.1 27/11/23 Moved fx logic into session manager class's user info method
-    2.2 20/01/24 Move to logMessage
-    2.3 26/11/25 Standard tidy-up
-    2.4 29/11/25 Rename cssVersionCheck() & mtceModeCheck() usage
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

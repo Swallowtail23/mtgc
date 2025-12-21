@@ -9,14 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Removed hard-coded email address, now uses ini file variables
-    2.1         Fix empty variable ($context)
-    2.2 20/01/24 Move to logMessage
-    2.3 28/02/25 Removed writelog() to message class file
-    2.4 25/11/25 Standard tidy-up
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

@@ -9,13 +9,8 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.1         Refactored error handling using a variable and return
-    1.2 20/01/24 Include sessionname.php and move to logMessage
-    1.3 05/10/24 Code optimisations
-    1.4 25/11/25 Standard tidy-up
 */
+
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
 else :

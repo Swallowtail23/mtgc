@@ -8,10 +8,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 07/12/25 Initial version
-    1.1 07/12/25 Use CollectionStats helper
 */
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');

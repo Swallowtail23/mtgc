@@ -9,11 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 17/10/16 Initial version
-    2.0 20/11/23 Added floating button to enable/disable Collection View to grid view
-    2.1 26/11/25 Standard tidy-up
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

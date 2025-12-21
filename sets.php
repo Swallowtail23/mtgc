@@ -9,18 +9,6 @@ Notes:       This page is the only one NOT mobile responsive design. Access via 
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved to use Mysqli_Manager library
-    3.0         Refactoring for cards_scry
-    4.0 02/12/23 Add pagination and set image reload for admins
-    4.1 20/01/24 Move to logMessage
-    4.2 29/05/24 Fix incorrect set ordering
-    4.3 25/11/25 Standard tidy-up
-    4.4 29/11/25 Rename forcePasswordChange usage
-    4.5 02/12/25 Guard empty set list and defer output until after redirects
-    4.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

@@ -9,11 +9,6 @@ Notes:       Uses collection_values table to store historical values.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 07/12/25 Initial version
-    1.1 07/12/25 Use CollectionStats helper
-    1.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');

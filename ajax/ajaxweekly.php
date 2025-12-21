@@ -9,12 +9,6 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:      -
-
-History:
-    1.0         Initial version
-    1.1 20/01/24 Include sessionname.php and move to logMessage
-    1.2 25/11/25 Standard tidy-up
-    1.3 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

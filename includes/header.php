@@ -9,11 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 02/01/24 Add debounce to search calls
-    1.2 26/11/25 Standard tidy-up
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

@@ -9,14 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 16/11/23 Initial version
-    1.1 25/11/25 Standard tidy-up
-    1.2 29/11/25 Add remote/local diff check and refresh
-    1.3 29/11/25 Move refresh to async path; add image check endpoint support
-    1.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
-    1.5 21/12/25 Preserve fatal unlink handling without trigger_error
 */
 
 /*

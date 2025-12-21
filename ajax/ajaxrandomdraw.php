@@ -8,11 +8,6 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 10/06/24 Initial version
-    1.1 28/07/24 MTGC-112 - fix mobile 'missing' buttons not working on mobile
-    1.2 25/11/25 Standard tidy-up
 */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') :

@@ -9,16 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 20/01/24 Move to logMessage
-    1.2 23/08/24 MTGC-123 - Use normal value if needed for Top Value
-    1.3 01/03/25 MTGC-124 - Move last price calc function here from functions file
-    1.4 25/11/25 Standard tidy-up
-    1.5 28/11/25 Remove unused status assignment
-    1.6 06/12/25 Use qty_total column for collection filtering
-    1.7 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

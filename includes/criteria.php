@@ -6,28 +6,9 @@ Date:        05/12/25
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
-
-History:
-    1.0         Initial version
-    2.0         Cards_scry refactoring
-    3.0         Add Arena legalities
-    4.0         PHP 8.1 compatibility
-    5.0         Add [set] search interpretation
-    6.0 09/12/23 Move main card search to parameterised queries
-    7.0 02/01/24 Add language search capability
-    7.1 20/01/24 Move to logMessage
-    7.2 22/01/24 Add Automatic search order, with variation for PLST and SLD
-                 Move to use booleans for card game types
-    7.3 17/02/24 Fix sort order for "New" searches
-    7.4 06/06/24 Move interpretation of input field to global function
-                 This allows interpretation of e.g. "Farfinder [IKO 2]"
-    7.5 10/06/24 Add AND / OR to type searches
-    7.6 01/08/24 MTGC-114 - fix match card searches failing if card names have hyphen
-    8.0 01/03/25 Add Name exact
-    8.1 02/03/25 Catch empty ability search
-    8.2 05/04/25 MTGC-150 remove $nameexact, generating errors in header searches
-    8.3 26/11/25 Standard tidy-up
-    8.4 05/12/25 Contract identical half splits (e.g. Sol Ring // Sol Ring)
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

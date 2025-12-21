@@ -9,13 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 28/02/25 Security fixes: HMAC-SHA256, SQLi fix, cookie & logging improvements, better IP detection
-    1.2 25/11/25 Standard tidy-up
-    1.3 01/12/25 CamelCase variables
-    1.4 01/12/25 Remove unused cookieLifetime
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

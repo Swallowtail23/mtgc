@@ -9,10 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 08/12/25 Initial version
-    1.2 20/12/25 Add CSV export support and shared history class
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

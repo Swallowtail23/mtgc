@@ -9,10 +9,6 @@ Notes:       Not currently used in code.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 23/10/16 Initial version
-    1.1 25/11/25 Standard tidy-up
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

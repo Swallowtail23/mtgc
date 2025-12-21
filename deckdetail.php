@@ -9,48 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Migrated to mysqli
-    3.0         Added export deck list
-    4.0         Added 'Need' list
-    5.0         Added 'Quick Add'
-    6.0         Some tweaks in Quick Add code to work with apostrophes
-    7.0         Added Google Charts for CMC chart view
-    8.0         Added Commander capability
-    9.0         Move to use scryfall image function
-    10.0        Moved from writelog to Message class
-    11.0        Refactoring for cards_scry
-    12.0        PHP 8.1 compatibility
-    12.1        Removed unnecessary db escaping on notes
-    13.0        Fixed quick add import not reading setcode; tidied some logging
-    14.0        Removed ability to add more than 1 for commander decks; removed qty display
-    15.0        Improved performance by making Missing check manual; updated icons; Partner Commander
-    16.0        Added deckname edit and delete deck from deck detail page
-    17.0        Add functional wishlist in decks; add commander colour identity
-    18.0 25/11/23 Add import; significantly more robust Quick Add
-    19.0 03/12/23 Add photo capability
-    19.1 04/12/23 Refine photo security by serving images through a PHP script
-    19.2 14/01/24 Move session.name to include
-    19.3 20/01/24 Move to logMessage
-    19.4 15/02/24 Empty type breaks decks - cater for this (REX, SLD)
-    19.5 09/06/24 Add local currency for deck value; update help text; email on multi input errors
-    20.0 10/06/24 Optimise missing queries, and run each time because it's faster
-    20.1 06/07/24 Add card collector numbers to deck exports; don't cut basic lands to 1 for commander
-    20.2 08/07/24 MTGC-108 - save/load multiline single-use quick add; add deck rename
-    20.3 27/07/24 Add hover image option for deck detail view
-    21.0 27/07/24 MTGC-111/109/110 - logging for deck add; preload hover images; fix tap hover on mobile
-    21.1 28/07/24 MTGC-112 - fix mobile Missing buttons not working
-    22.0 02/08/24 MTGC-115/116/113 - fix mouse/touch modes; tidy wishlist decks; add mana pip qty
-    22.1 11/08/24 MTGC-119 - save notes with Ajax instead of full submit
-    23.0 08/09/24 MTGC-125 - move deck export to deckmanager class (prep for automated exports)
-    24.0 05/10/24 MTGC-128 - Deck duplication code
-    24.1 13/10/24 MTGC-136/130 - Code tidy/optimisation; break icons line for long deck names
-    24.2 25/11/25 Standard tidy-up; Remove legacy $missing code; fixed sideboard only card display bug
-    24.3 29/11/25 Rename forcePasswordChange usage
-    25.0 29/11/25 Add async image checks
-    25.1 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

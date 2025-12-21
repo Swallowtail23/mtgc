@@ -9,12 +9,6 @@ Notes:       To be run via cron, e.g. daily
 Author:      Simon Wilson <simon@simonandkate.net>
 Copyright:   2025 Simon Wilson
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 10/06/24 Added DOCUMENT_ROOT so can run when called from bulk folder by php-cli
-    1.2 25/11/25 Formatting clean-up
-    1.3 28/11/25 Add To do line after copyright
 */
 
 // Load required files

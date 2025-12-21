@@ -9,20 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Add card variable types for centralisation of card types
-    2.1 27/11/23 Added fx variables from ini file
-    3.0 17/12/23 Added local fx currency array
-    4.0 02/01/24 Add language arrays
-    5.0 13/01/24 Add PHPMailer variables
-    5.1 07/07/24 Add array for cards with brackets in names
-    5.2 09/12/24 Move tribal here from index page
-    5.3 26/11/25 Standard tidy-up
-    5.4 28/11/25 Update inputInterpreter reference
-    5.5 29/11/25 Remove unused reference to $mtgprice
-    5.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

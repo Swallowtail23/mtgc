@@ -9,15 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 28/02/25 Minor fixes, CSRF protection
-    1.2 28/02/25 Restored styling and missing includes
-    1.3 01/03/25 Code tweaks/tidy-up
-    1.4 25/11/25 Formatting clean-up
-    1.5 25/11/25 Standard tidy-up
-    1.6 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

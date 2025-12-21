@@ -9,13 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 27/11/23 Brought in fx logic to userinfo method, and renamed from checkLogged to getUserInfo
-    1.2 20/01/24 Move to logMessage
-    1.3 25/11/25 Standard tidy-up
-    1.4 04/12/25 Handle FX API timeouts gracefully and reuse cached rates
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

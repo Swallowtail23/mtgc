@@ -10,37 +10,6 @@ Notes:       This page must not run the forcePasswordChange function - this is t
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Mysqli_Manager migration completed down to Line 350
-    3.0         Moved from writelog to Message class; migrated to mysqli
-    4.0         Errors running under php7.4 resolved (primarily null variable issues)
-    5.0         Refactoring of import for new database structure; add emailed report
-    6.0         Changed to password_verify / password_hash
-    7.0         Added handling for etched cards
-    8.0         Toggles for options (calling ajax updates)
-    9.0 17/12/23 Add currency selection
-    10.0 10/01/24 Rewrite of import display and code; add Delver Lens import
-    11.0 13/01/24 Add email export for CSV
-    11.1 20/01/24 Move to logMessage
-    11.2 09/06/24 Update help wording for export and import with languages; MTGC-87 and MTGC-89
-    12.0 05/07/24 Major import rewrite; MTGC-100
-    12.1 06/07/24 Tweaks for new import rewrite
-    12.2 23/08/24 MTGC-123 - Use normal price for total value if foil or etched prices unavailable but normal exists
-    13.0 01/03/25 Alterations for display of additional security options
-    13.1 02/03/25 Display fixes, including MTGC-145
-    13.2 25/11/25 Standard tidy-up
-    13.3 29/11/25 Update forcePasswordChange reference in notes
-    13.4 01/12/25 Respect email disabled setting on collection actions
-    13.5 04/12/25 Require 2FA for password changes and email notifications on change
-    13.6 06/12/25 Async collection value refresh on profile
-    13.7 06/12/25 Add profile/collection tabs and shared collection section
-    13.8 06/12/25 Move collection management to collection tab
-    13.9 18/12/25 Disable currency selection when FX disabled
-    14.0 21/12/25 Keep site title raw in email subjects
-    14.1 21/12/25 Simplify site title usage
-    14.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

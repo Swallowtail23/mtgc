@@ -6,16 +6,9 @@ Date:        21/12/25
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
-
-History:
-    1.0         Release 1
-    2.0 13/01/24 Move to PHPMailer for email output
-    2.1 20/01/24 Move to logMessage
-    2.2 11/06/24 Re-download set icons once a week
-    2.3 25/11/25 Formatting clean-up
-    2.4 25/11/25 Wrapped long SQL string
-    2.5 25/11/25 Rename PHPMailer wrapper to PascalCase
-    2.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 */
 
 require('bulk_ini.php');

@@ -9,11 +9,6 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 05/10/24 Initial version
-    1.1 25/11/25 Standard tidy-up
-    1.2 28/11/25 Add To do line after copyright
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

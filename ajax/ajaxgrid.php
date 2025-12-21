@@ -9,17 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Migrated to Mysqli_Manager
-    3.0         Moved from writelog to Message class
-    4.0         PHP 8.1 compatibility
-    5.0         Added third card finish (etched)
-    5.1 10/12/23 Add cardid regex filter; improve error handling back to Ajax
-    5.2 20/01/24 Include sessionname.php and move to logMessage
-    5.3 25/11/25 Standard tidy-up
-    5.4 28/11/25 Add To do line after copyright
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

@@ -9,14 +9,6 @@ Notes:       Call with Post 'text' and optionally 'filename'.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         PHP 8.1 compatibility
-    3.0 08/09/24 MTGC-125 - move export logic to deckManager class
-    4.0 05/10/24 MTGC-127 - fix broken deck missing export via DeckManager
-    4.1 25/11/25 Standard tidy-up
-    4.2 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

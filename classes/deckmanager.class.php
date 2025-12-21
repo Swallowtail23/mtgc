@@ -9,24 +9,6 @@ Notes:       ProcessInput() called with deck number and input string; quickAdd()
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 25/11/23 Initial version
-    1.1 11/12/23 Move deck-related methods from functions; move to single instance of Message class
-    1.2 20/01/24 Move to logMessage
-    1.3 15/02/24 Empty 'type' breaks decks - cater for this (REX, SLD)
-    2.0 09/06/24 Improve deck import capability to cater with MTGC import format as well as quick add format; send
-                email if multi input errors
-    3.0 13/07/24 MTGC-107 - correctly interpret sideboard cards on input
-    4.0 08/09/24 MTGC-125 - adding deck export code
-    4.1 05/10/24 MTGC-127 - Fix broken Deck missing export; add public function to call from dltext.php; MTGC-128 -
-                Add Deck type change function, and add 'variable' method to deck export, used in deck duplicate
-    4.2 13/10/24 MTGC-133 - Prefer non-promo cards when adding Quick Add without specified setcode
-    4.3 25/11/25 Standard tidy-up
-    4.4 25/11/25 Rename PHPMailer wrapper to PascalCase
-    4.5 28/11/25 Rename inputInterpreter call
-    4.6 04/12/25 Return multi-line quickadd errors to caller
-    4.7 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

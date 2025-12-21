@@ -7,34 +7,6 @@ Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved image calls to use scryfall function
-    3.0         Moved from writelog to Message class
-    4.0         Moved to mysqli
-    5.0         Re-factoring for cards_scry
-                Javascript simplification and Ajax changes
-    6.0         Layout changes for Arena cards
-    7.0         Add flip capability for battle cards
-    8.0         Changes to handle etched cards
-    9.0 02/12/23 Add javascript to add/remove b/w based on cview mode
-    10.0 09/12/23 Move main search to parameterised queries
-    11.0 02/01/24 Add language search parameters
-    11.1 20/01/24 Move to logMessage
-    11.2 22/01/24 Increased $maxresults to 3,500 to cope with The List
-    11.3 06/06/24 Move interpretation of input field to global function
-                  This allows interpretation of e.g. "Farfinder [IKO 2]"
-    11.4 10/06/24 Add AND / OR to type searches
-    11.5 09/12/24 Move tribal valid list to ini.php
-    12.0 01/03/25 Add Name exact
-    12.1 02/03/25 Catch and evade empty ability search
-    12.2 26/11/25 Standard tidy-up
-    12.3 28/11/25 Update inputInterpreter call
-    12.4 29/11/25 Rename forcePasswordChange usage
-    13.0 29/11/25 Add async image checks
-    13.1 07/12/25 Display abilities for two-faced cards
-    13.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // Call script initiation mechs

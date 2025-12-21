@@ -6,16 +6,9 @@ Date:        21/12/25
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 13/01/24 Use PHPMailer for email report
-    1.2 20/01/24 Move to logMessage
-    1.3 25/11/25 Formatting clean-up
-    1.4 25/11/25 Wrapped long log/email strings
-    1.5 25/11/25 Rename PHPMailer wrapper to PascalCase
-    1.6 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 require('bulk_ini.php');

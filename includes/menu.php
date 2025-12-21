@@ -9,13 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         PHP 8.1 compatibility
-    2.1 20/01/24 Move to logMessage
-    2.2 26/11/25 Standard tidy-up
-    2.3 02/12/25 Guard missing update notices
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

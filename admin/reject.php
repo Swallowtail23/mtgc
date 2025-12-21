@@ -8,14 +8,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved to Message class from writelog
-    2.1 20/01/24 Move to logMessage
-    2.2 24/11/25 PHPCS cleaning
-    2.3 25/11/25 Header tidy and metadata standardization
-    2.4 28/11/25 Add To do line after copyright
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

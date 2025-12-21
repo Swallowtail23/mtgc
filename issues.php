@@ -9,12 +9,6 @@ Notes:       No db functions.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 10/06/24 Added AND / OR to type searches, removed issue note
-    1.2 25/11/25 Standard tidy-up
-    1.3 29/11/25 Rename forcePasswordChange usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

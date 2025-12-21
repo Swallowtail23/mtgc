@@ -9,10 +9,6 @@ Notes:       Third-party code from IT-radionica.com.
 Author:      Radovan Janjic <rade@it-radionica.com>
 Copyright:   2011 IT-radionica.com
 To do:       -
-
-History:
-    1.0 29/06/13 Initial version
-    1.1 25/11/25 Standard tidy-up
 */
 
 /*

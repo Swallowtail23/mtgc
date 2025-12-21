@@ -11,14 +11,6 @@ Notes:       Usage:
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 13/01/24 Initial version
-    1.1 20/01/24 Move to logMessage
-    1.2 25/11/25 Standard tidy-up
-    1.3 25/11/25 Rename class to PascalCase
-    1.4 01/12/25 Respect email disabled setting
-    1.5 20/12/25 Support multiple attachments
 */
 
 //Import PHPMailer classes into the global namespace

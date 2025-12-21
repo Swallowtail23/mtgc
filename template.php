@@ -9,11 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 25/11/25 Standard tidy-up
-    1.2 29/11/25 Update forcePasswordChange call
 */
 
 if (file_exists('includes/sessionname.local.php')) :

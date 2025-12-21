@@ -9,15 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Add ZeroBadLogin public function, reset bad login count after good login
-    3.0         Correct empty array key for invalid email address
-    3.1 20/01/24 Move to logMessage
-    3.2 25/11/25 Standard tidy-up
-    3.3 25/11/25 Rename methods to camelCase
-    3.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

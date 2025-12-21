@@ -9,10 +9,6 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 06/12/25 Initial version
-    1.1 08/12/25 Allow collection tab, reuse CollectionStats
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

@@ -8,18 +8,6 @@ Notes:       The page does not run standard secpagesetup as it breaks the ajax l
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:      -
-
-History:
-    1.0         Initial version
-    2.0         Migrated to Mysqli_Manager
-    2.1         Moved from writelog to Message class
-    3.0         Refactor for cards_scry
-    4.0         Move to prepared statements
-    5.0         Add [set] search interpretation
-    5.1 20/01/24 Include sessionname.php and move to logMessage
-    6.0 07/07/24 Improved resilience and search options, including () and [], cards with part-names in brackets, etc
-    6.1 25/11/25 Standard tidy-up
-    6.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :

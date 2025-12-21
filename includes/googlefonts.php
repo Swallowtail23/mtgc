@@ -9,12 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 26/11/25 Standard tidy-up
-    1.2 26/11/25 Align header with standard format
-    1.3 04/12/25 Restrict Material Symbols to used icons
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

@@ -9,14 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1         Added session_regenerate_id; CSRF validation; db validation; unset redirect; cast user id
-    1.2 01/03/25 Code tidy and consistency tweaks
-    1.3 25/11/25 Formatting clean-up
-    1.4 25/11/25 Standard tidy-up
-    1.5 29/11/25 Rename cssVersionCheck usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

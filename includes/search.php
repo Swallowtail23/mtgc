@@ -9,18 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Added code to get sets from DB instead of setshtml.php
-    3.0         Add Arena legalities
-    4.0 06/12/23 Add year to optgroup
-    5.0 02/01/24 Add language search capability
-    5.1 22/01/24 Add Automatic search order, with variation for PLST and SLD
-    5.2 10/06/24 Add AND / OR to type searches
-    6.0 01/03/25 Add Name exact
-    6.1 26/11/25 Standard tidy-up
-    6.2 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

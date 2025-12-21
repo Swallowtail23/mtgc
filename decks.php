@@ -9,18 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Bug fixes (prevent adding deck with blank name)
-    3.0         Mysqli_Manager conversion
-    3.1         Moved from writelog to Message class
-    4.0         Refactoring for cards_scry data
-    5.0         PHP 8.1 compatibility
-    5.1 20/01/24 Move to logMessage
-    5.2 25/11/25 Standard tidy-up
-    5.3 29/11/25 Rename forcePasswordChange usage
-    5.4 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

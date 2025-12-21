@@ -9,11 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 23/10/16 Initial version
-    1.1 25/11/25 Standard tidy-up
-    1.2 25/11/25 Pad day to two digits
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

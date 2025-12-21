@@ -6,20 +6,9 @@ Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
 Notes:       Exports csv card collections where users are active and have opted in
-
-History:
-    1.0         Initial release
-    1.1 20/01/24 Added requirement to be 'active' status
-    2.0 08/09/24 MTGC-125 - adding decks to exports
-    2.1 25/11/25 Formatting clean-up
-    2.2 25/11/25 Wrapped long SQL/email strings
-    2.3 25/11/25 Rename PHPMailer wrapper to PascalCase
-    2.4 20/12/25 Add weekly value history export
-    2.5 20/12/25 Attach value history CSV to weekly collection export email
-    2.6 20/12/25 Consolidate weekly exports into a single email
-    2.7 21/12/25 Keep site title raw in email subjects and plain text
-    2.8 21/12/25 Simplify site title usage
-    2.9 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 */
 
 require('bulk_ini.php');

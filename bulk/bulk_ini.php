@@ -1,18 +1,13 @@
 <?php
-
 /*
 Version:     3.2
 Date:        25/11/25
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
 Notes:       {none}
-
-History:
-    1.0         Ini settings for bulk files
-    2.0 02/01/24 Bring card game types variable into here; also bulk file location URLs and languages to import
-    3.0 13/01/24 Move to PHPMailer for email output
-    3.1 25/11/25 Formatting clean-up
-    3.2 25/11/25 Wrapped long log strings
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

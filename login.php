@@ -9,24 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved from writelog to Message class; reset bad login count after good login
-    3.0         Moved to password-verify
-    4.0         Corrected logic around invalid user emails
-    5.0         Added Cloudflare Turnstile protection
-    6.0 09/12/23 Add redirect capture
-    6.1 20/01/24 Move to logMessage
-    7.0 28/02/25 Trusted devices capability
-    7.1 25/11/25 Update UserStatus method calls to camelCase
-    7.2 25/11/25 Standard tidy-up
-    7.3 27/11/25 Use dedicated variable for Turnstile client
-    7.4 27/11/25 Disable login submit until Turnstile success
-    7.5 27/11/25 Enable login submit via JS when Turnstile disabled or success
-    7.6 28/11/25 Extract login handling into LoginHandler class for clarity
-    7.7 29/11/25 Rename cssVersionCheck usage
-    8.0 02/12/25 Adjust to prevent "Session headers already sent"
 */
 
 if (file_exists('includes/sessionname.local.php')) :

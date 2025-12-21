@@ -9,12 +9,6 @@ Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes n
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0 17/10/16 Update copyright text
-    2.1 25/11/25 Standard tidy-up
-    2.2 01/12/25 Note when email alerts are disabled
 */
 
 $iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");

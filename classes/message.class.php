@@ -11,14 +11,6 @@ Notes:       Usage:
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         PHP 8.1 compatibility
-    3.0 14/01/24 Bring 'source' into the message function - all calls to be migrated
-    4.0 28/02/25 Moved writelog() here from error_handling.php
-    4.1 25/11/25 Standard tidy-up
-    4.2 21/12/25 Avoid argument mutation in backtraces
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

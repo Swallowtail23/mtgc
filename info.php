@@ -9,13 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Mysqli_Manager migration completed.
-    2.1 25/11/25 Standard tidy-up
-    2.2 29/11/25 Rename forcePasswordChange usage
-    2.3 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

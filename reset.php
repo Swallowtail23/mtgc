@@ -9,23 +9,6 @@ Notes:       Does not run secpagesetup - not a secure page!
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0 05/09/17 Removed hard-coded email address, now uses ini.php
-    2.1 25/11/25 Standard tidy-up
-    2.2 28/11/25 Use PasswordCheck::passwordReset for reset requests
-    2.3 29/11/25 Rename cssVersionCheck usage
-    3.0 01/12/25 Token-based password reset flow
-    3.1 04/12/25 Improve resilience and security around token management
-    3.2 04/12/25 Add cancel button to return to login
-    3.3 04/12/25 Hide reset form after password update message
-    3.4 04/12/25 Enforce complexity and difference checks for token resets
-    3.5 04/12/25 Require 2FA for password reset when enabled and notify user by email
-    3.6 04/12/25 Keep token reset form visible after validation errors
-    3.7 05/12/25 Preserve token URL on complexity/duplication failures
-    3.8 21/12/25 Keep site title raw in email subjects
-    3.9 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

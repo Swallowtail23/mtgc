@@ -8,20 +8,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version - no function yet
-    2.0         Functions added for add, edit, copy cards; run legality check; add pre-release promos
-    3.0         Move from writelog to Message class
-    4.0         Much simpler form, all data from Scryfall, so no editing here - just delete or delete image
-    5.0         PHP 8.1 compatibility
-    5.1 10/12/2023 Sanitise UUID
-    5.2 20/01/24 Move to include sessionname and logMessage
-    5.3 24/11/25 PHPCS cleaned
-    5.4 25/11/25 Header tidy and metadata standardization
-    5.5 28/11/25 Add To do line after copyright
-    5.6 29/11/25 Rename forcePasswordChange usage
-    5.7 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');

@@ -6,10 +6,9 @@ Date:        26/11/25
 Name:        footer.php
 Purpose:     PHP script to display footer
 Notes:       {none}
-
-History:
-    1.0 17/10/16 Initial version
-    1.1 26/11/25 Standard tidy-up
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
 */
 
 if (__FILE__ === $_SERVER['PHP_SELF']) :

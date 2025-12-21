@@ -9,24 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Break import into MTGC and Delver formats
-    3.0 13/01/24 Move to use PHPMailer
-    3.1 20/01/24 Move to logMessage
-    4.0 09/06/24 Update export and import routines for languages (MTGC-87, MTGC-89)
-    5.0 05/07/24 Major import routine rewrite (MTGC-100)
-    5.1 06/07/24 Catch fringe import cases, and improve return notices
-    5.2 25/11/25 Standard tidy-up
-    5.3 25/11/25 Rename PHPMailer wrapper to PascalCase
-    5.4 28/11/25 ImportCollectionRegex: declare global noQuickAddLayouts
-    5.5 28/11/25 Rename inputInterpreter call
-    5.6 02/12/25 Allow alternative result drivers when fetching export headers
-    5.7 20/12/25 Allow additional attachments in export emails
-    5.8 20/12/25 Expose collection CSV builder for bulk exports
-    5.9 21/12/25 Escape site title in HTML emails only
-    6.0 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

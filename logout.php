@@ -8,12 +8,7 @@ Purpose:     Destroy the session, log it, and head to login.php.
 Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:
-
-History:
-    1.0         Initial version
-    2.0 28/02/25 Add trusted device handling
-    2.1 25/11/25 Standard tidy-up
+To do:       -
 */
 
 if (file_exists('includes/sessionname.local.php')) :

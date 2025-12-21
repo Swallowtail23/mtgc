@@ -9,13 +9,6 @@ Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1 06/12/25 Add collection management actions and messaging
-    1.2 20/12/25 Add value history CSV export
-    1.3 21/12/25 Keep site title raw in email exports
-    1.4 21/12/25 Simplify site title usage
 */
 
 if (file_exists('includes/sessionname.local.php')) :

@@ -9,15 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved to Message class from writelog
-    3.0         Fixes for cards_scry database
-    3.1 20/01/24 Move to logMessage
-    3.2 25/11/25 Standard tidy-up
-    4.0 25/11/25 Refactor to lookup-based mapping (no behaviour change)
-    4.1 26/11/25 Allow string colour codes (split card normalization works)
 */
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

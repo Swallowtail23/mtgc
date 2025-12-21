@@ -9,14 +9,6 @@ Notes:       Currently called after import function is run.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    1.1         Filter table name with regex
-    1.2 20/01/24 Move to logMessage
-    1.3 25/11/25 Formatting clean-up
-    1.4 25/11/25 Standard tidy-up
-    1.5 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('includes/sessionname.local.php')) :

@@ -9,19 +9,6 @@ Notes:       {none}
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0         Initial version
-    2.0         Moved from crypt() to password_verify()
-    2.1 20/01/24 Move to logMessage
-    2.2 25/11/25 Standard tidy-up
-    2.3 27/11/25 Add email validation to newUser
-    2.4 01/12/25 Token-based password reset flow
-    2.6 04/12/25 Enforce complexity and difference checks for token resets
-    2.7 04/12/25 Notify user on password change
-    2.8 05/12/25 Reduce reset token TTL to 10 minutes
-    2.9 21/12/25 Avoid HTML-escaping site title in email subjects and plain text
-    3.0 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols

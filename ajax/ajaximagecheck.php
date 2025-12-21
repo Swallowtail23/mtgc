@@ -9,10 +9,6 @@ Notes:       Lightweight head/refresh; relies on ImageManager.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
-
-History:
-    1.0 29/11/25 Initial version
-    1.1 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
