@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        21/12/25
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
@@ -21,7 +21,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");
 

@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.1
+Version:     1.2
 Date:        07/12/25
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
@@ -14,7 +14,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 
 if (!isset($msg) || !($msg instanceof Message)) :
-    $msg = new Message($logfile ?? null);
+    $msg = new \MTG\Core\Message($logfile ?? null);
 endif;
 
 $statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);

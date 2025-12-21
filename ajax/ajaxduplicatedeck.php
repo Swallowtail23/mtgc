@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        28/11/25
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -22,7 +22,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Valid pages to call this (array)
 $expectedReferringPages = [$myURL . '/deckdetail.php'];

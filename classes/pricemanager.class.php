@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        21/12/25
 Name:        pricemanager.class.php
 Purpose:     Price management class.
@@ -31,7 +31,7 @@ class PriceManager
         $this->db = $db;
         $this->logfile = $logfile;
         $this->userEmail = $userEmail;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
     }
 
     // Fetch TCG buy URI and price from scryfall.com JSON data

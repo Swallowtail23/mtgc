@@ -30,10 +30,14 @@ All notable changes to this project will be documented in this file.
 - Fixed: pass explicit CSV escape characters for fputcsv/str_getcsv to avoid future default changes.
 - Infrastructure: Docker now builds on PHP 8.4 with composer platform pinned to PHP 8.2.30, and docker-init pulls base images on rebuild.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
+- Changed: instantiate `\MTG\Core\Message` with fully-qualified names after moving the class into `src/MTG`.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.
 - Changed: weekly value history export now attaches to the weekly collection export email.
 - Changed: weekly collection, value history, and deck exports are delivered in one email.
+- Infrastructure: update PHPUnit bootstrap to load Composer autoload and align Message log level globals.
+- Fixed: load Composer autoload in TrustedDeviceManager when Message class is not yet available.
+- Changed: drop the global Message class alias now that all references are fully qualified.
 
 ## [v0.1.3] - 2025-12-16
 

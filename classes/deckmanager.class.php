@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.7
+Version:     4.8
 Date:        21/12/25
 Name:        deckmanager.class.php
 Purpose:     Class for quickAdd and deck import.
@@ -42,7 +42,7 @@ class DeckManager
     ) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->userEmail = $userEmail;
         $this->serverEmail = $serverEmail;
         $this->importLinestoIgnore = $importLinestoIgnore;

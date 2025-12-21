@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        21/12/25
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -22,7 +22,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', "Collection page load");
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     27.0
+Version:     27.1
 Date:        21/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -26,7 +26,7 @@ function forcePasswordChange()
 function cssVersionCheck()
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     if (!is_object($db) or !method_exists($db, 'execute_query')) :
         $msg->logMessage(
             '[WARNING]',
@@ -59,7 +59,7 @@ function setMtceMode($toggle): bool
 {
     global $db, $logfile;
 
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $toggle = strtolower(trim((string) $toggle));
 
@@ -108,7 +108,7 @@ function setMtceMode($toggle): bool
 function mtceModeCheck($user)
 {
     global $db,$logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking maintenance mode, user $user");
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
@@ -281,7 +281,7 @@ function langReplace($str)
 function checkRemoteFile($url)
 {
     global $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     if (stripos($url, 'file://') === 0) :
         $path = substr($url, 7);
@@ -400,7 +400,7 @@ function getFullURL()
 function loginStamp($userEmail)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[NOTICE]', "Writing user login");
     $logindate = date("Y-m-d");
@@ -423,13 +423,13 @@ function ensureDirectoryExists($path)
     endif;
 
     if (@mkdir($path, 0755, true)) :
-        $msg = new Message($logfile);
+        $msg = new \MTG\Core\Message($logfile);
         $msg->logMessage('[NOTICE]', "Created directory $path");
         return;
     endif;
 
     $error = error_get_last();
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
     throw new Exception("[ERROR] Unable to create directory {$path}");
 }
@@ -545,7 +545,7 @@ function getBulkInfo($type)
 {
     // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
     global $logfile, $defaultCardsUrl, $allCardsUrl, $imgLocation;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     $bulkInfo = false;
 
     $url = $urlDefault = $urlAll = $fileLocation = $fileLocationDefault = $fileLocationAll = '';
@@ -656,7 +656,7 @@ function getBulkJson($uri, $file_location, $max_fileage)
 {
     // Function to download and save bulk Scryfall data files
     global $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $shouldDownload = true;
     $reason = '';
@@ -735,7 +735,7 @@ function scryfallImport($file_location, $type)
         $adminEmail,
         $imgLocation,
         $twoCardDetailSections;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     // Check and write columns for hashes (remove after done)
     $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
@@ -2128,7 +2128,7 @@ function validateTrueDecimal($v)
 {
     global $logfile;
     $result = floor($v);
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking $v for true decimal, result is $result");
     return(floor($v) != $v);
@@ -2171,7 +2171,7 @@ function cardTypes($finishes)
 function cardLegalDBField($decktype)
 {
     global $db, $deck_legality_map, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Looking up db_field for legality for deck type '$decktype'");
     $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
@@ -2185,7 +2185,7 @@ function cardLegalDBField($decktype)
 function promoLookup($promo_type)
 {
     global $promos_to_show, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Looking up promo description for '$promo_type'");
     $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));
@@ -2201,7 +2201,7 @@ function promoLookup($promo_type)
 function deckLegalList($deckNumber, $deck_type, $db_field)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage(
         '[DEBUG]',
@@ -2247,7 +2247,7 @@ function deckLegalList($deckNumber, $deck_type, $db_field)
 function validUUID($uuid)
 {
     global $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking for valid UUID ($uuid)");
     if (
@@ -2267,7 +2267,7 @@ function validUUID($uuid)
 function validTableName($input)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking for valid table name ($input)");
     $pattern = '/^\d+collection$/';
@@ -2348,14 +2348,14 @@ function inputInterpreter($input_string)
     // - set
     // - collector number
     global $db, $logfile, $bracketsInNames, $importLinestoIgnore;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
     $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
 
     // Define is_csv as a closure
     $is_csv = function ($string) use ($logfile) {
-        $msg = new Message($logfile);
+        $msg = new \MTG\Core\Message($logfile);
         // Check if the string contains at least 4 commas
         $comma_count = substr_count($string, ',');
         if ($comma_count < 4) :
@@ -2374,7 +2374,7 @@ function inputInterpreter($input_string)
 
     // Define extract_and_process_csv as a closure
     $extract_and_process_csv = function ($line) use ($logfile) {
-        $msg = new Message($logfile);
+        $msg = new \MTG\Core\Message($logfile);
 
         // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
         $fields = str_getcsv($line, ',', '"', '\\');

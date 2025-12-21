@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        25/11/25
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
@@ -21,7 +21,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     header("Refresh: 2; url=login.php"); // redirect if not logged in

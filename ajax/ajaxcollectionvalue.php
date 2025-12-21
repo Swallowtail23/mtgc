@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        08/12/25
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -20,7 +20,7 @@ startCustomSession();
 require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';

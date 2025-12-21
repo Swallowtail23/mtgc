@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.6
+Version:     2.7
 Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -17,7 +17,7 @@ use JsonMachine\Items;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 ensureDirectoryExists($imgLocation . 'json');
 
 // URLs
@@ -39,7 +39,7 @@ $max_fileage = 23 * 3600;
 function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     $msg->logMessage('[DEBUG]', "Fetching Download URI: $url");
     if ($pageNumber == 0) :
         $page = $file_location . 'migrations.json';
@@ -71,7 +71,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 function checkMigrationDataForMore($file)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $next_page = 'none';
@@ -89,7 +89,7 @@ function checkMigrationDataForMore($file)
 function clearDBMigrations()
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     if ($result = $db->query('TRUNCATE TABLE migrations')) :
         $msg->logMessage('[NOTICE]', "Scryfall migrations API: migrations table cleared");
@@ -119,7 +119,7 @@ function safeDeleteCheck($id)
 {
     global $db, $logfile;
     $safeScore = null;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     //Find if it's in any decks
     $userResultArray = $collectionResultArray = $resultArray = array();

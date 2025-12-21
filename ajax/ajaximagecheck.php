@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        21/12/25
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -20,7 +20,7 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Validate referrer to limit abuse
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.3
+Version:     2.4
 Date:        02/12/25
 Name:        menu.php
 Purpose:     PHP script to display menu
@@ -47,11 +47,11 @@ endif;
                         <?php
                     endif;
                 else :
-                    $obj = new Message($logfile);
+                    $obj = new \MTG\Core\Message($logfile);
                     $obj->logMessage('[DEBUG]', 'Menu updatenotices query returned no rows');
                 endif;
             else :
-                $obj = new Message($logfile);
+                $obj = new \MTG\Core\Message($logfile);
                 $obj->logMessage('[DEBUG]', 'Menu updatenotices query failed');
             endif;
         endif;

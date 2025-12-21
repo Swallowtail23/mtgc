@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     2.10
 Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -14,7 +14,7 @@ To do:       -
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg   = new Message($logfile);
+$msg   = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
 $historyExporter = new CollectionHistory($db, $logfile, $siteTitle);

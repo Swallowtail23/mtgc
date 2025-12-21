@@ -22,7 +22,8 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 forcePasswordChange();                    // Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+
+$msg = new \MTG\Core\Message($logfile);
 
 // Default numbers per page and max
 $listperpage = 30;

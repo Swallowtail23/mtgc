@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.5
+Version:     4.6
 Date:        21/12/25
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -26,7 +26,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Page content starts here
 if (isset($_GET['table'])) :

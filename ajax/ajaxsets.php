@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        25/11/25
 Name:        ajaxsets.php
 Purpose:     PHP script to update sets page
@@ -21,7 +21,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Check if the request is coming from valid page
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';

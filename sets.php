@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.6
+Version:     4.7
 Date:        21/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -22,7 +22,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 forcePasswordChange();                     // Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;

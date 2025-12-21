@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.4
+Version:     3.5
 Date:        21/12/25
 Name:        userstatus.class.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
@@ -32,7 +32,7 @@ class UserStatus
         $this->db = $db;
         $this->logfile = $logfile;
         $this->email = $email;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
     }
 
     public function getUserStatus()

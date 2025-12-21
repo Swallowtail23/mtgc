@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.4
+Version:     5.5
 Date:        21/12/25
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -22,7 +22,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 forcePasswordChange(); // Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 //page specific variables
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';

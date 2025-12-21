@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.1
+Version:     4.2
 Date:        26/11/25
 Name:        colour.php
 Purpose:     Return colour name for a colour code.
@@ -19,7 +19,7 @@ function colourFunction($colourcode)
 {
     $originalColourcode = $colourcode;
     global $logfile;
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     $msg->logMessage('[DEBUG]', "run with input: $colourcode");
     $decoded = json_decode($colourcode);
     $colourcode = '';

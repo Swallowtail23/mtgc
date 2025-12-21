@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        25/11/25
 Name:        twofactormanager.class.php
 Purpose:     Handles 2FA setup, verification, and management.
@@ -47,7 +47,7 @@ class TwoFactorManager
         if (!class_exists('Message')) :
             require_once(__DIR__ . '/../classes/message.class.php');
         endif;
-        $this->log = new Message($this->logfile);
+        $this->log = new \MTG\Core\Message($this->logfile);
     }
 
     private function directLog($level, $text)

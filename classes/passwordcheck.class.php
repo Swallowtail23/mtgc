@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.0
+Version:     3.1
 Date:        21/12/25
 Name:        passwordcheck.class.php
 Purpose:     Password validation class.
@@ -32,7 +32,7 @@ class PasswordCheck
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
@@ -503,7 +503,7 @@ class PasswordCheck
     public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
         global $serverEmail, $adminEmail, $emailEnabled;
-        $msg = new Message($this->logfile);
+        $msg = new \MTG\Core\Message($this->logfile);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
             $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");

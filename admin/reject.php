@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     2.4
+Version:     2.5
 Date:        28/11/25
 Name:        reject.php
 Purpose:     Non-admin rejection page called by admin pages on attempted load by non-admin or from non-secure page
@@ -30,7 +30,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     include '../includes/overlays.php';
     include '../includes/header.php';
     require('../includes/menu.php');
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
     ?>
     <div id='page'>
         <div class='staticpagecontent'>

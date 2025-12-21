@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.6
+Version:     5.8
 Date:        21/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -30,12 +30,20 @@ endif;
 // Composer
 $root = realpath($_SERVER["DOCUMENT_ROOT"]);
 require_once "$root/vendor/autoload.php";
+
 // Other classes
 function autoLoader($class_name)
 {
+    // If it's namespaced, let Composer handle it
+    if (strpos($class_name, '\\') !== false) :
+        return;
+    endif;
+
     $class_name_lwr = strtolower($class_name);
-    if (file_exists($_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php')) :
-        include $_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php';
+    $path = $_SERVER["DOCUMENT_ROOT"] . '/classes/' . $class_name_lwr . '.class.php';
+
+    if (file_exists($path)) :
+        require_once $path;
     endif;
 }
 spl_autoload_register('autoLoader');
@@ -199,7 +207,7 @@ try {
     if ($emailEnabled) :
         mail($adminEmail, $subject, $message, $from);
     else :
-        $fallbackMsg = new Message($logfile);
+        $fallbackMsg = new \MTG\Core\Message($logfile);
         $fallbackMsg->logMessage(
             '[NOTICE]',
             "Email disabled; fatal DB alert not sent to admin ({$err->getMessage()})"

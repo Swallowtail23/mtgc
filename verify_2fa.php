@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        29/11/25
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -23,7 +23,7 @@ require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $cssver = cssVersionCheck();
 
 if (!isset($_SESSION['user_pending_2fa'])) :

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        01/12/25
+Version:     1.6
+Date:        21/12/25
 Name:        trusteddevicemanager.class.php
 Purpose:     Manage trusted device tokens for extended session handling.
 Notes:       {none}
@@ -35,12 +35,15 @@ class TrustedDeviceManager
         // Load HMAC secret from environment variable
         $this->hmacSecret = getenv('HMAC_SECRET');
 
-        if (!class_exists('Message')) :
-            require_once(__DIR__ . '/../classes/message.class.php');
+        if (!class_exists(\MTG\Core\Message::class)) :
+            $autoload = __DIR__ . '/../vendor/autoload.php';
+            if (file_exists($autoload)) :
+                require_once $autoload;
+            endif;
         endif;
 
         try {
-            $this->msg = new Message($this->logfile);
+            $this->msg = new \MTG\Core\Message($this->logfile);
         } catch (Error $e) {
             $this->msg = null; // Ensure it's null if instantiation fails
             $this->log('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.4
+Version:     2.5
 Date:        29/11/25
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -45,7 +45,7 @@ else :
             exit();
         endif;
     else :
-        $msg = new Message($logfile);
+        $msg = new \MTG\Core\Message($logfile);
         $msg->logMessage('[ERROR]', "User array returned false - user no longer exists?");
         session_destroy();
         echo "<meta http-equiv='refresh' content='1;url=login.php'>";

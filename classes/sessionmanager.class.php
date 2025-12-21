@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        04/12/25
 Name:        sessionmanager.class.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -42,7 +42,7 @@ class SessionManager
         $this->fxAPI = $fxAPI;
         $this->fxLocal = $fxLocal;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->sessionArray = [
             'usernumber' => '',
             'username' => '',

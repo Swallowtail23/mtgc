@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     20.3
+Version:     20.4
 Date:        19/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -23,7 +23,7 @@ require('includes/secpagesetup.php');       //Setup page variables
 forcePasswordChange();                       //Check if user is disabled or needs to change password
 require('includes/colour.php');
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");

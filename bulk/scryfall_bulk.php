@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.1
+Version:     9.2
 Date:        19/12/25
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -14,7 +14,7 @@ To do:       -
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 // Start time tracking
 $start = microtime(true);

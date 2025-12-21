@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        21/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -63,7 +63,7 @@ class LoginHandler
     ) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->turnstileEnabled = $turnstileEnabled;
         $this->turnstileSecretKey = $turnstileSecretKey;
         $this->badLoginLimit = $badLoginLimit;

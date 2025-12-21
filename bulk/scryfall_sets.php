@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.6
+Version:     2.7
 Date:        21/12/25
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
@@ -14,7 +14,7 @@ To do:       -
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 ensureDirectoryExists($imgLocation . 'json');
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;

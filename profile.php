@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.2
+Version:     14.3
 Date:        21/12/25
 Name:        profile.php
 Purpose:     User profile page.
@@ -32,7 +32,7 @@ use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use OTPHP\TOTP;
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');

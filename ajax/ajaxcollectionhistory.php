@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        20/12/25
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -21,7 +21,7 @@ require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :

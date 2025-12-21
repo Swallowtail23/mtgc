@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.1
+Version:     25.2
 Date:        21/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -23,7 +23,7 @@ require('includes/functions.php');          //Includes basic functions for non-s
 require('includes/secpagesetup.php');       //Setup page variables
 require('includes/colour.php');
 forcePasswordChange();                       //Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $uniquecard_ref = [];

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.4
+Version:     5.5
 Date:        28/11/25
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -22,7 +22,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $priceMgr = new PriceManager($db, $logfile, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");
 

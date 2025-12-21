@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        20/12/25
 Name:        myphpmailer.class.php
 Purpose:     Extends PHPMailer with standard options.
@@ -43,7 +43,7 @@ class MyPHPMailer extends PHPMailer
         $this->smtpParameters = $smtpParameters;
         $this->serverEmail = $serverEmail;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
 
         // Set defaults for PHPMailer from ini.file

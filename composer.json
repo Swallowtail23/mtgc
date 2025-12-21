@@ -22,5 +22,10 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
+    },
+    "autoload": {
+        "psr-4": {
+            "MTG\\": "src/MTG/"
+        }
     }
 }

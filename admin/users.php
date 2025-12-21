@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.4
+Version:     6.5
 Date:        21/12/25
 Name:        users.php
 Purpose:     User administrative tasks
@@ -20,7 +20,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 forcePasswordChange();                          //Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
 function shouldRequirePasswordForNewUser($emailEnabled)
 {

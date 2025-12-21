@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        21/12/25
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
@@ -22,7 +22,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
 include 'includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');
 

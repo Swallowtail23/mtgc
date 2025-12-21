@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        21/12/25
 Name:        imagemanager.class.php
 Purpose:     Local image management class.
@@ -42,7 +42,7 @@ class ImageManager
         $this->logfile = $logfile;
         $this->serverEmail = $serverEmail;
         $this->adminEmail = $adminEmail;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
     }
 
     public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections)

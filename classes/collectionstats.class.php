@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        21/12/25
 Name:        collectionstats.class.php
 Purpose:     Compute collection totals and values for a user.
@@ -35,7 +35,7 @@ class CollectionStats
         $this->fxAPI = $fxAPI;
         $this->fxLocal = $fxLocal;
         $this->adminip = $adminip;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
     }
 
     public function getStats($userNumber, $tableName, $preferredCurrency = null)

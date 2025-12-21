@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.0
+Version:     6.1
 Date:        21/12/25
 Name:        importexport.class.php
 Purpose:     Import/export management class.
@@ -35,7 +35,7 @@ class ImportExport
         $this->logfile = $logfile;
         $this->userEmail = $userEmail;
         $this->serverEmail = $serverEmail;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 

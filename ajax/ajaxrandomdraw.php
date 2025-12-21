@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.2
+Version:     1.3
 Date:        25/11/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') :
     require('../includes/error_handling.php');
     require('../includes/functions.php');
     include '../includes/colour.php';
-    $msg = new Message($logfile);
+    $msg = new \MTG\Core\Message($logfile);
 
     $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
     $expectedReferringPages =   [

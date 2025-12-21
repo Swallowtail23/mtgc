@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        21/12/25
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
@@ -15,7 +15,7 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $obj  = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
 
 if (isset($argv[1])) :

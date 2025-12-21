@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.2
+Version:     6.3
 Date:        21/12/25
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -20,7 +20,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $expectedReferringPage = $myURL;

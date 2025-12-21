@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.9
+Version:     3.10
 Date:        21/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -24,7 +24,7 @@ require 'classes/message.class.php';
 require 'classes/twofactormanager.class.php';
 
 $cssver = cssVersionCheck();
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 

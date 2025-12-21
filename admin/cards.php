@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     5.7
+Version:     5.8
 Date:        21/12/25
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -22,7 +22,7 @@ require('../includes/secpagesetup.php');       //Setup page variables
 forcePasswordChange();                          //Check if user is disabled or needs to change password
 
 
-$msg = new Message($logfile);
+$msg = new \MTG\Core\Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");

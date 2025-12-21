@@ -1,22 +1,19 @@
 <?php
 
 /*
-Version:     4.2
+Version:     1.1
 Date:        21/12/25
-Name:        message.class.php
+Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
-                 $msg = new Message($logfile);
+                 $msg = new \MTG\Core\Message($logfile);
                  $msg->logMessage('[DEBUG]', "Message text");
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
+namespace MTG\Core;
 
 class Message
 {
@@ -97,4 +94,3 @@ class Message
         return 'Unknown file Unknown line';
     }
 }
-// phpcs:enable

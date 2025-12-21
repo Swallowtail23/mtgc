@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        21/12/25
 Name:        collectionhistory.class.php
 Purpose:     Collection value history retrieval and export helpers.
@@ -31,7 +31,7 @@ class CollectionHistory
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->message = new \MTG\Core\Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
         $this->serverEmail = $serverEmail ?: $GLOBALS['serverEmail'];
     }
