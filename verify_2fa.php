@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        29/11/25
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -36,7 +36,7 @@ $user_id = (int) $_SESSION['user_pending_2fa'];
 $email = $_SESSION['useremail_pending_2fa'];
 $is_admin = $_SESSION['admin_pending_2fa'] ?? false;
 $pwd_change_required = $_SESSION['chgpwd_pending_2fa'] ?? false;
-$tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+$tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
 $tfa_method = $tfaManager->getMethod($user_id);
 
 if (!isset($db) || !$db instanceof mysqli) :

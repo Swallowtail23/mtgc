@@ -11,10 +11,6 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
-
 class TrustedDeviceManager
 {
     /**

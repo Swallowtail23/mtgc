@@ -18,9 +18,7 @@ Example usage:
 */
 
 // phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
+
 
 class ImageManager
 {

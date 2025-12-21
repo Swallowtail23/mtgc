@@ -31,6 +31,10 @@ All notable changes to this project will be documented in this file.
 - Infrastructure: Docker now builds on PHP 8.4 with composer platform pinned to PHP 8.2.30, and docker-init pulls base images on rebuild.
 - Changed: log elapsed time for refresh bulk runs after downloading bulk files.
 - Changed: instantiate `\MTG\Core\Message` with fully-qualified names after moving the class into `src/MTG`.
+- Changed: update PasswordCheck usage to the namespaced `\MTG\Auth\PasswordCheck` class after relocating it to `src/MTG`.
+- Fixed: correct namespace resolution for Exception/MyPHPMailer usage in `\MTG\Auth\PasswordCheck`.
+- Changed: update TwoFactorManager usage to the namespaced `\MTG\Auth\TwoFactorManager` class after relocating it to `src/MTG`.
+- Changed: update DateYMD usage to the namespaced `\MTG\Core\DateYMD` class after relocating it to `src/MTG`.
 - Added: profile value history CSV download and weekly value history export email.
 - Infrastructure: added PHPUnit coverage for collection history CSV exports.
 - Changed: weekly value history export now attaches to the weekly collection export email.

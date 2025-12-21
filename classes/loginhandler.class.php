@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     2.1
 Date:        21/12/25
 Name:        loginhandler.class.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -29,10 +29,6 @@ Current flow:
 */
 
 use andkab\Turnstile\Turnstile;
-
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
 
 class LoginHandler
 {
@@ -332,7 +328,7 @@ class LoginHandler
         endif;
 
         // At this point, account is in a "normal" status; now we check password
-        $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
+        $passwordCheck = new \MTG\Auth\PasswordCheck($this->db, $this->logfile, $this->siteTitle);
         $passwordResult = $passwordCheck->validatePassword($email, $password);
 
         if ($passwordResult !== 10) :
@@ -361,7 +357,12 @@ class LoginHandler
             );
         endif;
 
-        $tfaManager = new TwoFactorManager($this->db, $this->smtpParameters, $this->serverEmail, $this->logfile);
+        $tfaManager = new \MTG\Auth\TwoFactorManager(
+            $this->db,
+            $this->smtpParameters,
+            $this->serverEmail,
+            $this->logfile
+        );
         if ($tfaManager->isEnabled($id)) :
             session_regenerate_id(true);
             $_SESSION['user_pending_2fa'] = $id;

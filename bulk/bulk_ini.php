@@ -1,10 +1,10 @@
 <?php
 /*
-Version:     3.2
+Version:     3.3
 Date:        25/11/25
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -14,19 +14,26 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-//  Class autoloading
-/// Composer
-require_once "../vendor/autoload.php";
+// Class autoloading
+// Composer
+$root = realpath($_SERVER["DOCUMENT_ROOT"] ?? (__DIR__ . '/..'));
+require_once $root . "/vendor/autoload.php";
 
-/// Other classes
+// Other classes
 function autoLoader($class_name)
 {
+    // If it's namespaced, let Composer handle it
+    if (strpos($class_name, '\\') !== false) :
+        return;
+    endif;
+
     $class_name_lwr = strtolower($class_name);
-    if (file_exists('../classes/' . $class_name_lwr . '.class.php')) :
-        include '../classes/' . $class_name_lwr . '.class.php';
+    $path = $GLOBALS['root'] . '/classes/' . $class_name_lwr . '.class.php';
+
+    if (file_exists($path)) :
+        require_once $path;
     endif;
 }
-
 spl_autoload_register('autoLoader');
 
 //Set error reporting based on ini file's dev setting

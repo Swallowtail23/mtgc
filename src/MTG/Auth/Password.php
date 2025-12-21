@@ -1,20 +1,17 @@
 <?php
 
 /*
-Version:     3.1
+Version:     3.3
 Date:        21/12/25
-Name:        passwordcheck.class.php
+Name:        Password.php
 Purpose:     Password validation class.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
+namespace MTG\Auth;
 
 class PasswordCheck
 {
@@ -162,13 +159,13 @@ class PasswordCheck
                     endif;
                     //endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         "[ERROR] Class Passwords: PasswordValidate - Other failure: Error: " . $this->db->error
                     );
                 endif;
             else :
                 $this->passwordvalidate = 0;
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR] Class Passwords: PasswordValidate - SQL failure: Error: " . $this->db->error
                 );
             endif;
@@ -237,14 +234,14 @@ class PasswordCheck
                         endif;
                     endif;
                 else :
-                    throw new Exception(
+                    throw new \Exception(
                         "[ERROR] Class Passwords: passwordReset - Other failure: Error: " . $this->db->error
                     );
                     return 0;
                     exit;
                 endif;
             else :
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR] Class Passwords: passwordReset - SQL failure: Error: " . $this->db->error
                 );
                 return 0;
@@ -285,6 +282,10 @@ class PasswordCheck
             $stmt->close();
             return null;
         endif;
+        /** @var int $usernumber */
+        $usernumber = 0;
+        /** @var string $dbemail */
+        $dbemail = '';
         $stmt->bind_result($usernumber, $dbemail);
         $stmt->fetch();
         $stmt->close();
@@ -337,7 +338,7 @@ class PasswordCheck
             );
             return false;
         endif;
-        if (!class_exists('MyPHPMailer')) :
+        if (!class_exists(\MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available for password change notice");
             return false;
         endif;
@@ -349,7 +350,7 @@ class PasswordCheck
         $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $mailer = new \MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");
             return true;
@@ -378,6 +379,8 @@ class PasswordCheck
             $stmt->close();
             return null;
         endif;
+        /** @var string $hash */
+        $hash = '';
         $stmt->bind_result($hash);
         $stmt->fetch();
         $stmt->close();
@@ -404,6 +407,10 @@ class PasswordCheck
             $stmt->close();
             return null;
         endif;
+        /** @var string $tokenHash */
+        $tokenHash = '';
+        /** @var string $expires */
+        $expires = '';
         $stmt->bind_result($tokenHash, $expires);
         $stmt->fetch();
         $stmt->close();
@@ -483,12 +490,12 @@ class PasswordCheck
      */
     protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
     {
-        if (!class_exists('MyPHPMailer')) :
+        if (!class_exists(\MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
-        $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
+        $mail = new \MyPHPMailer(true, $smtpParameters, $serverEmail, $this->logfile, $siteTitle);
         $subject = "$siteTitle password reset";
         $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
         $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"
@@ -534,11 +541,11 @@ class PasswordCheck
                     "New user query from " . $_SERVER['REMOTE_ADDR'] . " affected $affected_rows rows"
                 );
             else :
-                throw new Exception("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error);
+                throw new \Exception("[ERROR] Class Passwords: newUser: New user query failed " . $stmt->error);
             endif;
             $stmt->close();
         else :
-                throw new Exception(
+                throw new \Exception(
                     "[ERROR] Class Passwords: newUser: New user query failed to prepare statement "
                         . $this->db->error
                 );

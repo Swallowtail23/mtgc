@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.3
+Version:     14.5
 Date:        21/12/25
 Name:        profile.php
 Purpose:     User profile page.
@@ -121,7 +121,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         ) :
             $msg->logMessage('[DEBUG]', "SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
-            $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+            $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
             $userHas2fa = $tfaManager->isEnabled($userId);
             $userTwofaMethod = $userHas2fa ? $tfaManager->getMethod($userId) : '';
         else :
@@ -235,10 +235,10 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
                                                     . "</div>";
-                                                if (!class_exists('PasswordCheck')) :
+                                                if (!class_exists(\MTG\Auth\PasswordCheck::class)) :
                                                     require_once('classes/passwordcheck.class.php');
                                                 endif;
-                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;
@@ -307,7 +307,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
             //7. 2FA Section
                 // Get 2FA status for this user
-                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+                $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
                 $tfa_enabled = $tfaManager->isEnabled($userId);
 
                 // Check if we should enable or disable 2FA

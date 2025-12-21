@@ -1,22 +1,17 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.1
 Date:        25/11/25
-Name:        twofactormanager.class.php
+Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-
-// Prevent direct access
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
+namespace MTG\Auth;
 
 use OTPHP\TOTP;
 
@@ -44,8 +39,8 @@ class TwoFactorManager
         $this->smtp_parameters = $smtpParameters;
         $this->serverEmail = $serverEmail;
 
-        if (!class_exists('Message')) :
-            require_once(__DIR__ . '/../classes/message.class.php');
+        if (!class_exists(\MTG\Core\Message::class)) :
+            require_once __DIR__ . '/../Core/Message.php';
         endif;
         $this->log = new \MTG\Core\Message($this->logfile);
     }
@@ -428,7 +423,7 @@ class TwoFactorManager
         endif;
 
         try {
-            $mail = new MyPHPMailer(true, $this->smtp_parameters, $this->serverEmail, $this->logfile);
+            $mail = new \MyPHPMailer(true, $this->smtp_parameters, $this->serverEmail, $this->logfile);
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\n"
                 . "If you did not request this code, please ignore this email.";
@@ -437,7 +432,7 @@ class TwoFactorManager
                 $this->directLog('[NOTICE]', "Verification email sent to: $email");
                 return true;
             endif;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->directLog('[ERROR]', "Failed to send email: " . $e->getMessage());
         }
 
@@ -566,4 +561,3 @@ class TwoFactorManager
         return "TwoFactorManager";
     }
 }
-// phpcs:enable

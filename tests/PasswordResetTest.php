@@ -6,13 +6,14 @@ require_once __DIR__ . '/bootstrap.php';
 
 function getRealPasswordCheckClass(): string
 {
-    if (class_exists('PasswordCheckReal')) :
+    if (class_exists('PasswordCheckReal', false)) :
         return 'PasswordCheckReal';
     endif;
 
-    $source = file_get_contents(__DIR__ . '/../classes/passwordcheck.class.php');
+    $source = file_get_contents(__DIR__ . '/../src/MTG/Auth/Password.php');
     $source = preg_replace('/^<\\?php\\s*/', '', $source, 1);
-    $source = preg_replace('/class\\s+PasswordCheck/', 'class PasswordCheckReal', $source, 1);
+    $source = preg_replace('/^\\s*namespace\\s+MTG\\\\Auth;\\s*/m', '', $source, 1);
+    $source = preg_replace('/class\\s+PasswordCheck\\b/', 'class PasswordCheckReal', $source, 1);
     eval($source);
     return 'PasswordCheckReal';
 }

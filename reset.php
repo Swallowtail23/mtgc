@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.10
+Version:     3.13
 Date:        21/12/25
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -20,15 +20,13 @@ startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
-require 'classes/message.class.php';
-require 'classes/twofactormanager.class.php';
 
 $cssver = cssVersionCheck();
 $msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$pwReset = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
@@ -83,7 +81,7 @@ if (!$emailEnabledFlag) :
     $message = "Password reset is unavailable because email is disabled.";
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
     if (isset($_POST['send_twofa_code'])) :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $sent = false;
         if (!empty($resetUserId) && $twofaRequired && $twofaMethod === 'email') :
             $sent = $tfaManager->startVerification($resetUserId, $tokenEmail);
@@ -131,7 +129,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         );
         exit();
     else :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $twofaCode = trim($_POST['twofa_code'] ?? '');
         if (isset($_POST['send_twofa_code']) && $twofaRequired && $twofaMethod === 'email') :
             $tfaManager->startVerification($resetUserId, $email);

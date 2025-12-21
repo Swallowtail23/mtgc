@@ -11,10 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-// phpcs:disable PSR1.Classes.ClassDeclaration.MissingNamespace, PSR1.Files.SideEffects.FoundWithSymbols
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
-endif;
+namespace MTG\Core;
 
 class DateYMD
 {
@@ -34,4 +31,3 @@ class DateYMD
         return $this->getToday();
     }
 }
-// phpcs:enable

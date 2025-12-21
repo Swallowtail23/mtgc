@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.5
+Version:     6.6
 Date:        21/12/25
 Name:        users.php
 Purpose:     User administrative tasks
@@ -126,7 +126,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
-                $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                $obj = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
                 $msg->logMessage(
                     '[DEBUG]',
                     "Attempting to create user $username_raw with email $postemail_raw"
@@ -271,7 +271,7 @@ require('../includes/menu.php');
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
-                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                        $obj = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent"

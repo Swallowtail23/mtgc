@@ -26,6 +26,46 @@ namespace andkab\Turnstile {
     }
 }
 
+namespace MTG\Auth {
+    if (!class_exists(PasswordCheck::class, false)) {
+        class PasswordCheck
+        {
+            public static $result = 10;
+
+            public function __construct($db = null, $logfile = null, $siteTitle = null)
+            {
+            }
+
+            public function validatePassword($email, $password)
+            {
+                return self::$result;
+            }
+        }
+    }
+
+    if (!class_exists(TwoFactorManager::class, false)) {
+        class TwoFactorManager
+        {
+            public static $enabled = false;
+            public $verificationStarted = false;
+
+            public function __construct($db = null, $smtpParameters = null, $serverEmail = null, $logfile = null)
+            {
+            }
+
+            public function isEnabled($userId)
+            {
+                return self::$enabled;
+            }
+
+            public function startVerification($userId, $email)
+            {
+                $this->verificationStarted = true;
+            }
+        }
+    }
+}
+
 namespace {
 
     use PHPUnit\Framework\TestCase;
@@ -50,22 +90,6 @@ namespace {
             }
 
             public function validateTrustedDevice()
-            {
-                return self::$result;
-            }
-        }
-    }
-
-    if (!class_exists('PasswordCheck')) {
-        class PasswordCheck
-        {
-            public static $result = 10;
-
-            public function __construct($db = null, $logfile = null, $siteTitle = null)
-            {
-            }
-
-            public function validatePassword($email, $password)
             {
                 return self::$result;
             }
@@ -107,26 +131,6 @@ namespace {
         public function triggerLocked()
         {
             $this->locked = true;
-        }
-    }
-
-    class TwoFactorManager
-    {
-        public static $enabled = false;
-        public $verificationStarted = false;
-
-        public function __construct($db = null, $smtpParameters = null, $serverEmail = null, $logfile = null)
-        {
-        }
-
-        public function isEnabled($userId)
-        {
-            return self::$enabled;
-        }
-
-        public function startVerification($userId, $email)
-        {
-            $this->verificationStarted = true;
         }
     }
 
@@ -332,8 +336,8 @@ namespace {
             $db = new FakeDb();
             UserStatus::$badLoginResult = ['count' => 0, 'code' => 1];
             UserStatus::$userStatusResult = ['code' => 10, 'number' => 42, 'admin' => 0];
-            PasswordCheck::$result = 10;
-            TwoFactorManager::$enabled = false;
+            \MTG\Auth\PasswordCheck::$result = 10;
+            \MTG\Auth\TwoFactorManager::$enabled = false;
 
             $handler = $this->buildHandler($db, function () {
                 throw new TerminateException();
@@ -383,7 +387,7 @@ namespace {
                 'number' => 123,
                 'admin'  => 0,
             ];
-            PasswordCheck::$result = 10; // could be 10 or something else; it won't matter
+            \MTG\Auth\PasswordCheck::$result = 10; // could be 10 or something else; it won't matter
 
             $handler = $this->buildHandler($db, function () {
                 throw new TerminateException();
