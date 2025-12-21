@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Fixed: return null from `symbolReplace` when given null input.
 - Infrastructure: batch Scryfall bulk imports in 5,000-row transactions and log batch commits.
 - Changed: bulk import uses content/price hashes with conditional updates to skip full writes when card content is unchanged.
+- Changed: bulk import summary now splits updates by content-hash changes vs price-hash changes.
 - Infrastructure: added content_hash/price_hash columns in `setup/mtg_new.sql` and on-demand schema checks in bulk import.
 - Fixed: guard null `f1_` fields in card detail rendering to avoid errors.
 - Fixed: guard null `f2_` fields in card detail rendering to avoid errors.

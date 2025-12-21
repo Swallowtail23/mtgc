@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     27.3
-Date:        21/12/25
+Version:     27.4
+Date:        22/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -785,6 +785,7 @@ function scryfallImport($file_location, $type)
 
     // Initiate counters at zero
     $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
+    $count_update_content = $count_update_price = $count_update_both = 0;
 
     $data = JsonMachine\Items::fromFile(
         $file_location,
@@ -1216,6 +1217,10 @@ function scryfallImport($file_location, $type)
     if ($stmt === false) :
         throw new Exception('[ERROR] cards.php: Preparing SQL: ' . $db->error);
     endif;
+    $hashStmt = $db->prepare("SELECT content_hash, price_hash FROM `cards_scry` WHERE id = ? LIMIT 1");
+    if ($hashStmt === false) :
+        throw new Exception('[ERROR] scryfall_bulk.php: Preparing hash lookup SQL: ' . $db->error);
+    endif;
 
     // Initialise all variables for binding
     $id = null;
@@ -1334,6 +1339,10 @@ function scryfallImport($file_location, $type)
     $content_hash = null;
     $price_hash = null;
     $primary = (int) $primary;
+
+    $hash_id = null;
+    $existing_content_hash = null;
+    $existing_price_hash = null;
 
     $bind = $stmt->bind_param(
         "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
@@ -1473,6 +1482,19 @@ function scryfallImport($file_location, $type)
 
     if ($bind === false) :
         mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, __FILE__, __LINE__);
+    endif;
+    $hashBind = $hashStmt->bind_param("s", $hash_id);
+    if ($hashBind === false) :
+        mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding hash id: ' . $db->error, __FILE__, __LINE__);
+    endif;
+    $hashBindResult = $hashStmt->bind_result($existing_content_hash, $existing_price_hash);
+    if ($hashBindResult === false) :
+        mtgError(
+            E_USER_ERROR,
+            '[ERROR] scryfall_bulk.php: Binding hash results: ' . $db->error,
+            __FILE__,
+            __LINE__
+        );
     endif;
     $lastGoodId = null;
     $lastGoodCount = 0;
@@ -2019,6 +2041,37 @@ function scryfallImport($file_location, $type)
                 endif;
                 $price_hash = sha1($pricePayload);
 
+                $content_changed = false;
+                $price_changed = false;
+                $existing_content_hash = null;
+                $existing_price_hash = null;
+
+                $hash_id = $id;
+                $hashExec = $hashStmt->execute();
+                if ($hashExec === false) :
+                    mtgError(
+                        E_USER_ERROR,
+                        '[ERROR] scryfall_bulk.php: Checking existing hashes: ' . $db->error,
+                        __FILE__,
+                        __LINE__
+                    );
+                endif;
+                $hashStore = $hashStmt->store_result();
+                if ($hashStore === false) :
+                    mtgError(
+                        E_USER_ERROR,
+                        '[ERROR] scryfall_bulk.php: Storing hash results: ' . $db->error,
+                        __FILE__,
+                        __LINE__
+                    );
+                endif;
+                if ($hashStmt->num_rows > 0) :
+                    $hashStmt->fetch();
+                    $content_changed = ($existing_content_hash !== $content_hash);
+                    $price_changed = ($existing_price_hash !== $price_hash);
+                endif;
+                $hashStmt->free_result();
+
                 // Execute using already-bound params
                 $exec = $stmt->execute();
 
@@ -2049,7 +2102,32 @@ function scryfallImport($file_location, $type)
                         endif;
                     elseif ($status === 2) :
                         $count_update = $count_update + 1;
-                        $msg->logMessage('[DEBUG]', "Updated card - no error returned; return code: $status");
+                        if ($content_changed === true and $price_changed === true) :
+                            $count_update_both = $count_update_both + 1;
+                            $count_update_content = $count_update_content + 1;
+                            $count_update_price = $count_update_price + 1;
+                            $msg->logMessage(
+                                '[DEBUG]',
+                                "Updated card - content and price hash change; return code: $status"
+                            );
+                        elseif ($content_changed === true) :
+                            $count_update_content = $count_update_content + 1;
+                            $msg->logMessage(
+                                '[DEBUG]',
+                                "Updated card - content hash change; return code: $status"
+                            );
+                        elseif ($price_changed === true) :
+                            $count_update_price = $count_update_price + 1;
+                            $msg->logMessage(
+                                '[DEBUG]',
+                                "Updated card - price hash change; return code: $status"
+                            );
+                        else :
+                            $msg->logMessage(
+                                '[WARNING]',
+                                "Updated card - hash change not detected; return code: $status"
+                            );
+                        endif;
                     else :
                         $count_other = $count_other + 1;
                         $msg->logMessage('[DEBUG]', "No change - no error returned; return code: $status");
@@ -2112,14 +2190,17 @@ function scryfallImport($file_location, $type)
         throw new Exception('[ERROR] scryfall_bulk.php: Final commit failed: ' . $db->error);
     endif;
     $stmt->close();
+    $hashStmt->close();
 
     $msg->logMessage(
         '[NOTICE]',
         "Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, "
-        . "included $count_inc, updated: $count_update, other: $count_other"
+        . "included $count_inc, updated: $count_update (content: $count_update_content, "
+        . "price: $count_update_price, both: $count_update_both), other: $count_other"
     );
     $message = "Total: $total_count; total added: $count_add; total skipped: $count_skip; "
-        . "total included: $count_inc; total updated: $count_update";
+        . "total included: $count_inc; total updated: $count_update (content: $count_update_content; "
+        . "price: $count_update_price; both: $count_update_both)";
     return $message;
     // return $message to then use in parent to send email using MyPHPMailer
 }
