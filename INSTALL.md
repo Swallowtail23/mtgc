@@ -25,6 +25,10 @@ Adjust paths/commands for your platform.
    php_admin_value[session.cookie_samesite] = Strict
    php_admin_value[upload_max_filesize] = 32M
    php_admin_value[post_max_size] = 32M
+   php_admin_value[display_errors] = Off
+   php_admin_value[display_startup_errors] = Off
+   php_admin_value[log_errors] = On
+   php_admin_value[error_log] = /var/log/mtg/mtgapp.log
    ```
 
    Optionally set a custom session name by copying

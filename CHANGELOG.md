@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Infrastructure
-- PHP container config now suppresses display_errors and logs to mtgapp.log.
+- PHP config now suppresses display_errors and logs to mtgapp.log (container + bare metal).
 
 ## [v0.2.2] - 2025-12-22
 
