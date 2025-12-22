@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Changed: bulk import uses content/price hashes with conditional updates to skip full writes when card content is unchanged.
 - Changed: bulk import summary now splits updates by content-hash changes vs price-hash changes.
 - Changed: scryfall import now requires pre-existing content_hash/price_hash columns instead of auto-adding them.
+- Added: PHPUnit coverage for Message, INI, IniDebug, SessionManager, TwoFactorManager, UserStatus, CollectionStats, PriceManager, and DeckManager.
 - Infrastructure: entrypoint normalises `sets.sh` to use the mounted card image path in the container.
 - Fixed: repair and normalise `sets.sh` card image path rewrite in entrypoint.
 - Changed: rulings import now uses content hashing, batched writes, and conditional updates instead of truncating.
