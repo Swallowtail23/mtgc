@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.1-dev] - Unreleased
+
+### Added
+-
+
+### Changed
+-
+
+### Fixed
+-
+
+### Security
+-
+
+### Infrastructure
+-
+
 ## [v0.2.0] - 2025-12-22
 
 - Added: profile value history CSV download and weekly value history export email.
