@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.0
+Version:     2.1
 Date:        22/12/25
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -23,14 +23,6 @@ if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
     header('Location: login.php');
     exit();
 }
-if (empty($_SESSION['trust_device_flow'])) :
-    $msg = new \MTG\Core\Message($logfile);
-    $msg->logMessage('[ERROR]', 'Direct access to trust_device.php blocked (no flow flag)');
-    header('Location: index.php');
-    exit();
-endif;
-unset($_SESSION['trust_device_flow']);
-
 require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
@@ -42,6 +34,13 @@ if (!isset($db) || !$db instanceof mysqli) {
     $msg->logMessage('[ERROR]', 'Database connection is invalid in trust_device.php');
     die('A database error occurred, please try again later');
 }
+
+if (empty($_SESSION['trust_device_flow'])) :
+    $msg->logMessage('[ERROR]', 'Direct access to trust_device.php blocked (no flow flag)');
+    header('Location: index.php');
+    exit();
+endif;
+unset($_SESSION['trust_device_flow']);
 
 if (!isset($_SESSION['csrf_token'])) :
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

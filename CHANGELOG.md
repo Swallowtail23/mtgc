@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
 - Trust device prompt now requires the post-login flow flag so it can’t be opened directly.
 - Trust device direct access now logs an error before redirecting.
+- Fixed trust device flow to log access errors after autoload setup to avoid fatal exceptions.
 
 ### Security
 -
