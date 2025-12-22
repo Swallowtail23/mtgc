@@ -30,6 +30,8 @@ Adjust paths/commands for your platform.
    php_admin_value[log_errors] = On
    php_admin_value[error_log] = /var/log/mtg/mtgapp.log
    ```
+   Note: `error_log` applies to the entire php-fpm pool. On bare metal with multiple sites, omit it unless you
+   want all pool errors routed into the MTG log.
 
    Optionally set a custom session name by copying
    `includes/sessionname_template.php` to `includes/sessionname.local.php`.
