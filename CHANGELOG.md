@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.2-dev] - Unreleased
+
+### Fixed
+- VERSION increment only.
+
 ## [v0.2.1] - 2025-12-22
 
 ### Added
