@@ -17,7 +17,9 @@ if [ -d "$SCRIPTS_SRC" ]; then
     chmod +x "$SCRIPTS_SRC"/*.sh 2>/dev/null
     if [ -f "$SCRIPTS_SRC/sets.sh" ]; then
         echo "[DEBUG] Normalising sets.sh card image path to /mnt/data/cardimg"
-        sed -i -E 's|(chown -R [^ ]+ )[^ ]*cardimg|\\1/mnt/data/cardimg|g' "$SCRIPTS_SRC/sets.sh"
+        sed -i -E 's|^\\1/mnt/data/cardimg$|chown -R www-data:www-data /mnt/data/cardimg|' \
+            "$SCRIPTS_SRC/sets.sh"
+        sed -i -E '/^chown -R /s|/[^ ]*cardimg|/mnt/data/cardimg|g' "$SCRIPTS_SRC/sets.sh"
     fi
 fi
 

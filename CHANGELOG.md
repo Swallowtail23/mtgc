@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Changed: bulk import uses content/price hashes with conditional updates to skip full writes when card content is unchanged.
 - Changed: bulk import summary now splits updates by content-hash changes vs price-hash changes.
 - Infrastructure: entrypoint normalises `sets.sh` to use the mounted card image path in the container.
+- Fixed: repair and normalise `sets.sh` card image path rewrite in entrypoint.
 - Infrastructure: added content_hash/price_hash columns in `setup/mtg_new.sql` and on-demand schema checks in bulk import.
 - Fixed: guard null `f1_` fields in card detail rendering to avoid errors.
 - Fixed: guard null `f2_` fields in card detail rendering to avoid errors.
