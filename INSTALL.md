@@ -39,7 +39,7 @@ Adjust paths/commands for your platform.
 
 ## File/Directory setup
 
-- Create `/opt/mtg` (or your preferred config location).
+- Create `/opt/mtg`. 
 - Copy `setup/mtg_new.ini` to `/opt/mtg/mtg_new.ini` and edit per your
   environment (see README for key settings).
 - Copy the helper shell scripts from `setup/*.sh` into `/opt/mtg/scripts/`,
@@ -47,9 +47,9 @@ Adjust paths/commands for your platform.
   user in sets.sh.
 - Ensure the log file path specified in the ini exists and is writable (e.g.
   `/var/log/mtg/mtgapp.log`).
-- Ensure `ImgLocation` (in the ini) exists, is writable, and contains a writable
-  `json` folder for Scryfall downloads. Many admins symlink this to a large
-  storage volume.
+- Ensure `ImgLocation` specified in the ini exists, is writable, and contains a 
+  writable `json` folder for Scryfall downloads. Ideally, symlink this to a 
+  large storage volume.
 
 ## Log rotation
 
@@ -72,7 +72,7 @@ EOF
 
 Adjust the frequency or retention as needed and run
 `sudo logrotate -f /etc/logrotate.d/mtgc` for an immediate rotation. Schedule
-it (root crontab) to mirror the container defaults:
+it (root crontab):
 
 ```
 5 0 * * * /usr/sbin/logrotate /etc/logrotate.d/mtgc
@@ -87,16 +87,15 @@ it (root crontab) to mirror the container defaults:
 - Run the bulk scripts from the `bulk/` directory (in order) to populate data.
 
   ```bash
-  php scryfall_bulk.php all
-  php scryfall_bulk.php default
+  php scryfall_bulk.php refresh
   php scryfall_sets.php
   php scryfall_rulings.php
   php scryfall_migrations.php
   ```
-  The double run of scryfall_bulk.php is required for initial setup;
-  The first `all` pass writes every card record; the second `default` pass
+  The 'refresh' run of scryfall_bulk.php is required for initial setup;
+  Its first `all` pass writes every card record; the second `default` pass
   marks the primary language. See also Images section.
-  The first `scryfall_bulk.php all` run can take a long time.
+  The `scryfall_bulk.php refresh` run can take a long time.
 
 ## User setup
 
@@ -116,8 +115,7 @@ and PHPUnit (dev).
 
 ## Email / Disqus / Turnstile / FX setup
 
-- Configure SMTP credentials in the ini if you plan to send email. You may need
-  SPF/DKIM/DMARC records for deliverability.
+- Configure SMTP credentials in the ini if you plan to send email.
 - Enable Disqus by providing your shortname and enabling it in the ini.
 - Obtain Cloudflare Turnstile keys and set them in the ini to enable login
   protection (dev tier uses dummy keys).
@@ -165,7 +163,7 @@ log directory referenced in the cron file.
 ## Images
 
 - The first setup pass (`php bulk/scryfall_bulk.php all`) loads all cards without
-  downloading the ~90k images; the second pass (`php bulk/scryfall_bulk.php default`)
+  downloading the ~100k images; the second pass (`php bulk/scryfall_bulk.php default`)
   marks the primary language and only downloads images for truly new rows.
   Subsequent bulk runs download images as new cards appear.
 - Image sets can be downloaded for specific sets from the Sets page.
