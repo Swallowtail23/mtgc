@@ -10,6 +10,16 @@ class SrcClassMapTest extends TestCase
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($srcRoot));
         $mismatches = [];
 
+        $stubbed = [
+            'MTG\\Auth\\SessionManager',
+            'MTG\\Auth\\TrustedDeviceManager',
+            'MTG\\Auth\\TwoFactorManager',
+            'MTG\\Auth\\UserStatus',
+            'MTG\\Auth\\PasswordCheck',
+            'MTG\\Cards\\PriceManager',
+            'MTG\\Core\\INI'
+        ];
+
         foreach ($iterator as $file) :
             if (!$file->isFile() || $file->getExtension() !== 'php') :
                 continue;
@@ -44,6 +54,53 @@ class SrcClassMapTest extends TestCase
         $this->assertSame([], $mismatches, 'Class/file mismatches: ' . implode(', ', $mismatches));
     }
 
+    public function testSrcClassesAreAutoloadable()
+    {
+        $srcRoot = __DIR__ . '/../src/MTG';
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($srcRoot));
+        $mismatches = [];
+        $stubbed = [
+            'MTG\\Auth\\SessionManager',
+            'MTG\\Auth\\TrustedDeviceManager',
+            'MTG\\Auth\\TwoFactorManager',
+            'MTG\\Auth\\UserStatus',
+            'MTG\\Auth\\PasswordCheck',
+            'MTG\\Cards\\PriceManager',
+            'MTG\\Core\\INI'
+        ];
+
+        foreach ($iterator as $file) :
+            if (!$file->isFile() || $file->getExtension() !== 'php') :
+                continue;
+            endif;
+
+            $definition = $this->getClassDefinition($file->getPathname());
+            if ($definition === null) :
+                continue;
+            endif;
+
+            $fqcn = $definition['namespace']
+                ? $definition['namespace'] . '\\' . $definition['class']
+                : $definition['class'];
+
+            if (in_array($fqcn, $stubbed, true)) :
+                continue;
+            endif;
+
+            if (!class_exists($fqcn)) :
+                $mismatches[] = $file->getPathname() . ' => class not autoloadable (' . $fqcn . ')';
+                continue;
+            endif;
+
+            $reflection = new ReflectionClass($fqcn);
+            if (realpath($reflection->getFileName()) !== realpath($file->getPathname())) :
+                $mismatches[] = $file->getPathname() . ' => autoload mismatch (' . $fqcn . ')';
+            endif;
+        endforeach;
+
+        $this->assertSame([], $mismatches, 'Autoload mismatches: ' . implode(', ', $mismatches));
+    }
+
     private function getClassDefinition($path)
     {
         $tokens = token_get_all(file_get_contents($path));
@@ -57,17 +114,25 @@ class SrcClassMapTest extends TestCase
             endif;
 
             if ($tokens[$i][0] === T_NAMESPACE) :
-                $namespaceParts = [];
                 for ($j = $i + 1; $j < $count; $j++) :
-                    if (is_array($tokens[$j]) && $tokens[$j][0] === T_STRING) :
-                        $namespaceParts[] = $tokens[$j][1];
-                    elseif ($tokens[$j] === '\\') :
-                        $namespaceParts[] = '\\';
-                    elseif ($tokens[$j] === ';') :
+                    if (!is_array($tokens[$j])) :
+                        if ($tokens[$j] === ';') :
+                            break;
+                        endif;
+                        continue;
+                    endif;
+                    if (
+                        $tokens[$j][0] === T_NAME_QUALIFIED
+                        || $tokens[$j][0] === T_NAME_FULLY_QUALIFIED
+                    ) :
+                        $namespace = ltrim($tokens[$j][1], '\\');
+                        break;
+                    endif;
+                    if ($tokens[$j][0] === T_STRING) :
+                        $namespace = $tokens[$j][1];
                         break;
                     endif;
                 endfor;
-                $namespace = str_replace('\\\\', '\\', implode('', $namespaceParts));
             endif;
 
             if ($tokens[$i][0] === T_CLASS) :
