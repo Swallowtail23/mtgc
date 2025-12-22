@@ -15,15 +15,15 @@
 
 ## Description
 
-This is a "host your own" MtG collection-tracking website application. It is
-fully mobile-responsive and offers comprehensive search, collection tracking,
-localised currency conversion, import/export tooling, and optional 2FA and
-commenting integrations.
+This is a "host your own" MtG collection-tracking web application. It is
+fully mobile-responsive and offers comprehensive search, deck-building, 
+collection tracking, localised currency conversion, import/export tooling,
+and optional 2FA and commenting integrations.
 
 The app relies on data provided by Scryfall (sets/cards/rulings/prices/images).
 While due care is taken, no security guarantees are provided. The site is
-currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
-100 GB depending on downloaded images.
+currently developed on RHEL 8/9 with PHP 8.2 and podman containers with PHP 8.4;
+disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 
 ## Install Options
 
@@ -39,8 +39,8 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
 ### Web stack
 
 - Web server (e.g. Apache) with CLI access and ability to configure PHP/MySQL.
-- PHP 8.2 with extensions: `mysqli`, `gd` (with JPEG support), `exif`, `mbstring`,
-  `intl`, `curl`.
+- PHP 8.2 (minimum supported) to 8.4 with extensions: `mysqli`, `gd` (with JPEG
+  support), `exif`, `mbstring`, `intl`, `curl`.
 - PHP settings: `upload_max_filesize`/`post_max_size` ≥ 25 M; secure session
   cookie settings (HTTPOnly, Secure, SameSite=Strict).
 - MySQL 8+ (InnoDB tables, proper indexing for performance).
@@ -66,9 +66,9 @@ currently developed on RHEL 8/9 with PHP 8.2; disk usage ranges from 10 GB to
 
 ### Optional integrations
 
-- SMTP email infrastructure (PHPMailer). For direct senders, configure SPF/DKIM/
-  DMARC.
-- Disqus commenting, configured per ini.
+- SMTP email infrastructure (PHPMailer) to enable email-based password 
+  management and exports. For direct senders, configure SPF/DKIM/DMARC.
+- Disqus commenting. 
 
 ## Configuration & Admin Settings
 
