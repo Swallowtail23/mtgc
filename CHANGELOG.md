@@ -23,6 +23,9 @@ All notable changes to this project will be documented in this file.
 - Changed: bulk import summary now splits updates by content-hash changes vs price-hash changes.
 - Infrastructure: entrypoint normalises `sets.sh` to use the mounted card image path in the container.
 - Fixed: repair and normalise `sets.sh` card image path rewrite in entrypoint.
+- Changed: rulings import now uses content hashing, batched writes, and conditional updates instead of truncating.
+- Fixed: rulings import now removes rulings missing from the latest Scryfall data.
+- Changed: rulings unique key now uses content hashing to allow same-day rulings per card/source.
 - Infrastructure: added content_hash/price_hash columns in `setup/mtg_new.sql` and on-demand schema checks in bulk import.
 - Fixed: guard null `f1_` fields in card detail rendering to avoid errors.
 - Fixed: guard null `f2_` fields in card detail rendering to avoid errors.

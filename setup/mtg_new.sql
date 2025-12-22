@@ -230,7 +230,8 @@ CREATE TABLE `rulings_scry` (
   `oracle_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `source` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `published_at` date NOT NULL,
-  `comment` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
+  `comment` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `content_hash` char(40) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `scryfalljson` (
@@ -389,6 +390,7 @@ ALTER TABLE `password_resets`
 
 ALTER TABLE `rulings_scry`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `rulings_unique` (`content_hash`),
   ADD KEY `oracle_id` (`oracle_id`);
 
 ALTER TABLE `scryfalljson`
