@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     27.4
+Version:     27.5
 Date:        22/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -737,7 +737,6 @@ function scryfallImport($file_location, $type)
         $twoCardDetailSections;
     $msg = new \MTG\Core\Message($logfile);
 
-    // Check and write columns for hashes (remove after done)
     $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
     $contentHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'content_hash'");
     if ($contentHashResult === false) :
@@ -745,15 +744,9 @@ function scryfallImport($file_location, $type)
             '[ERROR] scryfall_bulk.php: Checking cards_scry content_hash column: ' . $db->error
         );
     elseif ($contentHashResult->num_rows === 0) :
-        $msg->logMessage('[NOTICE]', 'cards_scry content_hash column missing; adding column');
-        $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `content_hash` CHAR(40) NULL");
-        if ($alterResult === false) :
-            throw new Exception(
-                '[ERROR] scryfall_bulk.php: Adding cards_scry content_hash column: ' . $db->error
-            );
-        else :
-            $msg->logMessage('[DEBUG]', 'cards_scry content_hash column added');
-        endif;
+        throw new Exception(
+            '[ERROR] scryfall_bulk.php: cards_scry content_hash column missing (manual schema update required)'
+        );
     else :
         $msg->logMessage('[DEBUG]', 'cards_scry content_hash column present');
     endif;
@@ -767,15 +760,9 @@ function scryfallImport($file_location, $type)
             '[ERROR] scryfall_bulk.php: Checking cards_scry price_hash column: ' . $db->error
         );
     elseif ($priceHashResult->num_rows === 0) :
-        $msg->logMessage('[NOTICE]', 'cards_scry price_hash column missing; adding column');
-        $alterResult = $db->query("ALTER TABLE `cards_scry` ADD COLUMN `price_hash` CHAR(40) NULL");
-        if ($alterResult === false) :
-            throw new Exception(
-                '[ERROR] scryfall_bulk.php: Adding cards_scry price_hash column: ' . $db->error
-            );
-        else :
-            $msg->logMessage('[DEBUG]', 'cards_scry price_hash column added');
-        endif;
+        throw new Exception(
+            '[ERROR] scryfall_bulk.php: cards_scry price_hash column missing (manual schema update required)'
+        );
     else :
         $msg->logMessage('[DEBUG]', 'cards_scry price_hash column present');
     endif;
