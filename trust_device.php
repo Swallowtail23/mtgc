@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        29/11/25
+Version:     2.0
+Date:        22/12/25
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -23,6 +23,13 @@ if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
     header('Location: login.php');
     exit();
 }
+if (empty($_SESSION['trust_device_flow'])) :
+    $msg = new \MTG\Core\Message($logfile);
+    $msg->logMessage('[ERROR]', 'Direct access to trust_device.php blocked (no flow flag)');
+    header('Location: index.php');
+    exit();
+endif;
+unset($_SESSION['trust_device_flow']);
 
 require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler

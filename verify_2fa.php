@@ -92,8 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
                 if (isset($_SESSION['redirect_url_after_2fa'])) :
                     $redirect = $_SESSION['redirect_url_after_2fa'];
                     unset($_SESSION['redirect_url_after_2fa']);
+                    $_SESSION['trust_device_flow'] = true;
                     header('Location: trust_device.php?redirect_to=' . urlencode($redirect));
                 else :
+                    $_SESSION['trust_device_flow'] = true;
                     header('Location: trust_device.php');
                 endif;
             endif;

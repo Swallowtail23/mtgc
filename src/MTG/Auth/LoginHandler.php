@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.7
+Date:        22/12/25
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -148,12 +148,29 @@ class LoginHandler
         $message = $trustedLogin
             ? 'Welcome back! You\'ve been automatically signed in using a trusted device.'
             : 'You are already logged in!';
+        $siteTitleEsc = htmlspecialchars((string) $siteTitle, ENT_QUOTES, 'UTF-8');
+        $cssverEsc = htmlspecialchars((string) $cssver, ENT_QUOTES, 'UTF-8');
+        $messageEsc = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+
+        echo "<!DOCTYPE html>";
+        echo "<head>";
+        echo "<meta charset='UTF-8'>";
+        echo "<meta name='viewport' content='initial-scale=1.1, maximum-scale=1.1, "
+            . "minimum-scale=1.1, user-scalable=no'>";
+        echo "<title>{$siteTitleEsc} - login</title>";
+        echo "<link rel='manifest' href='/manifest.json' />";
+        echo "<link rel='stylesheet' type='text/css' href='css/style{$cssverEsc}.css'>";
+        include 'includes/googlefonts.php';
         echo "<meta http-equiv='refresh' content='2;url=index.php'>";
-        echo "<div class='alert-box notice' style='margin:20px;'>" . htmlspecialchars(
-            $message,
-            ENT_QUOTES,
-            'UTF-8'
-        ) . "</div>";
+        echo "</head>";
+        echo "<body id='loginbody' class='body'>";
+        include_once 'includes/analyticstracking.php';
+        echo "<div id='loginheader'>";
+        echo "<h2 id='h2'>{$siteTitleEsc}</h2>";
+        echo "<div class='alert-box notice' style='margin:20px;'>{$messageEsc}</div>";
+        echo "</div>";
+        echo "</body>";
+        echo "</html>";
         $this->terminate();
     }
 
@@ -490,6 +507,7 @@ class LoginHandler
             endif;
 
             $this->message->logMessage('[DEBUG]', 'Showing trust device prompt');
+            $_SESSION['trust_device_flow'] = true;
             header('Location: trust_device.php?redirect_to=' . urlencode($redirectUrl ?? 'index.php'));
             $this->terminate();
     }
