@@ -2,59 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.1.4-dev] - Unreleased
+## [v0.2.0-dev] - Unreleased
 
-- Hardened the Scryfall bulk import workflow with stricter argument handling, clearer CLI output, and single-pass
-  refresh logic for the all/default datasets.
-- Added run-start logging to setup/bulk shell helpers and mirrored key progress messages to CLI output across bulk
-  scripts for easier monitoring in cron/containers.
-- Profile: disable local currency selection whenever FX is turned off globally to avoid invalid choices.
-- Security hardening: tightened escaping for GET parameters and rendered titles, and normalised `htmlspecialchars`
-  usage to specify charset/flags explicitly.
-- Maintenance: introduced/updated Dependabot configuration and cleaned minor formatting issues.
-- Fixed: corrected the revised `downloadBulk` call in bulk scripts to avoid misfires.
-- Fixed: corrected an inaccurate log message in bulk scripts to reflect the correct workflow step.
-- Fixed: set the JSON quarantine rename result before logging to avoid incorrect error reporting.
-- Infrastructure: documented changelog update requirements in `AGENTS.md`.
-- Changed: added NOTICE-level progress logging every 2,500 records during Scryfall bulk imports.
-- Fixed: return null from `symbolReplace` when given null input.
-- Infrastructure: batch Scryfall bulk imports in 5,000-row transactions and log batch commits.
-- Changed: bulk import uses content/price hashes with conditional updates to skip full writes when card content is unchanged.
-- Changed: bulk import summary now splits updates by content-hash changes vs price-hash changes.
-- Changed: scryfall import now requires pre-existing content_hash/price_hash columns instead of auto-adding them.
-- Added: PHPUnit coverage for Message, INI, IniDebug, SessionManager, TwoFactorManager, UserStatus, CollectionStats, PriceManager, and DeckManager.
-- Infrastructure: entrypoint normalises `sets.sh` to use the mounted card image path in the container.
-- Fixed: repair and normalise `sets.sh` card image path rewrite in entrypoint.
-- Changed: rulings import now uses content hashing, batched writes, and conditional updates instead of truncating.
-- Fixed: rulings import now removes rulings missing from the latest Scryfall data.
-- Changed: rulings unique key now uses content hashing to allow same-day rulings per card/source.
-- Infrastructure: added content_hash/price_hash columns in `setup/mtg_new.sql` and on-demand schema checks in bulk import.
-- Fixed: guard null `f1_` fields in card detail rendering to avoid errors.
-- Fixed: guard null `f2_` fields in card detail rendering to avoid errors.
-- Fixed: restore card face and all_parts field mapping during Scryfall bulk import.
-- Fixed: escape site title in collection history HTML email content.
-- Fixed: keep site title raw in email subjects and plain-text bodies.
-- Fixed: replace E_USER_ERROR trigger_error usage with exceptions for PHP 8.4 compatibility.
-- Fixed: pass explicit CSV escape characters for fputcsv/str_getcsv to avoid future default changes.
-- Infrastructure: Docker now builds on PHP 8.4 with composer platform pinned to PHP 8.2.30, and docker-init pulls base images on rebuild.
-- Changed: log elapsed time for refresh bulk runs after downloading bulk files.
-- Changed: instantiate `\MTG\Core\Message` with fully-qualified names after moving the class into `src/MTG`.
-- Changed: update PasswordCheck usage to the namespaced `\MTG\Auth\PasswordCheck` class after relocating it to `src/MTG`.
-- Fixed: correct namespace resolution for Exception/MyPHPMailer usage in `\MTG\Auth\PasswordCheck`.
-- Changed: update TwoFactorManager usage to the namespaced `\MTG\Auth\TwoFactorManager` class after relocating it to `src/MTG`.
-- Changed: update DateYMD usage to the namespaced `\MTG\Core\DateYMD` class after relocating it to `src/MTG`.
-- Changed: update CollectionHistory usage to the namespaced `\MTG\Cards\CollectionHistory` class after relocating it to `src/MTG`.
-- Changed: update CollectionStats usage to the namespaced `\MTG\Cards\CollectionStats` class after relocating it to `src/MTG`.
-- Changed: update UserStatus usage to the namespaced `\MTG\Auth\UserStatus` class after relocating it to `src/MTG`.
-- Changed: move remaining legacy classes into `src/MTG` namespaces and update all call sites/tests accordingly.
-- Infrastructure: update docs to reflect namespaced `src/MTG` class layout and Composer autoloading.
 - Added: profile value history CSV download and weekly value history export email.
-- Infrastructure: added PHPUnit coverage for collection history CSV exports.
-- Changed: weekly value history export now attaches to the weekly collection export email.
-- Changed: weekly collection, value history, and deck exports are delivered in one email.
-- Infrastructure: update PHPUnit bootstrap to load Composer autoload and align Message log level globals.
-- Fixed: load Composer autoload in TrustedDeviceManager when Message class is not yet available.
-- Changed: drop the global Message class alias now that all references are fully qualified.
+- Added: PHPUnit coverage for collection history CSV exports and core/auth/cards classes.
+- Changed: weekly collection/value history/deck exports are delivered in one email, with value history attached.
+- Changed: bulk card import now batches writes, logs progress, uses content/price hashes with conditional updates,
+  splits update totals by hash type, and requires pre-existing hash columns (with schema updates in setup SQL).
+- Changed: rulings import now uses content hashing with batched writes and cleanup of removed rulings; unique key now
+  uses content_hash to allow same-day rulings per card/source.
+- Changed: classes moved under `src/MTG` namespaces with call sites/tests updated; Composer autoload and docs aligned.
+- Changed: profile currency selection is disabled when FX is globally off.
+- Security: tightened escaping for GET parameters and rendered titles, and normalised `htmlspecialchars` usage.
+- Fixed: bulk import mapping restored and null card faces guarded; rulings bulk JSON quarantine logging corrected.
+- Fixed: email title handling corrected for HTML/plain text, CSV parsing uses explicit escapes, and error paths now throw
+  exceptions for PHP 8.4 compatibility.
+- Fixed: `symbolReplace` returns null on null input; TrustedDeviceManager loads Composer autoload when Message is
+  unavailable.
+- Infrastructure: Docker builds on PHP 8.4 with composer platform pinned to PHP 8.2.30, and entrypoint normalises
+  `sets.sh` card image paths for container mounts.
 
 ## [v0.1.3] - 2025-12-16
 
