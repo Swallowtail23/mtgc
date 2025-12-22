@@ -1,9 +1,9 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
-Name:        Password.php
+Version:     1.1
+Date:        22/12/25
+Name:        PasswordCheck.php
 Purpose:     Password validation class.
 Notes:       -
 Author:      Simon Wilson

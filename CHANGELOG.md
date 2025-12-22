@@ -2,22 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.2.1-dev] - Unreleased
+## [v0.2.1] - 2025-12-22
 
 ### Added
--
-
-### Changed
--
+- Added: PHPUnit check to ensure `src/MTG` class names and namespaces match their file paths for PSR-4 autoloading.
 
 ### Fixed
--
-
-### Security
--
-
-### Infrastructure
--
+- Resolve PasswordCheck autoloading by aligning the class filename with its namespace.
 
 ## [v0.2.0] - 2025-12-22
 
