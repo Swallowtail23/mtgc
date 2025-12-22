@@ -5,5 +5,5 @@ echo "[$(date -Is)] sets.sh started"
 cd /var/www/mtgnew/bulk
 php ./scryfall_sets.php
 
-chown -R www-root:www-root /opt/mtg/cardimg
+chown -R www-data:www-data /opt/mtg/cardimg
 echo "[$(date -Is)] sets.sh completed"

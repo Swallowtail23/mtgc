@@ -15,6 +15,10 @@ if [ -d "$SCRIPTS_SRC" ]; then
     mkdir -p /opt/mtg
     ln -sfn "$SCRIPTS_SRC" "$SCRIPTS_DEST"
     chmod +x "$SCRIPTS_SRC"/*.sh 2>/dev/null
+    if [ -f "$SCRIPTS_SRC/sets.sh" ]; then
+        echo "[DEBUG] Normalising sets.sh card image path to /mnt/data/cardimg"
+        sed -i -E 's|(chown -R [^ ]+ )[^ ]*cardimg|\\1/mnt/data/cardimg|g' "$SCRIPTS_SRC/sets.sh"
+    fi
 fi
 
 # Install logrotate config if provided
