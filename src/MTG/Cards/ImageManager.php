@@ -45,7 +45,10 @@ class ImageManager
     public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections, $allowFetch = true)
     {
         $allowFetchLabel = ($allowFetch) ? 'true' : 'false';
-        $this->message->logMessage('[DEBUG]', "Called for $setcode, $cardId, $imgLocation, $layout (fetch $allowFetchLabel)");
+        $this->message->logMessage(
+            '[DEBUG]',
+            "Called for $setcode, $cardId, $imgLocation, $layout (fetch $allowFetchLabel)"
+        );
 
         $cardImages = $this->getCardImageUris($cardId);
         $localfile = $imgLocation . $setcode . '/' . $cardId . '.jpg';

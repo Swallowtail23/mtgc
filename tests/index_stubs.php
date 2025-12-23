@@ -121,8 +121,7 @@ namespace MTG\Cards {
                 $layout = null,
                 $twoCardDetailSections = null,
                 $allowFetch = true
-            )
-            {
+            ) {
                 return ['front' => '/cardimg/back.jpg'];
             }
         }
