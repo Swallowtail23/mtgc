@@ -7,8 +7,8 @@ class UserAgentTest extends TestCase
 {
     public function testBuildsUserAgentFromIniAndVersion()
     {
-        $iniPath = tempnam(sys_get_temp_dir(), 'mtgini_');
-        $versionPath = tempnam(sys_get_temp_dir(), 'mtgver_');
+        $iniPath = tempnam(__DIR__, 'mtgini_');
+        $versionPath = tempnam(__DIR__, 'mtgver_');
 
         $iniContent = "[general]\nURL = \"https://mtg.example.net\"\n\n[email]\nAdminEmail = \"admin@example.net\"\n";
         file_put_contents($iniPath, $iniContent);
@@ -20,5 +20,12 @@ class UserAgentTest extends TestCase
             "MtGCollection/0.2.3-dev (https://mtg.example.net; admin@example.net)",
             $userAgent
         );
+
+        if (is_file($iniPath)) :
+            unlink($iniPath);
+        endif;
+        if (is_file($versionPath)) :
+            unlink($versionPath);
+        endif;
     }
 }

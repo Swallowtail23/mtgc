@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Added PHPUnit coverage for the UserAgent builder.
 - Added PHPUnit coverage for async card price rendering.
 - Added PHPUnit coverage for async price response payloads.
+- UserAgent test now writes temp files in the workspace for CI compatibility.
 
 ## [v0.2.2] - 2025-12-22
 
