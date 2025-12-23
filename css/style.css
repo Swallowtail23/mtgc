@@ -2983,7 +2983,8 @@ td.columnhide
 }
 
 .card-image, .mainimg{
-    transition: transform 0.5s ease;
+    transition: transform 0.5s ease, opacity 0.25s ease;
+    opacity: 1;
 }
 
 .flipped {

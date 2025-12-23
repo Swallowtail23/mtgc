@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     13.5
+Version:     14.0
 Date:        23/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -374,19 +374,60 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
+            function swapImageWithFade($img, newSrc) {
+                $img.css('opacity', '0');
+                $img.off('load.mtgfade').on('load.mtgfade', function() {
+                    const $self = $(this);
+                    requestAnimationFrame(function() {
+                        requestAnimationFrame(function() {
+                            $self.css('opacity', '1');
+                        });
+                    });
+                });
+                $img.attr('src', newSrc);
+                if ($img[0] && $img[0].complete) {
+                    setTimeout(function() {
+                        $img.trigger('load');
+                    }, 0);
+                }
+            }
+
             function refreshCardImagesAsync() {
                 const seen = {};
+                const queue = [];
+                let inFlight = 0;
+                const maxConcurrent = 3;
+                let pauseUntil = 0;
+
+                $(document).on('pointerdown keydown', function() {
+                    pauseUntil = Date.now() + 300;
+                });
+
                 $('img').each(function() {
-                    const src = $(this).attr('src');
+                    const $img = $(this);
+                    const src = $img.attr('src') || '';
                     const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-                    if (!match) {
+                    const cardId = match ? match[1] : $img.data('cardid');
+                    if (!cardId) {
                         return;
                     }
-                    const cardId = match[1];
                     if (seen[cardId]) {
                         return;
                     }
                     seen[cardId] = true;
+                    queue.push(cardId);
+                });
+
+                function scheduleNext() {
+                    if (Date.now() < pauseUntil) {
+                        setTimeout(scheduleNext, 120);
+                        return;
+                    }
+                    if (inFlight >= maxConcurrent || queue.length === 0) {
+                        return;
+                    }
+                    const cardId = queue.shift();
+                    inFlight += 1;
                     $.ajax({
                         url: 'ajax/ajaximagecheck.php',
                         type: 'POST',
@@ -396,17 +437,40 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             if (!response || !response.success) {
                                 return;
                             }
-                            if (response.front) {
+                            if (response.front && response.front.indexOf('cardimg') !== -1) {
                                 const newSrc = response.front + '?t=' + Date.now();
-                                $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
+                                $('img[data-cardid="' + cardId + '"]').each(function() {
+                                    const $target = $(this);
+                                    $target.attr('data-front-src', response.front);
+                                    $target.attr('data-back-src', response.back || $target.attr('data-back-src') || '');
+                                    if ($target.hasClass('flipped') && response.back) {
+                                        swapImageWithFade($target, response.back + '?t=' + Date.now());
+                                    } else {
+                                        swapImageWithFade($target, newSrc);
+                                    }
+                                });
                             }
-                            if (response.back) {
-                                const newBackSrc = response.back + '?t=' + Date.now();
-                                $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
+                            if (response.back && response.back.indexOf('cardimg') !== -1) {
+                                $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
                             }
+                            if (
+                                response.front
+                                && response.back
+                                && response.front.indexOf('cardimg') !== -1
+                                && response.back.indexOf('cardimg') !== -1
+                            ) {
+                                $('.flipbutton[data-cardid="' + cardId + '"]').show();
+                            }
+                        },
+                        complete: function() {
+                            inFlight -= 1;
+                            setTimeout(scheduleNext, 0);
                         }
                     });
-                });
+                    setTimeout(scheduleNext, 0);
+                }
+
+                setTimeout(scheduleNext, 0);
             }
         </script>
         <script type="text/javascript">
@@ -951,6 +1015,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     <script type="text/javascript">
                         function swapImage(img_id, card_id, imageurl, imagebackurl) {
                             var $ImageId = $('#' + img_id);
+                            var backSrc = $ImageId.attr('data-back-src') || imagebackurl;
+                            var frontSrc = $ImageId.attr('data-front-src') || imageurl;
 
                             if (!$ImageId.hasClass('flipped')) {
                                 // If not flipped, apply flip effect
@@ -958,7 +1024,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
                                 // Set a timeout for half of the transition duration
                                 setTimeout(function () {
-                                    $ImageId.attr('src', imagebackurl);
+                                    $ImageId.attr('src', backSrc);
                                 }, 80);
                             } else {
                                 // If already flipped, remove flip effect
@@ -966,7 +1032,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
                                 // Set a timeout for half of the transition duration
                                 setTimeout(function () {
-                                    $ImageId.attr('src', imageurl);
+                                    $ImageId.attr('src', frontSrc);
                                 }, 80);
                             }
                         };
@@ -1025,18 +1091,20 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 $row['cs_id'],
                                 $imgLocation,
                                 $row['layout'],
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
+                            $imagebackurl = '';
                             if (!is_null($imageFunction['back'])) :
                                 if ($imageFunction['back'] === 'error' or $imageFunction['back'] === 'error') :
-                                    $imagebackurl = '/cardimg/back.jpg';
+                                    $imagebackurl = '/images/back.jpg';
                                 else :
-                                    $imagebackurl = $imageFunction['back'] . "?$time";
+                                    $imagebackurl = $imageFunction['back'];
                                 endif;
                             endif;
                             // If the current record has null fields set the variables to 0 so updates
@@ -1074,7 +1142,12 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 <?php
                                 $msg->logMessage('[DEBUG]', "$imageUrl");
                                 if (in_array($row['layout'], $flip_button_cards)) :
-                                    $flipButton = "<div style='cursor: pointer;' class='flipbutton' "
+                                    $flipstyle = (strpos($imageUrl, 'cardimg') !== false
+                                        and strpos($imagebackurl, 'cardimg') !== false)
+                                        ? 'cursor: pointer;'
+                                        : 'cursor: pointer; display: none;';
+                                    $flipButton = "<div style='{$flipstyle}' class='flipbutton' "
+                                        . "data-cardid='{$row['cs_id']}' "
                                         . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
                                         . "\"{$imageUrl}\",\"{$imagebackurl}\")>"
                                         . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
@@ -1090,7 +1163,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
                                     . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
                                     . "no. $number_import' class='card-image cardimg$in_collection' "
-                                    . "alt='$scryid' src='$imageUrl'></a>";
+                                    . "alt='$scryid' src='$imageUrl' data-cardid='$scryid' data-face='front' "
+                                    . "data-front-src='$imageUrl' data-back-src='$imagebackurl'></a>";
                                 echo $gridLink;
                                 $cellid = "cell" . $scryid;
                                 $cellid_one = $cellid . '_one';

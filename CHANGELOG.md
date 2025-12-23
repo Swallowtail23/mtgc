@@ -15,6 +15,13 @@ All notable changes to this project will be documented in this file.
 - Card detail no longer disables image caching for admin views.
 - Index no longer disables image caching for admin views.
 - Card detail uses placeholder images when cardimg is missing and relies on async image refresh.
+- Index uses placeholder images when cardimg is missing and relies on async image refresh.
+- Card detail keeps the TCGPlayer link visible while async pricing loads.
+- Flip buttons stay hidden until both card faces are available.
+- Index flip now returns to the real front image after async updates.
+- Index image refresh now throttles async checks and yields for user input.
+- Async image swaps now fade in instead of snapping from the placeholder.
+- Card detail flip button now respects viewport width when both faces are visible.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.

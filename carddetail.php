@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     21.1
+Version:     21.6
 Date:        23/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -73,6 +73,36 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <script src="/js/jquery.js"></script>
     <script src="/js/ajaxUpdate.js"></script>
     <script type="text/javascript">
+        function swapImageWithFade($img, newSrc) {
+            $img.css('opacity', '0');
+            $img.off('load.mtgfade').on('load.mtgfade', function() {
+                const $self = $(this);
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        $self.css('opacity', '1');
+                    });
+                });
+            });
+            $img.attr('src', newSrc);
+            if ($img[0] && $img[0].complete) {
+                setTimeout(function() {
+                    $img.trigger('load');
+                }, 0);
+            }
+        }
+
+        function updateFlipButtonsForViewport() {
+            const showFlip = window.matchMedia('(max-width: 1208px)').matches;
+            $('.flipbuttondetail').each(function() {
+                const $btn = $(this);
+                if (showFlip && $btn.data('ready') === 1) {
+                    $btn.show();
+                } else {
+                    $btn.hide();
+                }
+            });
+        }
+
         function refreshCardImagesAsync() {
             const seen = {};
             $('img').each(function() {
@@ -98,11 +128,25 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         }
                         if (response.front && response.front.indexOf('cardimg') !== -1) {
                             const newSrc = response.front + '?t=' + Date.now();
-                            $('img[data-cardid="' + cardId + '"][data-face="front"]').attr('src', newSrc);
+                            $('img[data-cardid="' + cardId + '"][data-face="front"]').each(function() {
+                                swapImageWithFade($(this), newSrc);
+                            });
                         }
                         if (response.back && response.back.indexOf('cardimg') !== -1) {
                             const newBackSrc = response.back + '?t=' + Date.now();
-                            $('img[data-cardid="' + cardId + '"][data-face="back"]').attr('src', newBackSrc);
+                            $('img[data-cardid="' + cardId + '"][data-face="back"]').each(function() {
+                                swapImageWithFade($(this), newBackSrc);
+                            });
+                        }
+                        if (
+                            response.front
+                            && response.back
+                            && response.front.indexOf('cardimg') !== -1
+                            && response.back.indexOf('cardimg') !== -1
+                        ) {
+                            $('.flipbuttondetail[data-cardid="' + cardId + '"]')
+                                .data('ready', 1);
+                            updateFlipButtonsForViewport();
                         }
                     }
                 });
@@ -110,6 +154,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         }
         $(function() {
             refreshCardImagesAsync();
+            updateFlipButtonsForViewport();
+            $(window).on('resize', updateFlipButtonsForViewport);
         });
     </script>
     <script type="text/javascript">
@@ -120,7 +166,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
         $(function() {  // On document ready
             $("img").on("error", function() {
-                $(this).attr("src", "/images/back.jpg");
+                $(this).css('opacity', '1').attr("src", "/images/back.jpg");
             });
 
             $("#importsubmit").prop('disabled', true);
@@ -776,7 +822,11 @@ require('includes/menu.php'); //mobile menu
                     endif;
                         $img_id = 'cardimg';
                     if (in_array($row['layout'], $twoCardDetailSections)) :
-                        echo "<div style='cursor: pointer;' class='flipbuttondetail' "
+                        $flipReady = (strpos($imageUrl, 'cardimg') !== false and strpos($imagebackurl, 'cardimg') !== false)
+                            ? 1
+                            : 0;
+                        echo "<div style='cursor: pointer; display: none;' class='flipbuttondetail' "
+                            . "data-cardid='{$row['cs_id']}' data-ready='{$flipReady}' "
                             . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
                             . "\"{$imageUrl}\",\"{$imagebackurl}\")>"
                             . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
@@ -945,7 +995,7 @@ require('includes/menu.php'); //mobile menu
                                                 $prevcardid,
                                                 ENT_QUOTES,
                                                 'UTF-8'
-                                            );?>
+                                            ); ?>
                                             <form action="?" method="get" id="prev_card">
                                                 <input
                                                     type="hidden"
@@ -972,24 +1022,32 @@ require('includes/menu.php'); //mobile menu
                                     <td colspan="3" class="nextbutton" style="cursor: pointer;"
                                         onclick="document.getElementById('next_card').submit();">
                                         <?php if (!empty($nextcardid)) :
-                                            $msg->logMessage('[DEBUG]', "Next card ('$nextcardid')");?>
+                                            $msg->logMessage('[DEBUG]', "Next card ('$nextcardid')");
+                                            $nextValue = htmlspecialchars(
+                                                $nextcardid,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>
                                             <form action="?" method="get" id="next_card">
-                                                <?php echo "<input type='hidden' name='id' value='$nextcardid'>"; ?>
-                                                <label style="cursor: pointer;">
-                                                    <span
-                                                        onclick="document.getElementById('next_card').submit();"
-                                                        title="Next card in set"
-                                                        onmouseover=""
-                                                        style="
-                                                            cursor: pointer;
-                                                            display:block;
-                                                            text-align:center;
-                                                            margin:0 auto;
-                                                        "
-                                                        class='material-symbols-outlined'>
-                                                        navigate_next
-                                                    </span>
-                                                </label>
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?php echo $nextValue; ?>"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    title="Next card in set"
+                                                    class="material-symbols-outlined"
+                                                    style="
+                                                        background:none;
+                                                        border:none;
+                                                        cursor:pointer;
+                                                        display:block;
+                                                        text-align:center;
+                                                        margin:0 auto;
+                                                    ">
+                                                    navigate_next
+                                                </button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
@@ -1013,24 +1071,32 @@ require('includes/menu.php'); //mobile menu
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;</td>
                                     <td colspan="3" class="nextbutton" style="cursor: pointer;"
                                         onclick="document.getElementById('next_card').submit();">
-                                        <?php if (!empty($nextcardid)) : ?>
+                                        <?php if (!empty($nextcardid)) :
+                                            $nextValue = htmlspecialchars(
+                                                $nextcardid,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>
                                             <form action="?" method="get" id="next_card">
-                                                <?php echo "<input type='hidden' name='id' value='$nextcardid'>"; ?>
-                                                <label style="cursor: pointer;">
-                                                    <span
-                                                        onclick="document.getElementById('next_card').submit();"
-                                                        title="Next card in set"
-                                                        onmouseover=""
-                                                        style="
-                                                            cursor: pointer;
-                                                            display:block;
-                                                            text-align:center;
-                                                            margin:0 auto;
-                                                        "
-                                                        class='material-symbols-outlined'>
-                                                        navigate_next
-                                                    </span>
-                                                </label>
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?php echo $nextValue; ?>"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    title="Next card in set"
+                                                    class="material-symbols-outlined"
+                                                    style="
+                                                        background:none;
+                                                        border:none;
+                                                        cursor:pointer;
+                                                        display:block;
+                                                        text-align:center;
+                                                        margin:0 auto;
+                                                    ">
+                                                    navigate_next
+                                                </button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
@@ -1053,24 +1119,32 @@ require('includes/menu.php'); //mobile menu
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;"
                                         onclick="document.getElementById('prev_card').submit();">
-                                        <?php if (!empty($prevcardid)) : ?>
+                                        <?php if (!empty($prevcardid)) :
+                                            $prevValue = htmlspecialchars(
+                                                $prevcardid,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>
                                             <form action="?" method="get" id="prev_card">
-                                                <?php echo "<input type='hidden' name='id' value='$prevcardid'>"; ?>
-                                                <label style="cursor: pointer;">
-                                                    <span
-                                                        onclick="document.getElementById('prev_card').submit();"
-                                                        title="Previous card in set"
-                                                        onmouseover=""
-                                                        style="
-                                                            cursor: pointer;
-                                                            display:block;
-                                                            text-align:center;
-                                                            margin:0 auto;
-                                                        "
-                                                        class='material-symbols-outlined'>
-                                                        navigate_before
-                                                    </span>
-                                                </label>
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?php echo $prevValue; ?>"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    title="Previous card in set"
+                                                    class="material-symbols-outlined"
+                                                    style="
+                                                        background:none;
+                                                        border:none;
+                                                        cursor:pointer;
+                                                        display:block;
+                                                        text-align:center;
+                                                        margin:0 auto;
+                                                    ">
+                                                    navigate_before
+                                                </button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
@@ -2031,8 +2105,12 @@ require('includes/menu.php'); //mobile menu
                                             id="tcgplayerlink"
                                             href="<?php echo $tcgdirectlink ?? '#'; ?>"
                                             target="_blank"
-                                            style="<?php echo ($tcgdirectlink === null) ? 'display: none' : ''; ?>"
-                                        >TCGPlayer</a>
+                                            data-loading="<?php echo ($tcgdirectlink === null) ? '1' : '0'; ?>"
+                                            style="<?php echo ($tcgdirectlink === null)
+                                                ? 'opacity:0.6;pointer-events:none;'
+                                                : ''; ?>"
+                                        ><?php echo ($tcgdirectlink === null) ? 'TCGPlayer (loading)' : 'TCGPlayer'; ?>
+                                        </a>
                                     </td>
                                 </tr>
                             </table>
@@ -2057,9 +2135,16 @@ require('includes/menu.php'); //mobile menu
                                                 priceBlock.html(response.price_html);
                                             }
                                             if (response.tcg_link) {
-                                                $('#tcgplayerlink').attr('href', response.tcg_link).show();
+                                                $('#tcgplayerlink')
+                                                    .attr('href', response.tcg_link)
+                                                    .attr('data-loading', '0')
+                                                    .text('TCGPlayer')
+                                                    .attr('style', '');
                                             } else {
-                                                $('#tcgplayerlink').hide();
+                                                $('#tcgplayerlink')
+                                                    .attr('data-loading', '1')
+                                                    .text('TCGPlayer (unavailable)')
+                                                    .attr('style', 'opacity:0.6;pointer-events:none;');
                                             }
                                         }
                                     });
