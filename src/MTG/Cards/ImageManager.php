@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        23/12/25
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -42,9 +42,10 @@ class ImageManager
         $this->message = new \MTG\Core\Message($this->logfile);
     }
 
-    public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections)
+    public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections, $allowFetch = true)
     {
-        $this->message->logMessage('[DEBUG]', "Called for $setcode, $cardId, $imgLocation, $layout");
+        $allowFetchLabel = ($allowFetch) ? 'true' : 'false';
+        $this->message->logMessage('[DEBUG]', "Called for $setcode, $cardId, $imgLocation, $layout (fetch $allowFetchLabel)");
 
         $cardImages = $this->getCardImageUris($cardId);
         $localfile = $imgLocation . $setcode . '/' . $cardId . '.jpg';
@@ -57,8 +58,13 @@ class ImageManager
 
         // Front face
         if (!file_exists($localfile)) :
-            $this->message->logMessage('[DEBUG]', "$localfile missing, running get image function");
-            $frontImg = $this->fetchAndStoreImage($cardImages['front'], $imgLocation, $setcode, $localfile);
+            if ($allowFetch) :
+                $this->message->logMessage('[DEBUG]', "$localfile missing, running get image function");
+                $frontImg = $this->fetchAndStoreImage($cardImages['front'], $imgLocation, $setcode, $localfile);
+            else :
+                $this->message->logMessage('[DEBUG]', "$localfile missing, using placeholder");
+                $frontImg = '/images/back.jpg';
+            endif;
         else :
             $this->message->logMessage('[DEBUG]', "File exists already at $localfile");
             $relativePath = strpos($localfile, 'cardimg');
@@ -73,8 +79,13 @@ class ImageManager
         // Back face
         if (isset($localFileB)) :
             if (!file_exists($localFileB)) :
-                $this->message->logMessage('[DEBUG]', "$localFileB missing, running get image function");
-                $backImg = $this->fetchAndStoreImage($cardImages['back'], $imgLocation, $setcode, $localFileB);
+                if ($allowFetch) :
+                    $this->message->logMessage('[DEBUG]', "$localFileB missing, running get image function");
+                    $backImg = $this->fetchAndStoreImage($cardImages['back'], $imgLocation, $setcode, $localFileB);
+                else :
+                    $this->message->logMessage('[DEBUG]', "$localFileB missing, using placeholder");
+                    $backImg = '/images/back.jpg';
+                endif;
             elseif (file_exists($localFileB)) :
                 $this->message->logMessage('[DEBUG]', "File exists already at $localFileB");
                 $relativePath2 = strpos($localFileB, 'cardimg');

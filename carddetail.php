@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     21.0
+Version:     21.1
 Date:        23/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -76,12 +76,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         function refreshCardImagesAsync() {
             const seen = {};
             $('img').each(function() {
-                const src = $(this).attr('src');
+                const $img = $(this);
+                const src = $img.attr('src') || '';
                 const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-                if (!match) {
+                const cardId = match ? match[1] : $img.data('cardid');
+                if (!cardId) {
                     return;
                 }
-                const cardId = match[1];
                 if (seen[cardId]) {
                     return;
                 }
@@ -95,13 +96,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         if (!response || !response.success) {
                             return;
                         }
-                        if (response.front) {
+                        if (response.front && response.front.indexOf('cardimg') !== -1) {
                             const newSrc = response.front + '?t=' + Date.now();
-                            $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
+                            $('img[data-cardid="' + cardId + '"][data-face="front"]').attr('src', newSrc);
                         }
-                        if (response.back) {
+                        if (response.back && response.back.indexOf('cardimg') !== -1) {
                             const newBackSrc = response.back + '?t=' + Date.now();
-                            $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
+                            $('img[data-cardid="' + cardId + '"][data-face="back"]').attr('src', newBackSrc);
                         }
                     }
                 });
@@ -119,7 +120,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
         $(function() {  // On document ready
             $("img").on("error", function() {
-                $(this).attr("src", "/cardimg/back.jpg");
+                $(this).attr("src", "/images/back.jpg");
             });
 
             $("#importsubmit").prop('disabled', true);
@@ -585,7 +586,8 @@ require('includes/menu.php'); //mobile menu
                     $row['cs_id'],
                     $imgLocation,
                     $row['layout'],
-                    $twoCardDetailSections
+                    $twoCardDetailSections,
+                    false
                 );
                 $msg->logMessage('[DEBUG]', "getImage result: {$imageFunction['front']} / {$imageFunction['back']}");
                 logTiming($msg, 'image-lookup', $pageStart);
@@ -887,6 +889,8 @@ require('includes/menu.php'); //mobile menu
                                         <div class='<?php echo $hoverclass; ?>' id='image-<?php echo $row['cs_id'];?>'>
                                             <img
                                                 class='mainimg'
+                                                data-cardid="<?php echo $row['cs_id']; ?>"
+                                                data-face="front"
                                                 alt='<?php echo $imagelocation;?>'
                                                 src='<?php echo $imagelocation;?>'
                                             >
@@ -896,16 +900,19 @@ require('includes/menu.php'); //mobile menu
                                             echo "<a href='https://gatherer.wizards.com/Pages/Card/Details.aspx?"
                                                 . "multiverseid=" . $multiverse_id . "' target='_blank'>"
                                                 . "<img alt='$lookupid' id='cardimg' class='mainimg' "
+                                                . "data-cardid='{$row['cs_id']}' data-face='front' "
                                                 . "src=$imagelocation>"
                                                 . "</a>";
                                         elseif (isset($row['scryfall_uri'])) :
                                                 echo "<a href='" . $row['scryfall_uri'] . "' target='_blank'>"
                                                 . "<img alt='$lookupid' id='cardimg' class='mainimg' "
+                                                . "data-cardid='{$row['cs_id']}' data-face='front' "
                                                 . "src=$imagelocation>"
                                                 . "</a>";
                                         else :
                                                 echo "<a href='https://gatherer.wizards.com/' target='_blank'>"
                                                 . "<img alt='$lookupid' id='cardimg' class='mainimg' "
+                                                . "data-cardid='{$row['cs_id']}' data-face='front' "
                                                 . "src=$imagelocation>"
                                                 . "</a>";
                                         endif; ?>
@@ -2553,6 +2560,8 @@ require('includes/menu.php'); //mobile menu
                                             <div class='backimgfloat' id='image-<?php echo $row['cs_id'];?>'>
                                                 <img
                                                     class='backimg'
+                                                    data-cardid="<?php echo $row['cs_id']; ?>"
+                                                    data-face="back"
                                                     alt='<?php echo $imagelocationback;?>'
                                                     src='<?php echo $imagelocationback;?>'
                                                 >
@@ -2563,14 +2572,17 @@ require('includes/menu.php'); //mobile menu
                                             echo "<a href='https://gatherer.wizards.com/Pages/Card/Details.aspx?"
                                                 . "multiverseid=" . $multiverse_id_2
                                                 . "' target='_blank'><img alt='$lookupid' id='cardimg' "
-                                                . "class='backimg' src=$imagelocationback></a>";
+                                                . "class='backimg' data-cardid='{$row['cs_id']}' data-face='back' "
+                                                . "src=$imagelocationback></a>";
                                         elseif (isset($row['scryfall_uri']) and $row['scryfall_uri'] !== "") :
                                                 echo "<a href='" . $row['scryfall_uri'] . "' target='_blank'><img "
                                                     . "alt='$lookupid' id='cardimg' class='backimg' "
+                                                    . "data-cardid='{$row['cs_id']}' data-face='back' "
                                                     . "src=$imagelocationback></a>";
                                         else :
                                                 echo "<a href='https://gatherer.wizards.com/' target='_blank'><img "
                                                     . "alt='$lookupid' id='cardimg' class='backimg' "
+                                                    . "data-cardid='{$row['cs_id']}' data-face='back' "
                                                     . "src=$imagelocationback></a>";
                                         endif;
 

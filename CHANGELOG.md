@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Card detail now logs micro-timing checkpoints to compare container vs bare metal performance.
 - Card detail no longer disables image caching for admin views.
 - Index no longer disables image caching for admin views.
+- Card detail uses placeholder images when cardimg is missing and relies on async image refresh.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
