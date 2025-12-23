@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     13.4
-Date:        21/12/25
+Version:     13.5
+Date:        23/12/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       {none}
@@ -1031,11 +1031,6 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 $imageUrl = '/cardimg/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
-                            endif;
-                            //If page is being loaded by admin, don't cache the image
-                            if (($admin == 1) and ($imageUrl !== '/cardimg/back.jpg')) :
-                                $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
-                                $imageUrl = $imageUrl . '?=' . $time;
                             endif;
                             if (!is_null($imageFunction['back'])) :
                                 if ($imageFunction['back'] === 'error' or $imageFunction['back'] === 'error') :

@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     20.8
+Version:     21.0
 Date:        23/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -873,14 +873,7 @@ require('includes/menu.php'); //mobile menu
                                 <td colspan="6">
                                     <?php
                                     $lookupid = htmlentities($row['cs_id'], ENT_QUOTES, "UTF-8");
-                                    //If page is being loaded by admin, don't cache the main image
-                                    if (($admin == 1) and ($imageUrl !== '/cardimg/back.jpg')) :
-                                        $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
-                                        $imgmodtime = filemtime($imgLocation . strtolower($setcode) . "/" . $imgname);
-                                        $imagelocation = $imageUrl . '?=' . $imgmodtime;
-                                    else :
-                                            $imagelocation = $imageUrl;
-                                    endif;
+                                    $imagelocation = $imageUrl;
                                         $msg->logMessage('[DEBUG]', "Image location is " . $imagelocation);
                                         // Set classes for hover image
                                     if (
@@ -2553,16 +2546,7 @@ require('includes/menu.php'); //mobile menu
                                     <td colspan="2">
                                             <?php
                                             $lookupid = htmlentities($row['cs_id'], ENT_QUOTES, "UTF-8");
-                                            //If page is being loaded by admin, don't cache the main image
-                                            if (($admin == 1) and ($imagebackurl !== '/cardimg/back.jpg')) :
-                                                $msg->logMessage('[DEBUG]', "Admin loading, don't cache image");
-                                                $imgmodtime = filemtime(
-                                                    $imgLocation . strtolower($setcode) . "/" . $imgname_2
-                                                );
-                                                $imagelocationback = $imagebackurl . '?=' . $imgmodtime;
-                                            else :
-                                                $imagelocationback = $imagebackurl;
-                                            endif;
+                                            $imagelocationback = $imagebackurl;
 
                                             $msg->logMessage('[DEBUG]', "Image location is " . $imagelocationback);
                                             ?>

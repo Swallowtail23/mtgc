@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - HTTP user agent strings are now built from the app version, site URL, and admin email.
 - Card detail prices now refresh via an async Scryfall call after initial render.
 - Card detail now logs micro-timing checkpoints to compare container vs bare metal performance.
+- Card detail no longer disables image caching for admin views.
+- Index no longer disables image caching for admin views.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
