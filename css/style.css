@@ -2180,6 +2180,8 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
 .deckcardimg
 {
     width: 180px;
+    transition: opacity 0.25s ease;
+    opacity: 1;
 }
 .hover 
 {
