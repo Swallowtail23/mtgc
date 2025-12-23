@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        23/12/25
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
@@ -77,7 +77,7 @@ class UserAgent
             endif;
         endif;
 
-        $userAgent = "MtGCollection/{$version} ({$url}; {$adminEmail})";
+        $userAgent = self::buildFromParts($version, $url, $adminEmail);
         $cache[$cacheKey] = $userAgent;
 
         if (!empty($logfile)) :
@@ -86,5 +86,14 @@ class UserAgent
         endif;
 
         return $userAgent;
+    }
+
+    public static function buildFromParts($version, $url, $adminEmail): string
+    {
+        $version = trim((string) $version);
+        $url = trim((string) $url);
+        $adminEmail = trim((string) $adminEmail);
+
+        return "MtGCollection/{$version} ({$url}; {$adminEmail})";
     }
 }
