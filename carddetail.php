@@ -822,7 +822,9 @@ require('includes/menu.php'); //mobile menu
                     endif;
                         $img_id = 'cardimg';
                     if (in_array($row['layout'], $twoCardDetailSections)) :
-                        $flipReady = (strpos($imageUrl, 'cardimg') !== false and strpos($imagebackurl, 'cardimg') !== false)
+                        $flipReady = (
+                            strpos($imageUrl, 'cardimg') !== false and strpos($imagebackurl, 'cardimg') !== false
+                            )
                             ? 1
                             : 0;
                         echo "<div style='cursor: pointer; display: none;' class='flipbuttondetail' "
