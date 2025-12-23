@@ -267,6 +267,7 @@ run_user_setup() {
         "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
 
     read -rp "Enter email address for admin user: " email
+    echo "[INFO] This will be set as the site admin email address in mtg_new.ini."
     read -rp "Enter desired username (display only): " username
     read -rsp "Enter password: " password
     echo

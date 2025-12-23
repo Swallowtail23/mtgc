@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.2
-Date:        22/12/25
+Version:     3.3
+Date:        23/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       {none}
@@ -40,11 +40,13 @@ $log_interval = 2500;
 $timeslice_start = microtime(true);
 
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: fetching $url");
+$userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
+$msg->logMessage('[DEBUG]', "Scryfall Rulings API user agent set to $userAgent");
 $options = array(
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_FOLLOWLOCATION => true,
     CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
-    CURLOPT_USERAGENT => "MtGCollection/1.0",
+    CURLOPT_USERAGENT => $userAgent,
     CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
     );
 $ch = curl_init($url);

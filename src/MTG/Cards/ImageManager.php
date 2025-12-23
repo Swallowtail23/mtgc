@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.1
+Date:        23/12/25
 Name:        ImageManager.php
 Purpose:     Local image management class.
 Notes:       -
@@ -308,7 +308,9 @@ class ImageManager
             return 'error';
         endif;
 
-        $options = array('http' => array('user_agent' => 'MtGCollection/1.0'));
+        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $this->message->logMessage('[DEBUG]', "Image fetch user agent set to $userAgent");
+        $options = array('http' => array('user_agent' => $userAgent));
         $context = stream_context_create($options);
         $image = file_get_contents($remoteUrl, false, $context);
 

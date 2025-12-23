@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.1
+Date:        23/12/25
 Name:        PriceManager.php
 Purpose:     Price management class.
 Notes:       -
@@ -47,6 +47,8 @@ class PriceManager
         //Set the URL
         $url = $baseurl . "cards/" . $cardId . "?" . $time;
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail URL for $cardId is $url");
+        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $this->message->logMessage('[DEBUG]', "Scryfall API user agent set to $userAgent");
 
         if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardId])) :
             if ($row->num_rows === 0) :
@@ -131,7 +133,7 @@ class PriceManager
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
-                CURLOPT_USERAGENT => "MtGCollection/1.0",
+                CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_HTTPHEADER => array(
                     "Accept: application/json;q=0.9,*/*;q=0.8"
                 ),
@@ -341,7 +343,7 @@ class PriceManager
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_FAILONERROR => true, // HTTP code > 400 will throw curl error
-                CURLOPT_USERAGENT => "MtGCollection/1.0",
+                CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_HTTPHEADER => array("Accept: application/json;q=0.9,*/*;q=0.8"),
                 );
             $ch = curl_init($url);

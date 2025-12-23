@@ -185,6 +185,7 @@ echo Starting initial DB setup...
 docker exec mtgc_db_1 mysql -u root -prootpass -e "INSERT INTO mtg_new.admin (\`key\`, usemin, mtce) VALUES (1, 0, 1) ON DUPLICATE KEY UPDATE mtce=1;"
 docker exec mtgc_db_1 mysql -u root -prootpass -e "SET FOREIGN_KEY_CHECKS=0; TRUNCATE TABLE mtg_new.collection_values; TRUNCATE TABLE mtg_new.users; SET FOREIGN_KEY_CHECKS=1;"
 set /p ADMIN_EMAIL="Enter email address for admin user: "
+echo [INFO] This will be set as the site admin email address in mtg_new.ini.
 set /p ADMIN_USER="Enter desired username (display only): "
 set /p ADMIN_PASS="Enter password: "
 powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%BASE_DIR%\config\mtg_new.ini') ^| %% { \$_ -replace '^AdminEmail\s*=.*', 'AdminEmail     = \"%ADMIN_EMAIL%\"' } ^| Set-Content '%BASE_DIR%\config\mtg_new.ini'"

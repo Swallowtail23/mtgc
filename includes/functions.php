@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     27.5
-Date:        22/12/25
+Version:     27.6
+Date:        23/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -294,13 +294,14 @@ function checkRemoteFile($url)
     endif;
 
     $ch = curl_init();
+    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
     curl_setopt($ch, CURLOPT_VERBOSE, 1);
     curl_setopt($ch, CURLOPT_STDERR, fopen('php://stderr', 'w'));
     curl_setopt($ch, CURLOPT_FAILONERROR, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'MtGCollection/1.0');
+    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
     curl_setopt($ch, CURLOPT_AUTOREFERER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
@@ -446,11 +447,12 @@ function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = fal
         return false;
     endif;
 
+    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_FILE, $fp);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-    curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
     curl_setopt($ch, CURLOPT_TIMEOUT, 300);
@@ -501,9 +503,10 @@ function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = fal
 
 function fetchJson($url, $msg, $context)
 {
+    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_USERAGENT, "MtGCollection/1.0");
+    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
     curl_setopt($ch, CURLOPT_TIMEOUT, 60);
