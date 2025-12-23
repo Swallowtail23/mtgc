@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     20.7
+Version:     20.8
 Date:        23/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -24,9 +24,17 @@ forcePasswordChange();                       //Check if user is disabled or need
 require('includes/colour.php');
 
 $msg = new \MTG\Core\Message($logfile);
+$pageStart = microtime(true);
+
+function logTiming($msg, $label, $start)
+{
+    $elapsed = microtime(true) - $start;
+    $msg->logMessage('[DEBUG]', "Timing {$label}: " . number_format($elapsed, 4) . "s");
+}
 
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
+logTiming($msg, 'post-session-setup', $pageStart);
 
 // Enable / disable deck functionality
 $decks_on = 1;
@@ -306,6 +314,7 @@ require('includes/menu.php'); //mobile menu
     else :
         $msg->logMessage('[DEBUG]', "Collection table exists");
     endif;
+    logTiming($msg, 'collection-table-check', $pageStart);
 
     $scryfallresult = array();
     $msg->logMessage('[DEBUG]', "Skipping synchronous Scryfall price refresh - async update will run after load");
@@ -448,6 +457,7 @@ require('includes/menu.php'); //mobile menu
                     "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
                 );
         endif;
+            logTiming($msg, 'card-detail-query', $pageStart);
             $qtyresults = $result->num_rows;
             // If the result has a card:
         if (!$qtyresults == 0) :
@@ -578,6 +588,7 @@ require('includes/menu.php'); //mobile menu
                     $twoCardDetailSections
                 );
                 $msg->logMessage('[DEBUG]', "getImage result: {$imageFunction['front']} / {$imageFunction['back']}");
+                logTiming($msg, 'image-lookup', $pageStart);
             if ($imageFunction['front'] == 'error') :
                 $imageUrl = '/cardimg/back.jpg';
             else :
@@ -828,6 +839,7 @@ require('includes/menu.php'); //mobile menu
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $results = $result->fetch_all(MYSQLI_ASSOC);
+                        logTiming($msg, 'prev-next-query', $pageStart);
                         $currentCardIndex = array_search($row['cs_id'], array_column($results, 'id'));
                         $msg->logMessage(
                             '[DEBUG]',

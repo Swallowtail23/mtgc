@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Docker init now confirms the admin email will be written to the mtg_new.ini email section.
 - HTTP user agent strings are now built from the app version, site URL, and admin email.
 - Card detail prices now refresh via an async Scryfall call after initial render.
+- Card detail now logs micro-timing checkpoints to compare container vs bare metal performance.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
