@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Docker init now confirms the admin email will be written to the mtg_new.ini email section.
 - HTTP user agent strings are now built from the app version, site URL, and admin email.
+- Card detail prices now refresh via an async Scryfall call after initial render.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
@@ -23,6 +24,8 @@ All notable changes to this project will be documented in this file.
 ### Infrastructure
 - PHP config now suppresses display_errors and logs to mtgapp.log (container + bare metal).
 - Added PHPUnit coverage for the UserAgent builder.
+- Added PHPUnit coverage for async card price rendering.
+- Added PHPUnit coverage for async price response payloads.
 
 ## [v0.2.2] - 2025-12-22
 

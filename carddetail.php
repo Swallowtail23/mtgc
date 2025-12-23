@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     20.6
-Date:        19/12/25
+Version:     20.7
+Date:        23/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -307,25 +307,16 @@ require('includes/menu.php'); //mobile menu
         $msg->logMessage('[DEBUG]', "Collection table exists");
     endif;
 
-    // Check/update/populate JSON data
-    $obj = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
-    $msg->logMessage('[DEBUG]', "Is card ID provided, does card exist? If yes ensure latest price");
-    if (
-        (isset($_GET["id"]) or isset($_POST["id"]))
-        and ($scryfallresult = $obj->scryfall($cardId))['action'] !== 'nocard'
-    ) :
-        $msg->logMessage('[DEBUG]', "Scryfall run, returned action '{$scryfallresult["action"]}'");
-        if ($scryfallresult["action"] === 'update' || $scryfallresult["action"] === 'get') :
-            // Update topvalue if new data has been obtained
-            $msg->logMessage('[DEBUG]', "Scryfall run returned Get or Update: Updating topvalue");
-            $obj->updateCollectionValues($mytable, $cardId);
-        endif;
-
+    $scryfallresult = array();
+    $msg->logMessage('[DEBUG]', "Skipping synchronous Scryfall price refresh - async update will run after load");
+    $msg->logMessage('[DEBUG]', "Is card ID provided, does card exist? If yes load card details");
+    if (isset($_GET["id"]) or isset($_POST["id"])) :
         $searchqry =
                "SELECT
                     cards_scry.id as cs_id,
                     oracle_id,
                     tcgplayer_id,
+                    scryfalljson.tcg_buy_uri,
                     multiverse,
                     multiverse2,
                     name,
@@ -444,6 +435,7 @@ require('includes/menu.php'); //mobile menu
                     $mytable.etched,
                     notes
                 FROM cards_scry
+                LEFT JOIN scryfalljson ON cards_scry.id = scryfalljson.id
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 WHERE cards_scry.id = ?
                 LIMIT 1";
@@ -562,8 +554,8 @@ require('includes/menu.php'); //mobile menu
                     '[DEBUG]',
                     "Recorded price from database is: $price_log/$price_foil_log/$price_etched_log"
                 );
-                $tcg_buy_uri = $scryfallresult["tcg_uri"];
-                $msg->logMessage('[DEBUG]', "TCGPlayer buy URI from Scryfall: $tcg_buy_uri");
+                $tcg_buy_uri = $row['tcg_buy_uri'] ?? null;
+                $msg->logMessage('[DEBUG]', "TCGPlayer buy URI from cached data: $tcg_buy_uri");
             if (isset($row['layout']) and $row['layout'] === "normal") :
                 $scryfallimg = $row['image_uri'];
             else :
@@ -936,24 +928,32 @@ require('includes/menu.php'); //mobile menu
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;"
                                         onclick="document.getElementById('prev_card').submit();">
                                         <?php if (!empty($prevcardid)) :
-                                            $msg->logMessage('[DEBUG]', "Previous card ('$prevcardid')");?>
+                                            $msg->logMessage('[DEBUG]', "Previous card ('$prevcardid')");
+                                            $prevValue = htmlspecialchars(
+                                                $prevcardid,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );?>
                                             <form action="?" method="get" id="prev_card">
-                                                <?php echo "<input type='hidden' name='id' value='$prevcardid'>"; ?>
-                                                <label style="cursor: pointer;">
-                                                    <span
-                                                        onclick="document.getElementById('prev_card').submit();"
-                                                        title="Previous card in set"
-                                                        onmouseover=""
-                                                        style="
-                                                            cursor: pointer;
-                                                            display:block;
-                                                            text-align:center;
-                                                            margin:0 auto;
-                                                        "
-                                                        class='material-symbols-outlined'>
-                                                        navigate_before
-                                                    </span>
-                                                </label>
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?php echo $prevValue; ?>"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    title="Previous card in set"
+                                                    class="material-symbols-outlined"
+                                                    style="
+                                                        background:none;
+                                                        border:none;
+                                                        cursor:pointer;
+                                                        display:block;
+                                                        text-align:center;
+                                                        margin:0 auto;
+                                                    ">
+                                                    navigate_before
+                                                </button>
                                             </form>
                                         <?php endif; ?>
                                     </td>
@@ -1918,8 +1918,9 @@ require('includes/menu.php'); //mobile menu
                             else :
                                 $msg->logMessage('[DEBUG]', "No etched price");
                                 $etchprice = false;
-                            endif;
-
+                            endif;?>
+                            <div id="priceblock" data-cardid="<?php echo $id; ?>">
+                            <?php
                             if ($normalprice == false and $foilprice == false and $etchprice == false) : ?>
                                 <table id='tcgplayer' width="100%">
                                     <tr>
@@ -1978,7 +1979,9 @@ require('includes/menu.php'); //mobile menu
                                     </tr> <?php
                                     endif; ?>
                                 </table> <?php
-                            endif;
+                            endif;?>
+                            </div>
+                            <?php
                             if (isset($tcg_buy_uri) and $tcg_buy_uri !== "") :
                                 $tcgdirectlink = $tcg_buy_uri;
                             else :
@@ -2011,13 +2014,45 @@ require('includes/menu.php'); //mobile menu
                                                 . "' target='_blank'>Search Scryfall</a>";
                                         endif;?>
                                     </td>
-                                    <td class="buycellleft"> <?php
-                                    if (isset($tcgdirectlink) and $tcgdirectlink !== null) :
-                                        echo "<a href='" . $tcgdirectlink . "' target='_blank'>TCGPlayer</a>";
-                                    endif; ?>
+                                    <td class="buycellleft">
+                                        <a
+                                            id="tcgplayerlink"
+                                            href="<?php echo $tcgdirectlink ?? '#'; ?>"
+                                            target="_blank"
+                                            style="<?php echo ($tcgdirectlink === null) ? 'display: none' : ''; ?>"
+                                        >TCGPlayer</a>
                                     </td>
                                 </tr>
                             </table>
+                            <script>
+                                $(function() {
+                                    var priceBlock = $('#priceblock');
+                                    var cardId = priceBlock.data('cardid');
+                                    if (!cardId) {
+                                        return;
+                                    }
+
+                                    $.ajax({
+                                        url: 'ajax/ajaxcardprice.php',
+                                        type: 'POST',
+                                        data: { cardid: cardId },
+                                        dataType: 'json',
+                                        success: function(response) {
+                                            if (!response || response.success !== true) {
+                                                return;
+                                            }
+                                            if (response.price_html) {
+                                                priceBlock.html(response.price_html);
+                                            }
+                                            if (response.tcg_link) {
+                                                $('#tcgplayerlink').attr('href', response.tcg_link).show();
+                                            } else {
+                                                $('#tcgplayerlink').hide();
+                                            }
+                                        }
+                                    });
+                                });
+                            </script>
 
 
                             <?php
