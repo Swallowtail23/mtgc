@@ -1384,7 +1384,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $imgLocation,
                                     $layout,
                                     $twoCardDetailSections,
-        false
+                                    false
                                 );
                                 if ($imageFunction['front'] == 'error') :
                                     $imageUrl = '/images/back.jpg';
@@ -1557,7 +1557,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                         $imgLocation,
                                         $layout,
                                         $twoCardDetailSections,
-        false
+                                        false
                                     );
                                     if ($imageFunction['front'] == 'error') :
                                         $imageUrl = '/images/back.jpg';
@@ -1727,7 +1727,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections,
-        false
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/images/back.jpg';
@@ -1993,7 +1993,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections,
-        false
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/images/back.jpg';
@@ -2235,7 +2235,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections,
-        false
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/images/back.jpg';
@@ -2540,7 +2540,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections,
-        false
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/images/back.jpg';
@@ -2771,7 +2771,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $imgLocation,
                                     $layout,
                                     $twoCardDetailSections,
-        false
+                                    false
                                 );
                                 if ($imageFunction['front'] == 'error') :
                                     $imageUrl = '/images/back.jpg';
@@ -2932,7 +2932,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $imgLocation,
                                 $layout,
                                 $twoCardDetailSections,
-        false
+                                false
                             );
                             if ($imageFunction['front'] == 'error') :
                                 $imageUrl = '/images/back.jpg';
