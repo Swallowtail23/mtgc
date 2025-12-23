@@ -43,8 +43,8 @@ compose definitions), keeping the project root clean of Docker-specific files.
 - `docker/docker-init.sh` / `docker/docker-init.bat` – bootstrap scripts for
   Linux/macOS/WSL and Windows respectively.
 - `docker/entrypoint.sh` – container init tasks (link config, log setup,
-  composer install). `docker/wait-for-mysql.sh` – waits on MySQL before Apache
-  starts.
+  composer install). 
+- `docker/wait-for-mysql.sh` – waits on MySQL before Apache starts.
 - `docker/mtgc_ctr.conf` – Apache vhost used inside the web image.
 - `docker/my.cnf` – MySQL server config baked into the DB image.
 - `docker/logrotate-mtgc.conf` – logrotate template for `${BASE_DIR}/logs`.
@@ -77,11 +77,11 @@ Clone the repo to your local host:
    ```
 
     - The script auto-detects Docker vs Podman/compose and prompts for:
-      - A base directory for card images/config/logs (e.g. `/srv/data`). The
+      - A base directory for card images/config/logs (e.g. `/mnt/data`). The
         script appends `/mtgc` and creates `cardimg`, `config`, and `logs`.
       - The HTTP port to expose (default `8082`).
-      - Whether to bind-mount the local checkout (answers `Y`) or use the
-        container's internal copy (answers `N`). Choosing `Y` adds
+      - Whether to bind-mount the local checkout (answer `Y`) or use the
+        container's internal copy (answer `N`). Choosing `Y` adds
         `docker-compose.dev.yml`, letting you edit files on the host and see the
         changes live inside the container. Dependencies remain container-managed
         because a named `vendor-deps` volume is always mounted at
@@ -92,7 +92,7 @@ Clone the repo to your local host:
         `composer_installed.flag` marker under your config directory: if it is
         missing (fresh install) it tells you Composer will run automatically on
         the next container start and create the file; if it exists, the script
-        asks whether you want to delete it so the next start re-runs Composer.
+        asks whether you want to delete it and re-run Composer install.
         Invalid or empty responses default to the container copy.
    - It creates `docker/.env` with those values, builds both images, starts the
      stack, and prompts for the first admin user credentials.
@@ -158,11 +158,10 @@ for you; there is no longer a root-level `.env`.
 
 - Configure SMTP via `${BASE_DIR}/config/mtg_new.ini` (`[smtp]` section). Set
   `EnableEmail = true`, supply host, port, username, password, and TLS mode.
-- Inside the Admin UI navigate to Settings → Email to toggle email features,
+- Or, inside the Admin UI navigate to Settings → Email to toggle email features,
   set the sender address, and test delivery once SMTP is configured.
-- For new-user onboarding, the admin workflow now sends a reset link (no
-  temporary password). Ensure email works so users can complete their account
-  setup promptly.
+- For new-user onboarding, the admin workflow sends a reset link (no temporary 
+  password). Ensure email works so users can complete their account setup promptly.
 - The init scripts leave `EnableEmail` disabled by default; after editing the
   ini, restart the web container (`podman-compose restart web`) so PHP picks up
   the changes. Monitor `podman-compose logs web` to debug PHPMailer output.
@@ -171,7 +170,7 @@ for you; there is no longer a root-level `.env`.
 
 The host paths defined during bootstrap contain persistent data:
 
-- `${BASE_DIR}/cardimg` – bulk JSON cache plus card images (can be tens of GBs).
+- `${BASE_DIR}/cardimg` – bulk JSON cache and card images (can be tens of GBs).
 - `${BASE_DIR}/config` – holds `mtg_new.ini`, `php_custom.ini`, the cron
   template `cron_mtgc`, and helper shell scripts under `config/scripts`. These
   are copied from `setup/*.sh` on the first run so you can schedule cron jobs.
@@ -191,7 +190,7 @@ When `docker/docker-init.sh` runs on a fresh database it executes:
 3. `php bulk/scryfall_rulings.php`
 4. `php bulk/scryfall_migrations.php`
 
-The 'refresh'' bulk run deliberately avoids downloading ~90k card images.
+The 'refresh'' bulk run deliberately avoids downloading ~100k card images.
 A first `all` pass writes every card record but skips image downloads;
 a second `default` pass marks the primary language. A `default` run will only
 download an image when a new row is inserted; because the `all` pass already
@@ -205,6 +204,8 @@ getting new cards with their images and any data changes released by Scryfall.
 
 Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
 pulling the full image set unnecessarily.
+
+DO NOT abuse the Scryfall service. See https://scryfall.com/docs/api for rules.
 
 ## Log rotation
 
@@ -255,8 +256,9 @@ Recommended artifacts:
 - MySQL data (volume `mtgc_db-data`).
 - Host directories under `${BASE_DIR}` (`cardimg`, `config`, `logs`).
 
-Use `docker/backup.sh` as a starting point. It reads `docker/.env`, dumps the
-database via `podman exec mtgc_db_1 mysqldump`, and archives `${BASE_DIR}/config`
+Use `docker/backup.sh`, executed on the host, as a starting point.
+It reads `docker/.env`, dumps the database via 
+`podman exec mtgc_db_1 mysqldump`, and archives `${BASE_DIR}/config`
 and `${BASE_DIR}/logs` into `./backups/<gitref>_<timestamp>/` (it uses
 `git describe --tags` to label the snapshot). Customize the script to include
 `cardimg` if you want full image backups (large). Example run:
