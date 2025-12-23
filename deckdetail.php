@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.4
-Date:        21/12/25
+Version:     25.6
+Date:        24/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -46,38 +46,100 @@ $uniquecard_ref = [];
     <script src="/js/jquery.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
+        function swapImageWithFade($img, newSrc) {
+            $img.css('opacity', '0');
+            $img.off('load.mtgfade').on('load.mtgfade', function() {
+                const $self = $(this);
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        $self.css('opacity', '1');
+                    });
+                });
+            });
+            $img.attr('src', newSrc);
+            if ($img[0] && $img[0].complete) {
+                setTimeout(function() {
+                    $img.trigger('load');
+                }, 0);
+            }
+        }
+
+        const deckImageQueue = [];
+        const deckImageQueued = {};
+        let deckImageInFlight = 0;
+        let deckImagePauseUntil = 0;
+        const deckImageMaxConcurrent = 3;
+
+        function enqueueDeckImage(cardId, priority) {
+            if (!cardId) {
+                return;
+            }
+            if (deckImageQueued[cardId] !== true) {
+                deckImageQueued[cardId] = true;
+                if (priority === true) {
+                    deckImageQueue.unshift(cardId);
+                } else {
+                    deckImageQueue.push(cardId);
+                }
+            } else if (priority === true) {
+                const idx = deckImageQueue.indexOf(cardId);
+                if (idx > 0) {
+                    deckImageQueue.splice(idx, 1);
+                    deckImageQueue.unshift(cardId);
+                }
+            }
+            scheduleDeckImageLoad();
+        }
+
+        function scheduleDeckImageLoad() {
+            if (Date.now() < deckImagePauseUntil) {
+                setTimeout(scheduleDeckImageLoad, 120);
+                return;
+            }
+            if (deckImageInFlight >= deckImageMaxConcurrent || deckImageQueue.length === 0) {
+                return;
+            }
+            const cardId = deckImageQueue.shift();
+            deckImageInFlight += 1;
+            $.ajax({
+                url: 'ajax/ajaximagecheck.php',
+                type: 'POST',
+                data: { cardid: cardId },
+                dataType: 'json',
+                success: function(response) {
+                    if (!response || !response.success) {
+                        return;
+                    }
+                    if (response.front && response.front.indexOf('cardimg') !== -1) {
+                        const newSrc = response.front + '?t=' + Date.now();
+                        $('img[data-cardid="' + cardId + '"]').each(function() {
+                            const $target = $(this);
+                            $target.attr('data-front-src', response.front);
+                            $target.attr('data-back-src', response.back || $target.attr('data-back-src') || '');
+                            swapImageWithFade($target, newSrc);
+                        });
+                    }
+                    if (response.back && response.back.indexOf('cardimg') !== -1) {
+                        $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
+                    }
+                },
+                complete: function() {
+                    deckImageInFlight -= 1;
+                    setTimeout(scheduleDeckImageLoad, 0);
+                }
+            });
+            setTimeout(scheduleDeckImageLoad, 0);
+        }
+
         function refreshCardImagesAsync() {
             const seen = {};
-            $('img').each(function() {
-                const src = $(this).attr('src');
-                const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-                if (!match) {
-                    return;
-                }
-                const cardId = match[1];
-                if (seen[cardId]) {
+            $('img[data-cardid]').each(function() {
+                const cardId = $(this).data('cardid');
+                if (!cardId || seen[cardId]) {
                     return;
                 }
                 seen[cardId] = true;
-                $.ajax({
-                    url: 'ajax/ajaximagecheck.php',
-                    type: 'POST',
-                    data: { cardid: cardId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (!response || !response.success) {
-                            return;
-                        }
-                        if (response.front) {
-                            const newSrc = response.front + '?t=' + Date.now();
-                            $('img[src*="' + cardId + '.jpg"]').attr('src', newSrc);
-                        }
-                        if (response.back) {
-                            const newBackSrc = response.back + '?t=' + Date.now();
-                            $('img[src*="' + cardId + '_b.jpg"]').attr('src', newBackSrc);
-                        }
-                    }
-                });
+                enqueueDeckImage(cardId, false);
             });
         }
     </script>
@@ -86,7 +148,10 @@ $uniquecard_ref = [];
             refreshCardImagesAsync();
             // Update the 'onerror' attribute for all images
             $('img').on('error', function() {
-                this.src = '/cardimg/back.jpg';
+                this.src = '/images/back.jpg';
+            });
+            $(document).on('pointerdown keydown', function() {
+                deckImagePauseUntil = Date.now() + 300;
             });
 
             // Click event for the document (outside .deckcardimgdiv and .randomcardimgdiv)
@@ -120,6 +185,10 @@ $uniquecard_ref = [];
                         if ($link.length) {
                             var id = $link.attr('id');
                             var $div = $('#' + id.replace('-taphover', ''));
+                            var cardId = $div.find('img[data-cardid]').data('cardid') || $link.data('cardid');
+                            if (cardId) {
+                                enqueueDeckImage(cardId, true);
+                            }
 
                             if (lastHoveredDiv && lastHoveredDiv !== $div) {
                                 clearTimeout(lastHoveredDiv.data('timeoutId'));
@@ -261,6 +330,10 @@ $uniquecard_ref = [];
                     var id = $link.attr('id');
                     var $div = $('#' + id.replace('-taphover', ''));
                     var mouseX, mouseY;
+                    var cardId = $div.find('img[data-cardid]').data('cardid') || $link.data('cardid');
+                    if (cardId) {
+                        enqueueDeckImage(cardId, true);
+                    }
 
                     if (e.pageX && e.pageY) {
                         mouseX = e.pageX;
@@ -1016,10 +1089,11 @@ while ($row = $result->fetch_assoc()) :
         $row['cardsid'],
         $imgLocation,
         $row['layout'],
-        $twoCardDetailSections
+        $twoCardDetailSections,
+        false
     );
     if ($imageFunction['front'] == 'error') :
-        $imageUrl = '/cardimg/back.jpg';
+        $imageUrl = '/images/back.jpg';
     else :
         $imageUrl = $imageFunction['front'];
     endif;
@@ -1058,10 +1132,11 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['cardsid'],
         $imgLocation,
         $row['layout'],
-        $twoCardDetailSections
+        $twoCardDetailSections,
+        false
     );
     if ($imageFunction['front'] == 'error') :
-        $imageUrl = '/cardimg/back.jpg';
+        $imageUrl = '/images/back.jpg';
     else :
         $imageUrl = $imageFunction['front'];
     endif;
@@ -1308,10 +1383,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $cardId,
                                     $imgLocation,
                                     $layout,
-                                    $twoCardDetailSections
+                                    $twoCardDetailSections,
+        false
                                 );
                                 if ($imageFunction['front'] == 'error') :
-                                    $imageUrl = '/cardimg/back.jpg';
+                                    $imageUrl = '/images/back.jpg';
                                 else :
                                     $imageUrl = $imageFunction['front'];
                                 endif;
@@ -1395,6 +1471,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     <img
                                         alt='<?php echo $deckcardname;?>'
                                         class='deckcardimg'
+                                        data-cardid="<?php echo $row['cardsid']; ?>"
+                                        data-front-src="<?php echo $imageUrl; ?>"
                                         src='<?php echo $imageUrl;?>'
                                     ></a>
                                 </div> <?php
@@ -1478,10 +1556,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                         $cardId,
                                         $imgLocation,
                                         $layout,
-                                        $twoCardDetailSections
+                                        $twoCardDetailSections,
+        false
                                     );
                                     if ($imageFunction['front'] == 'error') :
-                                        $imageUrl = '/cardimg/back.jpg';
+                                        $imageUrl = '/images/back.jpg';
                                     else :
                                         $imageUrl = $imageFunction['front'];
                                     endif;
@@ -1536,6 +1615,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                         <img
                                             alt='<?php echo $deckcardname;?>'
                                             class='deckcardimg'
+                                            data-cardid="<?php echo $row['cardsid']; ?>"
+                                            data-front-src="<?php echo $imageUrl; ?>"
                                             src='<?php echo $imageUrl;?>'
                                         ></a>
                                     </div> <?php
@@ -1645,10 +1726,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId,
                                 $imgLocation,
                                 $layout,
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+        false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
@@ -1794,6 +1876,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
@@ -1908,10 +1992,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId,
                                 $imgLocation,
                                 $layout,
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+        false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
@@ -2018,6 +2103,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
@@ -2147,10 +2234,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId,
                                 $imgLocation,
                                 $layout,
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+        false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
@@ -2257,6 +2345,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
@@ -2449,10 +2539,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId,
                                 $imgLocation,
                                 $layout,
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+        false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
@@ -2543,6 +2634,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
@@ -2677,10 +2770,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $cardId,
                                     $imgLocation,
                                     $layout,
-                                    $twoCardDetailSections
+                                    $twoCardDetailSections,
+        false
                                 );
                                 if ($imageFunction['front'] == 'error') :
-                                    $imageUrl = '/cardimg/back.jpg';
+                                    $imageUrl = '/images/back.jpg';
                                 else :
                                     $imageUrl = $imageFunction['front'];
                                 endif;
@@ -2718,6 +2812,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     <img
                                         alt='<?php echo $deckcardname;?>'
                                         class='deckcardimg'
+                                        data-cardid="<?php echo $row['cardsid']; ?>"
+                                        data-front-src="<?php echo $imageUrl; ?>"
                                         src='<?php echo $imageUrl;?>'
                                     ></a>
                                 </div> <?php
@@ -2835,10 +2931,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardId,
                                 $imgLocation,
                                 $layout,
-                                $twoCardDetailSections
+                                $twoCardDetailSections,
+        false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/cardimg/back.jpg';
+                                $imageUrl = '/images/back.jpg';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
@@ -3028,6 +3125,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 <img
                                     alt='<?php echo $deckcardname;?>'
                                     class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div>

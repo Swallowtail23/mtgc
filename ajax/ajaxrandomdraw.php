@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     1.3
-Date:        25/11/25
+Version:     1.4
+Date:        24/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -84,9 +84,16 @@ for ($i = 0; $i < 7; $i++) {
     $randomref = $i + 1; ?>
     <div class='randomcardimgdiv' id='<?php echo "random-$randomref";?>'>
         <a href='<?php echo $cardurl;?>'>
-        <img alt='<?php echo $name;?>' class='deckcardimg' src='<?php echo $imgurl;?>'></a>
+        <img
+            alt='<?php echo $name;?>'
+            class='deckcardimg'
+            data-cardid="<?php echo $id; ?>"
+            data-front-src="<?php echo $imgurl; ?>"
+            src='<?php echo $imgurl;?>'
+        ></a>
     </div> <?php
-    echo "<tr><td class='hoverTD'>$randomref: <a class='taphover' id='random-$randomref-taphover' href='$cardurl'>"
+    echo "<tr><td class='hoverTD'>$randomref: <a class='taphover' id='random-$randomref-taphover' "
+        . "data-cardid='{$id}' href='$cardurl'>"
         . "$name</a></td></tr>";
 }
 echo "</table>";

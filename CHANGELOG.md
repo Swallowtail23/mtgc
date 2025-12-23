@@ -22,12 +22,15 @@ All notable changes to this project will be documented in this file.
 - Index image refresh now throttles async checks and yields for user input.
 - Async image swaps now fade in instead of snapping from the placeholder.
 - Card detail flip button now respects viewport width when both faces are visible.
+- Deck detail now uses async image loading with hover/tap priority and placeholders.
+- Random draw hover now prioritises async image loading.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
 - Trust device prompt now requires the post-login flow flag so it can’t be opened directly.
 - Trust device direct access now logs an error before redirecting.
 - Fixed trust device flow to log access errors after autoload setup to avoid fatal exceptions.
+- Deck detail async image loading now skips synchronous fetches to avoid long page loads.
 
 ### Security
 -
