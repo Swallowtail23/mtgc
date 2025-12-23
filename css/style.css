@@ -1990,6 +1990,7 @@ table.profile_options tr.hoverhighlight:hover {
 {
     display: inline-block;
     text-align: center;
+    padding: 0px;
 }
 
 #importsubmit:disabled, #photosubmit:disabled
