@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.14
 Date:        24/12/25
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -105,6 +105,30 @@ elseif ($action === 'maintoside') :
     endif;
     $result = 'maintoside';
     $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'plusside') :
+    $result = $deckManager->addDeckCard($deckNumber, $cardId, "side", "1");
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'minusside') :
+    $result = $deckManager->subtractDeckCard($deckNumber, $cardId, "side", "1");
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'deleteside') :
+    $result = $deckManager->subtractDeckCard($deckNumber, $cardId, "side", "all");
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'sidetomain') :
+    if ($deckManager->subtractDeckCard($deckNumber, $cardId, 'side', '1') != "-error") :
+        $deckManager->addDeckCard($deckNumber, $cardId, "main", "1");
+    endif;
+    $result = 'sidetomain';
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'commander_add') :
+    $result = $deckManager->addCommander($deckNumber, $cardId);
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'partner_add') :
+    $result = $deckManager->addPartner($deckNumber, $cardId);
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
+elseif ($action === 'commander_remove') :
+    $result = $deckManager->delCommander($deckNumber, $cardId);
+    $msg->logMessage('[DEBUG]', "Deck action result: $result");
 else :
     $response['error'] = 'Unsupported action';
     returnResponse($response);
@@ -166,6 +190,7 @@ if ($action === 'maintoside' && $sideqty > 0) :
     endif;
     $detailQuery = "SELECT cards_scry.id AS cardsid,
             cards_scry.name,
+            cards_scry.flavor_name,
             cards_scry.rarity,
             cards_scry.setcode,
             cards_scry.number_import,
@@ -174,6 +199,9 @@ if ($action === 'maintoside' && $sideqty > 0) :
             cards_scry.cmc,
             cards_scry.f1_type,
             cards_scry.f1_cmc,
+            cards_scry.ability,
+            cards_scry.f1_ability,
+            cards_scry.f2_ability,
             cards_scry.color_identity
         FROM cards_scry
         WHERE cards_scry.id = ? LIMIT 1";
@@ -181,6 +209,9 @@ if ($action === 'maintoside' && $sideqty > 0) :
     if ($detailResult !== false && $detailResult->num_rows > 0) :
         $detailRow = $detailResult->fetch_assoc();
         $cardname = $detailRow['name'];
+        if (isset($detailRow['flavor_name']) and !empty($detailRow['flavor_name'])) :
+            $cardname = $detailRow['flavor_name'];
+        endif;
         $rarity = $detailRow['rarity'];
         $cardset = strtolower($detailRow['setcode']);
         $cardnumber = $detailRow['number_import'];
@@ -258,9 +289,32 @@ if ($action === 'maintoside' && $sideqty > 0) :
         else :
             $hoverclass = 'deckcardimgdiv';
         endif;
+        $maxCopies = mtgCardCopyLimit(
+            $card_type,
+            $detailRow['ability'] ?? null,
+            $detailRow['f1_ability'] ?? null,
+            $detailRow['f2_ability'] ?? null,
+            $decktype
+        );
+        $canAddMore = true;
+        if ($maxCopies !== null) :
+            $totalQuery = "SELECT SUM(IFNULL(deckcards.cardqty, 0) + IFNULL(deckcards.sideqty, 0)) AS totalqty
+                FROM deckcards
+                LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+                WHERE deckcards.decknumber = ? AND cards_scry.name = ? LIMIT 1";
+            $totalResult = $db->execute_query($totalQuery, [$deckNumber, $detailRow['name']]);
+            if ($totalResult !== false && $totalResult->num_rows > 0) :
+                $totalRow = $totalResult->fetch_assoc();
+                $currentCopies = (int) ($totalRow['totalqty'] ?? 0);
+                if ($currentCopies >= $maxCopies) :
+                    $canAddMore = false;
+                endif;
+            endif;
+        endif;
+        $addStyle = $canAddMore ? '' : ' display: none;';
 
         $sideRowHtml = "<tr class='deckrow' data-section='sideboard' data-cardid='{$cardId}' "
-            . "data-qty='{$sideqty}'>"
+            . "data-cardref='{$cardref}' data-qty='{$sideqty}'>"
             . "<td class=\"deckcardname hoverTD\">"
             . "<a class='taphover' {$illegal_tag} id='listside-{$cardref}-taphover' "
             . "href='carddetail.php?id={$cardId}'>"
@@ -271,25 +325,22 @@ if ($action === 'maintoside' && $sideqty > 0) :
         endif;
         $sideRowHtml .= "<td class='deckcardlistcenter noprint'>"
             . "<span onmouseover=\"\" title=\"Delete\" style=\"cursor: pointer;\" "
-            . "onclick=\"window.location='deckdetail.php?deck={$deckNumber}&amp;card={$cardId}&amp;deleteside=yes'\" "
-            . "class='material-symbols-outlined'>delete_forever</span></td>"
+            . "class='material-symbols-outlined js-deleteside' data-cardid=\"{$cardId}\" "
+            . "data-cardref=\"{$cardref}\">delete_forever</span></td>"
             . "<td class='deckcardlistcenter noprint'>"
             . "<span onmouseover=\"\" title=\"Move to main deck\" style=\"cursor: pointer;\" "
-            . "onclick=\"window.location='deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"
-            . "&amp;sidetomain=yes'\" "
-            . "class='material-symbols-outlined'>arrow_upward</span></td>";
+            . "class='material-symbols-outlined js-sidetomain' data-cardid=\"{$cardId}\" "
+            . "data-cardref=\"{$cardref}\">arrow_upward</span></td>";
         if ($isCommanderDeck !== true) :
             $sideRowHtml .= "<td class='deckcardlistright noprint'>"
                 . "<span onmouseover=\"\" title=\"Remove one\" style=\"cursor: pointer;\" "
-                . "onclick=\"window.location='deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"
-                . "&amp;minusside=yes'\" "
-                . "class='material-symbols-outlined'>remove</span></td>"
+                . "class='material-symbols-outlined js-minusside' data-cardid=\"{$cardId}\" "
+                . "data-cardref=\"{$cardref}\">remove</span></td>"
                 . "<td class='deckcardlistcenter js-qty-side' id='qty-side-{$cardref}'>{$sideqty}</td>"
                 . "<td class='deckcardlistleft noprint'>"
-                . "<span onmouseover=\"\" title=\"Add one\" style=\"cursor: pointer;\" "
-                . "onclick=\"window.location='deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"
-                . "&amp;plusside=yes'\" "
-                . "class='material-symbols-outlined'>add</span></td>";
+                . "<span onmouseover=\"\" title=\"Add one\" style=\"cursor: pointer;{$addStyle}\" "
+                . "class='material-symbols-outlined js-plusside' data-cardid=\"{$cardId}\" "
+                . "data-cardref=\"{$cardref}\" data-maxcopies=\"{$maxCopies}\">add</span></td>";
         endif;
         $sideRowHtml .= "</tr>";
         $sideHoverHtml = "<div class='{$hoverclass}' id='listside-{$cardref}'>"

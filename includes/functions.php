@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     27.7
+Version:     27.9
 Date:        24/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -23,9 +23,13 @@ function forcePasswordChange()
     endif;
 }
 
-function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null)
+function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
 {
     global $any_quantity;
+
+    if ($decktype === 'Wishlist') :
+        return null;
+    endif;
 
     if ($card_type !== null && str_contains($card_type, 'Basic Land')) :
         return null;

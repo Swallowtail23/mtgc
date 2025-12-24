@@ -26,6 +26,21 @@ All notable changes to this project will be documented in this file.
 - Random draw hover now prioritises async image loading.
 - Deck detail main-deck add-one now supports async updates via ajax.
 - Deck detail main-deck delete and minus-one now support async updates via ajax.
+- Deck detail derived sections now render via fragment includes and can refresh via ajax.
+- Fixed deck detail fragment currency formatting to avoid clobbering mana counters.
+- Documented deckdetail fragment dependencies and refresh flow.
+- Moved additional deck detail UI handlers into `js/deckdetail.js`.
+- Added fragment rendering tests for deck detail and the fragment renderer.
+- Added mana and deck value fragment tests plus a fragment response structure test.
+- Sideboard ajax inserts now honor preferred card display names (e.g., flavor name).
+- Sideboard ajax inserts now respect copy limits when rendering add buttons.
+- Main deck hover images no longer disappear after move-to-sideboard.
+- Move-to-sideboard fragment refresh now skips decklist replacement for faster hovers.
+- Deck detail hover handlers now clear previous bindings to avoid stacked delays after ajax updates.
+- Fixed deck detail fragment totals when decklist rendering is skipped in ajax refresh.
+- Random draw now renders via fragment and refreshes with ajax updates.
+- Wishlist decks no longer enforce copy limits.
+- Fixed deck detail fragment refresh handler so ajax updates trigger dependent fragments.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
@@ -55,6 +70,16 @@ All notable changes to this project will be documented in this file.
 - Deck detail async move-to-sideboard now updates main and sideboard rows inline.
 - 'Other' card types no longer break non-commander decktype lists.
 - TCGPlayer buttons now does not render with unwanted padding (deckdetail).
+- Deck detail fragment rendering now runs the deck list first to avoid stale or undefined totals.
+- Deck detail fragment renderer now imports global scope so fragments receive deck data in ajax mode.
+- Deck detail random draw fragment now loads its ajax include path correctly.
+- Random draw ajax now respects include mode to avoid reloading init files during fragment renders.
+- Deck detail sideboard actions now run via ajax without PRG refreshes.
+- Deck detail fragment refresh now preserves FX currency formatting for deck value.
+- Commander and partner moves now run via ajax without PRG refreshes.
+- Random draw now binds reliably on first page load after fragment rendering.
+- Colour identity fragment now hides when no commander is set after ajax updates.
+- Deck type changes now run via ajax to avoid lingering GET state on refresh.
 
 ### Security
 -

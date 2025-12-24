@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        24/12/25
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -493,7 +493,8 @@ class DeckManager
                         $card_type,
                         $info['ability'] ?? null,
                         $info['f1_ability'] ?? null,
-                        $info['f2_ability'] ?? null
+                        $info['f2_ability'] ?? null,
+                        $decktype
                     );
                     if ($maxCopies !== null) :
                         $name = $info['name'];
@@ -824,7 +825,8 @@ class DeckManager
                 $card_type,
                 $cardname['ability'] ?? null,
                 $cardname['f1_ability'] ?? null,
-                $cardname['f2_ability'] ?? null
+                $cardname['f2_ability'] ?? null,
+                $decktype
             );
             if ($maxCopies !== null) :
                 $qtyquery = "SELECT SUM(IFNULL(deckcards.cardqty, 0) + IFNULL(deckcards.sideqty, 0)) AS totalqty

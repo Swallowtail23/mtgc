@@ -10,6 +10,7 @@
 - [Install Options](#install-options)
 - [Dependencies](#dependencies)
 - [Configuration & Admin Settings](#configuration--admin-settings)
+- [Deck Detail Fragments](#deck-detail-fragments)
 - [Work In Progress](#work-in-progress)
 - [Credits](#credits)
 
@@ -94,6 +95,11 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 
 - Further automation/simplification of admin flows
 - Additional MTG-specific tweaks (Planes, Phenomena, etc.)
+
+## Deck Detail Fragments
+
+Deck detail derived sections now refresh via server-rendered fragments. See
+`docs/deckdetail_fragments.md` for the flow, fragment list, and update guidance.
 
 ## Credits
 
