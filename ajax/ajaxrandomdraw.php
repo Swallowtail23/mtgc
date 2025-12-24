@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.4
+Version:     1.5
 Date:        24/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -81,8 +81,22 @@ for ($i = 0; $i < 7; $i++) {
     $name = $uniquecard_ref[$a[$i]]['name'];
     $id = $uniquecard_ref[$a[$i]]['cardid'];
     $cardref = $uniquecard_ref[$a[$i]]['cardref'];
+    $layout = $uniquecard_ref[$a[$i]]['layout'] ?? null;
+    $f1_type = $uniquecard_ref[$a[$i]]['f1_type'] ?? null;
     $randomref = $i + 1; ?>
-    <div class='randomcardimgdiv' id='<?php echo "random-$randomref";?>'>
+    <?php
+    if (
+        (isset($layout) and in_array($layout, $image90rotate))
+        or (isset($f1_type) and in_array($f1_type, $image90rotate))
+    ) :
+        $hoverclass = 'randomcardimgdiv splitfloat';
+        $msg->logMessage('[DEBUG]', "Random draw hover rotated for '$name'");
+    else :
+        $hoverclass = 'randomcardimgdiv';
+        $msg->logMessage('[DEBUG]', "Random draw hover not rotated for '$name'");
+    endif;
+    ?>
+    <div class='<?php echo $hoverclass; ?>' id='<?php echo "random-$randomref";?>'>
         <a href='<?php echo $cardurl;?>'>
         <img
             alt='<?php echo $name;?>'

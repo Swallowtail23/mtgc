@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.6
+Version:     25.7
 Date:        24/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -1465,8 +1465,25 @@ m13,12,"Fog",en,1,0,0,{id}
                                             <?php
                                     endif;
                                         echo "</td>";
-                                        echo "</td>"; ?>
-                                <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                        echo "</td>";
+                                if (
+                                    in_array($row['layout'], $image90rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                ) :
+                                    $hoverclass = 'deckcardimgdiv splitfloat';
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "Hover image rotated for deckdetail card '$cardname'"
+                                    );
+                                else :
+                                    $hoverclass = 'deckcardimgdiv';
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "Hover image not rotated for deckdetail card '$cardname'"
+                                    );
+                                endif;
+                                ?>
+                                <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                     <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                     <img
                                         alt='<?php echo $deckcardname;?>'
@@ -1609,8 +1626,25 @@ m13,12,"Fog",en,1,0,0,{id}
                                         arrow_downward
                                     </span>
                                     <?php
-                                    echo "</td>";?>
-                                    <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                    echo "</td>";
+                                    if (
+                                        in_array($row['layout'], $image90rotate)
+                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    ) :
+                                        $hoverclass = 'deckcardimgdiv splitfloat';
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Hover image rotated for deckdetail card '$cardname'"
+                                        );
+                                    else :
+                                        $hoverclass = 'deckcardimgdiv';
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Hover image not rotated for deckdetail card '$cardname'"
+                                        );
+                                    endif;
+                                    ?>
+                                    <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                         <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                         <img
                                             alt='<?php echo $deckcardname;?>'
@@ -1740,6 +1774,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
                                 $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
+                                $uniquecard_ref["$deckcard_no"]['layout'] = $row['layout'];
+                                $uniquecard_ref["$deckcard_no"]['f1_type'] = $row['f1_type'] ?? null;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
@@ -1870,8 +1906,19 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     echo "</td>";
                                 endif;
-                                echo "</td>";?>
-                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                echo "</td>";
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage('[DEBUG]', "Hover image not rotated for deckdetail card '$cardname'");
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                 <img
                                     alt='<?php echo $deckcardname;?>'
@@ -2006,6 +2053,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
                                 $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
+                                $uniquecard_ref["$deckcard_no"]['layout'] = $row['layout'];
+                                $uniquecard_ref["$deckcard_no"]['f1_type'] = $row['f1_type'] ?? null;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
@@ -2097,8 +2146,19 @@ m13,12,"Fog",en,1,0,0,{id}
                                         . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                                echo "</td>";?>
-                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                echo "</td>";
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage('[DEBUG]', "Hover image not rotated for deckdetail card '$cardname'");
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                 <img
                                     alt='<?php echo $deckcardname;?>'
@@ -2213,6 +2273,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             and (strpos($card_type, 'Instant') === false)
                             and (strpos($card_type, 'Creature') === false)
                             and (strpos($card_type, 'Land') === false)
+                            and (strpos($card_type, 'Battle') === false)
                             and (
                                 (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
                             )
@@ -2248,6 +2309,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $uniquecard_ref["$deckcard_no"]['cardid'] = $cardId;
                                 $uniquecard_ref["$deckcard_no"]['imageurl'] = $imageUrl;
                                 $uniquecard_ref["$deckcard_no"]['cardurl'] = '/carddetail.php?id=' . $cardId;
+                                $uniquecard_ref["$deckcard_no"]['layout'] = $row['layout'];
+                                $uniquecard_ref["$deckcard_no"]['f1_type'] = $row['f1_type'] ?? null;
                                 $deckcard_no = $deckcard_no + 1;
                                 $rowqty = $rowqty + 1;
                             endwhile;
@@ -2339,8 +2402,19 @@ m13,12,"Fog",en,1,0,0,{id}
                                         . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                                echo "</td>";?>
-                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                echo "</td>";
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage('[DEBUG]', "Hover image not rotated for deckdetail card '$cardname'");
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                 <img
                                     alt='<?php echo $deckcardname;?>'
@@ -2396,7 +2470,6 @@ m13,12,"Fog",en,1,0,0,{id}
                                     endif;
                                     $i++;
                                 endwhile;
-                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 if ($validcommander == true) :
                                     ?>
@@ -2628,8 +2701,19 @@ m13,12,"Fog",en,1,0,0,{id}
                                         . "href='carddetail.php?id={$row['cardsid']}'>$cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
-                                echo "</td>";?>
-                            <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                echo "</td>";
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage('[DEBUG]', "Hover image not rotated for deckdetail card '$cardname'");
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                 <img
                                     alt='<?php echo $deckcardname;?>'
@@ -2806,8 +2890,25 @@ m13,12,"Fog",en,1,0,0,{id}
                                             . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
                                             . "</a></a>";
                                     endif;
-                                    echo "</td>";?>
-                                <div class='deckcardimgdiv' id='<?php echo "list-$cardref";?>'>
+                                    echo "</td>";
+                                if (
+                                    in_array($row['layout'], $image90rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                ) :
+                                    $hoverclass = 'deckcardimgdiv splitfloat';
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "Hover image rotated for deckdetail card '$cardname'"
+                                    );
+                                else :
+                                    $hoverclass = 'deckcardimgdiv';
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "Hover image not rotated for deckdetail card '$cardname'"
+                                    );
+                                endif;
+                                ?>
+                                <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
                                     <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                     <img
                                         alt='<?php echo $deckcardname;?>'
@@ -3119,8 +3220,18 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage('[DEBUG]', "Hover image not rotated for deckdetail card '$cardname'");
+                            endif;
                                 ?>
-                            <div class='deckcardimgdiv' id='<?php echo "listside-$cardref";?>'>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "listside-$cardref";?>'>
                                 <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
                                 <img
                                     alt='<?php echo $deckcardname;?>'
