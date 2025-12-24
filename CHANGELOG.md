@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Deck detail async image loading now skips synchronous fetches to avoid long page loads.
 - Deck detail hover images now rotate split/planar/siege cards in the main list and random draw.
 - 'Other' card types no longer break non-commander decktype lists.
+- TCGPlayer buttons now does not render with unwanted padding (deckdetail).
 
 ### Security
 -
