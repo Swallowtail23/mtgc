@@ -33,6 +33,12 @@ All notable changes to this project will be documented in this file.
 - Deck detail async image loading now skips synchronous fetches to avoid long page loads.
 - Deck detail hover images now rotate split/planar/siege cards in the main list and random draw.
 - Deck duplicate now retains Commander and Partner/Background status when copying decks.
+- Deck export now prefixes the deck name with "Deckname:" and imports ignore that header line.
+- Commander deck quantity checks now consider f1_ability/f2_ability for any-quantity rules.
+- Non-Commander decks now enforce copy limits (main+side combined) with any-quantity and up-to-N overrides.
+- Deck detail sideboard rows now compute base card names safely when decks are empty.
+- Deck import warnings now report when copy limits reduce or block line quantities.
+- Deck quick add now reports when card copy limits block or cap single-line adds.
 - 'Other' card types no longer break non-commander decktype lists.
 - TCGPlayer buttons now does not render with unwanted padding (deckdetail).
 
@@ -46,6 +52,7 @@ All notable changes to this project will be documented in this file.
 - Added PHPUnit coverage for async price response payloads.
 - UserAgent test now writes temp files in the workspace for CI compatibility.
 - UserAgent test now stubs the expected values directly.
+- DeckManager batch insert now tolerates DB stubs without execute_query for tests.
 
 ## [v0.2.2] - 2025-12-22
 

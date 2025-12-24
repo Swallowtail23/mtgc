@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     27.6
-Date:        23/12/25
+Version:     27.7
+Date:        24/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -21,6 +21,66 @@ function forcePasswordChange()
     if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
         header("Location: /profile.php");
     endif;
+}
+
+function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null)
+{
+    global $any_quantity;
+
+    if ($card_type !== null && str_contains($card_type, 'Basic Land')) :
+        return null;
+    endif;
+
+    $ability_candidates = array_filter(
+        [
+            $ability,
+            $f1_ability,
+            $f2_ability
+        ]
+    );
+
+    foreach ($ability_candidates as $ability_text) :
+        foreach ($any_quantity as $rule) :
+            if (str_contains($ability_text, $rule)) :
+                return null;
+            endif;
+        endforeach;
+
+        $pattern = '/A deck can have up to ([a-z0-9-]+) cards named/i';
+        if (preg_match($pattern, $ability_text, $matches)) :
+            $limit_text = strtolower(str_replace('-', ' ', $matches[1]));
+            if (ctype_digit($limit_text)) :
+                return (int) $limit_text;
+            endif;
+            $word_map = [
+                'one' => 1,
+                'two' => 2,
+                'three' => 3,
+                'four' => 4,
+                'five' => 5,
+                'six' => 6,
+                'seven' => 7,
+                'eight' => 8,
+                'nine' => 9,
+                'ten' => 10,
+                'eleven' => 11,
+                'twelve' => 12,
+                'thirteen' => 13,
+                'fourteen' => 14,
+                'fifteen' => 15,
+                'sixteen' => 16,
+                'seventeen' => 17,
+                'eighteen' => 18,
+                'nineteen' => 19,
+                'twenty' => 20
+            ];
+            if (isset($word_map[$limit_text])) :
+                return $word_map[$limit_text];
+            endif;
+        endif;
+    endforeach;
+
+    return 4;
 }
 
 function cssVersionCheck()

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.7
+Version:     25.10
 Date:        24/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -897,6 +897,12 @@ endwhile;
 $uniquecardscount = count($resultnames);
 $msg->logMessage('[DEBUG]', "Cards in deck: $uniquecardscount");
 $msg->logMessage('[DEBUG]', "Cards in deck: " . print_r($resultnames, true));
+$resultNameTotals = [];
+foreach ($resultnames as $resultEntry) :
+    if (isset($resultEntry['name'])) :
+        $resultNameTotals[$resultEntry['name']] = $resultEntry['qty'] ?? 0;
+    endif;
+endforeach;
 $requiredlist = '';
 $requiredbuy = '';
 if ($uniquecardscount > 0) :
@@ -1004,6 +1010,7 @@ $gg = 0;
 $gc = 0;
 $i = 0;
 while ($row = $result->fetch_assoc()) :
+    $baseCardName = $row['name'];
     if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
         $row['name'] = $row['flavor_name'];
     endif;
@@ -1150,6 +1157,23 @@ endwhile;
 if (isset($cardtoadd) and ($cardtoadd == 'cardnotfound' or $cardtoadd == 'cardnotadded')) : ?>
     <div class="msg-new error-new" onclick='closeMe(this)'>
         <span>That didn't work... check card name</span>
+        <br>
+        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+    </div>
+    <?php
+elseif (isset($cardtoadd) and $cardtoadd == 'limitreached') : ?>
+    <div class="msg-new error-new" onclick='closeMe(this)'>
+        <span>Deck already contains the limit for this card name</span>
+        <br>
+        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
+    </div>
+    <?php
+elseif (isset($cardtoadd) and str_starts_with($cardtoadd, 'limitpartial:')) : ?>
+    <?php
+    $limitQty = (int) substr($cardtoadd, strlen('limitpartial:'));
+    ?>
+    <div class="msg-new error-new" onclick='closeMe(this)'>
+        <span><?php echo $limitQty; ?> imported due to card name limit</span>
         <br>
         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
     </div>
@@ -1355,6 +1379,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         mysqli_data_seek($result, 0);
                         $commandercount = 0;
                         while ($row = $result->fetch_assoc()) :
+                            $baseCardName = $row['name'];
                             if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
@@ -1540,6 +1565,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         if (mysqli_num_rows($result) > 0) :
                             mysqli_data_seek($result, 0);
                             while ($row = $result->fetch_assoc()) :
+                                $baseCardName = $row['name'];
                                 if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                     $row['name'] = $row['flavor_name'];
                                 endif;
@@ -1725,6 +1751,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()) :
+                        $baseCardName = $row['name'];
                         if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
@@ -1973,8 +2000,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
+                                $maxCopies = mtgCardCopyLimit(
+                                    $card_type,
+                                    $row['ability'] ?? null,
+                                    $row['f1_ability'] ?? null,
+                                    $row['f2_ability'] ?? null
+                                );
+                                $canAddMore = true;
+                                if ($maxCopies !== null) :
+                                    $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                    if ($currentCopies >= $maxCopies) :
+                                        $canAddMore = false;
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                        );
+                                    endif;
+                                endif;
                                 echo "<td class='deckcardlistleft noprint'>";
-                                ?>
+                                if ($canAddMore) :
+                                    ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
@@ -1983,7 +2028,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                <?php
+                                    <?php
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2007,6 +2053,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()) :
+                        $baseCardName = $row['name'];
                         if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
@@ -2221,8 +2268,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
+                                $maxCopies = mtgCardCopyLimit(
+                                    $card_type,
+                                    $row['ability'] ?? null,
+                                    $row['f1_ability'] ?? null,
+                                    $row['f2_ability'] ?? null
+                                );
+                                $canAddMore = true;
+                                if ($maxCopies !== null) :
+                                    $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                    if ($currentCopies >= $maxCopies) :
+                                        $canAddMore = false;
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                        );
+                                    endif;
+                                endif;
                                 echo "<td class='deckcardlistleft noprint'>";
-                                ?>
+                                if ($canAddMore) :
+                                    ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
@@ -2231,7 +2296,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                <?php
+                                    <?php
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2255,6 +2321,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()) :
+                        $baseCardName = $row['name'];
                         if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
@@ -2280,7 +2347,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             and (strpos($card_type, 'Creature') === false)
                             and (strpos($card_type, 'Land') === false)
                             and (
-                                (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
+                            (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
                             )
                             and (strpos($card_type, 'Phenomenon') === false)
                             and ($row['commander'] < 1)
@@ -2547,8 +2614,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
+                                $maxCopies = mtgCardCopyLimit(
+                                    $card_type,
+                                    $row['ability'] ?? null,
+                                    $row['f1_ability'] ?? null,
+                                    $row['f2_ability'] ?? null
+                                );
+                                $canAddMore = true;
+                                if ($maxCopies !== null) :
+                                    $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                    if ($currentCopies >= $maxCopies) :
+                                        $canAddMore = false;
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                        );
+                                    endif;
+                                endif;
                                 echo "<td class='deckcardlistleft noprint'>";
-                                ?>
+                                if ($canAddMore) :
+                                    ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
@@ -2557,7 +2642,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                <?php
+                                    <?php
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2582,6 +2668,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 if (mysqli_num_rows($result) > 0) :
                     mysqli_data_seek($result, 0);
                     while ($row = $result->fetch_assoc()) :
+                        $baseCardName = $row['name'];
                         if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                             $row['name'] = $row['flavor_name'];
                         endif;
@@ -2782,8 +2869,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                 echo "<td class='deckcardlistcenter'>";
                                 echo $quantity;
                                 echo "</td>";
+                                $maxCopies = mtgCardCopyLimit(
+                                    $card_type,
+                                    $row['ability'] ?? null,
+                                    $row['f1_ability'] ?? null,
+                                    $row['f2_ability'] ?? null
+                                );
+                                $canAddMore = true;
+                                if ($maxCopies !== null) :
+                                    $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                    if ($currentCopies >= $maxCopies) :
+                                        $canAddMore = false;
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                        );
+                                    endif;
+                                endif;
                                 echo "<td class='deckcardlistleft noprint'>";
-                                ?>
+                                if ($canAddMore) :
+                                    ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
@@ -2792,7 +2897,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                <?php
+                                    <?php
+                                endif;
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2834,6 +2940,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     if (mysqli_num_rows($result) > 0) :
                         mysqli_data_seek($result, 0);
                         while ($row = $result->fetch_assoc()) :
+                            $baseCardName = $row['name'];
                             if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
@@ -2977,17 +3084,36 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "<td class='deckcardlistcenter'>";
                                     echo $quantity;
                                     echo "</td>";
+                                    $maxCopies = mtgCardCopyLimit(
+                                        $card_type,
+                                        $row['ability'] ?? null,
+                                        $row['f1_ability'] ?? null,
+                                        $row['f2_ability'] ?? null
+                                    );
+                                    $canAddMore = true;
+                                    if ($maxCopies !== null) :
+                                        $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                        if ($currentCopies >= $maxCopies) :
+                                            $canAddMore = false;
+                                            $msg->logMessage(
+                                                '[DEBUG]',
+                                                "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                            );
+                                        endif;
+                                    endif;
                                     echo "<td class='deckcardlistleft noprint'>";
-                                    ?>
+                                    if ($canAddMore) :
+                                        ?>
                                     <span
                                         onmouseover=""
-                                    title="Add one"
-                                    style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
+                                        title="Add one"
+                                        style="cursor: pointer;"
+                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
                                         class='material-symbols-outlined'>
                                         add
                                     </span>
-                                    <?php
+                                        <?php
+                                    endif;
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
@@ -3018,6 +3144,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     if (mysqli_num_rows($sideresult) > 0) :
                         mysqli_data_seek($sideresult, 0);
                         while ($row = $sideresult->fetch_assoc()) :
+                            $baseCardName = $row['name'];
                             if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
                             endif;
@@ -3218,8 +3345,26 @@ m13,12,"Fog",en,1,0,0,{id}
                                     echo "<td class='deckcardlistcenter'>";
                                     echo $quantity;
                                     echo "</td>";
+                                    $maxCopies = mtgCardCopyLimit(
+                                        $card_type,
+                                        $row['ability'] ?? null,
+                                        $row['f1_ability'] ?? null,
+                                        $row['f2_ability'] ?? null
+                                    );
+                                    $canAddMore = true;
+                                    if ($maxCopies !== null) :
+                                        $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
+                                        if ($currentCopies >= $maxCopies) :
+                                            $canAddMore = false;
+                                            $msg->logMessage(
+                                                '[DEBUG]',
+                                                "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
+                                            );
+                                        endif;
+                                    endif;
                                     echo "<td class='deckcardlistleft noprint'>";
-                                    ?>
+                                    if ($canAddMore) :
+                                        ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
@@ -3228,7 +3373,8 @@ m13,12,"Fog",en,1,0,0,{id}
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                    <?php
+                                        <?php
+                                    endif;
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";

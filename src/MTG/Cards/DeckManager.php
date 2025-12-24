@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.8
 Date:        24/12/25
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -27,6 +27,7 @@ class DeckManager
     private $importLinestoIgnore;
     private $siteTitle;
     private $nonPreferredSetCodes;
+    private $limitWarnings = [];
 
     public function __construct(
         $db,
@@ -76,6 +77,8 @@ class DeckManager
                 $start = substr($line, 0, 8);
                 if (strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false) :
                     $this->message->logMessage('[DEBUG]', "Row $row: Header row: '$line'");
+                elseif (stripos($line, 'Deckname:') === 0) :
+                    $this->message->logMessage('[DEBUG]', "Row $row: Deckname header");
                 elseif ($line === 'Commander') :
                     $commanderTrigger = true;
                     $partnerTrigger = false;
@@ -114,7 +117,9 @@ class DeckManager
                         $line,
                         $sideboardTrigger,
                         true,
-                        $commanderMode
+                        $commanderMode,
+                        $row,
+                        $line
                     );
                     if ($quickAddResult === false || $quickAddResult === 'cardnotfound') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Result: fail");
@@ -126,21 +131,6 @@ class DeckManager
                 endif;
                 $row = $row + 1;
             endforeach;
-            if ($warningSummary !== '') :
-                $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
-                $subject = "Deck Import failures / warnings";
-                $message = "$warningHeading \n \n $warningSummary \n";
-                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                    mail($this->userEmail, $subject, $message, $from);
-                else :
-                    $this->message->logMessage(
-                        '[NOTICE]',
-                        "Email disabled; deck import warnings not sent to {$this->userEmail}"
-                    );
-                endif;
-                $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningSummary'");
-                $quickAddResult = 'multierror';
-            endif;
         else :
             $this->message->logMessage(
                 '[DEBUG]',
@@ -157,6 +147,27 @@ class DeckManager
             // Clear array after batch insert
             $this->batchedCardIds = [];
         endif;
+        if (!empty($this->limitWarnings)) :
+            foreach ($this->limitWarnings as $limitWarning) :
+                $warningSummary = $warningSummary . $limitWarning;
+            endforeach;
+            $this->limitWarnings = [];
+        endif;
+        if ($warningSummary !== '') :
+            $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
+            $subject = "Deck Import failures / warnings";
+            $message = "$warningHeading\n\n$warningSummary\n";
+            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+                mail($this->userEmail, $subject, $message, $from);
+            else :
+                $this->message->logMessage(
+                    '[NOTICE]',
+                    "Email disabled; deck import warnings not sent to {$this->userEmail}"
+                );
+            endif;
+            $this->message->logMessage('[DEBUG]', "Deck import warnings: '$warningSummary'");
+            $quickAddResult = 'multierror';
+        endif;
 
         if (isset($quickAddResult)) :
             return $quickAddResult;
@@ -166,8 +177,15 @@ class DeckManager
     /**
      * Called from processInput().
      */
-    public function quickAdd($deckNumber, $getString, $sideboardTrigger = false, $batch = false, $commanderMode = null)
-    {
+    public function quickAdd(
+        $deckNumber,
+        $getString,
+        $sideboardTrigger = false,
+        $batch = false,
+        $commanderMode = null,
+        $rowNumber = null,
+        $originalLine = null
+    ) {
         global $noQuickAddLayouts;
 
         $this->message->logMessage(
@@ -353,7 +371,9 @@ class DeckManager
                             'id' => $cardtoadd,
                             'mainqty' => $mainQty,
                             'sideqty' => $sideQty,
-                            'commander' => $commanderMode
+                            'commander' => $commanderMode,
+                            'row' => $rowNumber,
+                            'line' => $originalLine
                         ];
                     endif;
                 else :
@@ -377,10 +397,159 @@ class DeckManager
     public function addDeckCardsBatch($deckNumber, $batchedCardIds)
     {
         $this->message->logMessage('[DEBUG]', "deckManager batch process called");
+        global $commander_decktypes;
+        if (!is_array($commander_decktypes)) :
+            $commander_decktypes = [];
+        endif;
         $values = [];
         $placeholders = [];
+        $filteredBatch = [];
 
-        foreach ($batchedCardIds as $batchedCard) :
+        if (!method_exists($this->db, 'execute_query')) :
+            $this->message->logMessage('[DEBUG]', "Batch insert: DB stub lacks execute_query; skipping limits");
+            $filteredBatch = $batchedCardIds;
+        endif;
+
+        $decktype = 'none';
+        $canQuery = method_exists($this->db, 'execute_query');
+        if (empty($filteredBatch) && $canQuery) :
+            $decktypesql = $this->db->execute_query(
+                "SELECT type FROM decks WHERE decknumber = ? LIMIT 1",
+                [$deckNumber]
+            );
+            if ($decktypesql !== false && $decktypesql->num_rows > 0) :
+                $decktype_row = $decktypesql->fetch_assoc();
+                if ($decktype_row['type'] !== null) :
+                    $decktype = $decktype_row['type'];
+                endif;
+            endif;
+        endif;
+
+        $cdr_type_deck = in_array($decktype, $commander_decktypes);
+        if ($cdr_type_deck == true) :
+            $this->message->logMessage('[DEBUG]', "Batch insert: Commander deck; skipping copy limits");
+        endif;
+
+        $cardInfoById = [];
+        $currentTotalsByName = [];
+        if ($cdr_type_deck == false && $canQuery) :
+            $cardIds = array_values(array_unique(array_column($batchedCardIds, 'id')));
+            if (!empty($cardIds)) :
+                $placeholdersIn = implode(',', array_fill(0, count($cardIds), '?'));
+                $cardInfoQuery = "SELECT id,name,type,f1_type,f2_type,ability,f1_ability,f2_ability "
+                    . "FROM cards_scry WHERE id IN ($placeholdersIn)";
+                $cardInfoResult = $this->db->execute_query($cardInfoQuery, $cardIds);
+                if ($cardInfoResult !== false) :
+                    while ($info = $cardInfoResult->fetch_assoc()) :
+                        $cardInfoById[$info['id']] = $info;
+                    endwhile;
+                endif;
+
+                $nameList = array_values(
+                    array_unique(
+                        array_map(function ($info) {
+                            return $info['name'];
+                        }, $cardInfoById)
+                    )
+                );
+                if (!empty($nameList)) :
+                    $namePlaceholders = implode(',', array_fill(0, count($nameList), '?'));
+                    $qtyQuery = "SELECT cards_scry.name,
+                            SUM(IFNULL(deckcards.cardqty, 0) + IFNULL(deckcards.sideqty, 0)) AS totalqty
+                        FROM deckcards
+                        LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+                        WHERE deckcards.decknumber = ? AND cards_scry.name IN ($namePlaceholders)
+                        GROUP BY cards_scry.name";
+                    $qtyParams = array_merge([$deckNumber], $nameList);
+                    $qtyResult = $this->db->execute_query($qtyQuery, $qtyParams);
+                    if ($qtyResult !== false) :
+                        while ($qtyRow = $qtyResult->fetch_assoc()) :
+                            $currentTotalsByName[$qtyRow['name']] = (int) ($qtyRow['totalqty'] ?? 0);
+                        endwhile;
+                    endif;
+                endif;
+            endif;
+        endif;
+
+        if (empty($filteredBatch)) :
+            $queuedTotalsByName = [];
+            foreach ($batchedCardIds as $batchedCard) :
+                $id = $batchedCard['id'];
+                $mainQty = $batchedCard['mainqty'];
+                $sideQty = $batchedCard['sideqty'];
+                if ($mainQty <= 0 && $sideQty <= 0) :
+                    continue;
+                endif;
+
+                if ($cdr_type_deck == false && isset($cardInfoById[$id])) :
+                    $info = $cardInfoById[$id];
+                    $card_type = $info['type'];
+                    if ($card_type === null && isset($info['f1_type'])) :
+                        $card_type = $info['f1_type'];
+                    elseif ($card_type === null && isset($info['f2_type'])) :
+                        $card_type = $info['f2_type'];
+                    endif;
+                    $maxCopies = mtgCardCopyLimit(
+                        $card_type,
+                        $info['ability'] ?? null,
+                        $info['f1_ability'] ?? null,
+                        $info['f2_ability'] ?? null
+                    );
+                    if ($maxCopies !== null) :
+                        $name = $info['name'];
+                        $existingQty = $currentTotalsByName[$name] ?? 0;
+                        $queuedQty = $queuedTotalsByName[$name] ?? 0;
+                        $availableQty = $maxCopies - ($existingQty + $queuedQty);
+                        if ($availableQty <= 0) :
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Batch limit reached for '$name'; skipping add"
+                            );
+                            $warningRow = $batchedCard['row'] ?? 'N/A';
+                            $warningLine = $batchedCard['line'] ?? $name;
+                            $this->limitWarnings[] = "LIMIT - Row $warningRow, Line: '$warningLine' (limit reached)\n";
+                            continue;
+                        endif;
+                        $requestedQty = $mainQty > 0 ? $mainQty : $sideQty;
+                        if ($requestedQty > $availableQty) :
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Batch limiting '$name' qty from $requestedQty to $availableQty"
+                            );
+                            $warningRow = $batchedCard['row'] ?? 'N/A';
+                            $warningLine = $batchedCard['line'] ?? $name;
+                            $this->limitWarnings[] = "LIMIT - Row $warningRow, Line: '$warningLine' "
+                                . "(limited to $availableQty)\n";
+                            if ($mainQty > 0) :
+                                $mainQty = $availableQty;
+                            else :
+                                $sideQty = $availableQty;
+                            endif;
+                            $requestedQty = $availableQty;
+                        endif;
+                        $queuedTotalsByName[$name] = $queuedQty + $requestedQty;
+                    endif;
+                endif;
+
+                if ($mainQty <= 0 && $sideQty <= 0) :
+                    continue;
+                endif;
+
+                $filteredBatch[] = [
+                    'id' => $id,
+                    'mainqty' => $mainQty,
+                    'sideqty' => $sideQty,
+                    'commander' => $batchedCard['commander'] ?? null
+                ];
+            endforeach;
+        endif;
+
+        if (empty($filteredBatch)) :
+            $this->message->logMessage('[DEBUG]', "Batch insert: no cards after limits applied");
+            return;
+        endif;
+
+        foreach ($filteredBatch as $batchedCard) :
             $id = $batchedCard['id'];
             $mainQty = $batchedCard['mainqty'];
             $sideQty = $batchedCard['sideqty'];
@@ -400,11 +569,11 @@ class DeckManager
             $stmt = $this->db->prepare($query);
 
             // Generate the type definition string dynamically based on the number of batched cards
-            $typeDefinition = str_repeat('isii', count($batchedCardIds));
+            $typeDefinition = str_repeat('isii', count($filteredBatch));
 
             // Prepare an array with the values to be bound
             $bindValues = [];
-            foreach ($batchedCardIds as $batchedCard) :
+            foreach ($filteredBatch as $batchedCard) :
                 $bindValues[] = $deckNumber;
                 $bindValues[] = $batchedCard['id'];
                 $bindValues[] = $batchedCard['mainqty'];
@@ -416,7 +585,7 @@ class DeckManager
 
             if ($stmt->execute()) :
                 $this->message->logMessage('[DEBUG]', "deckManager batch process completed");
-                foreach ($batchedCardIds as $batchedCard) :
+                foreach ($filteredBatch as $batchedCard) :
                     if (
                         isset($batchedCard['commander'])
                         and $batchedCard['commander'] !== null
@@ -518,7 +687,8 @@ class DeckManager
         );
 
         // Get card name and other key details of card to add
-        $cardnamequery = "SELECT name,type,f1_type,ability FROM cards_scry WHERE id = ? LIMIT 1";
+        $cardnamequery = "SELECT name,type,f1_type,f2_type,ability,f1_ability,f2_ability FROM cards_scry "
+            . "WHERE id = ? LIMIT 1";
         $result = $this->db->execute_query($cardnamequery, [$card]);
         $cardname = $result->fetch_assoc();
         if ($result === false) :
@@ -543,22 +713,28 @@ class DeckManager
             endif;
 
             while ($i < count($commander_multiples)) :
-                $while_result = false;
                 $this->message->logMessage('[DEBUG]', "Checking type for: {$commander_multiples[$i]}");
                 if (str_contains($card_type, $commander_multiples[$i]) == true) :
-                    $while_result = true;
                     $cdr_1_plus = true;
                 endif;
                 $i++;
             endwhile;
+            $ability_candidates = array_filter(
+                [
+                    $cardname['ability'] ?? null,
+                    $cardname['f1_ability'] ?? null,
+                    $cardname['f2_ability'] ?? null
+                ]
+            );
             $i = 0;
             while ($i < count($any_quantity)) :
-                $while_result = false;
                 $this->message->logMessage('[DEBUG]', "Checking ability for: {$any_quantity[$i]}");
-                if (isset($cardname['ability']) and (str_contains($cardname['ability'], $any_quantity[$i]) == true)) :
-                    $while_result = true;
-                    $cdr_1_plus = true;
-                endif;
+                foreach ($ability_candidates as $ability_text) :
+                    if (str_contains($ability_text, $any_quantity[$i]) == true) :
+                        $cdr_1_plus = true;
+                        break;
+                    endif;
+                endforeach;
                 $i++;
             endwhile;
             if ($cdr_1_plus == false) :
@@ -642,6 +818,48 @@ class DeckManager
             );
             $quantity = $quantity;
         endif;
+        $limitAction = null;
+        if ($cdr_type_deck == false and $quantity != false) :
+            $maxCopies = mtgCardCopyLimit(
+                $card_type,
+                $cardname['ability'] ?? null,
+                $cardname['f1_ability'] ?? null,
+                $cardname['f2_ability'] ?? null
+            );
+            if ($maxCopies !== null) :
+                $qtyquery = "SELECT SUM(IFNULL(deckcards.cardqty, 0) + IFNULL(deckcards.sideqty, 0)) AS totalqty
+                    FROM deckcards
+                    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+                    WHERE deckcards.decknumber = ? AND cards_scry.name = ?";
+                $qtyresult = $this->db->execute_query($qtyquery, [$deck, $cardnametext]);
+                if ($qtyresult !== false) :
+                    $qtyrow = $qtyresult->fetch_assoc();
+                    $existingQty = (int) ($qtyrow['totalqty'] ?? 0);
+                else :
+                    $existingQty = 0;
+                endif;
+                $availableQty = $maxCopies - $existingQty;
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    "Non-Commander copy limit for '$cardnametext' is $maxCopies (existing $existingQty)"
+                );
+                if ($availableQty <= 0) :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Limit reached for '$cardnametext'; skipping add"
+                    );
+                    $quantity = false;
+                    $limitAction = 'limitreached';
+                elseif ((int) $quantity > $availableQty) :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Limiting '$cardnametext' add qty from $quantity to $availableQty"
+                    );
+                    $quantity = $availableQty;
+                    $limitAction = "limitpartial:$availableQty";
+                endif;
+            endif;
+        endif;
 
         // Add card to deck
 
@@ -716,6 +934,9 @@ class DeckManager
 
             $this->message->logMessage('[NOTICE]', "Add card called: $cardquery, status is $status");
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
+                if ($limitAction !== null) :
+                    return $limitAction;
+                endif;
                 return $status;
             else :
                 throw new \Exception(
@@ -725,6 +946,9 @@ class DeckManager
             endif;
         else :
             $this->message->logMessage('[DEBUG]', "...skipping $cardnametext to deck #$deck");
+            if ($limitAction !== null) :
+                return $limitAction;
+            endif;
             return 'cardnotadded';
         endif;
     }
@@ -1237,9 +1461,9 @@ class DeckManager
                     return $typeComparison;
                 });
                 if (is_null($decktype) || $decktype === "") :
-                    $textfile = "{$deckrow['deckname']}\r\n\r\n";
+                    $textfile = "Deckname: {$deckrow['deckname']}\r\n\r\n";
                 else :
-                    $textfile = "$deckName ($decktype)\r\n\r\n";
+                    $textfile = "Deckname: $deckName ($decktype)\r\n\r\n";
                 endif;
                 $sidefile = "";
                 if (in_array($decktype, $commander_decktypes)) :
