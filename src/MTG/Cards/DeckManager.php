@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.1
+Date:        24/12/25
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -67,6 +67,8 @@ class DeckManager
             );
             $row = 1;
             $sideboardTrigger = false;
+            $commanderTrigger = false;
+            $partnerTrigger = false;
             $warningSummary = '';
             $warningHeading = 'Warning type, Row number, Input line';
             foreach ($lines as $line) :
@@ -74,21 +76,45 @@ class DeckManager
                 $start = substr($line, 0, 8);
                 if (strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false) :
                     $this->message->logMessage('[DEBUG]', "Row $row: Header row: '$line'");
+                elseif ($line === 'Commander') :
+                    $commanderTrigger = true;
+                    $partnerTrigger = false;
+                    $this->message->logMessage('[DEBUG]', "Row $row: Commander header");
+                elseif ($line === 'Partner/Background') :
+                    $partnerTrigger = true;
+                    $commanderTrigger = false;
+                    $this->message->logMessage('[DEBUG]', "Row $row: Partner/Background header");
                 elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
                     if (trim($line) === 'Sideboard') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Sideboard header");
                         $sideboardTrigger = true;
+                        $commanderTrigger = false;
+                        $partnerTrigger = false;
                     elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
                         $this->message->logMessage('[DEBUG]', "Row $row: Empty row");
+                        if ($commanderTrigger || $partnerTrigger) :
+                            $this->message->logMessage('[DEBUG]', "Row $row: Resetting commander mode");
+                            $commanderTrigger = false;
+                            $partnerTrigger = false;
+                        endif;
                     endif;
                 else :
                     $this->message->logMessage('[DEBUG]', "Row $row: Data row: '$line'");
+                    $commanderMode = null;
+                    if ($commanderTrigger) :
+                        $commanderMode = 'commander';
+                        $this->message->logMessage('[DEBUG]', "Row $row: Commander mode enabled");
+                    elseif ($partnerTrigger) :
+                        $commanderMode = 'partner';
+                        $this->message->logMessage('[DEBUG]', "Row $row: Partner mode enabled");
+                    endif;
                     // Set last parameter to true for batching
                     $quickAddResult = $this->quickAdd(
                         $deckNumber,
                         $line,
                         $sideboardTrigger,
-                        true
+                        true,
+                        $commanderMode
                     );
                     if ($quickAddResult === false || $quickAddResult === 'cardnotfound') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Result: fail");
@@ -140,7 +166,7 @@ class DeckManager
     /**
      * Called from processInput().
      */
-    public function quickAdd($deckNumber, $getString, $sideboardTrigger = false, $batch = false)
+    public function quickAdd($deckNumber, $getString, $sideboardTrigger = false, $batch = false, $commanderMode = null)
     {
         global $noQuickAddLayouts;
 
@@ -311,6 +337,15 @@ class DeckManager
                     if (!$batch) :
                         // Call addDeckCard only if not in batch mode
                         $addresult = $this->addDeckCard($deckNumber, $cardtoadd, "main", "$quickAddQty");
+                        if ($addresult !== false && $addresult !== 'cardnotfound' && $commanderMode !== null) :
+                            if ($commanderMode === 'commander') :
+                                $this->message->logMessage('[DEBUG]', "Setting commander for $cardtoadd");
+                                $this->addCommander($deckNumber, $cardtoadd);
+                            elseif ($commanderMode === 'partner') :
+                                $this->message->logMessage('[DEBUG]', "Setting partner/background for $cardtoadd");
+                                $this->addPartner($deckNumber, $cardtoadd);
+                            endif;
+                        endif;
                         return $addresult;
                     else :
                         // In batch mode, store the card ID and quantity in the batchedCardIds array
@@ -318,6 +353,7 @@ class DeckManager
                             'id' => $cardtoadd,
                             'mainqty' => $mainQty,
                             'sideqty' => $sideQty,
+                            'commander' => $commanderMode
                         ];
                     endif;
                 else :
@@ -380,6 +416,24 @@ class DeckManager
 
             if ($stmt->execute()) :
                 $this->message->logMessage('[DEBUG]', "deckManager batch process completed");
+                foreach ($batchedCardIds as $batchedCard) :
+                    if (
+                        isset($batchedCard['commander'])
+                        and $batchedCard['commander'] !== null
+                        and $batchedCard['sideqty'] == 0
+                    ) :
+                        if ($batchedCard['commander'] === 'commander') :
+                            $this->message->logMessage('[DEBUG]', "Batch setting commander for {$batchedCard['id']}");
+                            $this->addCommander($deckNumber, $batchedCard['id']);
+                        elseif ($batchedCard['commander'] === 'partner') :
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Batch setting partner/background for {$batchedCard['id']}"
+                            );
+                            $this->addPartner($deckNumber, $batchedCard['id']);
+                        endif;
+                    endif;
+                endforeach;
             else :
                 $this->message->logMessage('[ERROR]', "Error executing batch insert query: " . $stmt->error);
             endif;

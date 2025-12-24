@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        28/11/25
+Version:     1.6
+Date:        24/12/25
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -112,6 +112,10 @@ if ($isValidReferrer) :
 
             //import the card list to the new deck
             $obj->processInput($decksuccess['decknumber'], $cardlist);
+            $msg->logMessage(
+                '[DEBUG]',
+                "Duplicate deck import completed for deck {$decksuccess['decknumber']}, retaining commander flags"
+            );
 
             if ($decksuccess['flag'] === 1 && $cardlist !== '' && $setdecktype === 0) :
                 $response['success'] = true;
