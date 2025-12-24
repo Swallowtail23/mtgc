@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.10
+Version:     25.24
 Date:        24/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -898,11 +898,23 @@ $uniquecardscount = count($resultnames);
 $msg->logMessage('[DEBUG]', "Cards in deck: $uniquecardscount");
 $msg->logMessage('[DEBUG]', "Cards in deck: " . print_r($resultnames, true));
 $resultNameTotals = [];
-foreach ($resultnames as $resultEntry) :
-    if (isset($resultEntry['name'])) :
-        $resultNameTotals[$resultEntry['name']] = $resultEntry['qty'] ?? 0;
-    endif;
-endforeach;
+$totalsQuery = "SELECT cards_scry.name,
+        SUM(IFNULL(deckcards.cardqty, 0) + IFNULL(deckcards.sideqty, 0)) AS totalqty
+    FROM deckcards
+    LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id
+    WHERE deckcards.decknumber = ?
+    GROUP BY cards_scry.name";
+$totalsResult = $db->execute_query($totalsQuery, [$deckNumber]);
+if ($totalsResult === false) :
+    $msg->logMessage('[DEBUG]', "Total copy query failed: " . $db->error);
+else :
+    while ($totalsRow = $totalsResult->fetch_assoc()) :
+        if (isset($totalsRow['name'])) :
+            $resultNameTotals[$totalsRow['name']] = (int) ($totalsRow['totalqty'] ?? 0);
+        endif;
+    endwhile;
+    $msg->logMessage('[DEBUG]', "Copy totals: " . print_r($resultNameTotals, true));
+endif;
 $requiredlist = '';
 $requiredbuy = '';
 if ($uniquecardscount > 0) :
@@ -1191,14 +1203,12 @@ elseif (isset($cardtoadd)) : ?>
 endif;
 ?>
 <script>
-    // Function to toggle the visibility of the info box
-    function toggleInfoBox() {
-        var infoBox = document.getElementById("infoBox");
-        infoBox.style.display = (infoBox.style.display === "none" || infoBox.style.display === "")
-            ? "block"
-            : "none";
-    }
+    window.mtgDeckDetailConfig = {
+        deckNumber: <?php echo (int) $deckNumber; ?>,
+        isCommanderDeck: <?php echo in_array($decktype, $commander_decktypes) ? 'true' : 'false'; ?>
+    };
 </script>
+<script src="/js/deckdetail.js"></script>
 <!-- Info box -->
 <div class="info-box" id="infoBox" style="display:none">
     <span class="close-button material-symbols-outlined" onclick="toggleInfoBox()">close</span>
@@ -1443,7 +1453,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity;
                                 $commandername = $cardname;
                                 ?>
-                                <tr class='deckrow'>
+                                <tr class='deckrow' data-section='commander' data-qty='<?php echo $quantity; ?>'>
                                 <?php $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"; ?>
                                 <td class="deckcardname hoverTD">
                                     <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -1525,8 +1535,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Delete"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-deletemain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     delete_forever
                                 </span>
                                 <?php
@@ -1537,14 +1548,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Move to sideboard"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     arrow_downward
                                 </span>
                                 <?php
                                 echo "</td>";
                                 if (!in_array($decktype, $commander_decktypes)) :
-                                    echo "<td class='deckcardlistcenter'>";
+                                    echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                     echo $quantity;
                                     echo "</td>";
                                 endif;
@@ -1634,7 +1646,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $secondcommandername = $cardname;
                                     $warnings = true;
                                     ?>
-                                    <tr class='deckrow'>
+                                    <tr class='deckrow' data-section='commander' data-qty='<?php echo $quantity; ?>'>
                                     <?php $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}"; ?>
                                     <td class="deckcardname hoverTD">
                                         <?php echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -1687,8 +1699,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                         onmouseover=""
                                         title="Delete"
                                         style="cursor: pointer;"
-                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                        class='material-symbols-outlined'>
+                                        class='material-symbols-outlined js-deletemain'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>">
                                         delete_forever
                                     </span>
                                     <?php
@@ -1699,8 +1712,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                         onmouseover=""
                                         title="Move to sideboard"
                                         style="cursor: pointer;"
-                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                        class='material-symbols-outlined'>
+                                        class='material-symbols-outlined js-maintoside'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>">
                                         arrow_downward
                                     </span>
                                     <?php
@@ -1718,7 +1732,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     endif;?>
                     <tr>
                         <td colspan='4'>
-                            <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
+                            <i><b>Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)</b></i>
                         </td>
                     </tr>
                     <?php
@@ -1733,7 +1747,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         else : ?>
                             <td colspan='6'> <?php
                         endif; ?>
-                            <i><b>Creatures (<?php echo $creatures; ?>)</b></i>
+                            <i><b>Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)</b></i>
                         </td>
                     </tr>
                     <?php
@@ -1862,7 +1876,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
-                            <tr class='deckrow'>
+                            <tr class='deckrow' data-section='creatures' data-qty='<?php echo $quantity; ?>'>
                             <td class="deckcardname hoverTD">
                                 <?php
                                 $i = 0;
@@ -1964,8 +1978,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                 onmouseover=""
                                 title="Delete"
                                 style="cursor: pointer;"
-                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                class='material-symbols-outlined'>
+                                class='material-symbols-outlined js-deletemain'
+                                data-cardid="<?php echo $cardId; ?>"
+                                data-cardref="<?php echo $cardref; ?>">
                                 delete_forever
                             </span>
                             <?php
@@ -1973,14 +1988,15 @@ m13,12,"Fog",en,1,0,0,{id}
                             if ($decktype != 'Wishlist') :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 ?>
-                            <span
-                                onmouseover=""
-                                title="Move to sideboard"
-                                style="cursor: pointer;"
-                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                class='material-symbols-outlined'>
-                                arrow_downward
-                            </span>
+                                <span
+                                    onmouseover=""
+                                    title="Move to sideboard"
+                                    style="cursor: pointer;"
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    arrow_downward
+                                </span>
                                 <?php
                                 echo "</td>";
                             endif;
@@ -1991,13 +2007,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Remove one"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-minusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
                                     remove
                                 </span>
                                 <?php
                                 echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
+                                echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
                                 $maxCopies = mtgCardCopyLimit(
@@ -2017,19 +2035,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                         );
                                     endif;
                                 endif;
+                                $addStyle = $canAddMore ? '' : ' display: none;';
                                 echo "<td class='deckcardlistleft noprint'>";
-                                if ($canAddMore) :
-                                    ?>
+                                ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    style="cursor: pointer;<?php echo $addStyle; ?>"
+                                    class='material-symbols-outlined js-plusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>"
+                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
                                     add
                                 </span>
-                                    <?php
-                                endif;
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2046,7 +2065,8 @@ m13,12,"Fog",en,1,0,0,{id}
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Instants and Sorceries (<?php echo $instantsorcery; ?>)</b></i>
+                    <i><b>Instants and Sorceries
+                        (<span id='total-instantsorcery'><?php echo $instantsorcery; ?></span>)</b></i>
                     </td>
                 </tr>
                 <?php
@@ -2163,7 +2183,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
-                            <tr class='deckrow'>
+                            <tr class='deckrow' data-section='instantsorcery' data-qty='<?php echo $quantity; ?>'>
                             <td class="deckcardname hoverTD">
                                 <?php
                                 $i = 0;
@@ -2232,8 +2252,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                 onmouseover=""
                                 title="Delete"
                                 style="cursor: pointer;"
-                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                class='material-symbols-outlined'>
+                                class='material-symbols-outlined js-deletemain'
+                                data-cardid="<?php echo $cardId; ?>"
+                                data-cardref="<?php echo $cardref; ?>">
                                 delete_forever
                             </span>
                             <?php
@@ -2245,8 +2266,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Move to sideboard"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     arrow_downward
                                 </span>
                                 <?php
@@ -2259,13 +2281,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Remove one"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-minusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
                                     remove
                                 </span>
                                 <?php
                                 echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
+                                echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
                                 $maxCopies = mtgCardCopyLimit(
@@ -2285,19 +2309,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                         );
                                     endif;
                                 endif;
+                                $addStyle = $canAddMore ? '' : ' display: none;';
                                 echo "<td class='deckcardlistleft noprint'>";
-                                if ($canAddMore) :
-                                    ?>
+                                ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    style="cursor: pointer;<?php echo $addStyle; ?>"
+                                    class='material-symbols-outlined js-plusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>"
+                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
                                     add
                                 </span>
-                                    <?php
-                                endif;
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2314,7 +2339,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Other (<?php echo $other; ?>)</b></i>
+                    <i><b>Other (<span id='total-other'><?php echo $other; ?></span>)</b></i>
                     </td>
                 </tr>
                 <?php
@@ -2441,7 +2466,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardcmc = 6;
                             endif;
                             $cmc[$cardcmc] = $cmc[$cardcmc] + $quantity; ?>
-                            <tr class='deckrow'>
+                            <tr class='deckrow' data-section='other' data-qty='<?php echo $quantity; ?>'>
                             <td class="deckcardname hoverTD">
                                 <?php
                                 $i = 0;
@@ -2578,8 +2603,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Delete"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-deletemain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     delete_forever
                                 </span>
                             <?php
@@ -2591,8 +2617,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Move to sideboard"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     arrow_downward
                                 </span>
                                 <?php
@@ -2605,13 +2632,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Remove one"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-minusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
                                     remove
                                 </span>
                                 <?php
                                 echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
+                                echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
                                 $maxCopies = mtgCardCopyLimit(
@@ -2631,19 +2660,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                         );
                                     endif;
                                 endif;
+                                $addStyle = $canAddMore ? '' : ' display: none;';
                                 echo "<td class='deckcardlistleft noprint'>";
-                                if ($canAddMore) :
-                                    ?>
+                                ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    style="cursor: pointer;<?php echo $addStyle; ?>"
+                                    class='material-symbols-outlined js-plusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>"
+                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
                                     add
                                 </span>
-                                    <?php
-                                endif;
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2661,7 +2691,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Lands (<?php echo $lands; ?>)</b></i>
+                    <i><b>Lands (<span id='total-lands'><?php echo $lands; ?></span>)</b></i>
                     </td>
                 </tr>
                 <?php
@@ -2774,7 +2804,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $deck_colour_mismatch = $card_colour_mismatch = true;
                                 endif;
                             endif; ?>
-                            <tr class='deckrow'>
+                            <tr class='deckrow' data-section='lands' data-qty='<?php echo $quantity; ?>'>
                             <td class="deckcardname hoverTD">
                                 <?php
                                 $i = 0;
@@ -2833,8 +2863,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                 onmouseover=""
                                 title="Delete"
                                 style="cursor: pointer;"
-                                onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                class='material-symbols-outlined'>
+                                class='material-symbols-outlined js-deletemain'
+                                data-cardid="<?php echo $cardId; ?>"
+                                data-cardref="<?php echo $cardref; ?>">
                                 delete_forever
                             </span>
                             <?php
@@ -2846,8 +2877,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Move to sideboard"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     arrow_downward
                                 </span>
                                 <?php
@@ -2860,13 +2892,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Remove one"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-minusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
                                     remove
                                 </span>
                                 <?php
                                 echo "</td>";
-                                echo "<td class='deckcardlistcenter'>";
+                                echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
                                 $maxCopies = mtgCardCopyLimit(
@@ -2886,19 +2920,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                         );
                                     endif;
                                 endif;
+                                $addStyle = $canAddMore ? '' : ' display: none;';
                                 echo "<td class='deckcardlistleft noprint'>";
-                                if ($canAddMore) :
-                                    ?>
+                                ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
-                                    class='material-symbols-outlined'>
+                                    style="cursor: pointer;<?php echo $addStyle; ?>"
+                                    class='material-symbols-outlined js-plusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>"
+                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
                                     add
                                 </span>
-                                    <?php
-                                endif;
+                                <?php
                                 echo "</td>";
                             endif;
                             echo "</tr>";
@@ -2909,16 +2944,18 @@ m13,12,"Fog",en,1,0,0,{id}
                 $msg->logMessage('[DEBUG]', "Decktype: $decktype");
                 if ($decktype !== 'Wishlist') :
                     $msg->logMessage('[DEBUG]', "Not wishlist, adding a total row");?>
-                    <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;"> <?php
-                    if (in_array($decktype, $commander_decktypes)) :
-                        $msg->logMessage('[DEBUG]', "Commander type colspan 2");
-                        echo "<td colspan='2'><i><b>Total</b></i></td>";
-                    else :
+                    <tr
+                        style="border-bottom: 1pt solid black; border-top: 1pt solid black;"
+                        id="main-total-row"> <?php
+                        if (in_array($decktype, $commander_decktypes)) :
+                            $msg->logMessage('[DEBUG]', "Commander type colspan 2");
+                            echo "<td colspan='2'><i><b>Total</b></i></td>";
+                        else :
                             $msg->logMessage('[DEBUG]', "Not Commander type colspan 4");
                             echo "<td colspan='4'><i><b>Total</b></i></td>";
-                    endif;?>
+                        endif;?>
                         <td class='deckcardlistcenter'>
-                            <i><b><?php echo $total; ?></b></i>
+                            <i><b><span id='total-main'><?php echo $total; ?></span></b></i>
                         </td>
                         <td>&nbsp;</td>
                     </tr> <?php
@@ -2933,7 +2970,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         else : ?>
                             <td colspan='6'> <?php
                         endif; ?>
-                        <i><b>Planes and Phenomena (<?php echo $planes; ?>)</b></i>
+                        <i><b>Planes and Phenomena (<span id='total-planes'><?php echo $planes; ?></span>)</b></i>
                         </td>
                     </tr>
                     <?php
@@ -2982,7 +3019,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     $imageUrl = $imageFunction['front'];
                                 endif;
                                 $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");?>
-                                <tr class='deckrow'>
+                                <tr class='deckrow' data-section='planes' data-qty='<?php echo $quantity; ?>'>
                                 <td class="deckcardname hoverTD">
                                     <?php
                                     $i = 0;
@@ -3048,8 +3085,9 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Delete"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;deletemain=yes'"
-                                    class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-deletemain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
                                     delete_forever
                                 </span>
                                 <?php
@@ -3061,10 +3099,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Move to sideboard"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;maintoside=yes'"
-                                        class='material-symbols-outlined'>
-                                        arrow_downward
-                                    </span>
+                                    class='material-symbols-outlined js-maintoside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    arrow_downward
+                                </span>
                                     <?php
                                     echo "</td>";
                                 endif;
@@ -3075,13 +3114,15 @@ m13,12,"Fog",en,1,0,0,{id}
                                     onmouseover=""
                                     title="Remove one"
                                     style="cursor: pointer;"
-                                    onclick="window.location='<?php echo $cardActionBase; ?>&amp;minusmain=yes'"
-                                        class='material-symbols-outlined'>
+                                    class='material-symbols-outlined js-minusmain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>"
+                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
                                         remove
                                     </span>
                                     <?php
                                     echo "</td>";
-                                    echo "<td class='deckcardlistcenter'>";
+                                    echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                     echo $quantity;
                                     echo "</td>";
                                     $maxCopies = mtgCardCopyLimit(
@@ -3101,19 +3142,20 @@ m13,12,"Fog",en,1,0,0,{id}
                                             );
                                         endif;
                                     endif;
+                                    $addStyle = $canAddMore ? '' : ' display: none;';
                                     echo "<td class='deckcardlistleft noprint'>";
-                                    if ($canAddMore) :
-                                        ?>
+                                    ?>
                                     <span
                                         onmouseover=""
                                         title="Add one"
-                                        style="cursor: pointer;"
-                                        onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusmain=yes'"
-                                        class='material-symbols-outlined'>
+                                        style="cursor: pointer;<?php echo $addStyle; ?>"
+                                        class='material-symbols-outlined js-plusmain'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-qty-target="qty-main-<?php echo $cardref; ?>"
+                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
                                         add
                                     </span>
-                                        <?php
-                                    endif;
+                                    <?php
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
@@ -3123,7 +3165,7 @@ m13,12,"Fog",en,1,0,0,{id}
                 endif;
 // SIDEBOARD
                 if ($decktype != 'Wishlist' && $side > 0) :?>
-                    <tr style="border-top: 1pt solid black;">
+                    <tr style="border-top: 1pt solid black;" id="sideboard-start">
                         <?php
                         if (in_array($decktype, $commander_decktypes)) :
                             ?>
@@ -3259,7 +3301,11 @@ m13,12,"Fog",en,1,0,0,{id}
                                 $cardcmc = $row['f1_cmc'];
                             endif;?>
 
-                            <tr class='deckrow'>
+                            <tr
+                                class='deckrow'
+                                data-section='sideboard'
+                                data-cardid='<?php echo $cardId; ?>'
+                                data-qty='<?php echo $quantity; ?>'>
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
@@ -3342,7 +3388,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     </span>
                                     <?php
                                     echo "</td>";
-                                    echo "<td class='deckcardlistcenter'>";
+                                    echo "<td class='deckcardlistcenter js-qty-side' id='qty-side-$cardref'>";
                                     echo $quantity;
                                     echo "</td>";
                                     $maxCopies = mtgCardCopyLimit(
@@ -3362,19 +3408,18 @@ m13,12,"Fog",en,1,0,0,{id}
                                             );
                                         endif;
                                     endif;
+                                    $addStyle = $canAddMore ? '' : ' display: none;';
                                     echo "<td class='deckcardlistleft noprint'>";
-                                    if ($canAddMore) :
-                                        ?>
+                                    ?>
                                 <span
                                     onmouseover=""
                                     title="Add one"
-                                    style="cursor: pointer;"
+                                    style="cursor: pointer;<?php echo $addStyle; ?>"
                                     onclick="window.location='<?php echo $cardActionBase; ?>&amp;plusside=yes'"
                                     class='material-symbols-outlined'>
                                     add
                                 </span>
-                                        <?php
-                                    endif;
+                                    <?php
                                     echo "</td>";
                                 endif;
                                 echo "</tr>";
@@ -3406,7 +3451,9 @@ m13,12,"Fog",en,1,0,0,{id}
                             $sidetotal = $sidetotal + $quantity;
                         endwhile;
                     endif;?>
-                    <tr style="border-bottom: 1pt solid black; border-top: 1pt solid black;">
+                    <tr
+                        style="border-bottom: 1pt solid black; border-top: 1pt solid black;"
+                        id="sideboard-total-row">
                         <?php
                         if (in_array($decktype, $commander_decktypes)) :
                             ?>
@@ -3421,7 +3468,7 @@ m13,12,"Fog",en,1,0,0,{id}
                         </td>
 
                         <td colspan="1" class='deckcardlistcenter'>
-                            <i><b><?php echo $sidetotal; ?></b></i>
+                            <i><b><span id='total-sideboard'><?php echo $sidetotal; ?></span></b></i>
                         </td>
                         <td colspan="1">&nbsp;</td>
                     </tr> <?php

@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Card detail flip button now respects viewport width when both faces are visible.
 - Deck detail now uses async image loading with hover/tap priority and placeholders.
 - Random draw hover now prioritises async image loading.
+- Deck detail main-deck add-one now supports async updates via ajax.
+- Deck detail main-deck delete and minus-one now support async updates via ajax.
 
 ### Fixed
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
@@ -36,9 +38,21 @@ All notable changes to this project will be documented in this file.
 - Deck export now prefixes the deck name with "Deckname:" and imports ignore that header line.
 - Commander deck quantity checks now consider f1_ability/f2_ability for any-quantity rules.
 - Non-Commander decks now enforce copy limits (main+side combined) with any-quantity and up-to-N overrides.
+- Deck detail move-to-sideboard now updates sideboard rows even when the sideboard section was empty.
+- Commander deck sideboard inserts now match the column layout after move-to-sideboard.
+- Commander deck async totals now update correctly after main-deck deletions.
+- Commander deck totals now include commander zone cards during async updates.
+- Sideboard ajax inserts now apply legality/colour-identity styling and hover image classes.
+- Sideboard ajax inserts now attach hover divs correctly for touch/hover display.
 - Deck detail sideboard rows now compute base card names safely when decks are empty.
 - Deck import warnings now report when copy limits reduce or block line quantities.
 - Deck quick add now reports when card copy limits block or cap single-line adds.
+- Deck detail add-one buttons now reappear after async minus-one reduces copy totals.
+- Deck detail copy-limit checks now use deckwide totals by base card name.
+- Deck detail async updates now refresh section totals and main total counts.
+- Deck detail lands rows now update async quantities and totals correctly.
+- Deck detail move-to-sideboard now runs async and removes main-deck rows.
+- Deck detail async move-to-sideboard now updates main and sideboard rows inline.
 - 'Other' card types no longer break non-commander decktype lists.
 - TCGPlayer buttons now does not render with unwanted padding (deckdetail).
 
