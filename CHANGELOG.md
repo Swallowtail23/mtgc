@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Fixed trust device flow to log access errors after autoload setup to avoid fatal exceptions.
 - Deck detail async image loading now skips synchronous fetches to avoid long page loads.
 - Deck detail hover images now rotate split/planar/siege cards in the main list and random draw.
+- 'Other' card types no longer break non-commander decktype lists.
 
 ### Security
 -

@@ -2273,7 +2273,6 @@ m13,12,"Fog",en,1,0,0,{id}
                             and (strpos($card_type, 'Instant') === false)
                             and (strpos($card_type, 'Creature') === false)
                             and (strpos($card_type, 'Land') === false)
-                            and (strpos($card_type, 'Battle') === false)
                             and (
                                 (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
                             )
@@ -2424,6 +2423,7 @@ m13,12,"Fog",en,1,0,0,{id}
                                     src='<?php echo $imageUrl;?>'
                                 ></a>
                             </div> <?php
+                            $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
                             if (in_array($decktype, $commander_decktypes)) :
                                 $validcommander = false;
                                 $msg->logMessage(
