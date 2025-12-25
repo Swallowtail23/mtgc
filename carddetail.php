@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     22.4
+Version:     22.5
 Date:        25/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -1375,7 +1375,8 @@ require('includes/menu.php'); //mobile menu
                                             echo "Foil: <input class='bulkinputsmall foil js-ajax-update' "
                                                 . "id='$cellid_one' type='number' step='1' min='0' name='myfoil' "
                                                 . "value='$myfoil' data-ajax-cardid='$cardIdEsc' "
-                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' "
+                                                . "data-ajax-flash='$cellidOneFlashEsc' "
                                                 . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         elseif ($cardtypes === 'etchedonly') :
@@ -1383,7 +1384,8 @@ require('includes/menu.php'); //mobile menu
                                             echo "Etch: <input class='bulkinputsmall etch js-ajax-update' "
                                                 . "id='$cellid_one' type='number' step='1' min='0' name='myetch' "
                                                 . "value='$myetch' data-ajax-cardid='$cardIdEsc' "
-                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' "
+                                                . "data-ajax-flash='$cellidOneFlashEsc' "
                                                 . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
@@ -1391,7 +1393,8 @@ require('includes/menu.php'); //mobile menu
                                             echo "Normal: <input class='bulkinputsmall normal js-ajax-update' "
                                                 . "id='$cellid_one' type='number' step='1' min='0' name='myqty' "
                                                 . "value='$myqty' data-ajax-cardid='$cardIdEsc' "
-                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' "
+                                                . "data-ajax-flash='$cellidOneFlashEsc' "
                                                 . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
@@ -1411,7 +1414,8 @@ require('includes/menu.php'); //mobile menu
                                             echo "Etch: <input class='bulkinputsmall etch js-ajax-update' "
                                                 . "id='$cellid_two' type='number' step='1' min='0' name='myetch' "
                                                 . "value='$myetch' data-ajax-cardid='$cardIdEsc' "
-                                                . "data-ajax-cellid='$cellidTwoEsc' data-ajax-flash='$cellidTwoFlashEsc' "
+                                                . "data-ajax-cellid='$cellidTwoEsc' "
+                                                . "data-ajax-flash='$cellidTwoFlashEsc' "
                                                 . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
@@ -1419,7 +1423,8 @@ require('includes/menu.php'); //mobile menu
                                             echo "Foil: <input class='bulkinputsmall foil js-ajax-update' "
                                                 . "id='$cellid_two' type='number' step='1' min='0' name='myfoil' "
                                                 . "value='$myfoil' data-ajax-cardid='$cardIdEsc' "
-                                                . "data-ajax-cellid='$cellidTwoEsc' data-ajax-flash='$cellidTwoFlashEsc' "
+                                                . "data-ajax-cellid='$cellidTwoEsc' "
+                                                . "data-ajax-flash='$cellidTwoFlashEsc' "
                                                 . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
