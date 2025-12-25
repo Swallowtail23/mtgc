@@ -41,6 +41,12 @@ Mutation requests include a fragment list. The default list is set in
 1) `deckdetail.php` renders the initial page, loads `includes/deckdetail_data.php`,
    injects `window.mtgDeckDetailConfig`, and includes the fragments for first paint.
 2) User actions in `js/deckdetail.js` call `ajax/ajaxdeckcard.php` (or another mutation endpoint).
+   Related mutation endpoints:
+   - `ajax/ajaxdeckadd.php` (quick add text)
+   - `ajax/ajaxdeckimport.php` (text/CSV file import)
+   - `ajax/ajaxdeckrename.php` (deck name)
+   - `ajax/ajaxdecktype.php` (deck type)
+   - `ajax/ajaxphoto.php` (deck photo upload/delete; no fragment refresh)
 3) The mutation endpoint validates the session + CSRF, loads `includes/deckdetail_data.php`
    and `includes/fragments/deckdetail_mana_data.php`, then renders fragments.
 4) `ajax/ajaxdeckfragments_lib.php` renders the requested fragment includes in `includes/fragments/`
