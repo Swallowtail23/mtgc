@@ -421,7 +421,8 @@ To do:       -
                         <td colspan='4'>
                             <i><b>
                                 <span
-                                    class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                    class="material-symbols-outlined noprint
+                                        js-decksection-toggle decksection-toggle-icon"
                                     data-section="creatures"
                                     title="Fold/Unfold"
                                     style="cursor: pointer;">expand_more</span>
@@ -443,7 +444,8 @@ To do:       -
                         endif; ?>
                             <i><b>
                                 <span
-                                    class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                    class="material-symbols-outlined noprint
+                                        js-decksection-toggle decksection-toggle-icon"
                                     data-section="creatures"
                                     title="Fold/Unfold"
                                     style="cursor: pointer;">expand_more</span>
