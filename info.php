@@ -50,6 +50,7 @@ require('includes/menu.php');
             <img src="images/white_m.png"><?php echo $siteTitleEsc;?>
         </div>
         <h2 class='h2pad'>Copyright</h2>
+        Website design &copy; <?php echo $copyright;?><br>
         The information presented on this site about Magic: The Gathering is copyrighted by Wizards of the Coast.<br>
         This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.<br>
         Thanks to Andrew Gioia for his Keyrune project (<a target='_blank'
@@ -63,8 +64,7 @@ require('includes/menu.php');
             <li>Your IP address used to access this site</li>
         </ul>
         If you want to completely delete your account <a href='help.php'>send me a request</a> and I will delete all
-        stored information.<br><br>
-        Website design &copy; <?php echo $copyright;?>
+        stored information.<br>
     <hr class="styled">
     <h3 class="shallowh3">Updates</h3>
 
