@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.5
+Version:     1.8
 Date:        24/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -10,7 +10,11 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') :
+if (defined('INCLUDE_CHECK') && INCLUDE_CHECK === true) :
+    if (!isset($uniquecard_ref)) :
+        // do nothing
+    endif;
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     if (file_exists('../includes/sessionname.local.php')) :
         require('../includes/sessionname.local.php');
     else :
@@ -23,37 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') :
     include '../includes/colour.php';
     $msg = new \MTG\Core\Message($logfile);
 
-    $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-    $expectedReferringPages =   [
-                                    $myURL . '/deckdetail.php'
-                                ];
-
-    // Normalize the referring page URL
-    $normalizedReferringPage = str_replace('www.', '', $referringPage);
-
-    $isValidReferrer = false;
-    foreach ($expectedReferringPages as $page) :
-        // Normalize each expected referring page URL
-        $normalizedPage = str_replace('www.', '', $page);
-        if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-            $isValidReferrer = true;
-            break;
-        endif;
-    endforeach;
-
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
         exit();
     else :
         // Decode the JSON data received from the POST request
         $data = json_decode(file_get_contents('php://input'), true);
+        $csrfToken = isset($data['csrf_token']) ? $data['csrf_token'] : '';
+        if (!validateCsrfToken($csrfToken)) :
+            exit();
+        endif;
 
         // Check if the required variables are present
         if (
             isset($data['uniquecard_ref'])
             && isset($data['include_check'])
             && $data['include_check'] === true
-            && $isValidReferrer === true
         ) :
             $uniquecard_ref = $data['uniquecard_ref'];
             $msg->logMessage('[DEBUG]', print_r($uniquecard_ref, true));
@@ -62,17 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') :
         endif;
     endif;
 else :
-    if (!defined('INCLUDE_CHECK')) :
-        die('Direct access prohibited');
-    endif;
-
-    if (!isset($uniquecard_ref)) :
-        // do nothing
-    endif;
+    die('Direct access prohibited');
 endif;
 
 $a = array_rand($uniquecard_ref, 7);
-$msg->logMessage('[DEBUG]', "Random cards selected: " . print_r($a, true));
 echo "<table>";
 echo "<tr><td>&nbsp;</td></tr>";
 for ($i = 0; $i < 7; $i++) {
@@ -90,10 +72,8 @@ for ($i = 0; $i < 7; $i++) {
         or (isset($f1_type) and in_array($f1_type, $image90rotate))
     ) :
         $hoverclass = 'randomcardimgdiv splitfloat';
-        $msg->logMessage('[DEBUG]', "Random draw hover rotated for '$name'");
     else :
         $hoverclass = 'randomcardimgdiv';
-        $msg->logMessage('[DEBUG]', "Random draw hover not rotated for '$name'");
     endif;
     ?>
     <div class='<?php echo $hoverclass; ?>' id='<?php echo "random-$randomref";?>'>
