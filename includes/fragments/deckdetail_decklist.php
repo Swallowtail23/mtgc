@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.9
 Date:        24/12/25
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
@@ -15,6 +15,12 @@ To do:       -
 <table class='deckcardlist'>
                 <tr class='deckcardlisthead'>
                     <td class='deckcardlisthead1'>
+                        <span
+                            class="material-symbols-outlined noprint js-decksection-toggle-all decksection-toggle-all"
+                            title="Fold/Unfold all"
+                            style="cursor: pointer;">
+                            unfold_more
+                        </span>
                         <span class="noprint">Card</span>
                     </td>
                     <?php
@@ -411,15 +417,22 @@ To do:       -
                             endwhile;
                         endif;
                     endif;?>
-                    <tr>
+                    <tr class="deck-section-header" data-section="creatures">
                         <td colspan='4'>
-                            <i><b>Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)</b></i>
+                            <i><b>
+                                <span
+                                    class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                    data-section="creatures"
+                                    title="Fold/Unfold"
+                                    style="cursor: pointer;">expand_more</span>
+                                Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)
+                            </b></i>
                         </td>
                     </tr>
                     <?php
                 else :
                     ?>
-                    <tr>
+                    <tr class="deck-section-header" data-section="creatures">
                         <?php
                         if (in_array($decktype, $commander_decktypes)) : ?>
                             <td colspan='4'> <?php
@@ -428,7 +441,14 @@ To do:       -
                         else : ?>
                             <td colspan='6'> <?php
                         endif; ?>
-                            <i><b>Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)</b></i>
+                            <i><b>
+                                <span
+                                    class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                    data-section="creatures"
+                                    title="Fold/Unfold"
+                                    style="cursor: pointer;">expand_more</span>
+                                Creatures (<span id='total-creatures'><?php echo $creatures; ?></span>)
+                            </b></i>
                         </td>
                     </tr>
                     <?php
@@ -739,7 +759,7 @@ To do:       -
                         endif;
                     endwhile;
                 endif; ?>
-                <tr>
+                <tr class="deck-section-header" data-section="instantsorcery">
                     <?php
                     if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
@@ -748,7 +768,13 @@ To do:       -
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Instants and Sorceries
+                    <i><b>
+                        <span
+                            class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                            data-section="instantsorcery"
+                            title="Fold/Unfold"
+                            style="cursor: pointer;">expand_more</span>
+                        Instants and Sorceries
                         (<span id='total-instantsorcery'><?php echo $instantsorcery; ?></span>)</b></i>
                     </td>
                 </tr>
@@ -1014,7 +1040,7 @@ To do:       -
                         endif;
                     endwhile;
                 endif; ?>
-                <tr>
+                <tr class="deck-section-header" data-section="other">
                     <?php
                     if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
@@ -1023,7 +1049,13 @@ To do:       -
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Other (<span id='total-other'><?php echo $other; ?></span>)</b></i>
+                    <i><b>
+                        <span
+                            class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                            data-section="other"
+                            title="Fold/Unfold"
+                            style="cursor: pointer;">expand_more</span>
+                        Other (<span id='total-other'><?php echo $other; ?></span>)</b></i>
                     </td>
                 </tr>
                 <?php
@@ -1369,7 +1401,7 @@ To do:       -
                     endwhile;
                 endif;
                 ?>
-                <tr>
+                <tr class="deck-section-header" data-section="lands">
                     <?php
                     if (in_array($decktype, $commander_decktypes)) : ?>
                         <td colspan='4'> <?php
@@ -1378,7 +1410,13 @@ To do:       -
                     else : ?>
                         <td colspan='6'> <?php
                     endif; ?>
-                    <i><b>Lands (<span id='total-lands'><?php echo $lands; ?></span>)</b></i>
+                    <i><b>
+                        <span
+                            class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                            data-section="lands"
+                            title="Fold/Unfold"
+                            style="cursor: pointer;">expand_more</span>
+                        Lands (<span id='total-lands'><?php echo $lands; ?></span>)</b></i>
                     </td>
                 </tr>
                 <?php
@@ -1853,7 +1891,8 @@ To do:       -
                 endif;
 // SIDEBOARD
                 if ($decktype != 'Wishlist' && $side > 0) :?>
-                    <tr style="border-top: 1pt solid black;" id="sideboard-start">
+                    <tr style="border-top: 1pt solid black;" id="sideboard-start" class="deck-section-header"
+                        data-section="sideboard">
                         <?php
                         if (in_array($decktype, $commander_decktypes)) :
                             ?>
@@ -1866,7 +1905,13 @@ To do:       -
                         endif;
 
                         ?>
-                        <i><b>Sideboard</b></i>
+                        <i><b>
+                            <span
+                                class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                data-section="sideboard"
+                                title="Fold/Unfold"
+                                style="cursor: pointer;">expand_more</span>
+                            Sideboard</b></i>
                         </td>
                     </tr>
                     <?php

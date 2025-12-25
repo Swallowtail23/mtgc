@@ -69,6 +69,8 @@ All notable changes to this project will be documented in this file.
 - Copy-limit enforcement now uses deckwide totals; imports/quick add report capped or blocked quantities.
 - CSV input parsing now avoids HTML escaping during import for accurate name matching.
 - Random draw now validates inputs and escapes output to prevent client-side injection.
+- Deck list sections now default to collapsed with per-section toggles and a fold/unfold-all control.
+- Deck list section toggle icons now align with row text.
 
 ### Security
 - Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.

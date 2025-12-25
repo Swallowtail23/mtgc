@@ -27,6 +27,7 @@ $msoIcons = [
     'delete_forever',
     'done',
     'edit',
+    'expand_more',
     'frame_reload',
     'help',
     'image',
@@ -43,7 +44,8 @@ $msoIcons = [
     'search',
     'skip_next',
     'skip_previous',
-    'south_east'
+    'south_east',
+    'unfold_more'
 ];
 $msoIconParam = urlencode(implode(',', $msoIcons));
 $msoFontParameters = "css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"

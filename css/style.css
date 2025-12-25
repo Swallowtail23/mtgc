@@ -1804,6 +1804,17 @@ table
 {
     font-weight: 500;
 }
+.decksection-toggle-icon,
+.decksection-toggle-all
+{
+    display: inline-flex;
+    vertical-align: middle;
+    line-height: 1;
+    font-size: 18px;
+    margin-right: 4px;
+    position: relative;
+    top: -1px;
+}
 .deckcardlisthead2, .deckcardlisthead3
 {
     width: 24px;

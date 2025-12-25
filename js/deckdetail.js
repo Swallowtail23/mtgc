@@ -1,5 +1,5 @@
 /*
-Version:     2.7
+Version:     2.8
 Date:        24/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -24,6 +24,13 @@ var randomDrawRefs = [];
 var csrfToken = '';
 var lastAppliedVersion = 0;
 var fragmentTargets = {};
+var deckSectionState = {
+    creatures: true,
+    instantsorcery: true,
+    other: true,
+    lands: true,
+    sideboard: true
+};
 if (window.mtgDeckDetailConfig) {
     deckNumber = window.mtgDeckDetailConfig.deckNumber || 0;
     isCommanderDeck = window.mtgDeckDetailConfig.isCommanderDeck === true;
@@ -72,6 +79,31 @@ function updateDeckVersion(rawVersion) {
     if (versionInt > lastAppliedVersion) {
         lastAppliedVersion = versionInt;
     }
+}
+
+function getDeckSectionKeys() {
+    return ['creatures', 'instantsorcery', 'other', 'lands', 'sideboard'];
+}
+
+function setDeckSectionCollapsed(section, collapsed) {
+    deckSectionState[section] = collapsed;
+    var $rows = $('tr.deckrow[data-section="' + section + '"]');
+    if (collapsed) {
+        $rows.hide();
+    } else {
+        $rows.show();
+    }
+    var $toggle = $('.js-decksection-toggle[data-section="' + section + '"]');
+    if ($toggle.length) {
+        $toggle.text(collapsed ? 'chevron_right' : 'expand_more');
+    }
+}
+
+function applyDeckSectionState() {
+    getDeckSectionKeys().forEach(function (section) {
+        var collapsed = deckSectionState[section] !== false;
+        setDeckSectionCollapsed(section, collapsed);
+    });
 }
 
 function getFragmentList() {
@@ -143,6 +175,7 @@ function applyFragmentResponse(response, options) {
             }
             $('#' + targetId).replaceWith(response.fragments[fragmentKey]);
         });
+        applyDeckSectionState();
         if (window.bindRandomCardEvents) {
             window.bindRandomCardEvents();
         }
@@ -260,6 +293,32 @@ function bindDeckDetailHandlers() {
     if ($photoFile.length && $photoFile.val() === '') {
         $('#photosubmit').prop('disabled', true);
     }
+    applyDeckSectionState();
+    $(document).off('click.deckdetail', '.js-decksection-toggle').on(
+        'click.deckdetail',
+        '.js-decksection-toggle',
+        function () {
+            var section = $(this).data('section');
+            if (!section) {
+                return;
+            }
+            var collapsed = deckSectionState[section] !== false;
+            setDeckSectionCollapsed(section, !collapsed);
+        }
+    );
+
+    $(document).off('click.deckdetail', '.js-decksection-toggle-all').on(
+        'click.deckdetail',
+        '.js-decksection-toggle-all',
+        function () {
+            var anyCollapsed = getDeckSectionKeys().some(function (section) {
+                return deckSectionState[section] !== false;
+            });
+            getDeckSectionKeys().forEach(function (section) {
+                setDeckSectionCollapsed(section, !anyCollapsed);
+            });
+        }
+    );
     $(document).off('click.deckdetail', '.js-plusmain').on('click.deckdetail', '.js-plusmain', function (e) {
         e.preventDefault();
         var $button = $(this);
