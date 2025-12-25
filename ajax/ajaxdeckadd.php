@@ -1,10 +1,10 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.4
 Date:        24/12/25
-Name:        ajaxdeckfragments.php
-Purpose:     AJAX fragment updates for deck detail derived sections.
+Name:        ajaxdeckadd.php
+Purpose:     AJAX quick add for deck detail.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
@@ -28,7 +28,7 @@ $msg = new \MTG\Core\Message($logfile);
 $response = [
     'success' => false,
     'error' => '',
-    'fragments' => []
+    'status' => ''
 ];
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
@@ -48,18 +48,18 @@ if (!validateCsrfToken($csrfToken)) :
 endif;
 
 $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_NUMBER_INT);
-$requestedFragments = isset($_POST['fragments']) ? (array) $_POST['fragments'] : [];
+$quickadd = filter_input(INPUT_POST, 'quickadd', FILTER_UNSAFE_RAW);
 
-if ($deckNumber === null) :
+if ($deckNumber === null || $quickadd === null) :
     $response['error'] = 'Missing required parameters';
     returnResponse($response);
 endif;
 
-$msg->logMessage('[DEBUG]', "Deck fragment refresh requested for deck $deckNumber");
-$msg->logMessage(
-    '[DEBUG]',
-    "Deck fragment request fragments: " . implode(', ', array_map('strval', $requestedFragments))
-);
+$quickadd = trim($quickadd);
+if ($quickadd === '') :
+    $response['error'] = 'Empty input';
+    returnResponse($response);
+endif;
 
 $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
 $userArray = $sessionManager->getUserInfo();
@@ -90,17 +90,42 @@ if ($deckOwnerCheck === false) :
     returnResponse($response);
 endif;
 
+$result = $deckManager->processInput($deckNumber, $quickadd);
+$response['success'] = true;
+$response['status'] = $result;
+$response['deck_version'] = getDeckVersion($db, $deckNumber);
+
+$requestedFragments = isset($_POST['fragments']) ? (array) $_POST['fragments'] : [];
+if (count($requestedFragments) === 0) :
+    $requestedFragments = deckdetailDefaultFragments();
+endif;
+
 $skip_deckdetail_actions = true;
 include '../includes/deckdetail_data.php';
 include '../includes/fragments/deckdetail_mana_data.php';
 $msg->logMessage(
     '[DEBUG]',
-    "Deck fragment data loaded for deck $deckNumber, type $decktype, total $total_cards, side $side_total_cards"
+    "Deck add fragments requested for deck $deckNumber: " . implode(', ', array_map('strval', $requestedFragments))
 );
+$response['fragments'] = deckdetailRenderFragments($requestedFragments);
+if (isset($deck_version)) :
+    $response['deck_version'] = (int) $deck_version;
+    $response['version'] = (int) $deck_version;
+endif;
 
-$response = deckdetailBuildFragmentResponse($requestedFragments);
-$response['version'] = isset($deck_version) ? (int) $deck_version : 0;
 returnResponse($response);
+
+function getDeckVersion($db, $deckNumber)
+{
+    $versionQuery = "SELECT (UNIX_TIMESTAMP(deck_updated_at) * 1000000 + MICROSECOND(deck_updated_at)) AS deck_version
+        FROM decks WHERE decknumber = ? LIMIT 1";
+    $versionResult = $db->execute_query($versionQuery, [$deckNumber]);
+    if ($versionResult !== false && $versionResult->num_rows > 0) :
+        $versionRow = $versionResult->fetch_assoc();
+        return (int) ($versionRow['deck_version'] ?? 0);
+    endif;
+    return 0;
+}
 
 function returnResponse($response)
 {

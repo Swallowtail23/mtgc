@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     2.2
 Date:        24/12/25
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -604,11 +604,34 @@ class DeckManager
                         endif;
                     endif;
                 endforeach;
+                $this->bumpDeckUpdatedAt($deckNumber);
             else :
                 $this->message->logMessage('[ERROR]', "Error executing batch insert query: " . $stmt->error);
             endif;
 
             $stmt->close();
+        endif;
+    }
+
+    public function bumpDeckUpdatedAt($deckNumber)
+    {
+        $query = "UPDATE decks SET deck_updated_at = NOW(6) WHERE decknumber = ? LIMIT 1";
+        if (method_exists($this->db, 'execute_query')) :
+            $result = $this->db->execute_query($query, [$deckNumber]);
+        else :
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Deck updated_at bump skipped execute_query for deck $deckNumber (stub)"
+            );
+            $result = true;
+        endif;
+        if ($result === false) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "Deck updated_at bump failed for deck $deckNumber: {$this->db->error}"
+            );
+        else :
+            $this->message->logMessage('[DEBUG]', "Deck updated_at bumped for deck $deckNumber");
         endif;
     }
 
@@ -936,6 +959,7 @@ class DeckManager
 
             $this->message->logMessage('[NOTICE]', "Add card called: $cardquery, status is $status");
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
+                $this->bumpDeckUpdatedAt($deck);
                 if ($limitAction !== null) :
                     return $limitAction;
                 endif;
@@ -957,6 +981,7 @@ class DeckManager
 
     public function subtractDeckCard($deck, $card, $section, $quantity)
     {
+        $didUpdate = false;
         if ($quantity == "all") :
             if ($section == "side") :
                 $cardquery = "UPDATE deckcards SET sideqty = NULL WHERE decknumber = ? AND cardnumber = ?";
@@ -1037,7 +1062,7 @@ class DeckManager
 
         if ($status != '-error') :
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
-                //ran ok
+                $didUpdate = true;
             else :
                 throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
@@ -1059,13 +1084,17 @@ class DeckManager
             )";
             $params = [$deck];
             if ($runquery = $this->db->execute_query($cardquery, $params)) :
-                //ran ok
+                $didUpdate = true;
             else :
                 throw new \Exception(
                     '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                         . ": SQL failure: " . $this->db->error
                 );
             endif;
+        endif;
+
+        if ($didUpdate === true) :
+            $this->bumpDeckUpdatedAt($deck);
         endif;
 
         return $status;
@@ -1101,6 +1130,7 @@ class DeckManager
         $addCommanderStmt->bind_param('is', $deck, $card);
         if ($addCommanderStmt->execute()) :
             $this->message->logMessage('[NOTICE]', "Add Commander run: $addCommanderQuery, status is $status");
+            $this->bumpDeckUpdatedAt($deck);
             return $status;
         else :
             throw new \Exception(
@@ -1140,6 +1170,7 @@ class DeckManager
             )
         ) :
             $this->message->logMessage('[NOTICE]', "Add Partner run, status is $status");
+            $this->bumpDeckUpdatedAt($deck);
             return $status;
         else :
             throw new \Exception(
@@ -1164,6 +1195,7 @@ class DeckManager
                 )
             ) :
                 $this->message->logMessage('[NOTICE]', "Remove Commander called, status is $status");
+                $this->bumpDeckUpdatedAt($deck);
                 return $status;
             else :
                 throw new \Exception(
@@ -1391,6 +1423,9 @@ class DeckManager
                 );
             endif;
             $this->message->logMessage('[DEBUG]', "...result: {$this->db->affected_rows} row affected ");
+            if ($decktypereturn === 0) :
+                $this->bumpDeckUpdatedAt($deck);
+            endif;
         endif;
         return($decktypereturn);
     }

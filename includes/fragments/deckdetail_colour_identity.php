@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        24/12/25
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
@@ -13,7 +13,20 @@ To do:       -
 ?>
 <div id="deck-colour-identity-fragment">
     <?php
-    if (in_array($decktype, $commander_decktypes) && isset($cdrSet) && $cdrSet === true) :
+    $hasCommanderColours = false;
+    if (isset($cdrSet) && $cdrSet === true) :
+        $hasCommanderColours = true;
+    elseif (isset($cdr_colours) && $cdr_colours !== '') :
+        $hasCommanderColours = true;
+    endif;
+    if (isset($msg)) :
+        $msg->logMessage(
+            '[DEBUG]',
+            'Colour identity fragment commander colours ' . ($hasCommanderColours ? 'set' : 'not set')
+        );
+    endif;
+
+    if (in_array($decktype, $commander_decktypes) && $hasCommanderColours === true) :
         if ($cdr_colours == 'five') :
             $identity_title = 'All';
         else :

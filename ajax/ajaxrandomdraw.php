@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.7
+Version:     1.8
 Date:        24/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -27,37 +27,22 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     include '../includes/colour.php';
     $msg = new \MTG\Core\Message($logfile);
 
-    $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-    $expectedReferringPages =   [
-                                    $myURL . '/deckdetail.php'
-                                ];
-
-    // Normalize the referring page URL
-    $normalizedReferringPage = str_replace('www.', '', $referringPage);
-
-    $isValidReferrer = false;
-    foreach ($expectedReferringPages as $page) :
-        // Normalize each expected referring page URL
-        $normalizedPage = str_replace('www.', '', $page);
-        if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-            $isValidReferrer = true;
-            break;
-        endif;
-    endforeach;
-
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
         exit();
     else :
         // Decode the JSON data received from the POST request
         $data = json_decode(file_get_contents('php://input'), true);
+        $csrfToken = isset($data['csrf_token']) ? $data['csrf_token'] : '';
+        if (!validateCsrfToken($csrfToken)) :
+            exit();
+        endif;
 
         // Check if the required variables are present
         if (
             isset($data['uniquecard_ref'])
             && isset($data['include_check'])
             && $data['include_check'] === true
-            && $isValidReferrer === true
         ) :
             $uniquecard_ref = $data['uniquecard_ref'];
             $msg->logMessage('[DEBUG]', print_r($uniquecard_ref, true));

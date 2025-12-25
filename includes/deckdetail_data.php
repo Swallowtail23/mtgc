@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        24/12/25
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -14,7 +14,9 @@ To do:       -
 // Get deck details from database
 if (
     $deckinfoqry = $db->execute_query(
-        "SELECT deckname,notes,sidenotes,type FROM decks WHERE decknumber = ? LIMIT 1",
+        "SELECT deckname,notes,sidenotes,type,deck_updated_at,
+                (UNIX_TIMESTAMP(deck_updated_at) * 1000000 + MICROSECOND(deck_updated_at)) AS deck_version
+            FROM decks WHERE decknumber = ? LIMIT 1",
         [$deckNumber]
     )
 ) :
@@ -23,6 +25,8 @@ if (
     $notes      = $deckinfo['notes'];
     $sidenotes  = $deckinfo['sidenotes'];
     $decktype   = $deckinfo['type'];
+    $deck_updated_at = $deckinfo['deck_updated_at'] ?? null;
+    $deck_version = isset($deckinfo['deck_version']) ? (int) $deckinfo['deck_version'] : null;
 else :
     throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;

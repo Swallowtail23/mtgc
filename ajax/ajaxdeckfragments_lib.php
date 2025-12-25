@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.8
 Date:        24/12/25
 Name:        ajaxdeckfragments_lib.php
 Purpose:     Fragment rendering helpers for deck detail AJAX updates.
@@ -11,24 +11,120 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+function deckdetailFragmentRegistry()
+{
+    return [
+        [
+            'key' => 'decklist',
+            'id' => 'decklist-fragment',
+            'include' => '../includes/fragments/deckdetail_decklist.php',
+            'default' => true
+        ],
+        [
+            'key' => 'colour_identity',
+            'id' => 'deck-colour-identity-fragment',
+            'include' => '../includes/fragments/deckdetail_colour_identity.php',
+            'default' => true
+        ],
+        [
+            'key' => 'warnings',
+            'id' => 'deck-warnings-fragment',
+            'include' => '../includes/fragments/deckdetail_warnings.php',
+            'default' => true
+        ],
+        [
+            'key' => 'mana_value',
+            'id' => 'deck-mana-value-fragment',
+            'include' => '../includes/fragments/deckdetail_mana_value.php',
+            'default' => true
+        ],
+        [
+            'key' => 'mana_costs',
+            'id' => 'deck-mana-costs-fragment',
+            'include' => '../includes/fragments/deckdetail_mana_costs.php',
+            'default' => true
+        ],
+        [
+            'key' => 'deck_value',
+            'id' => 'deck-value-fragment',
+            'include' => '../includes/fragments/deckdetail_deck_value.php',
+            'default' => true
+        ],
+        [
+            'key' => 'deck_lists',
+            'id' => 'deck-lists-fragment',
+            'include' => '../includes/fragments/deckdetail_deck_lists.php',
+            'default' => true
+        ],
+        [
+            'key' => 'export_list',
+            'id' => 'deck-export-fragment',
+            'include' => '../includes/fragments/deckdetail_export_list.php',
+            'default' => true
+        ],
+        [
+            'key' => 'missing',
+            'id' => 'deck-missing-fragment',
+            'include' => '../includes/fragments/deckdetail_missing.php',
+            'default' => true
+        ],
+        [
+            'key' => 'buy_missing',
+            'id' => 'deck-buy-fragment',
+            'include' => '../includes/fragments/deckdetail_buy_missing.php',
+            'default' => true
+        ],
+        [
+            'key' => 'random_draw',
+            'id' => 'deck-random-draw-fragment',
+            'include' => '../includes/fragments/deckdetail_random_draw.php',
+            'default' => true
+        ]
+    ];
+}
+
+function deckdetailFragmentMap($fragmentRegistry = null)
+{
+    $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
+    $fragmentMap = [];
+    foreach ($fragmentRegistry as $entry) :
+        $fragmentMap[$entry['key']] = $entry['include'];
+    endforeach;
+    return $fragmentMap;
+}
+
+function deckdetailDefaultFragments($fragmentRegistry = null)
+{
+    $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
+    $defaults = [];
+    foreach ($fragmentRegistry as $entry) :
+        if (!empty($entry['default'])) :
+            $defaults[] = $entry['key'];
+        endif;
+    endforeach;
+    return $defaults;
+}
+
+function deckdetailFragmentTargets($fragmentRegistry = null)
+{
+    $fragmentRegistry = $fragmentRegistry ?? deckdetailFragmentRegistry();
+    $targets = [];
+    foreach ($fragmentRegistry as $entry) :
+        $targets[$entry['key']] = $entry['id'];
+    endforeach;
+    return $targets;
+}
+
 function deckdetailRenderFragments($requestedFragments, $fragmentMapOverride = null)
 {
     if (isset($GLOBALS) && is_array($GLOBALS)) :
-        extract($GLOBALS, EXTR_SKIP);
+        foreach ($GLOBALS as $key => $value) :
+            if (!isset($$key)) :
+                $$key = $value;
+            endif;
+        endforeach;
     endif;
-    $fragmentMap = $fragmentMapOverride ?? [
-        'colour_identity' => '../includes/fragments/deckdetail_colour_identity.php',
-        'decklist' => '../includes/fragments/deckdetail_decklist.php',
-        'warnings' => '../includes/fragments/deckdetail_warnings.php',
-        'mana_value' => '../includes/fragments/deckdetail_mana_value.php',
-        'mana_costs' => '../includes/fragments/deckdetail_mana_costs.php',
-        'deck_value' => '../includes/fragments/deckdetail_deck_value.php',
-        'deck_lists' => '../includes/fragments/deckdetail_deck_lists.php',
-        'export_list' => '../includes/fragments/deckdetail_export_list.php',
-        'missing' => '../includes/fragments/deckdetail_missing.php',
-        'buy_missing' => '../includes/fragments/deckdetail_buy_missing.php',
-        'random_draw' => '../includes/fragments/deckdetail_random_draw.php'
-    ];
+    $fragmentMap = $fragmentMapOverride ?? deckdetailFragmentMap();
 
     $fragments = [];
     $requested = is_array($requestedFragments) ? array_values($requestedFragments) : [];

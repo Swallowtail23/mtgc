@@ -1,7 +1,7 @@
 # Deck Detail Fragments
 
 This page uses server-rendered fragments to keep derived sections in sync after AJAX deck updates.
-The source of truth is still PHP; the client asks for updated fragments and swaps them into the DOM.
+The source of truth is still PHP; the client applies fragment HTML returned from mutation requests.
 
 ## Fragments and IDs
 
@@ -33,20 +33,26 @@ Because of these dependencies, all deck mutations should trigger a fragment refr
 
 ## Client refresh
 
-`js/deckdetail.js` calls `ajax/ajaxdeckfragments.php` to request updated fragments. The default
-fragment list is set in `window.mtgDeckDetailConfig.fragments` inside `deckdetail.php`.
+Mutation requests include a fragment list. The default list is set in
+`window.mtgDeckDetailConfig.fragments` inside `deckdetail.php`, sourced from the fragment registry.
 
 ## Flow map
 
 1) `deckdetail.php` renders the initial page, loads `includes/deckdetail_data.php`,
    injects `window.mtgDeckDetailConfig`, and includes the fragments for first paint.
-2) User actions in `js/deckdetail.js` call `ajax/ajaxdeckcard.php` to mutate the deck.
-3) On success, `js/deckdetail.js` calls `refreshDeckFragments()` to refresh dependent sections.
-4) `ajax/ajaxdeckfragments.php` validates the session/referrer, loads `includes/deckdetail_data.php`
-   and `includes/fragments/deckdetail_mana_data.php`, then calls the fragment renderer.
-5) `ajax/ajaxdeckfragments_lib.php` renders the requested fragment includes in `includes/fragments/`
-   and returns the HTML payload.
-6) `js/deckdetail.js` swaps fragment wrappers in the DOM and rebinds events/refreshes images.
+2) User actions in `js/deckdetail.js` call `ajax/ajaxdeckcard.php` (or another mutation endpoint).
+3) The mutation endpoint validates the session + CSRF, loads `includes/deckdetail_data.php`
+   and `includes/fragments/deckdetail_mana_data.php`, then renders fragments.
+4) `ajax/ajaxdeckfragments_lib.php` renders the requested fragment includes in `includes/fragments/`
+   and returns the HTML payload alongside the mutation response.
+5) `js/deckdetail.js` swaps fragment wrappers in the DOM and rebinds events/refreshes images.
+
+## Versioning and request validation
+
+- Deck changes update `decks.deck_updated_at` (TIMESTAMP(6)), returned as `version` in microseconds from
+  deck mutation endpoints (and `ajax/ajaxdeckfragments.php` for manual refreshes).
+- The client tracks `lastAppliedVersion` and ignores stale fragment responses.
+- Deck ajax endpoints require a CSRF token (`csrf_token`) alongside session + ownership checks.
 
 ## Server rendering
 
@@ -55,9 +61,19 @@ Fragment HTML is rendered via:
 - Fragment includes in `includes/fragments/`
 - Shared data/calculation logic in `includes/deckdetail_data.php`
 
+## Fragment registry
+
+All fragment metadata lives in `ajax/ajaxdeckfragments_lib.php`:
+- Fragment key
+- Wrapper ID
+- Include file
+- Default inclusion
+
+`deckdetail.php` uses the registry to populate `window.mtgDeckDetailConfig.fragments` and
+`window.mtgDeckDetailConfig.fragmentTargets`, which the client uses when applying responses.
+
 ## Adding new derived sections
 
 1) Create a fragment include with a wrapper element and ID.
-2) Add it to the fragment map in `ajax/ajaxdeckfragments_lib.php`.
-3) Add the ID replacement in `js/deckdetail.js`.
-4) Add it to the `window.mtgDeckDetailConfig.fragments` list.
+2) Add a registry entry in `ajax/ajaxdeckfragments_lib.php`.
+3) Confirm the wrapper ID matches the registry entry.

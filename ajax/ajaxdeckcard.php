@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.18
 Date:        24/12/25
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -22,19 +22,8 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
+require_once 'ajaxdeckfragments_lib.php';
 $msg = new \MTG\Core\Message($logfile);
-
-$expectedReferringPages = [$myURL . '/deckdetail.php'];
-$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$normalizedReferringPage = str_replace('www.', '', $referringPage);
-$isValidReferrer = false;
-foreach ($expectedReferringPages as $page) :
-    $normalizedPage = str_replace('www.', '', $page);
-    if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-        $isValidReferrer = true;
-        break;
-    endif;
-endforeach;
 
 $response = [
     'success' => false,
@@ -46,15 +35,14 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     returnResponse($response);
 endif;
 
-if ($isValidReferrer !== true) :
-    $msg->logMessage('[ERROR]', "Not called from a valid page");
-    http_response_code(403);
-    $response['error'] = 'Access forbidden';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
+    $response['error'] = 'Invalid request method';
     returnResponse($response);
 endif;
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
-    $response['error'] = 'Invalid request method';
+$csrfToken = $_POST['csrf_token'] ?? '';
+if (!validateCsrfToken($csrfToken)) :
+    $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;
 
@@ -73,6 +61,14 @@ $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI,
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];
+$rate = $userArray['rate'] ?? null;
+$targetCurrency = $userArray['currency'] ?? null;
+$mytable = $userArray['table'] ?? '';
+if ($mytable === '') :
+    $msg->logMessage('[ERROR]', "Missing collection table for user $user");
+    $response['error'] = 'Missing collection table';
+    returnResponse($response);
+endif;
 
 $deckManager = new \MTG\Cards\DeckManager(
     $db,
@@ -148,6 +144,7 @@ $response['success'] = true;
 $response['status'] = $result;
 $response['cardqty'] = $cardqty;
 $response['sideqty'] = $sideqty;
+$response['deck_version'] = getDeckVersion($db, $deckNumber);
 
 if ($action === 'maintoside' && $sideqty > 0) :
     $decktype = '';
@@ -353,10 +350,43 @@ if ($action === 'maintoside' && $sideqty > 0) :
     endif;
 endif;
 
+$requestedFragments = isset($_POST['fragments']) ? (array) $_POST['fragments'] : [];
+if (count($requestedFragments) === 0) :
+    $requestedFragments = deckdetailDefaultFragments();
+endif;
+
+$skip_deckdetail_actions = true;
+include '../includes/deckdetail_data.php';
+include '../includes/fragments/deckdetail_mana_data.php';
+$msg->logMessage(
+    '[DEBUG]',
+    "Deck action fragments requested for deck $deckNumber: " . implode(', ', array_map('strval', $requestedFragments))
+);
+$response['fragments'] = deckdetailRenderFragments($requestedFragments);
+if (isset($deck_version)) :
+    $response['deck_version'] = (int) $deck_version;
+    $response['version'] = (int) $deck_version;
+endif;
+
 returnResponse($response);
+
+function getDeckVersion($db, $deckNumber)
+{
+    $versionQuery = "SELECT (UNIX_TIMESTAMP(deck_updated_at) * 1000000 + MICROSECOND(deck_updated_at)) AS deck_version
+        FROM decks WHERE decknumber = ? LIMIT 1";
+    $versionResult = $db->execute_query($versionQuery, [$deckNumber]);
+    if ($versionResult !== false && $versionResult->num_rows > 0) :
+        $versionRow = $versionResult->fetch_assoc();
+        return (int) ($versionRow['deck_version'] ?? 0);
+    endif;
+    return 0;
+}
 
 function returnResponse($response)
 {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     header('Content-Type: application/json');
     echo json_encode($response);
     exit();

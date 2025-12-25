@@ -80,9 +80,22 @@ All notable changes to this project will be documented in this file.
 - Random draw now binds reliably on first page load after fragment rendering.
 - Colour identity fragment now hides when no commander is set after ajax updates.
 - Deck type changes now run via ajax to avoid lingering GET state on refresh.
+- Deck detail quick add now runs via ajax with live fragment refresh.
+- Deck detail fragments now use a deck update timestamp to guard against stale ajax responses.
+- Deck schema now includes `deck_updated_at` for versioned deck refreshes.
+- Deck update timestamps now store microseconds for stricter ordering.
+- Deck detail mutation endpoints now return fragments in the same response for single-step updates.
+- Deck updated timestamps now use microseconds on mutation bumps for consistent ordering.
+- Deck detail fragments now use a central registry for keys, IDs, and default inclusion.
+- Deck detail handlers now use delegated events to survive fragment swaps.
+- Deck detail fragment updates now fall back to a full reload on apply failures.
+- Deck detail deck rename now runs via ajax and refreshes deck list fragments.
+- Deck detail text/CSV imports now run via ajax with live fragment refresh.
+- Deck detail photo upload/delete now runs via ajax handlers with delegated events.
 
 ### Security
--
+- Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.
+- Deck detail ajax responses and deck detail pages now disable caching to avoid CSRF token leakage.
 
 ### Infrastructure
 - PHP config now suppresses display_errors and logs to mtgapp.log (container + bare metal).

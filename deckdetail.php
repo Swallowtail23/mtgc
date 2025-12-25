@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.39
+Version:     25.45
 Date:        24/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -22,6 +22,10 @@ require('includes/error_handling.php');
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
 require('includes/colour.php');
+require_once 'ajax/ajaxdeckfragments_lib.php';
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
 forcePasswordChange();                       //Check if user is disabled or needs to change password
 $msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
@@ -466,15 +470,6 @@ if (isset($_GET["deck"])) :
     $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_NUMBER_INT);
 elseif (isset($_POST["deck"])) :
     $deckNumber     = filter_input(INPUT_POST, 'deck', FILTER_SANITIZE_NUMBER_INT);
-    $renamedeck     = isset($_POST['renamedeck']) ? 'yes' : '';
-    $newname        = isset($_POST['newname'])
-        ? filter_input(
-            INPUT_POST,
-            'newname',
-            FILTER_SANITIZE_FULL_SPECIAL_CHARS,
-            FILTER_FLAG_NO_ENCODE_QUOTES
-        )
-        : '';
 else : ?>
     <div id='page'>
     <div class='staticpagecontent'>
@@ -500,135 +495,24 @@ if ($obj->deckOwnerCheck($deckNumber, $user) == false) : ?>
     exit();
 endif;
 
-// Update name if called before reading info (we've already checked ownership)
-if (isset($_POST['newname'])) :
-    $msg->logMessage('[DEBUG]', "Renaming deck to $newname");
-    $obj = new \MTG\Cards\DeckManager(
-        $db,
-        $logfile,
-        $userEmail,
-        $serverEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes
-    );
-    $renameresult = $obj->renameDeck($deckNumber, $newname, $user);
-    $msg->logMessage('[DEBUG]', "Renaming deck result: $renameresult");
-    if ($renameresult == 2) :
-        ?>
-        <div class="msg-new error-new" onclick='closeMe(this)'><span>Deck name exists already</span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <?php
-    elseif ($renameresult > 0) :
-        ?>
-        <div class="msg-new error-new" onclick='closeMe(this)'><span>Unknown error</span>
-            <br>
-            <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-        </div>
-        <?php
-    else :
-        $redirect = true;
-    endif;
-endif;
-
-//Carry out quick add requests
-if (isset($_GET["quickadd"])) :
-    $deckManager = new \MTG\Cards\DeckManager(
-        $db,
-        $logfile,
-        $userEmail,
-        $serverEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes
-    );
-    $cardtoadd = $deckManager->processInput($deckNumber, $_GET["quickadd"]);
-endif;
-
-//Deck import
-if (isset($_POST['import'])) :
-    $msg->logMessage('[DEBUG]', "Import called, checking file uploaded...");
-    if (is_uploaded_file($_FILES['filename']['tmp_name'])) :
-        $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} uploaded");
-        $file = fopen($_FILES['filename']['tmp_name'], 'r');
-        $deckManager = new \MTG\Cards\DeckManager(
-            $db,
-            $logfile,
-            $userEmail,
-            $serverEmail,
-            $importLinestoIgnore,
-            $nonPreferredSetCodes
-        );
-        // Read the entire file content into a variable
-        $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
-        fclose($file);
-
-        // Call the processInput method with the decknumber and file content
-        $cardtoadd = $deckManager->processInput($deckNumber, $fileContent);
-        $redirect = ($cardtoadd === 'multierror') ? false : true;
-    else :
-        $msg->logMessage('[DEBUG]', "Import file {$_FILES['filename']['name']} failed");
-    endif;
-endif;
-
 include 'includes/deckdetail_data.php';
 
 // Next the main DIV section ?>
-<?php
-if (isset($cardtoadd) and ($cardtoadd == 'cardnotfound' or $cardtoadd == 'cardnotadded')) : ?>
-    <div class="msg-new error-new" onclick='closeMe(this)'>
-        <span>That didn't work... check card name</span>
-        <br>
-        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-    </div>
-    <?php
-elseif (isset($cardtoadd) and $cardtoadd == 'limitreached') : ?>
-    <div class="msg-new error-new" onclick='closeMe(this)'>
-        <span>Deck already contains the limit for this card name</span>
-        <br>
-        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-    </div>
-    <?php
-elseif (isset($cardtoadd) and str_starts_with($cardtoadd, 'limitpartial:')) : ?>
-    <?php
-    $limitQty = (int) substr($cardtoadd, strlen('limitpartial:'));
-    ?>
-    <div class="msg-new error-new" onclick='closeMe(this)'>
-        <span><?php echo $limitQty; ?> imported due to card name limit</span>
-        <br>
-        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-    </div>
-    <?php
-elseif (isset($cardtoadd) and ($cardtoadd == 'multierror')) : ?>
-    <div class="msg-new error-new" onclick='closeMe(this)'>
-        <span>Multi input errors<br>&nbsp;Details sent by email</span>
-        <br>
-        <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
-    </div>
-    <?php
-elseif (isset($cardtoadd)) : ?>
-    <meta http-equiv='refresh' content='0; url=deckdetail.php?deck=<?php echo $deckNumber; ?>'> <?php
-    exit();
-endif;
-?>
+<?php ?>
 <script>
+    <?php
+    $fragmentRegistry = deckdetailFragmentRegistry();
+    $fragmentDefaults = deckdetailDefaultFragments($fragmentRegistry);
+    $fragmentTargets = deckdetailFragmentTargets($fragmentRegistry);
+    ?>
     window.mtgDeckDetailConfig = {
         deckNumber: <?php echo (int) $deckNumber; ?>,
         isCommanderDeck: <?php echo in_array($decktype, $commander_decktypes) ? 'true' : 'false'; ?>,
         deckName: <?php echo json_encode($deckName); ?>,
-        fragments: [
-            'decklist',
-            'colour_identity',
-            'warnings',
-            'mana_value',
-            'mana_costs',
-            'deck_value',
-            'deck_lists',
-            'export_list',
-            'missing',
-            'buy_missing',
-            'random_draw'
-        ],
+        deckVersion: <?php echo isset($deck_version) ? (int) $deck_version : 0; ?>,
+        csrfToken: <?php echo json_encode(generateCsrfToken()); ?>,
+        fragments: <?php echo json_encode($fragmentDefaults); ?>,
+        fragmentTargets: <?php echo json_encode($fragmentTargets); ?>,
         randomDrawEnabled: <?php echo (isset($uniquecard_ref) && count($uniquecard_ref) > 6 && $decktype != 'Wishlist')
             ? 'true'
             : 'false'; ?>,
@@ -665,12 +549,12 @@ m13,12,"Fog",en,1,0,0,{id}
                 <input type='hidden' name="deletedeck" value="yes">
                 <input type='hidden' name="decktodelete" value="<?php echo $deckNumber; ?>">
             </form>
-            <h2 class='h2pad'><?php
+            <h2 class='h2pad'><span id="deckname"><?php
             if (strlen($deckName) > 17) :
                 echo $deckName . '<br><br>';
             else :
                         echo $deckName;
-            endif; ?>
+            endif; ?></span>
                 &nbsp;
                 <span
                     title="Delete"
@@ -704,11 +588,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     content_copy
                 </span>
             </h2>
-                <form id="renameForm" style="display: none;" action="?" method="POST">
+                <form id="renameForm" style="display: none;">
                     <br><textarea class='textinput' id='newname' name='newname' rows='1' cols='30'
                         placeholder="New deck name" autofocus></textarea>
-                    <input type='hidden' id='renamedeck' name='renamedeck' value='yes'>
-                    <input type='hidden' id='deck' name='deck' value="<?php echo $deckNumber; ?>">
                     <input class='inline_button stdwidthbutton noprint' type="submit" value="RENAME">
                 </form>
                 <?php
@@ -771,143 +653,17 @@ m13,12,"Fog",en,1,0,0,{id}
             include 'includes/fragments/deckdetail_deck_lists.php';
             ?>
             <h4>Add cards</h4>
-            <form action="deckdetail.php"  method="GET">
+            <form id="quickadd-form" action="deckdetail.php" method="GET">
                 <!-- Hovering help button -->
                 <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">help</span>
 
-                <textarea class='textinput' rows="3" cols="47" name="quickadd"></textarea>
+                <textarea class='textinput' rows="3" cols="47" name="quickadd" id="quickadd-text"></textarea>
                 <br>
                 <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
                 <?php echo "<input type='hidden' name='deck' value='$deckNumber'>"; ?>
             </form>
-            <h4>Text or csv file</h4>
-            <script type="text/javascript">
-                $(document).ready(function(){
-                    $("#importsubmit").attr('disabled',true);
-                    $("#importfile").change(
-                        function(){
-                            if ($(this).val()){
-                                $("#importsubmit").removeAttr('disabled');
-                            }
-                            else {
-                                $("#importsubmit").attr('disabled',true);
-                            }
-                        });
-                });
-                $(document).ready(function(){
-                    $("#photosubmit").attr('disabled',true);
-                    $("#importphoto").change(
-                        function(){
-                            if ($(this).val()){
-                                $("#photosubmit").removeAttr('disabled');
-                            }
-                            else {
-                                $("#photosubmit").attr('disabled',true);
-                            }
-                        });
-                });
-                function deletePhoto() {
-                    // Get the deck number
-                    var deckNumber = $('input[name="decknumber"]').val();
-                    var csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
-
-                    // Create form data
-                    var formData = new FormData();
-                    formData.append('decknumber', deckNumber);
-                    formData.append('delete', '');
-                    formData.append('csrf_token', csrfToken);
-
-                    // Perform AJAX request
-                    $.ajax({
-                        url: '/ajax/ajaxphoto.php',
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        dataType: 'json',
-                        timeout: 5000,
-                        success: function(response) {
-                            if (response.success) {
-                                $('#result').html(response.message);
-                                $('#photo_div').hide();
-                                $('#deletePhotoBtn').hide();
-                                setTimeout(function() {
-                                    $('#result').html('');
-                                }, 5000);
-                            } else {
-                                $('#result').html('Error: ' + response.message);
-                                setTimeout(function() {
-                                    $('#result').html('');
-                                }, 20000);
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
-                            setTimeout(function() {
-                                $('#result').html('');
-                            }, 20000);
-                        }
-                    });
-                };
-                $(document).ready(function() {
-                    $('#uploadForm').submit(function(e) {
-                        e.preventDefault(); // Prevent the default form submission
-
-                        // Get the deck number from the hidden input
-                        var deckNumber = $('input[name="decknumber"]').val();
-                        var csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
-
-                        // Append the deck number to the form data
-                        var formData = new FormData(this);
-                        formData.append('decknumber', deckNumber);
-                        formData.append('update', '');
-                        formData.append('csrf_token', csrfToken);
-
-                        $.ajax({
-                            url: '/ajax/ajaxphoto.php',
-                            type: 'POST',
-                            data: formData,
-                            processData: false,
-                            contentType: false,
-                            dataType: 'json', // Expect JSON response
-                            success: function(response) {
-                                if (response.success) {
-                                    $('#result').html(response.message);
-                                    // Reload the image
-                                    // var imageUrl = 'cardimg/deck_photos/<?php echo $deckNumber; ?>.jpg';
-                                    var imageUrl = 'deckimage.php?deck=<?php echo $deckNumber; ?>';
-                                    var timestamp = new Date().getTime();
-                                    $('#deckPhoto').attr('src', imageUrl + '&' + timestamp);
-                                    $('#photo_div').show();
-                                    $('#deletePhotoBtn').show();
-                                    $("#photosubmit").attr('disabled',true);
-                                    setTimeout(function() {
-                                        $('#result').html('');
-                                    }, 5000);
-                                } else {
-                                    $('#result').html('Error: ' + response.message);
-                                    setTimeout(function() {
-                                        $('#result').html('');
-                                    }, 20000);
-                                }
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
-                                setTimeout(function() {
-                                    $('#result').html('');
-                                }, 20000);
-                            }
-                        });
-                    });
-                });
-            </script>
-            <script type="text/javascript">
-                function importPrep()
-                    {
-                        document.body.style.cursor='wait';
-                    }
-            </script>
-            <form enctype='multipart/form-data' action='?' method='post'>
+           From text or csv file:
+            <form id="import-form" enctype='multipart/form-data'>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
                     <span>SELECT</span>
@@ -916,12 +672,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     class='profilebutton'
                     id='importsubmit'
                     type='submit'
-                    name='import'
                     value='IMPORT'
                     disabled
-                    onclick='importPrep()'
                 >
-                <input type='hidden' id='deck' name='deck' value="<?php echo $deckNumber; ?>">
             </form>
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
@@ -945,7 +698,6 @@ m13,12,"Fog",en,1,0,0,{id}
                         class="profilebutton"
                         id="deletePhotoBtn"
                         type="button"
-                        onclick="deletePhoto()"
                         <?php echo !file_exists($imageFilePath) ? 'style="display:none;"' : ''; ?>
                     >DELETE</button>
                 </form>

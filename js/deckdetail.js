@@ -1,5 +1,5 @@
 /*
-Version:     1.7
+Version:     2.6
 Date:        24/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -21,6 +21,9 @@ var isCommanderDeck = false;
 var deckName = '';
 var randomDrawEnabled = false;
 var randomDrawRefs = [];
+var csrfToken = '';
+var lastAppliedVersion = 0;
+var fragmentTargets = {};
 if (window.mtgDeckDetailConfig) {
     deckNumber = window.mtgDeckDetailConfig.deckNumber || 0;
     isCommanderDeck = window.mtgDeckDetailConfig.isCommanderDeck === true;
@@ -28,6 +31,15 @@ if (window.mtgDeckDetailConfig) {
     randomDrawEnabled = window.mtgDeckDetailConfig.randomDrawEnabled === true;
     if (Array.isArray(window.mtgDeckDetailConfig.randomDrawRefs)) {
         randomDrawRefs = window.mtgDeckDetailConfig.randomDrawRefs;
+    }
+    if (window.mtgDeckDetailConfig.csrfToken) {
+        csrfToken = window.mtgDeckDetailConfig.csrfToken;
+    }
+    if (window.mtgDeckDetailConfig.deckVersion) {
+        lastAppliedVersion = parseInt(window.mtgDeckDetailConfig.deckVersion, 10) || 0;
+    }
+    if (window.mtgDeckDetailConfig.fragmentTargets) {
+        fragmentTargets = window.mtgDeckDetailConfig.fragmentTargets;
     }
 }
 
@@ -45,9 +57,129 @@ function updateRandomDrawState() {
     } catch (e) {
         randomDrawRefs = [];
     }
-    if (randomDrawEnabled) {
-        $('#random-draw-button').off('click').on('click', refreshTable);
+}
+
+function normalizeVersion(rawVersion) {
+    var versionInt = parseInt(rawVersion, 10);
+    if (isNaN(versionInt)) {
+        return 0;
     }
+    return versionInt;
+}
+
+function updateDeckVersion(rawVersion) {
+    var versionInt = normalizeVersion(rawVersion);
+    if (versionInt > lastAppliedVersion) {
+        lastAppliedVersion = versionInt;
+    }
+}
+
+function getFragmentList() {
+    if (window.mtgDeckDetailConfig && Array.isArray(window.mtgDeckDetailConfig.fragments)) {
+        return window.mtgDeckDetailConfig.fragments.slice();
+    }
+    return Object.keys(getFragmentTargets());
+}
+
+function getFragmentTargets() {
+    if (window.mtgDeckDetailConfig && window.mtgDeckDetailConfig.fragmentTargets) {
+        return window.mtgDeckDetailConfig.fragmentTargets;
+    }
+    return {
+        decklist: 'decklist-fragment',
+        colour_identity: 'deck-colour-identity-fragment',
+        warnings: 'deck-warnings-fragment',
+        mana_value: 'deck-mana-value-fragment',
+        mana_costs: 'deck-mana-costs-fragment',
+        deck_value: 'deck-value-fragment',
+        deck_lists: 'deck-lists-fragment',
+        export_list: 'deck-export-fragment',
+        missing: 'deck-missing-fragment',
+        buy_missing: 'deck-buy-fragment',
+        random_draw: 'deck-random-draw-fragment'
+    };
+}
+
+function hardReloadDeckDetail() {
+    if (deckNumber) {
+        window.location.href = 'deckdetail.php?deck=' + deckNumber;
+    } else {
+        window.location.reload();
+    }
+}
+
+function applyFragmentResponse(response, options) {
+    if (!response || response.success !== true || !response.fragments) {
+        hardReloadDeckDetail();
+        return;
+    }
+    var responseVersion = normalizeVersion(response.version || response.deck_version);
+    if (responseVersion && responseVersion < lastAppliedVersion) {
+        return;
+    }
+    var replaceDecklist = true;
+    var refreshImages = true;
+    var newCardIds = [];
+    if (options) {
+        replaceDecklist = options.replaceDecklist !== false;
+        refreshImages = options.refreshImages !== false;
+        if (Array.isArray(options.newCardIds)) {
+            newCardIds = options.newCardIds;
+        }
+    }
+    try {
+        var targets = getFragmentTargets();
+        if (replaceDecklist && response.fragments.decklist) {
+            var decklistId = targets.decklist || 'decklist-fragment';
+            $('#' + decklistId).replaceWith(response.fragments.decklist);
+        }
+        Object.keys(response.fragments).forEach(function (fragmentKey) {
+            if (fragmentKey === 'decklist') {
+                return;
+            }
+            var targetId = targets[fragmentKey];
+            if (!targetId) {
+                return;
+            }
+            $('#' + targetId).replaceWith(response.fragments[fragmentKey]);
+        });
+        if (window.bindRandomCardEvents) {
+            window.bindRandomCardEvents();
+        }
+        bindDeckDetailHandlers();
+        if (refreshImages && window.refreshCardImagesAsync) {
+            window.refreshCardImagesAsync();
+        } else if (newCardIds.length && window.enqueueDeckImage) {
+            newCardIds.forEach(function (cardId) {
+                window.enqueueDeckImage(cardId, true);
+            });
+        }
+        renderManaValueChart();
+        updateDeckTotals();
+        updateRandomDrawState();
+        if (responseVersion) {
+            updateDeckVersion(responseVersion);
+        }
+    } catch (e) {
+        hardReloadDeckDetail();
+    }
+}
+
+function showDeckMessage(text, isHtml) {
+    if (!text) {
+        return;
+    }
+    var $message = $('<div class="msg-new error-new"></div>');
+    if (isHtml) {
+        $message.append('<span>' + text + '</span><br>');
+    } else {
+        $message.append($('<span></span>').text(text)).append('<br>');
+    }
+    $message.append("<p onmouseover=\"\" style=\"cursor: pointer;\" id='dismiss'>OK</p>");
+    $message.on('click', function () {
+        closeMe(this);
+    });
+    $('body').append($message);
 }
 
 function closeMe(obj) {
@@ -98,7 +230,8 @@ function refreshTable() {
     var xhr = new XMLHttpRequest();
     var data = JSON.stringify({
         uniquecard_ref: randomDrawRefs,
-        include_check: true
+        include_check: true,
+        csrf_token: csrfToken
     });
     xhr.open('POST', 'ajax/ajaxrandomdraw.php', true);
     xhr.setRequestHeader('Content-Type', 'application/json');
@@ -118,8 +251,16 @@ window.closeMe = closeMe;
 window.submitForm = submitForm;
 window.refreshTable = refreshTable;
 
-function bindDeckCardActions() {
-    $('.js-plusmain').off('click').on('click', function (e) {
+function bindDeckDetailHandlers() {
+    var $importFile = $('#importfile');
+    if ($importFile.length && $importFile.val() === '') {
+        $('#importsubmit').prop('disabled', true);
+    }
+    var $photoFile = $('#importphoto');
+    if ($photoFile.length && $photoFile.val() === '') {
+        $('#photosubmit').prop('disabled', true);
+    }
+    $(document).off('click.deckdetail', '.js-plusmain').on('click.deckdetail', '.js-plusmain', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -135,13 +276,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'plusmain',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             var $qtyCell = $row.find('.js-qty-main');
             if ($qtyCell.length && response.cardqty !== undefined) {
                 $qtyCell.text(response.cardqty);
@@ -166,7 +310,7 @@ function bindDeckCardActions() {
                 alert(limitedQty + ' imported due to card name limit');
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -174,7 +318,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-minusmain').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-minusmain').on('click.deckdetail', '.js-minusmain', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -191,20 +335,23 @@ function bindDeckCardActions() {
             data: {
                 action: 'minusmain',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             if (response.cardqty <= 0) {
                 $row.remove();
                 if (cardRef) {
                     $('#list-' + cardRef).remove();
                 }
                 updateDeckTotals();
-                refreshDeckFragments();
+                applyFragmentResponse(response);
                 return;
             }
             var $qtyCell = $row.find('.js-qty-main');
@@ -227,7 +374,7 @@ function bindDeckCardActions() {
                 $plusButton.show();
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -235,7 +382,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-deletemain').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-deletemain').on('click.deckdetail', '.js-deletemain', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -251,13 +398,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'deletemain',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             var $row = $button.closest('tr.deckrow');
             var $qtyCell = $row.find('.js-qty-main');
             if (response.cardqty <= 0) {
@@ -317,7 +467,7 @@ function bindDeckCardActions() {
                 }
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -325,7 +475,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-maintoside').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-maintoside').on('click.deckdetail', '.js-maintoside', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -341,13 +491,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'maintoside',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             var $row = $button.closest('tr.deckrow');
             var $qtyCell = $row.find('.js-qty-main');
             if (response.cardqty <= 0) {
@@ -404,22 +557,7 @@ function bindDeckCardActions() {
                 }
             }
             updateDeckTotals();
-            refreshDeckFragments({
-                refreshImages: false,
-                newCardIds: response.side_row_html ? [cardId] : [],
-                fragments: [
-                    'colour_identity',
-                    'warnings',
-                    'mana_value',
-                    'mana_costs',
-                    'deck_value',
-                    'deck_lists',
-                    'export_list',
-                    'missing',
-                    'buy_missing',
-                    'random_draw'
-                ]
-            });
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -427,7 +565,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-plusside').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-plusside').on('click.deckdetail', '.js-plusside', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -445,13 +583,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'plusside',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             var $qtyCell = $row.find('.js-qty-side');
             if ($qtyCell.length && response.sideqty !== undefined) {
                 $qtyCell.text(response.sideqty);
@@ -476,7 +617,7 @@ function bindDeckCardActions() {
                 alert(limitedQty + ' imported due to card name limit');
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -484,7 +625,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-minusside').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-minusside').on('click.deckdetail', '.js-minusside', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -502,13 +643,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'minusside',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             if (response.sideqty <= 0) {
                 $row.remove();
                 if (cardRef) {
@@ -536,7 +680,7 @@ function bindDeckCardActions() {
                 }
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -544,7 +688,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-deleteside').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-deleteside').on('click.deckdetail', '.js-deleteside', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -562,19 +706,22 @@ function bindDeckCardActions() {
             data: {
                 action: 'deleteside',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             $row.remove();
             if (cardRef) {
                 $('#listside-' + cardRef).remove();
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -582,7 +729,7 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-sidetomain').off('click').on('click', function (e) {
+    $(document).off('click.deckdetail', '.js-sidetomain').on('click.deckdetail', '.js-sidetomain', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -600,13 +747,16 @@ function bindDeckCardActions() {
             data: {
                 action: 'sidetomain',
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
+            updateDeckVersion(response.deck_version);
             if (response.sideqty <= 0) {
                 $row.remove();
                 if (cardRef) {
@@ -622,7 +772,7 @@ function bindDeckCardActions() {
                 }
             }
             updateDeckTotals();
-            refreshDeckFragments();
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -630,7 +780,9 @@ function bindDeckCardActions() {
         });
     });
 
-    $('.js-commander-add, .js-partner-add, .js-commander-remove').off('click').on('click', function (e) {
+    $(document)
+        .off('click.deckdetail', '.js-commander-add, .js-partner-add, .js-commander-remove')
+        .on('click.deckdetail', '.js-commander-add, .js-partner-add, .js-commander-remove', function (e) {
         e.preventDefault();
         var $button = $(this);
         if ($button.data('busy')) {
@@ -652,18 +804,326 @@ function bindDeckCardActions() {
             data: {
                 action: action,
                 decknumber: deckNumber,
-                cardid: cardId
+                cardid: cardId,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
             }
         }).done(function (response) {
             if (!response || response.success !== true) {
                 alert('That did not work. Please try again.');
                 return;
             }
-            refreshDeckFragments();
+            updateDeckVersion(response.deck_version);
+            applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
             $button.data('busy', false);
+        });
+    });
+
+    $(document).off('click.deckdetail', '#random-draw-button').on('click.deckdetail', '#random-draw-button', function (e) {
+        if (!randomDrawEnabled) {
+            return;
+        }
+        refreshTable(e);
+    });
+
+    $(document)
+        .off('change.deckdetail', '#changeType select[name="updatetype"]')
+        .on('change.deckdetail', '#changeType select[name="updatetype"]', function (event) {
+            event.preventDefault();
+            var $select = $(this);
+            var newType = $select.val();
+            if (!newType || !deckNumber) {
+                return;
+            }
+            $select.prop('disabled', true);
+            $.ajax({
+                url: 'ajax/ajaxdecktype.php',
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    decknumber: deckNumber,
+                    updatetype: newType,
+                    csrf_token: csrfToken,
+                    fragments: getFragmentList()
+                }
+            }).done(function (response) {
+                if (!response || response.success !== true) {
+                    alert('That did not work. Please try again.');
+                    return;
+                }
+                updateDeckVersion(response.deck_version);
+                isCommanderDeck = response.is_commander === true;
+                if (window.mtgDeckDetailConfig) {
+                    window.mtgDeckDetailConfig.isCommanderDeck = isCommanderDeck;
+                }
+                $('#currentType').html(
+                    "<span style='font-weight:500'>" + $select.find('option:selected').text() + "</span><br>"
+                );
+                $("#changeType").hide();
+                $("#currentType").show();
+                applyFragmentResponse(response);
+            }).fail(function () {
+                alert('That did not work. Please try again.');
+            }).always(function () {
+                $select.prop('disabled', false);
+            });
+        });
+
+    $(document).off('submit.deckdetail', '#quickadd-form').on('submit.deckdetail', '#quickadd-form', function (event) {
+        event.preventDefault();
+        var $form = $(this);
+        var quickadd = $('#quickadd-text').val();
+        if (!quickadd || quickadd.trim() === '') {
+            alert('Add cards field cannot be empty');
+            return;
+        }
+        if ($form.data('busy')) {
+            return;
+        }
+        $form.data('busy', true);
+        $.ajax({
+            url: 'ajax/ajaxdeckadd.php',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                decknumber: deckNumber,
+                quickadd: quickadd,
+                csrf_token: csrfToken,
+                fragments: getFragmentList()
+            }
+        }).done(function (response) {
+            if (!response || response.success !== true) {
+                alert('That did not work. Please try again.');
+                return;
+            }
+            updateDeckVersion(response.deck_version);
+            if (response.status === 'cardnotfound' || response.status === 'cardnotadded') {
+                showDeckMessage("That didn't work... check card name");
+            } else if (response.status === 'limitreached') {
+                showDeckMessage('Deck already contains the limit for this card name');
+            } else if (response.status && response.status.indexOf('limitpartial:') === 0) {
+                var limitQty = parseInt(response.status.split(':')[1], 10) || 0;
+                showDeckMessage(limitQty + ' imported due to card name limit');
+            } else if (response.status === 'multierror') {
+                showDeckMessage('Multi input errors<br>&nbsp;Details sent by email', true);
+            }
+            $('#quickadd-text').val('');
+            applyFragmentResponse(response);
+        }).fail(function () {
+            alert('That did not work. Please try again.');
+        }).always(function () {
+            $form.data('busy', false);
+        });
+    });
+
+    $(document).off('change.deckdetail', '#importfile').on('change.deckdetail', '#importfile', function () {
+        var hasFile = $(this).val() !== '';
+        $('#importsubmit').prop('disabled', !hasFile);
+    });
+
+    $(document).off('change.deckdetail', '#importphoto').on('change.deckdetail', '#importphoto', function () {
+        var hasFile = $(this).val() !== '';
+        $('#photosubmit').prop('disabled', !hasFile);
+    });
+
+    $(document).off('submit.deckdetail', '#import-form').on('submit.deckdetail', '#import-form', function (event) {
+        event.preventDefault();
+        var $form = $(this);
+        var fileInput = $('#importfile')[0];
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert('Please select a file to import');
+            return;
+        }
+        if ($form.data('busy')) {
+            return;
+        }
+        $form.data('busy', true);
+        document.body.style.cursor = 'wait';
+        var formData = new FormData($form[0]);
+        formData.append('decknumber', deckNumber);
+        formData.append('csrf_token', csrfToken);
+        var fragments = getFragmentList();
+        fragments.forEach(function (fragmentKey) {
+            formData.append('fragments[]', fragmentKey);
+        });
+        $.ajax({
+            url: 'ajax/ajaxdeckimport.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json'
+        }).done(function (response) {
+            if (!response || response.success !== true) {
+                alert('That did not work. Please try again.');
+                return;
+            }
+            updateDeckVersion(response.deck_version);
+            if (response.status === 'cardnotfound' || response.status === 'cardnotadded') {
+                showDeckMessage("That didn't work... check card name");
+            } else if (response.status === 'limitreached') {
+                showDeckMessage('Deck already contains the limit for this card name');
+            } else if (response.status && response.status.indexOf('limitpartial:') === 0) {
+                var limitQty = parseInt(response.status.split(':')[1], 10) || 0;
+                showDeckMessage(limitQty + ' imported due to card name limit');
+            } else if (response.status === 'multierror') {
+                showDeckMessage('Multi input errors<br>&nbsp;Details sent by email', true);
+            }
+            $('#importfile').val('');
+            $('#importsubmit').prop('disabled', true);
+            applyFragmentResponse(response);
+        }).fail(function () {
+            alert('That did not work. Please try again.');
+        }).always(function () {
+            $form.data('busy', false);
+            document.body.style.cursor = '';
+        });
+    });
+
+    $(document).off('submit.deckdetail', '#renameForm').on('submit.deckdetail', '#renameForm', function (event) {
+        event.preventDefault();
+        var $form = $(this);
+        var fieldValue = $('#newname').val();
+        if (!fieldValue || fieldValue.trim() === '') {
+            alert('Rename field cannot be empty');
+            return;
+        }
+        if (deckName && fieldValue.trim() === deckName.trim()) {
+            alert('To cancel rename click edit button again');
+            return;
+        }
+        if ($form.data('busy')) {
+            return;
+        }
+        $form.data('busy', true);
+        $.ajax({
+            url: 'ajax/ajaxdeckrename.php',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                decknumber: deckNumber,
+                newname: fieldValue,
+                csrf_token: csrfToken,
+                fragments: ['export_list']
+            }
+        }).done(function (response) {
+            if (!response || response.success !== true) {
+                if (response && response.status === 'nameexists') {
+                    showDeckMessage('Deck name exists already');
+                } else {
+                    showDeckMessage('Unknown error');
+                }
+                return;
+            }
+            updateDeckVersion(response.deck_version);
+            if (response.deckname_html) {
+                $('#deckname').html(response.deckname_html);
+            } else if (response.deckname) {
+                $('#deckname').text(response.deckname);
+            }
+            if (response.deckname) {
+                deckName = response.deckname;
+                if (window.mtgDeckDetailConfig) {
+                    window.mtgDeckDetailConfig.deckName = response.deckname;
+                }
+            }
+            $("#renameForm, #changeType, #currentType").toggle("block");
+            applyFragmentResponse(response);
+        }).fail(function () {
+            alert('That did not work. Please try again.');
+        }).always(function () {
+            $form.data('busy', false);
+        });
+    });
+
+    $(document).off('submit.deckdetail', '#uploadForm').on('submit.deckdetail', '#uploadForm', function (event) {
+        event.preventDefault();
+        var $form = $(this);
+        if ($form.data('busy')) {
+            return;
+        }
+        $form.data('busy', true);
+        var formData = new FormData($form[0]);
+        formData.append('decknumber', deckNumber);
+        formData.append('update', '');
+        formData.append('csrf_token', csrfToken);
+        $.ajax({
+            url: '/ajax/ajaxphoto.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            timeout: 5000
+        }).done(function (response) {
+            if (response && response.success) {
+                $('#result').html(response.message);
+                var imageUrl = 'deckimage.php?deck=' + deckNumber;
+                var timestamp = new Date().getTime();
+                $('#deckPhoto').attr('src', imageUrl + '&' + timestamp);
+                $('#photo_div').show();
+                $('#deletePhotoBtn').show();
+                $('#photosubmit').prop('disabled', true);
+                setTimeout(function () {
+                    $('#result').html('');
+                }, 5000);
+            } else {
+                $('#result').html('Error: ' + (response ? response.message : 'Unknown error'));
+                setTimeout(function () {
+                    $('#result').html('');
+                }, 20000);
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
+            setTimeout(function () {
+                $('#result').html('');
+            }, 20000);
+        }).always(function () {
+            $form.data('busy', false);
+        });
+    });
+
+    $(document).off('click.deckdetail', '#deletePhotoBtn').on('click.deckdetail', '#deletePhotoBtn', function () {
+        if ($(this).data('busy')) {
+            return;
+        }
+        $(this).data('busy', true);
+        var formData = new FormData();
+        formData.append('decknumber', deckNumber);
+        formData.append('delete', '');
+        formData.append('csrf_token', csrfToken);
+        $.ajax({
+            url: '/ajax/ajaxphoto.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            timeout: 5000
+        }).done(function (response) {
+            if (response && response.success) {
+                $('#result').html(response.message);
+                $('#photo_div').hide();
+                $('#deletePhotoBtn').hide();
+                setTimeout(function () {
+                    $('#result').html('');
+                }, 5000);
+            } else {
+                $('#result').html('Error: ' + (response ? response.message : 'Unknown error'));
+                setTimeout(function () {
+                    $('#result').html('');
+                }, 20000);
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
+            setTimeout(function () {
+                $('#result').html('');
+            }, 20000);
+        }).always(function () {
+            $('#deletePhotoBtn').data('busy', false);
         });
     });
 }
@@ -834,7 +1294,7 @@ function ensureSideboardSection() {
         }
     }
 
-    function refreshDeckFragments(options) {
+function refreshDeckFragments(options) {
         // Fragment dependencies are documented in docs/deckdetail_fragments.md.
         if (!deckNumber) {
             return;
@@ -853,148 +1313,30 @@ function ensureSideboardSection() {
                 replaceDecklist = requestedFragments.indexOf('decklist') !== -1;
             }
         }
-        var fragments = [];
-        if (requestedFragments) {
-            fragments = requestedFragments;
-        } else if (window.mtgDeckDetailConfig && Array.isArray(window.mtgDeckDetailConfig.fragments)) {
-            fragments = window.mtgDeckDetailConfig.fragments;
-        }
-        if (fragments.length === 0) {
-            fragments = [
-                'decklist',
-                'colour_identity',
-                'warnings',
-                'mana_value',
-                'mana_costs',
-                'deck_value',
-                'deck_lists',
-                'export_list',
-                'missing',
-                'buy_missing',
-                'random_draw'
-            ];
-        }
+        var fragments = requestedFragments || getFragmentList();
         $.ajax({
             url: 'ajax/ajaxdeckfragments.php',
             method: 'POST',
             dataType: 'json',
             data: {
                 decknumber: deckNumber,
-                fragments: fragments
+                fragments: fragments,
+                expected_version: lastAppliedVersion,
+                csrf_token: csrfToken
             }
         }).done(function (response) {
-            if (!response || response.success !== true || !response.fragments) {
-                return;
-            }
-            if (replaceDecklist && response.fragments.decklist) {
-                $('#decklist-fragment').replaceWith(response.fragments.decklist);
-            }
-            if (response.fragments.colour_identity) {
-                $('#deck-colour-identity-fragment').replaceWith(response.fragments.colour_identity);
-            }
-            if (response.fragments.warnings) {
-                $('#deck-warnings-fragment').replaceWith(response.fragments.warnings);
-            }
-            if (response.fragments.mana_value) {
-                $('#deck-mana-value-fragment').replaceWith(response.fragments.mana_value);
-            }
-            if (response.fragments.mana_costs) {
-                $('#deck-mana-costs-fragment').replaceWith(response.fragments.mana_costs);
-            }
-            if (response.fragments.deck_value) {
-                $('#deck-value-fragment').replaceWith(response.fragments.deck_value);
-            }
-            if (response.fragments.deck_lists) {
-                $('#deck-lists-fragment').replaceWith(response.fragments.deck_lists);
-            } else {
-                if (response.fragments.export_list) {
-                    $('#deck-export-fragment').replaceWith(response.fragments.export_list);
-                }
-                if (response.fragments.missing) {
-                    $('#deck-missing-fragment').replaceWith(response.fragments.missing);
-                }
-                if (response.fragments.buy_missing) {
-                    $('#deck-buy-fragment').replaceWith(response.fragments.buy_missing);
-                }
-            }
-            if (response.fragments.random_draw) {
-                $('#deck-random-draw-fragment').replaceWith(response.fragments.random_draw);
-                updateRandomDrawState();
-            }
-            bindDeckCardActions();
-            if (window.bindRandomCardEvents) {
-                window.bindRandomCardEvents();
-            }
-            if (refreshImages && window.refreshCardImagesAsync) {
-                window.refreshCardImagesAsync();
-            } else if (newCardIds.length && window.enqueueDeckImage) {
-                newCardIds.forEach(function (cardId) {
-                    window.enqueueDeckImage(cardId, true);
-                });
-            }
-            renderManaValueChart();
-            updateDeckTotals();
-            updateRandomDrawState();
+            applyFragmentResponse(response, {
+                replaceDecklist: replaceDecklist,
+                refreshImages: refreshImages,
+                newCardIds: newCardIds
+            });
         });
     }
 
     $(document).ready(function () {
-        bindDeckCardActions();
+        bindDeckDetailHandlers();
         renderManaValueChart();
         updateRandomDrawState();
-
-        $('#changeType select[name="updatetype"]').on('change', function (event) {
-            event.preventDefault();
-            var $select = $(this);
-            var newType = $select.val();
-            if (!newType || !deckNumber) {
-                return;
-            }
-            $select.prop('disabled', true);
-            $.ajax({
-                url: 'ajax/ajaxdecktype.php',
-                method: 'POST',
-                dataType: 'json',
-                data: {
-                    decknumber: deckNumber,
-                    updatetype: newType
-                }
-            }).done(function (response) {
-                if (!response || response.success !== true) {
-                    alert('That did not work. Please try again.');
-                    return;
-                }
-                isCommanderDeck = response.is_commander === true;
-                if (window.mtgDeckDetailConfig) {
-                    window.mtgDeckDetailConfig.isCommanderDeck = isCommanderDeck;
-                }
-                $('#currentType').html(
-                    "<span style='font-weight:500'>" + $select.find('option:selected').text() + "</span><br>"
-                );
-                $("#changeType").hide();
-                $("#currentType").show();
-                refreshDeckFragments();
-            }).fail(function () {
-                alert('That did not work. Please try again.');
-            }).always(function () {
-                $select.prop('disabled', false);
-            });
-        });
-
-        $('#renameForm').on('submit', function (event) {
-            event.preventDefault();
-            var fieldValue = $('#newname').val();
-            if (!fieldValue || fieldValue.trim() === '') {
-                alert('Rename field cannot be empty');
-                return;
-            }
-            if (deckName && fieldValue.trim() === deckName.trim()) {
-                alert('To cancel rename click edit button again');
-                return;
-            }
-            this.submit();
-        });
-
         var notesTextarea = $('#notes');
         var sidenotesTextarea = $('#sidenotes');
         var saveButton = $('.save_icon');
