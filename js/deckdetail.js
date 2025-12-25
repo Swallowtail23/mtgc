@@ -1,5 +1,5 @@
 /*
-Version:     2.6
+Version:     2.7
 Date:        24/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -859,9 +859,14 @@ function bindDeckDetailHandlers() {
                 if (window.mtgDeckDetailConfig) {
                     window.mtgDeckDetailConfig.isCommanderDeck = isCommanderDeck;
                 }
-                $('#currentType').html(
-                    "<span style='font-weight:500'>" + $select.find('option:selected').text() + "</span><br>"
-                );
+                var selectedText = $select.find('option:selected').text();
+                var $currentType = $('#currentType');
+                $currentType.empty();
+                $('<span></span>')
+                    .css('font-weight', '500')
+                    .text(selectedText)
+                    .appendTo($currentType);
+                $currentType.append('<br>');
                 $("#changeType").hide();
                 $("#currentType").show();
                 applyFragmentResponse(response);
