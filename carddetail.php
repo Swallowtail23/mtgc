@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     21.6
-Date:        23/12/25
+Version:     22.4
+Date:        25/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -24,17 +24,8 @@ forcePasswordChange();                       //Check if user is disabled or need
 require('includes/colour.php');
 
 $msg = new \MTG\Core\Message($logfile);
-$pageStart = microtime(true);
-
-function logTiming($msg, $label, $start)
-{
-    $elapsed = microtime(true) - $start;
-    $msg->logMessage('[DEBUG]', "Timing {$label}: " . number_format($elapsed, 4) . "s");
-}
-
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
-logTiming($msg, 'post-session-setup', $pageStart);
 
 // Enable / disable deck functionality
 $decks_on = 1;
@@ -72,254 +63,6 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
     <script src="/js/ajaxUpdate.js"></script>
-    <script type="text/javascript">
-        function swapImageWithFade($img, newSrc) {
-            $img.css('opacity', '0');
-            $img.off('load.mtgfade').on('load.mtgfade', function() {
-                const $self = $(this);
-                requestAnimationFrame(function() {
-                    requestAnimationFrame(function() {
-                        $self.css('opacity', '1');
-                    });
-                });
-            });
-            $img.attr('src', newSrc);
-            if ($img[0] && $img[0].complete) {
-                setTimeout(function() {
-                    $img.trigger('load');
-                }, 0);
-            }
-        }
-
-        function updateFlipButtonsForViewport() {
-            const showFlip = window.matchMedia('(max-width: 1208px)').matches;
-            $('.flipbuttondetail').each(function() {
-                const $btn = $(this);
-                if (showFlip && $btn.data('ready') === 1) {
-                    $btn.show();
-                } else {
-                    $btn.hide();
-                }
-            });
-        }
-
-        function refreshCardImagesAsync() {
-            const seen = {};
-            $('img').each(function() {
-                const $img = $(this);
-                const src = $img.attr('src') || '';
-                const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-                const cardId = match ? match[1] : $img.data('cardid');
-                if (!cardId) {
-                    return;
-                }
-                if (seen[cardId]) {
-                    return;
-                }
-                seen[cardId] = true;
-                $.ajax({
-                    url: 'ajax/ajaximagecheck.php',
-                    type: 'POST',
-                    data: { cardid: cardId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (!response || !response.success) {
-                            return;
-                        }
-                        if (response.front && response.front.indexOf('cardimg') !== -1) {
-                            const newSrc = response.front + '?t=' + Date.now();
-                            $('img[data-cardid="' + cardId + '"][data-face="front"]').each(function() {
-                                swapImageWithFade($(this), newSrc);
-                            });
-                        }
-                        if (response.back && response.back.indexOf('cardimg') !== -1) {
-                            const newBackSrc = response.back + '?t=' + Date.now();
-                            $('img[data-cardid="' + cardId + '"][data-face="back"]').each(function() {
-                                swapImageWithFade($(this), newBackSrc);
-                            });
-                        }
-                        if (
-                            response.front
-                            && response.back
-                            && response.front.indexOf('cardimg') !== -1
-                            && response.back.indexOf('cardimg') !== -1
-                        ) {
-                            $('.flipbuttondetail[data-cardid="' + cardId + '"]')
-                                .data('ready', 1);
-                            updateFlipButtonsForViewport();
-                        }
-                    }
-                });
-            });
-        }
-        $(function() {
-            refreshCardImagesAsync();
-            updateFlipButtonsForViewport();
-            $(window).on('resize', updateFlipButtonsForViewport);
-        });
-    </script>
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            var button = document.getElementById('addtodeckbutton');
-            button.value = 'ADD'; // Replace 'New Button Text' with the text you want to display
-        });
-
-        $(function() {  // On document ready
-            $("img").on("error", function() {
-                $(this).css('opacity', '1').attr("src", "/images/back.jpg");
-            });
-
-            $("#importsubmit").prop('disabled', true);
-            $("#importfile").change(function() {
-                $("#importsubmit").prop('disabled', !$(this).val());
-            });
-
-            $('#deckselect').change(function (event) {
-                if($(this).val() === 'newdeck'){
-                    $('#deckqtyspan').attr("style", "display: inline");
-                    $('#deckqty').removeAttr("disabled");
-                    $('#deckqty').attr("placeholder", "1");
-                    $('#newdecknamespan').attr("style", "display: block");
-                    $('#newdeckname').removeAttr("disabled");
-                    $('#newdeckname').attr("placeholder", "New deck name");
-                    $('#addtodecksubmitspan').attr("style", "display: block");
-                    $('#addtodeckbutton').removeAttr("disabled");
-                } else if($('#deckselect').val() === 'none'){
-                    $('#deckqtyspan').attr("style", "display: none");
-                    $('#deckqty').attr("disabled", "disabled");
-                    $('#deckqty').attr("placeholder", "N/A");
-                    $('#newdecknamespan').attr("style", "display: none");
-                    $('#newdeckname').attr("disabled", "disabled");
-                    $('#newdeckname').attr("placeholder", "N/A");
-                    $('#addtodecksubmitspan').attr("style", "display: none");
-                    $('#addtodeckbutton').attr("disabled", "disabled");
-                } else {
-                    $('#deckqtyspan').attr("style", "display: inline");
-                    $('#deckqty').attr("placeholder", "1");
-                    $('#deckqty').removeAttr("disabled");
-                    $('#newdecknamespan').attr("style", "display: none");
-                    $('#newdeckname').attr("disabled", "disabled");
-                    $('#addtodecksubmitspan').attr("style", "display: block");
-                    $('#addtodeckbutton').removeAttr("disabled");
-                }
-            });
-
-            $('#addtodeck').submit(function() {
-                if(($('#deckselect').val() === 'newdeck')  &&  ($('#newdeckname').val() ==='')){
-                    alert("You need to complete the form...")
-                    return false;
-                }
-            });
-
-            var mainImg = $(".mainimg");
-            var imgFloat = $(".imgfloat");
-            var backImg = $(".backimg");
-            var backImgFloat = $(".backimgfloat");
-            mainImg.mousemove(function(e) {
-                var transform = mainImg.css('transform');
-                if (transform === 'rotate(180deg)' && window.innerWidth > 1208) {
-                    imgFloat.show();
-                    imgFloat.css({
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: 'rotate(180deg)'
-                    });
-                } else if (window.innerWidth > 1208) {
-                    imgFloat.show();
-                    imgFloat.css({
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px",
-                        transform: ''
-                    });
-                }
-            }).mouseout(function(e) {
-                imgFloat.hide();
-            });
-
-            backImg.mousemove(function(e){
-                backImgFloat.show();
-                backImgFloat.css(
-                    {
-                        top: (e.pageY - 170) + "px",
-                        left: (e.pageX + 95) + "px"
-                    }
-                );
-            }).mouseout(function(e)
-                {
-                    backImgFloat.hide();
-                }
-            );
-
-            $(".carddetailqtyinput").change(function(){
-                var ths = this;
-                var myqty = $(ths).val();
-                if(myqty=='')
-                {
-                    alert("Enter a number");
-                    $(ths).focus();
-                }
-                else if(!isInteger(myqty))
-                {
-                    alert("Enter a valid quantity");
-                    $(ths).focus();
-                }
-            });
-
-            var textarea = $('#cardnotes');
-            var saveButton = $('.save_icon');
-            var initialValue = textarea.val();
-            textarea.on('input', function() {
-                saveButton.prop('disabled', textarea.val() === initialValue);
-            });
-
-            $('#refreshsubmit').on('click', function() {
-                console.log('Refresh button clicked'); // Debugging line
-                refreshImage();
-            });
-        });
-
-        // Other js functions
-        function closeMe( obj )
-        {
-            obj.style.display = 'none';
-            window.location.href="carddetail.php?id=<?php echo $cardId;?>";
-        };
-
-        function isInteger(x) {
-            if(x<0)
-            {
-                return false;
-            }
-            else
-            {
-                return x % 1 === 0;
-            }
-        };
-
-        function rotateImg() {
-            var mainImg = document.querySelector(".mainimg");
-            mainImg.style.transform = mainImg.style.transform === 'rotate(180deg)' ? 'none' : 'rotate(180deg)';
-        };
-
-        function swapImage(img_id,card_id,imageurl,imagebackurl){
-            var ImageId = document.getElementById(img_id);
-            var FrontImg = card_id + ".jpg";
-            var BackImg = card_id + "_b.jpg";
-
-            if (ImageId.src.match(FrontImg))
-            {
-                ImageId.classList.add('flipped');
-                setTimeout(function () {
-                    ImageId.src = imagebackurl;
-                }, 80);
-            } else {
-                ImageId.classList.remove('flipped');
-                setTimeout(function () {
-                    ImageId.src = imageurl;
-                }, 80);
-            }
-        };
-    </script>
 </head>
 
 <body class="body">
@@ -361,7 +104,6 @@ require('includes/menu.php'); //mobile menu
     else :
         $msg->logMessage('[DEBUG]', "Collection table exists");
     endif;
-    logTiming($msg, 'collection-table-check', $pageStart);
 
     $scryfallresult = array();
     $msg->logMessage('[DEBUG]', "Skipping synchronous Scryfall price refresh - async update will run after load");
@@ -504,7 +246,6 @@ require('includes/menu.php'); //mobile menu
                     "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
                 );
         endif;
-            logTiming($msg, 'card-detail-query', $pageStart);
             $qtyresults = $result->num_rows;
             // If the result has a card:
         if (!$qtyresults == 0) :
@@ -636,7 +377,6 @@ require('includes/menu.php'); //mobile menu
                     false
                 );
                 $msg->logMessage('[DEBUG]', "getImage result: {$imageFunction['front']} / {$imageFunction['back']}");
-                logTiming($msg, 'image-lookup', $pageStart);
             if ($imageFunction['front'] == 'error') :
                 $imageUrl = '/cardimg/back.jpg';
             else :
@@ -684,14 +424,14 @@ require('includes/menu.php'); //mobile menu
                     $info = getimagesize($_FILES['filename']['tmp_name']);
                     if (($info === false) or ($info[2] !== IMAGETYPE_JPEG)) :
                         $msg->logMessage('[NOTICE]', "Image upload failed - not an image or not a JPG"); ?>
-                        <div class="msg-new error-new" onclick='closeMe(this)'><span>Not a JPG image</span>
+                        <div class="msg-new error-new"><span>Not a JPG image</span>
                             <br>
                                                 <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
                     else :
                             $upload_name = $imgLocation . strtolower($setcode) . "/" . $imgname;
                         if (!move_uploaded_file($_FILES['filename']['tmp_name'], $upload_name)) : ?>
-                        <div class="msg-new error-new" onclick='closeMe(this)'><span>Image write failed</span>
+                        <div class="msg-new error-new"><span>Image write failed</span>
                             <br>
                             <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
                         </div> <?php
@@ -816,7 +556,7 @@ require('includes/menu.php'); //mobile menu
                 <div id="carddetailmain">
                     <div id="carddetailimage"><?php
                     if ($row['layout'] === 'flip') : ?>
-                            <div style="cursor: pointer;" class='fliprotate' onClick="rotateImg()">
+                            <div style="cursor: pointer;" class="fliprotate js-rotate-img">
                                 <span class='material-symbols-outlined refresh'>refresh</span>
                             </div> <?php
                     endif;
@@ -827,10 +567,12 @@ require('includes/menu.php'); //mobile menu
                             )
                             ? 1
                             : 0;
-                        echo "<div style='cursor: pointer; display: none;' class='flipbuttondetail' "
+                        $frontImageEsc = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
+                        $backImageEsc = htmlspecialchars($imagebackurl, ENT_QUOTES, 'UTF-8');
+                        echo "<div style='cursor: pointer; display: none;' class='flipbuttondetail js-swap-image' "
                             . "data-cardid='{$row['cs_id']}' data-ready='{$flipReady}' "
-                            . "onclick=swapImage(\"{$img_id}\",\"{$row['cs_id']}\","
-                            . "\"{$imageUrl}\",\"{$imagebackurl}\")>"
+                            . "data-image-front='{$frontImageEsc}' data-image-back='{$backImageEsc}' "
+                            . "data-image-id='{$img_id}'>"
                             . "<span class='material-symbols-outlined refresh'>refresh</span></div>";
                     endif;
                         // Find the prev number card's ID
@@ -893,7 +635,6 @@ require('includes/menu.php'); //mobile menu
                         $stmt->execute();
                         $result = $stmt->get_result();
                         $results = $result->fetch_all(MYSQLI_ASSOC);
-                        logTiming($msg, 'prev-next-query', $pageStart);
                         $currentCardIndex = array_search($row['cs_id'], array_column($results, 'id'));
                         $msg->logMessage(
                             '[DEBUG]',
@@ -971,26 +712,13 @@ require('includes/menu.php'); //mobile menu
                                 </td>
                             </tr> <?php
                             if (!empty($prevcardid) && !empty($nextcardid)) : ?>
-                                <script>
-                                    document.addEventListener('keydown', function(event) {
-                                        if (event.key === 'ArrowLeft') {
-                                            moveLeft();
-                                        } else if (event.key === 'ArrowRight') {
-                                            moveRight();
-                                        }
-                                    });
-
-                                    function moveLeft() {
-                                        document.getElementById('prev_card').submit();
-                                    }
-
-                                    function moveRight() {
-                                        document.getElementById('next_card').submit();
-                                    }
-                                </script>
                                 <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;"
-                                        onclick="document.getElementById('prev_card').submit();">
+                                    <td
+                                        colspan="3"
+                                        class="previousbutton js-submit-form"
+                                        style="cursor: pointer;"
+                                        data-submit-form="prev_card"
+                                    >
                                         <?php if (!empty($prevcardid)) :
                                             $msg->logMessage('[DEBUG]', "Previous card ('$prevcardid')");
                                             $prevValue = htmlspecialchars(
@@ -1021,8 +749,12 @@ require('includes/menu.php'); //mobile menu
                                             </form>
                                         <?php endif; ?>
                                     </td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;"
-                                        onclick="document.getElementById('next_card').submit();">
+                                    <td
+                                        colspan="3"
+                                        class="nextbutton js-submit-form"
+                                        style="cursor: pointer;"
+                                        data-submit-form="next_card"
+                                    >
                                         <?php if (!empty($nextcardid)) :
                                             $msg->logMessage('[DEBUG]', "Next card ('$nextcardid')");
                                             $nextValue = htmlspecialchars(
@@ -1055,24 +787,17 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr> <?php
                             elseif (!empty($nextcardid)) : ?>
-                                <script>
-                                    document.addEventListener('keydown', function(event) {
-                                        if (event.key === 'ArrowRight') {
-                                            moveRight();
-                                        }
-                                    });
-
-                                    function moveRight() {
-                                        document.getElementById('next_card').submit();
-                                    }
-                                </script>
                                     <?php
                                     $msg->logMessage('[DEBUG]', "Next card ('$nextcardid')");
                                     ?>
                                 <tr>
                                     <td colspan="3" class="previousbutton" style="cursor: pointer;">&nbsp;</td>
-                                    <td colspan="3" class="nextbutton" style="cursor: pointer;"
-                                        onclick="document.getElementById('next_card').submit();">
+                                    <td
+                                        colspan="3"
+                                        class="nextbutton js-submit-form"
+                                        style="cursor: pointer;"
+                                        data-submit-form="next_card"
+                                    >
                                         <?php if (!empty($nextcardid)) :
                                             $nextValue = htmlspecialchars(
                                                 $nextcardid,
@@ -1104,23 +829,16 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr> <?php
                             elseif (!empty($prevcardid)) : ?>
-                                <script>
-                                    document.addEventListener('keydown', function(event) {
-                                        if (event.key === 'ArrowLeft') {
-                                            moveLeft();
-                                        }
-                                    });
-
-                                    function moveLeft() {
-                                        document.getElementById('prev_card').submit();
-                                    }
-                                </script>
                                     <?php
                                     $msg->logMessage('[DEBUG]', "Previous card ('$prevcardid')");
                                     ?>
                                 <tr>
-                                    <td colspan="3" class="previousbutton" style="cursor: pointer;"
-                                        onclick="document.getElementById('prev_card').submit();">
+                                    <td
+                                        colspan="3"
+                                        class="previousbutton js-submit-form"
+                                        style="cursor: pointer;"
+                                        data-submit-form="prev_card"
+                                    >
                                         <?php if (!empty($prevcardid)) :
                                             $prevValue = htmlspecialchars(
                                                 $prevcardid,
@@ -1257,72 +975,8 @@ require('includes/menu.php'); //mobile menu
                                         </form>
                                     </td>
                                 </tr>
-                                <script>
-                                    function refreshImage() {
-                                        const cardId = $('#refreshid').val();
-                                        console.log(cardId);
-
-                                        $.ajax({
-                                            url: 'ajax/ajaxcardrefreshimg.php',
-                                            type: 'POST',
-                                            data: { cardid: cardId },
-                                            dataType: 'json',
-                                            success: function(response) {
-                                                console.log('AJAX response:', response);
-                                                console.log('Type of response.success:', typeof response.success);
-                                                if (response.success) {
-                                                    console.log('Success response detected');
-                                                    // Check if #mainimg exists before trying to update it
-                                                    if ($('.mainimg').length) {
-                                                        const currentSrc = $('.mainimg').attr('src');
-                                                        const newSrcMain = updateUrlWithTimestamp(currentSrc);
-                                                        $('.mainimg').fadeOut(100, function() {
-                                                            console.log('New mainimg src:', newSrcMain);
-                                                            $(this).attr('src', newSrcMain).fadeIn(100, function() {
-                                                                // Force repaint by briefly removing/adding element
-                                                                // $(this).hide().show(0);
-                                                            });
-                                                        });
-                                                    }
-
-                                                    if ($('.backimg').length) {
-                                                        const currentSrc = $('.backimg').attr('src');
-                                                        const newSrcBack = updateUrlWithTimestamp(currentSrc);
-                                                        $('.backimg').fadeOut(100, function() {
-                                                            console.log('New backimg src:', newSrcBack);
-                                                            $(this).attr('src', newSrcBack).fadeIn(100, function() {
-                                                                // Force repaint by briefly removing/adding element
-                                                                // $(this).hide().show(0);
-                                                            });
-                                                        });
-                                                    }
-                                                    function updateUrlWithTimestamp(url) {
-                                                        const timestamp = new Date().getTime();
-
-                                                        // Check if the URL already has a query string
-                                                        if (url.indexOf('?') !== -1) {
-                                                            // If it already has parameters, append with &
-                                                            return url.replace(/(\&|\?)timestamp=\d*/, '')
-                                                                + '&timestamp=' + timestamp;
-                                                        } else {
-                                                            // If no parameters, add one with ?
-                                                            return url + '?timestamp=' + timestamp;
-                                                        }
-                                                    }
-                                                } else {
-                                                    console.log('Error response detected');
-                                                    alert('Error refreshing image: ' + response.message);
-                                                }
-                                            },
-                                            error: function(xhr, status, error) {
-                                                console.error('AJAZ error:', error);
-                                                alert('An error occurred while refreshing the image.');
-                                            }
-                                        });
-                                    };
-                                </script> <?php
-                            endif;
-                            ?>
+                                <?php
+                            endif; ?>
                         </table>
                     </div>
                     <div id="carddetailinfo">
@@ -1699,7 +1353,15 @@ require('includes/menu.php'); //mobile menu
                             $cellid_three = $cellid . '_three';
                             $cellid_one_flash = $cellid_one;
                             $cellid_two_flash = $cellid_two;
-                            $cellid_three_flash = $cellid_three; ?>
+                            $cellid_three_flash = $cellid_three;
+                            $cardIdEsc = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
+                            $cellidOneEsc = htmlspecialchars($cellid_one, ENT_QUOTES, 'UTF-8');
+                            $cellidTwoEsc = htmlspecialchars($cellid_two, ENT_QUOTES, 'UTF-8');
+                            $cellidThreeEsc = htmlspecialchars($cellid_three, ENT_QUOTES, 'UTF-8');
+                            $cellidOneFlashEsc = htmlspecialchars($cellid_one_flash, ENT_QUOTES, 'UTF-8');
+                            $cellidTwoFlashEsc = htmlspecialchars($cellid_two_flash, ENT_QUOTES, 'UTF-8');
+                            $cellidThreeFlashEsc = htmlspecialchars($cellid_three_flash, ENT_QUOTES, 'UTF-8');
+                            ?>
                             <table>
                                 <tr class='bulksubmitrowsmall'>
                                     <td class='bulksubmittd' id="<?php echo $cellid . "td_one"; ?>">
@@ -1710,24 +1372,27 @@ require('includes/menu.php'); //mobile menu
                                             echo "<i>MtG Arena/Online</i>";
                                         elseif ($cardtypes === 'foilonly') :
                                             $poststring = 'newfoil';
-                                            echo "Foil: <input class='bulkinputsmall foil' id='$cellid_one' "
-                                                . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Foil: <input class='bulkinputsmall foil js-ajax-update' "
+                                                . "id='$cellid_one' type='number' step='1' min='0' name='myfoil' "
+                                                . "value='$myfoil' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         elseif ($cardtypes === 'etchedonly') :
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_one' "
-                                                . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch js-ajax-update' "
+                                                . "id='$cellid_one' type='number' step='1' min='0' name='myetch' "
+                                                . "value='$myetch' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             $poststring = 'newqty';
-                                            echo "Normal: <input class='bulkinputsmall normal' id='$cellid_one' "
-                                                . "type='number' step='1' min='0' name='myqty' value='$myqty' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_one\",\"$cellid_one_flash\",\"$poststring\");'>";
+                                            echo "Normal: <input class='bulkinputsmall normal js-ajax-update' "
+                                                . "id='$cellid_one' type='number' step='1' min='0' name='myqty' "
+                                                . "value='$myqty' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidOneEsc' data-ajax-flash='$cellidOneFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1743,17 +1408,19 @@ require('includes/menu.php'); //mobile menu
                                             echo "&nbsp;";
                                         elseif ($cardtypes === 'normaletched') :
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_two' "
-                                                . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_two\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch js-ajax-update' "
+                                                . "id='$cellid_two' type='number' step='1' min='0' name='myetch' "
+                                                . "value='$myetch' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidTwoEsc' data-ajax-flash='$cellidTwoFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             $poststring = 'newfoil';
-                                            echo "Foil: <input class='bulkinputsmall foil' id='$cellid_two' "
-                                                . "type='number' step='1' min='0' name='myfoil' value='$myfoil' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_two\",\"$cellid_two_flash\",\"$poststring\");'>";
+                                            echo "Foil: <input class='bulkinputsmall foil js-ajax-update' "
+                                                . "id='$cellid_two' type='number' step='1' min='0' name='myfoil' "
+                                                . "value='$myfoil' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidTwoEsc' data-ajax-flash='$cellidTwoFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         endif;?>
                                     </td>
@@ -1761,10 +1428,12 @@ require('includes/menu.php'); //mobile menu
                                         <?php
                                         if ($cardtypes === 'normalfoiletched') :
                                             $poststring = 'newetch';
-                                            echo "Etch: <input class='bulkinputsmall etch' id='$cellid_three' "
-                                                . "type='number' step='1' min='0' name='myetch' value='$myetch' "
-                                                . "onchange='ajaxUpdate(\"$id\","
-                                                . "\"$cellid_three\",\"$cellid_three_flash\",\"$poststring\");'>";
+                                            echo "Etch: <input class='bulkinputsmall etch js-ajax-update' "
+                                                . "id='$cellid_three' type='number' step='1' min='0' name='myetch' "
+                                                . "value='$myetch' data-ajax-cardid='$cardIdEsc' "
+                                                . "data-ajax-cellid='$cellidThreeEsc' "
+                                                . "data-ajax-flash='$cellidThreeFlashEsc' "
+                                                . "data-ajax-post='$poststring'>";
                                             echo "<input class='card' type='hidden' name='card' value='$id'>";
                                         else :
                                             echo "&nbsp;";
@@ -1788,151 +1457,21 @@ require('includes/menu.php'); //mobile menu
                                 <button
                                     class='inline_button save_icon'
                                     type="button"
-                                    onclick="submitForm()"
                                     title="Save"
                                     disabled
                                 ><span class="material-symbols-outlined">save</span></button>
                             </form>
-                            <script>
-                                let initialNotesValue = document.getElementById('cardnotes').value;
-                                const notesTextarea = document.getElementById('cardnotes');
-                                const saveButton = document.querySelector('.save_icon');
-
-                                function submitForm() {
-                                    const notes = notesTextarea.value;
-                                    const card = document.querySelector('#updatenotesform input[name=\"id\"]').value;
-
-                                    const data = new URLSearchParams();
-                                    data.append('newnotes', notes);
-                                    data.append('cardid', card);
-
-                                    fetch('ajax/ajaxcardnotes.php', {
-                                        method: 'POST',
-                                        body: data,
-                                        headers: {
-                                            'Content-Type': 'application/x-www-form-urlencoded'
-                                        }
-                                    })
-                                    .then(response => response.json())
-                                    .then(result => {
-                                        if (result.success) {
-                                            initialNotesValue = notesTextarea.value;
-                                            saveButton.disabled = true;
-                                        } else {
-                                            alert('Error updating notes: ' + result.error);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error:', error);
-                                        alert('An error occurred while updating the notes.');
-                                    });
-                                }
-
-                                notesTextarea.addEventListener('input', function() {
-                                    saveButton.disabled = (notesTextarea.value === initialNotesValue);
-                                });
-                            </script>
-                            <script>
-                                $(document).ready(function() {
-                                    let id = '<?php echo $id; ?>';
-                                    let cardtypes = '<?php echo $cardtypes; ?>';
-                                    let poststring = '<?php echo $poststring; ?>';
-                                    let validkeysArray = [];
-
-                                    if (cardtypes === 'normalonly') {
-                                            validkeysArray.push("n");
-                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newqty = <?php echo $myqty; ?>;
-                                    } else if (cardtypes === 'foilonly') {
-                                            validkeysArray.push("f");
-                                            cellidfoil = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newfoil = <?php echo $myfoil; ?>;
-                                    } else if (cardtypes === 'etchedonly') {
-                                            validkeysArray.push("e");
-                                            cellidetch = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newetch = <?php echo $myetch; ?>;
-                                    } else if (cardtypes === 'normaletched') {
-                                            validkeysArray.push("n","e");
-                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newqty = <?php echo $myqty; ?>;
-                                            cellidetch = document.getElementById("<?php echo $cellid_two; ?>");
-                                            newetch = <?php echo $myetch; ?>;
-                                    } else if (cardtypes === 'normalfoiletched') {
-                                            validkeysArray.push("n","f","e");
-                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newqty = <?php echo $myqty; ?>;
-                                            cellidfoil = document.getElementById("<?php echo $cellid_two; ?>");
-                                            newfoil = <?php echo $myfoil; ?>;
-                                            cellidetch = document.getElementById("<?php echo $cellid_three; ?>");
-                                            newetch = <?php echo $myetch; ?>;
-                                    } else  {
-                                            validkeysArray.push("n","f");
-                                            cellidnormal = document.getElementById("<?php echo $cellid_one; ?>");
-                                            newqty = <?php echo $myqty; ?>;
-                                            cellidfoil = document.getElementById("<?php echo $cellid_two; ?>");
-                                            newfoil = <?php echo $myfoil; ?>;
-                                    }
-
-                                    let operation = '';
-                                    let ajaxTrigger = false;
-                                    $(document).on('keydown', function(f) {
-                                        const pressedKey = f.key;
-                                        if (pressedKey === '+') {
-                                            operation = 'add';
-                                        } else if (pressedKey === '-') {
-                                            operation = 'subtract';
-                                        } else if (
-                                            pressedKey === 'Escape'
-                                            && (operation === 'add' || operation === 'subtract')
-                                        ) {
-                                            operation = 'None';
-                                        } else if (validkeysArray.includes(pressedKey)) {
-                                            if (operation === 'add' && pressedKey === 'n') {
-                                                newqty = parseInt(newqty, 10) + 1;
-                                                ajaxTrigger = true;
-                                            } else if (operation === 'add' && pressedKey === 'f') {
-                                                newfoil = parseInt(newfoil, 10) + 1;
-                                                ajaxTrigger = true;
-                                            } else if (operation === 'add' && pressedKey === 'e') {
-                                                newetch = parseInt(newetch, 10) + 1;
-                                                ajaxTrigger = true;
-                                            } else if (operation === 'subtract' && pressedKey === 'n') {
-                                                newqty = Math.max(0, parseInt(newqty, 10) - 1);
-                                                ajaxTrigger = true;
-                                            } else if (operation === 'subtract' && pressedKey === 'f') {
-                                                newfoil = Math.max(0, parseInt(newfoil, 10) - 1);
-                                                ajaxTrigger = true;
-                                            } else if (operation === 'subtract' && pressedKey === 'e') {
-                                                newetch = Math.max(0, parseInt(newetch, 10) - 1);
-                                                ajaxTrigger = true;
-                                            }
-                                        }
-                                    });
-                                    $(document).on('keyup', function(e) {
-                                        const pressedKey = e.key;
-                                        if (validkeysArray.includes(pressedKey)) {
-                                            e.preventDefault();
-                                            if (ajaxTrigger === true) {
-                                                if (pressedKey === 'n') {
-                                                    console.log('Normal', newqty);
-                                                    cellidnormal.value = newqty;
-                                                } else if (pressedKey === 'f') {
-                                                    console.log('Foil', newfoil);
-                                                    cellidfoil.value = newfoil;
-                                                } else if (pressedKey === 'e') {
-                                                    console.log('Etch', newetch);
-                                                    cellidetch.value = newetch;
-                                                }
-                                                ajaxTrigger = false;
-                                                var event = new Event('change');
-                                                if (pressedKey === 'n') cellidnormal.dispatchEvent(event);
-                                                else if (pressedKey === 'f') cellidfoil.dispatchEvent(event);
-                                                else if (pressedKey === 'e') cellidetch.dispatchEvent(event);
-                                            }
-                                        }
-                                    });
-                                });
-                            </script>
+                            <div
+                                id="carddetail-bulk-config"
+                                data-cardid="<?php echo htmlspecialchars($id, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-cardtypes="<?php echo htmlspecialchars($cardtypes, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-cellid-one="<?php echo htmlspecialchars($cellid_one, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-cellid-two="<?php echo htmlspecialchars($cellid_two, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-cellid-three="<?php echo htmlspecialchars($cellid_three, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-myqty="<?php echo htmlspecialchars((string) $myqty, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-myfoil="<?php echo htmlspecialchars((string) $myfoil, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-myetch="<?php echo htmlspecialchars((string) $myetch, ENT_QUOTES, 'UTF-8'); ?>"
+                            ></div>
                             <hr class='hr324'>
                             <?php
 
@@ -2116,44 +1655,6 @@ require('includes/menu.php'); //mobile menu
                                     </td>
                                 </tr>
                             </table>
-                            <script>
-                                $(function() {
-                                    var priceBlock = $('#priceblock');
-                                    var cardId = priceBlock.data('cardid');
-                                    if (!cardId) {
-                                        return;
-                                    }
-
-                                    $.ajax({
-                                        url: 'ajax/ajaxcardprice.php',
-                                        type: 'POST',
-                                        data: { cardid: cardId },
-                                        dataType: 'json',
-                                        success: function(response) {
-                                            if (!response || response.success !== true) {
-                                                return;
-                                            }
-                                            if (response.price_html) {
-                                                priceBlock.html(response.price_html);
-                                            }
-                                            if (response.tcg_link) {
-                                                $('#tcgplayerlink')
-                                                    .attr('href', response.tcg_link)
-                                                    .attr('data-loading', '0')
-                                                    .text('TCGPlayer')
-                                                    .attr('style', '');
-                                            } else {
-                                                $('#tcgplayerlink')
-                                                    .attr('data-loading', '1')
-                                                    .text('TCGPlayer (unavailable)')
-                                                    .attr('style', 'opacity:0.6;pointer-events:none;');
-                                            }
-                                        }
-                                    });
-                                });
-                            </script>
-
-
                             <?php
 
                             // Others with this card section
@@ -2306,7 +1807,7 @@ require('includes/menu.php'); //mobile menu
                                                 $nonPreferredSetCodes
                                             );
                                         if ($obj->deckOwnerCheck($decktoaddto, $user) == false) : ?>
-                                                <div class="msg-new error-new" onclick='closeMe(this)'>
+                                                <div class="msg-new error-new">
                                                     <span>You don't have that deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2344,7 +1845,7 @@ require('includes/menu.php'); //mobile menu
                                                     "{$cardcheckrow['cardnumber']} is already in that deck"
                                                 );
                                                 ?>
-                                                <div class="msg-new error-new" onclick='closeMe(this)'>
+                                                <div class="msg-new error-new">
                                                     <span>Card already in deck</span>
                                                     <br>
                                                     <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2393,7 +1894,7 @@ require('includes/menu.php'); //mobile menu
                                                     and ($resultchkins['cardqty'] == $deckqty)
                                                 ) :
                                                     ?>
-                                                        <div class="msg-new success-new" onclick='closeMe(this)'>
+                                                        <div class="msg-new success-new">
                                                             <span>Card added</span>
                                                             <br>
                                                             <p
@@ -2408,7 +1909,7 @@ require('includes/menu.php'); //mobile menu
                                                         "Card $cardId added to deck $decktoaddto"
                                                     );
                                                 else :?>
-                                                    <div class="msg-new warning-new" onclick='closeMe(this)'>
+                                                    <div class="msg-new warning-new">
                                                         <span>Card in deck, but quantity mismatch</span>
                                                         <br>
                                                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2421,7 +1922,7 @@ require('includes/menu.php'); //mobile menu
                                                 endif;
                                             else :
                                                 ?>
-                                                    <div class="msg-new error-new" onclick='closeMe(this)'>
+                                                    <div class="msg-new error-new">
                                                         <span>Card not added</span>
                                                         <br>
                                                         <p onmouseover="" style="cursor: pointer;" id='dismiss'>OK</p>
@@ -2793,6 +2294,15 @@ require('includes/menu.php'); //mobile menu
 if (isset($ctrlf5)) :
     echo "<meta http-equiv='refresh' content='0;url=carddetail.php?id=$cardId'>";
 endif;
+?>
+<script>
+    window.mtgCardDetailConfig = {
+        cardId: <?php echo json_encode($cardId);?>,
+        lookupId: <?php echo json_encode(isset($lookupid) ? $lookupid : ''); ?>
+    };
+</script>
+<script src="/js/carddetail.js"></script>
+<?php
 require('includes/footer.php'); ?>
 </body>
 </html>

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Flip buttons stay hidden until both card faces are available.
 - Index image refresh now throttles async checks and yields for user input.
 - Async image swaps fade in instead of snapping from the placeholder.
+- Card detail JS handlers now live in `js/carddetail.js`.
 - Deck detail now uses async image loading with hover/tap priority and placeholders.
 - Random draw hover now prioritises async image loading.
 - Deck detail functions all migrated to async updates via ajax.
@@ -41,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Random draw now validates inputs and escapes output to prevent client-side injection.
 - Deck list sections now default to collapsed with per-section toggles and a fold/unfold-all control.
 - Deck detail hover/touch and image-loading JS now lives in `js/deckdetail.js`.
+- Card detail navigation now centralizes arrow key handling and adds swipe navigation.
 
 ### Security
 - Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.
