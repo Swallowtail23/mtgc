@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
 - CSV input parsing now avoids HTML escaping during import for accurate name matching.
 - Random draw now validates inputs and escapes output to prevent client-side injection.
 - Deck list sections now default to collapsed with per-section toggles and a fold/unfold-all control.
+- Deck detail hover/touch and image-loading JS now lives in `js/deckdetail.js`.
 
 ### Security
 - Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.
@@ -74,8 +75,8 @@ All notable changes to this project will be documented in this file.
 - Changed: weekly collection/value history/deck exports are delivered in one email, with value history attached.
 - Changed: bulk card import now batches writes, logs progress, uses content/price hashes with conditional updates,
   splits update totals by hash type, and requires pre-existing hash columns (with schema updates in setup SQL).
-- Changed: rulings import now uses content hashing with batched writes and cleanup of removed rulings; unique key now
-  uses content_hash to allow same-day rulings per card/source.
+- Changed: rulings import now uses content hashing with batched writes and cleanup of removed rulings; unique key
+  uses content_hash to allow multiple same-day rulings per card/source.
 - Changed: classes moved under `src/MTG` namespaces with call sites/tests updated; Composer autoload and docs aligned.
 - Changed: profile currency selection is disabled when FX is globally off.
 - Security: tightened escaping for GET parameters and rendered titles, and normalised `htmlspecialchars` usage.
@@ -91,11 +92,9 @@ All notable changes to this project will be documented in this file.
 
 - Maintenance release tagged 0.1.3 (no changelog was recorded at the time of release).
 
-## [v0.1.0-pre] - 2025-12-03
+## [v0.1.0] - 2025-12-03
 
 - Initial Docker/Podman packaging with bootstrap scripts (`docker-init.sh/.bat`).
 - Added cron templates, backup helper, logrotate config, and systemd unit.
 - Documented upgrade playbook, security hardening, and email configuration.
 - Includes full Scryfall bulk workflow, composer automation, and configurable dev bind-mounts.
-
-> This is a pre-release tag used during testing; final tagging will occur after QA completes.
