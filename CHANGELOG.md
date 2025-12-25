@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.2.3-dev] - Unreleased
+## [v0.3.0-dev] - Unreleased
 
 ### Added
 -
@@ -57,41 +57,18 @@ All notable changes to this project will be documented in this file.
 - Commander deck sideboard inserts now match the column layout after move-to-sideboard.
 - Commander deck async totals now update correctly after main-deck deletions.
 - Commander deck totals now include commander zone cards during async updates.
-- Sideboard ajax inserts now apply legality/colour-identity styling and hover image classes.
-- Sideboard ajax inserts now attach hover divs correctly for touch/hover display.
-- Deck detail sideboard rows now compute base card names safely when decks are empty.
-- Deck import warnings now report when copy limits reduce or block line quantities.
-- Deck quick add now reports when card copy limits block or cap single-line adds.
-- Deck detail add-one buttons now reappear after async minus-one reduces copy totals.
-- Deck detail copy-limit checks now use deckwide totals by base card name.
-- Deck detail async updates now refresh section totals and main total counts.
-- Deck detail lands rows now update async quantities and totals correctly.
-- Deck detail move-to-sideboard now runs async and removes main-deck rows.
-- Deck detail async move-to-sideboard now updates main and sideboard rows inline.
-- 'Other' card types no longer break non-commander decktype lists.
-- TCGPlayer buttons now does not render with unwanted padding (deckdetail).
-- Deck detail fragment rendering now runs the deck list first to avoid stale or undefined totals.
-- Deck detail fragment renderer now imports global scope so fragments receive deck data in ajax mode.
-- Deck detail random draw fragment now loads its ajax include path correctly.
-- Random draw ajax now respects include mode to avoid reloading init files during fragment renders.
-- Deck detail sideboard actions now run via ajax without PRG refreshes.
-- Deck detail fragment refresh now preserves FX currency formatting for deck value.
-- Commander and partner moves now run via ajax without PRG refreshes.
-- Random draw now binds reliably on first page load after fragment rendering.
-- Colour identity fragment now hides when no commander is set after ajax updates.
-- Deck type changes now run via ajax to avoid lingering GET state on refresh.
-- Deck detail quick add now runs via ajax with live fragment refresh.
-- Deck detail fragments now use a deck update timestamp to guard against stale ajax responses.
-- Deck schema now includes `deck_updated_at` for versioned deck refreshes.
-- Deck update timestamps now store microseconds for stricter ordering.
-- Deck detail mutation endpoints now return fragments in the same response for single-step updates.
-- Deck updated timestamps now use microseconds on mutation bumps for consistent ordering.
-- Deck detail fragments now use a central registry for keys, IDs, and default inclusion.
-- Deck detail handlers now use delegated events to survive fragment swaps.
-- Deck detail fragment updates now fall back to a full reload on apply failures.
-- Deck detail deck rename now runs via ajax and refreshes deck list fragments.
-- Deck detail text/CSV imports now run via ajax with live fragment refresh.
-- Deck detail photo upload/delete now runs via ajax handlers with delegated events.
+- Deck detail interactions now run via ajax (add/remove/move/sideboard/commander, quick add, import, rename, photo),
+  with fragment refreshes replacing PRG reloads.
+- Deck detail fragments now use a central registry and single-step mutation responses with stale-response protection
+  and reload fallback.
+- Deck schema now includes `deck_updated_at` (microsecond precision) for versioned deck refreshes.
+- Derived sections (warnings, mana charts, deck value, export/missing/buy, random draw) now refresh reliably; FX
+  formatting preserved.
+- Sideboard inserts now retain legality/colour styling and hover image behaviour.
+- Random draw now binds reliably after fragment refreshes.
+- Copy-limit enforcement now uses deckwide totals; imports/quick add report capped or blocked quantities.
+- CSV input parsing now avoids HTML escaping during import for accurate name matching.
+- Random draw now validates inputs and escapes output to prevent client-side injection.
 
 ### Security
 - Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.
