@@ -2,10 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.3.0-dev] - Unreleased
-
-### Added
--
+## [v0.3.0] - 2025-12-25
 
 ### Changed
 - Docker init now confirms the admin email will be written to the mtg_new.ini email section.
