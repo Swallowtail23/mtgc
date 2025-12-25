@@ -24,9 +24,9 @@ To do:       -
             $localvalue = $localFormatter->format($deckvalue * $rate);
         endif;
         if (isset($rate) and $rate > 0) :
-            echo "<b>Deck value</b><br>(TCGplayer) = " . $formattedDeckValue . " ($localvalue)";
+            echo "<b>Deck value</b><br>" . $formattedDeckValue . " ($localvalue)";
         else :
-            echo "<b>Deck value</b><br>(TCGplayer) = " . $formattedDeckValue;
+            echo "<b>Deck value</b><br>" . $formattedDeckValue;
         endif;
     endif;
     ?>
