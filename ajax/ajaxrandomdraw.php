@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     1.9
+Version:     2.0
 Date:        24/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -88,7 +88,7 @@ for ($i = 0; $i < 7; $i++) {
     $imgurl = $uniquecard_ref[$a[$i]]['imageurl'] ?? '/images/back.jpg';
     if (
         !is_string($imgurl)
-        || !preg_match('#^/(images|cardimg)/[A-Za-z0-9/_\.-]+$#', $imgurl)
+        || !preg_match('#^/?(images|cardimg)/[A-Za-z0-9/_\.-]+$#', $imgurl)
     ) :
         $imgurl = '/images/back.jpg';
     endif;
