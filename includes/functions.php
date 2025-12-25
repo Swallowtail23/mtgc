@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     27.9
+Version:     28.0
 Date:        24/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -2486,6 +2486,7 @@ function inputInterpreter($input_string)
     $msg = new \MTG\Core\Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
+    $raw_string = $input_string;
     $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
 
     // Define is_csv as a closure
@@ -2617,9 +2618,9 @@ function inputInterpreter($input_string)
     // MAIN PROCESSING //
 
     // Is the line CSV with at least 4 fields?
-    if ($is_csv($sanitised_string)) :
+    if ($is_csv($raw_string)) :
         // The line is in CSV format
-        $result = $extract_and_process_csv($sanitised_string);
+        $result = $extract_and_process_csv($raw_string);
 
         if ($result === 'header') :
             return 'header';
