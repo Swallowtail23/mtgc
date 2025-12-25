@@ -1,5 +1,5 @@
 /*
-Version:     2.8
+Version:     2.9
 Date:        24/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -139,6 +139,387 @@ function hardReloadDeckDetail() {
         window.location.reload();
     }
 }
+
+function swapImageWithFade($img, newSrc) {
+    $img.css('opacity', '0');
+    $img.off('load.mtgfade').on('load.mtgfade', function() {
+        var $self = $(this);
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                $self.css('opacity', '1');
+            });
+        });
+    });
+    $img.attr('src', newSrc);
+    if ($img[0] && $img[0].complete) {
+        setTimeout(function() {
+            $img.trigger('load');
+        }, 0);
+    }
+}
+
+var deckImageQueue = [];
+var deckImageQueued = {};
+var deckImageInFlight = 0;
+var deckImagePauseUntil = 0;
+var deckImageMaxConcurrent = 3;
+
+function enqueueDeckImage(cardId, priority) {
+    if (!cardId) {
+        return;
+    }
+    if (deckImageQueued[cardId] !== true) {
+        deckImageQueued[cardId] = true;
+        if (priority === true) {
+            deckImageQueue.unshift(cardId);
+        } else {
+            deckImageQueue.push(cardId);
+        }
+    } else if (priority === true) {
+        var idx = deckImageQueue.indexOf(cardId);
+        if (idx > 0) {
+            deckImageQueue.splice(idx, 1);
+            deckImageQueue.unshift(cardId);
+        }
+    }
+    scheduleDeckImageLoad();
+}
+
+function scheduleDeckImageLoad() {
+    if (Date.now() < deckImagePauseUntil) {
+        setTimeout(scheduleDeckImageLoad, 120);
+        return;
+    }
+    if (deckImageInFlight >= deckImageMaxConcurrent || deckImageQueue.length === 0) {
+        return;
+    }
+    var cardId = deckImageQueue.shift();
+    deckImageInFlight += 1;
+    $.ajax({
+        url: 'ajax/ajaximagecheck.php',
+        type: 'POST',
+        data: { cardid: cardId },
+        dataType: 'json',
+        success: function(response) {
+            if (!response || !response.success) {
+                return;
+            }
+            if (response.front && response.front.indexOf('cardimg') !== -1) {
+                var newSrc = response.front + '?t=' + Date.now();
+                $('img[data-cardid="' + cardId + '"]').each(function() {
+                    var $target = $(this);
+                    $target.attr('data-front-src', response.front);
+                    $target.attr('data-back-src', response.back || $target.attr('data-back-src') || '');
+                    swapImageWithFade($target, newSrc);
+                });
+            }
+            if (response.back && response.back.indexOf('cardimg') !== -1) {
+                $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
+            }
+        },
+        complete: function() {
+            deckImageInFlight -= 1;
+            setTimeout(scheduleDeckImageLoad, 0);
+        }
+    });
+    setTimeout(scheduleDeckImageLoad, 0);
+}
+
+function refreshCardImagesAsync() {
+    var seen = {};
+    $('img[data-cardid]').each(function() {
+        var cardId = $(this).data('cardid');
+        if (!cardId || seen[cardId]) {
+            return;
+        }
+        seen[cardId] = true;
+        enqueueDeckImage(cardId, false);
+    });
+}
+
+window.enqueueDeckImage = enqueueDeckImage;
+window.refreshCardImagesAsync = refreshCardImagesAsync;
+
+window.bindRandomCardEvents = function() {
+    $('td').off('mouseenter mouseleave');
+    $('td.hoverTD').off('touchstart touchmove touchend');
+    $('td.hoverTD a.taphover').off('click');
+    var touchDetected = false;
+    var hoverTimeout;
+    var lastHoveredDiv = null;
+
+    function setupNonTouchEvents() {
+        $('td').on('mouseenter', function(e) {
+            if (touchDetected) return;
+
+            var $link = $(this).find('a.taphover');
+            if ($link.length) {
+                var id = $link.attr('id');
+                var $div = $('#' + id.replace('-taphover', ''));
+                var cardId = $div.find('img[data-cardid]').data('cardid') || $link.data('cardid');
+                if (cardId) {
+                    enqueueDeckImage(cardId, true);
+                }
+
+                if (lastHoveredDiv && lastHoveredDiv !== $div) {
+                    clearTimeout(lastHoveredDiv.data('timeoutId'));
+                    lastHoveredDiv.hide();
+                }
+
+                lastHoveredDiv = $div;
+
+                hoverTimeout = setTimeout(function() {
+                    showHoverDiv($link, e);
+                }, 200); // 200ms delay before showing the hover image
+
+                $div.on('mouseenter', function() {
+                    clearTimeout($div.data('timeoutId'));
+                }).on('mouseleave', function() {
+                    var timeoutId = setTimeout(function() {
+                        $div.hide("slow");
+                    }, 200); // 200ms delay before hiding the div
+                    $div.data('timeoutId', timeoutId);
+                });
+            }
+        }).on('mouseleave', function(e) {
+            if (touchDetected) return;
+
+            clearTimeout(hoverTimeout);
+
+            var $link = $(this).find('a.taphover');
+            if ($link.length) {
+                var id = $link.attr('id');
+                var $div = $('#' + id.replace('-taphover', ''));
+                var timeoutId = setTimeout(function() {
+                    $div.hide("slow");
+                }, 200); // 200ms delay before hiding the div
+                $div.data('timeoutId', timeoutId);
+            }
+        });
+    }
+
+    function removeNonTouchEvents() {
+        $('td').off('mouseenter mouseleave');
+    }
+
+    function setupTouchEvents() {
+        var touchStartTime = 0;
+        var touchStartX = 0;
+        var touchStartY = 0;
+        var isScrolling = false;
+        var shouldTriggerLink = false;
+
+        // Touch start event
+        $('td.hoverTD').on('touchstart', function(e) {
+            touchStartTime = Date.now();
+            isScrolling = false;
+            shouldTriggerLink = false;
+
+            var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+            touchStartX = touch.pageX;
+            touchStartY = touch.pageY;
+
+            // Add touch-active and no-hover classes
+            $('tr.deckrow').addClass('no-hover');
+        });
+
+        // Touch move event
+        $('td.hoverTD').on('touchmove', function(e) {
+            var touch = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+            var moveX = touch.pageX;
+            var moveY = touch.pageY;
+
+            if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                isScrolling = true;
+            }
+        });
+
+        // Touch end event
+        $('td.hoverTD').on('touchend', function(e) {
+            var touchDuration = Date.now() - touchStartTime;
+
+            if (!isScrolling && touchDuration < 300) {
+                // 300ms threshold to distinguish between tap and scroll
+                var $link = $(this).find('a.taphover');
+                if ($link.length) {
+                    e.preventDefault();
+                    shouldTriggerLink = true;
+                    if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
+                        lastHoveredDiv.hide();
+                    }
+
+                    // Ensure event contains touches or changedTouches directly
+                    var touch = e.originalEvent.changedTouches[0] || e.originalEvent.touches[0];
+                    var customEvent = {
+                        pageX: touch.pageX,
+                        pageY: touch.pageY
+                    };
+                    showHoverDiv($link, customEvent); // Custom event with correct coordinates passed here
+                    lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
+                }
+            } else {
+                shouldTriggerLink = false;
+            }
+        });
+
+        // Click event to prevent link following
+        $('td.hoverTD a.taphover').on('click', function(e) {
+            if (!shouldTriggerLink) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    function getMenuWidth() {
+        var menu = document.getElementById('menu');
+        if (menu) {
+            var computedStyle = window.getComputedStyle(menu);
+            var left = parseInt(computedStyle.left, 10);
+
+            // If the menu is off-screen (negative left position), consider it inactive
+            if (left < 0) {
+                return 0;
+            }
+
+            return menu.offsetWidth;
+        }
+        return 0;
+    }
+
+    function getHeaderHeight() {
+        var header = document.getElementById('header');
+        if (header) {
+            var computedStyle = window.getComputedStyle(header);
+            var height = parseInt(computedStyle.height, 10);
+
+            return height;
+        }
+        return 0;
+    }
+
+    function showHoverDiv($link, e) {
+        var id = $link.attr('id');
+        var $div = $('#' + id.replace('-taphover', ''));
+        var mouseX, mouseY;
+        var cardId = $div.find('img[data-cardid]').data('cardid') || $link.data('cardid');
+        if (cardId) {
+            enqueueDeckImage(cardId, true);
+        }
+
+        if (e.pageX && e.pageY) {
+            mouseX = e.pageX;
+            mouseY = e.pageY;
+        } else {
+            // Handle cases where pageX and pageY are not directly available
+            var touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
+            mouseX = touch.pageX;
+            mouseY = touch.pageY;
+        }
+
+        // Force reflow to ensure dimensions are calculated
+        $div.css('display', 'block');
+        var divWidth = $div.outerWidth();
+        var divHeight = $div.outerHeight();
+        $div.css('display', 'none');
+
+        // Set fallback value for divHeight if it's 0
+        if (divWidth === 0) {
+            divWidth = 180; // Assuming 180 as the default width
+        }
+        if (divHeight === 0) {
+            divHeight = 258; // Assuming 258 as the default height
+        }
+
+        // Get the width of the menu if it's active
+        var menuWidth = getMenuWidth();
+        // Get the height of the header
+        var headerHeight = getHeaderHeight();
+        // Adjust position to prevent overflow if necessary
+        var leftPosition = mouseX - 150;
+        // Always show the image 80px below mouse click, even when scrolled
+        var topPosition = mouseY - headerHeight + 80;
+
+        // Ensure the div stays within the viewport and does not overlap the menu
+        var viewportWidth = $(window).width();
+        var viewportHeight = $(window).height();
+        var bottomViewable = viewportHeight + window.scrollY;
+        var realImgBottom = mouseY + 80 + divHeight;
+        console.log({
+            mouseX: mouseX,
+            mouseY: mouseY,
+            menuWidth: menuWidth,
+            headerHeight: headerHeight,
+            leftPosition: leftPosition,
+            topPosition: topPosition,
+            viewportWidth: viewportWidth,
+            viewportHeight: viewportHeight,
+            bottomViewable: bottomViewable,
+            divWidth: divWidth,
+            divHeight: divHeight,
+            realImgBottom: realImgBottom
+        });
+
+        // TopPosition is the distance from the top even if that is scrolled off the top of the view
+        // It positions the top of the image below the header
+        //      It is relative to bottom of header
+        // viewportHeight is what can be seen
+        // window.scrollY is what is off the top
+
+        if (leftPosition + divWidth > viewportWidth) {
+            leftPosition = viewportWidth - divWidth - 10; // 10px padding from the edge
+        }
+        if (leftPosition < menuWidth) {
+            leftPosition = menuWidth + 100; // 10px padding from the menu
+        }
+        if (realImgBottom + 10 > bottomViewable) {
+            // the image won't fit in view
+            topPosition = Math.max(
+                mouseY - divHeight - headerHeight - 80,
+                window.scrollY + 10
+            ); // 80px above mouse, unless < 10px from header
+        }
+
+        console.log({ leftPosition: leftPosition, topPosition: topPosition }); // Log the final positions
+
+        $div.css({ top: topPosition + 'px', left: leftPosition + 'px' }).show("slow");
+    }
+
+    // Default to non-touch hover solution
+    setupNonTouchEvents();
+
+    // Global touchstart listener to detect touch events on td.hoverTD
+    window.addEventListener('touchstart', function(e) {
+        if (touchDetected) return;
+
+        if (!$(e.target).closest('td.hoverTD').length) {
+            return;
+        }
+
+        touchDetected = true;
+
+        // Remove existing non-touch event handlers
+        removeNonTouchEvents();
+
+        // Set up touch-specific events
+        setupTouchEvents();
+    }, { capture: true, passive: false }); // Use capture phase and set passive to false
+
+    // Rebind mouse-specific event handlers when mouse movement is detected
+    window.addEventListener('mousemove', function(e) {
+        if (!touchDetected) return;
+
+        touchDetected = false;
+
+        // Remove touch-specific event handlers
+        $('td.hoverTD').off('touchstart touchmove touchend');
+
+        // Remove no-hover class on mouse events
+        $('tr.deckrow').removeClass('no-hover');
+
+        // Set up non-touch events again
+        setupNonTouchEvents();
+    });
+};
 
 function applyFragmentResponse(response, options) {
     if (!response || response.success !== true || !response.fragments) {
@@ -1401,6 +1782,33 @@ function refreshDeckFragments(options) {
         bindDeckDetailHandlers();
         renderManaValueChart();
         updateRandomDrawState();
+        refreshCardImagesAsync();
+        // Update the 'onerror' attribute for all images
+        $('img').on('error', function() {
+            this.src = '/images/back.jpg';
+        });
+        $(document).on('pointerdown keydown', function() {
+            deckImagePauseUntil = Date.now() + 300;
+        });
+
+        // Click event for the document (outside .deckcardimgdiv and .randomcardimgdiv)
+        $(document).on('click', function () {
+            $('.deckcardimgdiv').hide("slow");
+            $('.randomcardimgdiv').hide("slow");
+        });
+
+        $('#menubuttondiv, .searchicon').on('click', function () {
+            $('.deckcardimgdiv').hide("slow");
+            $('.randomcardimgdiv').hide("slow");
+        });
+
+        // Scroll event for the window
+        $(window).on('scroll', function () {
+            $('.deckcardimgdiv').hide("slow");
+            $('.randomcardimgdiv').hide("slow");
+        });
+
+        window.bindRandomCardEvents();
         var notesTextarea = $('#notes');
         var sidenotesTextarea = $('#sidenotes');
         var saveButton = $('.save_icon');
