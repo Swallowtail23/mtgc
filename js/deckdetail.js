@@ -1,6 +1,6 @@
 /*
-Version:     2.9
-Date:        24/12/25
+Version:     2.23
+Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -78,6 +78,134 @@ function updateDeckVersion(rawVersion) {
     var versionInt = normalizeVersion(rawVersion);
     if (versionInt > lastAppliedVersion) {
         lastAppliedVersion = versionInt;
+    }
+}
+
+function preloadFirstDeckImage() {
+    var $firstImg = $('#decklist-fragment img.deckcardimg').first();
+    if (!$firstImg.length) {
+        return;
+    }
+    var src = $firstImg.data('front-src') || $firstImg.attr('src');
+    if (!src) {
+        return;
+    }
+    var img = new Image();
+    img.src = src;
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (heroImg && window.innerWidth >= 2160) {
+        setDecksideHeroRotatable(false);
+        setDecksideHeroImage(src);
+    }
+}
+
+function setDecksideHeroRotatable(isRotatable) {
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (!heroImg) {
+        return;
+    }
+    var shouldRotate = isRotatable === true;
+    heroImg.classList.remove('is-rotated');
+    heroImg.dataset.rotatable = shouldRotate ? '1' : '0';
+    if (window.console && console.log) {
+        console.log('[DEBUG] Deckside hero rotation updated', { isRotatable: shouldRotate });
+    }
+}
+
+function bindDecksideHeroRotation() {
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (!heroImg || heroImg.dataset.rotationBound === '1') {
+        return;
+    }
+    heroImg.dataset.rotationBound = '1';
+    var rotateTimer = null;
+    var unrotateTimer = null;
+    heroImg.addEventListener('mouseenter', function () {
+        if (heroImg.dataset.rotatable !== '1') {
+            return;
+        }
+        if (unrotateTimer) {
+            clearTimeout(unrotateTimer);
+        }
+        if (rotateTimer) {
+            clearTimeout(rotateTimer);
+        }
+        rotateTimer = setTimeout(function () {
+            heroImg.classList.add('is-rotated');
+        }, 300);
+    });
+    heroImg.addEventListener('mouseleave', function () {
+        if (rotateTimer) {
+            clearTimeout(rotateTimer);
+        }
+        unrotateTimer = setTimeout(function () {
+            heroImg.classList.remove('is-rotated');
+        }, 300);
+    });
+}
+
+function updateDecksideHeroBackground(src) {
+    var decksideHero = document.getElementById('deckside-hero');
+    if (!decksideHero) {
+        return;
+    }
+    var isBack = typeof src === 'string' && src.indexOf('/images/back.jpg') !== -1;
+    decksideHero.classList.toggle('has-image', !isBack);
+}
+
+function setDecksideHeroImage(src) {
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (!heroImg) {
+        return;
+    }
+    if (heroImg.dataset.src === src) {
+        return;
+    }
+    heroImg.classList.remove('is-visible');
+    updateDecksideHeroBackground(src);
+    heroImg.dataset.src = src;
+    heroImg.onload = function () {
+        updateDecksideHeroBackground(this.src);
+        heroImg.classList.add('is-visible');
+    };
+    heroImg.src = src;
+    if (heroImg.complete) {
+        updateDecksideHeroBackground(heroImg.src);
+        heroImg.classList.add('is-visible');
+    }
+}
+
+function updateRandomDrawPlacement() {
+    var $fragment = $('#deck-random-draw-fragment');
+    var $footer = $('#deckside-footer');
+    var $anchor = $('#deck-random-draw-anchor');
+    if (!$fragment.length || !$footer.length || !$anchor.length) {
+        return;
+    }
+    var hasContent = $fragment.attr('data-has-content') === '1';
+    if (!hasContent) {
+        $footer.hide();
+        $fragment.removeClass('is-docked').addClass('is-inline');
+        return;
+    }
+    var deckside = document.getElementById('deckside');
+    if (!deckside) {
+        return;
+    }
+    var columnCount = parseInt(window.getComputedStyle(deckside).columnCount, 10);
+    var shouldDock = columnCount >= 3 && window.innerHeight > 1100;
+    if (shouldDock) {
+        $footer.show();
+        if (!$fragment.parent().is($footer)) {
+            $footer.append($fragment);
+        }
+        $fragment.addClass('is-docked').removeClass('is-inline');
+    } else {
+        $footer.hide();
+        if (!$fragment.prev().is($anchor)) {
+            $anchor.after($fragment);
+        }
+        $fragment.removeClass('is-docked').addClass('is-inline');
     }
 }
 
@@ -405,6 +533,20 @@ window.bindRandomCardEvents = function() {
         if (cardId) {
             enqueueDeckImage(cardId, true);
         }
+    var decksideHero = document.getElementById('deckside-hero');
+    if (decksideHero && window.innerWidth >= 2160) {
+        var $img = $div.find('img.deckcardimg').first();
+        setDecksideHeroRotatable($div.hasClass('splitfloat'));
+        var heroSrc = $img.attr('src') || $img.data('front-src');
+        if (heroSrc) {
+            setDecksideHeroImage(heroSrc);
+        }
+            $img.off('load.decksideHero').on('load.decksideHero', function () {
+                setDecksideHeroImage(this.src);
+            });
+            $('.deckcardimgdiv').hide();
+            return;
+        }
 
         if (e.pageX && e.pageY) {
             mouseX = e.pageX;
@@ -557,6 +699,7 @@ function applyFragmentResponse(response, options) {
             $('#' + targetId).replaceWith(response.fragments[fragmentKey]);
         });
         applyDeckSectionState();
+        updateRandomDrawPlacement();
         if (window.bindRandomCardEvents) {
             window.bindRandomCardEvents();
         }
@@ -652,6 +795,14 @@ function refreshTable() {
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             document.getElementById('table-container').innerHTML = xhr.responseText;
+            var $randomContent = $('#deck-random-draw-fragment .random-draw-content');
+            if ($randomContent.length) {
+                $randomContent.removeClass('is-visible');
+                $randomContent[0].offsetWidth;
+                setTimeout(function () {
+                    $randomContent.addClass('is-visible');
+                }, 10);
+            }
             if (window.bindRandomCardEvents) {
                 window.bindRandomCardEvents();
             }
@@ -1782,7 +1933,11 @@ function refreshDeckFragments(options) {
         bindDeckDetailHandlers();
         renderManaValueChart();
         updateRandomDrawState();
+        $('#deck-random-draw-fragment .random-draw-content').addClass('is-visible');
         refreshCardImagesAsync();
+        preloadFirstDeckImage();
+        updateRandomDrawPlacement();
+        bindDecksideHeroRotation();
         // Update the 'onerror' attribute for all images
         $('img').on('error', function() {
             this.src = '/images/back.jpg';
@@ -1806,6 +1961,10 @@ function refreshDeckFragments(options) {
         $(window).on('scroll', function () {
             $('.deckcardimgdiv').hide("slow");
             $('.randomcardimgdiv').hide("slow");
+        });
+
+        $(window).on('resize', function () {
+            updateRandomDrawPlacement();
         });
 
         window.bindRandomCardEvents();

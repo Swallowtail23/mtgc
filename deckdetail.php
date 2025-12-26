@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.46
-Date:        24/12/25
+Version:     25.54
+Date:        27/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -137,7 +137,7 @@ m13,12,"Fog",en,1,0,0,{id}
     </div>
 </div>
 <div id="page">
-    <div class="staticpagecontent">
+    <div class="staticpagecontent" id="deckdetail-layout">
         <div id="decklist">
             <span id="printtitle" class="headername">
                 <img src="images/white_m.png"> <?php echo $siteTitleEsc;?>
@@ -218,7 +218,12 @@ m13,12,"Fog",en,1,0,0,{id}
 
             <?php include 'includes/fragments/deckdetail_decklist.php'; ?>
         </div>
-        <div id="decknotesdiv">
+        <div id="deckside-wrap">
+            <div id="deckside">
+                <div id="deckside-hero" class="deckside-placeholder">
+                    <img id="deckside-hero-img" src="/images/back.jpg" alt="Deck preview">
+                </div>
+                <div id="decknotesdiv">
             <?php include 'includes/fragments/deckdetail_warnings.php'; ?>
             <form id="updatenotesform" action="?" method="POST">
                 <h4>&nbsp;Notes</h4>
@@ -240,39 +245,42 @@ m13,12,"Fog",en,1,0,0,{id}
             include 'includes/fragments/deckdetail_mana_value.php';
             include 'includes/fragments/deckdetail_mana_costs.php';
             include 'includes/fragments/deckdetail_deck_value.php';
-            include 'includes/fragments/deckdetail_random_draw.php';
             if ($decktype != 'Wishlist') : // Condense to 2 columns for wishlists
                 ?>
-        </div>
-        <div id='deckfunctions'>
+            </div>
+            <div id='deckfunctions'>
                 <?php
             endif;
+            echo '<div id="deck-random-draw-anchor"></div>';
+            include 'includes/fragments/deckdetail_random_draw.php';
             include 'includes/fragments/deckdetail_deck_lists.php';
             ?>
-            <h4>Add cards</h4>
-            <form id="quickadd-form" action="deckdetail.php" method="GET">
-                <!-- Hovering help button -->
-                <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">help</span>
-
-                <textarea class='textinput' rows="3" cols="47" name="quickadd" id="quickadd-text"></textarea>
-                <br>
-                <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
-                <?php echo "<input type='hidden' name='deck' value='$deckNumber'>"; ?>
-            </form>
-           From text or csv file:
-            <form id="import-form" enctype='multipart/form-data'>
-                <label class='importlabel'>
-                    <input id='importfile' type='file' name='filename'>
-                    <span>SELECT</span>
-                </label>
-                <input
-                    class='profilebutton'
-                    id='importsubmit'
-                    type='submit'
-                    value='IMPORT'
-                    disabled
-                >
-            </form>
+            <div id="deck-quickadd-group">
+                <div class="section-header-row">
+                    <h4>Add cards</h4>
+                    <span id="help-button" class="material-symbols-outlined" onclick="toggleInfoBox()">help</span>
+                </div>
+                <form id="quickadd-form" action="deckdetail.php" method="GET">
+                    <textarea class='textinput' rows="3" cols="47" name="quickadd" id="quickadd-text"></textarea>
+                    <br>
+                    <input class='inline_button stdwidthbutton noprint' type="submit" value="ADD">
+                    <?php echo "<input type='hidden' name='deck' value='$deckNumber'>"; ?>
+                </form>
+                <form id="import-form" enctype='multipart/form-data'>
+                    <div class="import-title">From text or csv file:</div>
+                    <label class='importlabel'>
+                        <input id='importfile' type='file' name='filename'>
+                        <span>SELECT</span>
+                    </label>
+                    <input
+                        class='profilebutton'
+                        id='importsubmit'
+                        type='submit'
+                        value='IMPORT'
+                        disabled
+                    >
+                </form>
+            </div>
             <div id='photo_upload' style="padding-bottom:20px;">
                 <h4>Photo</h4>
                 <?php
@@ -318,6 +326,9 @@ m13,12,"Fog",en,1,0,0,{id}
                 endif; ?>
                 <div id="result"></div>
             </div>
+                </div>
+            </div>
+            <div id="deckside-footer"></div>
         </div>
     </div>
 </div>

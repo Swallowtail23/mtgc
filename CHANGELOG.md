@@ -8,7 +8,30 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Deck detail now uses a masonry-style sidebar layout with responsive stacking for notes, stats, and actions.
+- Deck detail quick add and import blocks stay grouped in the masonry layout.
+- Deck detail adds a wide-screen masonry column placeholder for layout tuning.
+- Deck detail hover images use the wide-screen placeholder column at 2160px+ instead of floating overlays.
+- Deck detail preloads the first deck card image and fades the wide-screen hero column on hover.
+- Deck detail moves Random Draw below the masonry group for tall, three-column layouts.
+- Deck detail uses a scrollable deck list when the masonry is side-by-side and tightens footer spacing.
+- Deck detail now reserves scrollbar gutter space for the deck list to prevent layout shifts when scrollbars appear.
+- Deck detail shows Random Draw as an overlapping card strip when docked in the sidebar footer.
+- Deck detail Random Draw docked strip now uses an icon refresh button and large hover previews.
+- Deck detail Random Draw strip spacing and rotated hover alignment tuned for docked display.
+- Deck detail Random Draw header margin now matches masonry headings when inline.
+- Deck detail Random Draw docked hover now rotates around the right edge and uses a larger refresh icon.
+- Deck detail Random Draw docked hover now delays and lifts further for better readability.
+- Deck detail Random Draw rotated hover now uses a single transform to avoid hover oscillation.
+- Deck detail Random Draw hover lift increased for docked previews.
+- Deck detail Random Draw docked hover hitbox now extends to prevent hover flicker.
+- Deck detail Random Draw rotated hover now returns smoothly without a transform-origin jump.
+- Deck detail hero image now rotates split/planar-style cards after a short hover delay.
+- Deck detail hero image rotation now triggers only on hover, and the Add cards help icon is aligned with its header.
+- Deck detail hero hover now sits above other panels and unrotates after a short delay.
+- Deck detail Random Draw now fades/raises in new draws for smoother refresh.
+- Deck detail Random Draw refresh animation now eases in more gently.
+- Deck detail hero hover z-index now only elevates while rotated and Random Draw animation timing is stabilized.
 
 ### Fixed
 -

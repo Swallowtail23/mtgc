@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        24/12/25
+Version:     1.1
+Date:        26/12/25
 Name:        deckdetail_mana_costs.php
 Purpose:     Deck detail mana costs and sources fragment.
 Notes:       -
@@ -10,16 +10,18 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+$hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
 ?>
-<div id="deck-mana-costs-fragment">
+<div id="deck-mana-costs-fragment" data-has-content="<?php echo $hasManaCosts ? '1' : '0'; ?>">
     <?php
-    if ($show_mana_block and $decktype != 'Wishlist') :
+    if ($hasManaCosts) :
         ?>
+        <h4>Mana distribution</h4>
         <table style="width: 95%;">
             <tr>
-                <td style="text-align: center; width: 20%;"><b>Mana:</b></td>
-                <td style="text-align: center;"><b>Costs</b></td>
-                <td style="text-align: center;"><b>Sources</b></td>
+                <td style="text-align: center; width: 20%;">&nbsp;</td>
+                <td style="text-align: center;"><i>Costs</i></td>
+                <td style="text-align: center;"><i>Sources</i></td>
             </tr>
             <?php
             if ($w + $gw > 0) : ?>

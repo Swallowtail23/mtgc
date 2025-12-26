@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     2.0
-Date:        24/12/25
+Version:     2.2
+Date:        27/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -78,9 +78,8 @@ if (count($uniquecard_ref) < 7) :
 endif;
 
 $a = array_rand($uniquecard_ref, 7);
-echo "<table>";
-echo "<tr><td>&nbsp;</td></tr>";
-for ($i = 0; $i < 7; $i++) {
+$drawn_cards = [];
+for ($i = 0; $i < 7; $i++) :
     $cardurl = $uniquecard_ref[$a[$i]]['cardurl'] ?? '';
     if (!is_string($cardurl) || !preg_match('#^/carddetail\.php\?id=[A-Za-z0-9-]+$#', $cardurl)) :
         $cardurl = '#';
@@ -94,35 +93,63 @@ for ($i = 0; $i < 7; $i++) {
     endif;
     $name = $uniquecard_ref[$a[$i]]['name'] ?? '';
     $id = $uniquecard_ref[$a[$i]]['cardid'] ?? '';
-    $cardref = $uniquecard_ref[$a[$i]]['cardref'] ?? '';
     $layout = $uniquecard_ref[$a[$i]]['layout'] ?? null;
     $f1_type = $uniquecard_ref[$a[$i]]['f1_type'] ?? null;
-    $randomref = $i + 1; ?>
-    <?php
+    $randomref = $i + 1;
     if (
         (isset($layout) and in_array($layout, $image90rotate))
         or (isset($f1_type) and in_array($f1_type, $image90rotate))
     ) :
         $hoverclass = 'randomcardimgdiv splitfloat';
+        $is_rotated = true;
     else :
         $hoverclass = 'randomcardimgdiv';
+        $is_rotated = false;
     endif;
-    ?>
-    <div class='<?php echo $hoverclass; ?>' id='<?php echo "random-$randomref";?>'>
-        <a href='<?php echo htmlspecialchars($cardurl, ENT_QUOTES, 'UTF-8');?>'>
+    $drawn_cards[] = [
+        'randomref' => $randomref,
+        'hoverclass' => $hoverclass,
+        'isRotated' => $is_rotated,
+        'safeName' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+        'safeId' => htmlspecialchars($id, ENT_QUOTES, 'UTF-8'),
+        'safeUrl' => htmlspecialchars($cardurl, ENT_QUOTES, 'UTF-8'),
+        'safeImg' => htmlspecialchars($imgurl, ENT_QUOTES, 'UTF-8')
+    ];
+endfor;
+if (isset($msg)) :
+    $msg->logMessage('[DEBUG]', 'Random draw generated.');
+endif;
+
+echo "<div class='random-draw-content'>";
+echo "<div class='random-draw-strip' aria-label='Random draw cards'>";
+foreach ($drawn_cards as $index => $card) :
+    $card_class = $card['isRotated'] ? 'random-draw-card is-rotated' : 'random-draw-card';
+    echo "<a class='{$card_class}' href='{$card['safeUrl']}' style='--random-index: {$index};'>"
+        . "<img class='random-draw-card-img' alt='{$card['safeName']}' src='{$card['safeImg']}'>"
+        . "</a>";
+endforeach;
+echo "</div>";
+echo "<div class='random-draw-list'>";
+foreach ($drawn_cards as $card) : ?>
+    <div class='<?php echo $card['hoverclass']; ?>' id='<?php echo "random-{$card['randomref']}"; ?>'>
+        <a href='<?php echo $card['safeUrl']; ?>'>
         <img
-            alt='<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8');?>'
+            alt='<?php echo $card['safeName']; ?>'
             class='deckcardimg'
-            data-cardid="<?php echo htmlspecialchars($id, ENT_QUOTES, 'UTF-8'); ?>"
-            data-front-src="<?php echo htmlspecialchars($imgurl, ENT_QUOTES, 'UTF-8'); ?>"
-            src='<?php echo htmlspecialchars($imgurl, ENT_QUOTES, 'UTF-8');?>'
+            data-cardid="<?php echo $card['safeId']; ?>"
+            data-front-src="<?php echo $card['safeImg']; ?>"
+            src='<?php echo $card['safeImg']; ?>'
         ></a>
-    </div> <?php
-    $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-    $safeId = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
-    $safeUrl = htmlspecialchars($cardurl, ENT_QUOTES, 'UTF-8');
-    echo "<tr><td class='hoverTD'>$randomref: <a class='taphover' id='random-$randomref-taphover' "
-        . "data-cardid='{$safeId}' href='{$safeUrl}'>"
-        . "$safeName</a></td></tr>";
-}
+    </div>
+<?php endforeach;
+echo "<table>";
+echo "<tr><td>&nbsp;</td></tr>";
+foreach ($drawn_cards as $card) :
+    echo "<tr><td class='hoverTD'>{$card['randomref']}: "
+        . "<a class='taphover' id='random-{$card['randomref']}-taphover' "
+        . "data-cardid='{$card['safeId']}' href='{$card['safeUrl']}'>"
+        . "{$card['safeName']}</a></td></tr>";
+endforeach;
 echo "</table>";
+echo "</div>";
+echo "</div>";
