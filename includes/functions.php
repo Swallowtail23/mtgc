@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     28.0
-Date:        24/12/25
+Version:     28.1
+Date:        27/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -840,6 +840,17 @@ function scryfallImport($file_location, $type)
     // Initiate counters at zero
     $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
     $count_update_content = $count_update_price = $count_update_both = 0;
+    $diag_change_count = 0;
+    $diag_no_change_count = 0;
+    $diag_limit = 50;
+    $bulkDiagnosticEnabled = method_exists($msg, 'isBulkDiagnosticEnabled')
+        && $msg->isBulkDiagnosticEnabled();
+    if ($bulkDiagnosticEnabled) :
+        $msg->logMessage(
+            '[NOTICE]',
+            'Bulk diagnostic mode enabled for scryfall bulk import (first 50 change + no change rows).'
+        );
+    endif;
 
     $data = JsonMachine\Items::fromFile(
         $file_location,
@@ -2185,6 +2196,53 @@ function scryfallImport($file_location, $type)
                     else :
                         $count_other = $count_other + 1;
                         $msg->logMessage('[DEBUG]', "No change - no error returned; return code: $status");
+                    endif;
+
+                    if ($bulkDiagnosticEnabled) :
+                        $is_change = ($status !== 0);
+                        $log_change = $is_change && $diag_change_count < $diag_limit;
+                        $log_no_change = (!$is_change) && $diag_no_change_count < $diag_limit;
+                        if ($log_change || $log_no_change) :
+                            $diag_bucket = $is_change ? 'change' : 'no_change';
+                            if ($log_change) :
+                                $diag_change_count = $diag_change_count + 1;
+                            else :
+                                $diag_no_change_count = $diag_no_change_count + 1;
+                            endif;
+                            $diag_payload = [
+                                'bucket' => $diag_bucket,
+                                'status' => $status,
+                                'id' => $id,
+                                'name' => $name,
+                                'set_code' => $set_code,
+                                'collector_number' => $collector_number,
+                                'layout' => $layout,
+                                'lang' => $lang,
+                                'content_changed' => $content_changed,
+                                'price_changed' => $price_changed,
+                                'existing_content_hash' => $existing_content_hash,
+                                'existing_price_hash' => $existing_price_hash,
+                                'content_hash' => $content_hash,
+                                'price_hash' => $price_hash,
+                                'content_hash_data' => $contentHashData,
+                                'price_hash_data' => $priceHashData,
+                                'prices' => [
+                                    'usd' => $price_usd,
+                                    'usd_foil' => $price_usd_foil,
+                                    'usd_etched' => $price_usd_etched,
+                                    'price_sort' => $price_sort
+                                ],
+                                'scryfall_record' => $value
+                            ];
+                            $diag_json = json_encode(
+                                $diag_payload,
+                                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+                            );
+                            if ($diag_json === false) :
+                                $diag_json = 'Bulk diagnostic JSON encoding failed for ' . ($id ?? 'unknown id');
+                            endif;
+                            $msg->logBulkDiagnostic($diag_json);
+                        endif;
                     endif;
                 endif;
             endif;
