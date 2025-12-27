@@ -1,62 +1,163 @@
-const CACHE_NAME = 'mtg-collection-v2';
-const IMAGE_CACHE_NAME = 'mtg-images-v2';
+/*
+Version:     3.1
+Date:        27/12/25
+Name:        service-worker.js
+Purpose:     Safe caching of static assets and images for MTG Collection.
+Notes:       Avoids caching HTML or dynamic fragments.
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+*/
+
+'use strict';
+
+const DEBUG = false;
+const CACHE_VERSION = 'v3';
+const STATIC_CACHE = 'mtg-static-' + CACHE_VERSION;
+const IMAGE_CACHE = 'mtg-images-' + CACHE_VERSION;
+const IMAGE_CACHE_MAX_ITEMS = 200;
 
 const STATIC_ASSETS = [
-  '/manifest.json',
-  '/css/style.css',
-  '/css/style-min.css',
-  '/js/jquery.js',
-  '/images/w_png.png'
+    '/manifest.json',
+    '/css/style.css',
+    '/css/style-min.css',
+    '/js/jquery.js',
+    '/images/w_png.png',
+    '/images/ajax-loader.gif'
 ];
 
+function logDebug(message, data) {
+    if (!DEBUG) {
+        return;
+    }
+    if (typeof data === 'undefined') {
+        console.debug('[SW]', message);
+        return;
+    }
+    console.debug('[SW]', message, data);
+}
+
+function isSameOrigin(url) {
+    return url.origin === self.location.origin;
+}
+
+async function cachePut(cache, request, response) {
+    if (response && response.ok) {
+        await cache.put(request, response.clone());
+    }
+}
+
+async function trimCache(cacheName, maxItems) {
+    const cache = await caches.open(cacheName);
+    const keys = await cache.keys();
+    if (keys.length <= maxItems) {
+        return;
+    }
+    const excess = keys.length - maxItems;
+    for (let i = 0; i < excess; i++) {
+        await cache.delete(keys[i]);
+    }
+}
+
+async function cacheFirst(request, cacheName, maxItems) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    if (cached) {
+        logDebug('cache-first hit', request.url);
+        return cached;
+    }
+    logDebug('cache-first miss', request.url);
+    const response = await fetch(request);
+    await cachePut(cache, request, response);
+    if (maxItems) {
+        trimCache(cacheName, maxItems);
+    }
+    return response;
+}
+
+async function staleWhileRevalidate(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    const fetchPromise = fetch(request).then(async (response) => {
+        await cachePut(cache, request, response);
+        logDebug('stale-while-revalidate update', request.url);
+        return response;
+    });
+    if (cached) {
+        logDebug('stale-while-revalidate hit', request.url);
+        return cached;
+    }
+    logDebug('stale-while-revalidate miss', request.url);
+    return fetchPromise;
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)));
-  self.skipWaiting(); // activate new SW ASAP
+    logDebug('install');
+    event.waitUntil(
+        caches.open(STATIC_CACHE).then((cache) => {
+            const requests = STATIC_ASSETS.map((asset) => new Request(asset, { cache: 'reload' }));
+            return cache.addAll(requests);
+        })
+    );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.map((n) => (n === CACHE_NAME || n === IMAGE_CACHE_NAME ? undefined : caches.delete(n)))
-      )
-    )
-  );
-  self.clients.claim(); // control pages immediately
+    logDebug('activate');
+    event.waitUntil(
+        caches.keys().then((names) =>
+            Promise.all(
+                names.map((name) => (name === STATIC_CACHE || name === IMAGE_CACHE
+                    ? undefined
+                    : caches.delete(name)))
+            )
+        )
+    );
+});
+
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        logDebug('skip-waiting message');
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
+    const request = event.request;
+    if (request.method !== 'GET') {
+        return;
+    }
 
-  // 1) Navigation requests (HTML) — network-first, fallback to cache if offline
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then((res) => {
-        // optionally update a small runtime cache of HTML for offline fallback
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-        return res;
-      }).catch(async () => {
-        const cached = await caches.match(req);
-        return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
-      })
-    );
-    return;
-  }
+    const url = new URL(request.url);
+    if (!isSameOrigin(url)) {
+        return;
+    }
 
-  // 2) Card images — cache-first (as you had)
-  if (url.pathname.startsWith('/cardimg/')) {
-    event.respondWith(
-      caches.open(IMAGE_CACHE_NAME).then((cache) =>
-        cache.match(req).then((hit) => hit || fetch(req).then((net) => { cache.put(req, net.clone()); return net; }))
-      )
-    );
-    return;
-  }
+    if (url.pathname.endsWith('.php')) {
+        logDebug('network-only php', request.url);
+        event.respondWith(fetch(request));
+        return;
+    }
 
-  // 3) Other static assets — cache-first
-  event.respondWith(
-    caches.match(req).then((hit) => hit || fetch(req))
-  );
+    if (request.mode === 'navigate' || request.destination === 'document') {
+        logDebug('network-only document', request.url);
+        event.respondWith(
+            fetch(request).catch(() => new Response('Offline', { status: 503, statusText: 'Offline' }))
+        );
+        return;
+    }
+
+    if (request.destination === 'image'
+        && (url.pathname.startsWith('/cardimg/') || url.pathname.startsWith('/images/'))
+    ) {
+        event.respondWith(cacheFirst(request, IMAGE_CACHE, IMAGE_CACHE_MAX_ITEMS));
+        return;
+    }
+
+    if (request.destination === 'style'
+        || request.destination === 'script'
+        || request.destination === 'font'
+    ) {
+        event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+        return;
+    }
 });

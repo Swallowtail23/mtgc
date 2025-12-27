@@ -1,11 +1,13 @@
 <?php
 
 /*
-Version:     14.0
-Date:        23/12/25
+Version:     14.2
+Date:        27/12/25
 Name:        index.php
 Purpose:     Main site page
-Notes:       {none}
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
 To do:       -
 */
 
@@ -1291,15 +1293,132 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         $msg->logMessage('[DEBUG]', "Finished");?>
         <script>
             if ('serviceWorker' in navigator) {
-              window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
-                  .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                  })
-                  .catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                  });
-              });
+                window.addEventListener('load', function() {
+                    var swDebug = false;
+                    var swReloading = false;
+
+                    function swLog(message, data) {
+                        if (!swDebug) {
+                            return;
+                        }
+                        if (typeof data === 'undefined') {
+                            console.debug('[SW]', message);
+                            return;
+                        }
+                        console.debug('[SW]', message, data);
+                    }
+
+                    function showSwUpdateToast(registration) {
+                        if (document.getElementById('swUpdateToast')) {
+                            swLog('Update toast already visible');
+                            return;
+                        }
+
+                        swLog('Showing update toast');
+                        var toast = document.createElement('div');
+                        toast.id = 'swUpdateToast';
+                        toast.setAttribute('role', 'status');
+                        toast.setAttribute('aria-live', 'polite');
+                        toast.style.position = 'fixed';
+                        toast.style.left = '50%';
+                        toast.style.bottom = '16px';
+                        toast.style.transform = 'translateX(-50%)';
+                        toast.style.background = '#1c2730';
+                        toast.style.color = '#f7f7f7';
+                        toast.style.padding = '12px 16px';
+                        toast.style.borderRadius = '10px';
+                        toast.style.boxShadow = '0 12px 28px rgba(0, 0, 0, 0.25)';
+                        toast.style.fontFamily = '"Trebuchet MS", Verdana, sans-serif';
+                        toast.style.fontSize = '14px';
+                        toast.style.zIndex = '9999';
+                        toast.style.display = 'flex';
+                        toast.style.alignItems = 'center';
+                        toast.style.gap = '12px';
+                        toast.style.maxWidth = '90%';
+
+                        var text = document.createElement('span');
+                        text.textContent = 'Update available. Refresh to get the latest version.';
+
+                        var refreshBtn = document.createElement('button');
+                        refreshBtn.type = 'button';
+                        refreshBtn.textContent = 'Refresh';
+                        refreshBtn.style.background = '#f4d35e';
+                        refreshBtn.style.border = 'none';
+                        refreshBtn.style.borderRadius = '6px';
+                        refreshBtn.style.padding = '6px 10px';
+                        refreshBtn.style.cursor = 'pointer';
+                        refreshBtn.style.fontWeight = '600';
+                        refreshBtn.style.color = '#1c2730';
+
+                        var dismissBtn = document.createElement('button');
+                        dismissBtn.type = 'button';
+                        dismissBtn.textContent = 'Later';
+                        dismissBtn.style.background = 'transparent';
+                        dismissBtn.style.border = '1px solid rgba(247, 247, 247, 0.6)';
+                        dismissBtn.style.borderRadius = '6px';
+                        dismissBtn.style.padding = '6px 10px';
+                        dismissBtn.style.cursor = 'pointer';
+                        dismissBtn.style.color = '#f7f7f7';
+
+                        refreshBtn.addEventListener('click', function() {
+                            swLog('User accepted update');
+                            if (registration.waiting) {
+                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        });
+
+                        dismissBtn.addEventListener('click', function() {
+                            swLog('User dismissed update');
+                            toast.remove();
+                        });
+
+                        toast.appendChild(text);
+                        toast.appendChild(refreshBtn);
+                        toast.appendChild(dismissBtn);
+                        document.body.appendChild(toast);
+                    }
+
+                    function listenForSwUpdates(registration) {
+                        if (!registration) {
+                            return;
+                        }
+                        if (registration.waiting) {
+                            swLog('SW already waiting');
+                            showSwUpdateToast(registration);
+                        }
+                        registration.addEventListener('updatefound', function() {
+                            swLog('SW update found');
+                            var newWorker = registration.installing;
+                            if (!newWorker) {
+                                return;
+                            }
+                            newWorker.addEventListener('statechange', function() {
+                                swLog('SW state change', newWorker.state);
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showSwUpdateToast(registration);
+                                }
+                            });
+                        });
+                    }
+
+                    navigator.serviceWorker.addEventListener('controllerchange', function() {
+                        if (swReloading) {
+                            return;
+                        }
+                        swReloading = true;
+                        swLog('Controller changed, reloading');
+                        window.location.reload();
+                    });
+
+                    navigator.serviceWorker.register('/service-worker.js?v=3.1')
+                        .then(function(registration) {
+                            swLog('ServiceWorker registration successful', registration.scope);
+                            listenForSwUpdates(registration);
+                        })
+                        .catch(function(err) {
+                            swLog('ServiceWorker registration failed', err);
+                        });
+                });
             };
 
             var collQtyOp = document.getElementById("collQtyOp");

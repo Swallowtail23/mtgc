@@ -8,10 +8,12 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Service worker now shows an update toast to allow immediate refresh after new deployments.
+- Service worker registration now includes a version query to force revalidation on deploy.
 
 ### Fixed
--
+- Service worker now avoids caching HTML/fragments and uses safer asset/image caching to prevent blank renders.
+- Service worker now forces PHP requests to stay network-only for safety.
 
 ### Security
 -
