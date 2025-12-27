@@ -2,10 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.4.0-dev] - Unreleased
-
-### Added
--
+## [v0.4.0] - 2025-12-26
 
 ### Changed
 - Deck detail now uses a masonry-style sidebar layout with responsive stacking for notes, stats, and actions.
@@ -16,12 +13,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Sets pagination now restores the correct page when navigating back in history.
-
-### Security
--
-
-### Infrastructure
--
 
 ## [v0.3.0] - 2025-12-25
 
