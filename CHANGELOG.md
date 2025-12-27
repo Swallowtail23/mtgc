@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.4.1-dev] - Unreleased
+
+### Added
+-
+
+### Changed
+-
+
+### Fixed
+- CSS minifier now preserves media query spacing to prevent rule breakage.
+
+### Security
+-
+
+### Infrastructure
+-
+
 ## [v0.4.0] - 2025-12-26
 
 ### Changed
