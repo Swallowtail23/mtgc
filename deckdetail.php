@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.54
+Version:     25.59
 Date:        27/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -57,6 +57,28 @@ $uniquecard_ref = [];
 include_once("includes/analyticstracking.php");
 require('includes/overlays.php');
 require('includes/header.php');
+if ($tier == 'dev') :
+    echo '<div id="deckdetail-width-banner" style="position: fixed; top: 10px; right: 10px; z-index: 100000; '
+        . 'padding: 8px 10px; border: 1px solid #3f51b5; border-radius: 4px; background: #fff; '
+        . 'color: #000; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); max-width: 90%;">'
+        . 'Viewable width: (loading)</div>';
+    echo '<script>'
+        . 'function updateDeckdetailWidthBanner(){'
+        . 'var banner=document.getElementById("deckdetail-width-banner");'
+        . 'if(!banner){return;}'
+        . 'var width=document.documentElement.clientWidth||window.innerWidth;'
+        . 'banner.textContent="Viewable width: "+width+"px";'
+        . '}'
+        . 'if(document.readyState==="loading"){'
+        . 'document.addEventListener("DOMContentLoaded",updateDeckdetailWidthBanner);'
+        . '}else{'
+        . 'updateDeckdetailWidthBanner();'
+        . '}'
+        . 'window.addEventListener("load",updateDeckdetailWidthBanner);'
+        . 'window.addEventListener("resize",updateDeckdetailWidthBanner);'
+        . 'setTimeout(updateDeckdetailWidthBanner,0);'
+        . '</script>';
+endif;
 require('includes/menu.php'); //mobile menu
 
 $redirect = false;
@@ -221,7 +243,9 @@ m13,12,"Fog",en,1,0,0,{id}
         <div id="deckside-wrap">
             <div id="deckside">
                 <div id="deckside-hero" class="deckside-placeholder">
-                    <img id="deckside-hero-img" src="/images/back.jpg" alt="Deck preview">
+                    <a id="deckside-hero-link" href="#" aria-label="Open card detail">
+                        <img id="deckside-hero-img" src="/images/back.jpg" alt="Deck preview">
+                    </a>
                 </div>
                 <div id="decknotesdiv">
             <?php include 'includes/fragments/deckdetail_warnings.php'; ?>

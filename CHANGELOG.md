@@ -15,9 +15,30 @@ All notable changes to this project will be documented in this file.
 - Deck detail preloads the first deck card image and fades the wide-screen hero column on hover.
 - Deck detail moves Random Draw below the masonry group for tall, three-column layouts.
 - Deck detail uses a scrollable deck list when the masonry is side-by-side and tightens footer spacing.
+- Deck detail deck list max width reduced to 380px.
 - Deck detail now reserves scrollbar gutter space for the deck list to prevent layout shifts when scrollbars appear.
 - Deck detail shows Random Draw as an overlapping card strip when docked in the sidebar footer.
 - Deck detail Random Draw docked strip now uses an icon refresh button and large hover previews.
+- Deck detail Random Draw strip now requires hover/touch to navigate and supports touch-first previews.
+- Deck detail hero preview now links to the hovered card detail page.
+- Deck detail masonry sidebar now keeps 1890px-2159px columns tight against the hero column.
+- Deck detail hero placeholder now remains visible at 2160px+.
+- Deck detail hero preview now auto-loads from the first card image on touch layouts.
+- Deck detail hero auto-load now applies to the 1890px+ layout as soon as the hero column appears.
+- Deck detail temporarily shows a viewport width banner for mobile diagnostics.
+- Deck detail width banner now updates on DOMContentLoaded and window load for mobile.
+- Deck detail width banner now updates inline for mobile diagnostics.
+- Deck detail width banner now displays only for dev tier.
+- Deck detail width banner now updates on window resize.
+- Deck detail narrows masonry column width to 300px at 980px and below for layout testing.
+<<<<<<< ours
+<<<<<<< ours
+- Deck detail dev banner now shows grid column template diagnostics.
+- Deck detail width banner now keeps grid diagnostics when JS refreshes it.
+=======
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 - Deck detail Random Draw strip spacing and rotated hover alignment tuned for docked display.
 - Deck detail Random Draw header margin now matches masonry headings when inline.
 - Deck detail Random Draw docked hover now rotates around the right edge and uses a larger refresh icon.
@@ -25,7 +46,21 @@ All notable changes to this project will be documented in this file.
 - Deck detail Random Draw rotated hover now uses a single transform to avoid hover oscillation.
 - Deck detail Random Draw hover lift increased for docked previews.
 - Deck detail Random Draw docked hover hitbox now extends to prevent hover flicker.
+- Deck detail Random Draw docked strip padding reduced to remove excess spacing below the card row.
 - Deck detail Random Draw rotated hover now returns smoothly without a transform-origin jump.
+- Deck detail touch hover previews now clear on any non-row interaction and on scroll.
+- Deck detail Random Draw touch previews now clear on any outside interaction and scroll.
+- Deck detail Random Draw touch preview now de-zooms before dropping its z-index.
+- Deck detail Random Draw touch preview now clears on touchend interactions outside the strip.
+- Deck detail Random Draw touch preview now de-zooms the previous card before activating a new one.
+- Deck detail Random Draw touch preview now clears on pointerdown interactions outside the strip.
+- Deck detail Random Draw touch mode now disables sticky hover styling.
+- Deck detail Random Draw mouse hover now keeps z-index until de-zoom completes.
+- Deck detail Random Draw touch mode no longer resets on synthetic mousemove events.
+- Deck detail Random Draw now defaults to touch mode on non-hover devices to prevent sticky hover on load.
+- Deck detail Random Draw hover-out now preserves the standard delay in mouse mode.
+- Admin panel now regenerates `css/style-min.css` before enabling minified CSS.
+- Deck detail hero now auto-loads the first card when resizing into the wide layout.
 - Deck detail hero image now rotates split/planar-style cards after a short hover delay.
 - Deck detail hero image rotation now triggers only on hover, and the Add cards help icon is aligned with its header.
 - Deck detail hero hover now sits above other panels and unrotates after a short delay.
@@ -34,7 +69,8 @@ All notable changes to this project will be documented in this file.
 - Deck detail hero hover z-index now only elevates while rotated and Random Draw animation timing is stabilized.
 
 ### Fixed
--
+- Admin CSS minify no longer fails when logging file paths.
+- Deck detail width banner no longer appears outside dev tier.
 
 ### Security
 -
