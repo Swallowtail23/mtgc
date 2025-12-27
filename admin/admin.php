@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.11
+Version:     6.12
 Date:        27/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -197,7 +197,7 @@ function minifyCssFile(string $sourcePath, string $targetPath, \MTG\Core\Message
     endif;
 
     $minified = preg_replace('/\\s+/', ' ', $minified);
-    $minified = preg_replace('/\\s*([{}:;,()\\[\\]])\\s*/', '$1', $minified);
+    $minified = preg_replace('/\\s*([{}:;,\\[\\]])\\s*/', '$1', $minified);
     $minified = preg_replace('/;}/', '}', $minified);
     $minified = trim($minified);
 
