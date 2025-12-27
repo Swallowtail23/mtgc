@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.3
-Date:        02/12/25
+Version:     8.4
+Date:        27/12/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -46,6 +46,17 @@ $cssver = cssVersionCheck();
 
 // Temporary variable to store a redirection URL
 $redirectUrl = $_SESSION['redirect_url'] ?? null;
+$redirectCandidate = null;
+if (isset($_GET['redirect_to'])) :
+    $redirectCandidate = normalizeRedirectUrl($_GET['redirect_to']);
+elseif (isset($_POST['redirect_to'])) :
+    $redirectCandidate = normalizeRedirectUrl($_POST['redirect_to']);
+endif;
+if ($redirectCandidate) :
+    $redirectUrl = $redirectCandidate;
+    $_SESSION['redirect_url'] = $redirectCandidate;
+    $msg->logMessage('[DEBUG]', "Captured redirect_to override: $redirectCandidate");
+endif;
 
 $loginHandler->logStart();
 $trustedDeviceResult = $loginHandler->attemptTrustedDeviceLogin($redirectUrl);

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        22/12/25
+Version:     1.8
+Date:        27/12/25
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -530,8 +530,15 @@ class LoginHandler
     private function abortLogin($message, $logLevel, $logMessage, $delaySeconds = 5)
     {
         $this->message->logMessage($logLevel, $logMessage);
+        $redirectUrl = null;
+        if (isset($_SESSION['redirect_url'])) :
+            $redirectUrl = normalizeRedirectUrl($_SESSION['redirect_url']);
+            if ($redirectUrl) :
+                $this->message->logMessage('[DEBUG]', "Preserving redirect URL on login abort: $redirectUrl");
+            endif;
+        endif;
         session_destroy();
-        $this->renderLoginErrorPage($message, $delaySeconds);
+        $this->renderLoginErrorPage($message, $delaySeconds, $redirectUrl);
         $this->terminate();
     }
 
@@ -544,18 +551,22 @@ class LoginHandler
         exit($code);
     }
 
-    private function renderLoginErrorPage($message, $delaySeconds)
+    private function renderLoginErrorPage($message, $delaySeconds, $redirectUrl = null)
     {
         $cssver = function_exists('cssVersionCheck') ? cssVersionCheck() : '';
         $safeTitle = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
         $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         $delay = (int) $delaySeconds;
+        $redirectTarget = 'login.php';
+        if ($redirectUrl) :
+            $redirectTarget = 'login.php?redirect_to=' . urlencode($redirectUrl);
+        endif;
         ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='UTF-8'>
-    <meta http-equiv='refresh' content='<?php echo $delay; ?>;url=login.php'>
+    <meta http-equiv='refresh' content='<?php echo $delay; ?>;url=<?php echo $redirectTarget; ?>'>
     <meta
         name='viewport'
         content='initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no'

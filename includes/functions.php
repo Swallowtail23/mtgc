@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.1
+Version:     28.2
 Date:        27/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -117,6 +117,43 @@ function cssVersionCheck()
             return "";
         endif;
     endif;
+}
+
+function normalizeRedirectUrl($url)
+{
+    if (!is_string($url) || $url === '') :
+        return null;
+    endif;
+
+    $parsed = parse_url($url);
+    if ($parsed === false) :
+        return null;
+    endif;
+
+    if (isset($parsed['scheme']) || isset($parsed['host'])) :
+        return null;
+    endif;
+
+    $path = $parsed['path'] ?? '';
+    if ($path === '') :
+        return null;
+    endif;
+
+    if ($path[0] !== '/') :
+        $path = '/' . ltrim($path, '/');
+    endif;
+
+    $query = $parsed['query'] ?? '';
+    $fragment = $parsed['fragment'] ?? '';
+    $final = $path;
+    if ($query !== '') :
+        $final .= '?' . $query;
+    endif;
+    if ($fragment !== '') :
+        $final .= '#' . $fragment;
+    endif;
+
+    return $final;
 }
 
 function setMtceMode($toggle): bool

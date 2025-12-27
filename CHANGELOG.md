@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Deck detail random draw list no longer inserts a spacer row below the header.
+- Login flow now preserves requested destinations after failed login attempts.
+- Deck detail random draw hover positioning now anchors to viewport in single-column layouts.
 
 ### Security
 -

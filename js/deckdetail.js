@@ -1,5 +1,5 @@
 /*
-Version:     2.55
+Version:     2.56
 Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -568,7 +568,9 @@ window.bindRandomCardEvents = function() {
                     var touch = e.originalEvent.changedTouches[0] || e.originalEvent.touches[0];
                     var customEvent = {
                         pageX: touch.pageX,
-                        pageY: touch.pageY
+                        pageY: touch.pageY,
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
                     };
                     showHoverDiv($link, customEvent); // Custom event with correct coordinates passed here
                     lastHoveredDiv = $('#' + $link.attr('id').replace('-taphover', ''));
@@ -666,14 +668,17 @@ window.bindRandomCardEvents = function() {
             return;
         }
 
-        if (e.pageX && e.pageY) {
+        if (typeof e.clientX === 'number' && typeof e.clientY === 'number') {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        } else if (e.pageX && e.pageY) {
             mouseX = e.pageX;
             mouseY = e.pageY;
         } else {
             // Handle cases where pageX and pageY are not directly available
             var touch = e.changedTouches ? e.changedTouches[0] : e.touches[0];
-            mouseX = touch.pageX;
-            mouseY = touch.pageY;
+            mouseX = touch.clientX || touch.pageX;
+            mouseY = touch.clientY || touch.pageY;
         }
 
         // Force reflow to ensure dimensions are calculated
@@ -694,16 +699,17 @@ window.bindRandomCardEvents = function() {
         var menuWidth = getMenuWidth();
         // Get the height of the header
         var headerHeight = getHeaderHeight();
+        var isFixed = $div.css('position') === 'fixed';
         // Adjust position to prevent overflow if necessary
         var leftPosition = mouseX - 150;
-        // Always show the image 80px below mouse click, even when scrolled
-        var topPosition = mouseY - headerHeight + 80;
+        // Always show the image 80px below pointer
+        var topPosition = mouseY + 80;
 
         // Ensure the div stays within the viewport and does not overlap the menu
         var viewportWidth = $(window).width();
         var viewportHeight = $(window).height();
-        var bottomViewable = viewportHeight + window.scrollY;
-        var realImgBottom = mouseY + 80 + divHeight;
+        var bottomViewable = viewportHeight;
+        var realImgBottom = topPosition + divHeight;
         console.log({
             mouseX: mouseX,
             mouseY: mouseY,
@@ -716,7 +722,8 @@ window.bindRandomCardEvents = function() {
             bottomViewable: bottomViewable,
             divWidth: divWidth,
             divHeight: divHeight,
-            realImgBottom: realImgBottom
+            realImgBottom: realImgBottom,
+            positionMode: isFixed ? 'fixed' : 'absolute'
         });
 
         // TopPosition is the distance from the top even if that is scrolled off the top of the view
@@ -734,9 +741,12 @@ window.bindRandomCardEvents = function() {
         if (realImgBottom + 10 > bottomViewable) {
             // the image won't fit in view
             topPosition = Math.max(
-                mouseY - divHeight - headerHeight - 80,
-                window.scrollY + 10
-            ); // 80px above mouse, unless < 10px from header
+                mouseY - divHeight - 20,
+                headerHeight + 10
+            );
+        }
+        if (topPosition < headerHeight + 10) {
+            topPosition = headerHeight + 10;
         }
 
         console.log({ leftPosition: leftPosition, topPosition: topPosition }); // Log the final positions
