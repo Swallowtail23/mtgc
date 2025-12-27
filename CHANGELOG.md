@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.3.1-dev] - Unreleased
+## [v0.4.0-dev] - Unreleased
 
 ### Added
 -
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Deck detail now uses a masonry-style sidebar layout with responsive stacking for notes, stats, and actions.
 - Deck detail moves Random Draw below the masonry group for tall, three-column layouts.
+- Deck detail adds 'hero' image section on wider screen displays (1890px+).
 - Deck detail uses a scrollable deck list when the masonry is side-by-side.
 - Admin panel now regenerates `css/style-min.css` before enabling minified CSS.
 
