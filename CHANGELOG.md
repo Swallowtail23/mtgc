@@ -2,10 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.4.2-dev] - Unreleased
-
-### Added
--
+## [v0.4.2] - 2025-12-26
 
 ### Changed
 - Service worker now shows an update toast to allow immediate refresh after new deployments.
@@ -14,12 +11,6 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Service worker now avoids caching HTML/fragments and uses safer asset/image caching to prevent blank renders.
 - Service worker now forces PHP requests to stay network-only for safety.
-
-### Security
--
-
-### Infrastructure
--
 
 ## [v0.4.1] - 2025-12-26
 
