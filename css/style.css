@@ -1,5 +1,5 @@
 /*
-Version:     1.6
+Version:     2.3
 Date:        27/12/25
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
@@ -2343,6 +2343,7 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     position: relative;
     text-decoration: none;
     z-index: calc(10 + var(--random-index, 0));
+    -webkit-tap-highlight-color: transparent;
 }
 
 #deck-random-draw-fragment .random-draw-card:hover
@@ -2365,6 +2366,11 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     z-index: 999;
 }
 
+#deck-random-draw-fragment .random-draw-card.is-hover-out .random-draw-card-img
+{
+    transition-delay: 0.2s;
+}
+
 #deck-random-draw-fragment .random-draw-card + .random-draw-card
 {
     margin-left: calc(-1 * var(--random-draw-overlap, 24px));
@@ -2377,7 +2383,8 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     height: clamp(170px, 15vw, 230px);
     border-radius: 6px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.35);
-    transition: transform 0.2s ease 0.3s, box-shadow 0.2s ease 0.3s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition-delay: 0s;
     transform-origin: bottom left;
 }
 
@@ -2398,14 +2405,33 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     box-shadow: 0 4px 10px rgba(0,0,0,0.35);
 }
 
+#deck-random-draw-fragment.is-hover-suppressed .random-draw-card:hover:not(.is-touch-active) .random-draw-card-img
+{
+    transform: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+
+#deck-random-draw-fragment.is-hover-suppressed .random-draw-card:hover:not(.is-touch-active)
+{
+    z-index: calc(10 + var(--random-index, 0));
+}
+
+#deck-random-draw-fragment.is-hover-suppressed .random-draw-card.is-rotated:hover:not(.is-touch-active) .random-draw-card-img
+{
+    transform: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+
 #deck-random-draw-fragment .random-draw-card:hover .random-draw-card-img
 {
+    transition-delay: 0.2s;
     transform: translateY(calc(-1 * var(--random-draw-hover-lift, 100px))) scale(2.5);
     box-shadow: 0 16px 24px rgba(0,0,0,0.5);
 }
 
 #deck-random-draw-fragment .random-draw-card.is-touch-active .random-draw-card-img
 {
+    transition-delay: 0s;
     transform: translateY(calc(-1 * var(--random-draw-hover-lift, 100px))) scale(2.5);
     box-shadow: 0 16px 24px rgba(0,0,0,0.5);
 }
@@ -2417,12 +2443,14 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
 
 #deck-random-draw-fragment .random-draw-card.is-rotated:hover .random-draw-card-img
 {
+    transition-delay: 0.2s;
     transform: translateY(calc(-1 * var(--random-draw-hover-lift, 100px))) rotate(90deg) scale(2.5);
     box-shadow: 0 16px 24px rgba(0,0,0,0.5);
 }
 
 #deck-random-draw-fragment .random-draw-card.is-rotated.is-touch-active .random-draw-card-img
 {
+    transition-delay: 0s;
     transform: translateY(calc(-1 * var(--random-draw-hover-lift, 100px))) rotate(90deg) scale(2.5);
     box-shadow: 0 16px 24px rgba(0,0,0,0.5);
 }

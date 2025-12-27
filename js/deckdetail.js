@@ -1,5 +1,5 @@
 /*
-Version:     2.48
+Version:     2.54
 Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -785,13 +785,26 @@ window.bindRandomDrawStripInteractions = function() {
     var touchActiveClass = 'is-touch-active';
     var touchDeactivatingClass = 'is-touch-deactivating';
     var hoverOutClass = 'is-hover-out';
+    var hoverSuppressClass = 'is-hover-suppressed';
     var touchDeactivateDelay = 250;
     var pendingActivateTimer = null;
+    var pendingTouchCard = null;
+    var touchSwitchTimer = null;
+    var hoverSuppressTimer = null;
+    var lastHoveredCard = null;
+    var isTouchSwitching = function() {
+        return !!pendingTouchCard || $(selector + '.' + touchDeactivatingClass).length > 0;
+    };
     var clearTouchPreview = function(reason) {
         var $active = $(selector + '.' + touchActiveClass);
         if ($active.length) {
             $active.addClass(touchDeactivatingClass);
         }
+        if (touchSwitchTimer) {
+            clearTimeout(touchSwitchTimer);
+            touchSwitchTimer = null;
+        }
+        pendingTouchCard = null;
         $(selector).removeClass(touchActiveClass).removeData('touch-ready');
         setTimeout(function() {
             $(selector).removeClass(touchDeactivatingClass);
@@ -809,21 +822,31 @@ window.bindRandomDrawStripInteractions = function() {
         var $card = $(this);
         setTouchMode(true);
         var wasActive = $card.hasClass(touchActiveClass);
-        var $otherActive = $(selector + '.' + touchActiveClass).not($card);
+        var $otherActive = $(selector + '.' + touchActiveClass + ',' + selector + '.' + touchDeactivatingClass).not($card);
         if (pendingActivateTimer) {
             clearTimeout(pendingActivateTimer);
             pendingActivateTimer = null;
+        }
+        if (touchSwitchTimer) {
+            clearTimeout(touchSwitchTimer);
+            touchSwitchTimer = null;
         }
         $card.removeClass(touchDeactivatingClass);
         if ($otherActive.length) {
             $otherActive.addClass(touchDeactivatingClass);
             $otherActive.removeClass(touchActiveClass).removeData('touch-ready');
-            pendingActivateTimer = setTimeout(function() {
-                $card.data('touch-ready', !wasActive);
-                if (!wasActive) {
-                    $card.addClass(touchActiveClass);
+            pendingTouchCard = $card;
+            touchSwitchTimer = setTimeout(function() {
+                $(selector).removeClass(touchDeactivatingClass);
+                if (!pendingTouchCard || !pendingTouchCard.length) {
+                    return;
                 }
-                $otherActive.removeClass(touchDeactivatingClass);
+                $(selector).not(pendingTouchCard).removeClass(touchActiveClass).removeData('touch-ready');
+                pendingTouchCard.data('touch-ready', !wasActive);
+                if (!wasActive) {
+                    pendingTouchCard.addClass(touchActiveClass);
+                }
+                pendingTouchCard = null;
             }, touchDeactivateDelay);
             return;
         }
@@ -843,6 +866,12 @@ window.bindRandomDrawStripInteractions = function() {
                 console.debug('[DEBUG]', 'Random draw click blocked until hover.');
                 e.preventDefault();
             }
+            return;
+        }
+
+        if ($fragment.hasClass('is-touch-mode') && isTouchSwitching()) {
+            console.debug('[DEBUG]', 'Random draw touch click blocked during switch.');
+            e.preventDefault();
             return;
         }
 
@@ -938,28 +967,49 @@ window.bindRandomDrawStripInteractions = function() {
         setTouchMode(true);
     }
 
-    if (hoverCapable) {
-        $document.off('mouseenter.deckdetailHoverOut mouseleave.deckdetailHoverOut', selector)
-            .on('mouseenter.deckdetailHoverOut', selector, function() {
-                var $card = $(this);
-                var timer = $card.data('hover-out-timer');
-                if (timer) {
-                    clearTimeout(timer);
-                    $card.removeData('hover-out-timer');
+    $document.off('pointerenter.deckdetailHoverOut pointerleave.deckdetailHoverOut', selector)
+        .on('pointerenter.deckdetailHoverOut', selector, function(e) {
+            if ($fragment.hasClass('is-touch-mode')) {
+                return;
+            }
+            if (e.pointerType && e.pointerType !== 'mouse') {
+                return;
+            }
+            var $card = $(this);
+            if (lastHoveredCard && lastHoveredCard[0] !== $card[0]) {
+                $fragment.addClass(hoverSuppressClass);
+                if (hoverSuppressTimer) {
+                    clearTimeout(hoverSuppressTimer);
                 }
-                $card.removeClass(hoverOutClass);
-            })
-            .on('mouseleave.deckdetailHoverOut', selector, function() {
-                var $card = $(this);
-                $card.addClass(hoverOutClass);
-                var timer = setTimeout(function() {
-                    $card.removeClass(hoverOutClass);
+                hoverSuppressTimer = setTimeout(function() {
+                    $fragment.removeClass(hoverSuppressClass);
                 }, 350);
-                $card.data('hover-out-timer', timer);
-            });
-    } else {
-        $document.off('mouseenter.deckdetailHoverOut mouseleave.deckdetailHoverOut', selector);
-    }
+            }
+            var timer = $card.data('hover-out-timer');
+            if (timer) {
+                clearTimeout(timer);
+                $card.removeData('hover-out-timer');
+            }
+            $card.removeClass(hoverOutClass);
+            lastHoveredCard = $card;
+        })
+        .on('pointerleave.deckdetailHoverOut', selector, function(e) {
+            if ($fragment.hasClass('is-touch-mode')) {
+                return;
+            }
+            if (e.pointerType && e.pointerType !== 'mouse') {
+                return;
+            }
+            var $card = $(this);
+            $card.addClass(hoverOutClass);
+            var timer = setTimeout(function() {
+                $card.removeClass(hoverOutClass);
+                if (lastHoveredCard && lastHoveredCard[0] === $card[0]) {
+                    lastHoveredCard = null;
+                }
+            }, 350);
+            $card.data('hover-out-timer', timer);
+        });
 };
 
 function applyFragmentResponse(response, options) {
