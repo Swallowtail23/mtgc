@@ -8,10 +8,13 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Deck detail now uses a masonry-style sidebar layout with responsive stacking for notes, stats, and actions.
+- Deck detail moves Random Draw below the masonry group for tall, three-column layouts.
+- Deck detail uses a scrollable deck list when the masonry is side-by-side.
+- Admin panel now regenerates `css/style-min.css` before enabling minified CSS.
 
 ### Fixed
--
+- Sets pagination now restores the correct page when navigating back in history.
 
 ### Security
 -

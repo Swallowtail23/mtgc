@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        24/12/25
+Version:     1.4
+Date:        26/12/25
 Name:        deckdetail_mana_data.php
 Purpose:     Deck detail mana/deck value calculations for fragments.
 Notes:       -
@@ -20,6 +20,19 @@ if (($main_total + $side_total > 0) and $decktype != 'Wishlist') :
     if (($main_total - $lands) != 0) :
         $avgcmc = round(($cmctotal / ($main_total - $lands)), 2);
     endif;
+
+    $w = (float) $w;
+    $u = (float) $u;
+    $b = (float) $b;
+    $r = (float) $r;
+    $g = (float) $g;
+    $c = (float) $c;
+    $gw = (float) $gw;
+    $gu = (float) $gu;
+    $gb = (float) $gb;
+    $gr = (float) $gr;
+    $gg = (float) $gg;
+    $gc = (float) $gc;
 
     $w_percent = $u_percent = $b_percent = $r_percent = $g_percent
         = $gw_percent = $gu_percent = $gb_percent = $gr_percent

@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.9
-Date:        21/12/25
+Version:     6.11
+Date:        27/12/25
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       {none}
@@ -169,6 +169,47 @@ function isPathWritable($path)
     return is_writable($directory);
 }
 
+function minifyCssFile(string $sourcePath, string $targetPath, \MTG\Core\Message $msg): array
+{
+    $context = "source={$sourcePath} target={$targetPath}";
+    $msg->logMessage('[DEBUG]', "CSS minify requested ({$context})");
+
+    if (!file_exists($sourcePath)) :
+        $msg->logMessage('[ERROR]', "CSS minify failed: source file missing ({$context})");
+        return ['ok' => false, 'message' => 'CSS source file not found.'];
+    endif;
+
+    if (!isPathWritable($targetPath)) :
+        $msg->logMessage('[ERROR]', "CSS minify failed: target not writable ({$context})");
+        return ['ok' => false, 'message' => 'CSS minified file is not writable by the web user.'];
+    endif;
+
+    $css = file_get_contents($sourcePath);
+    if ($css === false) :
+        $msg->logMessage('[ERROR]', "CSS minify failed: unable to read source ({$context})");
+        return ['ok' => false, 'message' => 'Unable to read CSS source file.'];
+    endif;
+
+    $minified = preg_replace('#/\\*.*?\\*/#s', '', $css);
+    if ($minified === null) :
+        $msg->logMessage('[ERROR]', 'CSS minify failed: comment strip error');
+        return ['ok' => false, 'message' => 'Unable to strip CSS comments.'];
+    endif;
+
+    $minified = preg_replace('/\\s+/', ' ', $minified);
+    $minified = preg_replace('/\\s*([{}:;,()\\[\\]])\\s*/', '$1', $minified);
+    $minified = preg_replace('/;}/', '}', $minified);
+    $minified = trim($minified);
+
+    if (file_put_contents($targetPath, $minified) === false) :
+        $msg->logMessage('[ERROR]', "CSS minify failed: unable to write target ({$context})");
+        return ['ok' => false, 'message' => 'Unable to write minified CSS file.'];
+    endif;
+
+    $msg->logMessage('[NOTICE]', "CSS minify completed ({$context})");
+    return ['ok' => true, 'message' => 'CSS minified file updated.'];
+}
+
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail) Admin result: " . $admin);
 if ($admin !== 1) :
@@ -199,13 +240,24 @@ $cssAction = filter_input(INPUT_POST, 'css_action', FILTER_UNSAFE_RAW);
 
 if ($cssAction !== null) :
     requireCsrfToken();
+    $cssActionError = false;
 
     if ($cssAction === 'unminify') :
         $msg->logMessage('[DEBUG]', 'Turning off minimised CSS...');
         $cssQuery = 0;
     elseif ($cssAction === 'minify') :
         $msg->logMessage('[DEBUG]', 'Turning on minimised CSS...');
-        $cssQuery = 1;
+        $minifyResult = minifyCssFile('../css/style.css', '../css/style-min.css', $msg);
+        if ($minifyResult['ok']) :
+            $cssQuery = 1;
+            $_SESSION['config_save_message'] = $minifyResult['message'];
+            $_SESSION['config_save_status'] = 'success';
+        else :
+            $cssQuery = null;
+            $cssActionError = true;
+            $_SESSION['config_save_message'] = $minifyResult['message'];
+            $_SESSION['config_save_status'] = 'error';
+        endif;
     else :
         $cssQuery = null;
     endif;
@@ -227,9 +279,11 @@ if ($cssAction !== null) :
         header('Location: admin.php');
         exit();
     else :
-        // Unknown action - treat as error and redirect
-        $_SESSION['config_save_message'] = 'Invalid CSS action.';
-        $_SESSION['config_save_status'] = 'error';
+        if (!$cssActionError) :
+            // Unknown action - treat as error and redirect
+            $_SESSION['config_save_message'] = 'Invalid CSS action.';
+            $_SESSION['config_save_status'] = 'error';
+        endif;
         header('Location: admin.php');
         exit();
     endif;

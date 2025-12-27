@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        24/12/25
+Version:     1.2
+Date:        26/12/25
 Name:        deckdetail_warnings.php
 Purpose:     Deck detail warnings fragment.
 Notes:       -
@@ -11,28 +11,34 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 ?>
-<div id="deck-warnings-fragment">
-    <?php
-    if ((in_array($decktype, $hundredcarddecks) and $total < 100)) :
-        $warnings = true;
-        $hundred_not_enough = true;
-    endif;
-    if ((in_array($decktype, $sixtycarddecks) and $total < 60)) :
-        $warnings = true;
-        $sixty_not_enough = true;
-    endif;
-    if ((in_array($decktype, $fiftycarddecks) and $total < 50)) :
-        $warnings = true;
-        $fifty_not_enough = true;
-    endif;
-    if ($illegal_cards == true) :
-        $warnings = true;
-    endif;
-    if ($deck_colour_mismatch == true) :
-        $warnings = true;
-    endif;
+<?php
+$hasWarnings = false;
+if ((in_array($decktype, $hundredcarddecks) and $total < 100)) :
+    $warnings = true;
+    $hundred_not_enough = true;
+endif;
+if ((in_array($decktype, $sixtycarddecks) and $total < 60)) :
+    $warnings = true;
+    $sixty_not_enough = true;
+endif;
+if ((in_array($decktype, $fiftycarddecks) and $total < 50)) :
+    $warnings = true;
+    $fifty_not_enough = true;
+endif;
+if ($illegal_cards == true) :
+    $warnings = true;
+endif;
+if ($deck_colour_mismatch == true) :
+    $warnings = true;
+endif;
 
-    if (isset($warnings)) :
+if (isset($warnings)) :
+    $hasWarnings = true;
+endif;
+?>
+<div id="deck-warnings-fragment" data-has-content="<?php echo $hasWarnings ? '1' : '0'; ?>">
+    <?php
+    if ($hasWarnings) :
         echo "<h4>&nbsp;Warnings</h4>";
         echo "<ul style='margin-right: 20px;'>";
         if (isset($secondcommandername)) :
