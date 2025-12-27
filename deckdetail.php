@@ -250,11 +250,11 @@ m13,12,"Fog",en,1,0,0,{id}
                 <div id="decknotesdiv">
             <?php include 'includes/fragments/deckdetail_warnings.php'; ?>
             <form id="updatenotesform" action="?" method="POST">
-                <h4>&nbsp;Notes</h4>
+                <h4>Notes</h4>
                 <textarea class='decknotes textinput' id="notes" name='newnotes' rows='2' cols='40'>
 <?php echo $notes; ?></textarea>
                 <?php if ($decktype != 'Wishlist') :  ?>
-                    <h4>&nbsp;Sideboard notes</h4>
+                    <h4>Sideboard notes</h4>
                     <textarea class='decknotes textinput' id="sidenotes" name='newsidenotes' rows='2' cols='40'>
                     <?php echo $sidenotes; ?></textarea><br>
                 <?php endif;  ?>

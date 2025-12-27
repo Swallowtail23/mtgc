@@ -24,7 +24,7 @@ $cmcCounts = $cmc[0] . ',' . $cmc[1] . ',' . $cmc[2] . ',' . $cmc[3] . ',' . $cm
     <?php
     if ($hasManaValue) :
         ?>
-        <h4>&nbsp;Mana value</h4>
+        <h4>Mana value</h4>
         <div id="barchart_material" style="width: 85%; height: 150px;"></div>
         <?php
         if ($avgcmc !== null) :

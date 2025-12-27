@@ -39,7 +39,7 @@ endif;
 <div id="deck-warnings-fragment" data-has-content="<?php echo $hasWarnings ? '1' : '0'; ?>">
     <?php
     if ($hasWarnings) :
-        echo "<h4>&nbsp;Warnings</h4>";
+        echo "<h4>Warnings</h4>";
         echo "<ul style='margin-right: 20px;'>";
         if (isset($secondcommandername)) :
             echo "<li>You have a second commander ('<i>$secondcommandername</i>') - check rules and "

@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     2.2
+Version:     2.3
 Date:        27/12/25
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -143,7 +143,6 @@ foreach ($drawn_cards as $card) : ?>
     </div>
 <?php endforeach;
 echo "<table>";
-echo "<tr><td>&nbsp;</td></tr>";
 foreach ($drawn_cards as $card) :
     echo "<tr><td class='hoverTD'>{$card['randomref']}: "
         . "<a class='taphover' id='random-{$card['randomref']}-taphover' "
