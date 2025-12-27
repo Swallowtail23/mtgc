@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 - Admin panel now regenerates `css/style-min.css` before enabling minified CSS.
 
 ### Fixed
--
+- Sets pagination now restores the correct page when navigating back in history.
 
 ### Security
 -

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.7
-Date:        21/12/25
+Version:     4.8
+Date:        27/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -143,14 +143,72 @@ endif;
             }
         }
 
-        function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage) {
+        var currentPage = <?php echo (int) $page; ?>;
+        var currentFilter = '';
+
+        function normalizeFilter(value) {
+            var trimmed = (value || '').trim();
+            if (trimmed.length > 0 && trimmed.length < 3) {
+                return '';
+            }
+            return trimmed;
+        }
+
+        function buildSetsUrl(pageNumber, filterValue) {
+            var params = [];
+            if (pageNumber > 1) {
+                params.push('page=' + encodeURIComponent(pageNumber));
+            }
+            if (filterValue) {
+                params.push('filter=' + encodeURIComponent(filterValue));
+            }
+            if (!params.length) {
+                return 'sets.php';
+            }
+            return 'sets.php?' + params.join('&');
+        }
+
+        function updateHistoryState(pageNumber, filterValue, replace) {
+            if (!window.history || !window.history.pushState) {
+                return;
+            }
+            var state = { page: pageNumber, filter: filterValue };
+            var url = buildSetsUrl(pageNumber, filterValue);
+            if (replace) {
+                window.history.replaceState(state, '', url);
+            } else {
+                window.history.pushState(state, '', url);
+            }
+            console.debug('[DEBUG]', 'Sets pagination state updated', state);
+        }
+
+        function getStateFromUrl() {
+            var params = new URLSearchParams(window.location.search);
+            var pageParam = parseInt(params.get('page'), 10);
+            var pageNumber = isNaN(pageParam) ? 1 : Math.max(1, pageParam);
+            var filterValue = params.get('filter') || '';
+            return {
+                page: pageNumber,
+                filter: normalizeFilter(filterValue)
+            };
+        }
+
+        function fetchAndDisplaySets(filterValue, pageNumber, setsPerPage, options) {
+            var opts = options || {};
+            var normalizedFilter = normalizeFilter(filterValue);
+            var normalizedPage = Math.max(1, parseInt(pageNumber, 10) || 1);
+            currentPage = normalizedPage;
+            currentFilter = normalizedFilter;
+            if (opts.updateHistory) {
+                updateHistoryState(currentPage, currentFilter, opts.replaceHistory === true);
+            }
             var offset = (pageNumber * setsPerPage) - (setsPerPage);
             offset = Math.max(0, offset);
 
             $.ajax({
                 type: 'GET',
                 url: 'ajax/ajaxsets.php',
-                data: { filter: filterValue, setsPerPage: setsPerPage, offset: offset },
+                data: { filter: normalizedFilter, setsPerPage: setsPerPage, offset: offset },
                 dataType: 'json',
                 success: function(response) {
                     if (response.numResults === 0) {
@@ -194,7 +252,7 @@ endif;
 
         function loadPage(pageNumber, setsPerPage) {
             var filterValue = document.getElementById('setCodeFilter').value;
-            fetchAndDisplaySets(filterValue, pageNumber, setsPerPage);
+            fetchAndDisplaySets(filterValue, pageNumber, setsPerPage, { updateHistory: true });
         }
 
         var debounceTimer;
@@ -207,7 +265,7 @@ endif;
 
             debounceTimer = setTimeout(function() {
                 if (filterValue.length >= 3 || filterValue.length === 0) {
-                    fetchAndDisplaySets(filterValue, 1, setsPerPage);
+                    fetchAndDisplaySets(filterValue, 1, setsPerPage, { updateHistory: true });
                 }
             }, 300);
         }
@@ -304,6 +362,29 @@ endif;
 
         $(document).ready(function() {
             $('#setCodeFilter').focus();
+            var initialState = getStateFromUrl();
+            var setsPerPage = <?php echo $setsPerPage; ?>;
+            if (initialState.filter) {
+                $('#setCodeFilter').val(initialState.filter);
+            }
+            if (initialState.page !== currentPage || initialState.filter) {
+                fetchAndDisplaySets(
+                    initialState.filter,
+                    initialState.page,
+                    setsPerPage,
+                    { updateHistory: true, replaceHistory: true }
+                );
+            } else {
+                updateHistoryState(currentPage, currentFilter, true);
+            }
+            window.addEventListener('popstate', function(e) {
+                var state = e.state || getStateFromUrl();
+                var pageNumber = state.page || 1;
+                var filterValue = normalizeFilter(state.filter || '');
+                $('#setCodeFilter').val(filterValue);
+                console.debug('[DEBUG]', 'Sets pagination state restored', state);
+                fetchAndDisplaySets(filterValue, pageNumber, setsPerPage, { updateHistory: false });
+            });
         });
     </script>
 </head>
