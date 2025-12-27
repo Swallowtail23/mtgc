@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.12
+Version:     6.13
 Date:        27/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -1483,6 +1483,11 @@ require('../includes/menu.php');
                                                             echo ' selected';
                                                         endif;?>
                                                     >3 - Debug</option>
+                                                    <option value="4"
+                                                        <?php if ($logLevelIni == 4) :
+                                                            echo ' selected';
+                                                        endif;?>
+                                                    >4 - Bulk diagnostic</option>
                                                 </select>
                                             </label>
                                         </div>
