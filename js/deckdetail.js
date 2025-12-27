@@ -1,5 +1,5 @@
 /*
-Version:     2.23
+Version:     2.48
 Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -24,6 +24,7 @@ var randomDrawRefs = [];
 var csrfToken = '';
 var lastAppliedVersion = 0;
 var fragmentTargets = {};
+var decksideHeroAutoLoaded = false;
 var deckSectionState = {
     creatures: true,
     instantsorcery: true,
@@ -93,10 +94,52 @@ function preloadFirstDeckImage() {
     var img = new Image();
     img.src = src;
     var heroImg = document.getElementById('deckside-hero-img');
-    if (heroImg && window.innerWidth >= 2160) {
+    if (heroImg && window.innerWidth >= 1890) {
         setDecksideHeroRotatable(false);
-        setDecksideHeroImage(src);
+        var firstLink = $firstImg.closest('a').attr('href') || '#';
+        setDecksideHeroLink(firstLink);
+        if (src && src.indexOf('/images/back.jpg') === -1) {
+            setDecksideHeroImage(src);
+            decksideHeroAutoLoaded = true;
+            if (window.console && console.debug) {
+                console.debug('[DEBUG] Deckside hero auto-loaded from first deck image.');
+            }
+        } else {
+            $firstImg.off('load.decksideAuto').on('load.decksideAuto', function () {
+                if (decksideHeroAutoLoaded) {
+                    return;
+                }
+                var loadedSrc = $firstImg.data('front-src') || this.src;
+                if (!loadedSrc || loadedSrc.indexOf('/images/back.jpg') !== -1) {
+                    return;
+                }
+                setDecksideHeroImage(loadedSrc);
+                setDecksideHeroLink(firstLink);
+                decksideHeroAutoLoaded = true;
+                if (window.console && console.debug) {
+                    console.debug('[DEBUG] Deckside hero auto-loaded after async image update.');
+                }
+            });
+        }
     }
+}
+
+function maybeLoadDecksideHeroOnResize() {
+    if (window.innerWidth < 1890) {
+        return;
+    }
+    if (decksideHeroAutoLoaded) {
+        return;
+    }
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (!heroImg) {
+        return;
+    }
+    if (heroImg.src && heroImg.src.indexOf('/images/back.jpg') === -1) {
+        decksideHeroAutoLoaded = true;
+        return;
+    }
+    preloadFirstDeckImage();
 }
 
 function setDecksideHeroRotatable(isRotatable) {
@@ -172,6 +215,21 @@ function setDecksideHeroImage(src) {
     if (heroImg.complete) {
         updateDecksideHeroBackground(heroImg.src);
         heroImg.classList.add('is-visible');
+    }
+}
+
+function setDecksideHeroLink(href) {
+    var heroLink = document.getElementById('deckside-hero-link');
+    if (!heroLink) {
+        return;
+    }
+    var safeHref = typeof href === 'string' && href.length ? href : '#';
+    if (heroLink.getAttribute('href') === safeHref) {
+        return;
+    }
+    heroLink.setAttribute('href', safeHref);
+    if (window.console && console.log) {
+        console.log('[DEBUG] Deckside hero link updated', { href: safeHref });
     }
 }
 
@@ -375,6 +433,26 @@ window.bindRandomCardEvents = function() {
     var touchDetected = false;
     var hoverTimeout;
     var lastHoveredDiv = null;
+    var documentTouchHandler = null;
+    var documentClickHandler = null;
+    var windowScrollHandler = null;
+
+    function hideTouchHoverPreview(reason) {
+        if (lastHoveredDiv && lastHoveredDiv.is(':visible')) {
+            console.debug('[DEBUG]', 'Touch hover cleared.', reason);
+            lastHoveredDiv.hide();
+        }
+    }
+
+    function clearTouchHoverOnInteraction(e, reason) {
+        if (!touchDetected) {
+            return;
+        }
+        if ($(e.target).closest('td.hoverTD').length) {
+            return;
+        }
+        hideTouchHoverPreview(reason);
+    }
 
     function setupNonTouchEvents() {
         $('td').on('mouseenter', function(e) {
@@ -496,6 +574,30 @@ window.bindRandomCardEvents = function() {
                 e.preventDefault();
             }
         });
+
+        if (documentTouchHandler) {
+            document.removeEventListener('touchstart', documentTouchHandler, true);
+        }
+        if (documentClickHandler) {
+            document.removeEventListener('click', documentClickHandler, true);
+        }
+        if (windowScrollHandler) {
+            window.removeEventListener('scroll', windowScrollHandler, { passive: true });
+        }
+
+        documentTouchHandler = function(e) {
+            clearTouchHoverOnInteraction(e, 'document touch');
+        };
+        documentClickHandler = function(e) {
+            clearTouchHoverOnInteraction(e, 'document click');
+        };
+        windowScrollHandler = function() {
+            hideTouchHoverPreview('scroll');
+        };
+
+        document.addEventListener('touchstart', documentTouchHandler, true);
+        document.addEventListener('click', documentClickHandler, true);
+        window.addEventListener('scroll', windowScrollHandler, { passive: true });
     }
 
     function getMenuWidth() {
@@ -533,14 +635,15 @@ window.bindRandomCardEvents = function() {
         if (cardId) {
             enqueueDeckImage(cardId, true);
         }
-    var decksideHero = document.getElementById('deckside-hero');
-    if (decksideHero && window.innerWidth >= 2160) {
-        var $img = $div.find('img.deckcardimg').first();
-        setDecksideHeroRotatable($div.hasClass('splitfloat'));
-        var heroSrc = $img.attr('src') || $img.data('front-src');
-        if (heroSrc) {
-            setDecksideHeroImage(heroSrc);
-        }
+        var decksideHero = document.getElementById('deckside-hero');
+        if (decksideHero && window.innerWidth >= 1890) {
+            var $img = $div.find('img.deckcardimg').first();
+            setDecksideHeroRotatable($div.hasClass('splitfloat'));
+            var heroSrc = $img.attr('src') || $img.data('front-src');
+            if (heroSrc) {
+                setDecksideHeroImage(heroSrc);
+            }
+            setDecksideHeroLink($link.attr('href') || '#');
             $img.off('load.decksideHero').on('load.decksideHero', function () {
                 setDecksideHeroImage(this.src);
             });
@@ -654,6 +757,18 @@ window.bindRandomCardEvents = function() {
 
         // Remove touch-specific event handlers
         $('td.hoverTD').off('touchstart touchmove touchend');
+        if (documentTouchHandler) {
+            document.removeEventListener('touchstart', documentTouchHandler, true);
+        }
+        if (documentClickHandler) {
+            document.removeEventListener('click', documentClickHandler, true);
+        }
+        if (windowScrollHandler) {
+            window.removeEventListener('scroll', windowScrollHandler, { passive: true });
+        }
+        documentTouchHandler = null;
+        documentClickHandler = null;
+        windowScrollHandler = null;
 
         // Remove no-hover class on mouse events
         $('tr.deckrow').removeClass('no-hover');
@@ -661,6 +776,190 @@ window.bindRandomCardEvents = function() {
         // Set up non-touch events again
         setupNonTouchEvents();
     });
+};
+
+window.bindRandomDrawStripInteractions = function() {
+    var selector = '#deck-random-draw-fragment .random-draw-card';
+    var $fragment = $('#deck-random-draw-fragment');
+    var $document = $(document);
+    var touchActiveClass = 'is-touch-active';
+    var touchDeactivatingClass = 'is-touch-deactivating';
+    var hoverOutClass = 'is-hover-out';
+    var touchDeactivateDelay = 250;
+    var pendingActivateTimer = null;
+    var clearTouchPreview = function(reason) {
+        var $active = $(selector + '.' + touchActiveClass);
+        if ($active.length) {
+            $active.addClass(touchDeactivatingClass);
+        }
+        $(selector).removeClass(touchActiveClass).removeData('touch-ready');
+        setTimeout(function() {
+            $(selector).removeClass(touchDeactivatingClass);
+        }, touchDeactivateDelay);
+        console.debug('[DEBUG]', 'Random draw touch preview cleared.', reason);
+    };
+    var setTouchMode = function(isTouch) {
+        if (!$fragment.length) {
+            return;
+        }
+        $fragment.toggleClass('is-touch-mode', isTouch);
+    };
+
+    $document.off('touchstart.deckdetail', selector).on('touchstart.deckdetail', selector, function () {
+        var $card = $(this);
+        setTouchMode(true);
+        var wasActive = $card.hasClass(touchActiveClass);
+        var $otherActive = $(selector + '.' + touchActiveClass).not($card);
+        if (pendingActivateTimer) {
+            clearTimeout(pendingActivateTimer);
+            pendingActivateTimer = null;
+        }
+        $card.removeClass(touchDeactivatingClass);
+        if ($otherActive.length) {
+            $otherActive.addClass(touchDeactivatingClass);
+            $otherActive.removeClass(touchActiveClass).removeData('touch-ready');
+            pendingActivateTimer = setTimeout(function() {
+                $card.data('touch-ready', !wasActive);
+                if (!wasActive) {
+                    $card.addClass(touchActiveClass);
+                }
+                $otherActive.removeClass(touchDeactivatingClass);
+            }, touchDeactivateDelay);
+            return;
+        }
+        $(selector).not($card).removeClass(touchActiveClass).removeClass(touchDeactivatingClass).removeData('touch-ready');
+        $card.data('touch-ready', !wasActive);
+        if (!wasActive) {
+            $card.addClass(touchActiveClass);
+        }
+    });
+
+    $document.off('click.deckdetail', selector).on('click.deckdetail', selector, function (e) {
+        var $card = $(this);
+        var isHoverCapable = !window.matchMedia
+            || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        if (isHoverCapable) {
+            if (!$card.is(':hover') && !$card.is(':focus')) {
+                console.debug('[DEBUG]', 'Random draw click blocked until hover.');
+                e.preventDefault();
+            }
+            return;
+        }
+
+        if ($card.data('touch-ready') === true) {
+            console.debug('[DEBUG]', 'Random draw touch preview activated.');
+            e.preventDefault();
+            $card.data('touch-ready', false);
+            return;
+        }
+
+        if (!$card.hasClass(touchActiveClass)) {
+            console.debug('[DEBUG]', 'Random draw touch blocked until preview is active.');
+            e.preventDefault();
+            $(selector).removeClass(touchActiveClass).removeData('touch-ready');
+            $card.addClass(touchActiveClass);
+        }
+    });
+
+    $document.off('touchstart.deckdetail', '#deck-random-draw-fragment').on(
+        'touchstart.deckdetail',
+        '#deck-random-draw-fragment',
+        function (e) {
+            if ($(e.target).closest(selector).length) {
+                return;
+            }
+            clearTouchPreview('fragment touch');
+        }
+    );
+
+    document.removeEventListener('pointerdown', window.mtgRandomDrawPointerReset, true);
+    document.removeEventListener('pointerdown', window.mtgRandomDrawMouseModeHandler, true);
+    document.removeEventListener('touchstart', window.mtgRandomDrawTouchReset, true);
+    document.removeEventListener('touchend', window.mtgRandomDrawTouchEndReset, true);
+    document.removeEventListener('click', window.mtgRandomDrawClickReset, true);
+    window.removeEventListener('scroll', window.mtgRandomDrawScrollReset, { passive: true });
+
+    window.mtgRandomDrawPointerReset = function(e) {
+        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+            return;
+        }
+        clearTouchPreview('document pointer');
+    };
+
+    window.mtgRandomDrawTouchReset = function(e) {
+        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+            return;
+        }
+        clearTouchPreview('document touch');
+    };
+
+    window.mtgRandomDrawTouchEndReset = function(e) {
+        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+            return;
+        }
+        clearTouchPreview('document touchend');
+    };
+
+    window.mtgRandomDrawClickReset = function(e) {
+        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+            return;
+        }
+        clearTouchPreview('document click');
+    };
+
+    window.mtgRandomDrawScrollReset = function() {
+        clearTouchPreview('scroll');
+    };
+
+    if (window.mtgRandomDrawTouchModeHandler) {
+        document.removeEventListener('touchstart', window.mtgRandomDrawTouchModeHandler, true);
+    }
+    window.mtgRandomDrawTouchModeHandler = function() {
+        setTouchMode(true);
+    };
+
+    document.addEventListener('pointerdown', window.mtgRandomDrawPointerReset, true);
+    document.addEventListener('touchstart', window.mtgRandomDrawTouchReset, true);
+    document.addEventListener('touchend', window.mtgRandomDrawTouchEndReset, true);
+    document.addEventListener('click', window.mtgRandomDrawClickReset, true);
+    window.addEventListener('scroll', window.mtgRandomDrawScrollReset, { passive: true });
+    document.addEventListener('touchstart', window.mtgRandomDrawTouchModeHandler, true);
+    window.mtgRandomDrawMouseModeHandler = function(e) {
+        if (e && e.pointerType === 'mouse') {
+            setTouchMode(false);
+        }
+    };
+    document.addEventListener('pointerdown', window.mtgRandomDrawMouseModeHandler, true);
+
+    var hoverCapable = !window.matchMedia
+        || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (!hoverCapable) {
+        setTouchMode(true);
+    }
+
+    if (hoverCapable) {
+        $document.off('mouseenter.deckdetailHoverOut mouseleave.deckdetailHoverOut', selector)
+            .on('mouseenter.deckdetailHoverOut', selector, function() {
+                var $card = $(this);
+                var timer = $card.data('hover-out-timer');
+                if (timer) {
+                    clearTimeout(timer);
+                    $card.removeData('hover-out-timer');
+                }
+                $card.removeClass(hoverOutClass);
+            })
+            .on('mouseleave.deckdetailHoverOut', selector, function() {
+                var $card = $(this);
+                $card.addClass(hoverOutClass);
+                var timer = setTimeout(function() {
+                    $card.removeClass(hoverOutClass);
+                }, 350);
+                $card.data('hover-out-timer', timer);
+            });
+    } else {
+        $document.off('mouseenter.deckdetailHoverOut mouseleave.deckdetailHoverOut', selector);
+    }
 };
 
 function applyFragmentResponse(response, options) {
@@ -702,6 +1001,9 @@ function applyFragmentResponse(response, options) {
         updateRandomDrawPlacement();
         if (window.bindRandomCardEvents) {
             window.bindRandomCardEvents();
+        }
+        if (window.bindRandomDrawStripInteractions) {
+            window.bindRandomDrawStripInteractions();
         }
         bindDeckDetailHandlers();
         if (refreshImages && window.refreshCardImagesAsync) {
@@ -805,6 +1107,9 @@ function refreshTable() {
             }
             if (window.bindRandomCardEvents) {
                 window.bindRandomCardEvents();
+            }
+            if (window.bindRandomDrawStripInteractions) {
+                window.bindRandomDrawStripInteractions();
             }
             window.dispatchEvent(new Event('resize'));
         }
@@ -1929,6 +2234,33 @@ function refreshDeckFragments(options) {
         });
     }
 
+    function showDeckdetailWidthBanner() {
+        var banner = document.getElementById('deckdetail-width-banner');
+        if (!banner) {
+            return;
+        }
+        var width = document.documentElement.clientWidth || window.innerWidth;
+        var layout = document.getElementById('deckdetail-layout');
+        var columns = 'unknown';
+        if (layout && window.getComputedStyle) {
+            columns = window.getComputedStyle(layout).gridTemplateColumns || 'unknown';
+        }
+        banner.textContent = 'Viewable width: ' + width + 'px';
+    }
+
+    window.showDeckdetailWidthBanner = showDeckdetailWidthBanner;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showDeckdetailWidthBanner);
+    } else {
+        showDeckdetailWidthBanner();
+    }
+    window.addEventListener('load', showDeckdetailWidthBanner);
+    document.addEventListener('touchstart', showDeckdetailWidthBanner, { once: true, passive: true });
+    document.addEventListener('touchend', showDeckdetailWidthBanner, { once: true, passive: true });
+    document.addEventListener('pointerdown', showDeckdetailWidthBanner, { once: true });
+    document.addEventListener('click', showDeckdetailWidthBanner, { once: true });
+
     $(document).ready(function () {
         bindDeckDetailHandlers();
         renderManaValueChart();
@@ -1965,9 +2297,11 @@ function refreshDeckFragments(options) {
 
         $(window).on('resize', function () {
             updateRandomDrawPlacement();
+            maybeLoadDecksideHeroOnResize();
         });
 
         window.bindRandomCardEvents();
+        window.bindRandomDrawStripInteractions();
         var notesTextarea = $('#notes');
         var sidenotesTextarea = $('#sidenotes');
         var saveButton = $('.save_icon');
