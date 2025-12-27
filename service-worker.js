@@ -12,7 +12,7 @@ To do:       -
 'use strict';
 
 const DEBUG = false;
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = 'mtg-static-' + CACHE_VERSION;
 const IMAGE_CACHE = 'mtg-images-' + CACHE_VERSION;
 const IMAGE_CACHE_MAX_ITEMS = 200;

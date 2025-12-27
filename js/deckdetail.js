@@ -1,5 +1,5 @@
 /*
-Version:     2.54
+Version:     2.55
 Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -251,7 +251,17 @@ function updateRandomDrawPlacement() {
         return;
     }
     var columnCount = parseInt(window.getComputedStyle(deckside).columnCount, 10);
-    var shouldDock = columnCount >= 3 && window.innerHeight > 1100;
+    if (Number.isNaN(columnCount)) {
+        columnCount = 0;
+    }
+    var isNarrowViewport = window.matchMedia
+        && window.matchMedia('(max-width: 1759px)').matches;
+    var shouldDock = !isNarrowViewport && columnCount >= 3 && window.innerHeight > 1100;
+    console.debug('[DEBUG]', 'Random draw placement updated.', {
+        columnCount: columnCount,
+        isNarrowViewport: isNarrowViewport,
+        shouldDock: shouldDock
+    });
     if (shouldDock) {
         $footer.show();
         if (!$fragment.parent().is($footer)) {
@@ -634,6 +644,11 @@ window.bindRandomCardEvents = function() {
         var cardId = $div.find('img[data-cardid]').data('cardid') || $link.data('cardid');
         if (cardId) {
             enqueueDeckImage(cardId, true);
+        }
+        if ($div.length && $div.data('mtgDetached') !== true) {
+            $div.appendTo('body');
+            $div.data('mtgDetached', true);
+            console.debug('[DEBUG]', 'Hover preview detached to body.', id);
         }
         var decksideHero = document.getElementById('deckside-hero');
         if (decksideHero && window.innerWidth >= 1890) {

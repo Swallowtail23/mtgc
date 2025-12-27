@@ -28,6 +28,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Service worker now avoids caching HTML/fragments and uses safer asset/image caching to prevent blank renders.
 - Service worker now forces PHP requests to stay network-only for safety.
+- Deck detail random draw hover now uses fixed-position previews to avoid masonry layout shifts.
+- Deck detail random draw hover now detaches previews from masonry flow to restore hover behavior.
 
 ## [v0.4.1] - 2025-12-26
 

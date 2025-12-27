@@ -1,5 +1,5 @@
 /*
-Version:     2.3
+Version:     2.5
 Date:        27/12/25
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
@@ -2337,6 +2337,12 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     transform: translateY(0);
 }
 
+#deck-random-draw-fragment.is-inline .random-draw-content,
+#deck-random-draw-fragment.is-inline .random-draw-content.is-visible
+{
+    transform: none;
+}
+
 #deck-random-draw-fragment .random-draw-card
 {
     display: block;
@@ -2877,7 +2883,7 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
 .randomcardimgdiv
 {
     display:none;
-    position: absolute;
+    position: fixed;
     z-index: 100000;
 }
 .splitfloat
