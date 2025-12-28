@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.27
+Version:     14.29
 Date:        28/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -1298,11 +1298,33 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         console.debug('[SW]', message, data);
                     }
 
+                    function getSwCacheVersion(scriptUrl) {
+                        if (!scriptUrl) {
+                            return 'unknown';
+                        }
+                        try {
+                            var parsed = new URL(scriptUrl, window.location.origin);
+                            return parsed.searchParams.get('v') || 'unknown';
+                        } catch (err) {
+                            return 'unknown';
+                        }
+                    }
+
                     function showSwUpdateToast(registration) {
                         if (document.getElementById('swUpdateToast')) {
                             swLog('Update toast already visible');
                             return;
                         }
+
+                        var currentVersion = getSwCacheVersion(
+                            (navigator.serviceWorker.controller && navigator.serviceWorker.controller.scriptURL)
+                                || (registration.active && registration.active.scriptURL)
+                        );
+                        var newVersion = getSwCacheVersion(
+                            (registration.waiting && registration.waiting.scriptURL)
+                                || (registration.installing && registration.installing.scriptURL)
+                        );
+                        var versionLabel = currentVersion + ' → ' + newVersion;
 
                         swLog('Showing update toast');
                         var toast = document.createElement('div');
@@ -1327,7 +1349,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         toast.style.maxWidth = '90%';
 
                         var text = document.createElement('span');
-                        text.textContent = 'Update available. Refresh to get the latest version.';
+                        text.textContent = 'Update available (cache ' + versionLabel
+                            + '). Refresh to get the latest version.';
 
                         var refreshBtn = document.createElement('button');
                         refreshBtn.type = 'button';

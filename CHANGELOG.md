@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Async image refresh now briefly highlights refreshed images via a CSS class.
 - Service worker version now loads from `VERSION` in `includes/ini.php` and is shared across pages.
+- Service worker update toast now shows old/new cache versions.
 
 ### Fixed
 - Index async image refresh now triggers after IAS appends new results and skips already-seen cards.
