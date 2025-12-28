@@ -1,5 +1,5 @@
 /*
-Version:     2.56
+Version:     2.57
 Date:        27/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -803,6 +803,19 @@ window.bindRandomCardEvents = function() {
     });
 };
 
+function cleanupRandomDrawDetachedPreviews(reason) {
+    var $detached = $('.randomcardimgdiv').filter(function () {
+        return $(this).closest('#deck-random-draw-fragment').length === 0;
+    });
+    if ($detached.length) {
+        console.debug('[DEBUG]', 'Random draw detached previews removed.', {
+            count: $detached.length,
+            reason: reason || 'unknown'
+        });
+        $detached.remove();
+    }
+}
+
 window.bindRandomDrawStripInteractions = function() {
     var selector = '#deck-random-draw-fragment .random-draw-card';
     var $fragment = $('#deck-random-draw-fragment');
@@ -1072,6 +1085,7 @@ function applyFragmentResponse(response, options) {
             }
             $('#' + targetId).replaceWith(response.fragments[fragmentKey]);
         });
+        cleanupRandomDrawDetachedPreviews('fragment update');
         applyDeckSectionState();
         updateRandomDrawPlacement();
         if (window.bindRandomCardEvents) {
@@ -1171,6 +1185,7 @@ function refreshTable() {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
+            cleanupRandomDrawDetachedPreviews('random draw refresh');
             document.getElementById('table-container').innerHTML = xhr.responseText;
             var $randomContent = $('#deck-random-draw-fragment .random-draw-content');
             if ($randomContent.length) {

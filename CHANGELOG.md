@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Deck detail random draw hover positioning now anchors to viewport in single-column layouts.
 - Login form now carries redirect targets through the trust-device step.
 - Trust device flow now recovers redirect targets when the flow flag is missing.
+- Deck detail random draw text hover previews now refresh after new draws.
 
 ### Security
 -
