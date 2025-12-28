@@ -2,23 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.4.3-dev] - Unreleased
+## [v0.4.3] - 2025-12-27
 
 ### Added
 - Added loglevel 4 bulk diagnostic mode to emit verbose Scryfall bulk row diagnostics.
 
-### Changed
--
-
 ### Fixed
 - Login flow now preserves requested destinations across failed logins and trust-device prompts.
 - Deck detail random draw spacing and hover behavior corrected for single-column layouts and new draws.
-
-### Security
--
-
-### Infrastructure
--
 
 ## [v0.4.2] - 2025-12-26
 
