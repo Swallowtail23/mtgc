@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.2
-Date:        27/12/25
+Version:     14.17
+Date:        28/12/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -349,6 +349,10 @@ if (isset($qtyresults)) :
     if ($qtyresults > ($page * $perpage)) :
         $next = $page + 1;
     endif;
+    if ($page > 1) :
+        $prev = $page - 1;
+        $msg->logMessage('[DEBUG]', "Previous page set to $prev");
+    endif;
     // Work out number of results, and pages
     if (($qtyresults - $start_from) <= $perpage) :
         $lastresult = $qtyresults;
@@ -535,6 +539,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     let ias = new InfiniteAjaxScroll('.wrap', {
                         item: '.item', // single items
                         next: '.next',
+                        prev: '.prev',
                         pagination: '.pagination', // page navigation
                         negativeMargin: 250,
                         spinner: {
@@ -547,6 +552,9 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 element.style.opacity = '0';
                             }
                         }
+                    });
+                    ias.on('load', function (event) {
+                        event.nocache = true;
                     });
                     ias.on('page', (event) => {
                         $(".top").show(200);
@@ -576,11 +584,35 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             <script type="text/javascript">
                 $(document).ready(function () {
                     document.body.style.cursor='default';
-                    $(".top").hide();
-                    var UrlVars = getUrlVars();
-                    if (UrlVars["page"] > 1) {
-                        $(".top").show();
+                    var $topButton = $(".top");
+                    function getPageNumber(url) {
+                        if (!url) {
+                            return 1;
+                        }
+                        var match = url.match(/(?:\?|&)page=(\d+)/);
+                        if (!match) {
+                            return 1;
+                        }
+                        var pageValue = parseInt(match[1], 10);
+                        return isNaN(pageValue) ? 1 : pageValue;
                     }
+                    function updateTopButton() {
+                        var pageValue = getPageNumber(window.location.href);
+                        if (pageValue <= 1) {
+                            $topButton.stop(true, true).fadeOut(200);
+                            return;
+                        }
+                        if ((window.pageYOffset || document.documentElement.scrollTop) > 0) {
+                            $topButton.stop(true, true).fadeIn(200);
+                        } else {
+                            $topButton.stop(true, true).delay(300).fadeOut(200);
+                        }
+                    }
+
+                    updateTopButton();
+                    $(window).on('scroll', function () {
+                        updateTopButton();
+                    });
                 });
 
                 function isInteger(x) {
@@ -604,6 +636,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     }
                     return vars;
                 };
+
             </script> <?php
             if (($layout == 'grid' || $layout == 'bulk') and isset($validsearch) and ($validsearch !== "toomany")) :
                 // Load ajax grid update JS ?>
@@ -864,16 +897,30 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING">
                         </div>
                         <!--page navigation--> <?php
-                        if (isset($next)) :
+                        if (isset($next) or isset($prev)) :
                             $getString = getStringParameters($_GET, 'page');
-                            $href = 'index.php' . $getString . '&page=' . (int) $next;
-                            $nextLink = "<a href='"
-                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
-                                . "' class='next'>Next</a>";
+                            $msg->logMessage('[DEBUG]', "Rendering pagination links");
+                            if (isset($prev)) :
+                                $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;
+                                $prevLink = "<a href='"
+                                    . htmlspecialchars($prevHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='prev'>Prev</a>";
+                            endif;
+                            if (isset($next)) :
+                                $nextHref = 'index.php' . $getString . '&page=' . (int) $next;
+                                $nextLink = "<a href='"
+                                    . htmlspecialchars($nextHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='next'>Next</a>";
+                            endif;
                             ?>
                             <div class="pagination">
                                 <?php
-                                echo $nextLink;
+                                if (isset($prevLink)) :
+                                    echo $prevLink;
+                                endif;
+                                if (isset($nextLink)) :
+                                    echo $nextLink;
+                                endif;
                                 ?>
                             </div>
                         <?php endif ?>
@@ -992,16 +1039,30 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
-                        if (isset($next)) :
+                        if (isset($next) or isset($prev)) :
                             $getString = getStringParameters($_GET, 'page');
-                            $href = 'index.php' . $getString . '&page=' . (int) $next;
-                            $nextLink = "<a href='"
-                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
-                                . "' class='next'>Next</a>";
+                            $msg->logMessage('[DEBUG]', "Rendering pagination links");
+                            if (isset($prev)) :
+                                $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;
+                                $prevLink = "<a href='"
+                                    . htmlspecialchars($prevHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='prev'>Prev</a>";
+                            endif;
+                            if (isset($next)) :
+                                $nextHref = 'index.php' . $getString . '&page=' . (int) $next;
+                                $nextLink = "<a href='"
+                                    . htmlspecialchars($nextHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='next'>Next</a>";
+                            endif;
                             ?>
                             <div class="pagination">
                                 <?php
-                                echo $nextLink;
+                                if (isset($prevLink)) :
+                                    echo $prevLink;
+                                endif;
+                                if (isset($nextLink)) :
+                                    echo $nextLink;
+                                endif;
                                 ?>
                             </div>
                         <?php endif ?>
@@ -1260,16 +1321,30 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <div class="spinner"><img src='/images/ajax-loader.gif' alt="LOADING"></div>
                         <!--page navigation-->
                         <?php
-                        if (isset($next)) :
+                        if (isset($next) or isset($prev)) :
                             $getString = getStringParameters($_GET, 'page');
-                            $href = 'index.php' . $getString . '&page=' . (int) $next;
-                            $nextLink = "<a href='"
-                                . htmlspecialchars($href, ENT_QUOTES, 'UTF-8')
-                                . "' class='next'>Next</a>";
+                            $msg->logMessage('[DEBUG]', "Rendering pagination links");
+                            if (isset($prev)) :
+                                $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;
+                                $prevLink = "<a href='"
+                                    . htmlspecialchars($prevHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='prev'>Prev</a>";
+                            endif;
+                            if (isset($next)) :
+                                $nextHref = 'index.php' . $getString . '&page=' . (int) $next;
+                                $nextLink = "<a href='"
+                                    . htmlspecialchars($nextHref, ENT_QUOTES, 'UTF-8')
+                                    . "' class='next'>Next</a>";
+                            endif;
                             ?>
                             <div class="pagination">
                                 <?php
-                                echo $nextLink;
+                                if (isset($prevLink)) :
+                                    echo $prevLink;
+                                endif;
+                                if (isset($nextLink)) :
+                                    echo $nextLink;
+                                endif;
                                 ?>
                             </div>
                         <?php endif ?>
