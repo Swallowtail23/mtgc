@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.11
-Date:        21/12/25
+Version:     5.12
+Date:        28/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
 Notes:       -
@@ -36,6 +36,14 @@ $ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
 $myURL = $iniArray['general']['URL'];
 $siteTitle = $iniArray['general']['title'];
+$versionFile = dirname(__DIR__) . '/VERSION';
+$serviceWorkerVersion = 'v6';
+if (file_exists($versionFile)) :
+    $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
+    if ($serviceWorkerVersion === '') :
+        $serviceWorkerVersion = 'v6';
+    endif;
+endif;
 $fxAPI = $iniArray['fx']['FreecurrencyAPI'];
 $fxLocal = $iniArray['fx']['TargetCurrency'];
 if ($iniArray['general']['tier'] === 'dev') :

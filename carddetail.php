@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     22.5
-Date:        25/12/25
+Version:     22.8
+Date:        28/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -62,6 +62,10 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php');?>
     <script src="/js/jquery.js"></script>
+    <script type="text/javascript">
+        window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
+    </script>
+    <script src="/js/asyncImageRefresh.js"></script>
     <script src="/js/ajaxUpdate.js"></script>
 </head>
 

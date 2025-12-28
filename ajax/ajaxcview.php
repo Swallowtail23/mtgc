@@ -73,7 +73,7 @@ if ($isValidReferrer) :
             if ($result === false) :
                 throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
             else :
-                $msg->logMessage('[ERROR]', "Call to turn off collection view run for $userEmail");
+                $msg->logMessage('[ERROR]', "Call to turn on collection view run for $userEmail");
             endif;
         else :
             http_response_code(400);

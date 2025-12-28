@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.59
-Date:        27/12/25
+Version:     25.62
+Date:        28/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -48,6 +48,10 @@ $uniquecard_ref = [];
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php'); ?>
     <script src="/js/jquery.js"></script>
+    <script type="text/javascript">
+        window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
+    </script>
+    <script src="/js/asyncImageRefresh.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <?php ?>
 </head>

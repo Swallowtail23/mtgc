@@ -1,6 +1,6 @@
 /*
-Version:     2.57
-Date:        27/12/25
+Version:     2.58
+Date:        28/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -336,24 +336,6 @@ function hardReloadDeckDetail() {
     }
 }
 
-function swapImageWithFade($img, newSrc) {
-    $img.css('opacity', '0');
-    $img.off('load.mtgfade').on('load.mtgfade', function() {
-        var $self = $(this);
-        requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-                $self.css('opacity', '1');
-            });
-        });
-    });
-    $img.attr('src', newSrc);
-    if ($img[0] && $img[0].complete) {
-        setTimeout(function() {
-            $img.trigger('load');
-        }, 0);
-    }
-}
-
 var deckImageQueue = [];
 var deckImageQueued = {};
 var deckImageInFlight = 0;
@@ -397,20 +379,8 @@ function scheduleDeckImageLoad() {
         data: { cardid: cardId },
         dataType: 'json',
         success: function(response) {
-            if (!response || !response.success) {
-                return;
-            }
-            if (response.front && response.front.indexOf('cardimg') !== -1) {
-                var newSrc = response.front + '?t=' + Date.now();
-                $('img[data-cardid="' + cardId + '"]').each(function() {
-                    var $target = $(this);
-                    $target.attr('data-front-src', response.front);
-                    $target.attr('data-back-src', response.back || $target.attr('data-back-src') || '');
-                    swapImageWithFade($target, newSrc);
-                });
-            }
-            if (response.back && response.back.indexOf('cardimg') !== -1) {
-                $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
+            if (window.mtgHandleImageRefresh) {
+                window.mtgHandleImageRefresh(cardId, response);
             }
         },
         complete: function() {
@@ -422,7 +392,7 @@ function scheduleDeckImageLoad() {
 }
 
 function refreshCardImagesAsync() {
-    var seen = {};
+    var seen = window.mtgAsyncImageSeen || {};
     $('img[data-cardid]').each(function() {
         var cardId = $(this).data('cardid');
         if (!cardId || seen[cardId]) {
@@ -431,6 +401,7 @@ function refreshCardImagesAsync() {
         seen[cardId] = true;
         enqueueDeckImage(cardId, false);
     });
+    window.mtgAsyncImageSeen = seen;
 }
 
 window.enqueueDeckImage = enqueueDeckImage;

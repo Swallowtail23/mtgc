@@ -1,6 +1,6 @@
 /*
-Version:     2.5
-Date:        27/12/25
+Version:     2.6
+Date:        28/12/25
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -3701,6 +3701,12 @@ td.columnhide
 .card-image, .mainimg{
     transition: transform 0.5s ease, opacity 0.25s ease;
     opacity: 1;
+}
+
+.async-refresh-flash
+{
+    filter: brightness(1.15);
+    transition: filter 0.2s ease;
 }
 
 .flipped {

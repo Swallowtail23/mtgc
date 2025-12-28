@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.19
+Version:     14.27
 Date:        28/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -33,7 +33,6 @@ $gridperpage = 30;
 $bulkperpage = 1000;
 $maxresults = 3500;
 $time = time();
-$serviceWorkerVersion = 'v6';
 
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
@@ -381,128 +380,14 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <?php include('includes/googlefonts.php'); ?>
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
-            function swapImageWithFade($img, newSrc) {
-                function stripCache(src) {
-                    return src ? src.replace(/\?.*$/, '') : '';
-                }
-                const currentSrc = stripCache($img.attr('src'));
-                const targetSrc = stripCache(newSrc);
-                if (!targetSrc || currentSrc === targetSrc) {
-                    return;
-                }
-                const loader = new Image();
-                loader.onload = function() {
-                    $img.css('opacity', '0');
-                    $img.off('load.mtgfade').on('load.mtgfade', function() {
-                        const $self = $(this);
-                        requestAnimationFrame(function() {
-                            requestAnimationFrame(function() {
-                                $self.css('opacity', '1');
-                            });
-                        });
-                    });
-                    $img.attr('src', newSrc);
-                    if ($img[0] && $img[0].complete) {
-                        setTimeout(function() {
-                            $img.trigger('load');
-                        }, 0);
-                    }
-                };
-                loader.onerror = function() {
-                    $img.css('opacity', '1').attr('src', '/images/back.jpg');
-                };
-                loader.src = newSrc;
-            }
-
-            function refreshCardImagesAsync() {
-                const seen = {};
-                const queue = [];
-                let inFlight = 0;
-                const maxConcurrent = 3;
-                let pauseUntil = 0;
-
-                $(document).on('pointerdown keydown', function() {
-                    pauseUntil = Date.now() + 300;
-                });
-
-                $('img').each(function() {
-                    const $img = $(this);
-                    const src = $img.attr('src') || '';
-                    const match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-                    const cardId = match ? match[1] : $img.data('cardid');
-                    if (!cardId) {
-                        return;
-                    }
-                    if (seen[cardId]) {
-                        return;
-                    }
-                    seen[cardId] = true;
-                    queue.push(cardId);
-                });
-
-                function scheduleNext() {
-                    if (Date.now() < pauseUntil) {
-                        setTimeout(scheduleNext, 120);
-                        return;
-                    }
-                    if (inFlight >= maxConcurrent || queue.length === 0) {
-                        return;
-                    }
-                    const cardId = queue.shift();
-                    inFlight += 1;
-                    $.ajax({
-                        url: 'ajax/ajaximagecheck.php',
-                        type: 'POST',
-                        data: { cardid: cardId },
-                        dataType: 'json',
-                        success: function(response) {
-                            if (!response || !response.success) {
-                                return;
-                            }
-                            if (response.front_changed) {
-                                const frontSrc = response.front && response.front.indexOf('cardimg') !== -1
-                                    ? response.front
-                                    : '/images/back.jpg';
-                                const newSrc = frontSrc + '?t=' + Date.now();
-                                $('img[data-cardid="' + cardId + '"]').each(function() {
-                                    const $target = $(this);
-                                    $target.attr('data-front-src', frontSrc);
-                                    if (response.back_changed && response.back) {
-                                        $target.attr('data-back-src', response.back);
-                                    }
-                                    if ($target.hasClass('flipped') && response.back_changed && response.back) {
-                                        swapImageWithFade($target, response.back + '?t=' + Date.now());
-                                    } else {
-                                        swapImageWithFade($target, newSrc);
-                                    }
-                                });
-                            }
-                            if (response.back_changed && response.back && response.back.indexOf('cardimg') !== -1) {
-                                $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
-                            }
-                            if (
-                                response.front
-                                && response.back
-                                && response.front.indexOf('cardimg') !== -1
-                                && response.back.indexOf('cardimg') !== -1
-                            ) {
-                                $('.flipbutton[data-cardid="' + cardId + '"]').show();
-                            }
-                        },
-                        complete: function() {
-                            inFlight -= 1;
-                            setTimeout(scheduleNext, 0);
-                        }
-                    });
-                    setTimeout(scheduleNext, 0);
-                }
-
-                setTimeout(scheduleNext, 0);
-            }
+            window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
         </script>
+        <script src="/js/asyncImageRefresh.js"></script>
         <script type="text/javascript">
             $(function() {
-                refreshCardImagesAsync();
+                if (window.mtgRefreshCardImagesAsync) {
+                    window.mtgRefreshCardImagesAsync();
+                }
             });
         </script>
         <script type="text/javascript">
@@ -578,8 +463,17 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         event.nocache = true;
                     });
                     ias.on('page', (event) => {
-                        $(".top").show(200);
-                        refreshCardImagesAsync();
+                        if (window.mtgUpdateTopButton) {
+                            window.mtgUpdateTopButton();
+                        }
+                        if (window.mtgRefreshCardImagesAsync) {
+                            window.mtgRefreshCardImagesAsync();
+                        }
+                    });
+                    ias.on('appended', function () {
+                        if (window.mtgRefreshCardImagesAsync) {
+                            window.mtgRefreshCardImagesAsync();
+                        }
                     });
                     ias.on('last', function() {
                         let el = document.querySelector('.ias-no-more');
@@ -617,7 +511,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         var pageValue = parseInt(match[1], 10);
                         return isNaN(pageValue) ? 1 : pageValue;
                     }
-                    function updateTopButton() {
+                    window.mtgUpdateTopButton = function () {
                         var pageValue = getPageNumber(window.location.href);
                         if (pageValue <= 1) {
                             $topButton.stop(true, true).fadeOut(200);
@@ -628,11 +522,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         } else {
                             $topButton.stop(true, true).delay(300).fadeOut(200);
                         }
-                    }
+                    };
 
-                    updateTopButton();
+                    window.mtgUpdateTopButton();
                     $(window).on('scroll', function () {
-                        updateTopButton();
+                        window.mtgUpdateTopButton();
                     });
                 });
 

@@ -8,10 +8,19 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Changed
--
+- Async image refresh now briefly highlights refreshed images via a CSS class.
+- Service worker version now loads from `VERSION` in `includes/ini.php` and is shared across pages.
 
 ### Fixed
--
+- Index async image refresh now triggers after IAS appends new results and skips already-seen cards.
+- Index async image refresh now refreshes the base card image cache entry on change (front/back).
+- Async image refresh now uses a shared helper across index, carddetail, and deckdetail pages.
+- Async image refresh now busts cache when updating base image cache entries.
+- Async image refresh now forces a cache-busted DOM swap when a changed image is detected.
+- Async refresh highlight no longer blocks greyscale collection view styling.
+- Collection view greyscale now reapplies after async image swaps.
+- Collection view greyscale now rechecks across grid items after async swaps.
+- Top button no longer forces visible state on IAS page events without paging.
 
 ### Security
 -

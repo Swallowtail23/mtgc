@@ -1,6 +1,6 @@
 /*
-Version:     1.1
-Date:        25/12/25
+Version:     1.2
+Date:        28/12/25
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -15,24 +15,6 @@ To do:       -
     var cardDetailConfig = window.mtgCardDetailConfig || {};
     var cardIdForRedirect = cardDetailConfig.cardId || '';
 
-    function swapImageWithFade($img, newSrc) {
-        $img.css('opacity', '0');
-        $img.off('load.mtgfade').on('load.mtgfade', function () {
-            var $self = $(this);
-            requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                    $self.css('opacity', '1');
-                });
-            });
-        });
-        $img.attr('src', newSrc);
-        if ($img[0] && $img[0].complete) {
-            setTimeout(function () {
-                $img.trigger('load');
-            }, 0);
-        }
-    }
-
     function updateFlipButtonsForViewport() {
         var showFlip = window.matchMedia('(max-width: 1208px)').matches;
         $('.flipbuttondetail').each(function () {
@@ -46,52 +28,17 @@ To do:       -
     }
 
     function refreshCardImagesAsync() {
-        var seen = {};
-        $('img').each(function () {
-            var $img = $(this);
-            var src = $img.attr('src') || '';
-            var match = src.match(/cardimg\/[^/]+\/([a-f0-9-]+)(?:_b)?\.jpg/i);
-            var cardId = match ? match[1] : $img.data('cardid');
-            if (!cardId) {
-                return;
+        if (!window.mtgRefreshCardImagesAsync) {
+            return;
+        }
+        window.mtgRefreshCardImagesAsync({
+            selector: 'img[data-cardid]',
+            useFaces: true,
+            onFlipReady: function (cardId) {
+                $('.flipbuttondetail[data-cardid="' + cardId + '"]')
+                    .data('ready', 1);
+                updateFlipButtonsForViewport();
             }
-            if (seen[cardId]) {
-                return;
-            }
-            seen[cardId] = true;
-            $.ajax({
-                url: 'ajax/ajaximagecheck.php',
-                type: 'POST',
-                data: { cardid: cardId },
-                dataType: 'json',
-                success: function (response) {
-                    if (!response || !response.success) {
-                        return;
-                    }
-                    if (response.front && response.front.indexOf('cardimg') !== -1) {
-                        var newSrc = response.front + '?t=' + Date.now();
-                        $('img[data-cardid="' + cardId + '"][data-face="front"]').each(function () {
-                            swapImageWithFade($(this), newSrc);
-                        });
-                    }
-                    if (response.back && response.back.indexOf('cardimg') !== -1) {
-                        var newBackSrc = response.back + '?t=' + Date.now();
-                        $('img[data-cardid="' + cardId + '"][data-face="back"]').each(function () {
-                            swapImageWithFade($(this), newBackSrc);
-                        });
-                    }
-                    if (
-                        response.front
-                        && response.back
-                        && response.front.indexOf('cardimg') !== -1
-                        && response.back.indexOf('cardimg') !== -1
-                    ) {
-                        $('.flipbuttondetail[data-cardid="' + cardId + '"]')
-                            .data('ready', 1);
-                        updateFlipButtonsForViewport();
-                    }
-                }
-            });
         });
     }
 
