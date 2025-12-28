@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.4.5-dev] - Unreleased
+
+### Added
+-
+
+### Changed
+- Service worker cache version now derives from the registration query string.
+
+### Fixed
+- Index async image refresh now only swaps images when the backend detects a change and restores placeholders on load errors.
+
+### Security
+-
+
+### Infrastructure
+-
+
 ## [v0.4.4] - 2025-12-28
 
 ### Added

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        21/12/25
+Version:     1.5
+Date:        28/12/25
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
 Notes:       Lightweight head/refresh; relies on ImageManager.
@@ -73,7 +73,9 @@ try {
     echo json_encode([
         'success' => true,
         'front' => $result['front'],
+        'front_changed' => $result['front_changed'],
         'back' => $result['back'],
+        'back_changed' => $result['back_changed'],
     ]);
 } catch (Exception $e) {
     throw new Exception("[ERROR] ajaximagecheck.php: " . $e->getMessage());

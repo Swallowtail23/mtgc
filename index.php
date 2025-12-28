@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.17
+Version:     14.19
 Date:        28/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -33,6 +33,7 @@ $gridperpage = 30;
 $bulkperpage = 1000;
 $maxresults = 3500;
 $time = time();
+$serviceWorkerVersion = 'v6';
 
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
@@ -381,21 +382,36 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <script src="/js/jquery.js"></script>
         <script type="text/javascript">
             function swapImageWithFade($img, newSrc) {
-                $img.css('opacity', '0');
-                $img.off('load.mtgfade').on('load.mtgfade', function() {
-                    const $self = $(this);
-                    requestAnimationFrame(function() {
+                function stripCache(src) {
+                    return src ? src.replace(/\?.*$/, '') : '';
+                }
+                const currentSrc = stripCache($img.attr('src'));
+                const targetSrc = stripCache(newSrc);
+                if (!targetSrc || currentSrc === targetSrc) {
+                    return;
+                }
+                const loader = new Image();
+                loader.onload = function() {
+                    $img.css('opacity', '0');
+                    $img.off('load.mtgfade').on('load.mtgfade', function() {
+                        const $self = $(this);
                         requestAnimationFrame(function() {
-                            $self.css('opacity', '1');
+                            requestAnimationFrame(function() {
+                                $self.css('opacity', '1');
+                            });
                         });
                     });
-                });
-                $img.attr('src', newSrc);
-                if ($img[0] && $img[0].complete) {
-                    setTimeout(function() {
-                        $img.trigger('load');
-                    }, 0);
-                }
+                    $img.attr('src', newSrc);
+                    if ($img[0] && $img[0].complete) {
+                        setTimeout(function() {
+                            $img.trigger('load');
+                        }, 0);
+                    }
+                };
+                loader.onerror = function() {
+                    $img.css('opacity', '1').attr('src', '/images/back.jpg');
+                };
+                loader.src = newSrc;
             }
 
             function refreshCardImagesAsync() {
@@ -443,20 +459,25 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             if (!response || !response.success) {
                                 return;
                             }
-                            if (response.front && response.front.indexOf('cardimg') !== -1) {
-                                const newSrc = response.front + '?t=' + Date.now();
+                            if (response.front_changed) {
+                                const frontSrc = response.front && response.front.indexOf('cardimg') !== -1
+                                    ? response.front
+                                    : '/images/back.jpg';
+                                const newSrc = frontSrc + '?t=' + Date.now();
                                 $('img[data-cardid="' + cardId + '"]').each(function() {
                                     const $target = $(this);
-                                    $target.attr('data-front-src', response.front);
-                                    $target.attr('data-back-src', response.back || $target.attr('data-back-src') || '');
-                                    if ($target.hasClass('flipped') && response.back) {
+                                    $target.attr('data-front-src', frontSrc);
+                                    if (response.back_changed && response.back) {
+                                        $target.attr('data-back-src', response.back);
+                                    }
+                                    if ($target.hasClass('flipped') && response.back_changed && response.back) {
                                         swapImageWithFade($target, response.back + '?t=' + Date.now());
                                     } else {
                                         swapImageWithFade($target, newSrc);
                                     }
                                 });
                             }
-                            if (response.back && response.back.indexOf('cardimg') !== -1) {
+                            if (response.back_changed && response.back && response.back.indexOf('cardimg') !== -1) {
                                 $('img[data-cardid="' + cardId + '"]').attr('data-back-src', response.back);
                             }
                             if (
@@ -1485,7 +1506,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         window.location.reload();
                     });
 
-                    navigator.serviceWorker.register('/service-worker.js?v=3.1')
+                    navigator.serviceWorker.register('/service-worker.js?v=<?php echo $serviceWorkerVersion; ?>')
                         .then(function(registration) {
                             swLog('ServiceWorker registration successful', registration.scope);
                             listenForSwUpdates(registration);

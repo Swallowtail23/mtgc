@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        23/12/25
+Version:     1.3
+Date:        28/12/25
 Name:        ImageManager.php
 Purpose:     Local image management class.
 Notes:       -
@@ -239,16 +239,18 @@ class ImageManager
         $frontPath = $imgLocation . $setcode . '/' . $cardId . '.jpg';
         $backPath = $imgLocation . $setcode . '/' . $cardId . '_b.jpg';
 
-        $frontResult = $this->processImageFace($cardData['front'], $frontPath, $imgLocation, $setcode);
-        $backResult = '';
+        $frontResult = $this->processImageFaceRefresh($cardData['front'], $frontPath, $imgLocation, $setcode);
+        $backResult = array('path' => '', 'changed' => false);
 
         if (in_array($cardData['layout'], $twoCardDetailSections)) :
-            $backResult = $this->processImageFace($cardData['back'], $backPath, $imgLocation, $setcode);
+            $backResult = $this->processImageFaceRefresh($cardData['back'], $backPath, $imgLocation, $setcode);
         endif;
 
         return array(
-            'front' => $frontResult,
-            'back' => $backResult,
+            'front' => $frontResult['path'],
+            'front_changed' => $frontResult['changed'],
+            'back' => $backResult['path'],
+            'back_changed' => $backResult['changed'],
         );
     }
 
@@ -358,6 +360,33 @@ class ImageManager
         endif;
 
         return $currentPath;
+    }
+
+    private function processImageFaceRefresh($remoteUrl, $localPath, $imgLocation, $setcode)
+    {
+        $relativePath = strpos($localPath, 'cardimg');
+        $currentPath = substr($localPath, $relativePath);
+
+        if (!file_exists($localPath)) :
+            $this->message->logMessage('[DEBUG]', "Image missing, fetching $localPath");
+            $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
+            return array('path' => $path, 'changed' => true);
+        endif;
+
+        $age = time() - filemtime($localPath);
+        if ($age < self::IMAGE_MAX_AGE) :
+            $this->message->logMessage('[DEBUG]', "Image fresh, skipping refresh for $localPath");
+            return array('path' => $currentPath, 'changed' => false);
+        endif;
+
+        if ($remoteUrl !== '' && $this->diffImage($remoteUrl, $localPath)) :
+            $this->message->logMessage('[DEBUG]', "Refreshing local image $localPath from $remoteUrl");
+            $path = $this->fetchAndStoreImage($remoteUrl, $imgLocation, $setcode, $localPath);
+            return array('path' => $path, 'changed' => true);
+        endif;
+
+        $this->message->logMessage('[DEBUG]', "Image unchanged for $localPath");
+        return array('path' => $currentPath, 'changed' => false);
     }
 }
 // phpcs:enable
