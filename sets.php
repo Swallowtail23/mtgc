@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.8
-Date:        27/12/25
+Version:     4.10
+Date:        28/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -26,6 +26,8 @@ $msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$initialFilter = isset($_GET['filter']) ? trim((string) $_GET['filter']) : '';
+$useAjaxInitialLoad = ($page > 1 || strlen($initialFilter) >= 3);
 $setsPerPage = 30;
 $range = 4;
 $totalSets = 0;
@@ -211,6 +213,10 @@ endif;
                 data: { filter: normalizedFilter, setsPerPage: setsPerPage, offset: offset },
                 dataType: 'json',
                 success: function(response) {
+                    var loadingEl = document.getElementById('setsLoading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
                     if (response.numResults === 0) {
                         document.getElementById('setlist').style = "display: none";
                         document.getElementById('paginationTop').style = "display: none";
@@ -245,6 +251,10 @@ endif;
                     }
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    var loadingEl = document.getElementById('setsLoading');
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                    }
                     console.error('Set search: AJAX error: ' + textStatus + ' - ' + errorThrown);
                 }
             });
@@ -367,7 +377,7 @@ endif;
             if (initialState.filter) {
                 $('#setCodeFilter').val(initialState.filter);
             }
-            if (initialState.page !== currentPage || initialState.filter) {
+            if (initialState.page > 1 || initialState.filter) {
                 fetchAndDisplaySets(
                     initialState.filter,
                     initialState.page,
@@ -445,7 +455,14 @@ require 'includes/menu.php';
                 <div id='cancelsetfilter'><span class="material-symbols-outlined">close</span></div>
             </div>
         </div> <?php
-        echo '<div id="paginationTop" class="pagination" style="display: block;"><br>Page &nbsp;';
+        $initialPaginationDisplay = $useAjaxInitialLoad ? 'none' : 'block';
+        $initialTableDisplay = $useAjaxInitialLoad ? 'none' : 'table';
+        $initialLoadingDisplay = $useAjaxInitialLoad ? 'block' : 'none';
+        echo "<div id=\"setsLoading\" style=\"display: {$initialLoadingDisplay};\">"
+            . "<span class=\"material-symbols-outlined\">sync</span> Loading sets..."
+            . "</div>";
+        echo '<div id="paginationTop" class="pagination" style="display: ' . $initialPaginationDisplay
+            . ';"><br>Page &nbsp;';
         for ($i = 1; $i <= $totalPages; $i++) :
             if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) :
                 if ($i == $page) :
@@ -461,7 +478,7 @@ require 'includes/menu.php';
         echo '<a class="pagination-item" href="javascript:loadPage(' . ($page + 1) . ', ' . $setsPerPage
             . ');"><span class="material-symbols-outlined set-page pagination-item">skip_next</span></a>';
         echo '<br>&nbsp;</div>'; ?>
-        <table id='setlist'>
+        <table id='setlist' style="display: <?php echo $initialTableDisplay; ?>;">
             <tr>
                 <td class='setcell'>
                     <b>Icon</b>
@@ -582,7 +599,8 @@ require 'includes/menu.php';
             ?>
         </table> <?php
         echo '<div id="noResults" style="display:none"><br>No results<br></div>';
-        echo '<div id="paginationBottom" class="pagination"><br>Page &nbsp;';
+        echo '<div id="paginationBottom" class="pagination" style="display: ' . $initialPaginationDisplay
+            . ';"><br>Page &nbsp;';
         for ($i = 1; $i <= $totalPages; $i++) :
             if ($i == 1 || $i == $totalPages || ($i >= $page - $range && $i <= $page + $range)) :
                 if ($i == $page) :

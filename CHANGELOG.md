@@ -9,7 +9,8 @@
 -
 
 ### Fixed
--
+- Sets page now loads the requested page when opened with a `page` query parameter.
+- Sets page now hides initial results when loading a non-first page to avoid visible jumps.
 
 ### Security
 -

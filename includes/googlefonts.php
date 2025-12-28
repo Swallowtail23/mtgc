@@ -45,6 +45,7 @@ $msoIcons = [
     'skip_next',
     'skip_previous',
     'south_east',
+    'sync',
     'unfold_more'
 ];
 $msoIconParam = urlencode(implode(',', $msoIcons));
