@@ -14,6 +14,7 @@
 - [Running as a systemd service](#running-as-a-systemd-service)
 - [Monitoring](#monitoring)
 - [Security hardening](#security-hardening)
+- [Cloudflare cache rules](#cloudflare-cache-rules)
 - [Upgrade playbook](#upgrade-playbook)
 - [Rebuilding / upgrading](#rebuilding--upgrading)
 - [Email configuration](#email-configuration)
@@ -368,6 +369,17 @@ this setup provides automatic restarts with minimal configuration.
 
   Update the Apache config accordingly and reload the containers.
 - **Updates:** pull security patches regularly:
+
+## Cloudflare cache rules
+
+If the stack is behind Cloudflare, bypass caching for dynamic resources.
+Recommended Cache Rules:
+
+- `http.request.uri.path eq "/service-worker.js"`
+- `http.request.uri.path eq "/manifest.json"`
+- `http.request.uri.path eq "/index.php" and http.request.uri.query ne ""`
+
+Set each rule action to `Cache: Bypass`.
 
 ## Upgrade playbook
 

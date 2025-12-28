@@ -122,6 +122,17 @@ and PHPUnit (dev).
 - Obtain a FreecurrencyAPI key (optional). Leaving the key blank or set to
   'disabled' disables FX.
 
+## Cloudflare cache rules
+
+If you use Cloudflare in front of the app, bypass caching for dynamic resources.
+Recommended Cache Rules:
+
+- `http.request.uri.path eq "/service-worker.js"`
+- `http.request.uri.path eq "/manifest.json"`
+- `http.request.uri.path eq "/index.php" and http.request.uri.query ne ""`
+
+Set each rule action to `Cache: Bypass`.
+
 ## Cron / scheduled tasks
 
 Copy the helper scripts to `/opt/mtg/scripts` (as described earlier) and use the
