@@ -5,19 +5,20 @@ All notable changes to this project will be documented in this file.
 ## [v0.4.4-dev] - Unreleased
 
 ### Added
--
+- Index infinite scroll now supports loading previous pages when scrolling up (IAS v3.1.0).
 
 ### Changed
--
+- Top button now stays hidden when the page parameter is missing or set to 1.
 
 ### Fixed
--
+- Infinite scroll no longer appends timestamp cache-busters to index page URLs.
 
 ### Security
 -
 
 ### Infrastructure
--
+- Sample Apache configs now disable caching for `index.php` to prevent CDN or proxy caching of paged results.
+- Documented Cloudflare cache bypass rules for dynamic app routes.
 
 ## [v0.4.3] - 2025-12-27
 
