@@ -2,10 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.4.6-dev] - Unreleased
-
-### Added
--
+## [v0.4.6] - 2025-12-28
 
 ### Changed
 - Async image refresh now briefly highlights refreshed images via a CSS class.
@@ -22,12 +19,6 @@ All notable changes to this project will be documented in this file.
 - Collection view greyscale now reapplies after async image swaps.
 - Collection view greyscale now rechecks across grid items after async swaps.
 - Top button no longer forces visible state on IAS page events without paging.
-
-### Security
--
-
-### Infrastructure
--
 
 ## [v0.4.5] - 2025-12-28
 
