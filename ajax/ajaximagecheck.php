@@ -69,6 +69,13 @@ $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
 try {
     $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $result = $obj->checkAndRefreshImage($cardUUID);
+    $msg->logMessage(
+        '[DEBUG]',
+        "Async image refresh: $cardUUID front_changed="
+            . ($result['front_changed'] ? 'yes' : 'no')
+            . " back_changed="
+            . ($result['back_changed'] ? 'yes' : 'no')
+    );
 
     echo json_encode([
         'success' => true,

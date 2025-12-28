@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Index async image refresh now only swaps images when the backend detects a change and restores placeholders on load errors.
+- Added debug logging for async image refresh change decisions.
 
 ### Security
 -
