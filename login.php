@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.4
+Version:     8.5
 Date:        27/12/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -123,6 +123,10 @@ endif;
         <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
         <?php
         echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> ';
+        if ($redirectUrl) :
+            $redirectEsc = htmlspecialchars($redirectUrl, ENT_QUOTES, 'UTF-8');
+            echo "<input type='hidden' name='redirect_to' value='{$redirectEsc}'>";
+        endif;
         echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>";
         echo "<br><br>";
         echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";

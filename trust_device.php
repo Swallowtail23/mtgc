@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.1
-Date:        22/12/25
+Version:     2.3
+Date:        27/12/25
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -35,10 +35,19 @@ if (!isset($db) || !$db instanceof mysqli) {
     die('A database error occurred, please try again later');
 }
 
+$redirect_candidate = $_POST['redirect_to'] ?? $_GET['redirect_to'] ?? $_SESSION['redirect_url'] ?? 'index.php';
+$redirect_to = normalizeRedirectUrl($redirect_candidate) ?? 'index.php';
+$msg->logMessage('[DEBUG]', "Resolved trust device redirect target: $redirect_to");
+
 if (empty($_SESSION['trust_device_flow'])) :
-    $msg->logMessage('[ERROR]', 'Direct access to trust_device.php blocked (no flow flag)');
-    header('Location: index.php');
-    exit();
+    if ($redirect_to !== 'index.php') :
+        $_SESSION['trust_device_flow'] = true;
+        $msg->logMessage('[NOTICE]', 'Trust device flow flag missing; recovered from redirect target');
+    else :
+        $msg->logMessage('[ERROR]', 'Direct access to trust_device.php blocked (no flow flag)');
+        header('Location: index.php');
+        exit();
+    endif;
 endif;
 unset($_SESSION['trust_device_flow']);
 
@@ -54,8 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') :
 endif;
 
 $trust_choice = $_POST['trust_device'] ?? 'none';
-$redirect_to = $_POST['redirect_to'] ?? $_GET['redirect_to'] ?? $_SESSION['redirect_url'] ?? 'index.php';
-
 if ($redirect_to === 'login.php') :
     $redirect_to = 'index.php';
 endif;

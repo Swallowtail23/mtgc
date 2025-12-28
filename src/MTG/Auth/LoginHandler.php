@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        27/12/25
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -451,6 +451,7 @@ class LoginHandler
         $email = $loginData['email'];
         $userNumber = $loginData['usernumber'];
         $userStatusResult = $loginData['userstat_result'];
+        $redirectUrl = normalizeRedirectUrl($redirectUrl) ?? 'index.php';
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
 
@@ -508,7 +509,8 @@ class LoginHandler
 
             $this->message->logMessage('[DEBUG]', 'Showing trust device prompt');
             $_SESSION['trust_device_flow'] = true;
-            header('Location: trust_device.php?redirect_to=' . urlencode($redirectUrl ?? 'index.php'));
+            $this->message->logMessage('[DEBUG]', "Redirecting to trust device with target {$redirectUrl}");
+            header('Location: trust_device.php?redirect_to=' . urlencode($redirectUrl));
             $this->terminate();
     }
 

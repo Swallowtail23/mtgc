@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - Deck detail random draw list no longer inserts a spacer row below the header.
 - Login flow now preserves requested destinations after failed login attempts.
 - Deck detail random draw hover positioning now anchors to viewport in single-column layouts.
+- Login form now carries redirect targets through the trust-device step.
+- Trust device flow now recovers redirect targets when the flow flag is missing.
 
 ### Security
 -
