@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.4.6-dev] - Unreleased
+
+### Added
+-
+
+### Changed
+-
+
+### Fixed
+-
+
+### Security
+-
+
+### Infrastructure
+-
+
 ## [v0.4.5] - 2025-12-28
 
 ### Changed
