@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.4.7-dev] - Unreleased
+
+### Added
+-
+
+### Changed
+-
+
+### Fixed
+-
+
+### Security
+-
+
+### Infrastructure
+-
+
 All notable changes to this project will be documented in this file.
 
 ## [v0.4.6] - 2025-12-28
