@@ -1,6 +1,6 @@
 /*
-Version:     2.58
-Date:        28/12/25
+Version:     2.59
+Date:        29/12/25
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -429,7 +429,8 @@ window.bindRandomCardEvents = function() {
         if (!touchDetected) {
             return;
         }
-        if ($(e.target).closest('td.hoverTD').length) {
+        if ($(e.target).closest('td.hoverTD, .deckcardimgdiv, .randomcardimgdiv').length) {
+            console.debug('[DEBUG]', 'Touch hover interaction inside preview skipped.', reason);
             return;
         }
         hideTouchHoverPreview(reason);
@@ -918,28 +919,32 @@ window.bindRandomDrawStripInteractions = function() {
     window.removeEventListener('scroll', window.mtgRandomDrawScrollReset, { passive: true });
 
     window.mtgRandomDrawPointerReset = function(e) {
-        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+        if ($(e.target).closest('#deck-random-draw-fragment, .randomcardimgdiv').length) {
+            console.debug('[DEBUG]', 'Random draw touch reset skipped (preview active).');
             return;
         }
         clearTouchPreview('document pointer');
     };
 
     window.mtgRandomDrawTouchReset = function(e) {
-        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+        if ($(e.target).closest('#deck-random-draw-fragment, .randomcardimgdiv').length) {
+            console.debug('[DEBUG]', 'Random draw touch reset skipped (preview active).');
             return;
         }
         clearTouchPreview('document touch');
     };
 
     window.mtgRandomDrawTouchEndReset = function(e) {
-        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+        if ($(e.target).closest('#deck-random-draw-fragment, .randomcardimgdiv').length) {
+            console.debug('[DEBUG]', 'Random draw touch reset skipped (preview active).');
             return;
         }
         clearTouchPreview('document touchend');
     };
 
     window.mtgRandomDrawClickReset = function(e) {
-        if ($(e.target).closest('#deck-random-draw-fragment').length) {
+        if ($(e.target).closest('#deck-random-draw-fragment, .randomcardimgdiv').length) {
+            console.debug('[DEBUG]', 'Random draw touch reset skipped (preview active).');
             return;
         }
         clearTouchPreview('document click');

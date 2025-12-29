@@ -10,7 +10,9 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Fixed
--
+- Deck detail touch previews now allow taps on preview images to open card detail pages.
+- Card detail flip rotate now targets the visible image instead of the hidden hover image.
+- Card detail hover image rotation now tracks the main image rotation for flip cards.
 
 ### Security
 -

@@ -1,6 +1,6 @@
 /*
-Version:     1.2
-Date:        28/12/25
+Version:     1.4
+Date:        29/12/25
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -651,11 +651,29 @@ To do:       -
     };
 
     window.rotateImg = function () {
-        var mainImg = document.querySelector('.mainimg');
+        var mainImg = document.getElementById('cardimg');
         if (!mainImg) {
+            mainImg = document.querySelector('#carddetailimage img.mainimg');
+        }
+        if (!mainImg) {
+            console.debug('[DEBUG]', 'Card detail rotate skipped, image not found.');
             return;
         }
-        mainImg.style.transform = mainImg.style.transform === 'rotate(180deg)' ? 'none' : 'rotate(180deg)';
+        var rotateOn = mainImg.style.transform !== 'rotate(180deg)';
+        var targetTransform = rotateOn ? 'rotate(180deg)' : 'none';
+        mainImg.style.transform = targetTransform;
+        var cardId = mainImg.getAttribute('data-cardid') || '';
+        var hoverImg = null;
+        if (cardId) {
+            hoverImg = document.querySelector('#image-' + cardId + ' img.mainimg');
+        }
+        if (hoverImg && hoverImg !== mainImg) {
+            hoverImg.style.transform = targetTransform;
+        }
+        console.debug('[DEBUG]', 'Card detail rotate toggled.', {
+            cardId: cardId || null,
+            transform: targetTransform
+        });
     };
 
     window.swapImage = function (img_id, card_id, imageurl, imagebackurl) {
