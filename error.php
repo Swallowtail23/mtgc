@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        01/12/25
+Version:     2.3
+Date:        29/12/25
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
 Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes not loaded in this page.
@@ -12,6 +12,14 @@ To do:       -
 */
 
 $iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
+$serviceWorkerVersion = 'v6';
+$versionFile = __DIR__ . '/VERSION';
+if (file_exists($versionFile)) :
+    $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
+    if ($serviceWorkerVersion === '') :
+        $serviceWorkerVersion = 'v6';
+    endif;
+endif;
 //Copyright string
 $copyright = $iniArray['Copyright'];
 if ($iniArray['tier'] === 'dev') :
@@ -31,7 +39,7 @@ $cssver = "";
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
 <body class="body">

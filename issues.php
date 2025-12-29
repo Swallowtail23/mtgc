@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        29/11/25
+Version:     1.4
+Date:        29/12/25
 Name:        issues.php
 Purpose:     Issues page.
 Notes:       No db functions.
@@ -33,7 +33,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
 <body id="body" class="body">

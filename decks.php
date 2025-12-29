@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.7
-Date:        21/12/25
+Version:     5.8
+Date:        29/12/25
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -44,7 +44,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <?php include('includes/googlefonts.php');?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         $(function() {
             $('tbody tr[data-href]').addClass('clickable').click( function() {

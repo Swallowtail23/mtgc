@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        21/12/25
+Version:     1.8
+Date:        29/12/25
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -129,7 +129,7 @@ endif;
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-        <script src="/js/jquery.js"></script>
+        <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 var csvSuccess = "<?php echo $csvsuccess; ?>";

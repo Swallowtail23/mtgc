@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     22.8
-Date:        28/12/25
+Version:     22.9
+Date:        29/12/25
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -61,12 +61,12 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php');?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
     </script>
-    <script src="/js/asyncImageRefresh.js"></script>
-    <script src="/js/ajaxUpdate.js"></script>
+    <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
+    <script src="/js/ajaxUpdate.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
 <body class="body">
@@ -2310,7 +2310,7 @@ endif;
         lookupId: <?php echo json_encode(isset($lookupid) ? $lookupid : ''); ?>
     };
 </script>
-<script src="/js/carddetail.js"></script>
+<script src="/js/carddetail.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 <?php
 require('includes/footer.php'); ?>
 </body>

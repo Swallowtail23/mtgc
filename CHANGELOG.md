@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Infrastructure
--
+- Append service worker version query strings to JS asset includes to bust CDN caches on deploy.
 
 ## [v0.4.7] - 2025-12-29
 

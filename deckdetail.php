@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.62
-Date:        28/12/25
+Version:     25.63
+Date:        29/12/25
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -47,11 +47,11 @@ $uniquecard_ref = [];
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include('includes/googlefonts.php'); ?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
     </script>
-    <script src="/js/asyncImageRefresh.js"></script>
+    <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <?php ?>
 </head>
@@ -142,7 +142,7 @@ include 'includes/deckdetail_data.php';
         randomDrawRefs: <?php echo isset($uniquecard_ref) ? json_encode($uniquecard_ref) : '[]'; ?>
     };
 </script>
-<script src="/js/deckdetail.js"></script>
+<script src="/js/deckdetail.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 <!-- Info box -->
 <div class="info-box" id="infoBox" style="display:none">
     <span class="close-button material-symbols-outlined" onclick="toggleInfoBox()">close</span>

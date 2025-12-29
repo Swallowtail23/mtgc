@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.10
-Date:        21/12/25
+Version:     14.11
+Date:        29/12/25
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -48,7 +48,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
         <?php include('includes/googlefonts.php');?>
-        <script src="/js/jquery.js"></script>
+        <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script>
             function toggleQRBox() {
                 var qrBox = document.getElementById("qrBox");

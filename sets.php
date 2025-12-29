@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.10
-Date:        28/12/25
+Version:     4.11
+Date:        29/12/25
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -65,7 +65,7 @@ endif;
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include 'includes/googlefonts.php';?>
-    <script src="/js/jquery.js"></script>
+    <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script>
         const csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
 

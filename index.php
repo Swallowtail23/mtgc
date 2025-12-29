@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.40
+Version:     14.41
 Date:        29/12/25
 Name:        index.php
 Purpose:     Main site page
@@ -383,11 +383,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
         <?php include('includes/googlefonts.php'); ?>
-        <script src="/js/jquery.js"></script>
+        <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
             window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
         </script>
-        <script src="/js/asyncImageRefresh.js"></script>
+        <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
             $(function() {
                 if (window.mtgRefreshCardImagesAsync) {
@@ -451,7 +451,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 )
             ) :
                 // IAS will be needed ?>
-                <script src="/js/infinite-ajax-scroll.min.js"></script>
+                <script src="/js/infinite-ajax-scroll.min.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
                 <script type="text/javascript">
                 $(document).ready(function () { // Infinite Ajax Scroll configuration
                     let ias = new InfiniteAjaxScroll('.wrap', {
@@ -582,12 +582,12 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             </script> <?php
             if (($layout == 'grid' || $layout == 'bulk') and isset($validsearch) and ($validsearch !== "toomany")) :
                 // Load ajax grid update JS ?>
-                <script src="/js/ajaxUpdate.js"></script> <?php
+                <script src="/js/ajaxUpdate.js?v=<?php echo $serviceWorkerVersion; ?>"></script> <?php
             endif;
             if ($layout == 'grid' and isset($validsearch) and ($validsearch !== "toomany")) :
                 $floating_button = true;
                 // Load script to manage toggle of classes to show B&W (Collection View)?>
-                <script src="/js/cviewClassToggle.js"></script> <?php
+                <script src="/js/cviewClassToggle.js?v=<?php echo $serviceWorkerVersion; ?>"></script> <?php
             endif;
         endif;?>
     </head>
