@@ -1,19 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [v0.4.8-dev] - Unreleased
-
-### Added
--
-
-### Changed
--
-
-### Fixed
--
-
-### Security
--
+## [v0.4.8] - 2025-12-29
 
 ### Infrastructure
 - Append service worker version query strings to JS asset includes to bust CDN caches on deploy.
