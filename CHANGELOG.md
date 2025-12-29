@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.4.7-dev] - Unreleased
+## [v0.4.7] - 2025-12-29
 
 ### Added
 - Index grid now shows a card info placeholder when images are missing.
@@ -11,14 +11,9 @@
 ### Fixed
 - Sets page now loads the requested page when opened with a `page` query parameter.
 - Sets page now hides initial results when loading a non-first page to avoid visible jumps.
-- Card detail async image refresh now skips swaps when change flags are falsey.
-- Index async image refresh now swaps placeholders through the DOM when a local card image exists even if unchanged.
-
-### Security
--
-
-### Infrastructure
--
+- Card detail async image refresh more robust to avoid skipping images.
+- Index async image refresh now swaps placeholders through the DOM when a local card image exists even if
+unchanged, to ensure all images are updated and loaded, even if loaded async in another tab.
 
 All notable changes to this project will be documented in this file.
 
