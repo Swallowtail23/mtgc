@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.29
-Date:        28/12/25
+Version:     14.40
+Date:        29/12/25
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -276,6 +276,8 @@ $selectAll = "SELECT
                 number,
                 number_import,
                 cards_scry.name,
+                flavor_name,
+                printed_name,
                 game_types,
                 finishes,
                 cards_scry.foil as cs_foil,
@@ -287,7 +289,10 @@ $selectAll = "SELECT
                 type,
                 ability,
                 f1_ability,
+                f1_name,
+                f1_flavor_name,
                 f2_ability,
+                f2_name,
                 manacost,
                 layout,
                 p1_component,
@@ -391,6 +396,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             });
         </script>
         <script type="text/javascript">
+            $(window).on('load', function () {
+                if (window.mtgRetryPlaceholderImages) {
+                    window.mtgRetryPlaceholderImages();
+                }
+            });
+        </script>
+        <script type="text/javascript">
             // Setup search form radio button exclusions
             $(function() {
                 function setupMutualExclusion(selectorA, selectorB) {
@@ -462,6 +474,20 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     ias.on('load', function (event) {
                         event.nocache = true;
                     });
+                    let placeholderRetryTimer = null;
+                    function schedulePlaceholderRetry() {
+                        if (placeholderRetryTimer) {
+                            clearTimeout(placeholderRetryTimer);
+                        }
+                        placeholderRetryTimer = setTimeout(function () {
+                            if (window.mtgRetryPlaceholderImages) {
+                                if (window.console && console.debug) {
+                                    console.debug('[DEBUG] IAS placeholder retry after append queue idle.');
+                                }
+                                window.mtgRetryPlaceholderImages();
+                            }
+                        }, 500);
+                    }
                     ias.on('page', (event) => {
                         if (window.mtgUpdateTopButton) {
                             window.mtgUpdateTopButton();
@@ -474,6 +500,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         if (window.mtgRefreshCardImagesAsync) {
                             window.mtgRefreshCardImagesAsync();
                         }
+                        schedulePlaceholderRetry();
                     });
                     ias.on('last', function() {
                         let el = document.querySelector('.ias-no-more');
@@ -1073,14 +1100,21 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
-                                $imageUrl = '/images/back.jpg';
+                                $imageUrl = '';
                             else :
                                 $imageUrl = $imageFunction['front'];
                             endif;
+                            if ($imageUrl === '/images/back.jpg' or $imageUrl === '/cardimg/back.jpg') :
+                                $imageUrl = '';
+                            endif;
                             $imagebackurl = '';
                             if (!is_null($imageFunction['back'])) :
-                                if ($imageFunction['back'] === 'error' or $imageFunction['back'] === 'error') :
-                                    $imagebackurl = '/images/back.jpg';
+                                if (
+                                    $imageFunction['back'] === 'error'
+                                    or $imageFunction['back'] === '/images/back.jpg'
+                                    or $imageFunction['back'] === '/cardimg/back.jpg'
+                                ) :
+                                    $imagebackurl = '';
                                 else :
                                     $imagebackurl = $imageFunction['back'];
                                 endif;
@@ -1103,7 +1137,64 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $myetch = $row['etched'];
                             endif;
-                            $displayLang = strtoupper(htmlspecialchars($row['lang'], ENT_QUOTES, 'UTF-8'));
+                            $card_lang = $row['lang'] ?? '';
+                            $displayLang = strtoupper(htmlspecialchars($card_lang, ENT_QUOTES, 'UTF-8'));
+                            $displayNameHtml = '';
+                            if (in_array($row['layout'], $layouts_double)) :
+                                $f1Flavor = $row['f1_flavor_name'] ?? '';
+                                $f1Name = $row['f1_name'] ?? '';
+                                if ($f1Flavor !== null and $f1Flavor !== '') :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($f1Flavor), ENT_QUOTES, 'UTF-8')
+                                        . " <span class='card-info-name-secondary'>("
+                                        . htmlspecialchars(stripslashes($f1Name), ENT_QUOTES, 'UTF-8')
+                                        . ")</span>";
+                                else :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($f1Name), ENT_QUOTES, 'UTF-8');
+                                endif;
+                            else :
+                                $flavorName = $row['flavor_name'] ?? '';
+                                $cardName = $row['name'] ?? '';
+                                $printedName = $row['printed_name'] ?? '';
+                                if ($flavorName !== null and $flavorName !== '') :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($flavorName), ENT_QUOTES, 'UTF-8')
+                                        . " <span class='card-info-name-secondary'>("
+                                        . htmlspecialchars(stripslashes($cardName), ENT_QUOTES, 'UTF-8')
+                                        . ")</span>";
+                                elseif ($card_lang === 'ph') :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($cardName), ENT_QUOTES, 'UTF-8');
+                                elseif ($printedName !== '' and $printedName !== $cardName) :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($printedName), ENT_QUOTES, 'UTF-8')
+                                        . " <span class='card-info-name-secondary'>("
+                                        . htmlspecialchars(stripslashes($cardName), ENT_QUOTES, 'UTF-8')
+                                        . ")</span>";
+                                else :
+                                    $displayNameHtml = htmlspecialchars(stripslashes($cardName), ENT_QUOTES, 'UTF-8');
+                                endif;
+                            endif;
+                            $manaCostRaw = '';
+                            if (!empty($row['f1_manacost'])) :
+                                $manaCostRaw = $row['f1_manacost'];
+                            elseif (!empty($row['manacost'])) :
+                                $manaCostRaw = $row['manacost'];
+                            endif;
+                            $manaCostRaw = trim($manaCostRaw);
+                            if ($manaCostRaw === '' or $manaCostRaw === '0' or $manaCostRaw === '{0}') :
+                                $manaCostDisplay = '0';
+                            else :
+                                $manaCostDisplay = symbolReplace($manaCostRaw);
+                            endif;
+                            $cardTypeRaw = $row['type'] ?? '';
+                            if ($cardTypeRaw === '' && !empty($row['f1_type'])) :
+                                $cardTypeRaw = $row['f1_type'];
+                            endif;
+                            $cardTypeEsc = htmlspecialchars(stripslashes($cardTypeRaw), ENT_QUOTES, 'UTF-8');
+                            $collectorNumber = htmlspecialchars((string) $row['number_import'], ENT_QUOTES, 'UTF-8');
+                            $hasCardImage = (strpos($imageUrl, 'cardimg') !== false);
+                            $placeholderImg = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                            $msg->logMessage(
+                                '[DEBUG]',
+                                "Index image availability for {$row['cs_id']}: " . ($hasCardImage ? 'yes' : 'no')
+                            );
 
                             $msg->logMessage('[DEBUG]', "Collection view is $collection_view");
                             if (($myqty + $myfoil + $myetch) == 0 and $collection_view == 1) :
@@ -1138,11 +1229,30 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 endif;
                                 $setname = htmlspecialchars($row['set_name'], ENT_QUOTES, 'UTF-8');
                                 $number_import = $row['number_import'];
-                                $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
-                                    . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
-                                    . "no. $number_import' class='card-image cardimg$in_collection' "
-                                    . "alt='$scryid' src='$imageUrl' data-cardid='$scryid' data-face='front' "
-                                    . "data-front-src='$imageUrl' data-back-src='$imagebackurl'></a>";
+                                $expectedFront = "cardimg/$setcode/$scryid.jpg";
+                                if ($hasCardImage) :
+                                    $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
+                                        . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
+                                        . "no. $number_import' class='card-image cardimg$in_collection' "
+                                        . "alt='$scryid' src='$imageUrl' data-cardid='$scryid' data-face='front' "
+                                        . "data-front-src='$imageUrl' data-back-src='$imagebackurl'></a>";
+                                else :
+                                    $gridLink = "<a class='gridlink' href='/carddetail.php?id=$scryid'>"
+                                        . "<div class='card-info-placeholder cardimg$in_collection' "
+                                        . "data-cardid='$scryid'>"
+                                        . "<span class='material-symbols-outlined card-info-refresh' "
+                                        . "title='Refresh image' data-cardid='$scryid'>refresh</span>"
+                                        . "<div class='card-info-name'>$displayNameHtml</div>"
+                                        . "<div class='card-info-type'>$cardTypeEsc</div>"
+                                        . "<div class='card-info-mana'>$manaCostDisplay</div>"
+                                        . "<div class='card-info-number'>No. $collectorNumber</div>"
+                                        . "</div>"
+                                        . "<img id='$img_id' title='$uppercasesetcode ($setname / $displayLang) "
+                                        . "no. $number_import' class='card-image cardimg$in_collection "
+                                        . "card-image-hidden' alt='$scryid' src='$placeholderImg' "
+                                        . "data-cardid='$scryid' data-face='front' data-front-src='$expectedFront' "
+                                        . "data-back-src='$imagebackurl'></a>";
+                                endif;
                                 echo $gridLink;
                                 $cellid = "cell" . $scryid;
                                 $cellid_one = $cellid . '_one';

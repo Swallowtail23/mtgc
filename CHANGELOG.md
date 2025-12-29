@@ -3,7 +3,7 @@
 ## [v0.4.7-dev] - Unreleased
 
 ### Added
--
+- Index grid now shows a card info placeholder when images are missing.
 
 ### Changed
 - Rulings import now aborts if the content_hash column or unique key are missing instead of altering schema.
@@ -12,6 +12,7 @@
 - Sets page now loads the requested page when opened with a `page` query parameter.
 - Sets page now hides initial results when loading a non-first page to avoid visible jumps.
 - Card detail async image refresh now skips swaps when change flags are falsey.
+- Index async image refresh now swaps placeholders through the DOM when a local card image exists even if unchanged.
 
 ### Security
 -

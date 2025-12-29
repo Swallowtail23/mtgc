@@ -1,5 +1,5 @@
 /*
-Version:     1.8
+Version:     1.14
 Date:        29/12/25
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
@@ -34,6 +34,7 @@ To do:       -
             $img.css('opacity', '0');
             $img.off('load.mtgfade').on('load.mtgfade', function () {
                 const $self = $(this);
+                hideCardPlaceholder($self);
                 requestAnimationFrame(function () {
                     requestAnimationFrame(function () {
                         $self.css('opacity', '1');
@@ -83,6 +84,78 @@ To do:       -
         return value === true || value === 1 || value === '1' || value === 'true';
     }
 
+    function hideCardPlaceholder($img) {
+        const cardId = $img.data('cardid');
+        if (!cardId) {
+            return;
+        }
+        const placeholders = $('.card-info-placeholder[data-cardid="' + cardId + '"]');
+        if (placeholders.length) {
+            placeholders.addClass('card-info-hidden');
+        }
+        $img.removeClass('card-image-hidden');
+    }
+
+    function buildBustUrl(url) {
+        if (!url) {
+            return '';
+        }
+        const token = 't=' + Date.now();
+        return url.indexOf('?') === -1 ? url + '?' + token : url + '&' + token;
+    }
+
+    function retryPlaceholderImages(options) {
+        const opts = options || {};
+        const selector = opts.selector || '.card-info-placeholder';
+        const queue = [];
+        let inFlight = 0;
+        const maxConcurrent = 3;
+
+        $(selector).each(function () {
+            const $placeholder = $(this);
+            if ($placeholder.hasClass('card-info-hidden')) {
+                return;
+            }
+            const cardId = $placeholder.data('cardid');
+            if (!cardId) {
+                return;
+            }
+            const $img = $('img[data-cardid="' + cardId + '"]').first();
+            if (!$img.length) {
+                return;
+            }
+            const frontSrc = $img.attr('data-front-src') || '';
+            if (!frontSrc) {
+                return;
+            }
+            queue.push({ cardId: cardId, $img: $img, frontSrc: frontSrc });
+        });
+
+        function scheduleNext() {
+            if (inFlight >= maxConcurrent || queue.length === 0) {
+                return;
+            }
+            const item = queue.shift();
+            inFlight += 1;
+            fetch(item.frontSrc, { method: 'HEAD', cache: 'no-store' })
+                .then(function (response) {
+                    if (response && response.ok) {
+                        swapImageWithFade(item.$img, buildBustUrl(item.frontSrc), true);
+                    }
+                })
+                .catch(function () {
+                    return;
+                })
+                .finally(function () {
+                    inFlight -= 1;
+                    setTimeout(scheduleNext, 0);
+                });
+            setTimeout(scheduleNext, 0);
+        }
+
+        setTimeout(scheduleNext, 0);
+    }
+
     function handleImageRefresh(cardId, response, options) {
         if (!response || !response.success) {
             return;
@@ -93,11 +166,13 @@ To do:       -
 
         const frontChanged = isChangedFlag(response.front_changed);
         const backChanged = isChangedFlag(response.back_changed);
+        const placeholder = $('.card-info-placeholder[data-cardid="' + cardId + '"]').first();
+        const placeholderVisible = placeholder.length && !placeholder.hasClass('card-info-hidden');
+        const hasFrontImage = response.front && response.front.indexOf('cardimg') !== -1;
+        const shouldRevealFront = placeholderVisible && hasFrontImage;
 
-        if (frontChanged) {
-            const frontSrc = response.front && response.front.indexOf('cardimg') !== -1
-                ? response.front
-                : '/images/back.jpg';
+        if (frontChanged || shouldRevealFront) {
+            const frontSrc = hasFrontImage ? response.front : '/images/back.jpg';
             const frontBustUrl = frontSrc + '?t=' + Date.now();
             if (useFaces) {
                 const frontTargets = $('img[data-cardid="' + cardId + '"][data-face="front"]');
@@ -212,8 +287,26 @@ To do:       -
         setTimeout(scheduleNext, 0);
     }
 
+    $(document).on('click', '.card-info-refresh', function (event) {
+        event.preventDefault();
+        const cardId = $(this).data('cardid');
+        if (!cardId) {
+            return;
+        }
+        $.ajax({
+            url: 'ajax/ajaximagecheck.php',
+            type: 'POST',
+            data: { cardid: cardId },
+            dataType: 'json',
+            success: function (response) {
+                handleImageRefresh(cardId, response, {});
+            }
+        });
+    });
+
     window.mtgSwapImageWithFade = swapImageWithFade;
     window.mtgRefreshImageCache = refreshImageCache;
     window.mtgHandleImageRefresh = handleImageRefresh;
     window.mtgRefreshCardImagesAsync = refreshCardImagesAsync;
+    window.mtgRetryPlaceholderImages = retryPlaceholderImages;
 })(window, window.jQuery);
