@@ -1,14 +1,15 @@
 <?php
 
 /*
-Version:     3.3
-Date:        23/12/25
+Version:     3.4
+Date:        29/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 History:     See git history / CHANGELOG.md
+To do:       -
 */
 
 require('bulk_ini.php');
@@ -91,13 +92,8 @@ $hashColumnResult = $db->query("SHOW COLUMNS FROM `rulings_scry` LIKE 'content_h
 if ($hashColumnResult === false) :
     throw new Exception('[ERROR] scryfall_rulings.php: Checking rulings_scry content_hash: ' . $db->error);
 elseif ($hashColumnResult->num_rows === 0) :
-    $msg->logMessage('[NOTICE]', 'rulings_scry content_hash column missing; adding column');
-    $alterResult = $db->query("ALTER TABLE `rulings_scry` ADD COLUMN `content_hash` CHAR(40) NULL");
-    if ($alterResult === false) :
-        throw new Exception('[ERROR] scryfall_rulings.php: Adding content_hash: ' . $db->error);
-    else :
-        $msg->logMessage('[DEBUG]', 'rulings_scry content_hash column added');
-    endif;
+    $msg->logMessage('[FATAL]', 'rulings_scry content_hash column missing; aborting import');
+    exit(1);
 else :
     $msg->logMessage('[DEBUG]', 'rulings_scry content_hash column present');
 endif;
@@ -110,13 +106,8 @@ $hashIndexResult = $db->query("SHOW INDEX FROM `rulings_scry` WHERE Key_name = '
 if ($hashIndexResult === false) :
     throw new Exception('[ERROR] scryfall_rulings.php: Checking rulings_scry unique index: ' . $db->error);
 elseif ($hashIndexResult->num_rows === 0) :
-    $msg->logMessage('[NOTICE]', 'rulings_scry content_hash unique key missing; adding index');
-    $alterResult = $db->query("ALTER TABLE `rulings_scry` ADD UNIQUE KEY `rulings_unique` (`content_hash`)");
-    if ($alterResult === false) :
-        throw new Exception('[ERROR] scryfall_rulings.php: Adding rulings_scry unique key: ' . $db->error);
-    else :
-        $msg->logMessage('[DEBUG]', 'rulings_scry unique key added');
-    endif;
+    $msg->logMessage('[FATAL]', 'rulings_scry content_hash unique key missing; aborting import');
+    exit(1);
 else :
     $msg->logMessage('[DEBUG]', 'rulings_scry content_hash unique key present');
 endif;

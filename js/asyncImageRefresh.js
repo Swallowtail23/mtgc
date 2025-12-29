@@ -1,6 +1,6 @@
 /*
-Version:     1.7
-Date:        28/12/25
+Version:     1.8
+Date:        29/12/25
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -79,6 +79,10 @@ To do:       -
             });
     }
 
+    function isChangedFlag(value) {
+        return value === true || value === 1 || value === '1' || value === 'true';
+    }
+
     function handleImageRefresh(cardId, response, options) {
         if (!response || !response.success) {
             return;
@@ -87,7 +91,10 @@ To do:       -
         const useFaces = opts.useFaces === true;
         const onFlipReady = opts.onFlipReady || null;
 
-        if (response.front_changed) {
+        const frontChanged = isChangedFlag(response.front_changed);
+        const backChanged = isChangedFlag(response.back_changed);
+
+        if (frontChanged) {
             const frontSrc = response.front && response.front.indexOf('cardimg') !== -1
                 ? response.front
                 : '/images/back.jpg';
@@ -113,7 +120,7 @@ To do:       -
             }
         }
 
-        if (response.back_changed && response.back) {
+        if (backChanged && response.back) {
             const backBustUrl = response.back + '?t=' + Date.now();
             if (useFaces) {
                 const backTargets = $('img[data-cardid="' + cardId + '"][data-face="back"]');
