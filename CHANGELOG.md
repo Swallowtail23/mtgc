@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [v0.4.9-dev] - Unreleased
+## [v0.4.9] - 2025-12-30
 
 ### Added
 - Manual test stub for bulk import fixtures (`tests/manual_bulk_import_test.php`).
@@ -18,12 +18,6 @@ and reports change buckets.
 - Card detail flip rotate now targets the visible image instead of the hidden hover image.
 - Card detail hover image rotation now tracks the main image rotation for flip cards.
 - Bulk diagnostic logging now buckets added vs content/price changes with per-bucket limits.
-
-### Security
--
-
-### Infrastructure
--
 
 ## [v0.4.8] - 2025-12-29
 
