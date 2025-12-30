@@ -4,15 +4,20 @@ All notable changes to this project will be documented in this file.
 ## [v0.4.9-dev] - Unreleased
 
 ### Added
--
+- Manual test stub for bulk import fixtures (`tests/manual_bulk_import_test.php`).
 
 ### Changed
--
+- Removed bulk diagnostic logging from Scryfall bulk import.
+- Added test mode for bulk import to target `cards_scry_test`, which runs two fixture passes
+and reports change buckets.
+- Hash lookup now re-binds result columns per execution for prepared statement reliability.
+- Bulk import summary now labels no-change rows as unchanged instead of other.
 
 ### Fixed
 - Deck detail touch previews now allow taps on preview images to open card detail pages.
 - Card detail flip rotate now targets the visible image instead of the hidden hover image.
 - Card detail hover image rotation now tracks the main image rotation for flip cards.
+- Bulk diagnostic logging now buckets added vs content/price changes with per-bucket limits.
 
 ### Security
 -

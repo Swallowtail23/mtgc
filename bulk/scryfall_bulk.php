@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.4
+Version:     9.13
 Date:        19/12/25
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -29,13 +29,113 @@ ensureDirectoryExists($imgLocation . 'json');
 
 $arg1 = $argv[1] ?? '';
 $arg1 = strtolower(trim($arg1));
+$useTestTable = false;
 
-if ($arg1 === 'all') :
+if ($arg1 === 'test') :
+    $type = 'default';
+    $useTestTable = true;
+    $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test mode enabled; using cards_scry_test');
+elseif ($arg1 === 'all') :
     $type = 'all';
 elseif ($arg1 === 'refresh') :
     $type = 'refresh';
 else :
     $type = 'default';
+endif;
+$targetTable = $useTestTable ? 'cards_scry_test' : 'cards_scry';
+
+if ($useTestTable) :
+    $testFileFirst = __DIR__ . '/../tests/test_data/bulk_sample_10.json';
+    $testFileSecond = __DIR__ . '/../tests/test_data/bulk_sample_10_copy.json';
+
+    $msg->logMessage('[DEBUG]', 'Preparing cards_scry_test for bulk import test');
+    $tableCheck = $db->query("SHOW TABLES LIKE 'cards_scry_test'");
+    if ($tableCheck === false) :
+        $text = "Scryfall Bulk API: Failed to check cards_scry_test existence: {$db->error}";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    endif;
+    if ($tableCheck->num_rows === 0) :
+        $msg->logMessage('[NOTICE]', 'cards_scry_test missing; creating from cards_scry structure');
+        $createResult = $db->query("CREATE TABLE `cards_scry_test` LIKE `cards_scry`");
+        if ($createResult === false) :
+            $text = "Scryfall Bulk API: Failed to create cards_scry_test: {$db->error}";
+            $msg->logMessage('[ERROR]', $text);
+            if (PHP_SAPI === 'cli') :
+                fwrite(STDERR, $text . PHP_EOL);
+            endif;
+            exit(1);
+        endif;
+    endif;
+    $tableCheck->free();
+
+    $truncateResult = $db->query("TRUNCATE TABLE `cards_scry_test`");
+    if ($truncateResult === false) :
+        $text = "Scryfall Bulk API: Failed to truncate cards_scry_test: {$db->error}";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    endif;
+
+    if (!is_file($testFileFirst) || !is_file($testFileSecond)) :
+        $text = "Scryfall Bulk API: Test files missing: {$testFileFirst} or {$testFileSecond}";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    endif;
+
+    $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test run 1 (baseline) starting');
+    $bulkResultFirst = scryfallImport(
+        $testFileFirst,
+        'default',
+        $targetTable,
+        $statsFirst
+    );
+    if ($bulkResultFirst === false) :
+        $text = "Scryfall Bulk API: Test run 1 failed for {$testFileFirst}";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    endif;
+
+    $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test run 2 (mutated) starting');
+    $bulkResultSecond = scryfallImport(
+        $testFileSecond,
+        'default',
+        $targetTable,
+        $statsSecond
+    );
+    if ($bulkResultSecond === false) :
+        $text = "Scryfall Bulk API: Test run 2 failed for {$testFileSecond}";
+        $msg->logMessage('[ERROR]', $text);
+        if (PHP_SAPI === 'cli') :
+            fwrite(STDERR, $text . PHP_EOL);
+        endif;
+        exit(1);
+    endif;
+
+    $report = sprintf(
+        'Test summary: total %d, added %d, price only %d, content only %d, both %d',
+        $statsSecond['total'] ?? 0,
+        $statsSecond['added'] ?? 0,
+        $statsSecond['price_only'] ?? 0,
+        $statsSecond['content_only'] ?? 0,
+        $statsSecond['both'] ?? 0
+    );
+    $msg->logMessage('[NOTICE]', $report);
+    if (PHP_SAPI === 'cli') :
+        echo $report . PHP_EOL;
+    endif;
+    exit(0);
 endif;
 
 // Get info on required files to download and their local locations
@@ -98,7 +198,7 @@ if ($type === "refresh") :
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after bulk files obtained: %.2f seconds', $elapsed));
         // Run 1 - 'all', no images
-        $bulkResultAll = scryfallImport($fileLocationAll, 'all');
+        $bulkResultAll = scryfallImport($fileLocationAll, 'all', $targetTable);
         // Tag time progress after import finished
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after "all" import completed: %.2f seconds', $elapsed));
@@ -114,7 +214,7 @@ if ($type === "refresh") :
             echo "Scryfall Bulk API: MTG bulk update completed (all), $bulkResultAll\n";
         endif;            
         // Run 2 - 'default', assigns primary language
-        $bulkResultDefault = scryfallImport($fileLocationDefault, 'default');
+        $bulkResultDefault = scryfallImport($fileLocationDefault, 'default', $targetTable);
         // Tag time progress after import finished
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after "default" import completed: %.2f seconds', $elapsed));
@@ -147,7 +247,7 @@ else :
         // Tag time progress after getting bulk files
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after bulk files obtained: %.2f seconds', $elapsed));
-        $bulkResultMessage = scryfallImport($fileLocation, $type);
+        $bulkResultMessage = scryfallImport($fileLocation, $type, $targetTable);
         if ($bulkResultMessage === false) :
             $text = "Scryfall Bulk API: scryfallImport from $fileLocation failed for type '$type'";
             $msg->logMessage('[ERROR]', $text);

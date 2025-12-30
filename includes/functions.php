@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     28.2
-Date:        27/12/25
+Version:     28.14
+Date:        30/12/25
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -825,7 +825,12 @@ function getBulkJson($uri, $file_location, $max_fileage)
     return false;
 }
 
-function scryfallImport($file_location, $type)
+function scryfallImport(
+    $file_location,
+    $type,
+    $tableName = 'cards_scry',
+    &$stats = null
+)
 {
     // Function to process and import lines within Scryfall bulk data files
     global
@@ -841,34 +846,42 @@ function scryfallImport($file_location, $type)
         $twoCardDetailSections;
     $msg = new \MTG\Core\Message($logfile);
 
-    $msg->logMessage('[DEBUG]', 'Checking for cards_scry content_hash and price_hash columns');
-    $contentHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'content_hash'");
+    $allowedTables = ['cards_scry', 'cards_scry_test'];
+    if (!in_array($tableName, $allowedTables, true)) :
+        $msg->logMessage('[ERROR]', "Invalid table name '$tableName' for scryfallImport");
+        throw new Exception('[ERROR] scryfall_bulk.php: Invalid cards table name supplied');
+    endif;
+    $msg->logMessage('[DEBUG]', "Using cards table '$tableName' for scryfall import");
+    $msg->logMessage('[DEBUG]', "Checking for {$tableName} content_hash and price_hash columns");
+    $contentHashQuery = sprintf("SHOW COLUMNS FROM `%s` LIKE 'content_hash'", $tableName);
+    $contentHashResult = $db->query($contentHashQuery);
     if ($contentHashResult === false) :
         throw new Exception(
-            '[ERROR] scryfall_bulk.php: Checking cards_scry content_hash column: ' . $db->error
+            '[ERROR] scryfall_bulk.php: Checking cards table content_hash column: ' . $db->error
         );
     elseif ($contentHashResult->num_rows === 0) :
         throw new Exception(
-            '[ERROR] scryfall_bulk.php: cards_scry content_hash column missing (manual schema update required)'
+            '[ERROR] scryfall_bulk.php: cards table content_hash column missing (manual schema update required)'
         );
     else :
-        $msg->logMessage('[DEBUG]', 'cards_scry content_hash column present');
+        $msg->logMessage('[DEBUG]', 'cards table content_hash column present');
     endif;
     if ($contentHashResult !== false) :
         $contentHashResult->free();
     endif;
 
-    $priceHashResult = $db->query("SHOW COLUMNS FROM `cards_scry` LIKE 'price_hash'");
+    $priceHashQuery = sprintf("SHOW COLUMNS FROM `%s` LIKE 'price_hash'", $tableName);
+    $priceHashResult = $db->query($priceHashQuery);
     if ($priceHashResult === false) :
         throw new Exception(
-            '[ERROR] scryfall_bulk.php: Checking cards_scry price_hash column: ' . $db->error
+            '[ERROR] scryfall_bulk.php: Checking cards table price_hash column: ' . $db->error
         );
     elseif ($priceHashResult->num_rows === 0) :
         throw new Exception(
-            '[ERROR] scryfall_bulk.php: cards_scry price_hash column missing (manual schema update required)'
+            '[ERROR] scryfall_bulk.php: cards table price_hash column missing (manual schema update required)'
         );
     else :
-        $msg->logMessage('[DEBUG]', 'cards_scry price_hash column present');
+        $msg->logMessage('[DEBUG]', 'cards table price_hash column present');
     endif;
     if ($priceHashResult !== false) :
         $priceHashResult->free();
@@ -877,18 +890,6 @@ function scryfallImport($file_location, $type)
     // Initiate counters at zero
     $count_inc = $count_skip = $total_count = $count_add = $count_update = $count_other = 0;
     $count_update_content = $count_update_price = $count_update_both = 0;
-    $diag_change_count = 0;
-    $diag_no_change_count = 0;
-    $diag_limit = 50;
-    $bulkDiagnosticEnabled = method_exists($msg, 'isBulkDiagnosticEnabled')
-        && $msg->isBulkDiagnosticEnabled();
-    if ($bulkDiagnosticEnabled) :
-        $msg->logMessage(
-            '[NOTICE]',
-            'Bulk diagnostic mode enabled for scryfall bulk import (first 50 change + no change rows).'
-        );
-    endif;
-
     $data = JsonMachine\Items::fromFile(
         $file_location,
         ['decoder' => new JsonMachine\JsonDecoder\ExtJsonDecoder(true)]
@@ -914,12 +915,16 @@ function scryfallImport($file_location, $type)
     endif;
 
     $imageManager = null;
+    if ($tableName === 'cards_scry_test') :
+        $imageDownloads = false;
+    endif;
+
     if ($imageDownloads === true) :
         $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
     endif;
 
-    $stmt = $db->prepare("INSERT INTO
-                            `cards_scry`
+    $insertSql = sprintf("INSERT INTO
+                            `%s`
                             (id, oracle_id, tcgplayer_id, multiverse, multiverse2,
                             name, printed_name, flavor_name, lang, release_date,
                             api_uri, scryfall_uri, layout, image_uri, manacost,
@@ -1315,15 +1320,19 @@ function scryfallImport($file_location, $type)
                                 price_hash
                             ),
                             primary_card = IF(?, 1, primary_card)
-                        ");
+                        ", $tableName);
+    $stmt = $db->prepare($insertSql);
     if ($stmt === false) :
         throw new Exception('[ERROR] cards.php: Preparing SQL: ' . $db->error);
     endif;
-    $hashStmt = $db->prepare("SELECT content_hash, price_hash FROM `cards_scry` WHERE id = ? LIMIT 1");
+    $hashSql = sprintf(
+        "SELECT content_hash, price_hash FROM `%s` WHERE id = ? LIMIT 1",
+        $tableName
+    );
+    $hashStmt = $db->prepare($hashSql);
     if ($hashStmt === false) :
         throw new Exception('[ERROR] scryfall_bulk.php: Preparing hash lookup SQL: ' . $db->error);
     endif;
-
     // Initialise all variables for binding
     $id = null;
     $oracle_id = null;
@@ -1443,6 +1452,9 @@ function scryfallImport($file_location, $type)
     $primary = (int) $primary;
 
     $hash_id = null;
+    $hash_lookup = null;
+    $existing_id = null;
+    $existing_found = false;
     $existing_content_hash = null;
     $existing_price_hash = null;
 
@@ -1588,15 +1600,6 @@ function scryfallImport($file_location, $type)
     $hashBind = $hashStmt->bind_param("s", $hash_id);
     if ($hashBind === false) :
         mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding hash id: ' . $db->error, __FILE__, __LINE__);
-    endif;
-    $hashBindResult = $hashStmt->bind_result($existing_content_hash, $existing_price_hash);
-    if ($hashBindResult === false) :
-        mtgError(
-            E_USER_ERROR,
-            '[ERROR] scryfall_bulk.php: Binding hash results: ' . $db->error,
-            __FILE__,
-            __LINE__
-        );
     endif;
     $lastGoodId = null;
     $lastGoodCount = 0;
@@ -2147,6 +2150,9 @@ function scryfallImport($file_location, $type)
                 $price_changed = false;
                 $existing_content_hash = null;
                 $existing_price_hash = null;
+                $existing_id = null;
+                $existing_found = false;
+                $hash_lookup = 'none';
 
                 $hash_id = $id;
                 $hashExec = $hashStmt->execute();
@@ -2167,8 +2173,20 @@ function scryfallImport($file_location, $type)
                         __LINE__
                     );
                 endif;
+                $hashBindResult = $hashStmt->bind_result($existing_content_hash, $existing_price_hash);
+                if ($hashBindResult === false) :
+                    mtgError(
+                        E_USER_ERROR,
+                        '[ERROR] scryfall_bulk.php: Binding hash results: ' . $db->error,
+                        __FILE__,
+                        __LINE__
+                    );
+                endif;
                 if ($hashStmt->num_rows > 0) :
                     $hashStmt->fetch();
+                    $existing_found = true;
+                    $existing_id = $id;
+                    $hash_lookup = 'id';
                     $content_changed = ($existing_content_hash !== $content_hash);
                     $price_changed = ($existing_price_hash !== $price_hash);
                 endif;
@@ -2206,8 +2224,6 @@ function scryfallImport($file_location, $type)
                         $count_update = $count_update + 1;
                         if ($content_changed === true and $price_changed === true) :
                             $count_update_both = $count_update_both + 1;
-                            $count_update_content = $count_update_content + 1;
-                            $count_update_price = $count_update_price + 1;
                             $msg->logMessage(
                                 '[DEBUG]',
                                 "Updated card - content and price hash change; return code: $status"
@@ -2235,52 +2251,6 @@ function scryfallImport($file_location, $type)
                         $msg->logMessage('[DEBUG]', "No change - no error returned; return code: $status");
                     endif;
 
-                    if ($bulkDiagnosticEnabled) :
-                        $is_change = ($status !== 0);
-                        $log_change = $is_change && $diag_change_count < $diag_limit;
-                        $log_no_change = (!$is_change) && $diag_no_change_count < $diag_limit;
-                        if ($log_change || $log_no_change) :
-                            $diag_bucket = $is_change ? 'change' : 'no_change';
-                            if ($log_change) :
-                                $diag_change_count = $diag_change_count + 1;
-                            else :
-                                $diag_no_change_count = $diag_no_change_count + 1;
-                            endif;
-                            $diag_payload = [
-                                'bucket' => $diag_bucket,
-                                'status' => $status,
-                                'id' => $id,
-                                'name' => $name,
-                                'set_code' => $set_code,
-                                'collector_number' => $collector_number,
-                                'layout' => $layout,
-                                'lang' => $lang,
-                                'content_changed' => $content_changed,
-                                'price_changed' => $price_changed,
-                                'existing_content_hash' => $existing_content_hash,
-                                'existing_price_hash' => $existing_price_hash,
-                                'content_hash' => $content_hash,
-                                'price_hash' => $price_hash,
-                                'content_hash_data' => $contentHashData,
-                                'price_hash_data' => $priceHashData,
-                                'prices' => [
-                                    'usd' => $price_usd,
-                                    'usd_foil' => $price_usd_foil,
-                                    'usd_etched' => $price_usd_etched,
-                                    'price_sort' => $price_sort
-                                ],
-                                'scryfall_record' => $value
-                            ];
-                            $diag_json = json_encode(
-                                $diag_payload,
-                                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-                            );
-                            if ($diag_json === false) :
-                                $diag_json = 'Bulk diagnostic JSON encoding failed for ' . ($id ?? 'unknown id');
-                            endif;
-                            $msg->logBulkDiagnostic($diag_json);
-                        endif;
-                    endif;
                 endif;
             endif;
             if ($commit_due) :
@@ -2345,8 +2315,21 @@ function scryfallImport($file_location, $type)
         '[NOTICE]',
         "Bulk update completed: Total $total_count, added: $count_add, skipped $count_skip, "
         . "included $count_inc, updated: $count_update (content: $count_update_content, "
-        . "price: $count_update_price, both: $count_update_both), other: $count_other"
+        . "price: $count_update_price, both: $count_update_both), unchanged: $count_other"
     );
+    if (func_num_args() >= 4) :
+        $stats = [
+            'total' => $total_count,
+            'included' => $count_inc,
+            'skipped' => $count_skip,
+            'added' => $count_add,
+            'updated' => $count_update,
+            'content_only' => $count_update_content,
+            'price_only' => $count_update_price,
+            'both' => $count_update_both,
+            'other' => $count_other
+        ];
+    endif;
     $message = "Total: $total_count; total added: $count_add; total skipped: $count_skip; "
         . "total included: $count_inc; total updated: $count_update (content: $count_update_content; "
         . "price: $count_update_price; both: $count_update_both)";
