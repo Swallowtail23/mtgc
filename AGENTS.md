@@ -56,6 +56,12 @@
 - Standard Tidyup: No approval needed. Remove end of line whitespaces, apply phpcs automatic tidyup, split long lines to be <=120 characters, apply standard header format (see below). Do not change logic, program flow, or control structures. Must not change output.
 - Advanced Tidyup: Standard Tidyup plus also conduct a basic review of logic and possible optimisation. Make no logic code changes or optimisation without approval.
 
+## Problem-Solving Expectations
+- For complex or contentious issues, insist on a minimal reproducible test with fixed inputs and expected outputs before concluding.
+- Validate the full data path end-to-end (inputs → transforms → storage → readback) rather than assuming any step.
+- Treat logs/diagnostics as hypotheses; verify with direct checks when they conflict with observed results.
+- Prefer small, reversible instrumentation gated to test mode and remove it once the root cause is confirmed.
+
 ## Header
 Standard Header format example:
 
