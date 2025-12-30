@@ -830,8 +830,7 @@ function scryfallImport(
     $type,
     $tableName = 'cards_scry',
     &$stats = null
-)
-{
+) {
     // Function to process and import lines within Scryfall bulk data files
     global
         $db,
@@ -2250,7 +2249,6 @@ function scryfallImport(
                         $count_other = $count_other + 1;
                         $msg->logMessage('[DEBUG]', "No change - no error returned; return code: $status");
                     endif;
-
                 endif;
             endif;
             if ($commit_due) :
