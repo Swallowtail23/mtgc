@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        27/12/25
+Version:     1.3
+Date:        30/12/25
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -37,25 +37,6 @@ class Message
         $this->writelog($this->textstring, $effectiveLogfile);
     }
 
-    public function isBulkDiagnosticEnabled()
-    {
-        return (int) $this->logLevel === 4;
-    }
-
-    public function logBulkDiagnostic($text, $logfile = '')
-    {
-        if (!$this->isBulkDiagnosticEnabled()) :
-            return;
-        endif;
-
-        $effectiveLogfile = $logfile ?: $this->logfile;
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-        $caller_info = $this->findCallerInfo($backtrace);
-
-        $this->textstring = "[NOTICE] Bulk diagnostic {$caller_info}: $text";
-        $this->writelog($this->textstring, $effectiveLogfile);
-    }
-
     private function writelog($msg, $log = '')
     {
         $log = $log ?: $this->logfile;
@@ -76,9 +57,6 @@ class Message
         endif;
 
         $loglevel = (int) $this->logLevel;
-        if ($loglevel === 4) :
-            $loglevel = 2;
-        endif;
 
         if ($msglevel <= $loglevel) :
             $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;

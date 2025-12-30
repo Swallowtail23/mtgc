@@ -18,6 +18,9 @@ All notable changes to this project will be documented in this file.
 ### Infrastructure
 -
 
+### Removed
+- Admin config no longer offers loglevel 4 bulk diagnostic mode; logging now only accepts levels 1-3.
+
 ## [v0.4.9] - 2025-12-30
 
 ### Added

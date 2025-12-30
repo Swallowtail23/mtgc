@@ -1,10 +1,10 @@
 <?php
 /*
-Version:     6.13
-Date:        27/12/25
+Version:     6.14
+Date:        30/12/25
 Name:        admin.php
 Purpose:     Site control panel
-Notes:       {none}
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -637,7 +637,10 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     $updatedIni['general']['URL'] = getPostedValue('general_url', $iniArray['general']['URL']);
     $loglevelSelection = filter_input(INPUT_POST, 'general_loglevel', FILTER_SANITIZE_NUMBER_INT);
     if ($loglevelSelection !== null && $loglevelSelection !== false && $loglevelSelection !== '') :
-        $updatedIni['general']['Loglevel'] = $loglevelSelection;
+        $loglevelSelection = (int) $loglevelSelection;
+        if (in_array($loglevelSelection, array(1, 2, 3), true)) :
+            $updatedIni['general']['Loglevel'] = $loglevelSelection;
+        endif;
     endif;
 
     // Database settings
@@ -1483,11 +1486,6 @@ require('../includes/menu.php');
                                                             echo ' selected';
                                                         endif;?>
                                                     >3 - Debug</option>
-                                                    <option value="4"
-                                                        <?php if ($logLevelIni == 4) :
-                                                            echo ' selected';
-                                                        endif;?>
-                                                    >4 - Bulk diagnostic</option>
                                                 </select>
                                             </label>
                                         </div>
