@@ -1,6 +1,6 @@
 /*
-Version:     2.59
-Date:        29/12/25
+Version:     2.70
+Date:        01/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -82,6 +82,44 @@ function updateDeckVersion(rawVersion) {
     }
 }
 
+function swapImageByElement($img) {
+    if (!$img || !$img.length) {
+        return;
+    }
+    var backSrc = $img.attr('data-back-src');
+    var frontSrc = $img.attr('data-front-src') || $img.attr('src');
+    if (!backSrc || !frontSrc) {
+        return;
+    }
+    if (!$img.hasClass('flipped')) {
+        $img.addClass('flipped');
+        setTimeout(function () {
+            $img.attr('src', backSrc);
+        }, 80);
+    } else {
+        $img.removeClass('flipped');
+        setTimeout(function () {
+            $img.attr('src', frontSrc);
+        }, 80);
+    }
+}
+
+function updateDecksideHeroFlipButton() {
+    var $img = $('#deckside-hero-img');
+    var $button = $('#deckside-hero-flip');
+    if (!$img.length || !$button.length) {
+        return;
+    }
+    var backSrc = $img.attr('data-back-src');
+    var frontSrc = $img.attr('data-front-src') || $img.attr('src');
+    if (backSrc && frontSrc && backSrc.indexOf('cardimg') !== -1) {
+        $button.css('display', 'flex');
+    } else {
+        $button.hide();
+        $img.removeClass('flipped');
+    }
+}
+
 function preloadFirstDeckImage() {
     var $firstImg = $('#decklist-fragment img.deckcardimg').first();
     if (!$firstImg.length) {
@@ -99,7 +137,10 @@ function preloadFirstDeckImage() {
         var firstLink = $firstImg.closest('a').attr('href') || '#';
         setDecksideHeroLink(firstLink);
         if (src && src.indexOf('/images/back.jpg') === -1) {
-            setDecksideHeroImage(src);
+            setDecksideHeroImage(src, {
+                cardId: $firstImg.data('cardid'),
+                backSrc: $firstImg.attr('data-back-src') || ''
+            });
             decksideHeroAutoLoaded = true;
             if (window.console && console.debug) {
                 console.debug('[DEBUG] Deckside hero auto-loaded from first deck image.');
@@ -113,7 +154,10 @@ function preloadFirstDeckImage() {
                 if (!loadedSrc || loadedSrc.indexOf('/images/back.jpg') !== -1) {
                     return;
                 }
-                setDecksideHeroImage(loadedSrc);
+                setDecksideHeroImage(loadedSrc, {
+                    cardId: $firstImg.data('cardid'),
+                    backSrc: $firstImg.attr('data-back-src') || ''
+                });
                 setDecksideHeroLink(firstLink);
                 decksideHeroAutoLoaded = true;
                 if (window.console && console.debug) {
@@ -196,10 +240,17 @@ function updateDecksideHeroBackground(src) {
     decksideHero.classList.toggle('has-image', !isBack);
 }
 
-function setDecksideHeroImage(src) {
+function setDecksideHeroImage(src, options) {
     var heroImg = document.getElementById('deckside-hero-img');
     if (!heroImg) {
         return;
+    }
+    var opts = options || {};
+    if (opts.cardId) {
+        heroImg.dataset.cardid = opts.cardId;
+    }
+    if (Object.prototype.hasOwnProperty.call(opts, 'backSrc')) {
+        heroImg.dataset.backSrc = opts.backSrc;
     }
     if (heroImg.dataset.src === src) {
         return;
@@ -207,6 +258,7 @@ function setDecksideHeroImage(src) {
     heroImg.classList.remove('is-visible');
     updateDecksideHeroBackground(src);
     heroImg.dataset.src = src;
+    heroImg.dataset.frontSrc = src;
     heroImg.onload = function () {
         updateDecksideHeroBackground(this.src);
         heroImg.classList.add('is-visible');
@@ -216,6 +268,7 @@ function setDecksideHeroImage(src) {
         updateDecksideHeroBackground(heroImg.src);
         heroImg.classList.add('is-visible');
     }
+    updateDecksideHeroFlipButton();
 }
 
 function setDecksideHeroLink(href) {
@@ -278,7 +331,7 @@ function updateRandomDrawPlacement() {
 }
 
 function getDeckSectionKeys() {
-    return ['creatures', 'instantsorcery', 'other', 'lands', 'sideboard'];
+    return ['creatures', 'instantsorcery', 'other', 'lands', 'sideboard', 'planes', 'tokens'];
 }
 
 function setDeckSectionCollapsed(section, collapsed) {
@@ -406,6 +459,14 @@ function refreshCardImagesAsync() {
 
 window.enqueueDeckImage = enqueueDeckImage;
 window.refreshCardImagesAsync = refreshCardImagesAsync;
+if (window.mtgHandleImageRefresh && !window.mtgHandleImageRefreshWrapped) {
+    var originalHandleImageRefresh = window.mtgHandleImageRefresh;
+    window.mtgHandleImageRefresh = function (cardId, response) {
+        originalHandleImageRefresh(cardId, response);
+        updateDecksideHeroFlipButton();
+    };
+    window.mtgHandleImageRefreshWrapped = true;
+}
 
 window.bindRandomCardEvents = function() {
     $('td').off('mouseenter mouseleave');
@@ -630,11 +691,17 @@ window.bindRandomCardEvents = function() {
             setDecksideHeroRotatable($div.hasClass('splitfloat'));
             var heroSrc = $img.attr('src') || $img.data('front-src');
             if (heroSrc) {
-                setDecksideHeroImage(heroSrc);
+                setDecksideHeroImage(heroSrc, {
+                    cardId: $img.data('cardid'),
+                    backSrc: $img.attr('data-back-src') || ''
+                });
             }
             setDecksideHeroLink($link.attr('href') || '#');
             $img.off('load.decksideHero').on('load.decksideHero', function () {
-                setDecksideHeroImage(this.src);
+                setDecksideHeroImage(this.src, {
+                    cardId: $img.data('cardid'),
+                    backSrc: $img.attr('data-back-src') || ''
+                });
             });
             $('.deckcardimgdiv').hide();
             return;
@@ -806,7 +873,7 @@ window.bindRandomDrawStripInteractions = function() {
         return !!pendingTouchCard || $(selector + '.' + touchDeactivatingClass).length > 0;
     };
     var clearTouchPreview = function(reason) {
-        var $active = $(selector + '.' + touchActiveClass);
+        var $active = $(selector + '.' + touchActiveClass + ',' + selector + '.' + touchDeactivatingClass);
         if ($active.length) {
             $active.addClass(touchDeactivatingClass);
         }
@@ -1220,6 +1287,14 @@ function bindDeckDetailHandlers() {
             getDeckSectionKeys().forEach(function (section) {
                 setDeckSectionCollapsed(section, !anyCollapsed);
             });
+        }
+    );
+    $(document).off('click.deckdetail', '#deckside-hero-flip').on(
+        'click.deckdetail',
+        '#deckside-hero-flip',
+        function (e) {
+            e.preventDefault();
+            swapImageByElement($('#deckside-hero-img'));
         }
     );
     $(document).off('click.deckdetail', '.js-plusmain').on('click.deckdetail', '.js-plusmain', function (e) {
@@ -2119,75 +2194,77 @@ function ensureSideboardSection() {
 }
 
     function updateDeckTotals() {
-        var sections = ['creatures', 'instantsorcery', 'other', 'lands', 'planes'];
+        var sections = ['creatures', 'instantsorcery', 'other', 'lands', 'planes', 'tokens'];
+        var mainSections = ['commander', 'creatures', 'instantsorcery', 'other', 'lands'];
         var mainTotal = 0;
         sections.forEach(function (section) {
             var total = 0;
-        var $rows = $('tr.deckrow[data-section="' + section + '"]');
-        var $qtyCells = $rows.find('.js-qty-main');
-        if ($qtyCells.length) {
-            $qtyCells.each(function () {
+            var $rows = $('tr.deckrow[data-section="' + section + '"]');
+            var $qtyCells = $rows.find('.js-qty-main, .js-qty-side');
+            if ($qtyCells.length) {
+                $qtyCells.each(function () {
+                    var qty = parseInt($(this).text(), 10);
+                    if (!isNaN(qty)) {
+                        total += qty;
+                    }
+                });
+            } else {
+                $rows.each(function () {
+                    var qty = parseInt($(this).data('qty'), 10);
+                    if (!isNaN(qty)) {
+                        total += qty;
+                    }
+                });
+            }
+            var $target = $('#total-' + section);
+            if ($target.length) {
+                $target.text(total);
+            }
+        });
+        mainSections.forEach(function (section) {
+            var sectionTotal = 0;
+            var $rows = $('tr.deckrow[data-section="' + section + '"]');
+            var $qtyCells = $rows.find('.js-qty-main, .js-qty-side');
+            if ($qtyCells.length) {
+                $qtyCells.each(function () {
+                    var qty = parseInt($(this).text(), 10);
+                    if (!isNaN(qty)) {
+                        sectionTotal += qty;
+                    }
+                });
+            } else {
+                $rows.each(function () {
+                    var qty = parseInt($(this).data('qty'), 10);
+                    if (!isNaN(qty)) {
+                        sectionTotal += qty;
+                    }
+                });
+            }
+            mainTotal += sectionTotal;
+        });
+        var $mainTotal = $('#total-main');
+        if ($mainTotal.length) {
+            $mainTotal.text(mainTotal);
+        }
+        var sideTotal = 0;
+        var $sideRows = $('tr.deckrow[data-section="sideboard"]');
+        var $sideQtyCells = $sideRows.find('.js-qty-side');
+        if ($sideQtyCells.length) {
+            $sideQtyCells.each(function () {
                 var qty = parseInt($(this).text(), 10);
                 if (!isNaN(qty)) {
-                    total += qty;
+                    sideTotal += qty;
                 }
             });
         } else {
-            $rows.each(function () {
+            $sideRows.each(function () {
                 var qty = parseInt($(this).data('qty'), 10);
                 if (!isNaN(qty)) {
-                    total += qty;
+                    sideTotal += qty;
                 }
             });
         }
-        var $target = $('#total-' + section);
-        if ($target.length) {
-            $target.text(total);
-        }
-        mainTotal += total;
-    });
-    var $mainRows = $('tr.deckrow').not('[data-section=\"sideboard\"]');
-    var $mainQtyCells = $mainRows.find('.js-qty-main');
-    if ($mainQtyCells.length) {
-        mainTotal = 0;
-        $mainQtyCells.each(function () {
-            var qty = parseInt($(this).text(), 10);
-            if (!isNaN(qty)) {
-                mainTotal += qty;
-            }
-        });
-    } else {
-        mainTotal = 0;
-        $mainRows.each(function () {
-            var qty = parseInt($(this).data('qty'), 10);
-            if (!isNaN(qty)) {
-                mainTotal += qty;
-            }
-        });
-    }
-    var $mainTotal = $('#total-main');
-    if ($mainTotal.length) {
-        $mainTotal.text(mainTotal);
-    }
-    var sideTotal = 0;
-    var $sideRows = $('tr.deckrow[data-section="sideboard"]');
-    var $sideQtyCells = $sideRows.find('.js-qty-side');
-    if ($sideQtyCells.length) {
-        $sideQtyCells.each(function () {
-            var qty = parseInt($(this).text(), 10);
-            if (!isNaN(qty)) {
-                sideTotal += qty;
-            }
-        });
-    } else {
-        $sideRows.each(function () {
-            var qty = parseInt($(this).data('qty'), 10);
-            if (!isNaN(qty)) {
-                sideTotal += qty;
-            }
-        });
-    }
-    var $sideTotal = $('#total-sideboard');
+        var $sideTotal = $('#total-sideboard');
         if ($sideTotal.length) {
             $sideTotal.text(sideTotal);
         }
@@ -2333,6 +2410,7 @@ function refreshDeckFragments(options) {
         updateRandomDrawState();
         $('#deck-random-draw-fragment .random-draw-content').addClass('is-visible');
         refreshCardImagesAsync();
+        updateDecksideHeroFlipButton();
         preloadFirstDeckImage();
         updateRandomDrawPlacement();
         bindDecksideHeroRotation();

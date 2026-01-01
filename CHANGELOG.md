@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - Planes/Phenomena detection now ignores land subtypes like "Planet".
 - Emblems now route to the tokens section instead of main deck "Other".
 - Emblems no longer show quantity prefixes; planes/phenomena rows never show quantity prefixes.
-- Deck detail hero and random draw previews now expose flip controls when back faces are available.
+- Deck detail hero preview now exposes flip controls when back faces are available.
 - Async image refresh now records back-face URLs even when the image is already cached.
 
 ### Security

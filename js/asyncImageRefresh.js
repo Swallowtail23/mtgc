@@ -1,6 +1,6 @@
 /*
-Version:     1.14
-Date:        29/12/25
+Version:     1.15
+Date:        01/01/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -218,6 +218,15 @@ To do:       -
                     });
                 });
             }
+        }
+        if (response.back && response.back.indexOf('cardimg') !== -1) {
+            const targets = $('img[data-cardid="' + cardId + '"]');
+            targets.each(function () {
+                const $target = $(this);
+                if (!$target.attr('data-back-src')) {
+                    $target.attr('data-back-src', response.back);
+                }
+            });
         }
 
         if (

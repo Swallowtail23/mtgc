@@ -1,6 +1,6 @@
 /*
-Version:     2.14
-Date:        30/12/25
+Version:     2.16
+Date:        01/01/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -2238,6 +2238,25 @@ label.importlabel input[type="file"], label.profilelabel input[type="file"]
     transform-origin: center;
     position: relative;
     z-index: 10005;
+}
+
+.deckside-hero-flip
+{
+    position: absolute;
+    top: 75px;
+    left: 55px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    z-index: 10006;
+    padding: 0;
 }
 
 .deckside-placeholder img.is-visible
