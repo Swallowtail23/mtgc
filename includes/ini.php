@@ -433,7 +433,7 @@ $importLinestoIgnore = array(
                     "Sideboard notes",
                     "Planes and Phenomena",
                     "Tokens",
-                    
+
 );
 
 // Cards required per deck type for legal play
