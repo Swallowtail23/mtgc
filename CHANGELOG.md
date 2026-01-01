@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [v0.4.10-dev] - Unreleased
 
 ### Added
--
+- Added `ACCESSIBILITY.md` with minimal accessibility actions and review checklist.
 
 ### Changed
 -
