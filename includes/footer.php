@@ -16,7 +16,7 @@ if (__FILE__ === $_SERVER['PHP_SELF']) :
 endif;
 
 $cssValidatorUrl = 'https://jigsaw.w3.org/css-validator/validator?uri='
-    . 'https://www.mtgcollection.info/css/style.css' . $cssver . '.css';
+    . 'https://www.mtgcollection.info/css/style' . $cssver . '.css';
 ?>
 
 <div id="footer">
