@@ -6,22 +6,17 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added `ACCESSIBILITY.md` with minimal accessibility actions and review checklist.
 - Deck detail decklist now separates Planes/Phenomena and Tokens after the sideboard.
+- Added flip card handling to deck detail hero image.
 
 ### Changed
 - Token rows now use the standard add/remove quantity controls for quick updates.
 - Commander deck token and land rows now show quantities in the card name.
-- Non-Commander token rows no longer prefix quantities in the card name.
 - Commander deck quantity prefixes now use "x" (e.g. "4 x Island").
 - Commander deck totals now include commander/partner quantities after quick updates.
 - Deck export lists now break out Planes/Phenomena and Tokens into their own sections.
-- Deck detail hero flip icon now matches the index layout positioning.
 
 ### Fixed
-- Planes/Phenomena detection now ignores land subtypes like "Planet".
-- Emblems now route to the tokens section instead of main deck "Other".
-- Emblems no longer show quantity prefixes; planes/phenomena rows never show quantity prefixes.
-- Deck detail hero preview now exposes flip controls when back faces are available.
-- Async image refresh now records back-face URLs even when the image is already cached.
+-
 
 ### Security
 -
