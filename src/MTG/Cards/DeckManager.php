@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.2
-Date:        24/12/25
+Version:     2.3
+Date:        01/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -1442,6 +1442,32 @@ class DeckManager
         global $commander_decktypes, $smtpParameters;
         $this->message->logMessage('[NOTICE]', "Deck export called for deck $deckNumber");
 
+        $detectPlanePhenomenon = function ($cardType) {
+            if ($cardType === null || $cardType === '') :
+                return false;
+            endif;
+            return preg_match('/\bPlane\b/i', $cardType) === 1
+                || preg_match('/\bPhenomenon\b/i', $cardType) === 1;
+        };
+        $detectTokenLike = function ($cardType) {
+            if ($cardType === null || $cardType === '') :
+                return false;
+            endif;
+            return preg_match('/\bToken\b/i', $cardType) === 1
+                || preg_match('/\bEmblem\b/i', $cardType) === 1;
+        };
+        $normalizeType = function ($row) {
+            $cardType = $row['type'] ?? '';
+            if ($cardType === '' && isset($row['f1_type'])) :
+                $cardType = $row['f1_type'];
+            endif;
+            if (strpos($cardType, ' //') !== false) :
+                $len = strpos($cardType, ' //');
+                $cardType = substr($cardType, 0, $len);
+            endif;
+            return $cardType;
+        };
+
         $query = 'SELECT * FROM decks WHERE decknumber=?';
         $stmt = $this->db->execute_query($query, [$deckNumber]);
         if ($stmt === false) :
@@ -1503,6 +1529,10 @@ class DeckManager
                     $textfile = "Deckname: $deckName ($decktype)\r\n\r\n";
                 endif;
                 $sidefile = "";
+                $mainLines = [];
+                $planeLines = [];
+                $tokenLines = [];
+                $sideLines = [];
                 if (in_array($decktype, $commander_decktypes)) :
                     $cdrDeck = 1;
                     foreach ($allRows as $row) :
@@ -1523,6 +1553,9 @@ class DeckManager
                     $cdrDeck = 0;
                 endif;
                 foreach ($allRows as $detailrow) :
+                    $cardType = $normalizeType($detailrow);
+                    $isPlanePhenomenon = $detectPlanePhenomenon($cardType);
+                    $isTokenLike = $detectTokenLike($cardType);
                     if (
                         $detailrow['cardqty'] >= 1
                         && (
@@ -1531,14 +1564,48 @@ class DeckManager
                             && ($detailrow['commander'] !== 1 && $detailrow['commander'] !== 2))
                         )
                     ) :
-                        $textfile = $textfile . "{$detailrow['cardqty']} {$detailrow['name']} "
+                        $line = "{$detailrow['cardqty']} {$detailrow['name']} "
                             . "({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                        if ($isPlanePhenomenon) :
+                            $planeLines[] = $line;
+                        elseif ($isTokenLike) :
+                            $tokenLines[] = $line;
+                        else :
+                            $mainLines[] = $line;
+                        endif;
                     endif;
                     if ($detailrow['sideqty'] >= 1) :
-                        $sidefile = $sidefile . "{$detailrow['sideqty']} {$detailrow['name']} "
+                        $line = "{$detailrow['sideqty']} {$detailrow['name']} "
                             . "({$detailrow['setcode']} {$detailrow['number_import']})\r\n";
+                        if ($isPlanePhenomenon) :
+                            $planeLines[] = $line;
+                        elseif ($isTokenLike) :
+                            $tokenLines[] = $line;
+                        else :
+                            $sideLines[] = $line;
+                        endif;
                     endif;
                 endforeach;
+                $mainfile = implode('', $mainLines);
+                $planesfile = implode('', $planeLines);
+                $tokensfile = implode('', $tokenLines);
+                $sidefile = implode('', $sideLines);
+                $this->message->logMessage(
+                    '[DEBUG]',
+                    'Deck export sections - main: ' . count($mainLines)
+                        . ', planes: ' . count($planeLines)
+                        . ', tokens: ' . count($tokenLines)
+                        . ', sideboard: ' . count($sideLines)
+                );
+                if ($mainfile !== "") :
+                    $textfile = $textfile . $mainfile;
+                endif;
+                if ($planesfile !== "") :
+                    $textfile = $textfile . "\r\nPlanes and Phenomena\r\n\r\n" . $planesfile;
+                endif;
+                if ($tokensfile !== "") :
+                    $textfile = $textfile . "\r\nTokens\r\n\r\n" . $tokensfile;
+                endif;
                 if ($sidefile !== "") :
                     $textfile = $textfile . "\r\nSideboard\r\n\r\n" . $sidefile;
                 endif;

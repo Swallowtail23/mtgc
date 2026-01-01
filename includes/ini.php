@@ -380,7 +380,8 @@ $commander_decktypes = array('Commander',
 
 // Cards legal for multiples in Commander
 $commander_multiples = array("Basic Land",
-                             "Basic Snow Land");
+                             "Basic Snow Land",
+                             "Token");
 
 $any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
 
@@ -403,9 +404,6 @@ $validtypes = array('Commander',
 
 // Card layouts to NOT import in deck quick add routine
 $noQuickAddLayouts = array(
-                    'token',
-                    'double_faced_token',
-                    'emblem',
                     'meld',
                     'art_series');
 
@@ -433,7 +431,9 @@ $importLinestoIgnore = array(
                     "Sideboard",
                     "Notes",
                     "Sideboard notes",
-                    "Planes and Phenomena"
+                    "Planes and Phenomena",
+                    "Tokens",
+                    
 );
 
 // Cards required per deck type for legal play

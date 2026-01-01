@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        24/12/25
+Version:     2.4
+Date:        01/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -10,6 +10,18 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+?>
+<?php
+$planeTypeRegex = '/\\bPlane\\b/i';
+$phenomenonTypeRegex = '/\\bPhenomenon\\b/i';
+$detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonTypeRegex) {
+    $cardType = (string) $cardType;
+
+    return (
+        (preg_match($planeTypeRegex, $cardType) === 1 && stripos($cardType, 'Planeswalker') === false)
+        || preg_match($phenomenonTypeRegex, $cardType) === 1
+    );
+};
 ?>
 <div id="decklist-fragment">
 <table class='deckcardlist'>
@@ -488,7 +500,12 @@ To do:       -
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type, 'Creature') !== false) and ($row['commander'] < 1)) :
+                        if (
+                            (strpos($card_type, 'Creature') !== false)
+                            and ($row['commander'] < 1)
+                            and (strpos($card_type, 'Token') === false)
+                            and (strpos($card_type, 'Emblem') === false)
+                        ) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -605,7 +622,7 @@ To do:       -
                                 endwhile;
                                 if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
-                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 else :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -804,7 +821,11 @@ To do:       -
                             $len = strpos($card_type, ' //');
                             $card_type = substr($card_type, 0, $len);
                         endif;
-                        if ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false)) :
+                        if (
+                            ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false))
+                            and (strpos($card_type, 'Token') === false)
+                            and (strpos($card_type, 'Emblem') === false)
+                        ) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
                             $rarity = $row["rarity"];
@@ -920,7 +941,7 @@ To do:       -
                                 endwhile;
                                 if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
-                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 else :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -1089,10 +1110,9 @@ To do:       -
                             and (strpos($card_type, 'Instant') === false)
                             and (strpos($card_type, 'Creature') === false)
                             and (strpos($card_type, 'Land') === false)
-                            and (
-                            (strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false)
-                            )
-                            and (strpos($card_type, 'Phenomenon') === false)
+                            and (strpos($card_type, 'Token') === false)
+                            and (strpos($card_type, 'Emblem') === false)
+                            and !$detectPlanePhenomenon($card_type)
                             and ($row['commander'] < 1)
                         ) :
                             $quantity = $row["cardqty"];
@@ -1210,7 +1230,7 @@ To do:       -
                                 endwhile;
                                 if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
-                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 else :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -1449,6 +1469,8 @@ To do:       -
                         if (
                             (strpos($card_type, 'Land') !== false)
                             and (strpos($card_type, 'Land Creature') === false)
+                            and (strpos($card_type, 'Token') === false)
+                            and (strpos($card_type, 'Emblem') === false)
                         ) :
                             $quantity = $row["cardqty"];
                             $cardname = $row["name"];
@@ -1547,7 +1569,7 @@ To do:       -
                                 endwhile;
                                 if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
-                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 else :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
@@ -1688,211 +1710,51 @@ To do:       -
                         <td>&nbsp;</td>
                     </tr> <?php
                 endif;
-                if ($planes > 0) :?>
-                    <tr>
-                        <?php
-                        if (in_array($decktype, $commander_decktypes)) : ?>
-                            <td colspan='4'> <?php
-                        elseif ($decktype == 'Wishlist') : ?>
-                            <td colspan='5'> <?php
-                        else : ?>
-                            <td colspan='6'> <?php
-                        endif; ?>
-                        <i><b>Planes and Phenomena (<span id='total-planes'><?php echo $planes; ?></span>)</b></i>
-                        </td>
-                    </tr>
-                    <?php
-                    if (mysqli_num_rows($result) > 0) :
-                        mysqli_data_seek($result, 0);
-                        while ($row = $result->fetch_assoc()) :
-                            $baseCardName = $row['name'];
-                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
-                                $row['name'] = $row['flavor_name'];
-                            endif;
-
-                            // For SLD cards and REX cards with empty "Type", use the f1 definition instead
-                            if ($row['type'] !== null) :
-                                $card_type = $row['type'];
-                                $cardcmc = $row['cmc'];
-                            elseif ($row['type'] === null and isset($row['f1_type'])) :
-                                $card_type = $row['f1_type'];
-                                $cardcmc = $row['f1_cmc'];
-                            endif;
-
-                            if (
-                                (strpos($card_type, 'Plane') !== false && strpos($card_type, 'Planeswalker') === false)
-                                or (strpos($card_type, 'Phenomenon') !== false)
-                            ) :
-                                $quantity = $row["cardqty"];
-                                $cardname = $row["name"];
-                                $rarity = $row["rarity"];
-                                $rowqty = 0;
-                                $cardset = strtolower($row["setcode"]);
-                                $cardref = str_replace('.', '-', $row['cardsid']);
-                                $cardId = $row['cardsid'];
-                                $cardnumber = $row["number_import"];
-                                $layout = $row['layout'];
-                                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
-                                $imageFunction = $imageManager->getImage(
-                                    $cardset,
-                                    $cardId,
-                                    $imgLocation,
-                                    $layout,
-                                    $twoCardDetailSections,
-                                    false
-                                );
-                                if ($imageFunction['front'] == 'error') :
-                                    $imageUrl = '/images/back.jpg';
-                                else :
-                                    $imageUrl = $imageFunction['front'];
-                                endif;
-                                $msg->logMessage('[DEBUG]', "Main deck card '$cardname ($cardset $cardnumber)'");?>
-                                <tr class='deckrow' data-section='planes' data-qty='<?php echo $quantity; ?>'>
-                                <td class="deckcardname hoverTD">
-                                    <?php
-                                    $i = 0;
-                                    $cdr_1_plus = false;
-                                    while ($i < count($commander_multiples)) :
-                                        if (
-                                            isset($card_type)
-                                            and str_contains($card_type, $commander_multiples[$i]) == true
-                                        ) :
-                                            $cdr_1_plus = true;
-                                        endif;
-                                        $i++;
-                                    endwhile;
-                                    if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
-                                        echo "<a class='taphover' id='list-$cardref-taphover' "
-                                            . "href='carddetail.php?id={$row['cardsid']}'>"
-                                            . "$quantity $cardname "
-                                            . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
-                                            . "</a></a>";
-                                    else :
-                                        echo "<a class='taphover' id='list-$cardref-taphover' "
-                                            . "href='carddetail.php?id={$row['cardsid']}'>"
-                                            . "$cardname "
-                                            . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
-                                            . "</a></a>";
-                                    endif;
-                                    echo "</td>";
-                                    if (
-                                        in_array($row['layout'], $image90rotate)
-                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
-                                    ) :
-                                        $hoverclass = 'deckcardimgdiv splitfloat';
-                                        $msg->logMessage(
-                                            '[DEBUG]',
-                                            "Hover image rotated for deckdetail card '$cardname'"
-                                        );
-                                    else :
-                                        $hoverclass = 'deckcardimgdiv';
-                                        $msg->logMessage(
-                                            '[DEBUG]',
-                                            "Hover image not rotated for deckdetail card '$cardname'"
-                                        );
-                                    endif;
-                                    ?>
-                                <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
-                                    <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
-                                    <img
-                                        alt='<?php echo $deckcardname;?>'
-                                        class='deckcardimg'
-                                        data-cardid="<?php echo $row['cardsid']; ?>"
-                                        data-front-src="<?php echo $imageUrl; ?>"
-                                        src='<?php echo $imageUrl;?>'
-                                    ></a>
-                                </div> <?php
-                                $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
-                                if (in_array($decktype, $commander_decktypes)) :
-                                    echo "<td class='deckcardlistcenter noprint'>";
-                                    echo "</td>";
-                                endif;
-                                echo "<td class='deckcardlistcenter noprint'>";
-                                ?>
-                                <span
-                                    onmouseover=""
-                                    title="Delete"
-                                    style="cursor: pointer;"
-                                    class='material-symbols-outlined js-deletemain'
-                                    data-cardid="<?php echo $cardId; ?>"
-                                    data-cardref="<?php echo $cardref; ?>">
-                                    delete_forever
-                                </span>
-                                <?php
-                                echo "</td>";
-                                if ($decktype != 'Wishlist') :
-                                    echo "<td class='deckcardlistcenter noprint'>";
-                                    ?>
-                                <span
-                                    onmouseover=""
-                                    title="Move to sideboard"
-                                    style="cursor: pointer;"
-                                    class='material-symbols-outlined js-maintoside'
-                                    data-cardid="<?php echo $cardId; ?>"
-                                    data-cardref="<?php echo $cardref; ?>">
-                                    arrow_downward
-                                </span>
-                                    <?php
-                                    echo "</td>";
-                                endif;
-                                if (!in_array($decktype, $commander_decktypes)) :
-                                    echo "<td class='deckcardlistright noprint'>";
-                                    ?>
-                                <span
-                                    onmouseover=""
-                                    title="Remove one"
-                                    style="cursor: pointer;"
-                                    class='material-symbols-outlined js-minusmain'
-                                    data-cardid="<?php echo $cardId; ?>"
-                                    data-cardref="<?php echo $cardref; ?>"
-                                    data-qty-target="qty-main-<?php echo $cardref; ?>">
-                                        remove
-                                    </span>
-                                    <?php
-                                    echo "</td>";
-                                    echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
-                                    echo $quantity;
-                                    echo "</td>";
-                                    $maxCopies = mtgCardCopyLimit(
-                                        $card_type,
-                                        $row['ability'] ?? null,
-                                        $row['f1_ability'] ?? null,
-                                        $row['f2_ability'] ?? null
-                                    );
-                                    $canAddMore = true;
-                                    if ($maxCopies !== null) :
-                                        $currentCopies = $resultNameTotals[$baseCardName] ?? 0;
-                                        if ($currentCopies >= $maxCopies) :
-                                            $canAddMore = false;
-                                            $msg->logMessage(
-                                                '[DEBUG]',
-                                                "Copy limit reached for '$baseCardName' ($currentCopies/$maxCopies)"
-                                            );
-                                        endif;
-                                    endif;
-                                    $addStyle = $canAddMore ? '' : ' display: none;';
-                                    echo "<td class='deckcardlistleft noprint'>";
-                                    ?>
-                                    <span
-                                        onmouseover=""
-                                        title="Add one"
-                                        style="cursor: pointer;<?php echo $addStyle; ?>"
-                                        class='material-symbols-outlined js-plusmain'
-                                        data-cardid="<?php echo $cardId; ?>"
-                                        data-qty-target="qty-main-<?php echo $cardref; ?>"
-                                    data-maxcopies="<?php echo $maxCopies !== null ? $maxCopies : ''; ?>">
-                                        add
-                                    </span>
-                                    <?php
-                                    echo "</td>";
-                                endif;
-                                echo "</tr>";
-                            endif;
-                        endwhile;
-                    endif;
-                endif;
 // SIDEBOARD
-                if ($decktype != 'Wishlist' && $side > 0) :?>
+                $sideboardOtherRows = [];
+                $sideboardPlaneRows = [];
+                $sideboardTokenRows = [];
+                $sideboardOtherTotal = 0;
+                $sideboardPlaneTotal = 0;
+                $sideboardTokenTotal = 0;
+                if (mysqli_num_rows($sideresult) > 0) :
+                    mysqli_data_seek($sideresult, 0);
+                    while ($row = $sideresult->fetch_assoc()) :
+                        if ($row['type'] !== null) :
+                            $card_type = $row['type'];
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
+                            $card_type = $row['f1_type'];
+                        else :
+                            $card_type = '';
+                        endif;
+                        if (strpos($card_type, ' //') !== false) :
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        $isPlane = $detectPlanePhenomenon($card_type);
+                        $isToken = (
+                            (strpos($card_type, 'Token') !== false)
+                            || (strpos($card_type, 'Emblem') !== false)
+                        );
+                        if ($isPlane) :
+                            $sideboardPlaneRows[] = $row;
+                            $sideboardPlaneTotal += (int) $row['sideqty'];
+                        elseif ($isToken) :
+                            $sideboardTokenRows[] = $row;
+                            $sideboardTokenTotal += (int) $row['sideqty'];
+                        else :
+                            $sideboardOtherRows[] = $row;
+                            $sideboardOtherTotal += (int) $row['sideqty'];
+                        endif;
+                    endwhile;
+                endif;
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Sideboard split totals - base: {$sideboardOtherTotal}, planes: {$sideboardPlaneTotal}, "
+                    . "tokens: {$sideboardTokenTotal}"
+                );
+
+                if ($decktype != 'Wishlist' && $sideboardOtherTotal > 0) :?>
                     <tr style="border-top: 1pt solid black;" id="sideboard-start" class="deck-section-header"
                         data-section="sideboard">
                         <?php
@@ -1917,10 +1779,9 @@ To do:       -
                         </td>
                     </tr>
                     <?php
-                    $sidetotal = 0;
-                    if (mysqli_num_rows($sideresult) > 0) :
-                        mysqli_data_seek($sideresult, 0);
-                        while ($row = $sideresult->fetch_assoc()) :
+                    $sidetotal = $sideboardOtherTotal;
+                    if (!empty($sideboardOtherRows)) :
+                        foreach ($sideboardOtherRows as $row) :
                             $baseCardName = $row['name'];
                             if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
                                 $row['name'] = $row['flavor_name'];
@@ -1957,13 +1818,10 @@ To do:       -
                                 $imageUrl = $imageFunction['front'];
                             endif;
                             $msg->logMessage('[DEBUG]', "Sideboard card '$cardname ($cardset $cardnumber)'");
+                            $isPlanePhenomenon = $detectPlanePhenomenon($card_type);
                             if (
                                 $deck_legality_list != ''
-                                and (
-                                    (strpos($card_type, 'Plane') === false
-                                    || strpos($card_type, 'Planeswalker') !== false)
-                                )
-                                and strpos($card_type, 'Phenomenon') === false
+                                and !$isPlanePhenomenon
                             ) :
                                 $msg->logMessage(
                                     '[DEBUG]',
@@ -1990,11 +1848,7 @@ To do:       -
                             if (
                                 in_array($decktype, $commander_decktypes)
                                 and $illegal_tag == ''
-                                and (
-                                    (strpos($card_type, 'Plane') === false
-                                    || strpos($card_type, 'Planeswalker') !== false)
-                                )
-                                and (strpos($card_type, 'Phenomenon') === false)
+                                and !$isPlanePhenomenon
                             ) :
                                 $colour_id = count_chars(
                                     str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
@@ -2070,7 +1924,7 @@ To do:       -
                                 <?php
                                 if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' "
-                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity $cardname "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
                                         . "</a>";
                                 else :
@@ -2189,8 +2043,7 @@ To do:       -
                                 ></a>
                             </div>
                             <?php
-                            $sidetotal = $sidetotal + $quantity;
-                        endwhile;
+                        endforeach;
                     endif;?>
                     <tr
                         style="border-bottom: 1pt solid black; border-top: 1pt solid black;"
@@ -2215,6 +2068,541 @@ To do:       -
                     </tr> <?php
                 else :
                     $sidetotal = 0;
+                endif;
+
+                $planesMainRows = [];
+                $planesMainTotal = 0;
+                if (mysqli_num_rows($result) > 0) :
+                    mysqli_data_seek($result, 0);
+                    while ($row = $result->fetch_assoc()) :
+                        if ($row['type'] !== null) :
+                            $card_type = $row['type'];
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
+                            $card_type = $row['f1_type'];
+                        else :
+                            $card_type = '';
+                        endif;
+                        if (strpos($card_type, ' //') !== false) :
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if ($detectPlanePhenomenon($card_type)) :
+                            $planesMainRows[] = $row;
+                            $planesMainTotal += (int) $row['cardqty'];
+                        endif;
+                    endwhile;
+                endif;
+                $planesTotal = $planesMainTotal + $sideboardPlaneTotal;
+                if ($planesTotal > 0) :?>
+                    <tr class="deck-section-header" data-section="planes">
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) : ?>
+                            <td colspan='4'> <?php
+                        elseif ($decktype == 'Wishlist') : ?>
+                            <td colspan='5'> <?php
+                        else : ?>
+                            <td colspan='6'> <?php
+                        endif; ?>
+                        <i><b>
+                            <span
+                                class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                data-section="planes"
+                                title="Fold/Unfold"
+                                style="cursor: pointer;">expand_more</span>
+                            Planes and Phenomena (<span id='total-planes'><?php echo $planesTotal; ?></span>)</b></i>
+                        </td>
+                    </tr>
+                    <?php
+                    $msg->logMessage('[DEBUG]', "Rendering planes/phenomena section");
+                    if (!empty($planesMainRows)) :
+                        foreach ($planesMainRows as $row) :
+                            $quantity = (int) $row['cardqty'];
+                            $cardname = $row['name'];
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
+                                $cardname = $row['flavor_name'];
+                            endif;
+                            $displayName = $cardname;
+                            $rarity = $row['rarity'];
+                            $cardset = strtolower($row['setcode']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
+                            $cardId = $row['cardsid'];
+                            $layout = $row['layout'];
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageFunction = $imageManager->getImage(
+                                $cardset,
+                                $cardId,
+                                $imgLocation,
+                                $layout,
+                                $twoCardDetailSections,
+                                false
+                            );
+                            if ($imageFunction['front'] == 'error') :
+                                $imageUrl = '/images/back.jpg';
+                            else :
+                                $imageUrl = $imageFunction['front'];
+                            endif;
+                            $deckcardname = str_replace("'", '&#39;', $cardname);
+                            ?>
+                            <tr class='deckrow' data-section='planes' data-qty='<?php echo $quantity; ?>'>
+                                <td class="deckcardname hoverTD">
+                                    <?php
+                                    echo "<a class='taphover' id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>"
+                                        . "$displayName ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'>"
+                                        . "</i>)</a>";
+                                    ?>
+                                </td>
+                                <?php
+                                if (in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistcenter noprint'></td>";
+                                endif;
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span
+                                    onmouseover=""
+                                    title="Delete"
+                                    style="cursor: pointer;"
+                                    class='material-symbols-outlined js-deletemain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    delete_forever
+                                </span>
+                                <?php
+                                echo "</td>";
+                                if ($decktype != 'Wishlist') :
+                                    echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
+                                endif;
+                                if (!in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistright noprint'>&nbsp;</td>";
+                                    echo "<td class='deckcardlistcenter'>$quantity</td>";
+                                    echo "<td class='deckcardlistleft noprint'>&nbsp;</td>";
+                                endif;
+                                ?>
+                            </tr>
+                            <?php
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "Hover image not rotated for deckdetail card '$cardname'"
+                                );
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
+                                    src='<?php echo $imageUrl;?>'
+                                ></a>
+                            </div>
+                            <?php
+                        endforeach;
+                    endif;
+                    if (!empty($sideboardPlaneRows)) :
+                        foreach ($sideboardPlaneRows as $row) :
+                            $quantity = (int) $row['sideqty'];
+                            $cardname = $row['name'];
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
+                                $cardname = $row['flavor_name'];
+                            endif;
+                            $displayName = $cardname;
+                            $rarity = $row['rarity'];
+                            $cardset = strtolower($row['setcode']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
+                            $cardId = $row['cardsid'];
+                            $layout = $row['layout'];
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageFunction = $imageManager->getImage(
+                                $cardset,
+                                $cardId,
+                                $imgLocation,
+                                $layout,
+                                $twoCardDetailSections,
+                                false
+                            );
+                            if ($imageFunction['front'] == 'error') :
+                                $imageUrl = '/images/back.jpg';
+                            else :
+                                $imageUrl = $imageFunction['front'];
+                            endif;
+                            $deckcardname = str_replace("'", '&#39;', $cardname);
+                            ?>
+                            <tr class='deckrow' data-section='planes' data-qty='<?php echo $quantity; ?>'>
+                                <td class="deckcardname hoverTD">
+                                    <?php
+                                    echo "<a class='taphover' id='listside-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>"
+                                        . "$displayName ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'>"
+                                        . "</i>)</a>";
+                                    ?>
+                                </td>
+                                <?php
+                                if (in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistcenter noprint'></td>";
+                                endif;
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span
+                                    onmouseover=""
+                                    title="Delete"
+                                    style="cursor: pointer;"
+                                    class='material-symbols-outlined js-deleteside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    delete_forever
+                                </span>
+                                <?php
+                                echo "</td>";
+                                if ($decktype != 'Wishlist') :
+                                    echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
+                                endif;
+                                if (!in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistright noprint'>&nbsp;</td>";
+                                    echo "<td class='deckcardlistcenter'>$quantity</td>";
+                                    echo "<td class='deckcardlistleft noprint'>&nbsp;</td>";
+                                endif;
+                                ?>
+                            </tr>
+                            <?php
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "Hover image not rotated for deckdetail card '$cardname'"
+                                );
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "listside-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
+                                    src='<?php echo $imageUrl;?>'
+                                ></a>
+                            </div>
+                            <?php
+                        endforeach;
+                    endif;
+                endif;
+
+                $tokenMainRows = [];
+                $tokenMainTotal = 0;
+                if (mysqli_num_rows($result) > 0) :
+                    mysqli_data_seek($result, 0);
+                    while ($row = $result->fetch_assoc()) :
+                        if ($row['type'] !== null) :
+                            $card_type = $row['type'];
+                        elseif ($row['type'] === null and isset($row['f1_type'])) :
+                            $card_type = $row['f1_type'];
+                        else :
+                            $card_type = '';
+                        endif;
+                        if (strpos($card_type, ' //') !== false) :
+                            $len = strpos($card_type, ' //');
+                            $card_type = substr($card_type, 0, $len);
+                        endif;
+                        if (
+                            (strpos($card_type, 'Token') !== false)
+                            || (strpos($card_type, 'Emblem') !== false)
+                        ) :
+                            $tokenMainRows[] = $row;
+                            $tokenMainTotal += (int) $row['cardqty'];
+                        endif;
+                    endwhile;
+                endif;
+                $tokensTotal = $tokenMainTotal + $sideboardTokenTotal;
+                if ($tokensTotal > 0) :?>
+                    <tr class="deck-section-header" data-section="tokens">
+                        <?php
+                        if (in_array($decktype, $commander_decktypes)) : ?>
+                            <td colspan='4'> <?php
+                        elseif ($decktype == 'Wishlist') : ?>
+                            <td colspan='5'> <?php
+                        else : ?>
+                            <td colspan='6'> <?php
+                        endif; ?>
+                        <i><b>
+                            <span
+                                class="material-symbols-outlined noprint js-decksection-toggle decksection-toggle-icon"
+                                data-section="tokens"
+                                title="Fold/Unfold"
+                                style="cursor: pointer;">expand_more</span>
+                            Tokens (<span id='total-tokens'><?php echo $tokensTotal; ?></span>)</b></i>
+                        </td>
+                    </tr>
+                    <?php
+                    $msg->logMessage('[DEBUG]', "Rendering tokens section");
+                    if (!empty($tokenMainRows)) :
+                        foreach ($tokenMainRows as $row) :
+                            $quantity = (int) $row['cardqty'];
+                            $cardname = $row['name'];
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
+                                $cardname = $row['flavor_name'];
+                            endif;
+                            $card_type = $row['type'] ?? '';
+                            if ($card_type === '' && isset($row['f1_type'])) :
+                                $card_type = $row['f1_type'];
+                            endif;
+                            $isEmblem = (strpos($card_type, 'Emblem') !== false);
+                            $displayName = (in_array($decktype, $commander_decktypes) && !$isEmblem)
+                                ? "{$quantity} x {$cardname}"
+                                : $cardname;
+                            $rarity = $row['rarity'];
+                            $cardset = strtolower($row['setcode']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
+                            $cardId = $row['cardsid'];
+                            $layout = $row['layout'];
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageFunction = $imageManager->getImage(
+                                $cardset,
+                                $cardId,
+                                $imgLocation,
+                                $layout,
+                                $twoCardDetailSections,
+                                false
+                            );
+                            if ($imageFunction['front'] == 'error') :
+                                $imageUrl = '/images/back.jpg';
+                            else :
+                                $imageUrl = $imageFunction['front'];
+                            endif;
+                            $deckcardname = str_replace("'", '&#39;', $cardname);
+                            ?>
+                            <tr class='deckrow' data-section='tokens' data-qty='<?php echo $quantity; ?>'>
+                                <td class="deckcardname hoverTD">
+                                    <?php
+                                    echo "<a class='taphover' id='list-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>"
+                                        . "$displayName ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'>"
+                                        . "</i>)</a>";
+                                    ?>
+                                </td>
+                                <?php
+                                if (in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistcenter noprint'></td>";
+                                endif;
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span
+                                    onmouseover=""
+                                    title="Delete"
+                                    style="cursor: pointer;"
+                                    class='material-symbols-outlined js-deletemain'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    delete_forever
+                                </span>
+                                <?php
+                                echo "</td>";
+                                if ($decktype != 'Wishlist') :
+                                    echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
+                                endif;
+                                if (!in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistright noprint'>";
+                                    ?>
+                                    <span
+                                        onmouseover=""
+                                        title="Remove one"
+                                        style="cursor: pointer;"
+                                        class='material-symbols-outlined js-minusmain'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>"
+                                        data-qty-target="qty-main-<?php echo $cardref; ?>">
+                                        remove
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
+                                    echo $quantity;
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistleft noprint'>";
+                                    ?>
+                                    <span
+                                        onmouseover=""
+                                        title="Add one"
+                                        style="cursor: pointer;"
+                                        class='material-symbols-outlined js-plusmain'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>"
+                                        data-qty-target="qty-main-<?php echo $cardref; ?>">
+                                        add
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                endif;
+                                ?>
+                            </tr>
+                            <?php
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "Hover image not rotated for deckdetail card '$cardname'"
+                                );
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "list-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
+                                    src='<?php echo $imageUrl;?>'
+                                ></a>
+                            </div>
+                            <?php
+                        endforeach;
+                    endif;
+                    if (!empty($sideboardTokenRows)) :
+                        foreach ($sideboardTokenRows as $row) :
+                            $quantity = (int) $row['sideqty'];
+                            $cardname = $row['name'];
+                            if (isset($row['flavor_name']) and !empty($row['flavor_name'])) :
+                                $cardname = $row['flavor_name'];
+                            endif;
+                            $card_type = $row['type'] ?? '';
+                            if ($card_type === '' && isset($row['f1_type'])) :
+                                $card_type = $row['f1_type'];
+                            endif;
+                            $isEmblem = (strpos($card_type, 'Emblem') !== false);
+                            $displayName = (in_array($decktype, $commander_decktypes) && !$isEmblem)
+                                ? "{$quantity} x {$cardname}"
+                                : $cardname;
+                            $rarity = $row['rarity'];
+                            $cardset = strtolower($row['setcode']);
+                            $cardref = str_replace('.', '-', $row['cardsid']);
+                            $cardId = $row['cardsid'];
+                            $layout = $row['layout'];
+                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageFunction = $imageManager->getImage(
+                                $cardset,
+                                $cardId,
+                                $imgLocation,
+                                $layout,
+                                $twoCardDetailSections,
+                                false
+                            );
+                            if ($imageFunction['front'] == 'error') :
+                                $imageUrl = '/images/back.jpg';
+                            else :
+                                $imageUrl = $imageFunction['front'];
+                            endif;
+                            $deckcardname = str_replace("'", '&#39;', $cardname);
+                            ?>
+                            <tr class='deckrow' data-section='tokens' data-qty='<?php echo $quantity; ?>'>
+                                <td class="deckcardname hoverTD">
+                                    <?php
+                                    echo "<a class='taphover' id='listside-$cardref-taphover' "
+                                        . "href='carddetail.php?id={$row['cardsid']}'>"
+                                        . "$displayName ($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'>"
+                                        . "</i>)</a>";
+                                    ?>
+                                </td>
+                                <?php
+                                if (in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistcenter noprint'></td>";
+                                endif;
+                                echo "<td class='deckcardlistcenter noprint'>";
+                                ?>
+                                <span
+                                    onmouseover=""
+                                    title="Delete"
+                                    style="cursor: pointer;"
+                                    class='material-symbols-outlined js-deleteside'
+                                    data-cardid="<?php echo $cardId; ?>"
+                                    data-cardref="<?php echo $cardref; ?>">
+                                    delete_forever
+                                </span>
+                                <?php
+                                echo "</td>";
+                                if ($decktype != 'Wishlist') :
+                                    echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
+                                endif;
+                                if (!in_array($decktype, $commander_decktypes)) :
+                                    echo "<td class='deckcardlistright noprint'>";
+                                    ?>
+                                    <span
+                                        onmouseover=""
+                                        title="Remove one"
+                                        style="cursor: pointer;"
+                                        class='material-symbols-outlined js-minusside'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>">
+                                        remove
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistcenter js-qty-side' id='qty-side-$cardref'>";
+                                    echo $quantity;
+                                    echo "</td>";
+                                    echo "<td class='deckcardlistleft noprint'>";
+                                    ?>
+                                    <span
+                                        onmouseover=""
+                                        title="Add one"
+                                        style="cursor: pointer;"
+                                        class='material-symbols-outlined js-plusside'
+                                        data-cardid="<?php echo $cardId; ?>"
+                                        data-cardref="<?php echo $cardref; ?>">
+                                        add
+                                    </span>
+                                    <?php
+                                    echo "</td>";
+                                endif;
+                                ?>
+                            </tr>
+                            <?php
+                            if (
+                                in_array($row['layout'], $image90rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                            ) :
+                                $hoverclass = 'deckcardimgdiv splitfloat';
+                                $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
+                            else :
+                                $hoverclass = 'deckcardimgdiv';
+                                $msg->logMessage(
+                                    '[DEBUG]',
+                                    "Hover image not rotated for deckdetail card '$cardname'"
+                                );
+                            endif;
+                            ?>
+                            <div class='<?php echo $hoverclass; ?>' id='<?php echo "listside-$cardref";?>'>
+                                <a href='carddetail.php?id=<?php echo $row['cardsid'] ?>'>
+                                <img
+                                    alt='<?php echo $deckcardname;?>'
+                                    class='deckcardimg'
+                                    data-cardid="<?php echo $row['cardsid']; ?>"
+                                    data-front-src="<?php echo $imageUrl; ?>"
+                                    src='<?php echo $imageUrl;?>'
+                                ></a>
+                            </div>
+                            <?php
+                        endforeach;
+                    endif;
                 endif; ?>
             </table>
 </div>

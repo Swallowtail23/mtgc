@@ -157,7 +157,8 @@ $importLinestoIgnore = array(
                     "Sideboard",
                     "Notes",
                     "Sideboard notes",
-                    "Planes and Phenomena"
+                    "Planes and Phenomena",
+                    "Tokens"
 );
 
 $commander_decktypes = array('Commander',

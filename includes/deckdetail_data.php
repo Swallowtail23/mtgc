@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        24/12/25
+Version:     2.0
+Date:        01/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
 Notes:       -
@@ -330,26 +330,36 @@ while ($row = $result->fetch_assoc()) :
         $len = strpos($card_type, ' //');
         $card_type = substr($card_type, 0, $len);
     endif;
-    if ((strpos($card_type, 'Creature') !== false) and ($row['commander'] == 0)) :
+    $isPlanePhenomenon = (
+        (preg_match('/\\bPlane\\b/i', $card_type) === 1 && stripos($card_type, 'Planeswalker') === false)
+        || preg_match('/\\bPhenomenon\\b/i', $card_type) === 1
+    );
+
+    $isTokenLike = (
+        (strpos($card_type, 'Token') !== false)
+        || (strpos($card_type, 'Emblem') !== false)
+    );
+
+    if ((strpos($card_type, 'Creature') !== false) and ($row['commander'] == 0) and !$isTokenLike) :
         $creatures = $creatures + $row['cardqty'];
-    elseif ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false)) :
+    elseif (
+        ((strpos($card_type, 'Sorcery') !== false) or (strpos($card_type, 'Instant') !== false))
+        and !$isTokenLike
+    ) :
         $instantsorcery = $instantsorcery + $row['cardqty'];
     elseif (
         (strpos($card_type, 'Sorcery') === false)
         and (strpos($card_type, 'Instant') === false)
         and (strpos($card_type, 'Creature') === false)
         and (strpos($card_type, 'Land') === false)
-        and ((strpos($card_type, 'Plane') === false || strpos($card_type, 'Planeswalker') !== false))
-        and (strpos($card_type, 'Phenomenon') === false)
+        and !$isTokenLike
+        and !$isPlanePhenomenon
         and ($row['commander'] == 0)
     ) :
         $other = $other + $row['cardqty'];
-    elseif (strpos($card_type, 'Land') !== false) :
+    elseif ((strpos($card_type, 'Land') !== false) and !$isTokenLike) :
         $lands = $lands + $row['cardqty'];
-    elseif (
-        ((strpos($card_type, 'Plane') !== false && strpos($card_type, 'Planeswalker') === false))
-        || strpos($card_type, 'Phenomenon') !== false
-    ) :
+    elseif ($isPlanePhenomenon) :
         $planes = $planes + $row['cardqty'];
     endif;
     $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);

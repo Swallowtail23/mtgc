@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.63
-Date:        29/12/25
+Version:     25.64
+Date:        01/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -250,6 +250,14 @@ m13,12,"Fog",en,1,0,0,{id}
                     <a id="deckside-hero-link" href="#" aria-label="Open card detail">
                         <img id="deckside-hero-img" src="/images/back.jpg" alt="Deck preview">
                     </a>
+                    <button
+                        id="deckside-hero-flip"
+                        class="deckside-hero-flip material-symbols-outlined"
+                        type="button"
+                        title="Flip"
+                        aria-label="Flip card">
+                        refresh
+                    </button>
                 </div>
                 <div id="decknotesdiv">
             <?php include 'includes/fragments/deckdetail_warnings.php'; ?>
