@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [v0.4.10-dev] - Unreleased
+## [v0.4.10] - 2026-01-01
 
 ### Added
 - Added `ACCESSIBILITY.md` with minimal accessibility actions and review checklist.
@@ -14,12 +14,6 @@ All notable changes to this project will be documented in this file.
 - Commander deck quantity prefixes now use "x" (e.g. "4 x Island").
 - Commander deck totals now include commander/partner quantities after quick updates.
 - Deck export lists now break out Planes/Phenomena and Tokens into their own sections.
-
-### Fixed
--
-
-### Security
--
 
 ### Infrastructure
 -
