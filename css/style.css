@@ -1,6 +1,6 @@
 /*
-Version:     2.13
-Date:        29/12/25
+Version:     2.14
+Date:        30/12/25
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -696,7 +696,7 @@ table
     position:relative;
     top:19px;
     left: 179px;
-    width: calc(100% -179px);
+    width: calc(100% - 179px);
     width: -o-calc(100% - 179px); /* opera */
     width: -webkit-calc(100% - 179px); /* google, safari */
     width: -moz-calc(100% - 179px); /* firefox */
@@ -1487,8 +1487,8 @@ table
 {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    perspective: 1000;
-    -webkit-perspective: 1000;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
 }
 .animating #menu, .menu-visible #menu 
 {

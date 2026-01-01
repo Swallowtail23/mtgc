@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.14
+Version:     6.15
 Date:        30/12/25
 Name:        admin.php
 Purpose:     Site control panel
@@ -198,6 +198,20 @@ function minifyCssFile(string $sourcePath, string $targetPath, \MTG\Core\Message
 
     $minified = preg_replace('/\\s+/', ' ', $minified);
     $minified = preg_replace('/\\s*([{}:;,\\[\\]])\\s*/', '$1', $minified);
+    $minified = preg_replace_callback('/calc\\(([^)]*)\\)/', function ($matches) {
+        $expr = $matches[1];
+        $expr = preg_replace(
+            '/([0-9a-zA-Z%.)])\\s*([+-])\\s*([0-9a-zA-Z.(])/',
+            '$1 $2 $3',
+            $expr
+        );
+
+        return 'calc(' . $expr . ')';
+    }, $minified);
+    if ($minified === null) :
+        $msg->logMessage('[ERROR]', 'CSS minify failed: calc spacing error');
+        return ['ok' => false, 'message' => 'Unable to normalize calc() spacing.'];
+    endif;
     $minified = preg_replace('/;}/', '}', $minified);
     $minified = trim($minified);
 
