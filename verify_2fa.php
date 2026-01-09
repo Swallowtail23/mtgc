@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        29/11/25
+Version:     1.9
+Date:        09/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
 Notes:       {none}
@@ -44,9 +44,7 @@ if (!isset($db) || !$db instanceof mysqli) :
     die('A database error occurred, please try again later');
 endif;
 
-if (!isset($_SESSION['csrf_token'])) :
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-endif;
+$csrfToken = generateCsrfToken();
 
 $verification_attempted = false;
 $verification_error = '';
@@ -55,7 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
     $verification_attempted = true;
     $code = trim($_POST['code']);
 
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) :
+    $submittedToken = $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in verify_2fa.php');
         die('Invalid request');
     endif;
@@ -174,7 +173,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 placeholder='VERIFICATION CODE'
                 style="text-align: center; letter-spacing: 8px; font-size: 1.5em;"
             />
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
             <br><br>
             <div style="display: flex; justify-content: center; gap: 10px;">
                 <input type="submit" name="verify" id="loginsubmit" value="VERIFY" />

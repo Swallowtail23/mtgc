@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        27/12/25
+Version:     2.4
+Date:        09/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -51,12 +51,11 @@ if (empty($_SESSION['trust_device_flow'])) :
 endif;
 unset($_SESSION['trust_device_flow']);
 
-if (!isset($_SESSION['csrf_token'])) :
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-endif;
+$csrfToken = generateCsrfToken();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') :
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) :
+    $submittedToken = $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in trust_device.php');
         die('Invalid request.');
     endif;
@@ -130,7 +129,7 @@ else :
                         name="redirect_to"
                         value="<?php echo htmlspecialchars($redirect_to, ENT_NOQUOTES, 'UTF-8'); ?>"
                     >
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
                     <button
                         type="submit"
                         class="profilebutton"
@@ -145,7 +144,7 @@ else :
                         name="redirect_to"
                         value="<?php echo htmlspecialchars($redirect_to, ENT_NOQUOTES, 'UTF-8'); ?>"
                     >
-                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrfToken; ?>">
                     <button type="submit" class="profilebutton" style="margin-right: 10px;">NOT NOW</button>
                 </form>
             </div>

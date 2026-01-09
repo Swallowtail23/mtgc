@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.15
-Date:        30/12/25
+Version:     6.16
+Date:        09/01/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -15,21 +15,18 @@ else :
     require('../includes/sessionname_template.php');
 endif;
 startCustomSession();
-if (empty($_SESSION['csrf_token'])) :
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-endif;
 require('../includes/ini.php');             //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
 forcePasswordChange();                      //Check if user is disabled or needs to change password
 $msg = new \MTG\Core\Message($logfile);
+$csrfToken = generateCsrfToken();
 
 function requireCsrfToken(): void
 {
     $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
-    $token  = $_SESSION['csrf_token'] ?? '';
-    if ($posted === '' || !hash_equals($token, $posted)) :
+    if ($posted === '' || !validateCsrfToken($posted)) :
         http_response_code(403);
         die('CSRF check failed');
     endif;
@@ -1094,7 +1091,7 @@ require('../includes/menu.php');
                             <textarea class='textinput' id='updatetext' name='updatetext' rows='8'></textarea>
                         </td>
                         <td>
-                            <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                            <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                             <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                             <input class='profilebutton' name='update' type="submit" value="ADD">
                         </td>
@@ -1158,7 +1155,7 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <?php
-                            $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8');
+                            $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
                             ?>
                             <?php if (strpos($cssver, 'min') !== false) : ?>
                                 <form action="/admin/admin.php" method="post">
@@ -1182,7 +1179,7 @@ require('../includes/menu.php');
                         </td>
                         <td>
                             <form action="/admin/admin.php" method="post">
-                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                 <input type="hidden" name="scryfalljson_action" value="wipe">
                                 <input class='profilebutton' type="submit" value="WIPE JSON" />
@@ -1200,7 +1197,7 @@ require('../includes/menu.php');
                             endif; ?>
                         </td>
                         <td> <?php
-                            $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8');
+                            $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
                         if (($mtceStatus == 1) || ($mtceStatus == 2)) : ?>
                             <form action="/admin/admin.php" method="post">
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
@@ -1231,7 +1228,7 @@ require('../includes/menu.php');
                                     action="/admin/admin.php#inisettings"
                                     style="display:inline-block; margin-right: 10px;"
                                 >
-                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                     <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                     <input type="hidden" name="config_action" value="cancel_config_edit">
                                     <input class='profilebutton' type="submit" value="CANCEL" />
@@ -1248,7 +1245,7 @@ require('../includes/menu.php');
                                 <?php
                             else : ?>
                                 <form method="post" action="/admin/admin.php#inisettings">
-                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                     <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                     <input type="hidden" name="config_action" value="start_reauth">
                                     <input class='profilebutton' type="submit" value="SHOW/EDIT" />
@@ -1260,7 +1257,7 @@ require('../includes/menu.php');
                     <tr>
                         <td class="options_left" colspan="2">
                             <form method="post" action="/admin/admin.php#inisettings" class="config-reauth-form">
-                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                 <label>
                                     Re-authenticate to edit configuration<br>
@@ -1310,7 +1307,7 @@ require('../includes/menu.php');
                                 $adminIpValue        = $iniArray['security']['AdminIP'] ?? '';
                                 ?>
                                 <form id="configedit" method="post" action="/admin/admin.php">
-                                    <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                     <input
                                         type="hidden"
                                         name="csrf_token"
@@ -2155,7 +2152,7 @@ require('../includes/menu.php');
                             <!-- Display the DELETE button -->
                             <form id="deleteForm" method="post" action="/admin/admin.php">
                                 <input type="hidden" name="deleteMigrations" value="DELETE">
-                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                 <button
                                     type="button"
@@ -2169,7 +2166,7 @@ require('../includes/menu.php');
                             <!-- Display the TEST DELETE button with the $countSql variable -->
                             <form id="testDeleteForm" method="post" action="/admin/admin.php">
                                 <input type="hidden" name="deleteMigrations" value="TEST">
-                                <?php $csrfEsc = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrfEsc; ?>">
                                 <button 
                                     type="button"
