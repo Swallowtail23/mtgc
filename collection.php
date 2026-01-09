@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        09/01/26
+Version:     1.10
+Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -133,7 +133,11 @@ endif;
         <script>
             var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
                 ? window.mtgAjaxConfig.csrfToken
-                : '';
+                : <?php echo json_encode(generateCsrfToken()); ?>;
+            window.mtgAjaxConfig = window.mtgAjaxConfig || {};
+            if (!window.mtgAjaxConfig.csrfToken) {
+                window.mtgAjaxConfig.csrfToken = csrfToken;
+            }
             document.addEventListener('DOMContentLoaded', function() {
                 var csvSuccess = "<?php echo $csvsuccess; ?>";
                 if (csvSuccess === 'true') {
