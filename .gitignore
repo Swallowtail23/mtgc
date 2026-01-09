@@ -17,3 +17,4 @@ vendor/
 docker/.env
 docker/docker-compose.override.yml
 scripts/
+CODEBASE_REVIEW_FINDINGS.md
