@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        29/12/25
+Version:     1.9
+Date:        09/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -131,6 +131,9 @@ endif;
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script>
+            var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
+                ? window.mtgAjaxConfig.csrfToken
+                : '';
             document.addEventListener('DOMContentLoaded', function() {
                 var csvSuccess = "<?php echo $csvsuccess; ?>";
                 if (csvSuccess === 'true') {
@@ -193,6 +196,7 @@ endif;
                 $.ajax({
                     url: '/ajax/ajaxcollectionvalue.php',
                     method: 'GET',
+                    data: { 'csrf_token': csrfToken },
                     dataType: 'json'
                 }).done(function(data) {
                     if (data && data.success && data.html) {
@@ -269,7 +273,7 @@ endif;
                     $.ajax({
                         url: "/ajax/ajaxweekly.php",
                         method: "POST",
-                        data: { "weekly": weekly },
+                        data: { "weekly": weekly, "csrf_token": csrfToken },
                         error: function (jqXHR, textStatus, errorThrown) {
                             console.error("AJAX error: " + textStatus + " - " + errorThrown);
                         }

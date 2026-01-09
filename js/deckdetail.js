@@ -1,6 +1,6 @@
 /*
-Version:     2.70
-Date:        01/01/26
+Version:     2.71
+Date:        09/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -1195,7 +1195,8 @@ function submitForm() {
         data: {
             newnotes: notes,
             newsidenotes: sidenotes,
-            decknumber: deck
+            decknumber: deck,
+            csrf_token: csrfToken
         },
         dataType: 'json',
         success: function (result) {

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        26/11/25
+Version:     1.3
+Date:        09/01/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -16,6 +16,10 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 ?>
 
+<script>
+    window.mtgAjaxConfig = window.mtgAjaxConfig || {};
+    window.mtgAjaxConfig.csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
+</script>
 <script>
     $(function() {
         var debounce = function(func, delay) {

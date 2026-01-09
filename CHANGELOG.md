@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 -
 
 ### Security
--
+- Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
 
 ### Infrastructure
 -

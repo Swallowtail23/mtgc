@@ -1,3 +1,14 @@
+/*
+Version:     1.0
+Date:        09/01/26
+Name:        cviewClassToggle.js
+Purpose:     Toggle collection view classes and persist cview status via AJAX.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2026 MTG Collection
+To do:       -
+*/
+
 function toggleNoCollectionClass(cardid) {
     const cellone = document.getElementById('cell' + cardid + '_one');
     const celltwo = document.getElementById('cell' + cardid + '_two');
@@ -47,6 +58,9 @@ $(document).ready(function(){
         var cview = isChecked ? "TURN ON" : "TURN OFF";
         var title = isChecked ? "Toggle collection view off" : "Toggle collection view on";
         var classAction = isChecked ? 'removeClass' : 'addClass';
+        var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
+            ? window.mtgAjaxConfig.csrfToken
+            : '';
 
         if (isChecked) {
             addNoCollectionClass();
@@ -60,7 +74,7 @@ $(document).ready(function(){
         $.ajax({  
             url: "/ajax/ajaxcview.php",  
             method: "POST",  
-            data: { "collection_view": cview },
+            data: { "collection_view": cview, "csrf_token": csrfToken },
             success: function(data) {
                 // Handle response if needed
             },

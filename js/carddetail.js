@@ -1,6 +1,6 @@
 /*
-Version:     1.4
-Date:        29/12/25
+Version:     1.5
+Date:        09/01/26
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -13,6 +13,8 @@ To do:       -
     'use strict';
 
     var cardDetailConfig = window.mtgCardDetailConfig || {};
+    var ajaxConfig = window.mtgAjaxConfig || {};
+    var csrfToken = ajaxConfig.csrfToken || '';
     var cardIdForRedirect = cardDetailConfig.cardId || '';
 
     function updateFlipButtonsForViewport() {
@@ -214,6 +216,7 @@ To do:       -
             var data = new URLSearchParams();
             data.append('newnotes', notes);
             data.append('cardid', cardInput.value);
+            data.append('csrf_token', csrfToken);
 
             fetch('ajax/ajaxcardnotes.php', {
                 method: 'POST',
@@ -355,7 +358,7 @@ To do:       -
         $.ajax({
             url: 'ajax/ajaxcardprice.php',
             type: 'POST',
-            data: { cardid: cardId },
+            data: { cardid: cardId, csrf_token: csrfToken },
             dataType: 'json',
             success: function (response) {
                 if (!response || response.success !== true) {

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     28.14
-Date:        30/12/25
+Version:     28.15
+Date:        09/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -2546,6 +2546,55 @@ function validateCsrfToken($submittedToken)
     endif;
 
     return hash_equals($_SESSION['csrf_token'], $submittedToken);
+}
+
+function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
+{
+    $msg = new \MTG\Core\Message($logfile);
+    $contextLabel = $context !== '' ? $context . ': ' : '';
+    $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation started");
+
+    $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+    $msg->logMessage('[DEBUG]', "{$contextLabel}Referring page is: $referringPage");
+    $normalizedReferringPage = str_replace('www.', '', $referringPage);
+
+    $isValidReferrer = false;
+    foreach ($expectedReferringPages as $page) :
+        $normalizedPage = str_replace('www.', '', $page);
+        if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
+            $isValidReferrer = true;
+            break;
+        endif;
+    endforeach;
+
+    if ($isValidReferrer === false) :
+        $msg->logMessage('[DEBUG]', "{$contextLabel}Referrer validation failed");
+        return [
+            'valid' => false,
+            'reason' => 'referrer'
+        ];
+    endif;
+
+    if ($requireCsrf) :
+        $submittedToken = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '';
+        if (!is_string($submittedToken)) :
+            $submittedToken = '';
+        endif;
+
+        if (!validateCsrfToken($submittedToken)) :
+            $msg->logMessage('[DEBUG]', "{$contextLabel}CSRF validation failed");
+            return [
+                'valid' => false,
+                'reason' => 'csrf'
+            ];
+        endif;
+    endif;
+
+    $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation passed");
+    return [
+        'valid' => true,
+        'reason' => ''
+    ];
 }
 
 function inputInterpreter($input_string)

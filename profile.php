@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.11
-Date:        29/12/25
+Version:     14.12
+Date:        09/01/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -744,6 +744,9 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             <script type="text/javascript">
                                 $(document).ready(function () {
                                     document.body.style.cursor='normal';
+                                    var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
+                                        ? window.mtgAjaxConfig.csrfToken
+                                        : '';
 
                                     // Toggle collection view
                                     $('#cview_toggle').on('change', function () {
@@ -751,7 +754,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         $.ajax({
                                             url: "/ajax/ajaxcview.php",
                                             method: "POST",
-                                            data: { "collection_view": cview },
+                                            data: { "collection_view": cview, "csrf_token": csrfToken },
                                             error: function (jqXHR, textStatus, errorThrown) {
                                                 console.error("AJAX error: " + textStatus + " - " + errorThrown);
                                             }
@@ -765,7 +768,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                         $.ajax({
                                             url: "/ajax/ajaxgroup.php",
                                             method: "POST",
-                                            data: { "group": group },
+                                            data: { "group": group, "csrf_token": csrfToken },
                                             success: function () {
                                                 document.getElementById("grpname").style.display = display;
                                             }
@@ -780,7 +783,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                             $.ajax({
                                                 url: "/ajax/ajaxcurrency.php",
                                                 method: "GET",
-                                                data: { "currency": selectedCurrency },
+                                                data: { "currency": selectedCurrency, "csrf_token": csrfToken },
                                                 success: function (data) {
                                                     var response = JSON.parse(data);
                                                     console.log(response);
