@@ -82,12 +82,43 @@ function updateDeckVersion(rawVersion) {
     }
 }
 
+// Validate an image source URL before assigning it to an <img> element.
+// Disallow dangerous schemes like "javascript:" and restrict to same-origin paths.
+function getSafeImageSrc(rawSrc) {
+    if (!rawSrc || typeof rawSrc !== 'string') {
+        return null;
+    }
+    var trimmed = rawSrc.trim();
+    if (trimmed === '') {
+        return null;
+    }
+    // Disallow javascript: and other non-http(s) schemes by only allowing:
+    //  - root-relative paths (starting with "/"), or
+    //  - relative paths without a scheme or leading "//".
+    var lower = trimmed.toLowerCase();
+    if (lower.indexOf('javascript:') === 0) {
+        return null;
+    }
+    if (trimmed.indexOf('//') === 0) {
+        // Protocol-relative URL (e.g. //evil.com) - disallow to avoid external injection.
+        return null;
+    }
+    // If it contains "://" treat it as absolute URL and disallow to keep images same-origin-controlled.
+    if (trimmed.indexOf('://') !== -1) {
+        return null;
+    }
+    // At this point we allow relative or root-relative URLs controlled by the application.
+    return trimmed;
+}
+
 function swapImageByElement($img) {
     if (!$img || !$img.length) {
         return;
     }
-    var backSrc = $img.attr('data-back-src');
-    var frontSrc = $img.attr('data-front-src') || $img.attr('src');
+    var rawBackSrc = $img.attr('data-back-src');
+    var rawFrontSrc = $img.attr('data-front-src') || $img.attr('src');
+    var backSrc = getSafeImageSrc(rawBackSrc);
+    var frontSrc = getSafeImageSrc(rawFrontSrc);
     if (!backSrc || !frontSrc) {
         return;
     }
