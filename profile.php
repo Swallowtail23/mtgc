@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.15
-Date:        10/01/26
+Version:     14.16
+Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -11,17 +11,6 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
-
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
-require 'includes/secpagesetup.php';      // Setup page variables
 
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
@@ -35,6 +24,17 @@ use MTG\Auth\PasswordCheck;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
 use MTG\Core\Message;
+
+if (file_exists('includes/sessionname.local.php')) :
+    require 'includes/sessionname.local.php';
+else :
+    require 'includes/sessionname_template.php';
+endif;
+startCustomSession();
+require 'includes/ini.php';               // Initialise and load ini file
+require 'includes/error_handling.php';
+require 'includes/functions.php';         // Includes basic functions for non-secure pages
+require 'includes/secpagesetup.php';      // Setup page variables
 
 $msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;

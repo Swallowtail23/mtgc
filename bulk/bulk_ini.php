@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.9
+Version:     3.10
 Date:        25/11/25
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -88,6 +88,7 @@ endif;
 //Web root URL and site title
 $myURL = $iniArray['general']['URL'];
 $siteTitle = $iniArray['general']['title'];
+$any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
 
 //DB connect
 define('DB_HOST', $iniArray['database']['DBServer']);  //host

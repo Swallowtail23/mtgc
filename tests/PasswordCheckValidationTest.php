@@ -2,6 +2,12 @@
 
 use PHPUnit\Framework\TestCase;
 
+if (false) :
+    class PasswordCheckReal extends \MTG\Auth\PasswordCheck
+    {
+    }
+endif;
+
 function getRealPasswordCheckValidationClass(): string
 {
     if (class_exists('PasswordCheckReal', false)) :

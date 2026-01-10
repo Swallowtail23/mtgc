@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
 - Ajax grid quantity updates now accept numeric string inputs without failing validation.
 - forcePasswordChange now halts execution after redirecting to profile.php.
 - Weekly export toggle now accepts collection.php as a valid referrer.
+- Weekly exports now define any-quantity deck rules to avoid undefined variable errors.
+- Scryfall sets import now initializes Message after namespace imports to avoid missing class errors.
+- Scryfall rulings import now initializes Message after namespace imports to avoid missing class errors.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.

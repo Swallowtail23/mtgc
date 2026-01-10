@@ -41,7 +41,7 @@ class PasswordCheck
      */
     public function requestResetToken($email, $forceChange = false)
     {
-        global $serverEmail, $siteTitle, $myURL, $smtpParameters, $emailEnabled;
+        global $serverEmail, $myURL, $smtpParameters, $emailEnabled;
         if (!$emailEnabled) :
             $this->message->logMessage('[NOTICE]', 'Password reset request blocked; email disabled');
             return false;
@@ -73,7 +73,7 @@ class PasswordCheck
         endif;
 
         $link = rtrim($myURL, '/') . "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
-        return $this->sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters);
+        return $this->sendResetEmail($email, $link, $this->siteTitle, $serverEmail, $smtpParameters);
     }
 
     /**
@@ -188,7 +188,7 @@ class PasswordCheck
 
     public function passwordReset($email, $admin, $dbname)
     {
-        global $serverEmail, $adminEmail, $siteTitle, $myURL, $emailEnabled;
+        global $serverEmail, $adminEmail, $myURL, $emailEnabled;
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
             return 0;
@@ -221,10 +221,10 @@ class PasswordCheck
                     if ($reset === 1) :
                         $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
                         $subject = "Password reset";
-                        $message = "A new password was requested for your email at $siteTitle ($myURL)\n\n"
+                        $message = "A new password was requested for your email at $this->siteTitle ($myURL)\n\n"
                             . "Please login with this temporary password: $randompassword\n"
                             . "You will need to then choose a new password.\n\n"
-                            . "If you did not request a new password at $siteTitle, you can ignore this email.";
+                            . "If you did not request a new password at $this->siteTitle, you can ignore this email.";
                         if ($emailEnabled) :
                             mail($email, $subject, $message, $from);
                         else :
@@ -343,7 +343,7 @@ class PasswordCheck
      */
     public function sendPasswordChangeNotification($email)
     {
-        global $emailEnabled, $siteTitle, $serverEmail, $smtpParameters;
+        global $emailEnabled, $serverEmail, $smtpParameters;
         if (!$emailEnabled) :
             $this->message->logMessage(
                 '[NOTICE]',
@@ -356,9 +356,9 @@ class PasswordCheck
             return false;
         endif;
 
-        $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-        $subject = "$siteTitle password changed";
-        $plain = "Your password on $siteTitle was changed. "
+        $siteTitleEsc = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
+        $subject = "$this->siteTitle password changed";
+        $plain = "Your password on $this->siteTitle was changed. "
                   . "If this was not you, please reset your password immediately.";
         $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
@@ -368,7 +368,7 @@ class PasswordCheck
             $smtpParameters,
             $serverEmail,
             $this->logfile,
-            $siteTitle
+            $this->siteTitle
         );
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");

@@ -4,6 +4,12 @@ use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
 
+if (false) :
+    class PasswordCheckReal extends \MTG\Auth\PasswordCheck
+    {
+    }
+endif;
+
 function getRealPasswordCheckClass(): string
 {
     if (class_exists('PasswordCheckReal', false)) :
@@ -106,7 +112,6 @@ class PasswordResetTest extends TestCase
         $myURL = 'http://example.test';
         $smtpParameters = ['SMTPDebug' => 'SMTP::DEBUG_OFF'];
 
-        $realClass = getRealPasswordCheckClass();
         $this->checker = new PasswordCheckStub(null, $GLOBALS['logfile'], $siteTitle);
         $this->checker->users['user@example.test'] = ['usernumber' => 1, 'email' => 'user@example.test'];
     }
