@@ -30,21 +30,17 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxca
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo 'Access forbidden';
+        ajaxRespondText('Access forbidden', 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $msg->logMessage('[DEBUG]', "Unauthenticated ajax price request - redirecting to login");
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-    exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
@@ -59,9 +55,7 @@ else :
     $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
     if ($cardUUID === false) :
         $msg->logMessage('[ERROR]', "Invalid card UUID provided");
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid UUID provided']);
-        exit();
+        ajaxRespondJson(['error' => 'Invalid UUID provided'], 400);
     endif;
 
     $msg->logMessage('[DEBUG]', "Async price refresh for card $cardUUID");
@@ -72,9 +66,7 @@ else :
 
     if ($scryfallresult['action'] === 'nocard') :
         $msg->logMessage('[ERROR]', "Scryfall refresh failed - no card for $cardUUID");
-        http_response_code(404);
-        echo json_encode(['error' => 'Card not found']);
-        exit();
+        ajaxRespondJson(['error' => 'Card not found'], 404);
     endif;
 
     if ($scryfallresult['action'] === 'update' or $scryfallresult['action'] === 'get') :
@@ -96,9 +88,7 @@ else :
     $result = $db->execute_query($query, [$cardUUID]);
     if ($result === false or $result->num_rows < 1) :
         $msg->logMessage('[ERROR]', "Price lookup failed for $cardUUID");
-        http_response_code(404);
-        echo json_encode(['error' => 'Card not found']);
-        exit();
+        ajaxRespondJson(['error' => 'Card not found'], 404);
     endif;
 
     $row = $result->fetch_assoc();
@@ -131,6 +121,5 @@ else :
     $priceHtml = \MTG\Cards\PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
     $msg->logMessage('[DEBUG]', "Price HTML built for $cardUUID");
 
-    header('Content-Type: application/json');
-    echo json_encode(\MTG\Cards\PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
+    ajaxRespondJson(\MTG\Cards\PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
 endif;

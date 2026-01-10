@@ -31,29 +31,22 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxim
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo 'Access forbidden';
+        ajaxRespondText('Access forbidden', 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
-    exit();
+    ajaxRespondJson(['error' => 'Not authenticated'], 401);
 endif;
 
 $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
 
 if ($cardUUID === false) :
     $msg->logMessage('[ERROR]', "Invalid UUID provided");
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid UUID provided']);
-    exit();
+    ajaxRespondJson(['error' => 'Invalid UUID provided'], 400);
 endif;
 
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
@@ -69,7 +62,7 @@ try {
             . ($result['back_changed'] ? 'yes' : 'no')
     );
 
-    echo json_encode([
+    ajaxRespondJson([
         'success' => true,
         'front' => $result['front'],
         'front_changed' => $result['front_changed'],
@@ -78,6 +71,5 @@ try {
     ]);
 } catch (Exception $e) {
     throw new Exception("[ERROR] ajaximagecheck.php: " . $e->getMessage());
-    http_response_code(400);
-    echo json_encode(['error' => 'Unknown error']);
+    ajaxRespondJson(['error' => 'Unknown error'], 400);
 }

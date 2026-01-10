@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     28.15
-Date:        09/01/26
+Version:     28.16
+Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -2595,6 +2595,21 @@ function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $
         'valid' => true,
         'reason' => ''
     ];
+}
+
+function ajaxRespondJson($payload, $statusCode = 200)
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json');
+    echo json_encode($payload);
+    exit();
+}
+
+function ajaxRespondText($text, $statusCode = 200)
+{
+    http_response_code($statusCode);
+    echo $text;
+    exit();
 }
 
 function inputInterpreter($input_string)

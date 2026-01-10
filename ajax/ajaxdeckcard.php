@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.20
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -401,7 +401,5 @@ function returnResponse($response)
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit();
+    ajaxRespondJson($response, http_response_code());
 }

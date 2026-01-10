@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        10/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -146,7 +146,5 @@ function returnResponse($response)
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit();
+    ajaxRespondJson($response, http_response_code());
 }

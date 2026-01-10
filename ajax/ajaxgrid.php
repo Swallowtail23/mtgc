@@ -34,32 +34,24 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgr
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        http_response_code(403);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo 'Access forbidden';
+        ajaxRespondText('Access forbidden', 403);
     endif;
-    exit();
 endif;
 
 $msg->logMessage('[DEBUG]', "Ajax grid update, referrer is valid");
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-    exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     $cardId = $_POST['cardid'] ?? '';
     if (validUUID($cardId) === false) :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
         $response['status'] = 'error';
         $response['message'] = "Called with invalid card UUID";
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+        ajaxRespondJson($response, 400);
     endif;
 
         //Process and log new quantity request
@@ -77,10 +69,7 @@ else :
             );
             $response['status'] = 'error';
             $response['message'] = "Invalid normal qty";
-            http_response_code(400);
-            header('Content-Type: application/json');
-            echo json_encode($response);
-            exit;
+            ajaxRespondJson($response, 400);
         endif;
     elseif (isset($_POST['newfoil'])) :
             $qty = $_POST['newfoil'];
@@ -96,10 +85,7 @@ else :
                 );
                 $response['status'] = 'error';
                 $response['message'] = "Invalid foil qty";
-                http_response_code(400);
-                header('Content-Type: application/json');
-                echo json_encode($response);
-                exit;
+                ajaxRespondJson($response, 400);
         endif;
     elseif (isset($_POST['newetch'])) :
             $qty = $_POST['newetch'];
@@ -115,19 +101,13 @@ else :
                 );
                 $response['status'] = 'error';
                 $response['message'] = "Invalid etch qty";
-                http_response_code(400);
-                header('Content-Type: application/json');
-                echo json_encode($response);
-                exit;
+                ajaxRespondJson($response, 400);
         endif;
     else :
-            $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
-            $response['status'] = 'error';
-            $response['message'] = "Invalid call";
-            http_response_code(400);
-            header('Content-Type: application/json');
-            echo json_encode($response);
-            exit;
+        $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
+        $response['status'] = 'error';
+        $response['message'] = "Invalid call";
+        ajaxRespondJson($response, 400);
     endif;
 
         //Should only be here if newqty, newfoil or newetch are set
@@ -137,10 +117,7 @@ else :
     else :
             $response['status'] = 'error';
             $response['message'] = "Invalid qty";
-            http_response_code(400);
-            header('Content-Type: application/json');
-            echo json_encode($response);
-            exit;
+            ajaxRespondJson($response, 400);
     endif;
 
         $sqlid = $cardId;
@@ -154,10 +131,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+        ajaxRespondJson($response, 400);
     else :
             $beforeresult = $beforeresultqry->fetch_assoc();
         if (empty($beforeresult['normal'])) :
@@ -207,10 +181,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+        ajaxRespondJson($response, 400);
     else :
             $affected_rows = $db->affected_rows;
         if ($affected_rows === 2) :
@@ -234,10 +205,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        http_response_code(400);
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+        ajaxRespondJson($response, 400);
     else :
             $checkresult = $checkresultqry->fetch_assoc();
         if (isset($_POST['newqty'])) :
@@ -303,7 +271,5 @@ else :
     endif;
 
         // Send JSON response
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit;
+        ajaxRespondJson($response, http_response_code());
 endif;

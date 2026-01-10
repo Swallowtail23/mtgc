@@ -30,19 +30,15 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxco
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: Invalid CSRF token');
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: Not called from valid page');
-        http_response_code(403);
-        echo json_encode(['error' => 'Access forbidden']);
+        ajaxRespondJson(['error' => 'Access forbidden'], 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-    exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 endif;
 
 // Need to run these as secpagesetup not run (see page notes)
@@ -50,9 +46,7 @@ $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI,
 $userArray = $sessionManager->getUserInfo();
 if ($userArray === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: User array returned false');
-    http_response_code(500);
-    echo json_encode(['error' => 'User not found']);
-    exit();
+    ajaxRespondJson(['error' => 'User not found'], 500);
 endif;
 
 $user = $userArray['usernumber'];
@@ -99,11 +93,10 @@ echo "scryfall.com</a>.)<br>";
 $rowcounttotal = number_format($rowcount);
 $html = ob_get_clean();
 
-echo json_encode(
+ajaxRespondJson(
     [
         'success' => true,
         'html' => $html,
         'updated_rows' => $updatedRows,
     ]
 );
-exit();

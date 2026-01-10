@@ -222,7 +222,5 @@ endif;
 function returnResponse()
 {
     global $response;
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit();
+    ajaxRespondJson($response, http_response_code());
 }

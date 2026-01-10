@@ -28,21 +28,18 @@ $expectedReferringPages = [
 $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
 if ($ajaxValidation['valid'] === false) :
     $msg->logMessage('[ERROR]', "Not called from valid page");
-    http_response_code(403);
-    echo 'Access forbidden';
-    exit();
+    ajaxRespondText('Access forbidden', 403);
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-        echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-        exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
-        //Need to run these as secpagesetup not run (see page notes)
-        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
-        $userArray = $sessionManager->getUserInfo();
-        $user = $userArray['usernumber'];
-        $mytable = $userArray['table'];
-        //
+    //Need to run these as secpagesetup not run (see page notes)
+    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $userArray = $sessionManager->getUserInfo();
+    $user = $userArray['usernumber'];
+    $mytable = $userArray['table'];
+    //
     if ($_POST) :
         $r = $_POST['search'];
         $rtrim = trim($r, " \t\n\r\0\x0B");

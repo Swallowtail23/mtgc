@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Standardized remaining AJAX endpoints to use shared referrer/CSRF validation and updated callers to send tokens.
 
 ### Infrastructure
--
+- Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.
 
 ## [v0.4.10] - 2026-01-01
 

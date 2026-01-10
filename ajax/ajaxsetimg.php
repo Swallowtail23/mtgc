@@ -1,14 +1,14 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        10/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:      -
+To do:       -
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -29,21 +29,17 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxse
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxsetimg");
-        http_response_code(403);
-        echo json_encode(["status" => "error", "message" => "Invalid request token"]);
+        ajaxRespondJson(["status" => "error", "message" => "Invalid request token"], 403);
     else :
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo json_encode(["status" => "error", "message" => "Access forbidden"]);
+        ajaxRespondJson(["status" => "error", "message" => "Access forbidden"], 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     header("Refresh: 2; url=login.php"); // redirect if not logged in
     // Return an error in JSON format
-    echo json_encode(["status" => "error", "message" => "You are not logged in."]);
-    exit();
+    ajaxRespondJson(["status" => "error", "message" => "You are not logged in."]);
 else :
     // Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
@@ -56,9 +52,7 @@ else :
         $setcode = $_POST['setcode'];
         if (!is_string($setcode) || !preg_match('/^[A-Za-z0-9_]+$/', $setcode)) :
             $msg->logMessage('[ERROR]', "Invalid setcode supplied: '$setcode'");
-            http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "Invalid set code supplied"]);
-            exit();
+            ajaxRespondJson(["status" => "error", "message" => "Invalid set code supplied"], 400);
         endif;
         $root = $_SERVER['DOCUMENT_ROOT'];
         $msg->logMessage('[NOTICE]', "Called with set '$setcode'");
@@ -67,7 +61,7 @@ else :
         $cmd = "php $safeRoot $safeSetcode > /dev/null 2>&1 &";
         $msg->logMessage('[NOTICE]', "Running '$cmd'");
         exec($cmd);
-        echo json_encode(
+        ajaxRespondJson(
             [
                 "status" => "success",
                 "message" => "Image reloading started for set '$setcode' - result will be emailed to server admin"
@@ -75,6 +69,6 @@ else :
         );
     else :
         $msg->logMessage('[ERROR]', "No setcode supplied");
-        echo json_encode(["status" => "error", "message" => "No setcode supplied"]);
+        ajaxRespondJson(["status" => "error", "message" => "No setcode supplied"]);
     endif;
 endif;

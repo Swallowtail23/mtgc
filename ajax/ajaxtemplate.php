@@ -1,14 +1,14 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        10/01/26
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
-To do:      -
+To do:       -
 */
 
 if (file_exists('../includes/sessionname.local.php')) :
@@ -31,19 +31,15 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxte
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo json_encode(['error' => 'Access forbidden']);
+        ajaxRespondJson(['error' => 'Access forbidden'], 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-    exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>");
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
@@ -59,9 +55,7 @@ else :
 
         $msg->logMessage('[DEBUG]', "Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'");
     else :  // Error handling
-        http_response_code(400);
         $msg->logMessage('[ERROR]', "Offset not in range");
-        echo json_encode(['error' => 'Offset not in range']);
-        exit();
+        ajaxRespondJson(['error' => 'Offset not in range'], 400);
     endif;
 endif;

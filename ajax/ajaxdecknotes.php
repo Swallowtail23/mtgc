@@ -30,20 +30,16 @@ $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxde
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        http_response_code(403);
-        echo json_encode(['error' => 'Invalid request token']);
+        ajaxRespondJson(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        http_response_code(403);
-        echo 'Access forbidden';
+        ajaxRespondText('Access forbidden', 403);
     endif;
-    exit();
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
-    exit();
+    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
@@ -65,16 +61,14 @@ else :
         $result = $db->execute_query($query, [$newnotes, $newsidenotes, $deckNumber]);
 
         if ($result) {
-            echo json_encode(['success' => true]);
+            ajaxRespondJson(['success' => true]);
         } else {
-            http_response_code(400);
-            echo json_encode(['error' => 'No rows updated or SQL error occurred']);
+            ajaxRespondJson(['error' => 'No rows updated or SQL error occurred'], 400);
         }
     } catch (Exception $e) {
         throw new Exception(
             "[ERROR] ajaxdecknotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->error
         );
-        http_response_code(400);
-        echo json_encode(['error' => 'Database error']);
+        ajaxRespondJson(['error' => 'Database error'], 400);
     }
 endif;
