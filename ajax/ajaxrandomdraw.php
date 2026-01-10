@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.0
+Version:     3.1
 Date:        11/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -101,7 +101,10 @@ $allowedHoverClasses = ['randomcardimgdiv', 'randomcardimgdiv splitfloat'];
 $allowedCardClasses = ['random-draw-card', 'random-draw-card is-rotated'];
 for ($i = 0; $i < 7; $i++) :
     $cardurl = $uniquecard_ref[$a[$i]]['cardurl'] ?? '';
-    if (!is_string($cardurl) || !preg_match('#^/carddetail\.php\?id=[A-Za-z0-9-]+$#', $cardurl)) :
+    if (
+        !is_string($cardurl)
+        || !preg_match('#^/carddetail\.php\?id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$#i', $cardurl)
+    ) :
         $cardurl = '#';
     endif;
     $imgurl = $uniquecard_ref[$a[$i]]['imageurl'] ?? '/images/back.jpg';
@@ -138,10 +141,10 @@ for ($i = 0; $i < 7; $i++) :
         'hoverclass' => $hoverclass,
         'isRotated' => $is_rotated,
         'cardClass' => $cardClass,
-        'safeName' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
-        'safeId' => htmlspecialchars($id, ENT_QUOTES, 'UTF-8'),
-        'safeUrl' => htmlspecialchars($cardurl, ENT_QUOTES, 'UTF-8'),
-        'safeImg' => htmlspecialchars($imgurl, ENT_QUOTES, 'UTF-8')
+        'safeName' => htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+        'safeId' => htmlspecialchars($id, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+        'safeUrl' => htmlspecialchars($cardurl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+        'safeImg' => htmlspecialchars($imgurl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
     ];
 endfor;
 if (isset($msg)) :
