@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.13
+Version:     9.14
 Date:        19/12/25
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Bulk\ScryfallImport;
 
 require('bulk_ini.php');
 require('../includes/error_handling.php');
@@ -92,7 +94,7 @@ if ($useTestTable) :
     endif;
 
     $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test run 1 (baseline) starting');
-    $bulkResultFirst = scryfallImport(
+    $bulkResultFirst = ScryfallImport::scryfallImport(
         $testFileFirst,
         'default',
         $targetTable,
@@ -108,7 +110,7 @@ if ($useTestTable) :
     endif;
 
     $msg->logMessage('[NOTICE]', 'Scryfall Bulk API: test run 2 (mutated) starting');
-    $bulkResultSecond = scryfallImport(
+    $bulkResultSecond = ScryfallImport::scryfallImport(
         $testFileSecond,
         'default',
         $targetTable,
@@ -139,7 +141,7 @@ if ($useTestTable) :
 endif;
 
 // Get info on required files to download and their local locations
-$bulkInfo = getBulkInfo($type);
+$bulkInfo = ScryfallImport::getBulkInfo($type);
 if ($type === 'refresh') :
     $required = array('bulkUrlAll','bulkUrlDefault','fileLocationAll','fileLocationDefault');
 else :
@@ -177,8 +179,8 @@ if ($type === "refresh") :
         . "$fileLocationAll / $fileLocationDefault"
     );
     $maxFileAge = 0;
-    $get_all = getBulkJson($bulkUrlAll, $fileLocationAll, $maxFileAge);
-    $get_default = getBulkJson($bulkUrlDefault, $fileLocationDefault, $maxFileAge);
+    $get_all = ScryfallImport::getBulkJson($bulkUrlAll, $fileLocationAll, $maxFileAge);
+    $get_default = ScryfallImport::getBulkJson($bulkUrlDefault, $fileLocationDefault, $maxFileAge);
     if ($get_all === false) :
         $text = "Scryfall Bulk API: getBulkJson (all) returned error for $bulkUrlAll";
         $msg->logMessage('[ERROR]', $text);
@@ -198,7 +200,7 @@ if ($type === "refresh") :
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after bulk files obtained: %.2f seconds', $elapsed));
         // Run 1 - 'all', no images
-        $bulkResultAll = scryfallImport($fileLocationAll, 'all', $targetTable);
+        $bulkResultAll = ScryfallImport::scryfallImport($fileLocationAll, 'all', $targetTable);
         // Tag time progress after import finished
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after "all" import completed: %.2f seconds', $elapsed));
@@ -214,7 +216,7 @@ if ($type === "refresh") :
             echo "Scryfall Bulk API: MTG bulk update completed (all), $bulkResultAll\n";
         endif;            
         // Run 2 - 'default', assigns primary language
-        $bulkResultDefault = scryfallImport($fileLocationDefault, 'default', $targetTable);
+        $bulkResultDefault = ScryfallImport::scryfallImport($fileLocationDefault, 'default', $targetTable);
         // Tag time progress after import finished
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after "default" import completed: %.2f seconds', $elapsed));
@@ -235,7 +237,7 @@ else :
     $fileLocation = $bulkInfo['fileLocation'];
     $msg->logMessage('[NOTICE]', "Scryfall Bulk API: Download URI: $bulkUrl; File location: $fileLocation");
     $maxFileAge = 23 * 3600;
-    $get_json = getBulkJson($bulkUrl, $fileLocation, $maxFileAge);
+    $get_json = ScryfallImport::getBulkJson($bulkUrl, $fileLocation, $maxFileAge);
     if ($get_json === false) :
         $text = "Scryfall Bulk API: Download URI: getBulkJson returned error for $bulkUrl";
         $msg->logMessage('[ERROR]', $text);
@@ -247,7 +249,7 @@ else :
         // Tag time progress after getting bulk files
         $elapsed = microtime(true) - $start;
         $msg->logMessage('[NOTICE]', sprintf('Time after bulk files obtained: %.2f seconds', $elapsed));
-        $bulkResultMessage = scryfallImport($fileLocation, $type, $targetTable);
+        $bulkResultMessage = ScryfallImport::scryfallImport($fileLocation, $type, $targetTable);
         if ($bulkResultMessage === false) :
             $text = "Scryfall Bulk API: scryfallImport from $fileLocation failed for type '$type'";
             $msg->logMessage('[ERROR]', $text);

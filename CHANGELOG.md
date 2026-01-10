@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Added DeckManager helper tests covering deck legality and copy limits.
 - Added tests for SessionManager CSRF validation, PasswordCheck password rules, LoginHandler login stamps, and import CSV parsing.
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
+- Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport with tests for bulk info, JSON downloads, and guard rails.
 - Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 - Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
 
