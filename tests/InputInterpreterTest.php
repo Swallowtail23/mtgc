@@ -1,5 +1,6 @@
 <?php
 
+use MTG\Cards\ImportExport;
 use PHPUnit\Framework\TestCase;
 
 class InputInterpreterTest extends TestCase
@@ -7,7 +8,7 @@ class InputInterpreterTest extends TestCase
     public function testCsvHeader()
     {
         $line = 'set,number,name,lang,normal,foil,etched,uuid';
-        $this->assertSame('header', inputInterpreter($line));
+        $this->assertSame('header', ImportExport::inputInterpreter($line));
     }
 
     public function testValidCsvRow()
@@ -24,7 +25,41 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertSame($expected, inputInterpreter($line));
+        $this->assertSame($expected, ImportExport::inputInterpreter($line));
+    }
+
+    public function testDelverCsvRow()
+    {
+        $line = 'MH3,304,Plains,1,2,123e4567-e89b-12d3-a456-426614174000';
+        $expected = [
+            'set' => 'MH3',
+            'number' => '304',
+            'name' => 'Plains',
+            'lang' => 'unspecified',
+            'qty' => 3,
+            'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+            'normal' => 1,
+            'foil' => 2,
+            'etched' => 0
+        ];
+        $this->assertSame($expected, ImportExport::inputInterpreter($line));
+    }
+
+    public function testMtgcCsvRowWithEtched()
+    {
+        $line = 'MH3,304,Plains,en,1,2,3,123e4567-e89b-12d3-a456-426614174000';
+        $expected = [
+            'set' => 'MH3',
+            'number' => '304',
+            'name' => 'Plains',
+            'lang' => 'en',
+            'qty' => 6,
+            'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+            'normal' => 1,
+            'foil' => 2,
+            'etched' => 3
+        ];
+        $this->assertSame($expected, ImportExport::inputInterpreter($line));
     }
 
     public function testNonCsvText()
@@ -41,7 +76,13 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, inputInterpreter($line));
+        $this->assertEquals($expected, ImportExport::inputInterpreter($line));
+    }
+
+    public function testInvalidCsvRowReturnsFalse()
+    {
+        $line = 'MH3,304,Plains,1,0';
+        $this->assertFalse(ImportExport::inputInterpreter($line));
     }
 
     public function testNoPatternMatches()
@@ -57,6 +98,6 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, inputInterpreter('@@@'));
+        $this->assertEquals($expected, ImportExport::inputInterpreter('@@@'));
     }
 }

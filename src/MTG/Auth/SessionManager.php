@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.4
 Date:        10/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -333,7 +333,10 @@ class SessionManager
         return "Called as a string";
     }
 
-    public static function forcePasswordChange($logfile = null)
+    /**
+    * Optionally inject redirect/terminate handlers to allow testing without exiting the process.
+    */
+    public static function forcePasswordChange($logfile = null, $redirectHandler = null, $terminateHandler = null)
     {
         if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
             $logfile = $logfile ?? ($GLOBALS['logfile'] ?? null);
@@ -341,8 +344,18 @@ class SessionManager
                 $msg = new \MTG\Core\Message($logfile);
                 $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
             endif;
-            header("Location: /profile.php");
-            exit();
+            $target = '/profile.php';
+            if (is_callable($redirectHandler)) :
+                $redirectHandler($target);
+            else :
+                header("Location: $target");
+            endif;
+
+            if (is_callable($terminateHandler)) :
+                $terminateHandler();
+            else :
+                exit();
+            endif;
         endif;
     }
 

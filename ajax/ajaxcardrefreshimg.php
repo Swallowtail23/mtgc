@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        10/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -26,7 +26,11 @@ $msg = new \MTG\Core\Message($logfile);
 $expectedReferringPages = [
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardrefreshimg.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+    $expectedReferringPages,
+    $logfile,
+    'ajaxcardrefreshimg.php'
+);
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

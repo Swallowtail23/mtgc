@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     2.5
+Version:     2.6
 Date:        10/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -29,7 +29,12 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     $expectedReferringPages = [
         $myURL . '/deckdetail.php'
     ];
-    $ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxrandomdraw.php', false);
+    $ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+        $expectedReferringPages,
+        $logfile,
+        'ajaxrandomdraw.php',
+        false
+    );
     if ($ajaxValidation['valid'] === false) :
         $msg->logMessage('[ERROR]', "Not called from valid page");
         http_response_code(403);

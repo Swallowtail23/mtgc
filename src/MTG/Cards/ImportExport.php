@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.2
+Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -227,6 +227,396 @@ class ImportExport
         return $out;
     }
 
+    public static function inputInterpreter($input_string)
+    {
+        // Called by quickAdd in deckmanager class, index.php search inputs and collection imports
+        // This function takes an input string, either from deck quick add or search strings,
+        // and strips it into components:
+        // - UUID
+        // - qty (not applicable for searches)
+        // - cardname
+        // - set
+        // - collector number
+        global $db, $logfile, $bracketsInNames, $importLinestoIgnore;
+        $msg = new \MTG\Core\Message($logfile);
+
+        $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
+        $raw_string = $input_string;
+        $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
+
+        // Define is_csv as a closure
+        $is_csv = function ($string) use ($logfile) {
+            $msg = new \MTG\Core\Message($logfile);
+            // Check if the string contains at least 4 commas
+            $comma_count = substr_count($string, ',');
+            if ($comma_count < 4) :
+                $msg->logMessage('[DEBUG]', "Input is not CSV");
+                return false;
+            endif;
+
+            // Check if the string can be parsed into fields
+            $fields = str_getcsv($string, ',', '"', '\\');
+
+            // If str_getcsv returns an array with more than one element, it's likely a CSV
+            $fieldcount = count($fields);
+            $msg->logMessage('[DEBUG]', "Input is CSV, returning field count $fieldcount");
+            return $fieldcount > 1;
+        };
+
+        // Define extract_and_process_csv as a closure
+        $extract_and_process_csv = function ($line) use ($logfile) {
+            $msg = new \MTG\Core\Message($logfile);
+
+            // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
+            $fields = str_getcsv($line, ',', '"', '\\');
+            $qtyFields = count($fields);
+
+            if ($qtyFields === 6 || $qtyFields === 8) : // Only check if it has 6 or 8 fields, otherwise don't bother
+                // Header check
+                $headerKeywords  = ['set', 'number', 'name'];
+                $isHeader = true;
+                foreach ($headerKeywords as $keyword) :
+                    $found = false;
+                    foreach ($fields as $field) :
+                        if (stripos($field, $keyword) !== false) :
+                            $found = true;
+                            break;
+                        endif;
+                    endforeach;
+                    if (!$found) :
+                        $isHeader = false;
+                        break;
+                    endif;
+                endforeach;
+                if ($isHeader) :
+                    return 'header';
+                endif;
+
+                // Validate and determine CSV format
+                if ($qtyFields === 6) :
+                    if (
+                        !\isValidSetcode($fields[0])
+                        || !\isValidCardName($fields[2])
+                        || !(is_numeric($fields[3]) || empty($fields[3]))
+                        || !(is_numeric($fields[4]) || empty($fields[4]))
+                        || !\validUUID($fields[5])
+                    ) :
+                        $csvFormat = 'invalid';
+                    else :
+                        $csvFormat = 'delver';
+                    endif;
+                elseif ($qtyFields === 8) :
+                    if (
+                        !\isValidSetcode($fields[0])
+                        || !\isValidCardName($fields[2])
+                        || !\isValidLanguageCode($fields[3])
+                        || !(is_numeric($fields[4]) || empty($fields[4]))
+                        || !(is_numeric($fields[5]) || empty($fields[5]))
+                        || !(is_numeric($fields[6]) || empty($fields[6]))
+                        || !(\validUUID($fields[7]) || empty($fields[7]))
+                    ) :
+                        $csvFormat = 'invalid';
+                    else :
+                        $csvFormat = 'mtgc';
+                    endif;
+                else :
+                    $csvFormat = 'invalid';
+                endif;
+                $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is '$csvFormat'");
+
+                if ($csvFormat === 'invalid') :
+                    return false;
+                endif;
+
+                // Extracting common fields
+                $set    = $fields[0];
+                $number = $fields[1];
+                $name   = $fields[2];
+
+                // Extracting other fields based on format
+                if ($csvFormat === 'mtgc') :
+                    $lang   = $fields[3];
+                    $param5 = isset($fields[4]) ? (int) $fields[4] : 0;
+                    $param6 = isset($fields[5]) ? (int) $fields[5] : 0;
+                    $param7 = isset($fields[6]) ? (int) $fields[6] : 0;
+                    $uuid   = isset($fields[7]) ? $fields[7] : '';
+                elseif ($csvFormat === 'delver') : // No etched in Delver Lens files
+                    $lang   = 'unspecified';
+                    $param5 = isset($fields[3]) ? (int) $fields[3] : 0;
+                    $param6 = isset($fields[4]) ? (int) $fields[4] : 0;
+                    $param7 = 0;
+                    $uuid   = isset($fields[5]) ? $fields[5] : '';
+                else :
+                    return false;
+                endif;
+
+                // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
+                $qty = $param5 + $param6 + $param7;
+
+                return [
+                    'set' => $set,
+                    'number' => $number,
+                    'name' => $name,
+                    'lang' => $lang,
+                    'qty' => $qty,
+                    'uuid' => $uuid,
+                    'normal' => $param5,
+                    'foil' => $param6,
+                    'etched' => $param7
+                ];
+            else :
+                $msg->logMessage('[ERROR]', "Invalid CSV format: $line");
+                return false;
+            endif;
+        };
+
+        // MAIN PROCESSING //
+
+        // Is the line CSV with at least 4 fields?
+        if ($is_csv($raw_string)) :
+            // The line is in CSV format
+            $result = $extract_and_process_csv($raw_string);
+
+            if ($result === 'header') :
+                return 'header';
+            elseif ($result !== false) :
+                if (($result['normal'] + $result['foil'] + $result['etched'] === 0) && $result['qty'] > 0) :
+                    $result['normal'] = $result['qty'];
+                endif;
+                $msg->logMessage('[DEBUG]', "Input interpreter result (CSV): Qty: "
+                        . "[{$result['qty']} (N: {$result['normal']},"
+                        . " F: {$result['foil']}, E: {$result['etched']})] x Card: [{$result['name']}] "
+                        . "Set: [{$result['set']}] Collector number: [{$result['number']}] "
+                        . "UUID: [{$result['uuid']}]");
+                return [
+                    'set' => $result['set'],
+                    'number' => $result['number'],
+                    'name' => $result['name'],
+                    'lang' => $result['lang'],
+                    'qty' => $result['qty'],
+                    'uuid' => $result['uuid'],
+                    'normal' => $result['normal'],
+                    'foil' => $result['foil'],
+                    'etched' => $result['etched']
+                ];
+            else :
+                return false;
+            endif;
+        elseif (
+            trim($sanitised_string) === '' || \inArrayCaseInsensitive(trim($sanitised_string), $importLinestoIgnore)
+        ) :
+            return 'empty line';
+        else :
+            // Not a CSV
+            // Need to interpret a text line
+            // as either a moxfield decklist line or a MTGC quick add text line
+            // (MTGC has no info on normal/foil/etched)
+
+            // If the string starts with a number < 1000, assume it's a quantity and
+            // strip it from the string into a variable,
+            // leaving the rest of the string to be assessed for name / set / number.
+            // The only card names that start with numbers are Year cards, e.g.
+            // 2001 World Championships Ad etc.
+
+            $patternNumber = '/^(\d{1,3})\s+(.*)/'; // Match numbers up to 3 digits, and remove into $qty
+            $matches = [];
+            if (preg_match($patternNumber, trim($sanitised_string), $matches)) :
+                $qty = $matches[1];
+                $sanitised_string = trim($matches[2]);
+            else :
+                $qty = '';
+                $sanitised_string = trim($sanitised_string);
+            endif;
+
+            // If string contains an opening ( or [ but no closing ) or ], then terminate the string with %] and submit
+            if (
+                strpos($sanitised_string, '(') !== false
+                &&
+                strpos($sanitised_string, ']') === false
+                &&
+                strpos($sanitised_string, ')') === false
+            ) :
+                $sanitised_string = $sanitised_string . "%)";
+            elseif (
+                strpos($sanitised_string, '[') !== false
+                &&
+                strpos($sanitised_string, ']') === false
+                &&
+                strpos($sanitised_string, ')') === false
+            ) :
+                $sanitised_string = $sanitised_string . "%]";
+            endif;
+
+            // Shortcut matches
+            $pattern_shortcut1 = '/^[[(]([^)\]]+)[\])]\s+(\d+\S*?)$/';         // e.g. (mh3) 304 or [mh3] 304
+            $pattern_shortcut2 = '/^[[(]([^)\]]+)\s+(\d+\S*?)[)\]]$/';         // e.g. (mh3 304) or [mh3 304]
+
+            // Full matches
+            $pattern_full_1    = '/^(.+?)\s+[(\[]([^)\]]+)[)\]]\s+(\d+\S*?)(\s\*F\*)?$/';
+               // Plains (mh3) 304 or Plains [mh3] 304   Note - quantity already removed
+            $pattern_full_2    = '/^(.+?)\s+[(\[]([^)\]]+)\s+(\d+\S*?)[)\]](\s\*F\*)?$/';
+               // Plains (mh3 304) or Plains [mh3 304]   Note - quantity already removed
+
+            // Legacy match - catches remaining non-specific cases, e.g. "Plains"
+            $pattern_mtgc      = "/^([^()\[\]]+)?(?:[\[\(]\s*([^)\]\s]+)"
+                . "(?:\s*([^)\]\s]+(?:\s+[^)\]\s]+)*)?)?\s*[\)\]])?/";
+
+            // Shortcut matches (qty irrelevant)
+            if (
+                preg_match($pattern_shortcut1, $sanitised_string, $matches)
+                ||
+                preg_match($pattern_shortcut2, $sanitised_string, $matches)
+            ) :
+                $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is shortcut");
+                $format = 'shortcut';
+                // Set
+                if (isset($matches[1])) :
+                    $set = strtoupper($matches[1]);
+                else :
+                    $set = '';
+                endif;
+                // Collector number
+                if (isset($matches[2])) :
+                    $number = $matches[2];
+                else :
+                    $number = '';
+                endif;
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Input interpreter result (Shortcut): Set: [$set] Collector number: [$number]"
+                );
+                $output = [
+                    'set' => $set,
+                    'number' => $number,
+                    'name' => '',
+                    'lang' => '',
+                    'qty' => $qty,
+                    'uuid' => '',
+                    'normal' => 0,
+                    'foil' => 0,
+                    'etched' => 0
+                ];
+
+            // Full matches
+            elseif (
+                preg_match($pattern_full_1, $sanitised_string, $matches)
+                ||
+                preg_match($pattern_full_2, $sanitised_string, $matches)
+            ) :
+                $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is full string");
+                $format = 'full';
+                if ($qty === '') :
+                    $qty = 1;
+                endif;
+                $isFoil = isset($matches[4]) ? true : false;
+                if ($isFoil) :
+                    $normal = 0;
+                    $foil = $qty;
+                else :
+                     $normal = $qty;
+                     $foil = 0;
+                endif;
+                // Name
+                if (isset($matches[1])) :
+                    $name = trim($matches[1]);
+                else :
+                    $name = '';
+                endif;
+                // Set
+                if (isset($matches[2])) :
+                    $set = strtoupper($matches[2]);
+                else :
+                    $set = '';
+                endif;
+                // Collector number
+                if (isset($matches[3])) :
+                    $number = $matches[3];
+                else :
+                    $number = '';
+                endif;
+                $name = htmlspecialchars_decode($name, ENT_QUOTES);
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Input interpreter result (full): Qty: [$qty (N:$normal / F:$foil)] x Card: [$name] "
+                        . "Set: [$set] Collector number: [$number]"
+                );
+                $output = [
+                    'set' => $set,
+                    'number' => $number,
+                    'name' => $name,
+                    'lang' => '',
+                    'qty' => $qty,
+                    'uuid' => '',
+                    'normal' => $normal,
+                    'foil' => $foil,
+                    'etched' => 0
+                    ];
+            elseif (preg_match($pattern_mtgc, trim($sanitised_string), $matches)) :
+                $msg->logMessage('[DEBUG]', "Input interpreter result: String '$sanitised_string' is mtgc");
+                $format = 'mtgc';
+                if ($qty === '') :
+                    $qty = 1;
+                endif;
+
+                // Name
+                /// Catch fringe cases where name contains brackets ///
+                if (isset($matches[1]) && isset($matches[2])) :
+                    if (isset($matches[3])) :
+                        $teststring = trim($matches[2]) . " " . trim($matches[3]);
+                    else :
+                        $teststring = trim($matches[2]);
+                    endif;
+                endif;
+                if (isset($teststring) && \inArrayCaseInsensitive($teststring, $bracketsInNames)) :
+                    $msg->logMessage(
+                        '[DEBUG]',
+                        "Bracket contents match a card with brackets in name, resetting name, set to match"
+                    );
+                    $matches[1] = $matches[1] . "(" . $teststring . ")";
+                    $matches[2] = $matches[3] = '';
+                endif;
+
+                if (isset($matches[1])) :
+                    $name = trim($matches[1]);
+                else :
+                    $name = '';
+                endif;
+                // Set
+                if (isset($matches[2])) :
+                    $set = strtoupper($matches[2]);
+                else :
+                    $set = '';
+                endif;
+                // Collector number
+                if (isset($matches[3])) :
+                    $number = $matches[3];
+                else :
+                    $number = '';
+                endif;
+                $name = htmlspecialchars_decode($name, ENT_QUOTES);
+                $msg->logMessage(
+                    '[DEBUG]',
+                    "Input interpreter result (MTGC Quick add): Qty: [$qty] x Card: [$name] Set: [$set] "
+                        . "Collector number: [$number]"
+                );
+                $output = [
+                    'set' => $set,
+                    'number' => $number,
+                    'name' => $name,
+                    'lang' => '',
+                    'qty' => $qty,
+                    'uuid' => '',
+                    'normal' => $qty,
+                    'foil' => 0,
+                    'etched' => 0
+                ];
+            else :
+                return false;
+            endif;
+            return $output;
+        endif;
+    }
+
     public function importCollectionRegex($filename, $mytable, $importType, $userEmail, $serverEmail)
     {
         // Import type = add, replace or remove
@@ -251,7 +641,7 @@ class ImportExport
             $rowNumber = $i + 1;
             $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Reviewing line");
             $linestring = htmlspecialchars($line, ENT_NOQUOTES, 'UTF-8');
-            $interpretedString = inputInterpreter($linestring);
+            $interpretedString = self::inputInterpreter($linestring);
             if ($interpretedString === 'header') :
                 $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Header row");
             elseif ($interpretedString === 'empty line') :

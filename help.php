@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     2.10
 Date:        10/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -21,7 +21,8 @@ require('includes/ini.php');               //Initialise and load ini file
 require('includes/error_handling.php');
 require('includes/functions.php');     //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');      //Setup page variables
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);                      //Check if user is disabled or needs to change password
+// Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.67
+Version:     25.68
 Date:        10/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -26,7 +26,8 @@ require_once 'ajax/ajaxdeckfragments_lib.php';
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);                       //Check if user is disabled or needs to change password
+// Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);
 $msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 

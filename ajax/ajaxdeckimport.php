@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        10/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
@@ -34,7 +34,11 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckimport.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+    $expectedReferringPages,
+    $logfile,
+    'ajaxdeckimport.php'
+);
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';

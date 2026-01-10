@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -27,7 +27,11 @@ $expectedReferringPages = [
     $myURL . '/deckdetail.php',
     $myURL . '/index.php',
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaximagecheck.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+    $expectedReferringPages,
+    $logfile,
+    'ajaximagecheck.php'
+);
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

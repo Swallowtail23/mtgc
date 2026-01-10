@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.8
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -193,7 +193,7 @@ class DeckManager
             "Quick add interpreter called for deck $deckNumber with '$getString' (batch mode '$batch')"
         );
         $quickAddString = htmlspecialchars($getString, ENT_NOQUOTES, 'UTF-8');
-        $interpretedString = inputInterpreter($quickAddString);
+        $interpretedString = ImportExport::inputInterpreter($quickAddString);
         if ($interpretedString !== false) :
             // UUID
             if (isset($interpretedString['uuid']) and $interpretedString['uuid'] !== '') :
