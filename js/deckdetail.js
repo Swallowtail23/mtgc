@@ -1,5 +1,5 @@
 /*
-Version:     2.73
+Version:     2.75
 Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -90,20 +90,22 @@ function sanitizeUrl(rawUrl) {
     if (!trimmed) {
         return '';
     }
-    var lower = trimmed.toLowerCase();
-    if (lower.indexOf('javascript:') === 0 || lower.indexOf('data:') === 0 || lower.indexOf('vbscript:') === 0) {
-        return '';
-    }
     if (trimmed[0] === '#') {
         return trimmed;
     }
-    if (trimmed.indexOf('/') === 0 || trimmed.indexOf('./') === 0 || trimmed.indexOf('../') === 0) {
-        return trimmed;
+    var parsed;
+    try {
+        parsed = new URL(trimmed, window.location.origin);
+    } catch (e) {
+        return '';
     }
-    if (lower.indexOf('http://') === 0 || lower.indexOf('https://') === 0) {
-        return trimmed;
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return '';
     }
-    return '';
+    if (parsed.origin !== window.location.origin) {
+        return '';
+    }
+    return parsed.pathname + parsed.search + parsed.hash;
 }
 
 function sanitizeImageUrl(rawUrl) {
@@ -142,8 +144,8 @@ function updateDecksideHeroFlipButton() {
     if (!$img.length || !$button.length) {
         return;
     }
-    var backSrc = $img.attr('data-back-src');
-    var frontSrc = $img.attr('data-front-src') || $img.attr('src');
+    var backSrc = sanitizeImageUrl($img.attr('data-back-src'));
+    var frontSrc = sanitizeImageUrl($img.attr('data-front-src') || $img.attr('src'));
     if (backSrc && frontSrc && backSrc.indexOf('cardimg') !== -1) {
         $button.css('display', 'flex');
     } else {
@@ -157,7 +159,7 @@ function preloadFirstDeckImage() {
     if (!$firstImg.length) {
         return;
     }
-    var src = $firstImg.data('front-src') || $firstImg.attr('src');
+    var src = sanitizeImageUrl($firstImg.data('front-src') || $firstImg.attr('src'));
     if (!src) {
         return;
     }
@@ -182,7 +184,7 @@ function preloadFirstDeckImage() {
                 if (decksideHeroAutoLoaded) {
                     return;
                 }
-                var loadedSrc = $firstImg.data('front-src') || this.src;
+                var loadedSrc = sanitizeImageUrl($firstImg.data('front-src') || this.src);
                 if (!loadedSrc || loadedSrc.indexOf('/images/back.jpg') !== -1) {
                     return;
                 }
