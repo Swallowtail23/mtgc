@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        27/12/25
+Version:     1.11
+Date:        10/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -124,7 +124,7 @@ class LoginHandler
 
                     $this->message->logMessage('[NOTICE]', "Auto-login via trusted device for user $userEmail");
 
-                    if (!loginStamp($userEmail)) :
+                    if (!self::loginStamp($this->db, $this->logfile, $userEmail)) :
                         $this->message->logMessage(
                             '[ERROR]',
                             "Failed to update last login timestamp for $userEmail"
@@ -455,7 +455,7 @@ class LoginHandler
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
 
-        if (!loginStamp($email)) :
+        if (!self::loginStamp($this->db, $this->logfile, $email)) :
             $this->message->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
         endif;
 
@@ -634,5 +634,21 @@ class LoginHandler
         endif;
         $this->message->logMessage('[ERROR]', "Lock notice failed to send to $email");
         return false;
+    }
+
+    public static function loginStamp($db, $logfile, $userEmail)
+    {
+        $msg = new \MTG\Core\Message($logfile);
+
+        $msg->logMessage('[NOTICE]', "Writing user login");
+        $logindate = date("Y-m-d");
+        $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
+        if ($db->execute_query($query, [$logindate, $userEmail]) === true) :
+            $msg->logMessage('[DEBUG]', "Writing user login successful");
+            return 1;
+        else :
+            $msg->logMessage('[ERROR]', "Writing user login failed");
+            return 0;
+        endif;
     }
 }

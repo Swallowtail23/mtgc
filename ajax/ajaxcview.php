@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        09/01/26
+Version:     1.9
+Date:        10/01/26
 Name:        ajaxcview.php
 Purpose:     PHP script to turn ajax collection view on/off
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -27,7 +27,7 @@ $expectedReferringPages = [
     $myURL . '/index.php',
     $myURL . '/profile.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcview.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcview.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

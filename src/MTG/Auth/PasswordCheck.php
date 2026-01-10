@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        22/12/25
+Version:     1.3
+Date:        10/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
 Notes:       -
@@ -107,7 +107,7 @@ class PasswordCheck
             return false;
         endif;
 
-        if (!function_exists('validPass') || !validPass($newPassword)) :
+        if (!self::validPass($newPassword)) :
             $this->message->logMessage('[ERROR]', "Reset password does not meet complexity requirements for $email");
             return false;
         endif;
@@ -171,6 +171,16 @@ class PasswordCheck
             endif;
         endif;
         return $this->passwordvalidate;
+    }
+
+    public static function validPass($candidate)
+    {
+        if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $candidate, $hole)) :
+            return false;
+        else :
+            return true;
+        endif;
+        $hole = '';
     }
 
     public function passwordReset($email, $admin, $dbname)

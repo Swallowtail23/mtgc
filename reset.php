@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.13
-Date:        21/12/25
+Version:     3.14
+Date:        10/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -116,7 +116,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         $twofaRequired = (bool) $row['tfa_enabled'];
         $twofaMethod = $row['tfa_method'] ?? '';
     endif;
-    if (!validPass($newPassword)) :
+    if (!\MTG\Auth\PasswordCheck::validPass($newPassword)) :
         $_SESSION['reset_message'] = "Password does not meet complexity requirements.";
         header(
             'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)

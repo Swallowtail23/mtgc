@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -26,7 +26,7 @@ $msg = new \MTG\Core\Message($logfile);
 
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
 $response = ['success' => false, 'error' => ''];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxduplicatedeck.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxduplicatedeck.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

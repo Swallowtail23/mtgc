@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        10/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -26,7 +26,7 @@ $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
 $expectedReferringPages = [
     $myURL . '/collection.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcollectionhistory.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcollectionhistory.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: Invalid CSRF token');

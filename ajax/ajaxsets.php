@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        10/01/26
 Name:        ajaxsets.php
 Purpose:     PHP script to update sets page
@@ -26,7 +26,7 @@ $msg = new \MTG\Core\Message($logfile);
 $expectedReferringPages = [
     $myURL . '/sets.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsets.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsets.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

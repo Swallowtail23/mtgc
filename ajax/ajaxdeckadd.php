@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -34,7 +34,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckadd.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckadd.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
 endif;
 
 $csrfToken = $_POST['csrf_token'] ?? '';
-if (!validateCsrfToken($csrfToken)) :
+if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
     $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;

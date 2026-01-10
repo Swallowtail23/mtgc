@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
@@ -27,7 +27,7 @@ $expectedReferringPages = [
     $myURL . '/sets.php',
     $myURL . '/index.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxtemplate.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxtemplate.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        10/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -26,7 +26,7 @@ $msg = new \MTG\Core\Message($logfile);
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdecknotes.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdecknotes.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

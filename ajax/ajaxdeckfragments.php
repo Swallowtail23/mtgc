@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
@@ -34,7 +34,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckfragments.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckfragments.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
 endif;
 
 $csrfToken = $_POST['csrf_token'] ?? '';
-if (!validateCsrfToken($csrfToken)) :
+if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
     $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;

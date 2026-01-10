@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -27,7 +27,7 @@ $response = ['success' => false, 'message' => ''];
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxphoto.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxphoto.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxphoto");

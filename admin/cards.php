@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     5.10
-Date:        21/12/25
+Version:     5.11
+Date:        10/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -19,7 +19,7 @@ require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
-forcePasswordChange();                          //Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);                          //Check if user is disabled or needs to change password
 
 
 $msg = new \MTG\Core\Message($logfile);

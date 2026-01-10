@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.12
-Date:        09/01/26
+Version:     14.13
+Date:        10/01/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -169,7 +169,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         $db_password = $row['password'];
                         if ($new_password == $new_password_2) :
                             $msg->logMessage('[DEBUG]', "New passwords double type = match");
-                            if (validPass($new_password)) :
+                            if (\MTG\Auth\PasswordCheck::validPass($new_password)) :
                                 $msg->logMessage('[DEBUG]', "New password is a valid password");
                                 $twofaVerified = ($userHas2fa !== true);
                                 if ($userHas2fa) :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.66
+Version:     25.67
 Date:        10/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -26,7 +26,7 @@ require_once 'ajax/ajaxdeckfragments_lib.php';
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
-forcePasswordChange();                       //Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);                       //Check if user is disabled or needs to change password
 $msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
@@ -133,7 +133,7 @@ include 'includes/deckdetail_data.php';
         isCommanderDeck: <?php echo in_array($decktype, $commander_decktypes) ? 'true' : 'false'; ?>,
         deckName: <?php echo json_encode($deckName); ?>,
         deckVersion: <?php echo isset($deck_version) ? (int) $deck_version : 0; ?>,
-        csrfToken: <?php echo json_encode(generateCsrfToken()); ?>,
+        csrfToken: <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>,
         fragments: <?php echo json_encode($fragmentDefaults); ?>,
         fragmentTargets: <?php echo json_encode($fragmentTargets); ?>,
         randomDrawEnabled: <?php echo (isset($uniquecard_ref) && count($uniquecard_ref) > 6 && $decktype != 'Wishlist')

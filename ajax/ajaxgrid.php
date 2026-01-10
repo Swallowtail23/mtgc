@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.10
+Version:     5.11
 Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -30,7 +30,7 @@ $expectedReferringPages = [
     $myURL . '/index.php',
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgrid.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgrid.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

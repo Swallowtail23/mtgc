@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.4
-Date:        29/11/25
+Version:     4.5
+Date:        10/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -21,7 +21,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-forcePasswordChange(); // Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
 
 if (isset($_POST['decknumber'])) :
     $deckNumber = filter_input(

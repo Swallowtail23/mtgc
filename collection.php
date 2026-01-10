@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -133,7 +133,7 @@ endif;
         <script>
             var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
                 ? window.mtgAjaxConfig.csrfToken
-                : <?php echo json_encode(generateCsrfToken()); ?>;
+                : <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
             window.mtgAjaxConfig = window.mtgAjaxConfig || {};
             if (!window.mtgAjaxConfig.csrfToken) {
                 window.mtgAjaxConfig.csrfToken = csrfToken;

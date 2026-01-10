@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        09/01/26
+Version:     1.7
+Date:        10/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -26,7 +26,7 @@ $expectedReferringPages = [
     $myURL . '/profile.php',
     $myURL . '/collection.php',
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcollectionvalue.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcollectionvalue.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: Invalid CSRF token');

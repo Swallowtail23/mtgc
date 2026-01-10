@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.
 - Added DeckManager helper tests covering deck legality and copy limits.
+- Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 
 ## [v0.4.10] - 2026-01-01
 

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        21/12/25
+Version:     1.2
+Date:        10/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       -
@@ -331,5 +331,85 @@ class SessionManager
     {
         $this->message->logMessage("[ERROR]", "Called as string");
         return "Called as a string";
+    }
+
+    public static function forcePasswordChange($logfile = null)
+    {
+        if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
+            $logfile = $logfile ?? ($GLOBALS['logfile'] ?? null);
+            if ($logfile !== null) :
+                $msg = new \MTG\Core\Message($logfile);
+                $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
+            endif;
+            header("Location: /profile.php");
+            exit();
+        endif;
+    }
+
+    public static function generateCsrfToken()
+    {
+        if (!isset($_SESSION['csrf_token'])) :
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        endif;
+
+        return $_SESSION['csrf_token'];
+    }
+
+    public static function validateCsrfToken($submittedToken)
+    {
+        if (!isset($_SESSION['csrf_token']) || !is_string($submittedToken)) :
+            return false;
+        endif;
+
+        return hash_equals($_SESSION['csrf_token'], $submittedToken);
+    }
+
+    public static function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
+    {
+        $msg = new \MTG\Core\Message($logfile);
+        $contextLabel = $context !== '' ? $context . ': ' : '';
+        $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation started");
+
+        $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+        $msg->logMessage('[DEBUG]', "{$contextLabel}Referring page is: $referringPage");
+        $normalizedReferringPage = str_replace('www.', '', $referringPage);
+
+        $isValidReferrer = false;
+        foreach ($expectedReferringPages as $page) :
+            $normalizedPage = str_replace('www.', '', $page);
+            if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
+                $isValidReferrer = true;
+                break;
+            endif;
+        endforeach;
+
+        if ($isValidReferrer === false) :
+            $msg->logMessage('[DEBUG]', "{$contextLabel}Referrer validation failed");
+            return [
+                'valid' => false,
+                'reason' => 'referrer'
+            ];
+        endif;
+
+        if ($requireCsrf) :
+            $submittedToken = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '';
+            if (!is_string($submittedToken)) :
+                $submittedToken = '';
+            endif;
+
+            if (!self::validateCsrfToken($submittedToken)) :
+                $msg->logMessage('[DEBUG]', "{$contextLabel}CSRF validation failed");
+                return [
+                    'valid' => false,
+                    'reason' => 'csrf'
+                ];
+            endif;
+        endif;
+
+        $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation passed");
+        return [
+            'valid' => true,
+            'reason' => ''
+        ];
     }
 }

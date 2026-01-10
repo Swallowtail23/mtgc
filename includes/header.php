@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        10/01/26
 Name:        header.php
 Purpose:     PHP script to display header
@@ -18,7 +18,7 @@ endif;
 
 <script>
     window.mtgAjaxConfig = window.mtgAjaxConfig || {};
-    window.mtgAjaxConfig.csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
+    window.mtgAjaxConfig.csrfToken = <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
 </script>
 <script>
     $(function() {

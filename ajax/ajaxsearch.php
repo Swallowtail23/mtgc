@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     6.6
+Version:     6.7
 Date:        10/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -25,7 +25,7 @@ $msg = new \MTG\Core\Message($logfile);
 $expectedReferringPages = [
     $myURL
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
 if ($ajaxValidation['valid'] === false) :
     $msg->logMessage('[ERROR]', "Not called from valid page");
     ajaxRespondText('Access forbidden', 403);

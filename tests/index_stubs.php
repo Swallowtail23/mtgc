@@ -89,6 +89,34 @@ namespace MTG\Auth {
                     'rate' => 1
                 ];
             }
+
+            public static function forcePasswordChange($logfile = null)
+            {
+                return;
+            }
+
+            public static function generateCsrfToken()
+            {
+                if (!isset($_SESSION['csrf_token'])) :
+                    $_SESSION['csrf_token'] = 'test-csrf-token';
+                endif;
+
+                return $_SESSION['csrf_token'];
+            }
+
+            public static function validateCsrfToken($submittedToken)
+            {
+                return is_string($submittedToken) && isset($_SESSION['csrf_token'])
+                    && hash_equals($_SESSION['csrf_token'], $submittedToken);
+            }
+
+            public static function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
+            {
+                return [
+                    'valid' => true,
+                    'reason' => ''
+                ];
+            }
         }
     }
 }

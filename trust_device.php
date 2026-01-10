@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.4
-Date:        09/01/26
+Version:     2.5
+Date:        10/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -51,11 +51,11 @@ if (empty($_SESSION['trust_device_flow'])) :
 endif;
 unset($_SESSION['trust_device_flow']);
 
-$csrfToken = generateCsrfToken();
+$csrfToken = \MTG\Auth\SessionManager::generateCsrfToken();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') :
     $submittedToken = $_POST['csrf_token'] ?? '';
-    if (!validateCsrfToken($submittedToken)) :
+    if (!\MTG\Auth\SessionManager::validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in trust_device.php');
         die('Invalid request.');
     endif;

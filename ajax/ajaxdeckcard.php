@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.23
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -33,7 +33,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckcard.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckcard.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
 endif;
 
 $csrfToken = $_POST['csrf_token'] ?? '';
-if (!validateCsrfToken($csrfToken)) :
+if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
     $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        09/01/26
+Version:     1.11
+Date:        10/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
 Notes:       {none}
@@ -44,7 +44,7 @@ if (!isset($db) || !$db instanceof mysqli) :
     die('A database error occurred, please try again later');
 endif;
 
-$csrfToken = generateCsrfToken();
+$csrfToken = \MTG\Auth\SessionManager::generateCsrfToken();
 
 $verification_attempted = false;
 $verification_error = '';
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
     $code = trim($_POST['code']);
 
     $submittedToken = $_POST['csrf_token'] ?? '';
-    if (!validateCsrfToken($submittedToken)) :
+    if (!\MTG\Auth\SessionManager::validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in verify_2fa.php');
         die('Invalid request');
     endif;
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
                 $_SESSION['just_logged_in'] = true;
             endif;
 
-            if (!loginStamp($email)) :
+            if (!\MTG\Auth\LoginHandler::loginStamp($db, $logfile, $email)) :
                 $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
             endif;
 

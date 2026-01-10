@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.19
+Version:     28.20
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -14,17 +14,6 @@ To do:       -
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
-
-function forcePasswordChange()
-{
-    global $_SESSION, $logfile;
-    if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
-        $msg = new \MTG\Core\Message($logfile);
-        $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
-        header("Location: /profile.php");
-        exit();
-    endif;
-}
 
 
 function cssVersionCheck()
@@ -396,16 +385,6 @@ function getStringParameters($input, $ignore1, $ignore2 = '')
     return '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 }
 
-function validPass($candidate)
-{
-    if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $candidate, $hole)) :
-        return false;
-    else :
-        return true;
-    endif;
-    $hole = '';
-}
-
 function autoLink($str, $attributes = array())
 {
     $attrs = '';
@@ -437,23 +416,6 @@ function getFullURL()
     if (!empty($_SERVER['PATH_INFO'])) $myUrl .= $_SERVER['PATH_INFO'];
 
     return $myUrl;
-}
-
-function loginStamp($userEmail)
-{
-    global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
-
-    $msg->logMessage('[NOTICE]', "Writing user login");
-    $logindate = date("Y-m-d");
-    $query = "UPDATE users SET lastlogin_date = ? WHERE email = ?";
-    if ($db->execute_query($query, [$logindate,$userEmail]) === true) :
-        $msg->logMessage('[DEBUG]', "Writing user login successful");
-        return 1;
-    else :
-        $msg->logMessage('[ERROR]', "Writing user login failed");
-        return 0;
-    endif;
 }
 
 function ensureDirectoryExists($path)
@@ -2400,81 +2362,6 @@ function inArrayCaseInsensitive($needle, $haystack)
         endif;
     endforeach;
     return false;
-}
-
-/*
- * Generate (or return existing) CSRF token for the user's session.
- */
-
-function generateCsrfToken()
-{
-    if (!isset($_SESSION['csrf_token'])) :
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    endif;
-
-    return $_SESSION['csrf_token'];
-}
-
-/*
- * Validate the submitted CSRF token against the session token.
- */
-
-function validateCsrfToken($submittedToken)
-{
-    if (!isset($_SESSION['csrf_token']) || !is_string($submittedToken)) :
-        return false;
-    endif;
-
-    return hash_equals($_SESSION['csrf_token'], $submittedToken);
-}
-
-function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
-{
-    $msg = new \MTG\Core\Message($logfile);
-    $contextLabel = $context !== '' ? $context . ': ' : '';
-    $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation started");
-
-    $referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-    $msg->logMessage('[DEBUG]', "{$contextLabel}Referring page is: $referringPage");
-    $normalizedReferringPage = str_replace('www.', '', $referringPage);
-
-    $isValidReferrer = false;
-    foreach ($expectedReferringPages as $page) :
-        $normalizedPage = str_replace('www.', '', $page);
-        if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-            $isValidReferrer = true;
-            break;
-        endif;
-    endforeach;
-
-    if ($isValidReferrer === false) :
-        $msg->logMessage('[DEBUG]', "{$contextLabel}Referrer validation failed");
-        return [
-            'valid' => false,
-            'reason' => 'referrer'
-        ];
-    endif;
-
-    if ($requireCsrf) :
-        $submittedToken = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? '';
-        if (!is_string($submittedToken)) :
-            $submittedToken = '';
-        endif;
-
-        if (!validateCsrfToken($submittedToken)) :
-            $msg->logMessage('[DEBUG]', "{$contextLabel}CSRF validation failed");
-            return [
-                'valid' => false,
-                'reason' => 'csrf'
-            ];
-        endif;
-    endif;
-
-    $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation passed");
-    return [
-        'valid' => true,
-        'reason' => ''
-    ];
 }
 
 function ajaxRespondJson($payload, $statusCode = 200)

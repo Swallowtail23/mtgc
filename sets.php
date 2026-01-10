@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.12
+Version:     4.13
 Date:        10/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -21,7 +21,7 @@ require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
-forcePasswordChange();                     // Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);                     // Check if user is disabled or needs to change password
 $msg = new \MTG\Core\Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
@@ -67,7 +67,7 @@ endif;
     <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script>
-        const csrfToken = <?php echo json_encode(generateCsrfToken()); ?>;
+        const csrfToken = <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
 
         function reloadImages(setcode) {
             document.body.style.cursor = "wait";

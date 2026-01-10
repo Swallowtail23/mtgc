@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        09/01/26
+Version:     1.8
+Date:        10/01/26
 Name:        ajaxcardnotes.php
 Purpose:     PHP script to save card notes
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -26,7 +26,7 @@ $msg = new \MTG\Core\Message($logfile);
 $expectedReferringPages = [
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardnotes.php');
+$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardnotes.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

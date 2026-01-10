@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     22.11
+Version:     22.12
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -20,7 +20,7 @@ require('includes/ini.php');                //Initialise and load ini file
 require('includes/error_handling.php');     //Initialise and load error/logging file
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
-forcePasswordChange();                       //Check if user is disabled or needs to change password
+\MTG\Auth\SessionManager::forcePasswordChange($logfile);                       //Check if user is disabled or needs to change password
 require('includes/colour.php');
 
 $msg = new \MTG\Core\Message($logfile);
