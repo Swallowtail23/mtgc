@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        09/01/26
+Version:     1.4
+Date:        10/01/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -33,13 +33,15 @@ endif;
                 }, delay);
             };
         };
+        var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
+            ? window.mtgAjaxConfig.csrfToken
+            : '';
         var ajaxCall = debounce(function(searchid) {
-            var dataString = 'search=' + searchid;
             $('body').css('cursor', 'wait');
             $.ajax({
                 type: "POST",
                 url: "/ajax/ajaxsearch.php",
-                data: dataString,
+                data: { search: searchid, csrf_token: csrfToken },
                 cache: false,
                 success: function(html) {
                     $("#ajaxresult").html(html).show();

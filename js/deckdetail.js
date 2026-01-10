@@ -1,6 +1,6 @@
 /*
-Version:     2.71
-Date:        09/01/26
+Version:     2.72
+Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -429,7 +429,7 @@ function scheduleDeckImageLoad() {
     $.ajax({
         url: 'ajax/ajaximagecheck.php',
         type: 'POST',
-        data: { cardid: cardId },
+        data: { cardid: cardId, csrf_token: csrfToken },
         dataType: 'json',
         success: function(response) {
             if (window.mtgHandleImageRefresh) {
@@ -2486,6 +2486,7 @@ window.duplicateDeck = function (user, deckname, decknumber, decktype) {
     formData.append('deckname', deckname);
     formData.append('decknumber', decknumber);
     formData.append('decktype', decktype);
+    formData.append('csrf_token', csrfToken);
 
     fetch('ajax/ajaxduplicatedeck.php', {
         method: 'POST',

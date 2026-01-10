@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        24/12/25
+Version:     1.7
+Date:        10/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -24,65 +24,63 @@ require('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new \MTG\Core\Message($logfile);
 
-// Valid pages to call this (array)
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
-
-// Standard check code
-$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$normalizedReferringPage = str_replace('www.', '', $referringPage);
-$isValidReferrer = false;
-foreach ($expectedReferringPages as $page) :
-    // Normalize each expected referring page URL
-    $normalizedPage = str_replace('www.', '', $page);
-    if (strpos($normalizedReferringPage, $normalizedPage) !== false) :
-        $isValidReferrer = true;
-        break;
-    endif;
-endforeach;
-
-if ($isValidReferrer) :
-    $response = ['success' => false, 'error' => ''];
-    if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-        $response['success'] = false;
-        $response['error'] = 'User not logged in';
-        returnResponse();
+$response = ['success' => false, 'error' => ''];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxduplicatedeck.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $msg->logMessage('[ERROR]', "Invalid CSRF token");
+        http_response_code(403);
+        $response['error'] = 'Invalid request token';
     else :
-        // Need to run these as secpagesetup is not run (see page notes)
-        $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
-        $userArray = $sessionManager->getUserInfo();
-        $user = $userArray['usernumber'];
-        $mytable = $userArray['table'];
-        $userEmail = $_SESSION['useremail'];
+        $msg->logMessage('[ERROR]', "Not called from a valid page");
+        http_response_code(403);
+        $response['error'] = 'Access forbidden';
+    endif;
+    returnResponse();
+endif;
 
-        if (
-            isset($_POST['user'])
-            && isset($_POST['deckname'])
-            && isset($_POST['decknumber'])
-            && isset($_POST['decktype'])
-        ) :
-            $user = filter_input(INPUT_POST, 'user', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $deckName = filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $decktype = filter_input(INPUT_POST, 'decktype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $msg->logMessage(
-                '[ERROR]',
-                "Call to duplicate user $user's deck number $deckNumber, $deckName ($decktype)"
-            );
-            $counter = 1;
-            $newdeckname = $deckName . "_$counter";
+if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
+    $response['success'] = false;
+    $response['error'] = 'User not logged in';
+    returnResponse();
+else :
+    // Need to run these as secpagesetup is not run (see page notes)
+    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $userArray = $sessionManager->getUserInfo();
+    $user = $userArray['usernumber'];
+    $mytable = $userArray['table'];
+    $userEmail = $_SESSION['useremail'];
 
-            do {
-                // Check if the deck name already exists
-                $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
-                $decknameparams = [$user, $newdeckname];
-                $result = $db->execute_query($decknamechecksql, $decknameparams);
+    if (
+        isset($_POST['user'])
+        && isset($_POST['deckname'])
+        && isset($_POST['decknumber'])
+        && isset($_POST['decktype'])
+    ) :
+        $user = filter_input(INPUT_POST, 'user', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $deckName = filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $decktype = filter_input(INPUT_POST, 'decktype', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $msg->logMessage(
+            '[ERROR]',
+            "Call to duplicate user $user's deck number $deckNumber, $deckName ($decktype)"
+        );
+        $counter = 1;
+        $newdeckname = $deckName . "_$counter";
 
-                if ($result !== false && $result->num_rows > 0) :
-                    // Increment the counter and create a new name
-                    $counter++;
-                    $newdeckname = $deckName . "_$counter";  // Ensure that only one counter is appended
-                endif;
-            } while ($result !== false && $result->num_rows > 0);
+        do {
+            // Check if the deck name already exists
+            $decknamechecksql = "SELECT decknumber FROM decks WHERE owner = ? and deckname = ? LIMIT 1";
+            $decknameparams = [$user, $newdeckname];
+            $result = $db->execute_query($decknamechecksql, $decknameparams);
+
+            if ($result !== false && $result->num_rows > 0) :
+                // Increment the counter and create a new name
+                $counter++;
+                $newdeckname = $deckName . "_$counter";  // Ensure that only one counter is appended
+            endif;
+        } while ($result !== false && $result->num_rows > 0);
 
             // Instantiate the DeckManager
             $obj = new \MTG\Cards\DeckManager(
@@ -104,11 +102,11 @@ if ($isValidReferrer) :
 
             //Set the decktype the same as the source deck
             $setdecktype = $obj->setDeckType($decksuccess['decknumber'], $decktype);
-            if ($setdecktype !== 0) :
-                $response['success'] = false;
-                $response['error'] = 'Deck type set failed';
-                returnResponse();
-            endif;
+        if ($setdecktype !== 0) :
+            $response['success'] = false;
+            $response['error'] = 'Deck type set failed';
+            returnResponse();
+        endif;
 
             //import the card list to the new deck
             $obj->processInput($decksuccess['decknumber'], $cardlist);
@@ -117,28 +115,20 @@ if ($isValidReferrer) :
                 "Duplicate deck import completed for deck {$decksuccess['decknumber']}, retaining commander flags"
             );
 
-            if ($decksuccess['flag'] === 1 && $cardlist !== '' && $setdecktype === 0) :
-                $response['success'] = true;
-                $response['decknumber'] = $decksuccess['decknumber'];
-                returnResponse();
-            else :
+        if ($decksuccess['flag'] === 1 && $cardlist !== '' && $setdecktype === 0) :
+            $response['success'] = true;
+            $response['decknumber'] = $decksuccess['decknumber'];
+            returnResponse();
+        else :
                 $response['success'] = false;
                 $response['error'] = 'Failed to duplicate deck';
                 returnResponse();
-            endif;
-        else :
-            $response['success'] = false;
-            $response['error'] = 'Invalid input';
-            returnResponse();
         endif;
+    else :
+        $response['success'] = false;
+        $response['error'] = 'Invalid input';
+        returnResponse();
     endif;
-else :
-    // Log the error and return forbidden response as JSON
-    $msg->logMessage('[ERROR]', "Not called from a valid page");
-    http_response_code(403);
-    $response['success'] = false;
-    $response['error'] = 'Access forbidden';
-    returnResponse();
 endif;
 
 // Function to echo JSON response and exit

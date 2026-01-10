@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        24/12/25
+Version:     1.1
+Date:        10/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -30,6 +30,20 @@ $response = [
     'error' => '',
     'status' => ''
 ];
+
+$expectedReferringPages = [
+    $myURL . '/deckdetail.php'
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckimport.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $response['error'] = 'Invalid request token';
+    else :
+        $response['error'] = 'Access forbidden';
+    endif;
+    http_response_code(403);
+    returnResponse($response);
+endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $response['error'] = 'User not logged in';

@@ -1,6 +1,6 @@
 /*
-Version:     1.15
-Date:        01/01/26
+Version:     1.16
+Date:        10/01/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -18,6 +18,13 @@ To do:       -
 
     window.mtgAsyncImage = mtgAsyncImage;
     window.mtgAsyncImageSeen = mtgAsyncImageSeen;
+
+    function getAjaxCsrfToken() {
+        if (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken) {
+            return window.mtgAjaxConfig.csrfToken;
+        }
+        return '';
+    }
 
     function stripCache(src) {
         return src ? src.replace(/\?.*$/, '') : '';
@@ -280,7 +287,7 @@ To do:       -
             $.ajax({
                 url: 'ajax/ajaximagecheck.php',
                 type: 'POST',
-                data: { cardid: cardId },
+                data: { cardid: cardId, csrf_token: getAjaxCsrfToken() },
                 dataType: 'json',
                 success: function (response) {
                     handleImageRefresh(cardId, response, opts);
@@ -305,7 +312,7 @@ To do:       -
         $.ajax({
             url: 'ajax/ajaximagecheck.php',
             type: 'POST',
-            data: { cardid: cardId },
+            data: { cardid: cardId, csrf_token: getAjaxCsrfToken() },
             dataType: 'json',
             success: function (response) {
                 handleImageRefresh(cardId, response, {});

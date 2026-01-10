@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -293,7 +293,7 @@ endif;
                 $('#history-range button').removeClass('active');
                 $('#btn-range-' + range).addClass('active');
                 $('#history-status').text('Loading...');
-                $.getJSON('/ajax/ajaxcollectionhistory.php', {range: range})
+                $.getJSON('/ajax/ajaxcollectionhistory.php', { range: range, csrf_token: csrfToken })
                     .done(function (resp) {
                         if (!resp || resp.success !== true) {
                             $('#history-status').text('Unable to load history');
@@ -377,7 +377,7 @@ endif;
                 const range = currentHistoryRange || '30d';
                 window.location = '/ajax/ajaxcollectionhistory.php?range='
                     + encodeURIComponent(range)
-                    + '&format=csv';
+                    + '&format=csv&csrf_token=' + encodeURIComponent(csrfToken);
             }
 
             document.addEventListener('DOMContentLoaded', function() {

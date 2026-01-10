@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.18
-Date:        24/12/25
+Version:     1.19
+Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -29,6 +29,20 @@ $response = [
     'success' => false,
     'error' => ''
 ];
+
+$expectedReferringPages = [
+    $myURL . '/deckdetail.php'
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckcard.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $response['error'] = 'Invalid request token';
+    else :
+        $response['error'] = 'Access forbidden';
+    endif;
+    http_response_code(403);
+    returnResponse($response);
+endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $response['error'] = 'User not logged in';

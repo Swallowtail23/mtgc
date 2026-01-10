@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        24/12/25
+Version:     1.8
+Date:        10/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -30,6 +30,20 @@ $response = [
     'error' => '',
     'fragments' => []
 ];
+
+$expectedReferringPages = [
+    $myURL . '/deckdetail.php'
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckfragments.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $response['error'] = 'Invalid request token';
+    else :
+        $response['error'] = 'Access forbidden';
+    endif;
+    http_response_code(403);
+    returnResponse($response);
+endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $response['error'] = 'User not logged in';

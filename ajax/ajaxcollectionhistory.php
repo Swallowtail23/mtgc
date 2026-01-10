@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        20/12/25
+Version:     1.7
+Date:        10/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
 Notes:       -
@@ -23,6 +23,22 @@ require '../includes/functions.php';
 
 $msg = new \MTG\Core\Message($logfile);
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
+$expectedReferringPages = [
+    $myURL . '/collection.php'
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcollectionhistory.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: Invalid CSRF token');
+        http_response_code(403);
+        echo json_encode(['error' => 'Invalid request token']);
+    else :
+        $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: Not called from valid page');
+        http_response_code(403);
+        echo json_encode(['error' => 'Access forbidden']);
+    endif;
+    exit();
+endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: not authenticated');

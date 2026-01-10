@@ -1,6 +1,6 @@
 /*
-Version:     1.5
-Date:        09/01/26
+Version:     1.6
+Date:        10/01/26
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -61,7 +61,7 @@ To do:       -
         $.ajax({
             url: 'ajax/ajaxcardrefreshimg.php',
             type: 'POST',
-            data: { cardid: cardId },
+            data: { cardid: cardId, csrf_token: csrfToken },
             dataType: 'json',
             success: function (response) {
                 if (!response || !response.success) {

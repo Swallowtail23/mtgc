@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     6.5
-Date:        21/12/25
+Version:     6.6
+Date:        10/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -22,163 +22,167 @@ require('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new \MTG\Core\Message($logfile);
 
-$referringPage = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$expectedReferringPage = $myURL;
+$expectedReferringPages = [
+    $myURL
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
+if ($ajaxValidation['valid'] === false) :
+    $msg->logMessage('[ERROR]', "Not called from valid page");
+    http_response_code(403);
+    echo 'Access forbidden';
+    exit();
+endif;
 
-$normalizedReferringPage = str_replace('www.', '', $referringPage);
-$normalizedExpectedReferringPage = str_replace('www.', '', $expectedReferringPage);
-
-if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false) :
-    if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
+if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
         exit();
-    else :
+else :
         //Need to run these as secpagesetup not run (see page notes)
         $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
         $userArray = $sessionManager->getUserInfo();
         $user = $userArray['usernumber'];
         $mytable = $userArray['table'];
         //
-        if ($_POST) :
-            $r = $_POST['search'];
-            $rtrim = trim($r, " \t\n\r\0\x0B");
-            $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
-            $r = preg_replace($regex, ' ', $rtrim);
-            $r = filter_var($r, FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
-            $msg->logMessage('[DEBUG]', "Ajax search after URL removal and filtering is '$r'");
-            // Test for the existence of a string enclosed in parentheses
-            if (strpos($r, '[') !== false || strpos($r, '(') !== false) :
-                $insideBrackets = $closingBracket = $setClosed = false;
-                $str = $no = $sc = $typed = '';
+    if ($_POST) :
+        $r = $_POST['search'];
+        $rtrim = trim($r, " \t\n\r\0\x0B");
+        $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
+        $r = preg_replace($regex, ' ', $rtrim);
+        $r = filter_var($r, FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
+        $msg->logMessage('[DEBUG]', "Ajax search after URL removal and filtering is '$r'");
+        // Test for the existence of a string enclosed in parentheses
+        if (strpos($r, '[') !== false || strpos($r, '(') !== false) :
+            $insideBrackets = $closingBracket = $setClosed = false;
+            $str = $no = $sc = $typed = '';
 
-                foreach (str_split($r) as $char) :
-                    if ($char === '[' || $char === '(') :
-                        // stop adding to $namestr and trigger insidebrackets
-                        $insideBrackets = true;
-                    elseif ($insideBrackets && $char !== ']' && $char !== ')' && !$setClosed && $char !== ' ') :
+            foreach (str_split($r) as $char) :
+                if ($char === '[' || $char === '(') :
+                    // stop adding to $namestr and trigger insidebrackets
+                    $insideBrackets = true;
+                elseif ($insideBrackets && $char !== ']' && $char !== ')' && !$setClosed && $char !== ' ') :
                         // inside brackets, set not closed, no space... this is setcode
                         $sc .= $char;
-                    elseif ($insideBrackets && $char !== ']' && $char !== ')' && $char === ' ' && !$setClosed) :
+                elseif ($insideBrackets && $char !== ']' && $char !== ')' && $char === ' ' && !$setClosed) :
                         // inside brackets, space - setcode finished
                         $setClosed = true;
-                    elseif ($insideBrackets && $char !== ']' && $char !== ')' && $setClosed === true) :
+                elseif ($insideBrackets && $char !== ']' && $char !== ')' && $setClosed === true) :
                         // inside brackets, set closed - this is number
                         $no .= $char;
-                    elseif ($insideBrackets && ($char === ']' || $char === ')')) :
+                elseif ($insideBrackets && ($char === ']' || $char === ')')) :
                         // closing bracket
                         $setClosed = true;
                         $closingBracket = true;
                         break;
-                    elseif (!$insideBrackets) :
+                elseif (!$insideBrackets) :
                         $str .= $char;
-                    else :
+                else :
                         $msg->logMessage('[DEBUG]', "Should not be in here...");
-                    endif;
-                endforeach;
-                if ($insideBrackets && !$setClosed) :
-                    $setcode = trim($sc) . '%';
-                    $number = '';
-                elseif ($setClosed && $no === '' && $closingBracket) :
+                endif;
+            endforeach;
+            if ($insideBrackets && !$setClosed) :
+                $setcode = trim($sc) . '%';
+                $number = '';
+            elseif ($setClosed && $no === '' && $closingBracket) :
                     $setcode = trim($sc);
                     $number = '';
-                elseif ($insideBrackets && $no !== '' && !$closingBracket) :
+            elseif ($insideBrackets && $no !== '' && !$closingBracket) :
                     $setcode = trim($sc);
                     $number = trim($no) . '%';
-                elseif ($setClosed && $no !== '' && $closingBracket) :
+            elseif ($setClosed && $no !== '' && $closingBracket) :
                     $setcode = trim($sc);
                     $number = trim($no);
-                endif;
+            endif;
                 $typed = trim($str);
                 $searchString = '%' . trim($str) . '%';
                 // Here $typed is the text typed
-                if (isset($setcode)) :
-                    if (isset($number)) :
-                        $teststring = trim(trim($setcode) . " " . trim($number));
-                    else :
+            if (isset($setcode)) :
+                if (isset($number)) :
+                    $teststring = trim(trim($setcode) . " " . trim($number));
+                else :
                         $teststring = trim($setcode);
-                    endif;
-                    $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                    if (isset($teststring) && inArrayCaseInsensitive($teststring, $bracketsInNames)) :
-                        $msg->logMessage(
-                            '[DEBUG]',
-                            "Bracket contents match a card with brackets in name, resetting name, set to match"
-                        );
-                        $searchString = $typed = $typed . " (" . $teststring . ")";
-                        $setcode = $number = '';
-                    endif;
                 endif;
-            else :
+                    $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
+                if (isset($teststring) && inArrayCaseInsensitive($teststring, $bracketsInNames)) :
+                    $msg->logMessage(
+                        '[DEBUG]',
+                        "Bracket contents match a card with brackets in name, resetting name, set to match"
+                    );
+                    $searchString = $typed = $typed . " (" . $teststring . ")";
+                    $setcode = $number = '';
+                endif;
+            endif;
+        else :
                 // No brackets in this case
                 $typed = trim($r);
                 $searchString = '%' . trim($r) . '%';
                 $setcode = '';
                 $number = '';
-            endif;
+        endif;
             $msg->logMessage(
                 '[DEBUG]',
                 "Typed: '$typed'; Search: '$searchString'; Setcode: '$setcode'; Number: '$number' "
             );
 
-            // Header search only searches within primary_card set, not additional languages
-            $query = "SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, "
-                . "f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date "
-                . "FROM cards_scry "
-                . "WHERE "
-                . "(printed_name LIKE ? "
-                . "OR flavor_name LIKE ? "
-                . "OR name LIKE ? "
-                . "OR f1_printed_name LIKE ? "
-                . "OR f1_flavor_name LIKE ? "
-                . "OR f1_name LIKE ? "
-                . "OR f2_printed_name LIKE ? "
-                . "OR f2_flavor_name LIKE ? "
-                . "OR f2_name LIKE ?) "
-                . "AND "
-                . "(setcode LIKE ? OR ? = '') "
-                . "AND "
-                . "(number_import LIKE ? or ? = '') "
-                . "AND "
-                . "(primary_card = 1) "
-                . "ORDER BY release_date DESC, name ASC LIMIT 20";
-            $stmt = $db->prepare($query);
-            $stmt->bind_param(
-                "sssssssssssss",
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $searchString,
-                $setcode,
-                $setcode,
-                $number,
-                $number
-            );
-            $stmt->execute();
-            $stmt->store_result();
-            $stmt->bind_result(
-                $id,
-                $setcode,
-                $name,
-                $printed_name,
-                $flavor_name,
-                $f1_name,
-                $f1_printed_name,
-                $f1_flavor_name,
-                $f2_name,
-                $f2_printed_name,
-                $f2_flavor_name,
-                $release_date
-            );
+        // Header search only searches within primary_card set, not additional languages
+        $query = "SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, "
+            . "f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date "
+            . "FROM cards_scry "
+            . "WHERE "
+            . "(printed_name LIKE ? "
+            . "OR flavor_name LIKE ? "
+            . "OR name LIKE ? "
+            . "OR f1_printed_name LIKE ? "
+            . "OR f1_flavor_name LIKE ? "
+            . "OR f1_name LIKE ? "
+            . "OR f2_printed_name LIKE ? "
+            . "OR f2_flavor_name LIKE ? "
+            . "OR f2_name LIKE ?) "
+            . "AND "
+            . "(setcode LIKE ? OR ? = '') "
+            . "AND "
+            . "(number_import LIKE ? or ? = '') "
+            . "AND "
+            . "(primary_card = 1) "
+            . "ORDER BY release_date DESC, name ASC LIMIT 20";
+        $stmt = $db->prepare($query);
+        $stmt->bind_param(
+            "sssssssssssss",
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $setcode,
+            $setcode,
+            $number,
+            $number
+        );
+        $stmt->execute();
+        $stmt->store_result();
+        $stmt->bind_result(
+            $id,
+            $setcode,
+            $name,
+            $printed_name,
+            $flavor_name,
+            $f1_name,
+            $f1_printed_name,
+            $f1_flavor_name,
+            $f2_name,
+            $f2_printed_name,
+            $f2_flavor_name,
+            $release_date
+        );
 
-            if ($stmt->error) :
-                throw new Exception(
-                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $stmt->error
-                );
-            else : ?>
+        if ($stmt->error) :
+            throw new Exception(
+                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $stmt->error
+            );
+        else : ?>
                 <table class='ajaxshow'> <?php
                 while ($row = $stmt->fetch()) :
                     if ($printed_name !== null and strpos(strtolower($printed_name), strtolower($typed)) !== false) :
@@ -239,13 +243,7 @@ if (strpos($normalizedReferringPage, $normalizedExpectedReferringPage) !== false
                     endif;
                 endwhile; ?>
                 </table> <?php
-            endif;
         endif;
     endif;
-else :
-    //Otherwise forbid access
-    $msg->logMessage('[ERROR]', "Not called from index.php($expectedReferringSite,$referringPage");
-    http_response_code(403);
-    echo 'Access forbidden';
 endif;
 ?>

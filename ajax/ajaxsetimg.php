@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        25/11/25
+Version:     1.6
+Date:        10/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -22,6 +22,22 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
 $msg = new \MTG\Core\Message($logfile);
+$expectedReferringPages = [
+    $myURL . '/sets.php'
+];
+$ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsetimg.php');
+if ($ajaxValidation['valid'] === false) :
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxsetimg");
+        http_response_code(403);
+        echo json_encode(["status" => "error", "message" => "Invalid request token"]);
+    else :
+        $msg->logMessage('[ERROR]', "Not called from valid page");
+        http_response_code(403);
+        echo json_encode(["status" => "error", "message" => "Access forbidden"]);
+    endif;
+    exit();
+endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     header("Refresh: 2; url=login.php"); // redirect if not logged in
@@ -29,13 +45,6 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     echo json_encode(["status" => "error", "message" => "You are not logged in."]);
     exit();
 else :
-    if (!isset($_POST['csrf_token']) || !validateCsrfToken($_POST['csrf_token'])) :
-        $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxsetimg");
-        http_response_code(400);
-        echo json_encode(["status" => "error", "message" => "Invalid request token"]);
-        exit();
-    endif;
-
     // Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();

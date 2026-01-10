@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.11
-Date:        29/12/25
+Version:     4.12
+Date:        10/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -210,7 +210,12 @@ endif;
             $.ajax({
                 type: 'GET',
                 url: 'ajax/ajaxsets.php',
-                data: { filter: normalizedFilter, setsPerPage: setsPerPage, offset: offset },
+                data: {
+                    filter: normalizedFilter,
+                    setsPerPage: setsPerPage,
+                    offset: offset,
+                    csrf_token: csrfToken
+                },
                 dataType: 'json',
                 success: function(response) {
                     var loadingEl = document.getElementById('setsLoading');

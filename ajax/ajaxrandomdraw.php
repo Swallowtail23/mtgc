@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     2.3
-Date:        27/12/25
+Version:     2.4
+Date:        10/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -26,6 +26,16 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     require('../includes/functions.php');
     include '../includes/colour.php';
     $msg = new \MTG\Core\Message($logfile);
+    $expectedReferringPages = [
+        $myURL . '/deckdetail.php'
+    ];
+    $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxrandomdraw.php', false);
+    if ($ajaxValidation['valid'] === false) :
+        $msg->logMessage('[ERROR]', "Not called from valid page");
+        http_response_code(403);
+        echo 'Access forbidden';
+        exit();
+    endif;
 
     if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
         echo "<meta http-equiv='refresh' content='2;url=/login.php'>"; // redirect if not logged in
