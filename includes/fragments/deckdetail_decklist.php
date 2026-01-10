@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.4
-Date:        01/01/26
+Version:     2.5
+Date:        10/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -22,6 +22,16 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
         || preg_match($phenomenonTypeRegex, $cardType) === 1
     );
 };
+if (!isset($deckManager) || !($deckManager instanceof \MTG\Cards\DeckManager)) :
+    $deckManager = new \MTG\Cards\DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
+endif;
 ?>
 <div id="decklist-fragment">
 <table class='deckcardlist'>
@@ -739,7 +749,7 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
                                 echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
-                                $maxCopies = mtgCardCopyLimit(
+                                $maxCopies = $deckManager->mtgCardCopyLimit(
                                     $card_type,
                                     $row['ability'] ?? null,
                                     $row['f1_ability'] ?? null,
@@ -1024,7 +1034,7 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
                                 echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
-                                $maxCopies = mtgCardCopyLimit(
+                                $maxCopies = $deckManager->mtgCardCopyLimit(
                                     $card_type,
                                     $row['ability'] ?? null,
                                     $row['f1_ability'] ?? null,
@@ -1383,7 +1393,7 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
                                 echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
-                                $maxCopies = mtgCardCopyLimit(
+                                $maxCopies = $deckManager->mtgCardCopyLimit(
                                     $card_type,
                                     $row['ability'] ?? null,
                                     $row['f1_ability'] ?? null,
@@ -1652,7 +1662,7 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
                                 echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                 echo $quantity;
                                 echo "</td>";
-                                $maxCopies = mtgCardCopyLimit(
+                                $maxCopies = $deckManager->mtgCardCopyLimit(
                                     $card_type,
                                     $row['ability'] ?? null,
                                     $row['f1_ability'] ?? null,
@@ -1983,7 +1993,7 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
                                     echo "<td class='deckcardlistcenter js-qty-side' id='qty-side-$cardref'>";
                                     echo $quantity;
                                     echo "</td>";
-                                    $maxCopies = mtgCardCopyLimit(
+                                    $maxCopies = $deckManager->mtgCardCopyLimit(
                                         $card_type,
                                         $row['ability'] ?? null,
                                         $row['f1_ability'] ?? null,

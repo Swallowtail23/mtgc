@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.6
+Version:     2.7
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -489,7 +489,7 @@ class DeckManager
                     elseif ($card_type === null && isset($info['f2_type'])) :
                         $card_type = $info['f2_type'];
                     endif;
-                    $maxCopies = mtgCardCopyLimit(
+                    $maxCopies = $this->mtgCardCopyLimit(
                         $card_type,
                         $info['ability'] ?? null,
                         $info['f1_ability'] ?? null,
@@ -856,7 +856,7 @@ class DeckManager
         endif;
         $limitAction = null;
         if ($cdr_type_deck == false and $quantity != false) :
-            $maxCopies = mtgCardCopyLimit(
+            $maxCopies = $this->mtgCardCopyLimit(
                 $card_type,
                 $cardname['ability'] ?? null,
                 $cardname['f1_ability'] ?? null,
@@ -1762,5 +1762,125 @@ class DeckManager
     {
         $this->message->logMessage("[ERROR]", "Called as string");
         return "Called as a string";
+    }
+
+    public function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
+    {
+        global $any_quantity;
+
+        if ($decktype === 'Wishlist') :
+            return null;
+        endif;
+
+        if ($card_type !== null && str_contains($card_type, 'Basic Land')) :
+            return null;
+        endif;
+
+        $ability_candidates = array_filter(
+            [
+                $ability,
+                $f1_ability,
+                $f2_ability
+            ]
+        );
+
+        foreach ($ability_candidates as $ability_text) :
+            foreach ($any_quantity as $rule) :
+                if (str_contains($ability_text, $rule)) :
+                    return null;
+                endif;
+            endforeach;
+
+            $pattern = '/A deck can have up to ([a-z0-9-]+) cards named/i';
+            if (preg_match($pattern, $ability_text, $matches)) :
+                $limit_text = strtolower(str_replace('-', ' ', $matches[1]));
+                if (ctype_digit($limit_text)) :
+                    return (int) $limit_text;
+                endif;
+                $word_map = [
+                    'one' => 1,
+                    'two' => 2,
+                    'three' => 3,
+                    'four' => 4,
+                    'five' => 5,
+                    'six' => 6,
+                    'seven' => 7,
+                    'eight' => 8,
+                    'nine' => 9,
+                    'ten' => 10,
+                    'eleven' => 11,
+                    'twelve' => 12,
+                    'thirteen' => 13,
+                    'fourteen' => 14,
+                    'fifteen' => 15,
+                    'sixteen' => 16,
+                    'seventeen' => 17,
+                    'eighteen' => 18,
+                    'nineteen' => 19,
+                    'twenty' => 20
+                ];
+                if (isset($word_map[$limit_text])) :
+                    return $word_map[$limit_text];
+                endif;
+            endif;
+        endforeach;
+
+        return 4;
+    }
+
+    public function cardLegalDBField($decktype)
+    {
+        global $deck_legality_map;
+
+        $this->message->logMessage('[DEBUG]', "Looking up db_field for legality for deck type '$decktype'");
+        $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
+        if ($index !== false) :
+            $db_field = $deck_legality_map[$index]['db_field'];
+        endif;
+        $this->message->logMessage('[DEBUG]', "Deck type '$decktype' has legality in '$db_field'");
+        return $db_field;
+    }
+
+    public function deckLegalList($deckNumber, $deck_type, $db_field)
+    {
+        $this->message->logMessage(
+            '[DEBUG]',
+            "Getting deck legality list for $deck_type deck '$deckNumber' (using db_field '$db_field')"
+        );
+        $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
+        $this->message->logMessage('[DEBUG]', "Looking up SQL: $sql");
+        $sqlresult = $this->db->execute_query($sql, [$deckNumber]);
+        if ($sqlresult === false) :
+            throw new \Exception(
+                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                    . ": SQL failure: " . $this->db->error
+            );
+        else :
+            $i = 0;
+            $record = array();
+            while ($row = $sqlresult->fetch_assoc()) :
+                $record[$i] = $row['cardnumber'];
+                $i = $i + 1;
+            endwhile;
+        endif;
+        $list = array();
+        $p = 0;
+        foreach ($record as $value) :
+            $sql2 = "SELECT $db_field FROM cards_scry WHERE id = ? LIMIT 1";
+            $sqlresult2 = $this->db->execute_query($sql2, [$value]);
+            if ($sqlresult2 === false) :
+                throw new \Exception(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
+                        . ": SQL failure: " . $this->db->error
+                );
+            else :
+                $row2 = $sqlresult2->fetch_array(MYSQLI_ASSOC);
+                $legal = $row2["$db_field"];
+            endif;
+            $list[$p]['id'] = $value;
+            $list[$p]['legality'] = $legal;
+            $p = $p + 1;
+        endforeach;
+        return $list;
     }
 }

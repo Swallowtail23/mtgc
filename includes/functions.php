@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.18
+Version:     28.19
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -26,69 +26,6 @@ function forcePasswordChange()
     endif;
 }
 
-function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
-{
-    global $any_quantity;
-
-    if ($decktype === 'Wishlist') :
-        return null;
-    endif;
-
-    if ($card_type !== null && str_contains($card_type, 'Basic Land')) :
-        return null;
-    endif;
-
-    $ability_candidates = array_filter(
-        [
-            $ability,
-            $f1_ability,
-            $f2_ability
-        ]
-    );
-
-    foreach ($ability_candidates as $ability_text) :
-        foreach ($any_quantity as $rule) :
-            if (str_contains($ability_text, $rule)) :
-                return null;
-            endif;
-        endforeach;
-
-        $pattern = '/A deck can have up to ([a-z0-9-]+) cards named/i';
-        if (preg_match($pattern, $ability_text, $matches)) :
-            $limit_text = strtolower(str_replace('-', ' ', $matches[1]));
-            if (ctype_digit($limit_text)) :
-                return (int) $limit_text;
-            endif;
-            $word_map = [
-                'one' => 1,
-                'two' => 2,
-                'three' => 3,
-                'four' => 4,
-                'five' => 5,
-                'six' => 6,
-                'seven' => 7,
-                'eight' => 8,
-                'nine' => 9,
-                'ten' => 10,
-                'eleven' => 11,
-                'twelve' => 12,
-                'thirteen' => 13,
-                'fourteen' => 14,
-                'fifteen' => 15,
-                'sixteen' => 16,
-                'seventeen' => 17,
-                'eighteen' => 18,
-                'nineteen' => 19,
-                'twenty' => 20
-            ];
-            if (isset($word_map[$limit_text])) :
-                return $word_map[$limit_text];
-            endif;
-        endif;
-    endforeach;
-
-    return 4;
-}
 
 function cssVersionCheck()
 {
@@ -2382,20 +2319,6 @@ function cardTypes($finishes)
     return $cardtypes;
 }
 
-function cardLegalDBField($decktype)
-{
-    global $db, $deck_legality_map, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
-
-    $msg->logMessage('[DEBUG]', "Looking up db_field for legality for deck type '$decktype'");
-    $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
-    if ($index !== false) :
-        $db_field = $deck_legality_map[$index]['db_field'];
-    endif;
-    $msg->logMessage('[DEBUG]', "Deck type '$decktype' has legality in '$db_field'");
-    return $db_field;
-}
-
 function promoLookup($promo_type)
 {
     global $promos_to_show, $logfile;
@@ -2410,52 +2333,6 @@ function promoLookup($promo_type)
     endif;
     $msg->logMessage('[DEBUG]', "Promo description for '$promo_type' is '$promo_description'");
     return $promo_description;
-}
-
-function deckLegalList($deckNumber, $deck_type, $db_field)
-{
-    global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
-
-    $msg->logMessage(
-        '[DEBUG]',
-        "Getting deck legality list for $deck_type deck '$deckNumber' (using db_field '$db_field')"
-    );
-    $sql = "SELECT cardnumber FROM deckcards WHERE decknumber = ?";
-    $msg->logMessage('[DEBUG]', "Looking up SQL: $sql");
-    $sqlresult = $db->execute_query($sql, [$deckNumber]);
-    if ($sqlresult === false) :
-        throw new Exception(
-            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                . ": SQL failure: " . $db->error
-        );
-    else :
-        $i = 0;
-        $record = array();
-        while ($row = $sqlresult->fetch_assoc()) :
-            $record[$i] = $row['cardnumber'];
-            $i = $i + 1;
-        endwhile;
-    endif;
-    $list = array();
-    $p = 0;
-    foreach ($record as $value) :
-        $sql2 = "SELECT $db_field FROM cards_scry WHERE id = ? LIMIT 1";
-        $sqlresult2 = $db->execute_query($sql2, [$value]);
-        if ($sqlresult2 === false) :
-            throw new Exception(
-                '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
-                    . ": SQL failure: " . $db->error
-            );
-        else :
-            $row2 = $sqlresult2->fetch_array(MYSQLI_ASSOC);
-            $legal = $row2["$db_field"];
-        endif;
-        $list[$p]['id'] = $value;
-        $list[$p]['legality'] = $legal;
-        $p = $p + 1;
-    endforeach;
-    return $list;
 }
 
 function validUUID($uuid)

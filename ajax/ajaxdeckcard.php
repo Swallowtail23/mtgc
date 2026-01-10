@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.21
+Version:     1.22
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -175,9 +175,9 @@ if ($action === 'maintoside' && $sideqty > 0) :
     $illegal_tag = $red_font_tag;
     $wrong_colour_tag = $firebrick_font_tag;
     $deck_legality_list = '';
-    $db_field = $decktype !== '' ? cardLegalDBField($decktype) : '';
+    $db_field = $decktype !== '' ? $deckManager->cardLegalDBField($decktype) : '';
     if ($db_field !== '') :
-        $deck_legality_list = deckLegalList($deckNumber, $decktype, $db_field);
+        $deck_legality_list = $deckManager->deckLegalList($deckNumber, $decktype, $db_field);
     endif;
     $cdr_colours_raw = '';
     if ($isCommanderDeck) :
@@ -300,7 +300,7 @@ if ($action === 'maintoside' && $sideqty > 0) :
         else :
             $hoverclass = 'deckcardimgdiv';
         endif;
-        $maxCopies = mtgCardCopyLimit(
+        $maxCopies = $deckManager->mtgCardCopyLimit(
             $card_type,
             $detailRow['ability'] ?? null,
             $detailRow['f1_ability'] ?? null,

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.0
+Version:     2.1
 Date:        01/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -31,9 +31,18 @@ else :
     throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;
 
+$deckManager = new \MTG\Cards\DeckManager(
+    $db,
+    $logfile,
+    $userEmail,
+    $serverEmail,
+    $importLinestoIgnore,
+    $nonPreferredSetCodes
+);
+
 // Get relevant db_field with legality
 if ($decktype != '') :
-    $db_field = cardLegalDBField($decktype);
+    $db_field = $deckManager->cardLegalDBField($decktype);
 else :
     $db_field = '';
 endif;
@@ -41,7 +50,7 @@ $msg->logMessage('[DEBUG]', "Legality db-field for this deck is '$db_field'");
 
 // Get deck legalities
 if ($db_field != '') :
-    $deck_legality_list = deckLegalList($deckNumber, $decktype, $db_field);
+    $deck_legality_list = $deckManager->deckLegalList($deckNumber, $decktype, $db_field);
 else :
     $deck_legality_list = '';
 endif;
