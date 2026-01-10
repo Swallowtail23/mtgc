@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.16
+Version:     28.17
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -17,9 +17,12 @@ endif;
 
 function forcePasswordChange()
 {
-    global $_SESSION;
+    global $_SESSION, $logfile;
     if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
+        $msg = new \MTG\Core\Message($logfile);
+        $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
         header("Location: /profile.php");
+        exit();
     endif;
 }
 

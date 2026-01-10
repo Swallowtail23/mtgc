@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Deck detail sideboard notes no longer render whitespace when empty.
 - Ajax grid quantity updates no longer fail due to a parse error.
 - Ajax grid quantity updates now accept numeric string inputs without failing validation.
+- forcePasswordChange now halts execution after redirecting to profile.php.
 - Weekly export toggle now accepts collection.php as a valid referrer.
 
 ### Security
