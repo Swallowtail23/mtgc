@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        10/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
@@ -103,7 +103,7 @@ else :
     endif;
 
     if (!empty($finishes)) :
-        $cardtypes = cardTypes($finishes);
+        $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
     else :
         $msg->logMessage('[DEBUG]', "Finishes empty for $cardUUID, defaulting cardtypes to none");
         $cardtypes = 'none';

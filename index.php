@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.44
+Version:     14.45
 Date:        10/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -681,7 +681,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = cardTypes($finishes);
+                                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';
@@ -920,20 +920,20 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 </td>
                                 <?php
                                 if (isset($row['manacost']) and !empty($row['manacost'])) :
-                                    $manac = symbolReplace($row['manacost']);
+                                    $manac = \MTG\Cards\CardUtils::symbolReplace($row['manacost']);
                                 else :
                                     $manac = null;
                                 endif;
                                 if (isset($row['ability']) and !empty($row['ability'])) :
-                                    $ability = symbolReplace($row['ability']);
+                                    $ability = \MTG\Cards\CardUtils::symbolReplace($row['ability']);
                                     $msg->logMessage('[DEBUG]', "Ability: $ability");
                                 endif;
                                 if (isset($row['f1_ability']) and !empty($row['f1_ability'])) :
-                                    $f1Ability = symbolReplace($row['f1_ability']);
+                                    $f1Ability = \MTG\Cards\CardUtils::symbolReplace($row['f1_ability']);
                                     $msg->logMessage('[DEBUG]', "F1 Ability: $f1Ability");
                                 endif;
                                 if (isset($row['f2_ability']) and !empty($row['f2_ability'])) :
-                                    $f2Ability = symbolReplace($row['f2_ability']);
+                                    $f2Ability = \MTG\Cards\CardUtils::symbolReplace($row['f2_ability']);
                                     $msg->logMessage('[DEBUG]', "F2 Ability: $f2Ability");
                                 endif;
                                 ?>
@@ -1064,7 +1064,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = cardTypes($finishes);
+                                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';
@@ -1182,7 +1182,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             if ($manaCostRaw === '' or $manaCostRaw === '0' or $manaCostRaw === '{0}') :
                                 $manaCostDisplay = '0';
                             else :
-                                $manaCostDisplay = symbolReplace($manaCostRaw);
+                                $manaCostDisplay = \MTG\Cards\CardUtils::symbolReplace($manaCostRaw);
                             endif;
                             $cardTypeRaw = $row['type'] ?? '';
                             if ($cardTypeRaw === '' && !empty($row['f1_type'])) :

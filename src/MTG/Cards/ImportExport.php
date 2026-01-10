@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -953,7 +953,7 @@ class ImportExport
             $rowNumber = $batchedCard['row'];
             $id = $batchedCard['id'];
             $finishes = json_decode($batchedCard['finishes'], true);
-            $cardtype = cardTypes($finishes);
+            $cardtype = \MTG\Cards\CardUtils::cardTypes($finishes);
             $normal = $batchedCard['normal'];
             $foil = $batchedCard['foil'];
             $etched = $batchedCard['etched'];

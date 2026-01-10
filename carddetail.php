@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     22.13
+Version:     22.15
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -303,7 +303,7 @@ require('includes/menu.php'); //mobile menu
                 $msg->logMessage('[DEBUG]', "Card has a promo_type set: {$row['promo_types']}");
                 $full_promo_text = '';
                 foreach ($promo as $value) :
-                    $promo_description = promoLookup($value);
+                    $promo_description = \MTG\Cards\CardUtils::promoLookup($value);
                     if ($promo_description !== 'skip') :
                         if ($full_promo_text === '') :
                             $full_promo_text = $full_promo_text . "$promo_description";
@@ -475,7 +475,7 @@ require('includes/menu.php'); //mobile menu
                 //Set card types
             if (isset($row['finishes'])) :
                 $finishes = json_decode($row['finishes'], true);
-                $cardtypes = cardTypes($finishes);
+                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
             else :
                     $finishes = null;
                     $cardtypes = 'none';
@@ -1086,7 +1086,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $manacost = symbolReplace($row['f1_manacost']);
+                                $manacost = \MTG\Cards\CardUtils::symbolReplace($row['f1_manacost']);
                                 if ($manacost !== null and $manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
@@ -1100,7 +1100,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
-                                    echo "<b>Abilities: </b>" . symbolReplace($row['f1_ability']);
+                                    echo "<b>Abilities: </b>" . \MTG\Cards\CardUtils::symbolReplace($row['f1_ability']);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
@@ -1114,13 +1114,13 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                             else :
-                                $manacost = symbolReplace($row['manacost']);
+                                $manacost = \MTG\Cards\CardUtils::symbolReplace($row['manacost']);
                                 if ($manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
                                 if ($row['ability'] != '') :
-                                    echo "<b>Abilities: </b>" . symbolReplace($row['ability']);
+                                    echo "<b>Abilities: </b>" . \MTG\Cards\CardUtils::symbolReplace($row['ability']);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['type'], 'reature') !== false) :
@@ -1294,7 +1294,7 @@ require('includes/menu.php'); //mobile menu
                                 echo "<h3>Adventure: </h3>";
                                 echo "<b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = symbolReplace($row['f2_manacost']);
+                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1320,7 +1320,7 @@ require('includes/menu.php'); //mobile menu
                             elseif ($row['layout'] === 'split' or $row['layout'] === 'flip') :
                                 echo "<br><b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = symbolReplace($row['f2_manacost']);
+                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1334,7 +1334,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = symbolReplace($flipability);
+                                    $flipability = \MTG\Cards\CardUtils::symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
@@ -2131,7 +2131,8 @@ require('includes/menu.php'); //mobile menu
                                     else :
                                         $source = $rulingrow['source'];
                                     endif;
-                                    $ruling = $ruling . $newdate . ": " . symbolReplace($rulingrow['comment'])
+                                    $ruling = $ruling . $newdate . ": "
+                                        . \MTG\Cards\CardUtils::symbolReplace($rulingrow['comment'])
                                         . " (" . $source . ")<br>";
                                 endwhile;
                                 $ruling = autoLink($ruling, array("target" => "_blank","rel" => "nofollow"));
@@ -2215,7 +2216,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $flipmanacost = symbolReplace($row['f2_manacost']);
+                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== null and $flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -2229,7 +2230,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability !== null and $flipability != '') :
-                                    $flipability = symbolReplace($flipability);
+                                    $flipability = \MTG\Cards\CardUtils::symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
