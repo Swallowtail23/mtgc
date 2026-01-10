@@ -1,5 +1,5 @@
 /*
-Version:     2.75
+Version:     2.77
 Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -109,11 +109,27 @@ function sanitizeUrl(rawUrl) {
 }
 
 function sanitizeImageUrl(rawUrl) {
-    var safeUrl = sanitizeUrl(rawUrl);
-    if (!safeUrl || safeUrl === '#') {
+    if (typeof rawUrl !== 'string') {
         return '';
     }
-    return safeUrl;
+    rawUrl = rawUrl.trim();
+    if (rawUrl === '') {
+        return '';
+    }
+    var parsedUrl;
+    try {
+        // Allows relative URLs too (resolved against current page).
+        parsedUrl = new URL(rawUrl, document.baseURI);
+    } catch (e) {
+        return '';
+    }
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        return '';
+    }
+    if (parsedUrl.origin !== window.location.origin) {
+        return '';
+    }
+    return parsedUrl.href;
 }
 
 function swapImageByElement($img) {
@@ -125,15 +141,16 @@ function swapImageByElement($img) {
     if (!backSrc || !frontSrc) {
         return;
     }
+    var imgEl = $img.get(0);
     if (!$img.hasClass('flipped')) {
         $img.addClass('flipped');
         setTimeout(function () {
-            $img.attr('src', backSrc);
+            imgEl.src = backSrc;
         }, 80);
     } else {
         $img.removeClass('flipped');
         setTimeout(function () {
-            $img.attr('src', frontSrc);
+            imgEl.src = frontSrc;
         }, 80);
     }
 }
