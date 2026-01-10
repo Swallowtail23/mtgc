@@ -1,5 +1,5 @@
 /*
-Version:     2.78
+Version:     2.79
 Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -1283,7 +1283,11 @@ function refreshTable() {
         if (xhr.readyState === 4 && xhr.status === 200) {
             cleanupRandomDrawDetachedPreviews('random draw refresh');
             // Response is pre-escaped and allowlisted in ajaxrandomdraw.php (URLs/classes/names).
-            document.getElementById('table-container').innerHTML = xhr.responseText;
+            var parsedDoc = new DOMParser().parseFromString(xhr.responseText, 'text/html');
+            var randomFragment = parsedDoc.querySelector('.random-draw-content');
+            if (randomFragment) {
+                document.getElementById('table-container').innerHTML = randomFragment.outerHTML;
+            }
             var $randomContent = $('#deck-random-draw-fragment .random-draw-content');
             if ($randomContent.length) {
                 $randomContent.removeClass('is-visible');

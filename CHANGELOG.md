@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Scryfall sets import now initializes Message after namespace imports to avoid missing class errors.
 - Scryfall rulings import now initializes Message after namespace imports to avoid missing class errors.
 - Random draw fragment now enforces allowlisted classes before rendering.
+- Random draw fragment now extracts the expected container before injecting HTML.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
