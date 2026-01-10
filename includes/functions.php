@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.17
+Version:     28.18
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -2613,6 +2613,11 @@ function ajaxRespondText($text, $statusCode = 200)
     http_response_code($statusCode);
     echo $text;
     exit();
+}
+
+function escapeCardNotesForTextarea($notes)
+{
+    return htmlspecialchars((string) $notes, ENT_QUOTES, 'UTF-8');
 }
 
 function inputInterpreter($input_string)

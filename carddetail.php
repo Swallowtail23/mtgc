@@ -1,7 +1,7 @@
 <?php
 /*
-Version:     22.9
-Date:        29/12/25
+Version:     22.10
+Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -1452,8 +1452,9 @@ require('includes/menu.php'); //mobile menu
                             </table>
                             <form id="updatenotesform" action="?" method="POST">
                                 <table style="margin-top:10px"><?php
+                                    $notesEsc = escapeCardNotesForTextarea($notes);
                                     echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' "
-                                        . "cols='40' placeholder='My notes'>$notes</textarea></td></tr>"; ?>
+                                        . "cols='40' placeholder='My notes'>$notesEsc</textarea></td></tr>"; ?>
                                 </table> <?php
                                 echo "<input type='hidden' name='id' value=" . $lookupid . ">"; ?>
                                 <input
