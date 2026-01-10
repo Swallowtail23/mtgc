@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.8
-Date:        09/01/26
+Version:     5.9
+Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
 Notes:       {none}
@@ -306,5 +306,4 @@ else :
         header('Content-Type: application/json');
         echo json_encode($response);
         exit;
-endif;
 endif;

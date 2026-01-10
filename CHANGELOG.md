@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Collection async refresh now seeds CSRF token before header scripts load to prevent invalid tokens.
 - Deck detail sideboard notes no longer render whitespace when empty.
+- Ajax grid quantity updates no longer fail due to a parse error.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
