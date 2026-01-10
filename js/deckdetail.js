@@ -1,5 +1,5 @@
 /*
-Version:     2.79
+Version:     2.80
 Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -2160,7 +2160,7 @@ function bindDeckDetailHandlers() {
             timeout: 5000
         }).done(function (response) {
             if (response && response.success) {
-                $('#result').html(response.message);
+                $('#result').text(response.message);
                 var imageUrl = 'deckimage.php?deck=' + deckNumber;
                 var timestamp = new Date().getTime();
                 $('#deckPhoto').attr('src', imageUrl + '&' + timestamp);
@@ -2168,18 +2168,18 @@ function bindDeckDetailHandlers() {
                 $('#deletePhotoBtn').show();
                 $('#photosubmit').prop('disabled', true);
                 setTimeout(function () {
-                    $('#result').html('');
+                    $('#result').text('');
                 }, 5000);
             } else {
-                $('#result').html('Error: ' + (response ? response.message : 'Unknown error'));
+                $('#result').text('Error: ' + (response ? response.message : 'Unknown error'));
                 setTimeout(function () {
-                    $('#result').html('');
+                    $('#result').text('');
                 }, 20000);
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
+            $('#result').text('Error: ' + textStatus + ' - ' + errorThrown);
             setTimeout(function () {
-                $('#result').html('');
+                $('#result').text('');
             }, 20000);
         }).always(function () {
             $form.data('busy', false);
@@ -2205,22 +2205,22 @@ function bindDeckDetailHandlers() {
             timeout: 5000
         }).done(function (response) {
             if (response && response.success) {
-                $('#result').html(response.message);
+                $('#result').text(response.message);
                 $('#photo_div').hide();
                 $('#deletePhotoBtn').hide();
                 setTimeout(function () {
-                    $('#result').html('');
+                    $('#result').text('');
                 }, 5000);
             } else {
-                $('#result').html('Error: ' + (response ? response.message : 'Unknown error'));
+                $('#result').text('Error: ' + (response ? response.message : 'Unknown error'));
                 setTimeout(function () {
-                    $('#result').html('');
+                    $('#result').text('');
                 }, 20000);
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            $('#result').html('Error: ' + textStatus + ' - ' + errorThrown);
+            $('#result').text('Error: ' + textStatus + ' - ' + errorThrown);
             setTimeout(function () {
-                $('#result').html('');
+                $('#result').text('');
             }, 20000);
         }).always(function () {
             $('#deletePhotoBtn').data('busy', false);

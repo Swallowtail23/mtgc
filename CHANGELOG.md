@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Random draw fragment now enforces allowlisted classes before rendering.
 - Random draw fragment now extracts the expected container before injecting HTML.
 - Random draw now validates carddetail URLs against UUIDs and uses ENT_SUBSTITUTE escapes.
+- Deck photo upload/delete status messages now render as plain text to avoid HTML injection.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.

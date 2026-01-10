@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.15
-Date:        10/01/26
+Version:     1.16
+Date:        11/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -99,7 +99,7 @@ else :
                     $msg->logMessage('[DEBUG]', "Creating 'deck_photos' folder in $imgLocation");
 
                     if (!@mkdir($deckPhotosDir, 0755, true)) :
-                        $response['message'] = '<br>Failed to create directory for deck photos';
+                        $response['message'] = 'Failed to create directory for deck photos';
                         returnResponse();
                     endif;
                 else :
@@ -144,7 +144,7 @@ else :
                     elseif ($height == $width) :
                             $newWidth = $newHeight = 800;
                     else :
-                            $response['message'] = 'Failed to get image size<br>';
+                            $response['message'] = 'Failed to get image size';
                             returnResponse();
                     endif;
                         $msg->logMessage('[DEBUG]', "Width: $width --> $newWidth, Height: $height --> $newHeight");
@@ -168,7 +168,7 @@ else :
                             )
                             || !imagejpeg($resizedImage, $uploadFile, 80)
                     ) :
-                        $response['message'] = '<br>Failed to resize and save the image using GD';
+                        $response['message'] = 'Failed to resize and save the image using GD';
                         returnResponse();
                     endif;
                         // Destroy temp files
@@ -179,13 +179,13 @@ else :
 
                         // Move the uploaded file to the specified directory with the specific name
                     if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) :
-                        $response['message'] = 'Failed to move the uploaded file<br>';
+                    $response['message'] = 'Failed to move the uploaded file';
                         returnResponse();
                     endif;
                 endif;
                     $msg->logMessage('[DEBUG]', "Image upload success");
                     $response['success'] = true;
-                    $response['message'] = 'File is valid and was successfully uploaded<br>';
+                    $response['message'] = 'File is valid and was successfully uploaded';
                     returnResponse();
             else :
                     $response['message'] = 'Invalid file type. Only JPEG images are allowed.';
@@ -193,7 +193,7 @@ else :
             endif;
         else :
                 $msg->logMessage('[ERROR]', "Image upload failed");
-                $response['message'] = 'File upload error<br>';
+                $response['message'] = 'File upload error';
                 returnResponse();
         endif;
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) :
