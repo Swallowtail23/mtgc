@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     2.0
 Date:        10/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -25,7 +25,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 require_once 'ajaxdeckfragments_lib.php';
 $msg = new Message($logfile);
 

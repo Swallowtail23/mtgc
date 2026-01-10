@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        21/12/25
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
@@ -24,7 +24,6 @@ require 'includes/ini.php';                // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
-include 'includes/colour.php';
 $msg = new Message($logfile);
 
 $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.4
+Version:     2.5
 Date:        01/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
 
@@ -407,7 +408,7 @@ if (isset($cdrSet) and $cdrSet === true) :
     if ($i > 0 and $cdr_colours == '[""]') :
         $cdr_colours = '["C"]';
     endif;
-    $cdr_colours = colourFunction($cdr_colours);
+    $cdr_colours = CardUtils::colourFunction($cdr_colours, $msg);
 else :
     $cdr_colours_raw = $cdr_colours = "";
 endif;

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        10/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -25,7 +25,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 $msg = new Message($logfile);
 
 $expectedReferringPages = [$myURL . '/deckdetail.php'];

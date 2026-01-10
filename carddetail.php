@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.18
+Version:     22.20
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -29,7 +29,6 @@ require('includes/functions.php');          //Includes basic functions for non-s
 require('includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($logfile);
-require('includes/colour.php');
 
 $msg = new Message($logfile);
 // Is admin running the page
@@ -272,17 +271,17 @@ require('includes/menu.php'); //mobile menu
             $card_primary = $row['primary_card'];
 
             if ($row['color'] !== null) :
-                $card_colour = colourFunction($row['color']);
+                $card_colour = CardUtils::colourFunction($row['color'], $msg);
             else :
                     $card_colour = '';
             endif;
             if ($row['f1_colour'] !== null) :
-                $f1_colour = colourFunction($row['f1_colour']);
+                $f1_colour = CardUtils::colourFunction($row['f1_colour'], $msg);
             else :
                     $f1_colour = '';
             endif;
             if ($row['f2_colour'] !== null) :
-                $f2_colour = colourFunction($row['f2_colour']);
+                $f2_colour = CardUtils::colourFunction($row['f2_colour'], $msg);
             else :
                     $f2_colour = '';
             endif;

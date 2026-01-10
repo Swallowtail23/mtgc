@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
@@ -23,7 +23,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 $msg = new Message($logfile);
 
 $expectedReferringPages = [

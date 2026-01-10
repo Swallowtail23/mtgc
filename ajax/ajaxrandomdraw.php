@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.9
 Date:        10/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -28,7 +28,6 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     require('../includes/ini.php');
     require('../includes/error_handling.php');
     require('../includes/functions.php');
-    include '../includes/colour.php';
     $msg = new Message($logfile);
     $expectedReferringPages = [
         $myURL . '/deckdetail.php'

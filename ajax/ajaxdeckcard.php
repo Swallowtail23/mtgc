@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.26
+Version:     1.27
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -26,7 +26,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 require_once 'ajaxdeckfragments_lib.php';
 $msg = new Message($logfile);
 

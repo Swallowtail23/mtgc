@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        10/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -24,7 +24,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 $msg = new Message($logfile);
 
 $expectedReferringPages = [

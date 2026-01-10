@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.9
+Version:     7.0
 Date:        10/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -23,7 +23,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 $msg = new Message($logfile);
 
 $expectedReferringPages = [

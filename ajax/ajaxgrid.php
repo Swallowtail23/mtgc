@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.13
+Version:     5.14
 Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -25,7 +25,6 @@ require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
-include '../includes/colour.php';
 $msg = new Message($logfile);
 $priceMgr = new PriceManager($db, $logfile, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");

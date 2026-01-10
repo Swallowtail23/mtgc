@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        10/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -24,7 +24,6 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-include '../includes/colour.php';
 $msg = new Message($logfile);
 
 $expectedReferringPages = [

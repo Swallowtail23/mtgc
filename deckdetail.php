@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.71
+Version:     25.72
 Date:        10/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -25,7 +25,6 @@ require('includes/ini.php');                //Initialise and load ini file
 require('includes/error_handling.php');
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
-require('includes/colour.php');
 require_once 'ajax/ajaxdeckfragments_lib.php';
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');

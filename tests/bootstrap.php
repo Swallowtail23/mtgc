@@ -22,4 +22,3 @@ if (file_exists($autoload)) :
     require_once $autoload;
 endif;
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/colour.php';

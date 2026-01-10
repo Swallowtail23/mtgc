@@ -28,7 +28,6 @@ class DeckManager
     private $userEmail;
     private $serverEmail;
     private $importLinestoIgnore;
-    private $siteTitle;
     private $nonPreferredSetCodes;
     private $anyQuantity = [];
     private $limitWarnings = [];
@@ -40,8 +39,7 @@ class DeckManager
         $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
-        $anyQuantity,
-        $siteTitle = null
+        $anyQuantity
     ) {
         $this->db = $db;
         $this->logfile = $logfile;
@@ -50,7 +48,6 @@ class DeckManager
         $this->serverEmail = $serverEmail;
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
-        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
         $this->anyQuantity = is_array($anyQuantity) ? $anyQuantity : [];
     }
 
