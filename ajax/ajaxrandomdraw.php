@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.9
-Date:        10/01/26
+Version:     3.0
+Date:        11/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -97,6 +97,8 @@ endif;
 
 $a = array_rand($uniquecard_ref, 7);
 $drawn_cards = [];
+$allowedHoverClasses = ['randomcardimgdiv', 'randomcardimgdiv splitfloat'];
+$allowedCardClasses = ['random-draw-card', 'random-draw-card is-rotated'];
 for ($i = 0; $i < 7; $i++) :
     $cardurl = $uniquecard_ref[$a[$i]]['cardurl'] ?? '';
     if (!is_string($cardurl) || !preg_match('#^/carddetail\.php\?id=[A-Za-z0-9-]+$#', $cardurl)) :
@@ -124,10 +126,18 @@ for ($i = 0; $i < 7; $i++) :
         $hoverclass = 'randomcardimgdiv';
         $is_rotated = false;
     endif;
+    if (!in_array($hoverclass, $allowedHoverClasses, true)) :
+        $hoverclass = 'randomcardimgdiv';
+    endif;
+    $cardClass = $is_rotated ? 'random-draw-card is-rotated' : 'random-draw-card';
+    if (!in_array($cardClass, $allowedCardClasses, true)) :
+        $cardClass = 'random-draw-card';
+    endif;
     $drawn_cards[] = [
         'randomref' => $randomref,
         'hoverclass' => $hoverclass,
         'isRotated' => $is_rotated,
+        'cardClass' => $cardClass,
         'safeName' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
         'safeId' => htmlspecialchars($id, ENT_QUOTES, 'UTF-8'),
         'safeUrl' => htmlspecialchars($cardurl, ENT_QUOTES, 'UTF-8'),
@@ -141,8 +151,7 @@ endif;
 echo "<div class='random-draw-content'>";
 echo "<div class='random-draw-strip' aria-label='Random draw cards'>";
 foreach ($drawn_cards as $index => $card) :
-    $card_class = $card['isRotated'] ? 'random-draw-card is-rotated' : 'random-draw-card';
-    echo "<a class='{$card_class}' href='{$card['safeUrl']}' style='--random-index: {$index};'>"
+    echo "<a class='{$card['cardClass']}' href='{$card['safeUrl']}' style='--random-index: {$index};'>"
         . "<img class='random-draw-card-img' alt='{$card['safeName']}' src='{$card['safeImg']}'>"
         . "</a>";
 endforeach;
