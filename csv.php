@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.9
+Version:     4.10
 Date:        10/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -77,7 +77,41 @@ if ($requestedTable !== null && $requestedTable !== '') :
         else :
             // If not in debug mode, redirect back to the calling page
             $msg->logMessage('[DEBUG]', 'Not in SMTP/site debug, redirecting back to referrer');
-            $returnUrl = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'profile.php';
+            $returnUrlRaw = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            $returnUrl = '/profile.php';
+            $expectedHost = parse_url($myURL, PHP_URL_HOST);
+            if ($returnUrlRaw !== '') :
+                $parsedReferrer = parse_url($returnUrlRaw);
+                if ($parsedReferrer !== false) :
+                    $referrerHost = $parsedReferrer['host'] ?? '';
+                    if ($referrerHost === '' || $referrerHost === $expectedHost) :
+                        $path = $parsedReferrer['path'] ?? '';
+                        $query = $parsedReferrer['query'] ?? '';
+                        $fragment = $parsedReferrer['fragment'] ?? '';
+                        $pathWithQuery = $path;
+                        if ($query !== '') :
+                            $pathWithQuery .= '?' . $query;
+                        endif;
+                        if ($fragment !== '') :
+                            $pathWithQuery .= '#' . $fragment;
+                        endif;
+                        $normalizedReturn = normalizeRedirectUrl($pathWithQuery);
+                        if ($normalizedReturn !== null) :
+                            $returnUrl = $normalizedReturn;
+                        else :
+                            $msg->logMessage('[DEBUG]', 'csv.php referrer normalize failed, using profile.php');
+                        endif;
+                    else :
+                        $msg->logMessage(
+                            '[DEBUG]',
+                            "csv.php referrer host mismatch ($referrerHost), using profile.php"
+                        );
+                    endif;
+                else :
+                    $msg->logMessage('[DEBUG]', 'csv.php referrer parse failed, using profile.php');
+                endif;
+            endif;
+            $msg->logMessage('[DEBUG]', "csv.php redirecting back to $returnUrl");
             // If the mailexport was successful
             if ($mailexport === true) :
                 $_SESSION['csv_status'] = 'true';

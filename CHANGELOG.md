@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - CSV exports now validate table names and restrict non-admin users to their own collection tables.
 - Card detail notes are now HTML-escaped on output to prevent stored XSS.
 - Deck detail and deck action endpoints now share a unified ownership check to prevent IDOR access.
+- CSV export redirects now normalize same-origin referrers and fall back to profile.php to prevent open redirects.
 
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.
