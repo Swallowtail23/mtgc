@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.4
+Version:     3.5
 Date:        29/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -20,6 +20,7 @@ ensureDirectoryExists($imgLocation . 'json');
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
+use MTG\Bulk\ScryfallImport;
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
@@ -82,7 +83,13 @@ else :
 endif;
 if ($download > 0) :
     $msg->logMessage('[NOTICE]', "Scryfall Rulings API: downloading: $rulings_uri");
-    $rulingreturn = downloadBulk($rulings_uri, $file_location, $msg, 'Scryfall rulings data download', false);
+$rulingreturn = ScryfallImport::downloadBulk(
+    $rulings_uri,
+    $file_location,
+    $msg,
+    'Scryfall rulings data download',
+    false
+);
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: Local file: $file_location");
 

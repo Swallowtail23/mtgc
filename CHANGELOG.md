@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Added tests for SessionManager CSRF validation, PasswordCheck password rules, LoginHandler login stamps, and import CSV parsing.
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
 - Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport with tests for bulk info, JSON downloads, and guard rails.
+- Moved downloadBulk and fetchJson into MTG\Bulk\ScryfallImport and updated bulk scripts to use the class helpers.
 - Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 - Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        10/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -19,6 +19,113 @@ use Throwable;
 
 class ScryfallImport
 {
+    public static function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
+    {
+        $dir = dirname($dest);
+        if (!is_dir($dir)) :
+            if (!mkdir($dir, 0775, true)) :
+                $msg->logMessage('[ERROR]', "$context: unable to create directory $dir");
+                return false;
+            endif;
+        endif;
+
+        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        $tmp = $dest . '.tmp';
+        if (is_file($tmp)) :
+            @unlink($tmp);
+        endif;
+
+        $logfp = @fopen($tmp, 'wb');
+        if ($logfp === false) :
+            $msg->logMessage('[ERROR]', "$context: failed to open temp file for download: $tmp");
+            return false;
+        endif;
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_FILE, $logfp);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_FAILONERROR, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 600);
+        curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+        if ($debug === true) :
+            curl_setopt($ch, CURLOPT_VERBOSE, true);
+        endif;
+
+        $ok = curl_exec($ch);
+        $err = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+
+        curl_close($ch);
+        if (is_resource($logfp)) :
+            fclose($logfp);
+        endif;
+
+        if ($ok === false) :
+            @unlink($tmp);
+            $msg->logMessage('[ERROR]', "$context: curl download failed (HTTP $httpCode): $err");
+            return false;
+        endif;
+
+        // Basic sanity: must be non-zero
+        if (!is_file($tmp) || filesize($tmp) === 0) :
+            @unlink($tmp);
+            $msg->logMessage('[ERROR]', "$context: download produced empty file: $tmp");
+            return false;
+        endif;
+
+        // Atomic replace
+        if (!rename($tmp, $dest)) :
+            @unlink($tmp);
+            $msg->logMessage('[ERROR]', "$context: failed to move temp file into place: $tmp -> $dest");
+            return false;
+        endif;
+
+        return true;
+    }
+
+    public static function fetchJson($url, $msg, $context)
+    {
+        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_ENCODING, '');
+        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+
+        $body = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+
+        if ($body === false) :
+            $msg->logMessage(
+                '[ERROR]',
+                "$context: curl_exec failed (HTTP $httpCode): " . curl_error($ch)
+            );
+            curl_close($ch);
+            return false;
+        endif;
+
+        curl_close($ch);
+
+        if ($httpCode < 200 || $httpCode >= 300) :
+            $msg->logMessage('[ERROR]', "$context: HTTP $httpCode from $url");
+            return false;
+        endif;
+
+        $data = json_decode($body, true);
+        if (!is_array($data)) :
+            $msg->logMessage(
+                '[ERROR]',
+                "$context: JSON decode failed: " . json_last_error_msg()
+            );
+            return false;
+        endif;
+
+        return $data;
+    }
+
     public static function getBulkInfo($type)
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
@@ -49,7 +156,7 @@ class ScryfallImport
 
         if (!empty($url) && !empty($fileLocation)) :
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $url");
-            $scryfallBulk = fetchJson($url, $msg, 'Scryfall bulk API');
+            $scryfallBulk = static::fetchJson($url, $msg, 'Scryfall bulk API');
             if ($scryfallBulk === false) :
                 return false;
             endif;
@@ -61,12 +168,12 @@ class ScryfallImport
         ) :
             // Run twice, once for each file and location
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $urlDefault");
-            $scryfallBulkDefault = fetchJson($urlDefault, $msg, 'Scryfall bulk API');
+            $scryfallBulkDefault = static::fetchJson($urlDefault, $msg, 'Scryfall bulk API');
             if ($scryfallBulkDefault === false) :
                 return false;
             endif;
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $urlAll");
-            $scryfallBulkAll = fetchJson($urlAll, $msg, 'Scryfall bulk API');
+            $scryfallBulkAll = static::fetchJson($urlAll, $msg, 'Scryfall bulk API');
             if ($scryfallBulkAll === false) :
                 return false;
             endif;
@@ -171,7 +278,7 @@ class ScryfallImport
 
         $msg->logMessage('[NOTICE]', "Scryfall bulk API: $reason");
 
-        $ok = downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
+        $ok = static::downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
         if ($ok === true) :
             $size = filesize($file_location);
             $msg->logMessage(
@@ -185,7 +292,7 @@ class ScryfallImport
         $msg->logMessage('[ERROR]', "Scryfall bulk API: Download failed, retrying in 20 seconds");
         sleep(20);
 
-        $ok = downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
+        $ok = static::downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
         if ($ok === true) :
             $size = filesize($file_location);
             $msg->logMessage(

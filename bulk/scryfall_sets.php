@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     2.10
 Date:        21/12/25
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
@@ -19,6 +19,7 @@ ensureDirectoryExists($imgLocation . 'json');
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
+use MTG\Bulk\ScryfallImport;
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
@@ -74,7 +75,13 @@ else :
 endif;
 if ($download > 0) :
     $msg->logMessage('[NOTICE]', "Scryfall sets API: ($file_location), downloading: $url");
-    $setsreturn = downloadBulk($url, $file_location, $msg, 'Scryfall sets data download', false);
+$setsreturn = ScryfallImport::downloadBulk(
+    $url,
+    $file_location,
+    $msg,
+    'Scryfall sets data download',
+    false
+);
 endif;
 $msg->logMessage('[NOTICE]', "Scryfall sets API: Local file: $file_location");
 
@@ -147,7 +154,13 @@ foreach ($data as $key => $value) :
                 $msg->logMessage('[DEBUG]', "Set icon for '$code' to be $seticon from $icon_svg_uri?$time");
                 if (!file_exists($seticon)) :
                     $msg->logMessage('[DEBUG]', "Icon not at $seticon");
-                    downloadBulk($icon_svg_uri . "?" . $time, $seticon, $msg, 'Set icon download', false);
+                    ScryfallImport::downloadBulk(
+                        $icon_svg_uri . "?" . $time,
+                        $seticon,
+                        $msg,
+                        'Set icon download',
+                        false
+                    );
                 endif;
                 $seticon = $icon_svg_uri = '';
             else :

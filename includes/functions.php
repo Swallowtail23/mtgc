@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.22
+Version:     28.23
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -436,115 +436,6 @@ function ensureDirectoryExists($path)
     $msg = new \MTG\Core\Message($logfile);
     $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
     throw new Exception("[ERROR] Unable to create directory {$path}");
-}
-
-function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
-{
-    // Downloads URL to $dest atomically via $dest.tmp, returns true/false.
-    // Logs errors via $msg.
-
-    $tmp = $dest . '.tmp';
-    $fp = fopen($tmp, 'wb');
-    if ($fp === false) :
-        $msg->logMessage('[ERROR]', "$context: failed to open temp file for write: $tmp");
-        return false;
-    endif;
-
-    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_FILE, $fp);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 300);
-    curl_setopt($ch, CURLOPT_ENCODING, '');
-
-    // Optional debug to logfile (off by default)
-    $logfp = null;
-    if ($debug === true) :
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        $logfp = fopen($GLOBALS['logfile'], 'ab');
-        if ($logfp !== false) :
-            curl_setopt($ch, CURLOPT_STDERR, $logfp);
-        endif;
-    endif;
-
-    $ok = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-    $err = ($ok === false) ? curl_error($ch) : '';
-
-    curl_close($ch);
-    fclose($fp);
-    if (is_resource($logfp)) :
-        fclose($logfp);
-    endif;
-
-    if ($ok === false) :
-        @unlink($tmp);
-        $msg->logMessage('[ERROR]', "$context: curl download failed (HTTP $httpCode): $err");
-        return false;
-    endif;
-
-    // Basic sanity: must be non-zero
-    if (!is_file($tmp) || filesize($tmp) === 0) :
-        @unlink($tmp);
-        $msg->logMessage('[ERROR]', "$context: download produced empty file: $tmp");
-        return false;
-    endif;
-
-    // Atomic replace
-    if (!rename($tmp, $dest)) :
-        @unlink($tmp);
-        $msg->logMessage('[ERROR]', "$context: failed to move temp file into place: $tmp -> $dest");
-        return false;
-    endif;
-
-    return true;
-}
-
-function fetchJson($url, $msg, $context)
-{
-    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array("Accept: application/json;q=0.9,*/*;q=0.8"));
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-    curl_setopt($ch, CURLOPT_ENCODING, '');
-    curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-
-    $body = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-
-    if ($body === false) :
-        $msg->logMessage(
-            '[ERROR]',
-            "$context: curl_exec failed (HTTP $httpCode): " . curl_error($ch)
-        );
-        curl_close($ch);
-        return false;
-    endif;
-
-    curl_close($ch);
-
-    if ($httpCode < 200 || $httpCode >= 300) :
-        $msg->logMessage('[ERROR]', "$context: HTTP $httpCode from $url");
-        return false;
-    endif;
-
-    $data = json_decode($body, true);
-    if (!is_array($data)) :
-        $msg->logMessage(
-            '[ERROR]',
-            "$context: JSON decode failed: " . json_last_error_msg()
-        );
-        return false;
-    endif;
-
-    return $data;
 }
 
 function validateTrueDecimal($v)

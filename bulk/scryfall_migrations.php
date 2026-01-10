@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     2.11
 Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -13,6 +13,7 @@ To do:       -
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
+use MTG\Bulk\ScryfallImport;
 
 require('bulk_ini.php');
 require('../includes/error_handling.php');
@@ -64,7 +65,13 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 
     if ($download > 0) :
         $msg->logMessage('[DEBUG]', "Scryfall migrations API: ($page), downloading: $url");
-        $setsreturn = downloadBulk($url, $page, $msg, 'Scryfall migration data download', false);
+        ScryfallImport::downloadBulk(
+            $url,
+            $page,
+            $msg,
+            'Scryfall migration data download',
+            false
+        );
     endif;
     return $page;
 }

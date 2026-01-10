@@ -1,15 +1,21 @@
 <?php
 
-namespace MTG\Bulk {
-    function fetchJson($url, $msg, $context)
+use MTG\Bulk\ScryfallImport;
+use PHPUnit\Framework\TestCase;
+
+class ScryfallImportStub extends ScryfallImport
+{
+    public static $fetchMap = [];
+    public static $downloadCalls = 0;
+
+    public static function fetchJson($url, $msg, $context)
     {
-        $map = $GLOBALS['scryfallFetchMap'] ?? [];
-        return $map[$url] ?? false;
+        return self::$fetchMap[$url] ?? false;
     }
 
-    function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
+    public static function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
     {
-        $GLOBALS['scryfallDownloadCalls'] = ($GLOBALS['scryfallDownloadCalls'] ?? 0) + 1;
+        self::$downloadCalls++;
         $dir = dirname($dest);
         if (!is_dir($dir)) :
             mkdir($dir, 0777, true);
@@ -19,152 +25,147 @@ namespace MTG\Bulk {
     }
 }
 
-namespace {
-    use MTG\Bulk\ScryfallImport;
-    use PHPUnit\Framework\TestCase;
+class BulkQueryStub
+{
+    public $num_rows;
 
-    class BulkQueryStub
+    public function __construct($numRows)
     {
-        public $num_rows;
-
-        public function __construct($numRows)
-        {
-            $this->num_rows = $numRows;
-        }
-
-        public function free()
-        {
-        }
+        $this->num_rows = $numRows;
     }
 
-    class BulkDbStub
+    public function free()
     {
-        public $error = '';
-        private $responses;
+    }
+}
 
-        public function __construct(array $responses)
-        {
-            $this->responses = $responses;
-        }
+class BulkDbStub
+{
+    public $error = '';
+    private $responses;
 
-        public function query($sql)
-        {
-            return array_shift($this->responses);
-        }
+    public function __construct(array $responses)
+    {
+        $this->responses = $responses;
     }
 
-    class ScryfallImportTest extends TestCase
+    public function query($sql)
     {
-        private $originalDb;
+        return array_shift($this->responses);
+    }
+}
 
-        protected function setUp(): void
-        {
-            $GLOBALS['scryfallFetchMap'] = [];
-            $GLOBALS['scryfallDownloadCalls'] = 0;
-            $this->originalDb = $GLOBALS['db'] ?? null;
-        }
+class ScryfallImportTest extends TestCase
+{
+    private $originalDb;
 
-        protected function tearDown(): void
-        {
-            $GLOBALS['db'] = $this->originalDb;
-        }
+    protected function setUp(): void
+    {
+        ScryfallImportStub::$fetchMap = [];
+        ScryfallImportStub::$downloadCalls = 0;
+        $this->originalDb = $GLOBALS['db'] ?? null;
+    }
 
-        public function testGetBulkInfoDefault()
-        {
-            $GLOBALS['defaultCardsUrl'] = 'https://api.example/default';
-            $GLOBALS['allCardsUrl'] = 'https://api.example/all';
-            $GLOBALS['imgLocation'] = sys_get_temp_dir() . '/mtg/';
-            $GLOBALS['scryfallFetchMap'] = [
-                $GLOBALS['defaultCardsUrl'] => [
-                    'type' => 'default_cards',
-                    'download_uri' => 'https://download.example/default'
-                ]
-            ];
+    protected function tearDown(): void
+    {
+        $GLOBALS['db'] = $this->originalDb;
+    }
 
-            $result = ScryfallImport::getBulkInfo('default');
+    public function testGetBulkInfoDefault()
+    {
+        $GLOBALS['defaultCardsUrl'] = 'https://api.example/default';
+        $GLOBALS['allCardsUrl'] = 'https://api.example/all';
+        $GLOBALS['imgLocation'] = sys_get_temp_dir() . '/mtg/';
+        ScryfallImportStub::$fetchMap = [
+            $GLOBALS['defaultCardsUrl'] => [
+                'type' => 'default_cards',
+                'download_uri' => 'https://download.example/default'
+            ]
+        ];
 
-            $this->assertSame(
-                [
-                    'bulkUrl' => 'https://download.example/default',
-                    'fileLocation' => $GLOBALS['imgLocation'] . 'json/bulk.json'
-                ],
-                $result
-            );
-        }
+        $result = ScryfallImportStub::getBulkInfo('default');
 
-        public function testGetBulkInfoRefresh()
-        {
-            $GLOBALS['defaultCardsUrl'] = 'https://api.example/default';
-            $GLOBALS['allCardsUrl'] = 'https://api.example/all';
-            $GLOBALS['imgLocation'] = sys_get_temp_dir() . '/mtg/';
-            $GLOBALS['scryfallFetchMap'] = [
-                $GLOBALS['defaultCardsUrl'] => [
-                    'type' => 'default_cards',
-                    'download_uri' => 'https://download.example/default'
-                ],
-                $GLOBALS['allCardsUrl'] => [
-                    'type' => 'all_cards',
-                    'download_uri' => 'https://download.example/all'
-                ]
-            ];
+        $this->assertSame(
+            [
+                'bulkUrl' => 'https://download.example/default',
+                'fileLocation' => $GLOBALS['imgLocation'] . 'json/bulk.json'
+            ],
+            $result
+        );
+    }
 
-            $result = ScryfallImport::getBulkInfo('refresh');
+    public function testGetBulkInfoRefresh()
+    {
+        $GLOBALS['defaultCardsUrl'] = 'https://api.example/default';
+        $GLOBALS['allCardsUrl'] = 'https://api.example/all';
+        $GLOBALS['imgLocation'] = sys_get_temp_dir() . '/mtg/';
+        ScryfallImportStub::$fetchMap = [
+            $GLOBALS['defaultCardsUrl'] => [
+                'type' => 'default_cards',
+                'download_uri' => 'https://download.example/default'
+            ],
+            $GLOBALS['allCardsUrl'] => [
+                'type' => 'all_cards',
+                'download_uri' => 'https://download.example/all'
+            ]
+        ];
 
-            $this->assertSame(
-                [
-                    'bulkUrlDefault' => 'https://download.example/default',
-                    'fileLocationDefault' => $GLOBALS['imgLocation'] . 'json/bulk.json',
-                    'bulkUrlAll' => 'https://download.example/all',
-                    'fileLocationAll' => $GLOBALS['imgLocation'] . 'json/bulk_all.json',
-                ],
-                $result
-            );
-        }
+        $result = ScryfallImportStub::getBulkInfo('refresh');
 
-        public function testGetBulkJsonSkipsFreshFile()
-        {
-            $file = tempnam(sys_get_temp_dir(), 'bulk_');
-            file_put_contents($file, 'data');
-            touch($file, time());
+        $this->assertSame(
+            [
+                'bulkUrlDefault' => 'https://download.example/default',
+                'fileLocationDefault' => $GLOBALS['imgLocation'] . 'json/bulk.json',
+                'bulkUrlAll' => 'https://download.example/all',
+                'fileLocationAll' => $GLOBALS['imgLocation'] . 'json/bulk_all.json',
+            ],
+            $result
+        );
+    }
 
-            $result = ScryfallImport::getBulkJson('https://download.example/file', $file, 3600);
+    public function testGetBulkJsonSkipsFreshFile()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'bulk_');
+        file_put_contents($file, 'data');
+        touch($file, time());
 
-            $this->assertSame('Skipped', $result);
-            $this->assertSame(0, $GLOBALS['scryfallDownloadCalls']);
+        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600);
+
+        $this->assertSame('Skipped', $result);
+        $this->assertSame(0, ScryfallImportStub::$downloadCalls);
+        unlink($file);
+    }
+
+    public function testGetBulkJsonDownloadsWhenMissing()
+    {
+        $file = sys_get_temp_dir() . '/bulk_missing.json';
+        if (file_exists($file)) :
             unlink($file);
-        }
+        endif;
 
-        public function testGetBulkJsonDownloadsWhenMissing()
-        {
-            $file = sys_get_temp_dir() . '/bulk_missing.json';
-            if (file_exists($file)) :
-                unlink($file);
-            endif;
+        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600);
 
-            $result = ScryfallImport::getBulkJson('https://download.example/file', $file, 3600);
+        $this->assertSame('Success', $result);
+        $this->assertSame(1, ScryfallImportStub::$downloadCalls);
+        $this->assertTrue(is_file($file));
+        unlink($file);
+    }
 
-            $this->assertSame('Success', $result);
-            $this->assertSame(1, $GLOBALS['scryfallDownloadCalls']);
-            $this->assertTrue(is_file($file));
-            unlink($file);
-        }
+    public function testScryfallImportRejectsInvalidTableName()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid cards table name supplied');
 
-        public function testScryfallImportRejectsInvalidTableName()
-        {
-            $this->expectException(\Exception::class);
-            $this->expectExceptionMessage('Invalid cards table name supplied');
+        ScryfallImportStub::scryfallImport('file.json', 'default', 'bad_table');
+    }
 
-            ScryfallImport::scryfallImport('file.json', 'default', 'bad_table');
-        }
+    public function testScryfallImportRejectsMissingContentHash()
+    {
+        $GLOBALS['db'] = new BulkDbStub([new BulkQueryStub(0)]);
 
-        public function testScryfallImportRejectsMissingContentHash()
-        {
-            $GLOBALS['db'] = new BulkDbStub([new BulkQueryStub(0)]);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('content_hash column missing');
 
-            $this->expectException(\Exception::class);
-            $this->expectExceptionMessage('content_hash column missing');
-
-            ScryfallImport::scryfallImport('file.json', 'default', 'cards_scry');
-        }
+        ScryfallImportStub::scryfallImport('file.json', 'default', 'cards_scry');
     }
 }
