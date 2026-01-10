@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
 - Standardized CSRF generation/validation in admin and auth flows to use shared helpers.
 - Standardized remaining AJAX endpoints to use shared referrer/CSRF validation and updated callers to send tokens.
+- CSV exports now validate table names and restrict non-admin users to their own collection tables.
 
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.

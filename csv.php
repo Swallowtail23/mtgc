@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.8
-Date:        21/12/25
+Version:     4.9
+Date:        10/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -29,8 +29,35 @@ require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new \MTG\Core\Message($logfile);
 
 // Page content starts here
-if (isset($_GET['table'])) :
-    $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
+$requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);
+if ($requestedTable !== null) :
+    $requestedTable = trim($requestedTable);
+endif;
+if ($requestedTable !== null && $requestedTable !== '') :
+    $msg->logMessage(
+        '[DEBUG]',
+        "csv.php requested table '$requestedTable' by user $userEmail, admin status $admin"
+    );
+    $validatedTable = validTableName($requestedTable);
+    if ($validatedTable === false) :
+        $msg->logMessage('[ERROR]', "csv.php invalid table '$requestedTable' requested by $userEmail");
+        throw new Exception("[ERROR] csv.php: Invalid table requested");
+    endif;
+    if ($admin == 1) :
+        $table = $validatedTable;
+        $msg->logMessage('[DEBUG]', "csv.php admin export allowed for '$table'");
+    else :
+        if ($validatedTable !== $mytable) :
+            $msg->logMessage(
+                '[ERROR]',
+                "csv.php blocked export for '$validatedTable' by $userEmail (user table '$mytable')"
+            );
+            throw new Exception("[ERROR] csv.php: Unauthorized table requested");
+        endif;
+        $table = $mytable;
+        $msg->logMessage('[DEBUG]', "csv.php exporting own table '$table'");
+    endif;
+
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
     $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
