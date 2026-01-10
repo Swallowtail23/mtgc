@@ -1,5 +1,5 @@
 /*
-Version:     2.72
+Version:     2.73
 Date:        10/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -82,12 +82,44 @@ function updateDeckVersion(rawVersion) {
     }
 }
 
+function sanitizeUrl(rawUrl) {
+    if (typeof rawUrl !== 'string') {
+        return '';
+    }
+    var trimmed = rawUrl.trim();
+    if (!trimmed) {
+        return '';
+    }
+    var lower = trimmed.toLowerCase();
+    if (lower.indexOf('javascript:') === 0 || lower.indexOf('data:') === 0 || lower.indexOf('vbscript:') === 0) {
+        return '';
+    }
+    if (trimmed[0] === '#') {
+        return trimmed;
+    }
+    if (trimmed.indexOf('/') === 0 || trimmed.indexOf('./') === 0 || trimmed.indexOf('../') === 0) {
+        return trimmed;
+    }
+    if (lower.indexOf('http://') === 0 || lower.indexOf('https://') === 0) {
+        return trimmed;
+    }
+    return '';
+}
+
+function sanitizeImageUrl(rawUrl) {
+    var safeUrl = sanitizeUrl(rawUrl);
+    if (!safeUrl || safeUrl === '#') {
+        return '';
+    }
+    return safeUrl;
+}
+
 function swapImageByElement($img) {
     if (!$img || !$img.length) {
         return;
     }
-    var backSrc = $img.attr('data-back-src');
-    var frontSrc = $img.attr('data-front-src') || $img.attr('src');
+    var backSrc = sanitizeImageUrl($img.attr('data-back-src'));
+    var frontSrc = sanitizeImageUrl($img.attr('data-front-src') || $img.attr('src'));
     if (!backSrc || !frontSrc) {
         return;
     }
@@ -245,25 +277,26 @@ function setDecksideHeroImage(src, options) {
     if (!heroImg) {
         return;
     }
+    var safeSrc = sanitizeImageUrl(src) || '/images/back.jpg';
     var opts = options || {};
     if (opts.cardId) {
         heroImg.dataset.cardid = opts.cardId;
     }
     if (Object.prototype.hasOwnProperty.call(opts, 'backSrc')) {
-        heroImg.dataset.backSrc = opts.backSrc;
+        heroImg.dataset.backSrc = sanitizeImageUrl(opts.backSrc) || '';
     }
-    if (heroImg.dataset.src === src) {
+    if (heroImg.dataset.src === safeSrc) {
         return;
     }
     heroImg.classList.remove('is-visible');
-    updateDecksideHeroBackground(src);
-    heroImg.dataset.src = src;
-    heroImg.dataset.frontSrc = src;
+    updateDecksideHeroBackground(safeSrc);
+    heroImg.dataset.src = safeSrc;
+    heroImg.dataset.frontSrc = safeSrc;
     heroImg.onload = function () {
         updateDecksideHeroBackground(this.src);
         heroImg.classList.add('is-visible');
     };
-    heroImg.src = src;
+    heroImg.src = safeSrc;
     if (heroImg.complete) {
         updateDecksideHeroBackground(heroImg.src);
         heroImg.classList.add('is-visible');
@@ -276,7 +309,7 @@ function setDecksideHeroLink(href) {
     if (!heroLink) {
         return;
     }
-    var safeHref = typeof href === 'string' && href.length ? href : '#';
+    var safeHref = sanitizeUrl(href) || '#';
     if (heroLink.getAttribute('href') === safeHref) {
         return;
     }
