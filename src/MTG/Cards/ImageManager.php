@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        28/12/25
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -13,11 +13,14 @@ To do:       -
 
 /*
 Example usage:
-    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $result = $obj->getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections);
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
+use MTG\Core\UserAgent;
 
 class ImageManager
 {
@@ -39,7 +42,7 @@ class ImageManager
         $this->logfile = $logfile;
         $this->serverEmail = $serverEmail;
         $this->adminEmail = $adminEmail;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
     }
 
     public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections, $allowFetch = true)
@@ -324,7 +327,7 @@ class ImageManager
             return 'error';
         endif;
 
-        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
         $this->message->logMessage('[DEBUG]', "Image fetch user agent set to $userAgent");
         $options = array('http' => array('user_agent' => $userAgent));
         $context = stream_context_create($options);

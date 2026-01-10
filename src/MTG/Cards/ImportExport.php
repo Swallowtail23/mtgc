@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class ImportExport
 {
@@ -32,7 +35,7 @@ class ImportExport
         $this->logfile = $logfile;
         $this->userEmail = $userEmail;
         $this->serverEmail = $serverEmail;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
@@ -66,7 +69,7 @@ class ImportExport
                         "Adding " . count($extraAttachments) . " extra attachments to collection export email"
                     );
                 endif;
-                $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -112,7 +115,7 @@ class ImportExport
                         "Adding " . count($extraAttachments) . " extra attachments to weekly export email"
                     );
                 endif;
-                $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -238,7 +241,7 @@ class ImportExport
         // - set
         // - collector number
         global $db, $logfile, $bracketsInNames, $importLinestoIgnore;
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
 
         $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
         $raw_string = $input_string;
@@ -246,7 +249,7 @@ class ImportExport
 
         // Define is_csv as a closure
         $is_csv = function ($string) use ($logfile) {
-            $msg = new \MTG\Core\Message($logfile);
+            $msg = new Message($logfile);
             // Check if the string contains at least 4 commas
             $comma_count = substr_count($string, ',');
             if ($comma_count < 4) :
@@ -265,7 +268,7 @@ class ImportExport
 
         // Define extract_and_process_csv as a closure
         $extract_and_process_csv = function ($line) use ($logfile) {
-            $msg = new \MTG\Core\Message($logfile);
+            $msg = new Message($logfile);
 
             // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
             $fields = str_getcsv($line, ',', '"', '\\');
@@ -953,7 +956,7 @@ class ImportExport
             $rowNumber = $batchedCard['row'];
             $id = $batchedCard['id'];
             $finishes = json_decode($batchedCard['finishes'], true);
-            $cardtype = \MTG\Cards\CardUtils::cardTypes($finishes);
+            $cardtype = CardUtils::cardTypes($finishes);
             $normal = $batchedCard['normal'];
             $foil = $batchedCard['foil'];
             $etched = $batchedCard['etched'];

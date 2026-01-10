@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     6.7
+Version:     6.9
 Date:        10/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -9,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:      -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -20,12 +24,12 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [
     $myURL
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
 if ($ajaxValidation['valid'] === false) :
     $msg->logMessage('[ERROR]', "Not called from valid page");
     ajaxRespondText('Access forbidden', 403);
@@ -35,7 +39,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

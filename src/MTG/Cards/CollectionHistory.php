@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        21/12/25
 Name:        CollectionHistory.php
 Purpose:     Collection value history retrieval and export helpers.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class CollectionHistory
 {
@@ -28,7 +31,7 @@ class CollectionHistory
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
         $this->serverEmail = $serverEmail ?: $GLOBALS['serverEmail'];
     }
@@ -158,7 +161,7 @@ class CollectionHistory
         endif;
 
         if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-            $mail = new \MTG\Core\MyPHPMailer(
+            $mail = new MyPHPMailer(
                 true,
                 $smtpParameters,
                 $this->serverEmail,

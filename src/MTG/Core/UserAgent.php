@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        23/12/25
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
@@ -21,7 +21,7 @@ class UserAgent
         $cacheKey = $iniPath . '|' . ($versionPath ?? '');
         if (isset($cache[$cacheKey])) :
             if (!empty($logfile)) :
-                $msg = new \MTG\Core\Message($logfile);
+                $msg = new Message($logfile);
                 $msg->logMessage('[DEBUG]', "User agent cache hit for $iniPath");
             endif;
             return $cache[$cacheKey];
@@ -38,13 +38,13 @@ class UserAgent
                 $version = ltrim($rawVersion, "vV");
             else :
                 if (!empty($logfile)) :
-                    $msg = new \MTG\Core\Message($logfile);
+                    $msg = new Message($logfile);
                     $msg->logMessage('[DEBUG]', "Version file is empty at $versionPath");
                 endif;
             endif;
         else :
             if (!empty($logfile)) :
-                $msg = new \MTG\Core\Message($logfile);
+                $msg = new Message($logfile);
                 $msg->logMessage('[DEBUG]', "Version file missing at $versionPath");
             endif;
         endif;
@@ -52,13 +52,13 @@ class UserAgent
         $url = 'unknown';
         $adminEmail = 'unknown';
         if (is_file($iniPath)) :
-            $ini = new \MTG\Core\INI($iniPath);
+            $ini = new INI($iniPath);
             $iniArray = $ini->data;
             if (!empty($iniArray['general']['URL'])) :
                 $url = trim((string) $iniArray['general']['URL']);
             else :
                 if (!empty($logfile)) :
-                    $msg = new \MTG\Core\Message($logfile);
+                    $msg = new Message($logfile);
                     $msg->logMessage('[DEBUG]', "User agent URL missing from ini file");
                 endif;
             endif;
@@ -66,13 +66,13 @@ class UserAgent
                 $adminEmail = trim((string) $iniArray['email']['AdminEmail']);
             else :
                 if (!empty($logfile)) :
-                    $msg = new \MTG\Core\Message($logfile);
+                    $msg = new Message($logfile);
                     $msg->logMessage('[DEBUG]', "User agent admin email missing from ini file");
                 endif;
             endif;
         else :
             if (!empty($logfile)) :
-                $msg = new \MTG\Core\Message($logfile);
+                $msg = new Message($logfile);
                 $msg->logMessage('[DEBUG]', "User agent ini file missing at $iniPath");
             endif;
         endif;
@@ -81,7 +81,7 @@ class UserAgent
         $cache[$cacheKey] = $userAgent;
 
         if (!empty($logfile)) :
-            $msg = new \MTG\Core\Message($logfile);
+            $msg = new Message($logfile);
             $msg->logMessage('[DEBUG]', "User agent built as $userAgent");
         endif;
 

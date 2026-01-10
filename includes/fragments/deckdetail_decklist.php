@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.7
 Date:        10/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImageManager;
+
 ?>
 <?php
 $planeTypeRegex = '/\\bPlane\\b/i';
@@ -22,8 +26,8 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
         || preg_match($phenomenonTypeRegex, $cardType) === 1
     );
 };
-if (!isset($deckManager) || !($deckManager instanceof \MTG\Cards\DeckManager)) :
-    $deckManager = new \MTG\Cards\DeckManager(
+if (!isset($deckManager) || !($deckManager instanceof DeckManager)) :
+    $deckManager = new DeckManager(
         $db,
         $logfile,
         $userEmail,
@@ -120,7 +124,7 @@ endif;
                                 $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                                 $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
@@ -308,7 +312,7 @@ endif;
                                     $cardId = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
-                                    $imageManager = new \MTG\Cards\ImageManager(
+                                    $imageManager = new ImageManager(
                                         $db,
                                         $logfile,
                                         $serverEmail,
@@ -525,7 +529,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -845,7 +849,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1134,7 +1138,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1491,7 +1495,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1813,7 +1817,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2137,7 +2141,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2230,7 +2234,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2379,7 +2383,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2507,7 +2511,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,

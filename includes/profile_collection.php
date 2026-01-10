@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     1.5
+Version:     1.7
 Date:        07/12/25
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
@@ -9,15 +10,19 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\CollectionStats;
+use MTG\Core\Message;
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
 if (!isset($msg) || !($msg instanceof Message)) :
-    $msg = new \MTG\Core\Message($logfile ?? null);
+    $msg = new Message($logfile ?? null);
 endif;
 
-$statsHelper = new \MTG\Cards\CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
 $stats = $statsHelper->getStats($user, $mytable, $targetCurrency ?? null);
 
 $valueUsd = $stats['value_usd'];

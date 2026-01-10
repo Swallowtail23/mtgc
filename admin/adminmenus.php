@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     1.3
+Version:     1.4
 Date:        28/11/25
 Name:        adminmenus.php
 Purpose:     Menus for admin pages
@@ -9,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;

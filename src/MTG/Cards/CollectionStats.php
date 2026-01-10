@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        21/12/25
 Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
 
 class CollectionStats
 {
@@ -32,7 +35,7 @@ class CollectionStats
         $this->fxAPI = $fxAPI;
         $this->fxLocal = $fxLocal;
         $this->adminip = $adminip;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
     }
 
     public function getStats($userNumber, $tableName, $preferredCurrency = null)
@@ -49,7 +52,7 @@ class CollectionStats
         $targetCurrency = strtoupper(trim((string) $targetCurrency));
 
         if (!empty($targetCurrency) && $targetCurrency !== 'USD' && !empty($this->fxAPI)) :
-            $sessionManager = new \MTG\Auth\SessionManager(
+            $sessionManager = new SessionManager(
                 $this->db,
                 $this->adminip,
                 [],

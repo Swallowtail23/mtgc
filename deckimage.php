@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.11
 Date:        10/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\DeckManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -21,7 +24,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");
 
@@ -47,7 +50,7 @@ if ($isValidReferrer) :
 
     if (isset($_GET['deck']) && ($_GET['deck']) !== '') :
         $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
-        $deckManager = new \MTG\Cards\DeckManager(
+        $deckManager = new DeckManager(
             $db,
             $logfile,
             $userEmail,

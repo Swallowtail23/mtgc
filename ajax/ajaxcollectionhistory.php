@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.12
 Date:        10/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\CollectionHistory;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require '../includes/sessionname.local.php';
@@ -21,12 +25,12 @@ require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
 $expectedReferringPages = [
     $myURL . '/collection.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+$ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
     $logfile,
     'ajaxcollectionhistory.php'
@@ -56,7 +60,7 @@ if (!in_array($format, ['json', 'csv'], true)) :
 endif;
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: user {$userId}, range {$range}, format {$format}");
-$history = new \MTG\Cards\CollectionHistory($db, $logfile, $siteTitle);
+$history = new CollectionHistory($db, $logfile, $siteTitle);
 $data = $history->getHistoryData($userId, $range);
 if ($data === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: unable to fetch history');

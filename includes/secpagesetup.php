@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.9
 Date:        29/11/25
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -22,7 +25,7 @@ if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     exit();
 else :
     // Session information \\
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     if ($userArray !== false) :
         $user = $userArray['usernumber'];
@@ -45,7 +48,7 @@ else :
             exit();
         endif;
     else :
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
         $msg->logMessage('[ERROR]', "User array returned false - user no longer exists?");
         session_destroy();
         echo "<meta http-equiv='refresh' content='1;url=login.php'>";

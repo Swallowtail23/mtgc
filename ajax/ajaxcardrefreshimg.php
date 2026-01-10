@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -21,12 +25,12 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+$ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
     $logfile,
     'ajaxcardrefreshimg.php'
@@ -46,7 +50,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
@@ -61,7 +65,7 @@ else :
     $msg->logMessage('[NOTICE]', "Image refresh called for $cardUUID by $userEmail");
 
     try {
-        $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+        $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
         $newImage = $obj->refreshImage($cardUUID);
 
         if ($newImage === 'success') :

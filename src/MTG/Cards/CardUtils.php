@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.2
 Date:        10/01/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
@@ -12,6 +12,8 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
 
 class CardUtils
 {
@@ -161,7 +163,7 @@ class CardUtils
     public static function promoLookup($promo_type)
     {
         global $promos_to_show, $logfile;
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
 
         $msg->logMessage('[DEBUG]', "Looking up promo description for '$promo_type'");
         $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));

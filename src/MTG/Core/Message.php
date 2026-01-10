@@ -1,12 +1,12 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        30/12/25
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
-                 $msg = new \MTG\Core\Message($logfile);
+                 $msg = new Message($logfile);
                  $msg->logMessage('[DEBUG]', "Message text");
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection

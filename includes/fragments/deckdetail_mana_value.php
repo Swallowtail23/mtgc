@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        26/12/25
 Name:        deckdetail_mana_value.php
 Purpose:     Deck detail mana value chart fragment.
@@ -10,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 ?>
 <?php
 $hasManaValue = $show_mana_block;

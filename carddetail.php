@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     22.15
+Version:     22.17
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -9,6 +10,12 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\CardUtils;
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require('includes/sessionname.local.php');
@@ -21,10 +28,10 @@ require('includes/error_handling.php');     //Initialise and load error/logging 
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($logfile);
 require('includes/colour.php');
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
 
@@ -303,7 +310,7 @@ require('includes/menu.php'); //mobile menu
                 $msg->logMessage('[DEBUG]', "Card has a promo_type set: {$row['promo_types']}");
                 $full_promo_text = '';
                 foreach ($promo as $value) :
-                    $promo_description = \MTG\Cards\CardUtils::promoLookup($value);
+                    $promo_description = CardUtils::promoLookup($value);
                     if ($promo_description !== 'skip') :
                         if ($full_promo_text === '') :
                             $full_promo_text = $full_promo_text . "$promo_description";
@@ -372,7 +379,7 @@ require('includes/menu.php'); //mobile menu
                     '[DEBUG]',
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
-                $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                 $imageFunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],
@@ -475,7 +482,7 @@ require('includes/menu.php'); //mobile menu
                 //Set card types
             if (isset($row['finishes'])) :
                 $finishes = json_decode($row['finishes'], true);
-                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
+                $cardtypes = CardUtils::cardTypes($finishes);
             else :
                     $finishes = null;
                     $cardtypes = 'none';
@@ -1086,7 +1093,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $manacost = \MTG\Cards\CardUtils::symbolReplace($row['f1_manacost']);
+                                $manacost = CardUtils::symbolReplace($row['f1_manacost']);
                                 if ($manacost !== null and $manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
@@ -1100,7 +1107,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
-                                    echo "<b>Abilities: </b>" . \MTG\Cards\CardUtils::symbolReplace($row['f1_ability']);
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplace($row['f1_ability']);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
@@ -1114,13 +1121,13 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                             else :
-                                $manacost = \MTG\Cards\CardUtils::symbolReplace($row['manacost']);
+                                $manacost = CardUtils::symbolReplace($row['manacost']);
                                 if ($manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
                                 if ($row['ability'] != '') :
-                                    echo "<b>Abilities: </b>" . \MTG\Cards\CardUtils::symbolReplace($row['ability']);
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplace($row['ability']);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['type'], 'reature') !== false) :
@@ -1294,7 +1301,7 @@ require('includes/menu.php'); //mobile menu
                                 echo "<h3>Adventure: </h3>";
                                 echo "<b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1320,7 +1327,7 @@ require('includes/menu.php'); //mobile menu
                             elseif ($row['layout'] === 'split' or $row['layout'] === 'flip') :
                                 echo "<br><b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1334,7 +1341,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = \MTG\Cards\CardUtils::symbolReplace($flipability);
+                                    $flipability = CardUtils::symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
@@ -1793,7 +1800,7 @@ require('includes/menu.php'); //mobile menu
                                             '[NOTICE]',
                                             "Calling Deckmanager->addDeck: '$user/$newdeckname'"
                                         );
-                                        $obj = new \MTG\Cards\DeckManager(
+                                        $obj = new DeckManager(
                                             $db,
                                             $logfile,
                                             $userEmail,
@@ -1809,7 +1816,7 @@ require('includes/menu.php'); //mobile menu
                                         endif;
                                     else :
                                             // Check that the proposed deck exists and belongs to owner.
-                                            $obj = new \MTG\Cards\DeckManager(
+                                            $obj = new DeckManager(
                                                 $db,
                                                 $logfile,
                                                 $userEmail,
@@ -1882,7 +1889,7 @@ require('includes/menu.php'); //mobile menu
                                             $deckqty = (int)$deckqty;
 
                                             //Call add card function
-                                            $obj = new \MTG\Cards\DeckManager(
+                                            $obj = new DeckManager(
                                                 $db,
                                                 $logfile,
                                                 $userEmail,
@@ -1948,7 +1955,7 @@ require('includes/menu.php'); //mobile menu
                                     endif;
                                 endif;
                                 $msg->logMessage('[NOTICE]', "Checking to see if $cardId is in any owned decks");
-                                $obj = new \MTG\Cards\DeckManager(
+                                $obj = new DeckManager(
                                     $db,
                                     $logfile,
                                     $userEmail,
@@ -1977,7 +1984,7 @@ require('includes/menu.php'); //mobile menu
                                         $grpuserid = $grpuser[$t]['id'];
                                         $grpusername = ucfirst($grpuser[$t]['name']);
                                         $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
-                                        $obj = new \MTG\Cards\DeckManager(
+                                        $obj = new DeckManager(
                                             $db,
                                             $logfile,
                                             $userEmail,
@@ -2132,7 +2139,7 @@ require('includes/menu.php'); //mobile menu
                                         $source = $rulingrow['source'];
                                     endif;
                                     $ruling = $ruling . $newdate . ": "
-                                        . \MTG\Cards\CardUtils::symbolReplace($rulingrow['comment'])
+                                        . CardUtils::symbolReplace($rulingrow['comment'])
                                         . " (" . $source . ")<br>";
                                 endwhile;
                                 $ruling = autoLink($ruling, array("target" => "_blank","rel" => "nofollow"));
@@ -2216,7 +2223,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $flipmanacost = \MTG\Cards\CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
                                 if ($flipmanacost !== null and $flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -2230,7 +2237,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability !== null and $flipability != '') :
-                                    $flipability = \MTG\Cards\CardUtils::symbolReplace($flipability);
+                                    $flipability = CardUtils::symbolReplace($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;

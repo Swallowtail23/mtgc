@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     2.5
+Version:     2.7
 Date:        28/11/25
 Name:        reject.php
 Purpose:     Non-admin rejection page called by admin pages on attempted load by non-admin or from non-secure page
@@ -9,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -30,7 +33,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     include '../includes/overlays.php';
     include '../includes/header.php';
     require('../includes/menu.php');
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
     ?>
     <div id='page'>
         <div class='staticpagecontent'>

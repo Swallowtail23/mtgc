@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.5
+Version:     8.7
 Date:        27/12/25
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\LoginHandler;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -25,8 +28,8 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$msg = new \MTG\Core\Message($logfile);
-$loginHandler = new \MTG\Auth\LoginHandler(
+$msg = new Message($logfile);
+$loginHandler = new LoginHandler(
     $db,
     $logfile,
     $turnstile,

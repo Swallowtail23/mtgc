@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.4
 Date:        10/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -16,6 +16,9 @@ namespace MTG\Bulk;
 use JsonMachine\Items;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use Throwable;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
+use MTG\Core\UserAgent;
 
 class ScryfallImport
 {
@@ -29,7 +32,7 @@ class ScryfallImport
             endif;
         endif;
 
-        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
         $tmp = $dest . '.tmp';
         if (is_file($tmp)) :
             @unlink($tmp);
@@ -85,7 +88,7 @@ class ScryfallImport
 
     public static function fetchJson($url, $msg, $context)
     {
-        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
@@ -130,7 +133,7 @@ class ScryfallImport
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
         global $logfile, $defaultCardsUrl, $allCardsUrl, $imgLocation;
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
         $bulkInfo = false;
 
         $url = $urlDefault = $urlAll = $fileLocation = $fileLocationDefault = $fileLocationAll = '';
@@ -241,7 +244,7 @@ class ScryfallImport
     {
         // Function to download and save bulk Scryfall data files
         global $logfile;
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
 
         $shouldDownload = true;
         $reason = '';
@@ -324,7 +327,7 @@ class ScryfallImport
             $adminEmail,
             $imgLocation,
             $twoCardDetailSections;
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
         if (!in_array($tableName, $allowedTables, true)) :
@@ -400,7 +403,7 @@ class ScryfallImport
         endif;
 
         if ($imageDownloads === true) :
-            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
         endif;
 
         $insertSql = sprintf("INSERT INTO

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        24/12/25
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
@@ -10,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 ?>
 <div id="deck-colour-identity-fragment">
     <?php

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.9
 Date:        28/11/25
 Name:        cleanup_tokens.php
 Purpose:     Cleanup expired trusted device tokens
@@ -11,15 +11,18 @@ Copyright:   2025 Simon Wilson
 To do:       -
 */
 
+use MTG\Auth\TrustedDeviceManager;
+use MTG\Core\Message;
+
 // Load required files
 $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__);  // point to web root
 require_once(dirname(__FILE__) . '/../includes/ini.php');
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[NOTICE]', "Starting trusted device token cleanup");
 
 // Initialize the device manager
-$deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
+$deviceManager = new TrustedDeviceManager($db, $logfile);
 
 // Perform cleanup
 $cleanedCount = $deviceManager->cleanupExpiredTokens();

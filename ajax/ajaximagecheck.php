@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.10
 Date:        10/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -20,14 +24,14 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [
     $myURL . '/carddetail.php',
     $myURL . '/deckdetail.php',
     $myURL . '/index.php',
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+$ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
     $logfile,
     'ajaximagecheck.php'
@@ -56,7 +60,7 @@ endif;
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
 
 try {
-    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $result = $obj->checkAndRefreshImage($cardUUID);
     $msg->logMessage(
         '[DEBUG]',

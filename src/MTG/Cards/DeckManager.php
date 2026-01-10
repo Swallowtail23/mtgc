@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.10
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class DeckManager
 {
@@ -40,7 +43,7 @@ class DeckManager
     ) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->userEmail = $userEmail;
         $this->serverEmail = $serverEmail;
         $this->importLinestoIgnore = $importLinestoIgnore;
@@ -1651,7 +1654,7 @@ class DeckManager
                 endif;
             elseif ($format === "email") :
                 if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
 
                     $subject = "Deck export";
                     $emailbody = "Your deck export ($deckName) is attached.";

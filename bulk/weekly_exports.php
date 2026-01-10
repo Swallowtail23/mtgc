@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.13
+Version:     2.15
 Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -11,13 +11,19 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Cards\CollectionHistory;
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImportExport;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
+
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg   = new \MTG\Core\Message($logfile);
+$msg   = new Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-$obj   = new \MTG\Cards\ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
-$historyExporter = new \MTG\Cards\CollectionHistory($db, $logfile, $siteTitle);
+$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
+$historyExporter = new CollectionHistory($db, $logfile, $siteTitle);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -28,7 +34,7 @@ while ($user = $usersExport->fetch_assoc()) :
     $userNumber = $user['usernumber'];
     $usertable = $userNumber . "collection";
     $userEmail = $user['email'];
-    $decks = new \MTG\Cards\DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $decks = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
     // Decks
     $deckZipPath = '';
     $query = 'SELECT decknumber FROM decks WHERE owner=?';
@@ -111,7 +117,7 @@ while ($user = $usersExport->fetch_assoc()) :
 
     if (isset($emailEnabled) && $emailEnabled === true) :
         if ($collectionTempFile !== '') :
-            $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
             $mailresult = $mail->sendEmail(
                 $userEmail,
                 true,
@@ -145,7 +151,7 @@ endwhile;
 $subject = "$siteTitle weekly export user report";
 $emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; weekly export admin summary not sent');

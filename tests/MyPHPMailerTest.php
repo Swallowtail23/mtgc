@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use MTG\Core\MyPHPMailer;
 
 require_once __DIR__ . '/../src/MTG/Core/MyPHPMailer.php';
 
@@ -43,7 +44,7 @@ class MyPHPMailerTest extends TestCase
 
     public function testHeloIsConfiguredFromParameters()
     {
-        $mailer = new \MTG\Core\MyPHPMailer(
+        $mailer = new MyPHPMailer(
             true,
             $this->buildParams(['SMTPHelo' => 'custom.helo']),
             'server@example.com',
@@ -56,7 +57,7 @@ class MyPHPMailerTest extends TestCase
 
     public function testSslVerificationOptionsAreDisabledWhenRequested()
     {
-        $mailer = new \MTG\Core\MyPHPMailer(
+        $mailer = new MyPHPMailer(
             true,
             $this->buildParams(['SMTPVerifySSL' => false]),
             'server@example.com',
@@ -72,7 +73,7 @@ class MyPHPMailerTest extends TestCase
 
     public function testSslVerificationOptionsRemainDefaultWhenNotDisabled()
     {
-        $mailer = new \MTG\Core\MyPHPMailer(
+        $mailer = new MyPHPMailer(
             true,
             $this->buildParams(),
             'server@example.com',

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.9
+Version:     5.11
 Date:        10/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -21,8 +25,8 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-\MTG\Auth\SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
-$msg = new \MTG\Core\Message($logfile);
+SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
+$msg = new Message($logfile);
 
 //page specific variables
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';
@@ -116,7 +120,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
             else :
                         $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckName'");
-                        $obj = new \MTG\Cards\DeckManager(
+                        $obj = new DeckManager(
                             $db,
                             $logfile,
                             $userEmail,
@@ -132,7 +136,7 @@ require('includes/menu.php'); //mobile menu
         // Delete a deck
         if ($deletedeck == "yes") :
             $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
-            $obj = new \MTG\Cards\DeckManager(
+            $obj = new DeckManager(
                 $db,
                 $logfile,
                 $userEmail,

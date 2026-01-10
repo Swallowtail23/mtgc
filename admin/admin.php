@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     6.18
+Version:     6.20
 Date:        10/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -9,6 +10,13 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\PasswordCheck;
+use MTG\Auth\SessionManager;
+use MTG\Core\DateYMD;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
+
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
 else :
@@ -20,14 +28,14 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
-$msg = new \MTG\Core\Message($logfile);
-$csrfToken = \MTG\Auth\SessionManager::generateCsrfToken();
+SessionManager::forcePasswordChange($logfile);
+$msg = new Message($logfile);
+$csrfToken = SessionManager::generateCsrfToken();
 
 function requireCsrfToken(): void
 {
     $posted = (string) filter_input(INPUT_POST, 'csrf_token', FILTER_UNSAFE_RAW);
-    if ($posted === '' || !\MTG\Auth\SessionManager::validateCsrfToken($posted)) :
+    if ($posted === '' || !SessionManager::validateCsrfToken($posted)) :
         http_response_code(403);
         die('CSRF check failed');
     endif;
@@ -167,7 +175,7 @@ function isPathWritable($path)
     return is_writable($directory);
 }
 
-function minifyCssFile(string $sourcePath, string $targetPath, \MTG\Core\Message $msg): array
+function minifyCssFile(string $sourcePath, string $targetPath, Message $msg): array
 {
     $context = "source={$sourcePath} target={$targetPath}";
     $msg->logMessage('[DEBUG]', "CSS minify requested ({$context})");
@@ -229,7 +237,7 @@ if ($admin !== 1) :
 endif;
 
 //Get date for update form
-$dateObject = new \MTG\Core\DateYMD();
+$dateObject = new DateYMD();
 $date = $dateObject->getToday();
 
 $scryAction = filter_input(INPUT_POST, 'scryfalljson_action', FILTER_UNSAFE_RAW);
@@ -577,7 +585,7 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     requireCsrfToken();
 
     if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
         $subject = "Test email from {$siteTitle}";
         $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
         $bodyText = strip_tags($bodyHtml);
@@ -604,7 +612,7 @@ if ($configAction === 'start_reauth') :
     $configAuthRequested = true;
 elseif ($configAction === 'reauth_submit') :
     $reauthPassword = filter_input(INPUT_POST, 'config_password', FILTER_UNSAFE_RAW);
-    $passwordCheck = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
+    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
     $reauthResult = $passwordCheck->validatePassword($userEmail, $reauthPassword);
     if ($reauthResult === 10) :
         $_SESSION['config_edit_expires'] = time() + $configAuthWindowSeconds;
@@ -791,7 +799,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $iniArray = $updatedIni;
             $logfile = $updatedIni['general']['Logfile'];
             $logLevelIni = $updatedIni['general']['Loglevel'] ?? $logLevelIni;
-            $msg = new \MTG\Core\Message($logfile);
+            $msg = new Message($logfile);
             header('Location: admin.php');
             exit();
         else :

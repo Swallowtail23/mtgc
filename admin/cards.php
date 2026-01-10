@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     5.12
+Version:     5.14
 Date:        10/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -9,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
+
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
 else :
@@ -20,10 +26,10 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($logfile);
 
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");
@@ -192,7 +198,7 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $obj->refreshImage($id);
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

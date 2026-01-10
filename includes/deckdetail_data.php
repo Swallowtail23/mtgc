@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.1
+Version:     2.3
 Date:        01/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImageManager;
 
 // Get deck details from database
 if (
@@ -31,7 +34,7 @@ else :
     throw new Exception("[ERROR] deckdetail.php: " . __LINE__ . ": SQL failure: Error: " . $db->error);
 endif;
 
-$deckManager = new \MTG\Cards\DeckManager(
+$deckManager = new DeckManager(
     $db,
     $logfile,
     $userEmail,
@@ -371,7 +374,7 @@ while ($row = $result->fetch_assoc()) :
     elseif ($isPlanePhenomenon) :
         $planes = $planes + $row['cardqty'];
     endif;
-    $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
@@ -414,7 +417,7 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
-    $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],

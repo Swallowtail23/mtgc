@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     2.6
+Version:     2.8
 Date:        10/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -9,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
 
 if (defined('INCLUDE_CHECK') && INCLUDE_CHECK === true) :
     if (!isset($uniquecard_ref) || !is_array($uniquecard_ref)) :
@@ -25,11 +29,11 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     require('../includes/error_handling.php');
     require('../includes/functions.php');
     include '../includes/colour.php';
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
     $expectedReferringPages = [
         $myURL . '/deckdetail.php'
     ];
-    $ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+    $ajaxValidation = SessionManager::validateAjaxRequest(
         $expectedReferringPages,
         $logfile,
         'ajaxrandomdraw.php',
@@ -49,7 +53,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
         // Decode the JSON data received from the POST request
         $data = json_decode(file_get_contents('php://input'), true);
         $csrfToken = isset($data['csrf_token']) ? $data['csrf_token'] : '';
-        if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
+        if (!SessionManager::validateCsrfToken($csrfToken)) :
             exit();
         endif;
 

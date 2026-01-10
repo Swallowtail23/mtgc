@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.11
 Date:        21/12/25
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
@@ -11,12 +11,16 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
+
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 
-$msg = new \MTG\Core\Message($logfile);
-$obj  = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+$msg = new Message($logfile);
+$obj  = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
 
 if (isset($argv[1])) :
     $setcode = $argv[1];
@@ -61,7 +65,7 @@ if (isset($argv[1])) :
         $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
             . "Failed: $fail_count";
         if (isset($emailEnabled) && $emailEnabled === true) :
-            $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
             $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
         else :
             $msg->logMessage(

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        24/12/25
 Name:        deckdetail_missing.php
 Purpose:     Deck detail missing list fragment.
@@ -10,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 ?>
 <tbody id="deck-missing-fragment">
     <?php

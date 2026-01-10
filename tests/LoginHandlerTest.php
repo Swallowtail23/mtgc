@@ -125,6 +125,10 @@ namespace MTG\Auth {
 namespace {
 
     use MTG\Auth\LoginHandler;
+    use MTG\Auth\PasswordCheck;
+    use MTG\Auth\TrustedDeviceManager;
+    use MTG\Auth\TwoFactorManager;
+    use MTG\Auth\UserStatus;
     use PHPUnit\Framework\TestCase;
 
     require_once __DIR__ . '/bootstrap.php';
@@ -275,7 +279,7 @@ namespace {
             $turnstile_secret_key = '';
             $siteTitle = 'MTG Test';
 
-            return new \MTG\Auth\LoginHandler(
+            return new LoginHandler(
                 $db,
                 $logfile,
                 $turnstile,
@@ -296,7 +300,7 @@ namespace {
             ['usernumber' => 7, 'username' => 'tester', 'email' => 'user@example.com', 'admin' => 1]
             ]));
             $db->executeQueue = [true];
-            \MTG\Auth\TrustedDeviceManager::$result = 7;
+            TrustedDeviceManager::$result = 7;
 
             $handler = $this->buildHandler($db);
             $result = $handler->attemptTrustedDeviceLogin('dashboard.php');
@@ -313,7 +317,7 @@ namespace {
         {
             $db = new FakeDb();
             $GLOBALS['db'] = $db;
-            \MTG\Auth\TrustedDeviceManager::$result = false;
+            TrustedDeviceManager::$result = false;
 
             $handler = $this->buildHandler($db);
             $result = $handler->attemptTrustedDeviceLogin(null);
@@ -336,10 +340,10 @@ namespace {
         public function testProcessLoginSubmissionSuccessWithout2FA()
         {
             $db = new FakeDb();
-            \MTG\Auth\UserStatus::$badLoginResult = ['count' => 0, 'code' => 1];
-            \MTG\Auth\UserStatus::$userStatusResult = ['code' => 10, 'number' => 42, 'admin' => 0];
-            \MTG\Auth\PasswordCheck::$result = 10;
-            \MTG\Auth\TwoFactorManager::$enabled = false;
+            UserStatus::$badLoginResult = ['count' => 0, 'code' => 1];
+            UserStatus::$userStatusResult = ['code' => 10, 'number' => 42, 'admin' => 0];
+            PasswordCheck::$result = 10;
+            TwoFactorManager::$enabled = false;
 
             $handler = $this->buildHandler($db, function () {
                 throw new TerminateException();
@@ -383,13 +387,13 @@ namespace {
             $db = new FakeDb();
 
             // Simulate a user who is already locked
-            \MTG\Auth\UserStatus::$badLoginResult    = ['count' => 5];
-            \MTG\Auth\UserStatus::$userStatusResult  = [
+            UserStatus::$badLoginResult    = ['count' => 5];
+            UserStatus::$userStatusResult  = [
                 'code'   => 2,   // locked
                 'number' => 123,
                 'admin'  => 0,
             ];
-            \MTG\Auth\PasswordCheck::$result = 10; // could be 10 or something else; it won't matter
+            PasswordCheck::$result = 10; // could be 10 or something else; it won't matter
 
             $handler = $this->buildHandler($db, function () {
                 throw new TerminateException();

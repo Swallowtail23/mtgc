@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.12
+Version:     5.14
 Date:        28/12/25
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Core\INI;
+use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -32,7 +35,7 @@ $root = realpath($_SERVER["DOCUMENT_ROOT"]);
 require_once "$root/vendor/autoload.php";
 
 // Set error reporting based on ini file's dev setting
-$ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
+$ini = new INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
 $myURL = $iniArray['general']['URL'];
 $siteTitle = $iniArray['general']['title'];
@@ -195,7 +198,7 @@ try {
     if ($emailEnabled) :
         mail($adminEmail, $subject, $message, $from);
     else :
-        $fallbackMsg = new \MTG\Core\Message($logfile);
+        $fallbackMsg = new Message($logfile);
         $fallbackMsg->logMessage(
             '[NOTICE]',
             "Email disabled; fatal DB alert not sent to admin ({$err->getMessage()})"

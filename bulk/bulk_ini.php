@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     3.7
+Version:     3.9
 Date:        25/11/25
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -9,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Core\INI;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -20,7 +23,7 @@ $root = realpath(__DIR__ . '/..');
 require_once $root . "/vendor/autoload.php";
 
 //Set error reporting based on ini file's dev setting
-$ini = new \MTG\Core\INI("/opt/mtg/mtg_new.ini");
+$ini = new INI("/opt/mtg/mtg_new.ini");
 $iniArray = $ini->data;
 if ($iniArray['general']['tier'] === 'dev') :
     $tier = 'dev';

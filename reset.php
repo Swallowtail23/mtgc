@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.14
+Version:     3.16
 Date:        10/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\PasswordCheck;
+use MTG\Auth\TwoFactorManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -22,11 +26,11 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
 $cssver = cssVersionCheck();
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
+$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
@@ -81,7 +85,7 @@ if (!$emailEnabledFlag) :
     $message = "Password reset is unavailable because email is disabled.";
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
     if (isset($_POST['send_twofa_code'])) :
-        $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $sent = false;
         if (!empty($resetUserId) && $twofaRequired && $twofaMethod === 'email') :
             $sent = $tfaManager->startVerification($resetUserId, $tokenEmail);
@@ -116,7 +120,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         $twofaRequired = (bool) $row['tfa_enabled'];
         $twofaMethod = $row['tfa_method'] ?? '';
     endif;
-    if (!\MTG\Auth\PasswordCheck::validPass($newPassword)) :
+    if (!PasswordCheck::validPass($newPassword)) :
         $_SESSION['reset_message'] = "Password does not meet complexity requirements.";
         header(
             'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)
@@ -129,7 +133,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         );
         exit();
     else :
-        $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
         $twofaCode = trim($_POST['twofa_code'] ?? '');
         if (isset($_POST['send_twofa_code']) && $twofaRequired && $twofaMethod === 'email') :
             $tfaManager->startVerification($resetUserId, $email);

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        10/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Auth;
+
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class PasswordCheck
 {
@@ -29,7 +32,7 @@ class PasswordCheck
     {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
     }
 
@@ -348,7 +351,7 @@ class PasswordCheck
             );
             return false;
         endif;
-        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
+        if (!class_exists(MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available for password change notice");
             return false;
         endif;
@@ -360,7 +363,7 @@ class PasswordCheck
         $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 
-        $mailer = new \MTG\Core\MyPHPMailer(
+        $mailer = new MyPHPMailer(
             true,
             $smtpParameters,
             $serverEmail,
@@ -506,12 +509,12 @@ class PasswordCheck
      */
     protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
     {
-        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
+        if (!class_exists(MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
-        $mail = new \MTG\Core\MyPHPMailer(
+        $mail = new MyPHPMailer(
             true,
             $smtpParameters,
             $serverEmail,
@@ -532,7 +535,7 @@ class PasswordCheck
     public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
         global $serverEmail, $adminEmail, $emailEnabled;
-        $msg = new \MTG\Core\Message($this->logfile);
+        $msg = new Message($this->logfile);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
             $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");

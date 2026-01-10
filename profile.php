@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.13
+Version:     14.15
 Date:        10/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -31,8 +31,12 @@ use Endroid\QrCode\Label\Font\OpenSans;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use OTPHP\TOTP;
+use MTG\Auth\PasswordCheck;
+use MTG\Auth\TrustedDeviceManager;
+use MTG\Auth\TwoFactorManager;
+use MTG\Core\Message;
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
@@ -121,7 +125,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         ) :
             $msg->logMessage('[DEBUG]', "SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
-            $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+            $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
             $userHas2fa = $tfaManager->isEnabled($userId);
             $userTwofaMethod = $userHas2fa ? $tfaManager->getMethod($userId) : '';
         else :
@@ -169,7 +173,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         $db_password = $row['password'];
                         if ($new_password == $new_password_2) :
                             $msg->logMessage('[DEBUG]', "New passwords double type = match");
-                            if (\MTG\Auth\PasswordCheck::validPass($new_password)) :
+                            if (PasswordCheck::validPass($new_password)) :
                                 $msg->logMessage('[DEBUG]', "New password is a valid password");
                                 $twofaVerified = ($userHas2fa !== true);
                                 if ($userHas2fa) :
@@ -229,13 +233,13 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                     . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                                 // Removing all trusted devices
-                                                    (new \MTG\Auth\TrustedDeviceManager($db, $logfile))
+                                                    (new TrustedDeviceManager($db, $logfile))
                                                         ->removeAllUserDevices($userId);
                                                 echo "<div class='alert-box success' id='pwdchange'>"
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
                                                     . "</div>";
-                                                $passwordCheck = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;
@@ -304,7 +308,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
             //7. 2FA Section
                 // Get 2FA status for this user
-                $tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
                 $tfa_enabled = $tfaManager->isEnabled($userId);
 
                 // Check if we should enable or disable 2FA
@@ -646,7 +650,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 </div> <?php
 
                 // Get trusted devices for this user
-                $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
+                $deviceManager = new TrustedDeviceManager($db, $logfile);
                 // Get the current device's token hash, if the cookie is set.
                 $currentDeviceHash = null;
                 if (isset($_COOKIE[$deviceManager->getCookieName()])) :

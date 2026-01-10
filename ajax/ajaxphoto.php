@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.13
 Date:        10/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -21,13 +25,13 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $response = ['success' => false, 'message' => ''];
 
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxphoto.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxphoto.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxphoto");
@@ -46,7 +50,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     exit();
 else :
     // Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
@@ -64,7 +68,7 @@ else :
             returnResponse();
         endif;
 
-        $deckManager = new \MTG\Cards\DeckManager(
+        $deckManager = new DeckManager(
             $db,
             $logfile,
             $userEmail,
@@ -203,7 +207,7 @@ else :
             returnResponse();
         endif;
 
-        $deckManager = new \MTG\Cards\DeckManager(
+        $deckManager = new DeckManager(
             $db,
             $logfile,
             $userEmail,

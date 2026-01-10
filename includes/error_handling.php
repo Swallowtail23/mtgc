@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.7
 Date:        25/11/25
 Name:        error_handling.php
 Purpose:     Process page initiation and setup error handling.
@@ -11,6 +11,8 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Core\Message;
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
@@ -18,7 +20,7 @@ endif;
 function mtgError($number, $string, $file, $line, $context = '')
 {
     global $logfile, $adminEmail, $serverEmail, $emailEnabled;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
         $userEmail = $_SESSION['useremail'];
@@ -110,7 +112,7 @@ function mtgException($err)
     if ($emailEnabled) :
         mail($adminEmail, $subject, $message, $from);
     else :
-        $fallback = new \MTG\Core\Message($logfile);
+        $fallback = new Message($logfile);
         $fallback->logMessage(
             '[NOTICE]',
             "Email disabled; exception notification not sent ({$err->getMessage()})"

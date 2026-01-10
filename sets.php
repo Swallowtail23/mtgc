@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.14
+Version:     4.16
 Date:        10/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -22,8 +25,8 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
-$msg = new \MTG\Core\Message($logfile);
+SessionManager::forcePasswordChange($logfile);
+$msg = new Message($logfile);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -68,7 +71,7 @@ endif;
     <?php include 'includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script>
-        const csrfToken = <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
+        const csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
 
         function reloadImages(setcode) {
             document.body.style.cursor = "wait";

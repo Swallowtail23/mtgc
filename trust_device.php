@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.7
 Date:        10/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Auth\TrustedDeviceManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -27,7 +31,7 @@ require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $cssver = cssVersionCheck();
 
 if (!isset($db) || !$db instanceof mysqli) {
@@ -51,11 +55,11 @@ if (empty($_SESSION['trust_device_flow'])) :
 endif;
 unset($_SESSION['trust_device_flow']);
 
-$csrfToken = \MTG\Auth\SessionManager::generateCsrfToken();
+$csrfToken = SessionManager::generateCsrfToken();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') :
     $submittedToken = $_POST['csrf_token'] ?? '';
-    if (!\MTG\Auth\SessionManager::validateCsrfToken($submittedToken)) :
+    if (!SessionManager::validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in trust_device.php');
         die('Invalid request.');
     endif;
@@ -78,7 +82,7 @@ if ($trust_choice !== 'none') :
         try {
             $user_id = (int) $_SESSION['user'];
             $msg->logMessage('[DEBUG]', "Creating trusted device for user $user_id");
-            $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
+            $deviceManager = new TrustedDeviceManager($db, $logfile);
             $result = $deviceManager->createTrustedDevice($user_id, $trustDuration);
             $msg->logMessage(
                 '[NOTICE]',

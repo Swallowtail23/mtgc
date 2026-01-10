@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.11
+Version:     5.13
 Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\PriceManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -22,15 +26,15 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
-$priceMgr = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
+$msg = new Message($logfile);
+$priceMgr = new PriceManager($db, $logfile, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");
 
 $expectedReferringPages = [
     $myURL . '/index.php',
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgrid.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgrid.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

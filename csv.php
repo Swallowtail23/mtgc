@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.10
+Version:     4.12
 Date:        10/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\ImportExport;
+use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -26,7 +29,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 // Page content starts here
 $requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);
@@ -60,7 +63,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
 
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

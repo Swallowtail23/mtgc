@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.2
 Date:        21/12/25
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
@@ -14,6 +14,8 @@ To do:       -
 namespace MTG\Auth;
 
 use OTPHP\TOTP;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class TwoFactorManager
 {
@@ -39,10 +41,10 @@ class TwoFactorManager
         $this->smtp_parameters = $smtpParameters;
         $this->serverEmail = $serverEmail;
 
-        if (!class_exists(\MTG\Core\Message::class)) :
+        if (!class_exists(Message::class)) :
             require_once __DIR__ . '/../Core/Message.php';
         endif;
-        $this->log = new \MTG\Core\Message($this->logfile);
+        $this->log = new Message($this->logfile);
     }
 
     private function directLog($level, $text)
@@ -417,13 +419,13 @@ class TwoFactorManager
             return false;
         endif;
 
-        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
+        if (!class_exists(MyPHPMailer::class)) :
             $this->directLog('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
         try {
-            $mail = new \MTG\Core\MyPHPMailer(
+            $mail = new MyPHPMailer(
                 true,
                 $this->smtp_parameters,
                 $this->serverEmail,

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.10
 Date:        10/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -23,7 +27,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
 require_once 'ajaxdeckfragments_lib.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $response = [
     'success' => false,
@@ -34,7 +38,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckadd.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckadd.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -56,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
 endif;
 
 $csrfToken = $_POST['csrf_token'] ?? '';
-if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
+if (!SessionManager::validateCsrfToken($csrfToken)) :
     $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;
@@ -75,7 +79,7 @@ if ($quickadd === '') :
     returnResponse($response);
 endif;
 
-$sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];
@@ -88,7 +92,7 @@ if ($mytable === '') :
     returnResponse($response);
 endif;
 
-$deckManager = new \MTG\Cards\DeckManager(
+$deckManager = new DeckManager(
     $db,
     $logfile,
     $userEmail,

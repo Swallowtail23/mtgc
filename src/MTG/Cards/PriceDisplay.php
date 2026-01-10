@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        23/12/25
 Name:        PriceDisplay.php
 Purpose:     Build price values and HTML for card detail pricing displays.
@@ -13,13 +13,15 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\Message;
+
 class PriceDisplay
 {
     public static function computePrices($scryfallResult, $row, $cardtypes, $rate, $logfile = null): array
     {
         $msg = null;
         if (!empty($logfile)) :
-            $msg = new \MTG\Core\Message($logfile);
+            $msg = new Message($logfile);
             $msg->logMessage('[DEBUG]', "Building price data for cardtypes '$cardtypes'");
         endif;
 
@@ -39,7 +41,7 @@ class PriceDisplay
             and $scryfallResult["price"] !== null
             and str_contains($cardtypes, 'normal')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using Scryfall normal price");
             endif;
             $prices['normalprice'] = number_format($scryfallResult['price'], 2);
@@ -50,13 +52,13 @@ class PriceDisplay
             and $row["price"] != 0.00
             and str_contains($cardtypes, 'normal')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using database normal price");
             endif;
             $prices['normalprice'] = number_format($row['price'], 2);
             $prices['localnormal'] = number_format(($row["price"] * $rate), 2, '.', ',');
         else :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "No normal price");
             endif;
         endif;
@@ -68,7 +70,7 @@ class PriceDisplay
             and $scryfallResult["price_foil"] !== null
             and str_contains($cardtypes, 'foil')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using Scryfall foil price");
             endif;
             $prices['foilprice'] = number_format($scryfallResult['price_foil'], 2);
@@ -79,13 +81,13 @@ class PriceDisplay
             and $row["price_foil"] != 0.00
             and str_contains($cardtypes, 'foil')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using database foil price");
             endif;
             $prices['foilprice'] = number_format($row['price_foil'], 2);
             $prices['localfoil'] = number_format(($row["price_foil"] * $rate), 2, '.', ',');
         else :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "No foil price");
             endif;
         endif;
@@ -97,7 +99,7 @@ class PriceDisplay
             and $scryfallResult["price_etched"] !== null
             and str_contains($cardtypes, 'etch')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using Scryfall etched price");
             endif;
             $prices['etchprice'] = number_format($scryfallResult['price_etched'], 2);
@@ -108,13 +110,13 @@ class PriceDisplay
             and $row["price_etched"] != 0.00
             and str_contains($cardtypes, 'etch')
         ) :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "Using database etched price");
             endif;
             $prices['etchprice'] = number_format($row['price_etched'], 2);
             $prices['localetched'] = number_format(($row["price_etched"] * $rate), 2, '.', ',');
         else :
-            if ($msg instanceof \MTG\Core\Message) :
+            if ($msg instanceof Message) :
                 $msg->logMessage('[DEBUG]', "No etched price");
             endif;
         endif;

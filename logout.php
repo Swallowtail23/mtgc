@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.4
+Version:     2.6
 Date:        25/11/25
 Name:        logout.php
 Purpose:     Destroy the session, log it, and head to login.php.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\TrustedDeviceManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -27,13 +30,13 @@ $removeTrusted = 1;
 require 'includes/ini.php';
 require 'includes/error_handling.php';
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[NOTICE]', "User $userEmail logging out from {$_SERVER['REMOTE_ADDR']}");
 
 // Remove trusted device token
 if ($db && $userId > 0 && $removeTrusted === 1) :
     try {
-        $deviceManager = new \MTG\Auth\TrustedDeviceManager($db, $logfile);
+        $deviceManager = new TrustedDeviceManager($db, $logfile);
 
         $msg->logMessage('[DEBUG]', 'Attempting to remove trusted device');
         $deviceManager->removeTrustedDevice();

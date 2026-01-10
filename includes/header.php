@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        10/01/26
 Name:        header.php
 Purpose:     PHP script to display header
@@ -11,6 +11,8 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Auth\SessionManager;
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
@@ -18,7 +20,7 @@ endif;
 
 <script>
     window.mtgAjaxConfig = window.mtgAjaxConfig || {};
-    window.mtgAjaxConfig.csrfToken = <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
+    window.mtgAjaxConfig.csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
 </script>
 <script>
     $(function() {

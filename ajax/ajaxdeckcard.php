@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.23
+Version:     1.25
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -10,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImageManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -23,7 +28,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
 require_once 'ajaxdeckfragments_lib.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $response = [
     'success' => false,
@@ -33,7 +38,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckcard.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdeckcard.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -55,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
 endif;
 
 $csrfToken = $_POST['csrf_token'] ?? '';
-if (!\MTG\Auth\SessionManager::validateCsrfToken($csrfToken)) :
+if (!SessionManager::validateCsrfToken($csrfToken)) :
     $response['error'] = 'Invalid request token';
     returnResponse($response);
 endif;
@@ -71,7 +76,7 @@ endif;
 
 $msg->logMessage('[DEBUG]', "Deck action '$action' for deck $deckNumber and card $cardId");
 
-$sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];
@@ -84,7 +89,7 @@ if ($mytable === '') :
     returnResponse($response);
 endif;
 
-$deckManager = new \MTG\Cards\DeckManager(
+$deckManager = new DeckManager(
     $db,
     $logfile,
     $userEmail,
@@ -232,7 +237,7 @@ if ($action === 'maintoside' && $sideqty > 0) :
             $card_type = $detailRow['f1_type'];
         endif;
         $cardref = str_replace('.', '-', $detailRow['cardsid']);
-        $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+        $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
         $imageFunction = $imageManager->getImage(
             $cardset,
             $cardId,

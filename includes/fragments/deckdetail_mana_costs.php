@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        26/12/25
 Name:        deckdetail_mana_costs.php
 Purpose:     Deck detail mana costs and sources fragment.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\CardUtils;
+
 $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
 ?>
 <div id="deck-mana-costs-fragment" data-has-content="<?php echo $hasManaCosts ? '1' : '0'; ?>">
@@ -27,7 +30,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($w + $gw > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{W}"); ?>
+                    <?php echo CardUtils::symbolReplace("{W}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $w === 0 ? '-' : "$w ($w_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gw === 0 ? '-' : "$gw ($gw_percent%)"; ?> </td>
@@ -36,7 +39,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($u + $gu > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{U}"); ?>
+                    <?php echo CardUtils::symbolReplace("{U}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $u === 0 ? '-' : "$u ($u_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gu === 0 ? '-' : "$gu ($gu_percent%)"; ?> </td>
@@ -45,7 +48,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($b + $gb > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{B}"); ?>
+                    <?php echo CardUtils::symbolReplace("{B}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $b === 0 ? '-' : "$b ($b_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gb === 0 ? '-' : "$gb ($gb_percent%)"; ?> </td>
@@ -54,7 +57,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($r + $gr > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{R}"); ?>
+                    <?php echo CardUtils::symbolReplace("{R}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $r === 0 ? '-' : "$r ($r_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gr === 0 ? '-' : "$gr ($gr_percent%)"; ?> </td>
@@ -63,7 +66,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($g + $gg > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{G}"); ?>
+                    <?php echo CardUtils::symbolReplace("{G}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $g === 0 ? '-' : "$g ($g_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gg === 0 ? '-' : "$gg ($gg_percent%)"; ?> </td>
@@ -72,7 +75,7 @@ $hasManaCosts = $show_mana_block && $decktype != 'Wishlist';
             if ($c + $gc > 0) : ?>
             <tr>
                 <td style="text-align: center; width: 20%;">
-                    <?php echo \MTG\Cards\CardUtils::symbolReplace("{C}"); ?>
+                    <?php echo CardUtils::symbolReplace("{C}"); ?>
                 </td>
                 <td style="text-align: center;"><?php echo $c === 0 ? '-' : "$c ($c_percent%)"; ?> </td>
                 <td style="text-align: center;"><?php echo $gc === 0 ? '-' : "$gc ($gc_percent%)"; ?> </td>

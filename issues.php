@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        10/01/26
 Name:        issues.php
 Purpose:     Issues page.
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -21,7 +23,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-\MTG\Auth\SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
+SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>

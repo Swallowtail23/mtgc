@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.5
+Version:     3.7
 Date:        29/12/25
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -15,12 +15,16 @@ To do:       -
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 ensureDirectoryExists($imgLocation . 'json');
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
+use MTG\Bulk\RulingsHasher;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
+use MTG\Core\UserAgent;
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
@@ -42,7 +46,7 @@ $log_interval = 2500;
 $timeslice_start = microtime(true);
 
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: fetching $url");
-$userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
+$userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
 $msg->logMessage('[DEBUG]', "Scryfall Rulings API user agent set to $userAgent");
 $options = array(
     CURLOPT_RETURNTRANSFER => true,
@@ -175,7 +179,7 @@ if ($keyBind === false) :
     throw new Exception('[ERROR] scryfall_rulings: Binding key parameters: ' . $db->error);
 endif;
 
-$hasher = new \MTG\Bulk\RulingsHasher();
+$hasher = new RulingsHasher();
 
 $msg->logMessage('[DEBUG]', 'Starting rulings import transaction batch');
 $batchStart = $db->begin_transaction();
@@ -307,7 +311,7 @@ $subject = "MTG rulings update completed";
 $body = "Total rulings: $total_count; added: $count_add; updated: $count_update; unchanged: $count_other; "
     . "removed: $deleted_count";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_rulings alert');

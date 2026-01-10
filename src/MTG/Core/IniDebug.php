@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        25/11/25
 Name:        IniDebug.php
 Purpose:     Pre-database debugging; logs messages to logfiles or syslog when enabled.
@@ -21,7 +21,7 @@ class IniDebug
     public function __construct($logfile)
     {
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
     }
 
     public function inidebugging($logLevelIni, $logfile, $message)

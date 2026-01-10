@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.45
+Version:     14.47
 Date:        10/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -10,6 +10,13 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\CardUtils;
+use MTG\Cards\ImageManager;
+use MTG\Cards\ImportExport;
+use MTG\Cards\PriceManager;
+use MTG\Core\Message;
 
 // Call script initiation mechs
 if (file_exists('includes/sessionname.local.php')) :
@@ -24,9 +31,9 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($logfile);
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 // Default numbers per page and max
 $listperpage = 30;
@@ -85,7 +92,7 @@ if (isset($_GET['name']) and $_GET['name'] !== "") :
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
-    $interpretedString = \MTG\Cards\ImportExport::inputInterpreter($name);
+    $interpretedString = ImportExport::inputInterpreter($name);
     if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
         $name = $interpretedString['name'];
     else :
@@ -313,7 +320,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') and ( $scope == 'mycollection')) :
     $msg->logMessage('[NOTICE]', "My Collection / Price query called, updating collection pricing");
-    $obj = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
+    $obj = new PriceManager($db, $logfile, $userEmail);
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
@@ -681,7 +688,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
+                                $cardtypes = CardUtils::cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';
@@ -920,20 +927,20 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 </td>
                                 <?php
                                 if (isset($row['manacost']) and !empty($row['manacost'])) :
-                                    $manac = \MTG\Cards\CardUtils::symbolReplace($row['manacost']);
+                                    $manac = CardUtils::symbolReplace($row['manacost']);
                                 else :
                                     $manac = null;
                                 endif;
                                 if (isset($row['ability']) and !empty($row['ability'])) :
-                                    $ability = \MTG\Cards\CardUtils::symbolReplace($row['ability']);
+                                    $ability = CardUtils::symbolReplace($row['ability']);
                                     $msg->logMessage('[DEBUG]', "Ability: $ability");
                                 endif;
                                 if (isset($row['f1_ability']) and !empty($row['f1_ability'])) :
-                                    $f1Ability = \MTG\Cards\CardUtils::symbolReplace($row['f1_ability']);
+                                    $f1Ability = CardUtils::symbolReplace($row['f1_ability']);
                                     $msg->logMessage('[DEBUG]', "F1 Ability: $f1Ability");
                                 endif;
                                 if (isset($row['f2_ability']) and !empty($row['f2_ability'])) :
-                                    $f2Ability = \MTG\Cards\CardUtils::symbolReplace($row['f2_ability']);
+                                    $f2Ability = CardUtils::symbolReplace($row['f2_ability']);
                                     $msg->logMessage('[DEBUG]', "F2 Ability: $f2Ability");
                                 endif;
                                 ?>
@@ -1064,7 +1071,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             $scryid = $row['cs_id'];
                             if (isset($row['finishes'])) :
                                 $finishes = json_decode($row['finishes'], true);
-                                $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
+                                $cardtypes = CardUtils::cardTypes($finishes);
                             else :
                                 $finishes = null;
                                 $cardtypes = 'none';
@@ -1091,7 +1098,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new \MTG\Cards\ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
                             $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],
@@ -1182,7 +1189,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             if ($manaCostRaw === '' or $manaCostRaw === '0' or $manaCostRaw === '{0}') :
                                 $manaCostDisplay = '0';
                             else :
-                                $manaCostDisplay = \MTG\Cards\CardUtils::symbolReplace($manaCostRaw);
+                                $manaCostDisplay = CardUtils::symbolReplace($manaCostRaw);
                             endif;
                             $cardTypeRaw = $row['type'] ?? '';
                             if ($cardTypeRaw === '' && !empty($row['f1_type'])) :

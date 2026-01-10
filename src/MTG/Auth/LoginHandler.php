@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.13
 Date:        10/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -31,6 +31,8 @@ Current flow:
 namespace MTG\Auth;
 
 use andkab\Turnstile\Turnstile;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 class LoginHandler
 {
@@ -61,7 +63,7 @@ class LoginHandler
     ) {
         $this->db = $db;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->turnstileEnabled = $turnstileEnabled;
         $this->turnstileSecretKey = $turnstileSecretKey;
         $this->badLoginLimit = $badLoginLimit;
@@ -91,7 +93,7 @@ class LoginHandler
             '[DEBUG]',
             'Checking for trusted device cookie with db connection: ' . (isset($this->db) ? 'valid' : 'missing')
         );
-        $deviceManager = new \MTG\Auth\TrustedDeviceManager($this->db, $this->logfile);
+        $deviceManager = new TrustedDeviceManager($this->db, $this->logfile);
 
         $trustedDeviceUser = $deviceManager->validateTrustedDevice();
         $trustedDeviceUser = (int) $trustedDeviceUser;
@@ -276,7 +278,7 @@ class LoginHandler
         endif;
 
         // Create once — reuse for everything
-        $user = new \MTG\Auth\UserStatus($this->db, $this->logfile, $email);
+        $user = new UserStatus($this->db, $this->logfile, $email);
 
         // Check bad login count
         $badLoginResult = $user->getBadLogin();
@@ -347,7 +349,7 @@ class LoginHandler
         endif;
 
         // At this point, account is in a "normal" status; now we check password
-        $passwordCheck = new \MTG\Auth\PasswordCheck($this->db, $this->logfile, $this->siteTitle);
+        $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
         $passwordResult = $passwordCheck->validatePassword($email, $password);
 
         if ($passwordResult !== 10) :
@@ -376,7 +378,7 @@ class LoginHandler
             );
         endif;
 
-        $tfaManager = new \MTG\Auth\TwoFactorManager(
+        $tfaManager = new TwoFactorManager(
             $this->db,
             $this->smtpParameters,
             $this->serverEmail,
@@ -595,7 +597,7 @@ class LoginHandler
             $this->message->logMessage('[NOTICE]', "Lock notice suppressed; email disabled for $email");
             return false;
         endif;
-        if (!class_exists(\MTG\Core\MyPHPMailer::class)) :
+        if (!class_exists(MyPHPMailer::class)) :
             $this->message->logMessage(
                 '[ERROR]',
                 "Lock notice failed; MyPHPMailer not available for $email"
@@ -616,7 +618,7 @@ class LoginHandler
               . "or contact the administrator.</p>"
               . "<p>Resetting your password will unlock your account.</p>";
 
-        $mailer = new \MTG\Core\MyPHPMailer(
+        $mailer = new MyPHPMailer(
             true,
             $this->smtpParameters,
             $this->serverEmail,
@@ -638,7 +640,7 @@ class LoginHandler
 
     public static function loginStamp($db, $logfile, $userEmail)
     {
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
 
         $msg->logMessage('[NOTICE]', "Writing user login");
         $logindate = date("Y-m-d");

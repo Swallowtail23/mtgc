@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        26/12/25
 Name:        deckdetail_deck_lists.php
 Purpose:     Deck detail deck lists fragment wrapper.
@@ -10,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 $hasDeckLists = ($total + $sidetotal > 0);
 ?>
 <div id="deck-lists-fragment" data-has-content="<?php echo $hasDeckLists ? '1' : '0'; ?>">

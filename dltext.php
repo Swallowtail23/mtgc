@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.5
+Version:     4.7
 Date:        10/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
@@ -10,6 +10,9 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -21,7 +24,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-\MTG\Auth\SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
+SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
 
 if (isset($_POST['decknumber'])) :
     $deckNumber = filter_input(
@@ -31,7 +34,7 @@ if (isset($_POST['decknumber'])) :
         FILTER_FLAG_NO_ENCODE_QUOTES
     );
     $deckNumber = htmlspecialchars_decode($deckNumber, ENT_QUOTES);
-    $obj = new \MTG\Cards\DeckManager(
+    $obj = new DeckManager(
         $db,
         $logfile,
         $userEmail,
@@ -59,7 +62,7 @@ elseif (isset($_POST['text'])) :
         : 'dltext.txt';
 
     // Instantiate DeckManager and use the exportMissing function to handle the export
-    $obj = new \MTG\Cards\DeckManager(
+    $obj = new DeckManager(
         $db,
         $logfile,
         $userEmail,

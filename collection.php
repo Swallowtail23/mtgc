@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.14
 Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -10,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Cards\ImportExport;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -22,7 +27,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', "Collection page load");
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
@@ -56,7 +61,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
     if ($csvResult !== true) :
@@ -133,7 +138,7 @@ endif;
         <script>
             var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
                 ? window.mtgAjaxConfig.csrfToken
-                : <?php echo json_encode(\MTG\Auth\SessionManager::generateCsrfToken()); ?>;
+                : <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
             window.mtgAjaxConfig = window.mtgAjaxConfig || {};
             if (!window.mtgAjaxConfig.csrfToken) {
                 window.mtgAjaxConfig.csrfToken = csrfToken;
@@ -702,7 +707,7 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new \MTG\Cards\ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,
@@ -717,7 +722,7 @@ endif;
                             if ($adddeck === 'yes') :
                                 $currentDateTime = date("j F Y, g:i:sa");
                                 $tmpdeckname = $currentDateTime;
-                                $obj = new \MTG\Cards\DeckManager(
+                                $obj = new DeckManager(
                                     $db,
                                     $logfile,
                                     $userEmail,
@@ -740,7 +745,7 @@ endif;
                                     echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
                                         . "var deckCreated = true;</script>";
                                     $file = fopen($_FILES['filename']['tmp_name'], 'r');
-                                    $deckManager = new \MTG\Cards\DeckManager(
+                                    $deckManager = new DeckManager(
                                         $db,
                                         $logfile,
                                         $userEmail,

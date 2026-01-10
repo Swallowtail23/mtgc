@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        10/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -12,6 +12,8 @@ To do:       -
 */
 
 namespace MTG\Auth;
+
+use MTG\Core\Message;
 
 class SessionManager
 {
@@ -39,7 +41,7 @@ class SessionManager
         $this->fxAPI = $fxAPI;
         $this->fxLocal = $fxLocal;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->sessionArray = [
             'usernumber' => '',
             'username' => '',
@@ -341,7 +343,7 @@ class SessionManager
         if ((isset($_SESSION["chgpwd"])) and ($_SESSION["chgpwd"] == true)) :
             $logfile = $logfile ?? ($GLOBALS['logfile'] ?? null);
             if ($logfile !== null) :
-                $msg = new \MTG\Core\Message($logfile);
+                $msg = new Message($logfile);
                 $msg->logMessage('[DEBUG]', 'forcePasswordChange: redirecting to profile.php');
             endif;
             $target = '/profile.php';
@@ -379,7 +381,7 @@ class SessionManager
 
     public static function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
     {
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
         $contextLabel = $context !== '' ? $context . ': ' : '';
         $msg->logMessage('[DEBUG]', "{$contextLabel}Ajax validation started");
 

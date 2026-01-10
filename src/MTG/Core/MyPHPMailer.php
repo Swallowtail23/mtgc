@@ -1,12 +1,12 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.11
 Date:        20/12/25
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
-                 $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+                 $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
                  $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
@@ -44,7 +44,7 @@ class MyPHPMailer extends PHPMailer
         $this->smtpParameters = $smtpParameters;
         $this->serverEmail = $serverEmail;
         $this->logfile = $logfile;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
 
         // Set defaults for PHPMailer from ini.file

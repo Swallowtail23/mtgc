@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        21/12/25
 Name:        INI.php
 Purpose:     Simple PHP class to manage INI files (read/write).
@@ -15,7 +15,7 @@ To do:       -
 Examples
 
 // Parse config.ini
-$ini = new \MTG\Core\INI('config.ini');
+$ini = new INI('config.ini');
 
 echo '<pre>';
 echo 'Content of: config.ini' . PHP_EOL;

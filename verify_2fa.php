@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.13
 Date:        10/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -10,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\LoginHandler;
+use MTG\Auth\SessionManager;
+use MTG\Auth\TwoFactorManager;
+use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -23,7 +28,7 @@ require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 $cssver = cssVersionCheck();
 
 if (!isset($_SESSION['user_pending_2fa'])) :
@@ -36,7 +41,7 @@ $user_id = (int) $_SESSION['user_pending_2fa'];
 $email = $_SESSION['useremail_pending_2fa'];
 $is_admin = $_SESSION['admin_pending_2fa'] ?? false;
 $pwd_change_required = $_SESSION['chgpwd_pending_2fa'] ?? false;
-$tfaManager = new \MTG\Auth\TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+$tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
 $tfa_method = $tfaManager->getMethod($user_id);
 
 if (!isset($db) || !$db instanceof mysqli) :
@@ -44,7 +49,7 @@ if (!isset($db) || !$db instanceof mysqli) :
     die('A database error occurred, please try again later');
 endif;
 
-$csrfToken = \MTG\Auth\SessionManager::generateCsrfToken();
+$csrfToken = SessionManager::generateCsrfToken();
 
 $verification_attempted = false;
 $verification_error = '';
@@ -54,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
     $code = trim($_POST['code']);
 
     $submittedToken = $_POST['csrf_token'] ?? '';
-    if (!\MTG\Auth\SessionManager::validateCsrfToken($submittedToken)) :
+    if (!SessionManager::validateCsrfToken($submittedToken)) :
         $msg->logMessage('[ERROR]', 'CSRF token mismatch in verify_2fa.php');
         die('Invalid request');
     endif;
@@ -76,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
                 $_SESSION['just_logged_in'] = true;
             endif;
 
-            if (!\MTG\Auth\LoginHandler::loginStamp($db, $logfile, $email)) :
+            if (!LoginHandler::loginStamp($db, $logfile, $email)) :
                 $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
             endif;
 

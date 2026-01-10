@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        23/12/25
 Name:        PriceManager.php
 Purpose:     Price management class.
@@ -12,6 +12,9 @@ To do:       -
 */
 
 namespace MTG\Cards;
+
+use MTG\Core\Message;
+use MTG\Core\UserAgent;
 
 class PriceManager
 {
@@ -28,7 +31,7 @@ class PriceManager
         $this->db = $db;
         $this->logfile = $logfile;
         $this->userEmail = $userEmail;
-        $this->message = new \MTG\Core\Message($this->logfile);
+        $this->message = new Message($this->logfile);
     }
 
     // Fetch TCG buy URI and price from scryfall.com JSON data
@@ -47,7 +50,7 @@ class PriceManager
         //Set the URL
         $url = $baseurl . "cards/" . $cardId . "?" . $time;
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail URL for $cardId is $url");
-        $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
         $this->message->logMessage('[DEBUG]', "Scryfall API user agent set to $userAgent");
 
         if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardId])) :

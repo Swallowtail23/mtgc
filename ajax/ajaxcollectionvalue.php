@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.10
 Date:        10/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -10,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\CollectionStats;
+use MTG\Cards\PriceManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require '../includes/sessionname.local.php';
@@ -20,13 +25,13 @@ startCustomSession();
 require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [
     $myURL . '/profile.php',
     $myURL . '/collection.php',
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+$ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
     $logfile,
     'ajaxcollectionvalue.php'
@@ -46,7 +51,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
 endif;
 
 // Need to run these as secpagesetup not run (see page notes)
-$sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
 $userArray = $sessionManager->getUserInfo();
 if ($userArray === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: User array returned false');
@@ -62,10 +67,10 @@ $userEmail = $_SESSION['useremail'];
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for table $mytable");
 
-$priceManager = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
+$priceManager = new PriceManager($db, $logfile, $userEmail);
 $updatedRows = $priceManager->updateCollectionValues($mytable);
 
-$statsHelper = new \MTG\Cards\CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
 $stats = $statsHelper->getStats($user, $mytable, $targetCurrency);
 
 $unformatted_value = $stats['value_usd'];

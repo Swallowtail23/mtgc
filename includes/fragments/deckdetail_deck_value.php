@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        26/12/25
 Name:        deckdetail_deck_value.php
 Purpose:     Deck detail deck value fragment.
@@ -10,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 $hasDeckValue = $show_mana_block;
 ?>
 <div id="deck-value-fragment" data-has-content="<?php echo $hasDeckValue ? '1' : '0'; ?>">

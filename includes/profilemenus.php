@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     1.0
+Version:     1.1
 Date:        07/12/25
 Name:        profilemenus.php
 Purpose:     Menus for profile/collection pages
@@ -9,6 +10,7 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;

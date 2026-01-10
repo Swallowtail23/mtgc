@@ -1,6 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use MTG\Cards\CardUtils;
 
 class SymbolReplaceTest extends TestCase
 {
@@ -15,7 +16,7 @@ class SymbolReplaceTest extends TestCase
             . '<img src="images/g.png" alt="{G}" class="manaimg">'
             . '<img src="images/colourless_mana.png" alt="{C}" class="manaimg">';
 
-        $this->assertSame($expected, \MTG\Cards\CardUtils::symbolReplace($input));
+        $this->assertSame($expected, CardUtils::symbolReplace($input));
     }
 
     public function testReplacesHybridAndPhyrexianSymbols()
@@ -26,7 +27,7 @@ class SymbolReplaceTest extends TestCase
             . '<img src="images/chaos.png" alt="{PG}" class="manaimg">'
             . 'Planeswalk';
 
-        $this->assertSame($expected, \MTG\Cards\CardUtils::symbolReplace($input));
+        $this->assertSame($expected, CardUtils::symbolReplace($input));
     }
 
     public function testReplacesNumbersNewlinesAndHalfSymbol()
@@ -37,7 +38,7 @@ class SymbolReplaceTest extends TestCase
             . '<img src="images/half.png" alt="{1/2}" class="manaimg">'
             . '-';
 
-        $this->assertSame($expected, \MTG\Cards\CardUtils::symbolReplace($input));
+        $this->assertSame($expected, CardUtils::symbolReplace($input));
     }
 
     public function testPoundAndHashAreHandled()
@@ -45,6 +46,6 @@ class SymbolReplaceTest extends TestCase
         $input = 'Line£With#Hash';
         $expected = 'Line<br>WithHash';
 
-        $this->assertSame($expected, \MTG\Cards\CardUtils::symbolReplace($input));
+        $this->assertSame($expected, CardUtils::symbolReplace($input));
     }
 }

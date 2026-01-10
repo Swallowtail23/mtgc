@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.4
+Version:     2.6
 Date:        02/12/25
 Name:        menu.php
 Purpose:     PHP script to display menu
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -47,11 +49,11 @@ endif;
                         <?php
                     endif;
                 else :
-                    $obj = new \MTG\Core\Message($logfile);
+                    $obj = new Message($logfile);
                     $obj->logMessage('[DEBUG]', 'Menu updatenotices query returned no rows');
                 endif;
             else :
-                $obj = new \MTG\Core\Message($logfile);
+                $obj = new Message($logfile);
                 $obj->logMessage('[DEBUG]', 'Menu updatenotices query failed');
             endif;
         endif;

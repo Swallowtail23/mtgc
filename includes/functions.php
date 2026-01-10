@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.24
+Version:     28.26
 Date:        10/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -11,6 +11,9 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Core\Message;
+use MTG\Core\UserAgent;
+
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
@@ -19,7 +22,7 @@ endif;
 function cssVersionCheck()
 {
     global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
     if (!is_object($db) or !method_exists($db, 'execute_query')) :
         $msg->logMessage(
             '[WARNING]',
@@ -89,7 +92,7 @@ function setMtceMode($toggle): bool
 {
     global $db, $logfile;
 
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $toggle = strtolower(trim((string) $toggle));
 
@@ -138,7 +141,7 @@ function setMtceMode($toggle): bool
 function mtceModeCheck($user)
 {
     global $db,$logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking maintenance mode, user $user");
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
@@ -202,7 +205,7 @@ function langReplace($str)
 function checkRemoteFile($url)
 {
     global $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     if (stripos($url, 'file://') === 0) :
         $path = substr($url, 7);
@@ -215,7 +218,7 @@ function checkRemoteFile($url)
     endif;
 
     $ch = curl_init();
-    $userAgent = \MTG\Core\UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
+    $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
     curl_setopt($ch, CURLOPT_VERBOSE, 1);
@@ -318,13 +321,13 @@ function ensureDirectoryExists($path)
     endif;
 
     if (@mkdir($path, 0755, true)) :
-        $msg = new \MTG\Core\Message($logfile);
+        $msg = new Message($logfile);
         $msg->logMessage('[NOTICE]', "Created directory $path");
         return;
     endif;
 
     $error = error_get_last();
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
     $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
     throw new Exception("[ERROR] Unable to create directory {$path}");
 }
@@ -333,7 +336,7 @@ function validateTrueDecimal($v)
 {
     global $logfile;
     $result = floor($v);
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking $v for true decimal, result is $result");
     return(floor($v) != $v);
@@ -342,7 +345,7 @@ function validateTrueDecimal($v)
 function validUUID($uuid)
 {
     global $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking for valid UUID ($uuid)");
     if (
@@ -362,7 +365,7 @@ function validUUID($uuid)
 function validTableName($input)
 {
     global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $msg->logMessage('[DEBUG]', "Checking for valid table name ($input)");
     $pattern = '/^\d+collection$/';

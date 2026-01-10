@@ -1,6 +1,7 @@
 <?php
+
 /*
-Version:     6.8
+Version:     6.10
 Date:        10/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -9,6 +10,11 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\PasswordCheck;
+use MTG\Auth\SessionManager;
+use MTG\Core\Message;
+
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
 else :
@@ -20,8 +26,8 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-\MTG\Auth\SessionManager::forcePasswordChange($logfile);
-$msg = new \MTG\Core\Message($logfile);
+SessionManager::forcePasswordChange($logfile);
+$msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
 function shouldRequirePasswordForNewUser($emailEnabled)
 {
@@ -127,7 +133,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
-                $obj = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
+                $obj = new PasswordCheck($db, $logfile, $siteTitle);
                 $msg->logMessage(
                     '[DEBUG]',
                     "Attempting to create user $username_raw with email $postemail_raw"
@@ -272,7 +278,7 @@ require('../includes/menu.php');
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
-                        $obj = new \MTG\Auth\PasswordCheck($db, $logfile, $siteTitle);
+                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent"

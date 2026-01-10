@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -22,11 +26,11 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
 $response = ['success' => false, 'error' => ''];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest(
+$ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
     $logfile,
     'ajaxduplicatedeck.php'
@@ -50,7 +54,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     returnResponse();
 else :
     // Need to run these as secpagesetup is not run (see page notes)
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
@@ -87,7 +91,7 @@ else :
         } while ($result !== false && $result->num_rows > 0);
 
             // Instantiate the DeckManager
-            $obj = new \MTG\Cards\DeckManager(
+            $obj = new DeckManager(
                 $db,
                 $logfile,
                 $userEmail,

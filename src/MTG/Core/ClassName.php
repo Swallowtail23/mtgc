@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        07/12/25
 Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
@@ -62,7 +62,7 @@ class ClassName
         $this->db         = $db;
         $this->logfile    = $logfile;
         $this->identifier = $identifier;
-        $this->message    = new \MTG\Core\Message($this->logfile);
+        $this->message    = new Message($this->logfile);
     }
 
     /**

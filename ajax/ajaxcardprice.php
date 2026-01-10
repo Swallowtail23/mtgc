@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.7
 Date:        10/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
@@ -10,6 +10,12 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\CardUtils;
+use MTG\Cards\PriceDisplay;
+use MTG\Cards\PriceManager;
+use MTG\Core\Message;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -21,12 +27,12 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 include '../includes/colour.php';
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 
 $expectedReferringPages = [
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = \MTG\Auth\SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardprice.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardprice.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
@@ -43,7 +49,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new \MTG\Auth\SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];
@@ -60,7 +66,7 @@ else :
 
     $msg->logMessage('[DEBUG]', "Async price refresh for card $cardUUID");
 
-    $priceManager = new \MTG\Cards\PriceManager($db, $logfile, $userEmail);
+    $priceManager = new PriceManager($db, $logfile, $userEmail);
     $scryfallresult = $priceManager->scryfall($cardUUID);
     $msg->logMessage('[DEBUG]', "Scryfall refresh action '{$scryfallresult['action']}' for $cardUUID");
 
@@ -103,7 +109,7 @@ else :
     endif;
 
     if (!empty($finishes)) :
-        $cardtypes = \MTG\Cards\CardUtils::cardTypes($finishes);
+        $cardtypes = CardUtils::cardTypes($finishes);
     else :
         $msg->logMessage('[DEBUG]', "Finishes empty for $cardUUID, defaulting cardtypes to none");
         $cardtypes = 'none';
@@ -111,15 +117,15 @@ else :
 
     $tcg_buy_uri = $scryfallresult['tcg_uri'] ?? ($row['tcg_buy_uri'] ?? null);
 
-    $priceData = \MTG\Cards\PriceDisplay::computePrices(
+    $priceData = PriceDisplay::computePrices(
         $scryfallresult,
         $row,
         $cardtypes,
         $rate,
         $logfile
     );
-    $priceHtml = \MTG\Cards\PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
+    $priceHtml = PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
     $msg->logMessage('[DEBUG]', "Price HTML built for $cardUUID");
 
-    ajaxRespondJson(\MTG\Cards\PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
+    ajaxRespondJson(PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
 endif;

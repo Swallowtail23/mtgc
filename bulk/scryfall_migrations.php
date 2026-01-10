@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.11
+Version:     2.13
 Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -14,11 +14,13 @@ To do:       -
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
+use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new \MTG\Core\Message($logfile);
+$msg = new Message($logfile);
 ensureDirectoryExists($imgLocation . 'json');
 
 // URLs
@@ -40,7 +42,7 @@ $max_fileage = 23 * 3600;
 function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 {
     global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
     $msg->logMessage('[DEBUG]', "Fetching Download URI: $url");
     if ($pageNumber == 0) :
         $page = $file_location . 'migrations.json';
@@ -78,7 +80,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 function checkMigrationDataForMore($file)
 {
     global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $next_page = 'none';
@@ -96,7 +98,7 @@ function checkMigrationDataForMore($file)
 function clearDBMigrations()
 {
     global $db, $logfile;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     if ($result = $db->query('TRUNCATE TABLE migrations')) :
         $msg->logMessage('[NOTICE]', "Scryfall migrations API: migrations table cleared");
@@ -126,7 +128,7 @@ function safeDeleteCheck($id)
 {
     global $db, $logfile;
     $safeScore = null;
-    $msg = new \MTG\Core\Message($logfile);
+    $msg = new Message($logfile);
 
     //Find if it's in any decks
     $userResultArray = $collectionResultArray = $resultArray = array();
@@ -385,7 +387,7 @@ endif;
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new \MTG\Core\MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_migrations alert');
