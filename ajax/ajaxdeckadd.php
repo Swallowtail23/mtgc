@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        10/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -98,7 +98,8 @@ $deckManager = new DeckManager(
     $userEmail,
     $serverEmail,
     $importLinestoIgnore,
-    $nonPreferredSetCodes
+    $nonPreferredSetCodes,
+    $any_quantity,
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckadd.php');

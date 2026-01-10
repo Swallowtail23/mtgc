@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.15
+Version:     2.16
 Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -34,7 +34,15 @@ while ($user = $usersExport->fetch_assoc()) :
     $userNumber = $user['usernumber'];
     $usertable = $userNumber . "collection";
     $userEmail = $user['email'];
-    $decks = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+    $decks = new DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes,
+        $any_quantity
+    );
     // Decks
     $deckZipPath = '';
     $query = 'SELECT decknumber FROM decks WHERE owner=?';

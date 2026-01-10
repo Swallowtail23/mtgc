@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.11
+Version:     5.12
 Date:        10/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -126,7 +126,8 @@ require('includes/menu.php'); //mobile menu
                             $userEmail,
                             $serverEmail,
                             $importLinestoIgnore,
-                            $nonPreferredSetCodes
+                            $nonPreferredSetCodes,
+                            $any_quantity,
                         );
                         // returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                         $decksuccess = $obj->addDeck($user, $deckName);
@@ -142,7 +143,8 @@ require('includes/menu.php'); //mobile menu
                 $userEmail,
                 $serverEmail,
                 $importLinestoIgnore,
-                $nonPreferredSetCodes
+                $nonPreferredSetCodes,
+                $any_quantity,
             );
             $obj->delDeck($decktodelete);
         endif;

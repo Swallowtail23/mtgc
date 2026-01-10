@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.7
+Version:     4.8
 Date:        10/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
@@ -40,7 +40,8 @@ if (isset($_POST['decknumber'])) :
         $userEmail,
         $serverEmail,
         $importLinestoIgnore,
-        $nonPreferredSetCodes
+        $nonPreferredSetCodes,
+        $any_quantity,
     );
     $obj->exportDeck($deckNumber, "download");
 elseif (isset($_POST['text'])) :
@@ -68,7 +69,8 @@ elseif (isset($_POST['text'])) :
         $userEmail,
         $serverEmail,
         $importLinestoIgnore,
-        $nonPreferredSetCodes
+        $nonPreferredSetCodes,
+        $any_quantity,
     );
     $obj->exportMissing($textdata, $filename);
 else :

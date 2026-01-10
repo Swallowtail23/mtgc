@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
@@ -106,7 +106,8 @@ $deckManager = new DeckManager(
     $userEmail,
     $serverEmail,
     $importLinestoIgnore,
-    $nonPreferredSetCodes
+    $nonPreferredSetCodes,
+    $any_quantity,
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckimport.php');

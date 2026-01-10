@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.70
+Version:     25.71
 Date:        10/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -111,7 +111,15 @@ endif;?>
 <?php
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
-$obj = new DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
+$obj = new DeckManager(
+    $db,
+    $logfile,
+    $userEmail,
+    $serverEmail,
+    $importLinestoIgnore,
+    $nonPreferredSetCodes,
+    $any_quantity
+);
 if ($obj->assertDeckOwner($deckNumber, $user, 'deckdetail.php') === false) : ?>
     <div id='page'>
     <div class='staticpagecontent'>

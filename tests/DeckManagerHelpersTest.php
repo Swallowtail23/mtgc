@@ -95,6 +95,7 @@ class DeckManagerHelpersTest extends TestCase
     private function buildDeckManager($db = null)
     {
         $logfile = $GLOBALS['logfile'] ?? sys_get_temp_dir() . '/phpunit.log';
+        $anyQuantity = $GLOBALS['any_quantity'] ?? [];
         $db = $db ?: new DeckManagerHelpersDb([], []);
         return new DeckManager(
             $db,
@@ -103,6 +104,7 @@ class DeckManagerHelpersTest extends TestCase
             'server@example.test',
             [],
             [],
+            $anyQuantity,
             'Test Site'
         );
     }

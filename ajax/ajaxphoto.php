@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        10/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -74,7 +74,8 @@ else :
             $userEmail,
             $serverEmail,
             $importLinestoIgnore,
-            $nonPreferredSetCodes
+            $nonPreferredSetCodes,
+            $any_quantity,
         );
         if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
             http_response_code(403);
@@ -213,7 +214,8 @@ else :
             $userEmail,
             $serverEmail,
             $importLinestoIgnore,
-            $nonPreferredSetCodes
+            $nonPreferredSetCodes,
+            $any_quantity,
         );
         if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
             http_response_code(403);

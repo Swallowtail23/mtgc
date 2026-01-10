@@ -5,22 +5,6 @@ use PHPUnit\Framework\TestCase;
 
 class CardUtilsTest extends TestCase
 {
-    private $originalPromos;
-
-    protected function setUp(): void
-    {
-        $this->originalPromos = $GLOBALS['promos_to_show'] ?? null;
-    }
-
-    protected function tearDown(): void
-    {
-        if ($this->originalPromos !== null) :
-            $GLOBALS['promos_to_show'] = $this->originalPromos;
-        else :
-            unset($GLOBALS['promos_to_show']);
-        endif;
-    }
-
     public function testCardTypesNormalFoilEtched()
     {
         $finishes = ['nonfoil', 'foil', 'etched'];
@@ -51,20 +35,20 @@ class CardUtilsTest extends TestCase
 
     public function testPromoLookupReturnsDisplay()
     {
-        $GLOBALS['promos_to_show'] = [
+        $promosToShow = [
             ['promotype' => 'bundle', 'display' => 'Bundle promo'],
             ['promotype' => 'prerelease', 'display' => 'Prerelease promo'],
         ];
 
-        $this->assertSame('Bundle promo', CardUtils::promoLookup('bundle'));
+        $this->assertSame('Bundle promo', CardUtils::promoLookup('bundle', $promosToShow));
     }
 
     public function testPromoLookupReturnsSkipWhenMissing()
     {
-        $GLOBALS['promos_to_show'] = [
+        $promosToShow = [
             ['promotype' => 'bundle', 'display' => 'Bundle promo'],
         ];
 
-        $this->assertSame('skip', CardUtils::promoLookup('missing'));
+        $this->assertSame('skip', CardUtils::promoLookup('missing', $promosToShow));
     }
 }

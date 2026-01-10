@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        10/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -66,7 +66,8 @@ else :
         $userEmail,
         $serverEmail,
         $importLinestoIgnore,
-        $nonPreferredSetCodes
+        $nonPreferredSetCodes,
+        $any_quantity,
     );
     if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdecknotes.php') === false) :
         ajaxRespondJson(['error' => 'Access forbidden'], 403);

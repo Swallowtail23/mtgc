@@ -41,6 +41,7 @@ class DeckOwnerAssertTest extends TestCase
     private function buildDeckManager($db)
     {
         $logfile = $GLOBALS['logfile'] ?? sys_get_temp_dir() . '/phpunit.log';
+        $anyQuantity = $GLOBALS['any_quantity'] ?? [];
         return new DeckManager(
             $db,
             $logfile,
@@ -48,6 +49,7 @@ class DeckOwnerAssertTest extends TestCase
             'server@example.test',
             [],
             [],
+            $anyQuantity,
             'Test Site'
         );
     }

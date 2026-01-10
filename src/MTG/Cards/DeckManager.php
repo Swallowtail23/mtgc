@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.10
+Version:     2.13
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -30,6 +30,7 @@ class DeckManager
     private $importLinestoIgnore;
     private $siteTitle;
     private $nonPreferredSetCodes;
+    private $anyQuantity = [];
     private $limitWarnings = [];
 
     public function __construct(
@@ -39,6 +40,7 @@ class DeckManager
         $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
+        $anyQuantity,
         $siteTitle = null
     ) {
         $this->db = $db;
@@ -49,6 +51,7 @@ class DeckManager
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
         $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
+        $this->anyQuantity = is_array($anyQuantity) ? $anyQuantity : [];
     }
 
     public function processInput($deckNumber, $input)
@@ -719,7 +722,7 @@ class DeckManager
 
     public function addDeckCard($deck, $card, $section, $quantity)
     {
-        global $commander_decktypes, $commander_multiples, $any_quantity;
+        global $commander_decktypes, $commander_multiples;
         $this->message->logMessage(
             '[NOTICE]',
             "Add card called: '$quantity' x '$card' to '$deck' ($section)"
@@ -766,10 +769,10 @@ class DeckManager
                 ]
             );
             $i = 0;
-            while ($i < count($any_quantity)) :
-                $this->message->logMessage('[DEBUG]', "Checking ability for: {$any_quantity[$i]}");
+            while ($i < count($this->anyQuantity)) :
+                $this->message->logMessage('[DEBUG]', "Checking ability for: {$this->anyQuantity[$i]}");
                 foreach ($ability_candidates as $ability_text) :
-                    if (str_contains($ability_text, $any_quantity[$i]) == true) :
+                    if (str_contains($ability_text, $this->anyQuantity[$i]) == true) :
                         $cdr_1_plus = true;
                         break;
                     endif;
@@ -1769,8 +1772,6 @@ class DeckManager
 
     public function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
     {
-        global $any_quantity;
-
         if ($decktype === 'Wishlist') :
             return null;
         endif;
@@ -1788,7 +1789,7 @@ class DeckManager
         );
 
         foreach ($ability_candidates as $ability_text) :
-            foreach ($any_quantity as $rule) :
+            foreach ($this->anyQuantity as $rule) :
                 if (str_contains($ability_text, $rule)) :
                     return null;
                 endif;

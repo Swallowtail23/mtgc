@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        10/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -97,7 +97,8 @@ else :
                 $userEmail,
                 $serverEmail,
                 $importLinestoIgnore,
-                $nonPreferredSetCodes
+                $nonPreferredSetCodes,
+                $any_quantity,
             );
 
             //Create the new deck shell

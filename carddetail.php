@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.17
+Version:     22.18
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -310,7 +310,7 @@ require('includes/menu.php'); //mobile menu
                 $msg->logMessage('[DEBUG]', "Card has a promo_type set: {$row['promo_types']}");
                 $full_promo_text = '';
                 foreach ($promo as $value) :
-                    $promo_description = CardUtils::promoLookup($value);
+                    $promo_description = CardUtils::promoLookup($value, $promos_to_show, $msg);
                     if ($promo_description !== 'skip') :
                         if ($full_promo_text === '') :
                             $full_promo_text = $full_promo_text . "$promo_description";
@@ -1806,7 +1806,8 @@ require('includes/menu.php'); //mobile menu
                                             $userEmail,
                                             $serverEmail,
                                             $importLinestoIgnore,
-                                            $nonPreferredSetCodes
+                                            $nonPreferredSetCodes,
+                                            $any_quantity,
                                         );
                                         $decksuccess = $obj->addDeck($user, $newdeckname);
                                         if ($decksuccess['flag'] === 1) :
@@ -1822,7 +1823,8 @@ require('includes/menu.php'); //mobile menu
                                                 $userEmail,
                                                 $serverEmail,
                                                 $importLinestoIgnore,
-                                                $nonPreferredSetCodes
+                                                $nonPreferredSetCodes,
+                                                $any_quantity,
                                             );
                                         if ($obj->assertDeckOwner($decktoaddto, $user, 'carddetail.php') === false) : ?>
                                                 <div class="msg-new error-new">
@@ -1895,7 +1897,8 @@ require('includes/menu.php'); //mobile menu
                                                 $userEmail,
                                                 $serverEmail,
                                                 $importLinestoIgnore,
-                                                $nonPreferredSetCodes
+                                                $nonPreferredSetCodes,
+                                                $any_quantity,
                                             );
                                             $obj->addDeckCard($decktoaddto, $cardId, 'main', $deckqty);
 
@@ -1961,7 +1964,8 @@ require('includes/menu.php'); //mobile menu
                                     $userEmail,
                                     $serverEmail,
                                     $importLinestoIgnore,
-                                    $nonPreferredSetCodes
+                                    $nonPreferredSetCodes,
+                                    $any_quantity,
                                 );
                                 $inmydecks = $obj->deckCardCheck($cardId, $user);
                                 echo "<b>Decks</b><br>";
@@ -1990,7 +1994,8 @@ require('includes/menu.php'); //mobile menu
                                             $userEmail,
                                             $serverEmail,
                                             $importLinestoIgnore,
-                                            $nonPreferredSetCodes
+                                            $nonPreferredSetCodes,
+                                            $any_quantity,
                                         );
                                         $ingrpdecks = $obj->deckCardCheck($cardId, $grpuserid);
                                         $t = $t + 1;

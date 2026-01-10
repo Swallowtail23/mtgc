@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Moved downloadBulk and fetchJson into MTG\Bulk\ScryfallImport and updated bulk scripts to use the class helpers.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.
 - Standardized MTG class references to use statements across PHP scripts and class files.
+- Removed unused globals from CardUtils and ImportExport, and injected any-quantity rules into DeckManager.
 - Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 - Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
 

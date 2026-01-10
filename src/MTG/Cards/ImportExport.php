@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -240,7 +240,7 @@ class ImportExport
         // - cardname
         // - set
         // - collector number
-        global $db, $logfile, $bracketsInNames, $importLinestoIgnore;
+        global $logfile, $bracketsInNames, $importLinestoIgnore;
         $msg = new Message($logfile);
 
         $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");

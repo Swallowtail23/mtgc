@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.8
 Date:        10/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
@@ -33,7 +33,8 @@ if (!isset($deckManager) || !($deckManager instanceof DeckManager)) :
         $userEmail,
         $serverEmail,
         $importLinestoIgnore,
-        $nonPreferredSetCodes
+        $nonPreferredSetCodes,
+        $any_quantity,
     );
 endif;
 ?>

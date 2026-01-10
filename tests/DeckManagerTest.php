@@ -53,7 +53,16 @@ class DeckManagerTest extends TestCase
         $stmt = new DeckStmtStub();
         $db = new DeckDbStub($stmt);
         $GLOBALS['siteTitle'] = 'MTG';
-        $manager = new DeckManager($db, $GLOBALS['logfile'], 'user@example.com', 'server@example.com', [], []);
+        $anyQuantity = $GLOBALS['any_quantity'] ?? [];
+        $manager = new DeckManager(
+            $db,
+            $GLOBALS['logfile'],
+            'user@example.com',
+            'server@example.com',
+            [],
+            [],
+            $anyQuantity
+        );
 
         $batch = [
             ['id' => 'card-1', 'mainqty' => 2, 'sideqty' => 0],

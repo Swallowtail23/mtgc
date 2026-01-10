@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -728,7 +728,8 @@ endif;
                                     $userEmail,
                                     $serverEmail,
                                     $importLinestoIgnore,
-                                    $nonPreferredSetCodes
+                                    $nonPreferredSetCodes,
+                                    $any_quantity,
                                 );
                                 $msg->logMessage(
                                     '[DEBUG]',
@@ -751,7 +752,8 @@ endif;
                                         $userEmail,
                                         $serverEmail,
                                         $importLinestoIgnore,
-                                        $nonPreferredSetCodes
+                                        $nonPreferredSetCodes,
+                                        $any_quantity,
                                     );
                                     // Read the entire file content into a variable
                                     $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));

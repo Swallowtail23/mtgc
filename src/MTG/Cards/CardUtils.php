@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.4
 Date:        10/01/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
@@ -128,7 +128,6 @@ class CardUtils
 
     public static function cardTypes($finishes)
     {
-        global $db, $logfile;
         $cardtypes = 'none';
         $card_normal = 0;
         $card_foil = 0;
@@ -160,19 +159,23 @@ class CardUtils
         return $cardtypes;
     }
 
-    public static function promoLookup($promo_type)
+    public static function promoLookup(string $promo_type, array $promosToShow, ?Message $msg = null): string
     {
-        global $promos_to_show, $logfile;
-        $msg = new Message($logfile);
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', "Looking up promo description for '$promo_type'");
+        endif;
 
-        $msg->logMessage('[DEBUG]', "Looking up promo description for '$promo_type'");
-        $index = array_search($promo_type, array_column($promos_to_show, 'promotype'));
+        $index = array_search($promo_type, array_column($promosToShow, 'promotype'), true);
         if ($index !== false) :
-            $promo_description = $promos_to_show[$index]['display'];
+            $promo_description = $promosToShow[$index]['display'];
         else :
             $promo_description = 'skip';
         endif;
-        $msg->logMessage('[DEBUG]', "Promo description for '$promo_type' is '$promo_description'");
+
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', "Promo description for '$promo_type' is '$promo_description'");
+        endif;
+
         return $promo_description;
     }
 }
