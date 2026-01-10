@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        09/01/26
+Version:     1.8
+Date:        10/01/26
 Name:        ajaxweekly.php
 Purpose:     PHP script to turn weekly export on/off
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -24,7 +24,8 @@ include '../includes/colour.php';
 $msg = new \MTG\Core\Message($logfile);
 
 $expectedReferringPages = [
-    $myURL . '/profile.php'
+    $myURL . '/profile.php',
+    $myURL . '/collection.php'
 ];
 $ajaxValidation = validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxweekly.php');
 if ($ajaxValidation['valid'] === false) :
@@ -70,7 +71,7 @@ else :
         if ($result === false) :
             throw new Exception('[ERROR] ajaxweekly.php: Error: ' . $db->error);
         else :
-            $msg->logMessage('[ERROR]', "Call to turn off weekly export run for $userEmail");
+            $msg->logMessage('[ERROR]', "Call to turn on weekly export run for $userEmail");
         endif;
     else :
         http_response_code(400);
