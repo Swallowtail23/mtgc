@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.9
+Version:     5.10
 Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -54,10 +54,12 @@ else :
         ajaxRespondJson($response, 400);
     endif;
 
-        //Process and log new quantity request
+    //Process and log new quantity request
     if (isset($_POST['newqty'])) :
-        $qty = $_POST['newqty'];
-        if (is_int($qty / 1) and $qty > -1) :
+        $msg->logMessage('[DEBUG]', "Processing normal quantity update");
+        $qtyInput = $_POST['newqty'];
+        $qty = filter_var($qtyInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        if ($qty !== false) :
             $msg->logMessage(
                 '[NOTICE]',
                 "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Normal:$qty"
@@ -65,45 +67,50 @@ else :
         else :
             $msg->logMessage(
                 '[ERROR]',
-                "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for normal $cardId"
+                "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qtyInput passed for normal $cardId"
             );
             $response['status'] = 'error';
             $response['message'] = "Invalid normal qty";
             ajaxRespondJson($response, 400);
         endif;
     elseif (isset($_POST['newfoil'])) :
-            $qty = $_POST['newfoil'];
-        if (is_int($qty / 1) and $qty > -1) :
+        $msg->logMessage('[DEBUG]', "Processing foil quantity update");
+        $qtyInput = $_POST['newfoil'];
+        $qty = filter_var($qtyInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        if ($qty !== false) :
             $msg->logMessage(
                 '[NOTICE]',
                 "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Foil:$qty"
             );
         else :
-                $msg->logMessage(
-                    '[ERROR]',
-                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for foil $cardId"
-                );
-                $response['status'] = 'error';
-                $response['message'] = "Invalid foil qty";
-                ajaxRespondJson($response, 400);
+            $msg->logMessage(
+                '[ERROR]',
+                "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qtyInput passed for foil $cardId"
+            );
+            $response['status'] = 'error';
+            $response['message'] = "Invalid foil qty";
+            ajaxRespondJson($response, 400);
         endif;
     elseif (isset($_POST['newetch'])) :
-            $qty = $_POST['newetch'];
-        if (is_int($qty / 1) and $qty > -1) :
+        $msg->logMessage('[DEBUG]', "Processing etched quantity update");
+        $qtyInput = $_POST['newetch'];
+        $qty = filter_var($qtyInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        if ($qty !== false) :
             $msg->logMessage(
                 '[NOTICE]',
                 "User $userEmail({$_SERVER['REMOTE_ADDR']}) Qty update request for $cardId, request: Etched:$qty"
             );
         else :
-                $msg->logMessage(
-                    '[ERROR]',
-                    "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qty passed for etched $cardId"
-                );
-                $response['status'] = 'error';
-                $response['message'] = "Invalid etch qty";
-                ajaxRespondJson($response, 400);
+            $msg->logMessage(
+                '[ERROR]',
+                "User $userEmail({$_SERVER['REMOTE_ADDR']}) invalid qty $qtyInput passed for etched $cardId"
+            );
+            $response['status'] = 'error';
+            $response['message'] = "Invalid etch qty";
+            ajaxRespondJson($response, 400);
         endif;
     else :
+        $msg->logMessage('[DEBUG]', "No quantity arguments provided in request");
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
         $response['status'] = 'error';
         $response['message'] = "Invalid call";
