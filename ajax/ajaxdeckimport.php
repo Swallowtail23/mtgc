@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.2
+Version:     1.3
 Date:        10/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
@@ -101,7 +101,7 @@ $deckManager = new \MTG\Cards\DeckManager(
     $nonPreferredSetCodes
 );
 
-$deckOwnerCheck = $deckManager->deckOwnerCheck($deckNumber, $user);
+$deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckimport.php');
 if ($deckOwnerCheck === false) :
     $msg->logMessage('[ERROR]', "Deck ownership check failed for deck $deckNumber");
     $response['error'] = 'Deck ownership check failed';

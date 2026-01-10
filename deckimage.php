@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        21/12/25
+Version:     1.9
+Date:        10/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
 Notes:       {none}
@@ -47,6 +47,21 @@ if ($isValidReferrer) :
 
     if (isset($_GET['deck']) && ($_GET['deck']) !== '') :
         $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
+        $deckManager = new \MTG\Cards\DeckManager(
+            $db,
+            $logfile,
+            $userEmail,
+            $serverEmail,
+            $importLinestoIgnore,
+            $nonPreferredSetCodes
+        );
+        $ownerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'deckimage.php');
+        if ($ownerCheck === false) :
+            $msg->logMessage('[ERROR]', "deckimage.php: deck ownership check failed for deck $deckNumber");
+            http_response_code(403);
+            echo 'Access forbidden';
+            exit();
+        endif;
         $imageFilePath = $imgLocation . 'deck_photos/' . $deckNumber . '.jpg'; // Filesystem path
 
         // Check if the file exists

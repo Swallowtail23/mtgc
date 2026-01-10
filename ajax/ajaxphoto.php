@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.10
 Date:        10/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -61,6 +61,20 @@ else :
             $msg->logMessage('[ERROR]', "Invalid deck number supplied: '$deckNumber'");
             http_response_code(400);
             $response['message'] = 'Invalid deck number';
+            returnResponse();
+        endif;
+
+        $deckManager = new \MTG\Cards\DeckManager(
+            $db,
+            $logfile,
+            $userEmail,
+            $serverEmail,
+            $importLinestoIgnore,
+            $nonPreferredSetCodes
+        );
+        if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
+            http_response_code(403);
+            $response['message'] = 'Access forbidden';
             returnResponse();
         endif;
 
@@ -186,6 +200,20 @@ else :
             $msg->logMessage('[ERROR]', "Invalid deck number supplied for delete: '$deckNumber'");
             http_response_code(400);
             $response['message'] = 'Invalid deck number';
+            returnResponse();
+        endif;
+
+        $deckManager = new \MTG\Cards\DeckManager(
+            $db,
+            $logfile,
+            $userEmail,
+            $serverEmail,
+            $importLinestoIgnore,
+            $nonPreferredSetCodes
+        );
+        if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
+            http_response_code(403);
+            $response['message'] = 'Access forbidden';
             returnResponse();
         endif;
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        10/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
@@ -97,7 +97,7 @@ $deckManager = new \MTG\Cards\DeckManager(
     $nonPreferredSetCodes
 );
 
-$deckOwnerCheck = $deckManager->deckOwnerCheck($deckNumber, $user);
+$deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckfragments.php');
 if ($deckOwnerCheck === false) :
     $msg->logMessage('[ERROR]', "Deck ownership check failed for deck $deckNumber");
     $response['error'] = 'Deck ownership check failed';

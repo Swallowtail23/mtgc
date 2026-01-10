@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.3
-Date:        01/01/26
+Version:     2.6
+Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -635,9 +635,13 @@ class DeckManager
         endif;
     }
 
-    public function deckOwnerCheck($deck, $user)
+    public function assertDeckOwner($deck, $user, $context = '')
     {
-        $this->message->logMessage('[DEBUG]', "Checking deck ownership: $deck, $user");
+        $contextLabel = $context !== '' ? $context . ': ' : '';
+        $this->message->logMessage(
+            '[DEBUG]',
+            "{$contextLabel}Asserting deck ownership for deck $deck, user $user"
+        );
         $sql = "SELECT deckname, owner FROM decks WHERE decknumber = ? LIMIT 1";
         $result = $this->db->execute_query($sql, [$deck]);
         if ($result === false) :
@@ -645,28 +649,36 @@ class DeckManager
                 '[ERROR]' . basename(__FILE__) . " " . __LINE__ . "Function " . __FUNCTION__
                     . ": SQL failure: " . $this->db->error
             );
-        else :
-            if ($row = $result->fetch_assoc()) :
-                $deckName = $row['deckname'];
-                $owner = $row['owner'];
-                $this->message->logMessage(
-                    '[DEBUG]',
-                    "Deck $deck ($deckName) belongs to owner $owner (called by $user)"
-                );
-                if ($owner != $user) :
-                    $this->message->logMessage(
-                        '[ERROR]',
-                        "Deck {$row['deckname']} does not belong to user $user, returning to deck page"
-                    );
-                    return false;
-                else :
-                    return $deckName;
-                endif;
-            else :
-                $this->message->logMessage('[ERROR]', "No deck found for deck $deck, returning to deck page");
-                return false;
-            endif;
         endif;
+
+        $row = $result->fetch_assoc();
+        if ($row === null) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "{$contextLabel}No deck found for deck $deck, returning to deck page"
+            );
+            return false;
+        endif;
+
+        $deckName = $row['deckname'];
+        $owner = $row['owner'];
+        $this->message->logMessage(
+            '[DEBUG]',
+            "{$contextLabel}Deck $deck ($deckName) belongs to owner $owner (called by $user)"
+        );
+        if ((int) $owner !== (int) $user) :
+            $this->message->logMessage(
+                '[ERROR]',
+                "{$contextLabel}Deck ownership assertion failed for deck $deck, user $user"
+            );
+            return false;
+        endif;
+
+        $this->message->logMessage(
+            '[DEBUG]',
+            "{$contextLabel}Deck ownership assertion passed for deck $deck ($deckName)"
+        );
+        return true;
     }
 
     public function deckCardCheck($card, $user)

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.21
 Date:        10/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -93,7 +93,7 @@ $deckManager = new \MTG\Cards\DeckManager(
     $nonPreferredSetCodes
 );
 
-$deckOwnerCheck = $deckManager->deckOwnerCheck($deckNumber, $user);
+$deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckcard.php');
 if ($deckOwnerCheck === false) :
     $msg->logMessage('[ERROR]', "Deck ownership check failed for deck $deckNumber");
     $response['error'] = 'Deck ownership check failed';

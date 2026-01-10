@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Standardized remaining AJAX endpoints to use shared referrer/CSRF validation and updated callers to send tokens.
 - CSV exports now validate table names and restrict non-admin users to their own collection tables.
 - Card detail notes are now HTML-escaped on output to prevent stored XSS.
+- Deck detail and deck action endpoints now share a unified ownership check to prevent IDOR access.
 
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.

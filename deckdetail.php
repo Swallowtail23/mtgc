@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.65
+Version:     25.66
 Date:        10/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -107,7 +107,7 @@ endif;?>
 // Check to see if the called deck belongs to the logged in user.
 $msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
 $obj = new \MTG\Cards\DeckManager($db, $logfile, $userEmail, $serverEmail, $importLinestoIgnore, $nonPreferredSetCodes);
-if ($obj->deckOwnerCheck($deckNumber, $user) == false) : ?>
+if ($obj->assertDeckOwner($deckNumber, $user, 'deckdetail.php') === false) : ?>
     <div id='page'>
     <div class='staticpagecontent'>
     <h3>This deck is not yours... returning to your deck page...</h3>

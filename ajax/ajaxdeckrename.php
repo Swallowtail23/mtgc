@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        10/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -97,7 +97,7 @@ $deckManager = new \MTG\Cards\DeckManager(
     $nonPreferredSetCodes
 );
 
-$deckOwnerCheck = $deckManager->deckOwnerCheck($deckNumber, $user);
+$deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckrename.php');
 if ($deckOwnerCheck === false) :
     $msg->logMessage('[ERROR]', "Deck ownership check failed for deck $deckNumber");
     $response['error'] = 'Deck ownership check failed';

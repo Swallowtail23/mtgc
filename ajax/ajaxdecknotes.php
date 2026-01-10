@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        09/01/26
+Version:     1.9
+Date:        10/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -55,6 +55,18 @@ else :
         '[NOTICE]',
         "Called with: Notes: $newnotes, Side notes: $newsidenotes, Deck number: $deckNumber"
     );
+
+    $deckManager = new \MTG\Cards\DeckManager(
+        $db,
+        $logfile,
+        $userEmail,
+        $serverEmail,
+        $importLinestoIgnore,
+        $nonPreferredSetCodes
+    );
+    if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdecknotes.php') === false) :
+        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+    endif;
 
     try {
         $query = "UPDATE decks SET notes = ?, sidenotes = ? WHERE decknumber = ?";

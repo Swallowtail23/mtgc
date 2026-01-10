@@ -1,6 +1,6 @@
 <?php
 /*
-Version:     22.10
+Version:     22.11
 Date:        10/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -1816,7 +1816,7 @@ require('includes/menu.php'); //mobile menu
                                                 $importLinestoIgnore,
                                                 $nonPreferredSetCodes
                                             );
-                                        if ($obj->deckOwnerCheck($decktoaddto, $user) == false) : ?>
+                                        if ($obj->assertDeckOwner($decktoaddto, $user, 'carddetail.php') === false) : ?>
                                                 <div class="msg-new error-new">
                                                     <span>You don't have that deck</span>
                                                     <br>
