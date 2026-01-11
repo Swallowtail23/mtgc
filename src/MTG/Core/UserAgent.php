@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        11/01/26
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
@@ -15,27 +15,6 @@ namespace MTG\Core;
 
 class UserAgent
 {
-    public static function build($iniPath = '/opt/mtg/mtg_new.ini', $versionPath = null, $logfile = null)
-    {
-        $msg = null;
-        if (!empty($logfile)) :
-            $msg = new Message($logfile);
-        endif;
-
-        $iniArray = [];
-        if (is_file($iniPath)) :
-            $ini = new INI($iniPath);
-            $iniArray = $ini->data;
-        else :
-            if ($msg !== null) :
-                $msg->logMessage('[DEBUG]', "User agent ini file missing at $iniPath");
-            endif;
-        endif;
-
-        $config = AppConfig::fromIni($iniArray);
-        return self::buildFromConfig($config, $versionPath, $msg);
-    }
-
     public static function buildFromConfig(AppConfig $config, $versionPath = null, $msg = null): string
     {
         static $cache = array();

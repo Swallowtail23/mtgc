@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxgroup.php
 Purpose:     PHP script to turn ajax group on/off
@@ -23,12 +23,12 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/profile.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgroup.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxgroup.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

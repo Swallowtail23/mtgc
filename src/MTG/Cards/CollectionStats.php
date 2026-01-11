@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        11/01/26
 Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
@@ -34,8 +34,7 @@ class CollectionStats
         $this->appConfig = $appConfig;
         $this->fxAPI = $this->appConfig->fx('api', '');
         $this->fxLocal = $this->appConfig->fx('local', '');
-        $logfile = (string) $this->appConfig->general('logFile', '');
-        $this->message = new Message($logfile);
+        $this->message = new Message($this->appConfig);
     }
 
     public function getStats($userNumber, $tableName, $preferredCurrency = null)

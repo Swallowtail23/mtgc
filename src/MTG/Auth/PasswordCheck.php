@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        11/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
@@ -23,14 +23,12 @@ class PasswordCheck
     * @var mysqli
     */
     private $db;
-    private $logfile;
     private $message;
     private $siteTitle;
     private $serverEmail;
     private $adminEmail;
     private $emailEnabled;
     private $baseUrl;
-    private $smtpParameters;
     private $appConfig;
 
     public $passwordvalidate;
@@ -39,14 +37,12 @@ class PasswordCheck
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
-        $this->logfile = (string) $this->appConfig->general('logFile', '');
-        $this->message = new Message($this->logfile);
+        $this->message = new Message($this->appConfig);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
         $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->baseUrl = (string) $this->appConfig->general('url', '');
-        $this->smtpParameters = $this->appConfig->getSmtpParameters();
     }
 
     /**
@@ -89,13 +85,7 @@ class PasswordCheck
         if ($linkBase === '') :
             $link = "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
         endif;
-        return $this->sendResetEmail(
-            $email,
-            $link,
-            $this->siteTitle,
-            $this->serverEmail,
-            $this->smtpParameters
-        );
+        return $this->sendResetEmail($email, $link);
     }
 
     /**
@@ -383,13 +373,7 @@ class PasswordCheck
         $html = "<p>Your password on $siteTitleEsc was changed.</p>"
               . "<p>If this was not you, please reset your password immediately.</p>";
 
-        $mailer = new MyPHPMailer(
-            true,
-            $this->smtpParameters,
-            $this->serverEmail,
-            $this->logfile,
-            $this->siteTitle
-        );
+        $mailer = new MyPHPMailer(true, $this->appConfig);
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Password change notification sent to $email");
             return true;
@@ -527,21 +511,15 @@ class PasswordCheck
     /**
      * Send reset email via PHPMailer wrapper.
      */
-    protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
+    protected function sendResetEmail($email, $link)
     {
         if (!class_exists(MyPHPMailer::class)) :
             $this->message->logMessage('[ERROR]', "MyPHPMailer class not available");
             return false;
         endif;
 
-        $mail = new MyPHPMailer(
-            true,
-            $smtpParameters,
-            $serverEmail,
-            $this->logfile,
-            $siteTitle
-        );
-        $subject = "$siteTitle password reset";
+        $mail = new MyPHPMailer(true, $this->appConfig);
+        $subject = "{$this->siteTitle} password reset";
         $safeLink = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
         $bodyText = "A password reset was requested for your account. Click the link below to set a new password:\n\n"
             . "$link\n\nIf you did not request this, you can ignore this email.";
@@ -554,7 +532,7 @@ class PasswordCheck
 
     public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
-        $msg = new Message($this->logfile);
+        $msg = new Message($this->appConfig);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
             $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");

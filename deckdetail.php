@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.73
+Version:     25.74
 Date:        11/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -30,8 +30,8 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
-$msg = new Message($logfile);
+SessionManager::forcePasswordChange($appConfig);
+$msg = new Message($appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $uniquecard_ref = [];
@@ -112,9 +112,8 @@ endif;?>
 $msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
 $obj = new DeckManager(
     $db,
-    $logfile,
+    $appConfig,
     $userEmail,
-    $serverEmail,
     $importLinestoIgnore,
     $nonPreferredSetCodes,
     $any_quantity

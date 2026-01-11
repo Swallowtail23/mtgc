@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.1
+Version:     7.2
 Date:        11/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -23,12 +23,12 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsearch.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxsearch.php');
 if ($ajaxValidation['valid'] === false) :
     $msg->logMessage('[ERROR]', "Not called from valid page");
     ajaxRespondText('Access forbidden', 403);

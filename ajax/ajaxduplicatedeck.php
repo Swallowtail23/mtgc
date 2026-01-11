@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        11/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -25,13 +25,13 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
 $response = ['success' => false, 'error' => ''];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaxduplicatedeck.php'
 );
 if ($ajaxValidation['valid'] === false) :
@@ -92,9 +92,8 @@ else :
             // Instantiate the DeckManager
             $obj = new DeckManager(
                 $db,
-                $logfile,
+                $appConfig,
                 $userEmail,
-                $serverEmail,
                 $importLinestoIgnore,
                 $nonPreferredSetCodes,
                 $any_quantity,

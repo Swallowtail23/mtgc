@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        11/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -25,7 +25,7 @@ startCustomSession();
 require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/profile.php',
@@ -67,7 +67,7 @@ $userEmail = $_SESSION['useremail'];
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for table $mytable");
 
-$priceManager = new PriceManager($db, $logfile, $userEmail);
+$priceManager = new PriceManager($db, $appConfig, $userEmail);
 $updatedRows = $priceManager->updateCollectionValues($mytable);
 
 $statsHelper = new CollectionStats($db, $appConfig);

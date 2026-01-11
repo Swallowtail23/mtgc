@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        11/01/26
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
@@ -23,13 +23,13 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/sets.php',
     $myURL . '/index.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxtemplate.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxtemplate.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

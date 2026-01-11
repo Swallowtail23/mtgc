@@ -1,6 +1,9 @@
 <?php
 
+use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
+
+require_once __DIR__ . '/bootstrap.php';
 
 function getRealPriceManagerClass(): string
 {
@@ -64,16 +67,75 @@ class PriceDbStub
 
 class PriceManagerTest extends TestCase
 {
+    private function buildConfig(int $maxCardDataAge): AppConfig
+    {
+        $iniArray = [
+            'general' => [
+                'URL' => 'https://test.example',
+                'title' => 'Test',
+                'tier' => 'dev',
+                'Loglevel' => 0,
+                'Logfile' => $GLOBALS['logfile'] ?? '',
+                'ImgLocation' => '',
+                'Timezone' => 'UTC',
+                'Locale' => 'en_US',
+                'Copyright' => ''
+            ],
+            'security' => [
+                'Turnstile' => 'disabled',
+                'Turnstile_site_key' => '',
+                'Turnstile_secret_key' => '',
+                'TrustDuration' => 0,
+                'Badloginlimit' => 0,
+                'AdminIP' => ''
+            ],
+            'email' => [
+                'Email' => 'disabled',
+                'AdminEmail' => 'admin@example.test',
+                'ServerEmail' => 'server@example.test',
+                'SMTPDebug' => 'SMTP::DEBUG_OFF',
+                'Host' => '',
+                'SMTPAuth' => '',
+                'Username' => '',
+                'Password' => '',
+                'SMTPSecure' => '',
+                'Port' => 25,
+                'SMTPHelo' => '',
+                'SMTPVerifySSL' => 1
+            ],
+            'fx' => [
+                'FreecurrencyAPI' => '',
+                'TargetCurrency' => ''
+            ],
+            'comments' => [
+                'Disqus' => 'disabled',
+                'DisqusDevURL' => '',
+                'DisqusProdURL' => ''
+            ],
+        ];
+
+        return AppConfig::fromIni($iniArray, [
+            'general' => [
+                'logLevel' => 0,
+                'logFile' => $GLOBALS['logfile'] ?? '',
+                'maxCardDataAge' => $maxCardDataAge,
+            ],
+            'email' => [
+                'enabled' => false,
+            ],
+        ]);
+    }
+
     protected function setUp(): void
     {
-        $GLOBALS['max_card_data_age'] = 99999;
+        $GLOBALS['logfile'] = $GLOBALS['logfile'] ?? sys_get_temp_dir() . '/phpunit.log';
     }
 
     public function testScryfallReturnsNoCardWhenMissing()
     {
         $class = getRealPriceManagerClass();
         $db = new PriceDbStub(new PriceResultStub(0, []), new PriceResultStub(0, []));
-        $manager = new $class($db, $GLOBALS['logfile'], 'user@example.com');
+        $manager = new $class($db, $this->buildConfig(99999), 'user@example.com');
 
         $result = $manager->scryfall('missing-id');
 
@@ -89,7 +151,7 @@ class PriceManagerTest extends TestCase
             'tcg_buy_uri' => 'https://example.com'
         ]);
         $db = new PriceDbStub($cardsResult, $jsonResult);
-        $manager = new $class($db, $GLOBALS['logfile'], 'user@example.com');
+        $manager = new $class($db, $this->buildConfig(99999), 'user@example.com');
 
         $result = $manager->scryfall('card-id');
 

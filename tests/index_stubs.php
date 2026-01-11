@@ -84,7 +84,7 @@ namespace MTG\Auth {
                 ];
             }
 
-            public static function forcePasswordChange($logfile = null)
+            public static function forcePasswordChange($appConfig = null)
             {
                 return;
             }
@@ -106,7 +106,7 @@ namespace MTG\Auth {
 
             public static function validateAjaxRequest(
                 $expectedReferringPages,
-                $logfile,
+                $appConfig,
                 $context = '',
                 $requireCsrf = true
             ) {

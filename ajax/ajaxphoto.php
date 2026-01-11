@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.17
+Version:     1.18
 Date:        11/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -24,13 +24,13 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $response = ['success' => false, 'message' => ''];
 
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxphoto.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxphoto.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token for ajaxphoto");
@@ -69,9 +69,8 @@ else :
 
         $deckManager = new DeckManager(
             $db,
-            $logfile,
+            $appConfig,
             $userEmail,
-            $serverEmail,
             $importLinestoIgnore,
             $nonPreferredSetCodes,
             $any_quantity,
@@ -209,9 +208,8 @@ else :
 
         $deckManager = new DeckManager(
             $db,
-            $logfile,
+            $appConfig,
             $userEmail,
-            $serverEmail,
             $importLinestoIgnore,
             $nonPreferredSetCodes,
             $any_quantity,

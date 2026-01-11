@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.16
+Version:     5.17
 Date:        11/01/26
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -170,6 +170,7 @@ $appConfig = AppConfig::fromIni($iniArray, [
         'tier' => $tier,
         'logLevel' => $logLevelIni,
         'logFile' => $logfile,
+        'maxCardDataAge' => $max_card_data_age,
     ],
     'security' => [
         'turnstileEnabled' => ($turnstile === 1),
@@ -224,7 +225,7 @@ try {
     if ($emailEnabled) :
         mail($adminEmail, $subject, $message, $from);
     else :
-        $fallbackMsg = new Message($logfile);
+        $fallbackMsg = new Message($appConfig);
         $fallbackMsg->logMessage(
             '[NOTICE]',
             "Email disabled; fatal DB alert not sent to admin ({$err->getMessage()})"

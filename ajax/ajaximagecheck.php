@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        11/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -24,7 +24,7 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/carddetail.php',

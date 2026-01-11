@@ -1,12 +1,71 @@
 <?php
 
 use MTG\Cards\CollectionHistory;
+use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../src/MTG/Cards/CollectionHistory.php';
+require_once __DIR__ . '/bootstrap.php';
 
 class CollectionHistoryTest extends TestCase
 {
+    private function buildConfig($logfile): AppConfig
+    {
+        $iniArray = [
+            'general' => [
+                'URL' => 'https://test.example',
+                'title' => 'Test Site',
+                'tier' => 'dev',
+                'Loglevel' => 0,
+                'Logfile' => $logfile,
+                'ImgLocation' => '',
+                'Timezone' => 'UTC',
+                'Locale' => 'en_US',
+                'Copyright' => ''
+            ],
+            'security' => [
+                'Turnstile' => 'disabled',
+                'Turnstile_site_key' => '',
+                'Turnstile_secret_key' => '',
+                'TrustDuration' => 0,
+                'Badloginlimit' => 0,
+                'AdminIP' => ''
+            ],
+            'email' => [
+                'Email' => 'disabled',
+                'AdminEmail' => 'admin@example.test',
+                'ServerEmail' => 'server@example.test',
+                'SMTPDebug' => 'SMTP::DEBUG_OFF',
+                'Host' => '',
+                'SMTPAuth' => '',
+                'Username' => '',
+                'Password' => '',
+                'SMTPSecure' => '',
+                'Port' => 25,
+                'SMTPHelo' => '',
+                'SMTPVerifySSL' => 1
+            ],
+            'fx' => [
+                'FreecurrencyAPI' => '',
+                'TargetCurrency' => ''
+            ],
+            'comments' => [
+                'Disqus' => 'disabled',
+                'DisqusDevURL' => '',
+                'DisqusProdURL' => ''
+            ],
+        ];
+
+        return AppConfig::fromIni($iniArray, [
+            'general' => [
+                'logLevel' => 0,
+                'logFile' => $logfile,
+            ],
+            'email' => [
+                'enabled' => false,
+            ],
+        ]);
+    }
+
     protected function setUp(): void
     {
         $GLOBALS['logfile'] = 0;
@@ -17,7 +76,7 @@ class CollectionHistoryTest extends TestCase
 
     public function testBuildCsvIncludesHeaderAndRows()
     {
-        $history = new CollectionHistory(new DbStub([]), $GLOBALS['logfile'], 'Test Site');
+        $history = new CollectionHistory(new DbStub([]), $this->buildConfig(0));
         $csv = $history->buildCsv(
             [
                 [
@@ -45,7 +104,7 @@ class CollectionHistoryTest extends TestCase
     public function testGetHistoryDataUsesNullStartDateForAllRange()
     {
         $db = new DbStub([]);
-        $history = new CollectionHistory($db, $GLOBALS['logfile'], 'Test Site');
+        $history = new CollectionHistory($db, $this->buildConfig(0));
 
         $data = $history->getHistoryData(5, 'all');
 
@@ -68,7 +127,7 @@ class CollectionHistoryTest extends TestCase
             ]
         ];
         $db = new DbStub($rows);
-        $history = new CollectionHistory($db, $GLOBALS['logfile'], 'Test Site');
+        $history = new CollectionHistory($db, $this->buildConfig(0));
 
         $data = $history->getHistoryData(7, 'bogus');
 

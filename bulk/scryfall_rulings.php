@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.9
+Version:     3.10
 Date:        11/01/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -23,7 +23,7 @@ use MTG\Core\UserAgent;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 ensureDirectoryExists($imgLocation . 'json');
 
 // How old to overwrite
@@ -311,7 +311,7 @@ $subject = "MTG rulings update completed";
 $body = "Total rulings: $total_count; added: $count_add; updated: $count_update; unchanged: $count_other; "
     . "removed: $deleted_count";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $appConfig);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_rulings alert');

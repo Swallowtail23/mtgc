@@ -151,7 +151,7 @@ class SessionManagerTest extends TestCase
         $_POST['csrf_token'] = 'valid-token';
         $_SERVER['HTTP_REFERER'] = 'https://example.test/collection.php';
 
-        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['logfile'], 'test');
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
 
         $this->assertSame(['valid' => true, 'reason' => ''], $result);
     }
@@ -164,7 +164,7 @@ class SessionManagerTest extends TestCase
         $_POST['csrf_token'] = 'valid-token';
         $_SERVER['HTTP_REFERER'] = 'https://evil.test/';
 
-        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['logfile'], 'test');
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
 
         $this->assertSame(['valid' => false, 'reason' => 'referrer'], $result);
     }
@@ -177,7 +177,7 @@ class SessionManagerTest extends TestCase
         $_POST['csrf_token'] = 'wrong-token';
         $_SERVER['HTTP_REFERER'] = 'https://example.test/collection.php';
 
-        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['logfile'], 'test');
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test');
 
         $this->assertSame(['valid' => false, 'reason' => 'csrf'], $result);
     }
@@ -188,7 +188,7 @@ class SessionManagerTest extends TestCase
         $class = getRealSessionManagerClass();
         $_SERVER['HTTP_REFERER'] = 'https://example.test/collection.php';
 
-        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['logfile'], 'test', false);
+        $result = $class::validateAjaxRequest(['collection.php'], $GLOBALS['appConfig'], 'test', false);
 
         $this->assertSame(['valid' => true, 'reason' => ''], $result);
     }
@@ -203,7 +203,7 @@ class SessionManagerTest extends TestCase
             header_remove();
         endif;
 
-        $class::forcePasswordChange($GLOBALS['logfile']);
+        $class::forcePasswordChange($GLOBALS['appConfig']);
 
         $headers = headers_list();
         $locationHeaders = array_filter($headers, function ($header) {
@@ -230,7 +230,7 @@ class SessionManagerTest extends TestCase
             $captured['terminated'] = true;
         };
 
-        $class::forcePasswordChange($GLOBALS['logfile'], $redirectHandler, $terminateHandler);
+        $class::forcePasswordChange($GLOBALS['appConfig'], $redirectHandler, $terminateHandler);
 
         $this->assertSame('/profile.php', $captured['location']);
         $this->assertTrue($captured['terminated']);

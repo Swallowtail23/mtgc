@@ -93,7 +93,7 @@ class PasswordCheckStub extends PasswordCheckReal
         return true;
     }
 
-    protected function sendResetEmail($email, $link, $siteTitle, $serverEmail, $smtpParameters)
+    protected function sendResetEmail($email, $link)
     {
         $this->sentLinks[] = ['email' => $email, 'link' => $link];
         return true;

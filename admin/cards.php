@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.16
+Version:     5.17
 Date:        11/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -26,10 +26,10 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($appConfig);
 
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.22
+Version:     22.23
 Date:        11/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -28,9 +28,9 @@ require('includes/error_handling.php');     //Initialise and load error/logging 
 require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($appConfig);
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
 
@@ -1801,9 +1801,8 @@ require('includes/menu.php'); //mobile menu
                                         );
                                         $obj = new DeckManager(
                                             $db,
-                                            $logfile,
+                                            $appConfig,
                                             $userEmail,
-                                            $serverEmail,
                                             $importLinestoIgnore,
                                             $nonPreferredSetCodes,
                                             $any_quantity,
@@ -1818,9 +1817,8 @@ require('includes/menu.php'); //mobile menu
                                             // Check that the proposed deck exists and belongs to owner.
                                             $obj = new DeckManager(
                                                 $db,
-                                                $logfile,
+                                                $appConfig,
                                                 $userEmail,
-                                                $serverEmail,
                                                 $importLinestoIgnore,
                                                 $nonPreferredSetCodes,
                                                 $any_quantity,
@@ -1892,9 +1890,8 @@ require('includes/menu.php'); //mobile menu
                                             //Call add card function
                                             $obj = new DeckManager(
                                                 $db,
-                                                $logfile,
+                                                $appConfig,
                                                 $userEmail,
-                                                $serverEmail,
                                                 $importLinestoIgnore,
                                                 $nonPreferredSetCodes,
                                                 $any_quantity,
@@ -1959,9 +1956,8 @@ require('includes/menu.php'); //mobile menu
                                 $msg->logMessage('[NOTICE]', "Checking to see if $cardId is in any owned decks");
                                 $obj = new DeckManager(
                                     $db,
-                                    $logfile,
+                                    $appConfig,
                                     $userEmail,
-                                    $serverEmail,
                                     $importLinestoIgnore,
                                     $nonPreferredSetCodes,
                                     $any_quantity,
@@ -1989,9 +1985,8 @@ require('includes/menu.php'); //mobile menu
                                         $msg->logMessage('[DEBUG]', "Checking user $grpusername for $cardId");
                                         $obj = new DeckManager(
                                             $db,
-                                            $logfile,
+                                            $appConfig,
                                             $userEmail,
-                                            $serverEmail,
                                             $importLinestoIgnore,
                                             $nonPreferredSetCodes,
                                             $any_quantity,

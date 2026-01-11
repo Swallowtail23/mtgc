@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        11/01/26
 Name:        AppConfig.php
 Purpose:     App-wide config container built from ini values.
@@ -51,6 +51,7 @@ class AppConfig
             'timezone' => $iniArray['general']['Timezone'] ?? '',
             'locale' => $iniArray['general']['Locale'] ?? '',
             'copyright' => $iniArray['general']['Copyright'] ?? '',
+            'maxCardDataAge' => $iniArray['general']['MaxCardDataAge'] ?? 0,
         ];
 
         $config->security = [

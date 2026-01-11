@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxsets.php
 Purpose:     PHP script to update sets page
@@ -23,12 +23,12 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/sets.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxsets.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxsets.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

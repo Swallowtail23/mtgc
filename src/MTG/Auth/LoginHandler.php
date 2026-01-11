@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.19
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -41,13 +41,11 @@ class LoginHandler
     * @var mysqli
     */
     private $db;
-    private $logfile;
     private $message;
     private $turnstileEnabled;
     private $turnstileSecretKey;
     private $badLoginLimit;
     private $siteTitle;
-    private $smtpParameters;
     private $serverEmail;
     private $adminEmail;
     private $emailEnabled;
@@ -59,13 +57,11 @@ class LoginHandler
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
-        $this->logfile = (string) $this->appConfig->general('logFile', '');
-        $this->message = new Message($this->logfile);
+        $this->message = new Message($this->appConfig);
         $this->turnstileEnabled = (bool) $this->appConfig->security('turnstileEnabled', false);
         $this->turnstileSecretKey = (string) $this->appConfig->security('turnstileSecretKey', '');
         $this->badLoginLimit = (int) $this->appConfig->security('badLoginLimit', 0);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
-        $this->smtpParameters = $this->appConfig->getSmtpParameters();
         $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
@@ -126,7 +122,7 @@ class LoginHandler
 
                     $this->message->logMessage('[NOTICE]', "Auto-login via trusted device for user $userEmail");
 
-                    if (!self::loginStamp($this->db, $this->logfile, $userEmail)) :
+                    if (!self::loginStamp($this->db, $this->appConfig, $userEmail)) :
                         $this->message->logMessage(
                             '[ERROR]',
                             "Failed to update last login timestamp for $userEmail"
@@ -278,7 +274,7 @@ class LoginHandler
         endif;
 
         // Create once — reuse for everything
-        $user = new UserStatus($this->db, $this->logfile, $email);
+        $user = new UserStatus($this->db, $this->appConfig, $email);
 
         // Check bad login count
         $badLoginResult = $user->getBadLogin();
@@ -378,12 +374,7 @@ class LoginHandler
             );
         endif;
 
-        $tfaManager = new TwoFactorManager(
-            $this->db,
-            $this->smtpParameters,
-            $this->serverEmail,
-            $this->logfile
-        );
+        $tfaManager = new TwoFactorManager($this->db, $this->appConfig);
         if ($tfaManager->isEnabled($id)) :
             session_regenerate_id(true);
             $_SESSION['user_pending_2fa'] = $id;
@@ -457,7 +448,7 @@ class LoginHandler
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
 
-        if (!self::loginStamp($this->db, $this->logfile, $email)) :
+        if (!self::loginStamp($this->db, $this->appConfig, $email)) :
             $this->message->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
         endif;
 
@@ -617,13 +608,7 @@ class LoginHandler
               . "or contact the administrator.</p>"
               . "<p>Resetting your password will unlock your account.</p>";
 
-        $mailer = new MyPHPMailer(
-            true,
-            $this->smtpParameters,
-            $this->serverEmail,
-            $this->logfile,
-            $this->siteTitle
-        );
+        $mailer = new MyPHPMailer(true, $this->appConfig);
         if ($this->adminEmail !== '' && filter_var($this->adminEmail, FILTER_VALIDATE_EMAIL)) :
             $mailer->addCC($this->adminEmail);
         else :
@@ -640,9 +625,9 @@ class LoginHandler
         return false;
     }
 
-    public static function loginStamp($db, $logfile, $userEmail)
+    public static function loginStamp($db, AppConfig $appConfig, $userEmail)
     {
-        $msg = new Message($logfile);
+        $msg = new Message($appConfig);
 
         $msg->logMessage('[NOTICE]', "Writing user login");
         $logindate = date("Y-m-d");

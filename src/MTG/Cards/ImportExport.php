@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.8
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -22,27 +23,28 @@ class ImportExport
     * @var mysqli
     */
     private $db;
-    private $logfile;
+    private $appConfig;
     private $userEmail;
     private $serverEmail;
     private $message;
     private $siteTitle;
+    private $emailEnabled;
     private $batchedCardIds = []; // Array to store batched cards to add
 
-    public function __construct($db, $logfile, $userEmail, $serverEmail, $siteTitle = null)
+    public function __construct($db, AppConfig $appConfig, $userEmail)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
         $this->userEmail = $userEmail;
-        $this->serverEmail = $serverEmail;
-        $this->message = new Message($this->logfile);
-        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->message = new Message($this->appConfig);
+        $this->siteTitle = (string) $this->appConfig->general('title', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
     }
 
     public function exportCollectionToCsv(
         $table,
         $myURL,
-        $smtpParameters,
         $format = 'echo',
         $filename = 'export.csv',
         $userName = '',
@@ -62,14 +64,14 @@ class ImportExport
                 echo "\xEF\xBB\xBF"; // UTF-8 BOM
                 echo $out;
         elseif ($format === 'email') :
-            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+            if ($this->emailEnabled) :
                 if (!empty($extraAttachments)) :
                     $this->message->logMessage(
                         '[DEBUG]',
                         "Adding " . count($extraAttachments) . " extra attachments to collection export email"
                     );
                 endif;
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new MyPHPMailer(true, $this->appConfig);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -108,14 +110,14 @@ class ImportExport
                 return false;
             endif;
         elseif ($format === 'weekly' && $userName !== '' && $userEmail !== '') :
-            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+            if ($this->emailEnabled) :
                 if (!empty($extraAttachments)) :
                     $this->message->logMessage(
                         '[DEBUG]',
                         "Adding " . count($extraAttachments) . " extra attachments to weekly export email"
                     );
                 endif;
-                $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                $mail = new MyPHPMailer(true, $this->appConfig);
 
                 $tempFile = tempnam(sys_get_temp_dir(), 'export_');
                 file_put_contents($tempFile, $out);
@@ -240,16 +242,16 @@ class ImportExport
         // - cardname
         // - set
         // - collector number
-        global $logfile, $bracketsInNames, $importLinestoIgnore;
-        $msg = new Message($logfile);
+        global $appConfig, $bracketsInNames, $importLinestoIgnore;
+        $msg = new Message($appConfig);
 
         $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
         $raw_string = $input_string;
         $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
 
         // Define is_csv as a closure
-        $is_csv = function ($string) use ($logfile) {
-            $msg = new Message($logfile);
+        $is_csv = function ($string) use ($appConfig) {
+            $msg = new Message($appConfig);
             // Check if the string contains at least 4 commas
             $comma_count = substr_count($string, ',');
             if ($comma_count < 4) :
@@ -267,8 +269,8 @@ class ImportExport
         };
 
         // Define extract_and_process_csv as a closure
-        $extract_and_process_csv = function ($line) use ($logfile) {
-            $msg = new Message($logfile);
+        $extract_and_process_csv = function ($line) use ($appConfig) {
+            $msg = new Message($appConfig);
 
             // Parse the CSV row, with basic sanity checking on where things should be and what they should look like
             $fields = str_getcsv($line, ',', '"', '\\');
@@ -620,7 +622,7 @@ class ImportExport
         endif;
     }
 
-    public function importCollectionRegex($filename, $mytable, $importType, $userEmail, $serverEmail)
+    public function importCollectionRegex($filename, $mytable, $importType, $userEmail)
     {
         // Import type = add, replace or remove
         // Import format = 'regex'
@@ -886,10 +888,10 @@ class ImportExport
         fclose($handle);
         $summary = "Import done - $count unique cards, $importType total: $total.";
         print $summary;
-        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
+        $from = "From: {$this->serverEmail}\r\nReturn-path: {$this->serverEmail}";
         $subject = "Import failures / warnings";
         $message = "$warningSummary \n \n$summary";
-        if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+        if ($this->emailEnabled === true) :
             mail($userEmail, $subject, $message, $from);
         else :
             $this->message->logMessage(

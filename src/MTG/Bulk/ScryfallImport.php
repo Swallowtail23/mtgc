@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        11/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -134,8 +134,8 @@ class ScryfallImport
     public static function getBulkInfo($type)
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
-        global $logfile, $defaultCardsUrl, $allCardsUrl, $imgLocation;
-        $msg = new Message($logfile);
+        global $appConfig, $defaultCardsUrl, $allCardsUrl, $imgLocation;
+        $msg = new Message($appConfig);
         $bulkInfo = false;
 
         $url = $urlDefault = $urlAll = $fileLocation = $fileLocationDefault = $fileLocationAll = '';
@@ -245,8 +245,8 @@ class ScryfallImport
     public static function getBulkJson($uri, $file_location, $max_fileage)
     {
         // Function to download and save bulk Scryfall data files
-        global $logfile;
-        $msg = new Message($logfile);
+        global $appConfig;
+        $msg = new Message($appConfig);
 
         $shouldDownload = true;
         $reason = '';
@@ -330,7 +330,7 @@ class ScryfallImport
             $adminEmail,
             $imgLocation,
             $twoCardDetailSections;
-        $msg = new Message($logfile);
+        $msg = new Message($appConfig);
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
         if (!in_array($tableName, $allowedTables, true)) :

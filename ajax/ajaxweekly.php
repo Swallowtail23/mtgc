@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxweekly.php
 Purpose:     PHP script to turn weekly export on/off
@@ -23,13 +23,13 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/profile.php',
     $myURL . '/collection.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxweekly.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxweekly.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

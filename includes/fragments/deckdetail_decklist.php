@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.10
+Version:     2.11
 Date:        11/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
@@ -29,9 +29,8 @@ $detectPlanePhenomenon = function ($cardType) use ($planeTypeRegex, $phenomenonT
 if (!isset($deckManager) || !($deckManager instanceof DeckManager)) :
     $deckManager = new DeckManager(
         $db,
-        $logfile,
+        $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $any_quantity,

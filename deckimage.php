@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        10/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
@@ -24,7 +24,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");
 
@@ -52,9 +52,8 @@ if ($isValidReferrer) :
         $deckNumber = filter_input(INPUT_GET, 'deck', FILTER_SANITIZE_SPECIAL_CHARS);
         $deckManager = new DeckManager(
             $db,
-            $logfile,
+            $appConfig,
             $userEmail,
-            $serverEmail,
             $importLinestoIgnore,
             $nonPreferredSetCodes,
             $any_quantity,

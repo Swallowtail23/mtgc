@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.0
+Version:     2.1
 Date:        11/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
@@ -26,7 +26,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 require_once 'ajaxdeckfragments_lib.php';
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $response = [
     'success' => false,
@@ -39,7 +39,7 @@ $expectedReferringPages = [
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaxdeckimport.php'
 );
 if ($ajaxValidation['valid'] === false) :
@@ -101,9 +101,8 @@ endif;
 
 $deckManager = new DeckManager(
     $db,
-    $logfile,
+    $appConfig,
     $userEmail,
-    $serverEmail,
     $importLinestoIgnore,
     $nonPreferredSetCodes,
     $any_quantity,

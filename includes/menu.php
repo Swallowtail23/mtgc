@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.6
+Version:     2.7
 Date:        02/12/25
 Name:        menu.php
 Purpose:     PHP script to display menu
@@ -49,11 +49,11 @@ endif;
                         <?php
                     endif;
                 else :
-                    $obj = new Message($logfile);
+                    $obj = new Message($appConfig);
                     $obj->logMessage('[DEBUG]', 'Menu updatenotices query returned no rows');
                 endif;
             else :
-                $obj = new Message($logfile);
+                $obj = new Message($appConfig);
                 $obj->logMessage('[DEBUG]', 'Menu updatenotices query failed');
             endif;
         endif;

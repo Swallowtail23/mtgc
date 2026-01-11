@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.11
+Version:     6.12
 Date:        11/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -26,8 +26,8 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
-$msg = new Message($logfile);
+SessionManager::forcePasswordChange($appConfig);
+$msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
 function shouldRequirePasswordForNewUser($emailEnabled)
 {

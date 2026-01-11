@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.49
+Version:     14.50
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -31,9 +31,9 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($appConfig);
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 // Default numbers per page and max
 $listperpage = 30;
@@ -320,7 +320,7 @@ require('includes/criteria.php'); //Builds $criteria and assesses validity
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') and ( $scope == 'mycollection')) :
     $msg->logMessage('[NOTICE]', "My Collection / Price query called, updating collection pricing");
-    $obj = new PriceManager($db, $logfile, $userEmail);
+    $obj = new PriceManager($db, $appConfig, $userEmail);
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search

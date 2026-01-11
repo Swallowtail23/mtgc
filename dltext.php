@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.8
+Version:     4.9
 Date:        10/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
@@ -24,7 +24,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
+SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
 
 if (isset($_POST['decknumber'])) :
     $deckNumber = filter_input(
@@ -36,9 +36,8 @@ if (isset($_POST['decknumber'])) :
     $deckNumber = htmlspecialchars_decode($deckNumber, ENT_QUOTES);
     $obj = new DeckManager(
         $db,
-        $logfile,
+        $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $any_quantity,
@@ -65,9 +64,8 @@ elseif (isset($_POST['text'])) :
     // Instantiate DeckManager and use the exportMissing function to handle the export
     $obj = new DeckManager(
         $db,
-        $logfile,
+        $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $any_quantity,

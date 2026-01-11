@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.6
 Date:        29/11/25
 Name:        loggedout.php
 Purpose:     Logged out landing page.
@@ -24,7 +24,7 @@ require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $cssver = cssVersionCheck();
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>

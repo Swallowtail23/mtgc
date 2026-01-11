@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.14
+Version:     5.15
 Date:        10/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -25,15 +25,15 @@ require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
 require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
-$msg = new Message($logfile);
-$priceMgr = new PriceManager($db, $logfile, $userEmail);
+$msg = new Message($appConfig);
+$priceMgr = new PriceManager($db, $appConfig, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");
 
 $expectedReferringPages = [
     $myURL . '/index.php',
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxgrid.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxgrid.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");

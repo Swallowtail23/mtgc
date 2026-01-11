@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -32,7 +32,6 @@ class ImageManager
     * @var mysqli
     */
     private $db;
-    private $logfile;
     private $serverEmail;
     private $adminEmail;
     private $message;
@@ -42,10 +41,9 @@ class ImageManager
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
-        $this->logfile = (string) $this->appConfig->general('logFile', '');
         $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
-        $this->message = new Message($this->logfile);
+        $this->message = new Message($this->appConfig);
     }
 
     public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections, $allowFetch = true)

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        10/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -25,7 +25,7 @@ require '../includes/ini.php';
 require '../includes/error_handling.php';
 require '../includes/functions.php';
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
 $expectedReferringPages = [
     $myURL . '/collection.php'
@@ -60,7 +60,7 @@ if (!in_array($format, ['json', 'csv'], true)) :
 endif;
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: user {$userId}, range {$range}, format {$format}");
-$history = new CollectionHistory($db, $logfile, $siteTitle);
+$history = new CollectionHistory($db, $appConfig);
 $data = $history->getHistoryData($userId, $range);
 if ($data === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: unable to fetch history');

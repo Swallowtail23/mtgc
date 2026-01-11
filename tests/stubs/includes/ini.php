@@ -1,6 +1,7 @@
 <?php
 
 // Stub ini for index tests to avoid real config and DB connections.
+require_once __DIR__ . '/../../../src/MTG/Core/AppConfig.php';
 
 $iniArray = [
     'general' => [
@@ -38,6 +39,7 @@ $iniArray = [
         'DBName' => 'db'
     ],
     'email' => [
+        'Email' => 'disabled',
         'SMTPDebug' => 0,
         'Host' => '',
         'SMTPAuth' => false,
@@ -45,6 +47,8 @@ $iniArray = [
         'Password' => '',
         'SMTPSecure' => '',
         'Port' => 0,
+        'SMTPHelo' => '',
+        'SMTPVerifySSL' => 1,
         'AdminEmail' => 'admin@example.com',
         'ServerEmail' => 'server@example.com'
     ]
@@ -69,6 +73,15 @@ $valid_tribe = [];
 $search_langs_codes = ['en'];
 
 $logfile = $iniArray['general']['Logfile'];
+$appConfig = \MTG\Core\AppConfig::fromIni($iniArray, [
+    'general' => [
+        'logLevel' => $iniArray['general']['Loglevel'] ?? 0,
+        'logFile' => $logfile,
+    ],
+    'email' => [
+        'enabled' => false,
+    ],
+]);
 
 if (!isset($GLOBALS['db'])) {
     $GLOBALS['db'] = new class {

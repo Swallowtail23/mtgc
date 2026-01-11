@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        10/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -28,7 +28,7 @@ require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $cssver = cssVersionCheck();
 
 if (!isset($_SESSION['user_pending_2fa'])) :
@@ -41,7 +41,7 @@ $user_id = (int) $_SESSION['user_pending_2fa'];
 $email = $_SESSION['useremail_pending_2fa'];
 $is_admin = $_SESSION['admin_pending_2fa'] ?? false;
 $pwd_change_required = $_SESSION['chgpwd_pending_2fa'] ?? false;
-$tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+$tfaManager = new TwoFactorManager($db, $appConfig);
 $tfa_method = $tfaManager->getMethod($user_id);
 
 if (!isset($db) || !$db instanceof mysqli) :
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) :
                 $_SESSION['just_logged_in'] = true;
             endif;
 
-            if (!LoginHandler::loginStamp($db, $logfile, $email)) :
+            if (!LoginHandler::loginStamp($db, $appConfig, $email)) :
                 $msg->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
             endif;
 

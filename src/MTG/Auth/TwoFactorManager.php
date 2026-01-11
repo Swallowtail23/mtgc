@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        21/12/25
+Version:     1.3
+Date:        11/01/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
 Notes:       -
@@ -14,6 +14,7 @@ To do:       -
 namespace MTG\Auth;
 
 use OTPHP\TOTP;
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -23,6 +24,7 @@ class TwoFactorManager
     * @var mysqli
     */
     private $db;
+    private $appConfig;
     private $logfile;
     private $log;
     private $code_length = 6;
@@ -30,21 +32,22 @@ class TwoFactorManager
     private $max_attempts = 3;
     private $smtp_parameters;
     private $serverEmail;
+    private $emailEnabled;
+    private $siteTitle;
 
     /**
      * Constructor
      */
-    public function __construct($db, $smtpParameters, $serverEmail, $logfile = "")
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
-        $this->smtp_parameters = $smtpParameters;
-        $this->serverEmail = $serverEmail;
-
-        if (!class_exists(Message::class)) :
-            require_once __DIR__ . '/../Core/Message.php';
-        endif;
-        $this->log = new Message($this->logfile);
+        $this->appConfig = $appConfig;
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
+        $this->smtp_parameters = $this->appConfig->getSmtpParameters();
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
+        $this->siteTitle = (string) $this->appConfig->general('title', '');
+        $this->log = new Message($this->appConfig);
     }
 
     private function directLog($level, $text)
@@ -104,12 +107,11 @@ class TwoFactorManager
             return false;
         endif;
 
-        $emailEnabled = isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true;
         if (!in_array($method, ['email', 'app'], true)) :
             $this->directLog('[ERROR]', "Invalid 2FA method: $method");
             return false;
         endif;
-        if (!$emailEnabled && $method === 'email') :
+        if (!$this->emailEnabled && $method === 'email') :
             $this->directLog('[ERROR]', "Email 2FA requested but email is disabled for user ID: $user_id");
             return false;
         endif;
@@ -124,7 +126,7 @@ class TwoFactorManager
             $secret = $totp->getSecret();    // e.g. "JBSWY3DPEHPK3PXP"
 
             // 2) Set a label & issuer for the authenticator app
-            $totp->setLabel($GLOBALS['siteTitle']);
+            $totp->setLabel($this->siteTitle);
             $totp->setIssuer("MySite");
 
             // 3) Generate a provisioning URI. You can then show this as a QR code
@@ -224,13 +226,13 @@ class TwoFactorManager
         endif;
 
         $method = $this->getMethod($user_id);
-        if ($method === 'email' && (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true)) :
+        if ($method === 'email' && $this->emailEnabled !== true) :
             $this->directLog('[NOTICE]', "Email 2FA method ignored because email is disabled; switching to app");
             return false;
         endif;
 
         if ($method === 'email') :
-            if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+            if ($this->emailEnabled !== true) :
                 $this->directLog('[ERROR]', "Email 2FA requested for user ID but email is disabled: $user_id");
                 return false;
             endif;
@@ -414,7 +416,7 @@ class TwoFactorManager
             return false;
         endif;
 
-        if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+        if ($this->emailEnabled !== true) :
             $this->directLog('[ERROR]', "Email disabled; cannot send verification email to $email");
             return false;
         endif;
@@ -425,12 +427,7 @@ class TwoFactorManager
         endif;
 
         try {
-            $mail = new MyPHPMailer(
-                true,
-                $this->smtp_parameters,
-                $this->serverEmail,
-                $this->logfile
-            );
+            $mail = new MyPHPMailer(true, $this->appConfig);
             $subject = "Your verification code";
             $emailbody = "Your verification code is: $code\n\nThis code will expire in 10 minutes.\n\n"
                 . "If you did not request this code, please ignore this email.";

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.13
+Version:     2.14
 Date:        21/12/25
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -20,7 +20,7 @@ use MTG\Core\MyPHPMailer;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 ensureDirectoryExists($imgLocation . 'json');
 
 // URLs
@@ -42,7 +42,7 @@ $max_fileage = 23 * 3600;
 function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
     $msg->logMessage('[DEBUG]', "Fetching Download URI: $url");
     if ($pageNumber == 0) :
         $page = $file_location . 'migrations.json';
@@ -80,7 +80,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
 function checkMigrationDataForMore($file)
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $next_page = 'none';
@@ -98,7 +98,7 @@ function checkMigrationDataForMore($file)
 function clearDBMigrations()
 {
     global $db, $logfile;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     if ($result = $db->query('TRUNCATE TABLE migrations')) :
         $msg->logMessage('[NOTICE]', "Scryfall migrations API: migrations table cleared");
@@ -128,7 +128,7 @@ function safeDeleteCheck($id)
 {
     global $db, $logfile;
     $safeScore = null;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     //Find if it's in any decks
     $userResultArray = $collectionResultArray = $resultArray = array();
@@ -387,7 +387,7 @@ endif;
 $subject = "MTG migrations update completed";
 $body = "Total: $total_count \nNeed action: $need_action \n$action_text";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $appConfig);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_migrations alert');

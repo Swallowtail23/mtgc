@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        11/01/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
@@ -46,7 +46,7 @@ class TrustedDeviceManager
         endif;
 
         try {
-            $this->msg = new Message($this->logfile);
+            $this->msg = new Message($this->appConfig);
         } catch (\Error $e) {
             $this->msg = null; // Ensure it's null if instantiation fails
             $this->log('[NOTICE]', 'Falling back to direct logging in TrustedDeviceManager');

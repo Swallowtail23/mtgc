@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.13
+Version:     2.14
 Date:        11/01/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
@@ -20,7 +20,7 @@ use MTG\Core\MyPHPMailer;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 ensureDirectoryExists($imgLocation . 'json');
 
 // How old to overwrite
@@ -180,7 +180,7 @@ endif;
 $subject = "MTG sets update completed";
 $body = "Total sets: $total_count";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $appConfig);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; skipping scryfall_sets alert');

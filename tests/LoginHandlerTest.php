@@ -49,7 +49,7 @@ namespace MTG\Auth {
             public static $enabled = false;
             public $verificationStarted = false;
 
-            public function __construct($db = null, $smtpParameters = null, $serverEmail = null, $logfile = null)
+            public function __construct($db = null, $appConfig = null)
             {
             }
 
@@ -74,7 +74,7 @@ namespace MTG\Auth {
             public $locked = false;
             public $zeroed = false;
 
-            public function __construct($db = null, $logfile = null, $email = null)
+            public function __construct($db = null, $appConfig = null, $email = null)
             {
             }
 

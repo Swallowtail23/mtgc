@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
@@ -26,7 +26,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 require_once 'ajaxdeckfragments_lib.php';
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $response = [
     'success' => false,
@@ -36,7 +36,7 @@ $response = [
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdecktype.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxdecktype.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $response['error'] = 'Invalid request token';
@@ -91,9 +91,8 @@ endif;
 
 $deckManager = new DeckManager(
     $db,
-    $logfile,
+    $appConfig,
     $userEmail,
-    $serverEmail,
     $importLinestoIgnore,
     $nonPreferredSetCodes,
     $any_quantity,

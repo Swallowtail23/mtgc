@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
@@ -19,7 +19,7 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $obj  = new ImageManager($db, $appConfig);
 
 if (isset($argv[1])) :
@@ -65,7 +65,7 @@ if (isset($argv[1])) :
         $body = "Processed $completediterations of $num_rows images for $setcode. Success: $success_count; "
             . "Failed: $fail_count";
         if (isset($emailEnabled) && $emailEnabled === true) :
-            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mail = new MyPHPMailer(true, $appConfig);
             $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
         else :
             $msg->logMessage(

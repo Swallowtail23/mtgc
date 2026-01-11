@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     28.27
+Version:     28.29
 Date:        11/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
@@ -21,8 +21,8 @@ endif;
 
 function cssVersionCheck()
 {
-    global $db, $logfile;
-    $msg = new Message($logfile);
+    global $db, $appConfig;
+    $msg = new Message($appConfig);
     if (!is_object($db) or !method_exists($db, 'execute_query')) :
         $msg->logMessage(
             '[WARNING]',
@@ -90,9 +90,9 @@ function normalizeRedirectUrl($url)
 
 function setMtceMode($toggle): bool
 {
-    global $db, $logfile;
+    global $db, $appConfig;
 
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     $toggle = strtolower(trim((string) $toggle));
 
@@ -140,8 +140,8 @@ function setMtceMode($toggle): bool
 
 function mtceModeCheck($user)
 {
-    global $db,$logfile;
-    $msg = new Message($logfile);
+    global $db, $appConfig;
+    $msg = new Message($appConfig);
 
     $msg->logMessage('[DEBUG]', "Checking maintenance mode, user $user");
     $sql1 = "SELECT mtce FROM admin LIMIT 1";
@@ -205,7 +205,7 @@ function langReplace($str)
 function checkRemoteFile($url)
 {
     global $appConfig, $logfile;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     if (stripos($url, 'file://') === 0) :
         $path = substr($url, 7);
@@ -314,29 +314,29 @@ function getFullURL()
 
 function ensureDirectoryExists($path)
 {
-    global $logfile;
+    global $appConfig;
 
     if (is_dir($path)) :
         return;
     endif;
 
     if (@mkdir($path, 0755, true)) :
-        $msg = new Message($logfile);
+        $msg = new Message($appConfig);
         $msg->logMessage('[NOTICE]', "Created directory $path");
         return;
     endif;
 
     $error = error_get_last();
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
     $msg->logMessage('[ERROR]', "Failed to create directory $path: " . ($error['message'] ?? 'unknown error'));
     throw new Exception("[ERROR] Unable to create directory {$path}");
 }
 
 function validateTrueDecimal($v)
 {
-    global $logfile;
+    global $appConfig;
     $result = floor($v);
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     $msg->logMessage('[DEBUG]', "Checking $v for true decimal, result is $result");
     return(floor($v) != $v);
@@ -344,8 +344,8 @@ function validateTrueDecimal($v)
 
 function validUUID($uuid)
 {
-    global $logfile;
-    $msg = new Message($logfile);
+    global $appConfig;
+    $msg = new Message($appConfig);
 
     $msg->logMessage('[DEBUG]', "Checking for valid UUID ($uuid)");
     if (
@@ -364,8 +364,8 @@ function validUUID($uuid)
 
 function validTableName($input)
 {
-    global $db, $logfile;
-    $msg = new Message($logfile);
+    global $db, $appConfig;
+    $msg = new Message($appConfig);
 
     $msg->logMessage('[DEBUG]', "Checking for valid table name ($input)");
     $pattern = '/^\d+collection$/';

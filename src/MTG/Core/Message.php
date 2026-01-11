@@ -1,12 +1,12 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        11/01/26
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
-                 $msg = new Message($logfile);
+                 $msg = new Message($appConfig);
                  $msg->logMessage('[DEBUG]', "Message text");
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
@@ -22,28 +22,11 @@ class Message
     private $appConfig;
     public $textstring;
 
-    public function __construct($logfile = null, $logLevel = null, ?AppConfig $appConfig = null)
+    public function __construct(AppConfig $appConfig)
     {
         $this->appConfig = $appConfig;
-
-        $configLogfile = $this->appConfig ? $this->appConfig->general('logFile', null) : null;
-        $configLogLevel = $this->appConfig ? $this->appConfig->general('logLevel', null) : null;
-
-        if ($logfile !== null) :
-            $this->logfile = $logfile;
-        elseif ($configLogfile !== null) :
-            $this->logfile = $configLogfile;
-        else :
-            $this->logfile = $GLOBALS['logfile'] ?? '';
-        endif;
-
-        if ($logLevel !== null) :
-            $this->logLevel = $logLevel;
-        elseif ($configLogLevel !== null) :
-            $this->logLevel = $configLogLevel;
-        else :
-            $this->logLevel = $GLOBALS['logLevelIni'] ?? 3;
-        endif;
+        $this->logfile = $this->appConfig->general('logFile', '');
+        $this->logLevel = (int) $this->appConfig->general('logLevel', 3);
     }
 
     public function logMessage($errorlevel, $text, $logfile = '')

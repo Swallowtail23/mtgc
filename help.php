@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.12
+Version:     2.13
 Date:        10/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -25,7 +25,7 @@ require('includes/error_handling.php');
 require('includes/functions.php');     //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');      //Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
+SessionManager::forcePasswordChange($appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ $name = ucfirst($userName);
                         $subject = "Message sent using your contact form";
                     endif;
                     if (isset($emailEnabled) && $emailEnabled === true) :
-                        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+                        $mailer = new MyPHPMailer(true, $appConfig);
                         $mailResult = $mailer->sendEmail($adminEmail, false, $subject, $message, '', '', '');
                         if ($mailResult === true) :
                             echo "Email sent!";

@@ -3,19 +3,75 @@
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use MTG\Cards\ImportExport;
+use MTG\Core\AppConfig;
 use MTG\Core\MyPHPMailer;
 
-require_once __DIR__ . '/../src/MTG/Cards/ImportExport.php';
+require_once __DIR__ . '/bootstrap.php';
 
 class ImportExportEmailTest extends TestCase
 {
+    private function buildConfig(string $logfile, bool $emailEnabled): AppConfig
+    {
+        $iniArray = [
+            'general' => [
+                'URL' => 'https://test.example',
+                'title' => 'Test',
+                'tier' => 'dev',
+                'Loglevel' => 0,
+                'Logfile' => $logfile,
+                'ImgLocation' => '',
+                'Timezone' => 'UTC',
+                'Locale' => 'en_US',
+                'Copyright' => ''
+            ],
+            'security' => [
+                'Turnstile' => 'disabled',
+                'Turnstile_site_key' => '',
+                'Turnstile_secret_key' => '',
+                'TrustDuration' => 0,
+                'Badloginlimit' => 0,
+                'AdminIP' => ''
+            ],
+            'email' => [
+                'Email' => $emailEnabled ? 'enabled' : 'disabled',
+                'AdminEmail' => 'admin@example.test',
+                'ServerEmail' => 'server@example.test',
+                'SMTPDebug' => 'SMTP::DEBUG_OFF',
+                'Host' => 'smtp.example.com',
+                'SMTPAuth' => true,
+                'Username' => 'user',
+                'Password' => 'pass',
+                'SMTPSecure' => 'tls',
+                'Port' => 2525,
+                'SMTPHelo' => 'helo.example.com',
+                'SMTPVerifySSL' => 1
+            ],
+            'fx' => [
+                'FreecurrencyAPI' => '',
+                'TargetCurrency' => ''
+            ],
+            'comments' => [
+                'Disqus' => 'disabled',
+                'DisqusDevURL' => '',
+                'DisqusProdURL' => ''
+            ],
+        ];
+
+        return AppConfig::fromIni($iniArray, [
+            'general' => [
+                'logLevel' => 0,
+                'logFile' => $logfile,
+            ],
+            'email' => [
+                'enabled' => $emailEnabled,
+            ],
+        ]);
+    }
     #[RunInSeparateProcess]
     public function testExportEmailReturnsFalseWhenSendFails()
     {
-        global $emailEnabled, $siteTitle, $logfile;
-        $emailEnabled = true;
-        $siteTitle = 'MTG Test';
         $logfile = tempnam(sys_get_temp_dir(), 'impexp_');
+        $appConfig = $this->buildConfig($logfile, true);
 
         if (!class_exists(MyPHPMailer::class, false)) {
             eval(
@@ -24,13 +80,10 @@ class ImportExportEmailTest extends TestCase
                 {
                     public static $calls = [];
 
-                    public function __construct($exceptions, $smtpParameters, $serverEmail, $logfile, $siteTitle = null)
+                    public function __construct($exceptions, $appConfig)
                     {
                         self::$calls[] = [
-                            "params" => $smtpParameters,
-                            "serverEmail" => $serverEmail,
-                            "logfile" => $logfile,
-                            "siteTitle" => $siteTitle
+                            "logfile" => $appConfig ? $appConfig->general("logFile", "") : ""
                         ];
                     }
 
@@ -103,10 +156,8 @@ class ImportExportEmailTest extends TestCase
 
         $exporter = new ImportExport(
             $db,
-            $logfile,
-            'user@example.com',
-            'server@example.com',
-            $siteTitle
+            $appConfig,
+            'user@example.com'
         );
 
         $extraAttachments = [
@@ -115,17 +166,6 @@ class ImportExportEmailTest extends TestCase
         $result = $exporter->exportCollectionToCsv(
             'mytable',
             'http://example.com',
-            [
-                'SMTPHost' => 'smtp.example.com',
-                'SMTPHelo' => 'helo.example.com',
-                'SMTPPort' => 2525,
-                'SMTPAuth' => true,
-                'SMTPUsername' => 'user',
-                'SMTPPassword' => 'pass',
-                'SMTPSecure' => 'tls',
-                'SMTPDebug' => 'SMTP::DEBUG_OFF',
-                'globalDebug' => 3
-            ],
             'email',
             'export.csv',
             '',
@@ -205,12 +245,11 @@ class ImportExportEmailTest extends TestCase
             }
         };
 
+        $logfile = tempnam(sys_get_temp_dir(), 'impexp_');
         $exporter = new ImportExport(
             $db,
-            null,
-            'user@example.com',
-            'server@example.com',
-            'MTG Test'
+            $this->buildConfig($logfile, false),
+            'user@example.com'
         );
 
         $csv = $exporter->buildCollectionCsv('mytable');
@@ -221,5 +260,9 @@ class ImportExportEmailTest extends TestCase
             $csv
         );
         $this->assertStringContainsString('"SET","123","Card Name","EN","1","0","0","abcd1234"', $csv);
+
+        if ($logfile && file_exists($logfile)) {
+            unlink($logfile);
+        }
     }
 }

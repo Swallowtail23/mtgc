@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        11/01/26
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
@@ -19,7 +19,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 
 if (!isset($msg) || !($msg instanceof Message)) :
-    $msg = new Message($logfile ?? null);
+    $msg = new Message($appConfig);
 endif;
 
 $statsHelper = new CollectionStats($db, $appConfig);

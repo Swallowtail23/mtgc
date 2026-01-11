@@ -2,6 +2,8 @@
 
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/bootstrap.php';
+
 function getRealUserStatusClass(): string
 {
     if (class_exists('UserStatusReal', false)) :
@@ -69,7 +71,7 @@ class UserStatusTest extends TestCase
             'badlogins' => new UserStatusResultStub(0, [])
         ];
         $db = new UserStatusDbStub($results);
-        $status = new $class($db, $GLOBALS['logfile'], 'user@example.com');
+        $status = new $class($db, $GLOBALS['appConfig'], 'user@example.com');
 
         $result = $status->getUserStatus();
 
@@ -86,7 +88,7 @@ class UserStatusTest extends TestCase
             'badlogins' => new UserStatusResultStub(1, ['badlogins' => null])
         ];
         $db = new UserStatusDbStub($results);
-        $status = new $class($db, $GLOBALS['logfile'], 'user@example.com');
+        $status = new $class($db, $GLOBALS['appConfig'], 'user@example.com');
 
         $result = $status->getBadLogin();
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.12
 Date:        21/12/25
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
@@ -24,14 +24,14 @@ require 'includes/ini.php';                // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');
 
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
     if (validTableName($table) !== false) :
-        $obj = new PriceManager($db, $logfile, $userEmail);
+        $obj = new PriceManager($db, $appConfig, $userEmail);
         $obj->updateCollectionValues($table);
     else :
         throw new Exception('[ERROR] valueupdate.php: Invalid table format');

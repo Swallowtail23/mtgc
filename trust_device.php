@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.9
 Date:        11/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -31,7 +31,7 @@ require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
 require 'includes/functions.php';         // Include needed functions
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $cssver = cssVersionCheck();
 
 if (!isset($db) || !$db instanceof mysqli) {

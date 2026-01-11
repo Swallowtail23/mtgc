@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.16
+Version:     4.17
 Date:        10/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -25,8 +25,8 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
-$msg = new Message($logfile);
+SessionManager::forcePasswordChange($appConfig);
+$msg = new Message($appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.8
 Date:        11/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -37,9 +37,8 @@ endif;
 
 $deckManager = new DeckManager(
     $db,
-    $logfile,
+    $appConfig,
     $userEmail,
-    $serverEmail,
     $importLinestoIgnore,
     $nonPreferredSetCodes,
     $any_quantity,

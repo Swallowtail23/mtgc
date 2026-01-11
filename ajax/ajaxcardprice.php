@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        11/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
@@ -26,12 +26,12 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/carddetail.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxcardprice.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxcardprice.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
@@ -65,7 +65,7 @@ else :
 
     $msg->logMessage('[DEBUG]', "Async price refresh for card $cardUUID");
 
-    $priceManager = new PriceManager($db, $logfile, $userEmail);
+    $priceManager = new PriceManager($db, $appConfig, $userEmail);
     $scryfallresult = $priceManager->scryfall($cardUUID);
     $msg->logMessage('[DEBUG]', "Scryfall refresh action '{$scryfallresult['action']}' for $cardUUID");
 
@@ -121,7 +121,7 @@ else :
         $row,
         $cardtypes,
         $rate,
-        $logfile
+        $appConfig
     );
     $priceHtml = PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
     $msg->logMessage('[DEBUG]', "Price HTML built for $cardUUID");

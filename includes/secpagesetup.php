@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.0
+Version:     3.1
 Date:        11/01/26
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -48,7 +48,7 @@ else :
             exit();
         endif;
     else :
-        $msg = new Message($logfile);
+        $msg = new Message($appConfig);
         $msg->logMessage('[ERROR]', "User array returned false - user no longer exists?");
         session_destroy();
         echo "<meta http-equiv='refresh' content='1;url=login.php'>";

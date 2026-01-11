@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.21
+Version:     6.22
 Date:        11/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -28,8 +28,8 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
 // Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($logfile);
-$msg = new Message($logfile);
+SessionManager::forcePasswordChange($appConfig);
+$msg = new Message($appConfig);
 $csrfToken = SessionManager::generateCsrfToken();
 
 function requireCsrfToken(): void
@@ -585,7 +585,7 @@ if (isset($_POST['test_email']) && $_POST['test_email'] === 'send') :
     requireCsrfToken();
 
     if (!empty($serverEmail) && !empty($adminEmail)) :
-        $mailer = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle);
+        $mailer = new MyPHPMailer(true, $appConfig);
         $subject = "Test email from {$siteTitle}";
         $bodyHtml = "<p>This is a test email confirming SMTP settings are working.</p>";
         $bodyText = strip_tags($bodyHtml);
@@ -799,7 +799,7 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
             $iniArray = $updatedIni;
             $logfile = $updatedIni['general']['Logfile'];
             $logLevelIni = $updatedIni['general']['Loglevel'] ?? $logLevelIni;
-            $msg = new Message($logfile);
+            $msg = new Message($appConfig);
             header('Location: admin.php');
             exit();
         else :

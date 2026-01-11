@@ -3,6 +3,8 @@
 use MTG\Cards\PriceDisplay;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/bootstrap.php';
+
 class PriceDisplayTest extends TestCase
 {
     public function testComputePricesUsesScryfallWhenPresent()
@@ -18,7 +20,7 @@ class PriceDisplayTest extends TestCase
             'price_etched' => '3.00'
         ];
 
-        $prices = PriceDisplay::computePrices($scryfall, $row, 'normalonly', 2, null);
+        $prices = PriceDisplay::computePrices($scryfall, $row, 'normalonly', 2, $GLOBALS['appConfig']);
 
         $this->assertSame('1.23', $prices['normalprice']);
         $this->assertSame('2.46', $prices['localnormal']);

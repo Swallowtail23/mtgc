@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.8
 Date:        25/11/25
 Name:        error_handling.php
 Purpose:     Process page initiation and setup error handling.
@@ -20,7 +20,7 @@ endif;
 function mtgError($number, $string, $file, $line, $context = '')
 {
     global $logfile, $adminEmail, $serverEmail, $emailEnabled;
-    $msg = new Message($logfile);
+    $msg = new Message($appConfig);
 
     if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
         $userEmail = $_SESSION['useremail'];
@@ -112,7 +112,7 @@ function mtgException($err)
     if ($emailEnabled) :
         mail($adminEmail, $subject, $message, $from);
     else :
-        $fallback = new Message($logfile);
+        $fallback = new Message($appConfig);
         $fallback->logMessage(
             '[NOTICE]',
             "Email disabled; exception notification not sent ({$err->getMessage()})"

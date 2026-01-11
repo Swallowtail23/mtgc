@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.8
-Date:        07/12/25
+Version:     1.10
+Date:        11/01/26
 Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
 Notes:       -
@@ -21,13 +21,7 @@ class ClassName
      * @var mysqli
      */
     private $db;
-
-    /**
-     * Path to the log file.
-     *
-     * @var string
-     */
-    private $logfile;
+    private $appConfig;
 
     /**
      * Message logger instance.
@@ -54,15 +48,15 @@ class ClassName
      * Constructor.
      *
      * @param mysqli      $db         Database connection.
-     * @param string      $logfile    Log file path.
+     * @param AppConfig   $appConfig  App configuration container.
      * @param string|null $identifier Optional per-instance identifier (e.g. user email).
      */
-    public function __construct($db, $logfile, $identifier = null)
+    public function __construct($db, AppConfig $appConfig, $identifier = null)
     {
         $this->db         = $db;
-        $this->logfile    = $logfile;
+        $this->appConfig  = $appConfig;
         $this->identifier = $identifier;
-        $this->message    = new Message($this->logfile);
+        $this->message    = new Message($this->appConfig);
     }
 
     /**

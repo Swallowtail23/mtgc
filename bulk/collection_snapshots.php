@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        11/01/26
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
@@ -18,7 +18,7 @@ require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $msg->logMessage('[NOTICE]', 'Starting collection value snapshot run');
 
 $fxAPI = $iniArray['fx']['FreecurrencyAPI'] ?? '';

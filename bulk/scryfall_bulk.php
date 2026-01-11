@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.16
+Version:     9.17
 Date:        19/12/25
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -18,7 +18,7 @@ use MTG\Core\MyPHPMailer;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 // Start time tracking
 $start = microtime(true);
@@ -265,7 +265,7 @@ else :
         $msg->logMessage('[NOTICE]', sprintf('Time after import completed: %.2f seconds', $elapsed));
         $subject = "MTG bulk update completed ($type)";
         if (!empty($emailEnabled)) :
-            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mail = new MyPHPMailer(true, $appConfig);
             $mailresult = $mail->sendEmail($adminEmail, false, $subject, $bulkResultMessage);
             $msg->logMessage('[DEBUG]', "Mail result is '$mailresult'");
         else :

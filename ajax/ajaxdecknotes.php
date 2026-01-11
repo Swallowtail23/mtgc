@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.16
 Date:        11/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -24,12 +24,12 @@ startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
-$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $logfile, 'ajaxdecknotes.php');
+$ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxdecknotes.php');
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
@@ -61,9 +61,8 @@ else :
 
     $deckManager = new DeckManager(
         $db,
-        $logfile,
+        $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $any_quantity,

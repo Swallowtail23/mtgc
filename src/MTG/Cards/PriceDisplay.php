@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        23/12/25
+Version:     1.4
+Date:        11/01/26
 Name:        PriceDisplay.php
 Purpose:     Build price values and HTML for card detail pricing displays.
 Notes:       -
@@ -13,17 +13,15 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 
 class PriceDisplay
 {
-    public static function computePrices($scryfallResult, $row, $cardtypes, $rate, $logfile = null): array
+    public static function computePrices($scryfallResult, $row, $cardtypes, $rate, AppConfig $appConfig): array
     {
-        $msg = null;
-        if (!empty($logfile)) :
-            $msg = new Message($logfile);
-            $msg->logMessage('[DEBUG]', "Building price data for cardtypes '$cardtypes'");
-        endif;
+        $msg = new Message($appConfig);
+        $msg->logMessage('[DEBUG]', "Building price data for cardtypes '$cardtypes'");
 
         $prices = [
             'normalprice' => false,

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.12
+Version:     4.13
 Date:        10/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -29,7 +29,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 // Page content starts here
 $requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);
@@ -63,7 +63,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
 
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $appConfig, $userEmail);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output
@@ -71,10 +71,10 @@ if ($requestedTable !== null && $requestedTable !== '') :
     // will also be output to screen
     if (isset($_GET['type']) && $_GET['type'] === 'echo') :
         $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
-        $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'echo');
+        $obj->exportCollectionToCsv($table, $myURL, 'echo');
     elseif (isset($_GET['type']) && $_GET['type'] === 'email') :
         $msg->logMessage('[DEBUG]', "csv.php running for '$table', output ('{$_GET['type']}')");
-        $mailexport = $obj->exportCollectionToCsv($table, $myURL, $smtpParameters, 'email');
+        $mailexport = $obj->exportCollectionToCsv($table, $myURL, 'email');
         if ($smtpParameters['SMTPDebug'] !== 'SMTP::DEBUG_OFF' && $smtpParameters['globalDebug'] == 3) :
             $msg->logMessage('[DEBUG]', 'In debug, not redirecting');
         else :

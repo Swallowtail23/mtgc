@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     2.8
 Date:        11/01/26
 Name:        logout.php
 Purpose:     Destroy the session, log it, and head to login.php.
@@ -30,7 +30,7 @@ $removeTrusted = 1;
 require 'includes/ini.php';
 require 'includes/error_handling.php';
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $msg->logMessage('[NOTICE]', "User $userEmail logging out from {$_SERVER['REMOTE_ADDR']}");
 
 // Remove trusted device token

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.17
+Version:     1.18
 Date:        11/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
@@ -26,7 +26,7 @@ require('../includes/ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
 require_once 'ajaxdeckfragments_lib.php';
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 
 $response = [
     'success' => false,
@@ -97,9 +97,8 @@ endif;
 
 $deckManager = new DeckManager(
     $db,
-    $logfile,
+    $appConfig,
     $userEmail,
-    $serverEmail,
     $importLinestoIgnore,
     $nonPreferredSetCodes,
     $any_quantity,

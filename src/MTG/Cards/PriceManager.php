@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        11/01/26
 Name:        PriceManager.php
 Purpose:     Price management class.
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\UserAgent;
 
@@ -22,23 +23,24 @@ class PriceManager
     * @var mysqli
     */
     private $db;
-    private $logfile;
+    private $appConfig;
     private $userEmail;
     private $message;
+    private $maxCardDataAge;
 
-    public function __construct($db, $logfile, $userEmail)
+    public function __construct($db, AppConfig $appConfig, $userEmail)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
         $this->userEmail = $userEmail;
-        $this->message = new Message($this->logfile);
+        $this->message = new Message($this->appConfig);
+        $this->maxCardDataAge = (int) $this->appConfig->general('maxCardDataAge', 0);
     }
 
     // Fetch TCG buy URI and price from scryfall.com JSON data
     public function scryfall($cardId, $action = '')
     {
         //Set up the function
-        global $appConfig, $max_card_data_age; //From ini.php
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail for $cardId");
         if (!isset($cardId)) :
             $this->message->logMessage('[ERROR]', "Scryfall API by $this->userEmail without required card id");
@@ -50,7 +52,7 @@ class PriceManager
         //Set the URL
         $url = $baseurl . "cards/" . $cardId . "?" . $time;
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail URL for $cardId is $url");
-        $userAgent = UserAgent::buildFromConfig($appConfig, null, $this->message);
+        $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
         $this->message->logMessage('[DEBUG]', "Scryfall API user agent set to $userAgent");
 
         if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardId])) :
@@ -92,12 +94,13 @@ class PriceManager
                 '[DEBUG]',
                 "Scryfall API by $this->userEmail with result: Data exists for $cardId, $record_age seconds old"
             );
-            if ($record_age > $max_card_data_age) :
+            if ($record_age > $this->maxCardDataAge) :
                 //Old data, fetch and update:
                 $scryaction = 'update';
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->userEmail with result: Data stale (older than $max_card_data_age seconds)"
+                    "Scryfall API by $this->userEmail with result: Data stale "
+                        . "(older than {$this->maxCardDataAge} seconds)"
                         . " for $cardId, running '$scryaction'"
                 );
             elseif ($action == "update") :
@@ -114,7 +117,7 @@ class PriceManager
                 $this->message->logMessage(
                     '[DEBUG]',
                     "Scryfall API by $this->userEmail with result: Data not stale "
-                        . "(younger than $max_card_data_age seconds) for $cardId, running '$scryaction'"
+                        . "(younger than {$this->maxCardDataAge} seconds) for $cardId, running '$scryaction'"
                 );
             endif;
         else :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.18
+Version:     14.19
 Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -36,7 +36,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
@@ -125,7 +125,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         ) :
             $msg->logMessage('[DEBUG]', "SQL query for user details succeeded");
             $row = $rowqry->fetch_assoc();
-            $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+            $tfaManager = new TwoFactorManager($db, $appConfig);
             $userHas2fa = $tfaManager->isEnabled($userId);
             $userTwofaMethod = $userHas2fa ? $tfaManager->getMethod($userId) : '';
         else :
@@ -308,7 +308,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
             //7. 2FA Section
                 // Get 2FA status for this user
-                $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+                $tfaManager = new TwoFactorManager($db, $appConfig);
                 $tfa_enabled = $tfaManager->isEnabled($userId);
 
                 // Check if we should enable or disable 2FA

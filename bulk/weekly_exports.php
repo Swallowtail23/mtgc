@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.16
+Version:     2.17
 Date:        21/12/25
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -20,10 +20,10 @@ use MTG\Core\MyPHPMailer;
 require('bulk_ini.php');
 require('../includes/error_handling.php');
 require('../includes/functions.php');
-$msg   = new Message($logfile);
+$msg   = new Message($appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-$obj   = new ImportExport($db, $logfile, $serverEmail, $serverEmail, $siteTitle);
-$historyExporter = new CollectionHistory($db, $logfile, $siteTitle);
+$obj   = new ImportExport($db, $appConfig, $serverEmail);
+$historyExporter = new CollectionHistory($db, $appConfig);
 
 $list = '';
 $usersExport = $db->execute_query(
@@ -36,9 +36,8 @@ while ($user = $usersExport->fetch_assoc()) :
     $userEmail = $user['email'];
     $decks = new DeckManager(
         $db,
-        $logfile,
+        $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $any_quantity
@@ -125,7 +124,7 @@ while ($user = $usersExport->fetch_assoc()) :
 
     if (isset($emailEnabled) && $emailEnabled === true) :
         if ($collectionTempFile !== '') :
-            $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+            $mail = new MyPHPMailer(true, $appConfig);
             $mailresult = $mail->sendEmail(
                 $userEmail,
                 true,
@@ -159,7 +158,7 @@ endwhile;
 $subject = "$siteTitle weekly export user report";
 $emailbody = "Weekly collection export from $siteTitle have been run for:\r\n\r\n$list";
 if (isset($emailEnabled) && $emailEnabled === true) :
-    $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile);
+    $mail = new MyPHPMailer(true, $appConfig);
     $mailresult = $mail->sendEmail($adminEmail, false, $subject, $emailbody);
 else :
     $msg->logMessage('[NOTICE]', 'Email disabled; weekly export admin summary not sent');

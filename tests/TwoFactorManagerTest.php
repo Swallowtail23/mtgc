@@ -2,6 +2,8 @@
 
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/bootstrap.php';
+
 function getRealTwoFactorManagerClass(): string
 {
     if (class_exists('TwoFactorManagerReal', false)) :
@@ -81,7 +83,7 @@ class TwoFactorManagerTest extends TestCase
         $result = new TwoFactorResultStub(1, ['tfa_enabled' => 1]);
         $stmt = new TwoFactorStmtStub($result);
         $db = new TwoFactorDbStub($stmt);
-        $manager = new $class($db, [], 'server@example.com');
+        $manager = new $class($db, $GLOBALS['appConfig']);
 
         $this->assertTrue($manager->isEnabled(10));
     }
@@ -92,7 +94,7 @@ class TwoFactorManagerTest extends TestCase
         $result = new TwoFactorResultStub(0, []);
         $stmt = new TwoFactorStmtStub($result);
         $db = new TwoFactorDbStub($stmt);
-        $manager = new $class($db, [], 'server@example.com');
+        $manager = new $class($db, $GLOBALS['appConfig']);
 
         $this->assertSame('email', $manager->getMethod(10));
     }

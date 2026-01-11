@@ -1,12 +1,12 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.15
 Date:        11/01/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
-                 $mail = new MyPHPMailer(true, $smtpParameters, $serverEmail, $logfile, $siteTitle, $appConfig);
+                 $mail = new MyPHPMailer(true, $appConfig);
                  $mailresult = $mail->sendEmail($adminEmail, false, $subject, $body);
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
@@ -27,52 +27,27 @@ class MyPHPMailer extends PHPMailer
      * MyPHPMailer constructor.
      *
      * @param bool|null $exceptions
-     * @param string    $body A default HTML message body
+     * @param AppConfig $appConfig
      */
-    private $serverEmail;
-    private $logfile;
     private $message;
-    private $siteTitle;
     private $emailEnabled;
     private $appConfig;
 
-    public function __construct(
-        $exceptions,
-        $smtpParameters,
-        $serverEmail,
-        $logfile,
-        $siteTitle = null,
-        ?AppConfig $appConfig = null
-    ) {
+    public function __construct($exceptions, AppConfig $appConfig)
+    {
         //Don't forget to do this or other things may not be set correctly!
         parent::__construct($exceptions);
         // Set variables
         $this->appConfig = $appConfig;
-        $this->serverEmail = $serverEmail;
-        $this->logfile = $logfile;
-
-        if ($this->appConfig !== null && ($this->serverEmail === null || $this->serverEmail === '')) :
-            $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
-        endif;
-        if ($this->appConfig !== null && $this->logfile === null) :
-            $this->logfile = $this->appConfig->general('logFile', null);
-        endif;
-
-        $logLevel = $this->appConfig ? $this->appConfig->general('logLevel', null) : null;
-        $this->message = new Message($this->logfile, $logLevel, $this->appConfig);
-        $this->siteTitle = $siteTitle
-            ?: ($this->appConfig ? (string) $this->appConfig->general('title', '') : ($GLOBALS['siteTitle'] ?? ''));
-        $this->emailEnabled = $this->appConfig
-            ? (bool) $this->appConfig->email('enabled', false)
-            : (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true);
-
-        if (empty($smtpParameters) && $this->appConfig !== null) :
-            $smtpParameters = $this->appConfig->getSmtpParameters();
-        endif;
+        $this->message = new Message($this->appConfig);
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
+        $serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $siteTitle = (string) $this->appConfig->general('title', '');
+        $smtpParameters = $this->appConfig->getSmtpParameters();
 
         // Set defaults for PHPMailer from ini.file
-        $this->setFrom($this->serverEmail, $this->siteTitle);
-        $this->addReplyTo($this->serverEmail, $this->siteTitle);
+        $this->setFrom($serverEmail, $siteTitle);
+        $this->addReplyTo($serverEmail, $siteTitle);
         $this->isSMTP();
         $this->Host       = $smtpParameters['SMTPHost'];
         $this->Helo       = $smtpParameters['SMTPHelo'] ?? gethostname();

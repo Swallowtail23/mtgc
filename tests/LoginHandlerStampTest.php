@@ -3,6 +3,8 @@
 use MTG\Auth\LoginHandler;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/bootstrap.php';
+
 class LoginStampDbStub
 {
     public $lastQuery;
@@ -28,7 +30,7 @@ class LoginHandlerStampTest extends TestCase
     {
         $db = new LoginStampDbStub(true);
 
-        $result = LoginHandler::loginStamp($db, $GLOBALS['logfile'], 'user@example.test');
+        $result = LoginHandler::loginStamp($db, $GLOBALS['appConfig'], 'user@example.test');
 
         $this->assertSame(1, $result);
         $this->assertSame('UPDATE users SET lastlogin_date = ? WHERE email = ?', $db->lastQuery);
@@ -40,7 +42,7 @@ class LoginHandlerStampTest extends TestCase
     {
         $db = new LoginStampDbStub(false);
 
-        $result = LoginHandler::loginStamp($db, $GLOBALS['logfile'], 'user@example.test');
+        $result = LoginHandler::loginStamp($db, $GLOBALS['appConfig'], 'user@example.test');
 
         $this->assertSame(0, $result);
     }

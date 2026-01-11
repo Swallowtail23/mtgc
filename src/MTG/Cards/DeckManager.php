@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.13
+Version:     2.16
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -22,11 +23,12 @@ class DeckManager
     * @var mysqli
     */
     private $db;
-    private $logfile;
+    private $appConfig;
     private $batchedCardIds = []; // Array to store batched cards to add
     private $message;
     private $userEmail;
     private $serverEmail;
+    private $emailEnabled;
     private $importLinestoIgnore;
     private $nonPreferredSetCodes;
     private $anyQuantity = [];
@@ -34,18 +36,18 @@ class DeckManager
 
     public function __construct(
         $db,
-        $logfile,
+        AppConfig $appConfig,
         $userEmail,
-        $serverEmail,
         $importLinestoIgnore,
         $nonPreferredSetCodes,
         $anyQuantity
     ) {
         $this->db = $db;
-        $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->appConfig = $appConfig;
+        $this->message = new Message($this->appConfig);
         $this->userEmail = $userEmail;
-        $this->serverEmail = $serverEmail;
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
         $this->anyQuantity = is_array($anyQuantity) ? $anyQuantity : [];
@@ -160,7 +162,7 @@ class DeckManager
             $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Deck Import failures / warnings";
             $message = "$warningHeading\n\n$warningSummary\n";
-            if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
+            if ($this->emailEnabled) :
                 mail($this->userEmail, $subject, $message, $from);
             else :
                 $this->message->logMessage(
@@ -1454,7 +1456,7 @@ class DeckManager
         // - Bulk
         // - Variable (returns the decklist from the function, used in duplicate deck function)
 
-        global $commander_decktypes, $smtpParameters;
+        global $commander_decktypes;
         $this->message->logMessage('[NOTICE]', "Deck export called for deck $deckNumber");
 
         $detectPlanePhenomenon = function ($cardType) {
@@ -1653,8 +1655,8 @@ class DeckManager
                     unlink($tmpName);
                 endif;
             elseif ($format === "email") :
-                if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                    $mail = new MyPHPMailer(true, $smtpParameters, $this->serverEmail, $this->logfile);
+                if ($this->emailEnabled) :
+                    $mail = new MyPHPMailer(true, $this->appConfig);
 
                     $subject = "Deck export";
                     $emailbody = "Your deck export ($deckName) is attached.";

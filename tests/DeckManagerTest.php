@@ -56,9 +56,8 @@ class DeckManagerTest extends TestCase
         $anyQuantity = $GLOBALS['any_quantity'] ?? [];
         $manager = new DeckManager(
             $db,
-            $GLOBALS['logfile'],
+            $GLOBALS['appConfig'],
             'user@example.com',
-            'server@example.com',
             [],
             [],
             $anyQuantity

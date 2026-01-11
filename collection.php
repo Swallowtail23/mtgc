@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.17
 Date:        10/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -27,7 +27,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', "Collection page load");
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
@@ -61,9 +61,9 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+    $obj = new ImportExport($db, $appConfig, $userEmail);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
-    $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, $smtpParameters, 'email');
+    $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, 'email');
     if ($csvResult !== true) :
         $msg->logMessage('[ERROR]', "CSV export email failed: " . (is_string($csvResult) ? $csvResult : 'unknown'));
         $_SESSION['csv_status'] = 'false';
@@ -707,13 +707,12 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new ImportExport($db, $logfile, $userEmail, $serverEmail, $siteTitle);
+                        $obj = new ImportExport($db, $appConfig, $userEmail);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,
                             $importType,
-                            $userEmail,
-                            $serverEmail
+                            $userEmail
                         );
                         if ($importcards === 'emptyfile') :
                             echo "<h4>File contains no card data</h4>";
@@ -724,9 +723,8 @@ endif;
                                 $tmpdeckname = $currentDateTime;
                                 $obj = new DeckManager(
                                     $db,
-                                    $logfile,
+                                    $appConfig,
                                     $userEmail,
-                                    $serverEmail,
                                     $importLinestoIgnore,
                                     $nonPreferredSetCodes,
                                     $any_quantity,
@@ -748,9 +746,8 @@ endif;
                                     $file = fopen($_FILES['filename']['tmp_name'], 'r');
                                     $deckManager = new DeckManager(
                                         $db,
-                                        $logfile,
+                                        $appConfig,
                                         $userEmail,
-                                        $serverEmail,
                                         $importLinestoIgnore,
                                         $nonPreferredSetCodes,
                                         $any_quantity,

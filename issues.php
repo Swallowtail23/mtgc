@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        10/01/26
 Name:        issues.php
 Purpose:     Issues page.
@@ -23,7 +23,7 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
+SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>

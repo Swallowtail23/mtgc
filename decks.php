@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.12
+Version:     5.13
 Date:        10/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -25,8 +25,8 @@ require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
 require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
-SessionManager::forcePasswordChange($logfile); // Check if user is disabled or needs to change password
-$msg = new Message($logfile);
+SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
+$msg = new Message($appConfig);
 
 //page specific variables
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';
@@ -119,18 +119,17 @@ require('includes/menu.php'); //mobile menu
                 </div>
                 <?php
             else :
-                        $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckName'");
-                        $obj = new DeckManager(
-                            $db,
-                            $logfile,
-                            $userEmail,
-                            $serverEmail,
-                            $importLinestoIgnore,
-                            $nonPreferredSetCodes,
-                            $any_quantity,
-                        );
-                        // returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
-                        $decksuccess = $obj->addDeck($user, $deckName);
+                $msg->logMessage('[NOTICE]', "Calling Deckmanager->addDeck: '$user/$deckName'");
+                $obj = new DeckManager(
+                    $db,
+                    $appConfig,
+                    $userEmail,
+                    $importLinestoIgnore,
+                    $nonPreferredSetCodes,
+                    $any_quantity,
+                );
+                // returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
+                $decksuccess = $obj->addDeck($user, $deckName);
             endif;
         endif;
 
@@ -139,9 +138,8 @@ require('includes/menu.php'); //mobile menu
             $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
             $obj = new DeckManager(
                 $db,
-                $logfile,
+                $appConfig,
                 $userEmail,
-                $serverEmail,
                 $importLinestoIgnore,
                 $nonPreferredSetCodes,
                 $any_quantity,

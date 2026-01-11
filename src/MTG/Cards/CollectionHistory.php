@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        21/12/25
+Version:     1.5
+Date:        11/01/26
 Name:        CollectionHistory.php
 Purpose:     Collection value history retrieval and export helpers.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -22,18 +23,20 @@ class CollectionHistory
     * @var mysqli
     */
     private $db;
-    private $logfile;
+    private $appConfig;
     private $message;
     private $siteTitle;
     private $serverEmail;
+    private $emailEnabled;
 
-    public function __construct($db, $logfile, $siteTitle = null, $serverEmail = null)
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
-        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
-        $this->serverEmail = $serverEmail ?: $GLOBALS['serverEmail'];
+        $this->appConfig = $appConfig;
+        $this->message = new Message($this->appConfig);
+        $this->siteTitle = (string) $this->appConfig->general('title', '');
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
     }
 
     public function getHistoryData($userId, $range)
@@ -140,7 +143,6 @@ class CollectionHistory
     public function emailHistoryCsv(
         $userId,
         $myURL,
-        $smtpParameters,
         $range,
         $filename,
         $userName,
@@ -160,13 +162,8 @@ class CollectionHistory
             return false;
         endif;
 
-        if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-            $mail = new MyPHPMailer(
-                true,
-                $smtpParameters,
-                $this->serverEmail,
-                $this->logfile
-            );
+        if ($this->emailEnabled) :
+            $mail = new MyPHPMailer(true, $this->appConfig);
 
             $tempFile = tempnam(sys_get_temp_dir(), 'history_');
             file_put_contents($tempFile, $csv);

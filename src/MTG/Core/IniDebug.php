@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        25/11/25
+Version:     1.9
+Date:        11/01/26
 Name:        IniDebug.php
 Purpose:     Pre-database debugging; logs messages to logfiles or syslog when enabled.
 Notes:       Not currently used in code.
@@ -17,22 +17,27 @@ class IniDebug
 {
     private $logfile;
     private $message;
+    private $appConfig;
 
-    public function __construct($logfile)
+    public function __construct(AppConfig $appConfig)
     {
-        $this->logfile = $logfile;
-        $this->message = new Message($this->logfile);
+        $this->appConfig = $appConfig;
+        $this->logfile = $this->appConfig->general('logFile', '');
+        $this->message = new Message($this->appConfig);
     }
 
-    public function inidebugging($logLevelIni, $logfile, $message)
+    public function inidebugging($message)
     {
-        if ($logLevelIni === '3' and $logfile !== 0) :
-            $fd = fopen($logfile, "a");
+        $logLevel = (string) $this->appConfig->general('logLevel', '');
+        $logfile = $this->logfile;
+
+        if ($logLevel === '3' and $logfile !== 0) :
+            $fd = fopen($logfile, 'a');
             $msg = "[DEBUG] $message";
             $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
             fwrite($fd, $str . "\n");
             fclose($fd);
-        elseif ($logLevelIni === '3' and $logfile === 0) :
+        elseif ($logLevel === '3' and $logfile === 0) :
             openlog("MTG", LOG_NDELAY, LOG_USER);
             syslog(LOG_INFO, "[MTG-DEBUG] $message");
             closelog();

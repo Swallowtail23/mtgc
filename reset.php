@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.17
+Version:     3.18
 Date:        11/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -26,7 +26,7 @@ require 'includes/error_handling.php';
 require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
 $cssver = cssVersionCheck();
-$msg = new Message($logfile);
+$msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
@@ -85,7 +85,7 @@ if (!$emailEnabledFlag) :
     $message = "Password reset is unavailable because email is disabled.";
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
     if (isset($_POST['send_twofa_code'])) :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new TwoFactorManager($db, $appConfig);
         $sent = false;
         if (!empty($resetUserId) && $twofaRequired && $twofaMethod === 'email') :
             $sent = $tfaManager->startVerification($resetUserId, $tokenEmail);
@@ -133,7 +133,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         );
         exit();
     else :
-        $tfaManager = new TwoFactorManager($db, $smtpParameters, $serverEmail, $logfile);
+        $tfaManager = new TwoFactorManager($db, $appConfig);
         $twofaCode = trim($_POST['twofa_code'] ?? '');
         if (isset($_POST['send_twofa_code']) && $twofaRequired && $twofaMethod === 'email') :
             $tfaManager->startVerification($resetUserId, $email);

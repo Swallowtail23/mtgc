@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        21/12/25
+Version:     1.4
+Date:        11/01/26
 Name:        UserStatus.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Auth;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 
 class UserStatus
@@ -21,18 +22,18 @@ class UserStatus
     * @var mysqli
     */
     private $db;
-    private $logfile;
+    private $appConfig;
     private $message;
     private $email;
     public $status;
     public $badlogincount;
 
-    public function __construct($db, $logfile, $email)
+    public function __construct($db, AppConfig $appConfig, $email)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
         $this->email = $email;
-        $this->message = new Message($this->logfile);
+        $this->message = new Message($this->appConfig);
     }
 
     public function getUserStatus()
