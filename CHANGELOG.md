@@ -42,6 +42,14 @@ AppConfig into AJAX validation.
 - Added tests for AppConfig redaction/normalization, Validation helpers, UrlHelper utilities, and GameRules language labels.
 - Added tests for DateYMD, TextHelper, Filesystem directory creation, AdminSettings maintenance, and UserAgent config paths.
 - Added tests for AjaxResponse and ErrorHandler using fixture scripts to validate exit paths.
+- Added DeckManager action tests covering commander/partner updates, deck card checks, and subtraction paths.
+- Added DeckManager copy limit tests for standard cards, basic lands, and Nazgul limits.
+- Added ImportExport CSV builder test coverage and additional input interpreter edge cases.
+- Added PriceManager updateCollectionValues tests covering bulk and single-card transactions.
+- Expanded ScryfallImport tests for bulk info failures, stale downloads, and price_hash column checks.
+- Added test coverage report, and bulk_ini now wraps bootstrap with CLI-friendly error handling.
+- Index test no longer resets global error handlers to avoid PHPUnit risky warnings.
+- Bulk scripts now rely on bootstrap for Message setup and no longer load includes/error_handling.php (removed).
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
 - Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport (including downloadBulk/fetchJson) with tests and updated bulk scripts.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.

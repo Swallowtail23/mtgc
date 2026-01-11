@@ -47,8 +47,6 @@ class IndexTest extends TestCase
             $GLOBALS['search_langs_codes'] = $this->originalLookups['search_langs_codes'];
         }
         ini_set('sendmail_path', $this->originalSendmailPath);
-        restore_error_handler();
-        restore_exception_handler();
     }
 
     public function testIndexRendersWithStubbedEnvironment()

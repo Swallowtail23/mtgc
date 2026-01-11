@@ -116,4 +116,70 @@ class InputInterpreterTest extends TestCase
             ImportExport::inputInterpreter('@@@', $this->appConfig, $this->gameRules)
         );
     }
+
+    public function testEmptyLineAndIgnoredLine()
+    {
+        $rules = new GameRules([
+            'bracketsInNames' => [],
+            'importLinestoIgnore' => ['Sideboard'],
+        ]);
+
+        $this->assertSame('empty line', ImportExport::inputInterpreter(' ', $this->appConfig, $rules));
+        $this->assertSame('empty line', ImportExport::inputInterpreter('Sideboard', $this->appConfig, $rules));
+    }
+
+    public function testBracketNameIsPreserved()
+    {
+        $rules = new GameRules([
+            'bracketsInNames' => ['A'],
+            'importLinestoIgnore' => [],
+        ]);
+        $result = ImportExport::inputInterpreter('2 Card (A)', $this->appConfig, $rules);
+        $this->assertSame('Card (A)', $result['name']);
+        $this->assertSame('2', $result['qty']);
+    }
+
+    public function testShortcutAndFoilFullFormats()
+    {
+        $shortcut = [
+            'set' => 'MH3',
+            'number' => '304',
+            'name' => '',
+            'lang' => '',
+            'qty' => '',
+            'uuid' => '',
+            'normal' => 0,
+            'foil' => 0,
+            'etched' => 0
+        ];
+        $this->assertSame(
+            $shortcut,
+            ImportExport::inputInterpreter('(mh3) 304', $this->appConfig, $this->gameRules)
+        );
+
+        $foilExpected = [
+            'set' => 'MH3',
+            'number' => '304',
+            'name' => 'Plains',
+            'lang' => '',
+            'qty' => '2',
+            'uuid' => '',
+            'normal' => 0,
+            'foil' => '2',
+            'etched' => 0
+        ];
+        $this->assertSame(
+            $foilExpected,
+            ImportExport::inputInterpreter('2 Plains (mh3) 304 *F*', $this->appConfig, $this->gameRules)
+        );
+    }
+
+    public function testMtgcCsvAllowsEmptyUuid()
+    {
+        $line = 'MH3,304,Plains,en,1,0,0,';
+        $result = ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules);
+
+        $this->assertSame('', $result['uuid']);
+        $this->assertSame(1, $result['normal']);
+    }
 }

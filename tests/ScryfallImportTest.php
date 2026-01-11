@@ -9,6 +9,7 @@ class ScryfallImportStub extends ScryfallImport
 {
     public static $fetchMap = [];
     public static $downloadCalls = 0;
+    public static $downloadResults = [];
 
     public static function fetchJson($url, $msg, $context, AppConfig $appConfig)
     {
@@ -24,6 +25,12 @@ class ScryfallImportStub extends ScryfallImport
         $debug = false
     ) {
         self::$downloadCalls++;
+        if (!empty(self::$downloadResults)) :
+            $next = array_shift(self::$downloadResults);
+            if ($next === false) :
+                return false;
+            endif;
+        endif;
         $dir = dirname($dest);
         if (!is_dir($dir)) :
             mkdir($dir, 0777, true);
@@ -69,6 +76,7 @@ class ScryfallImportTest extends TestCase
     {
         ScryfallImportStub::$fetchMap = [];
         ScryfallImportStub::$downloadCalls = 0;
+        ScryfallImportStub::$downloadResults = [];
     }
 
     private function buildAppConfig(array $overrides = []): AppConfig
@@ -203,6 +211,76 @@ class ScryfallImportTest extends TestCase
         unlink($file);
     }
 
+    public function testGetBulkInfoRejectsMismatchedType()
+    {
+        $defaultUrl = 'https://api.example/default';
+        $imgLocation = sys_get_temp_dir() . '/mtg/';
+        $appConfig = $this->buildAppConfig([
+            'general' => ['imageBaseDir' => $imgLocation],
+        ]);
+        $gameRules = new GameRules([
+            'defaultCardsUrl' => $defaultUrl,
+            'allCardsUrl' => ''
+        ]);
+        ScryfallImportStub::$fetchMap = [
+            $defaultUrl => [
+                'type' => 'all_cards',
+                'download_uri' => 'https://download.example/all'
+            ]
+        ];
+
+        $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
+    }
+
+    public function testGetBulkInfoRejectsMissingDownloadUri()
+    {
+        $defaultUrl = 'https://api.example/default';
+        $imgLocation = sys_get_temp_dir() . '/mtg/';
+        $appConfig = $this->buildAppConfig([
+            'general' => ['imageBaseDir' => $imgLocation],
+        ]);
+        $gameRules = new GameRules([
+            'defaultCardsUrl' => $defaultUrl,
+            'allCardsUrl' => ''
+        ]);
+        ScryfallImportStub::$fetchMap = [
+            $defaultUrl => [
+                'type' => 'default_cards'
+            ]
+        ];
+
+        $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
+    }
+
+    public function testGetBulkInfoReturnsFalseOnFetchFailure()
+    {
+        $defaultUrl = 'https://api.example/default';
+        $appConfig = $this->buildAppConfig([
+            'general' => ['imageBaseDir' => sys_get_temp_dir() . '/mtg/'],
+        ]);
+        $gameRules = new GameRules([
+            'defaultCardsUrl' => $defaultUrl,
+            'allCardsUrl' => ''
+        ]);
+
+        $this->assertFalse(ScryfallImportStub::getBulkInfo('default', $appConfig, $gameRules));
+    }
+
+    public function testGetBulkJsonDownloadsWhenStale()
+    {
+        $appConfig = $this->buildAppConfig();
+        $file = tempnam(sys_get_temp_dir(), 'bulk_');
+        file_put_contents($file, 'data');
+        touch($file, time() - 7200);
+
+        ScryfallImportStub::$downloadResults = [true];
+        $result = ScryfallImportStub::getBulkJson('https://download.example/file', $file, 3600, $appConfig);
+
+        $this->assertSame('Success', $result);
+        $this->assertSame(1, ScryfallImportStub::$downloadCalls);
+        unlink($file);
+    }
+
     public function testScryfallImportRejectsInvalidTableName()
     {
         $appConfig = $this->buildAppConfig();
@@ -232,6 +310,26 @@ class ScryfallImportTest extends TestCase
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('content_hash column missing');
+
+        ScryfallImportStub::scryfallImport('file.json', 'default', 'cards_scry', $db, $appConfig, $gameRules);
+    }
+
+    public function testScryfallImportRejectsMissingPriceHash()
+    {
+        $appConfig = $this->buildAppConfig();
+        $gameRules = new GameRules([
+            'games_to_include' => ['paper'],
+            'langs_to_skip' => [],
+            'langs_to_skip_all' => [],
+            'layouts_to_skip' => [],
+        ]);
+        $db = new BulkDbStub([
+            new BulkQueryStub(1),
+            new BulkQueryStub(0)
+        ]);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('price_hash column missing');
 
         ScryfallImportStub::scryfallImport('file.json', 'default', 'cards_scry', $db, $appConfig, $gameRules);
     }
