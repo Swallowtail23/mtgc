@@ -5,14 +5,117 @@ $GLOBALS['logfile'] = sys_get_temp_dir() . '/phpunit.log';
 $GLOBALS['loglevelini'] = 0;
 $GLOBALS['logLevelIni'] = 0;
 
-$db = new class {
-    // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-    public function real_escape_string($str)
+if (!class_exists('DummyMysqli')) :
+    class DummyMysqli extends \mysqli
     {
-        return $str;
+        public function __construct()
+        {
+        }
+
+        public function set_charset($charset)
+        {
+            return true;
+        }
+
+        public function execute_query(string $query, ?array $params = null): \mysqli_result|bool
+        {
+            $lowerQuery = strtolower($query);
+            $row = [];
+            if (strpos($lowerQuery, 'select usemin') !== false) :
+                $row = ['usemin' => 0];
+            elseif (strpos($lowerQuery, 'select mtce') !== false) :
+                $row = ['mtce' => 0];
+            elseif (strpos($lowerQuery, 'select admin') !== false && strpos($lowerQuery, 'from users') !== false) :
+                $row = ['admin' => 0];
+            elseif (strpos($lowerQuery, 'count(') !== false) :
+                $row = ['count' => 0];
+            endif;
+
+            return new class($row) extends \mysqli_result {
+                private array $row;
+
+                public function __construct(array $row)
+                {
+                    $this->row = $row;
+                }
+
+                public int|string $num_rows = 0;
+
+                public function fetch_row(): array|null
+                {
+                    if (!empty($this->row)) :
+                        return [reset($this->row)];
+                    endif;
+                    return [0];
+                }
+
+                public function fetch_array(int $mode = MYSQLI_BOTH): array|false|null
+                {
+                    if (!empty($this->row)) :
+                        return $this->row;
+                    endif;
+                    return false;
+                }
+
+                public function fetch_assoc(): array|null
+                {
+                    if (!empty($this->row)) :
+                        return $this->row;
+                    endif;
+                    return [];
+                }
+
+                public function free(): void
+                {
+                }
+            };
+        }
+
+        public function query(string $query, int $result_mode = MYSQLI_STORE_RESULT): \mysqli_result|bool
+        {
+            $lowerQuery = strtolower($query);
+            if (strpos($lowerQuery, 'create table') !== false) :
+                return true;
+            endif;
+
+            $row = [];
+            if (strpos($lowerQuery, 'show tables like') !== false) :
+                $row = ['table' => 'collectionTemplate'];
+            endif;
+
+            return new class($row) extends \mysqli_result {
+                private array $row;
+
+                public function __construct(array $row)
+                {
+                    $this->row = $row;
+                }
+
+                public int|string $num_rows = 0;
+
+                public function fetch_assoc(): array|null
+                {
+                    if (!empty($this->row)) :
+                        return $this->row;
+                    endif;
+                    return [];
+                }
+
+                public function free(): void
+                {
+                }
+            };
+        }
+
+        // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+        public function real_escape_string($str)
+        {
+            return $str;
+        }
     }
-};
-$GLOBALS['db'] = $db;
+endif;
+
+$GLOBALS['db'] = new DummyMysqli();
 
 $bracketsInNames = [];
 $importLinestoIgnore = [];

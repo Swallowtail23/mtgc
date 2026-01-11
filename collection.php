@@ -14,19 +14,11 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php';      // Setup page variables
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-$msg = new Message($appConfig);
+// Content
 $msg->logMessage('[DEBUG]', "Collection page load");
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');

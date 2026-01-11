@@ -17,16 +17,10 @@ use MTG\Core\Message;
 use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
-if (file_exists('../includes/sessionname.local.php')) :
-    require('../includes/sessionname.local.php');
-else :
-    require('../includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('../includes/ini.php');                //Initialise and load ini file
-require('../includes/error_handling.php');
-require('../includes/secpagesetup.php');       //Setup page variables
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require '../bootstrap.php';
+
+// Content
 $priceMgr = new PriceManager($db, $appConfig, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");
 

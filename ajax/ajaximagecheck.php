@@ -13,20 +13,13 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\ImageManager;
-use MTG\Core\Message;
 use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
-if (file_exists('../includes/sessionname.local.php')) :
-    require('../includes/sessionname.local.php');
-else :
-    require('../includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('../includes/ini.php');
-require('../includes/error_handling.php');
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require '../bootstrap.php';
 
+// Content
 $expectedReferringPages = [
     $myURL . '/carddetail.php',
     $myURL . '/deckdetail.php',
@@ -34,7 +27,7 @@ $expectedReferringPages = [
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaximagecheck.php'
 );
 if ($ajaxValidation['valid'] === false) :

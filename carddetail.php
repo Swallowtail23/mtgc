@@ -11,28 +11,17 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Auth\SessionManager;
 use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
 use MTG\Core\Http\UrlHelper;
-use MTG\Core\Message;
 use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require('includes/sessionname.local.php');
-else :
-    require('includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('includes/ini.php');                //Initialise and load ini file
-require('includes/error_handling.php');     //Initialise and load error/logging file
-require('includes/secpagesetup.php');       //Setup page variables
-// Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($appConfig);
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-$msg = new Message($appConfig);
+// Content
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
 

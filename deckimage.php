@@ -12,19 +12,11 @@ To do:       -
 */
 
 use MTG\Cards\DeckManager;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php'; // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php'; // Setup page variables
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
+// Content
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");
 
 // Valid pages to call this (array)

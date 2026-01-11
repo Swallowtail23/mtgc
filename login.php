@@ -12,32 +12,14 @@ To do:       -
 */
 
 use MTG\Auth\LoginHandler;
-use MTG\Admin\AdminSettings;
 use MTG\Core\Http\UrlHelper;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-
-startCustomSession();
+// Bootstrap
+$appContext = require 'bootstrap.php';
 ob_start();
 
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
+// Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-
-$msg = new Message($appConfig);
-$loginHandler = new LoginHandler($db, $appConfig);
-
-if (!isset($db) || !$db instanceof mysqli) :
-    $msg->logMessage('[ERROR]', 'Database connection is null or invalid in login.php');
-    die('A database error occurred. Please try again later.');
-endif;
-
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 // Temporary variable to store a redirection URL
 $redirectUrl = $_SESSION['redirect_url'] ?? null;
@@ -53,6 +35,7 @@ if ($redirectCandidate) :
     $msg->logMessage('[DEBUG]', "Captured redirect_to override: $redirectCandidate");
 endif;
 
+$loginHandler = new LoginHandler($db, $appConfig);
 $loginHandler->logStart();
 $trustedDeviceResult = $loginHandler->attemptTrustedDeviceLogin($redirectUrl);
 

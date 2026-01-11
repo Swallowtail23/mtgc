@@ -19,7 +19,6 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);                              // find CSS Version
 if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];  // capture entered URL
     header("Location: /login.php");                       // check if user is logged in; else redirect to login.php

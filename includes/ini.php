@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.20
+Version:     5.22
 Date:        11/01/26
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -12,6 +12,7 @@ To do:       -
 */
 
 use MTG\Core\AppConfig;
+use MTG\Core\AppContext;
 use MTG\Core\GameRules;
 use MTG\Core\INI;
 use MTG\Core\Message;
@@ -242,3 +243,5 @@ $gameRulesData = $gameRules->all();
 foreach ($gameRulesData as $ruleName => $ruleValue) :
     $$ruleName = $ruleValue;
 endforeach;
+
+$appContext = new AppContext($db, $appConfig, $gameRules, $iniArray, new Message($appConfig));

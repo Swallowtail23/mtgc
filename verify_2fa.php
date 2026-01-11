@@ -14,23 +14,11 @@ To do:       -
 use MTG\Auth\LoginHandler;
 use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
-use MTG\Admin\AdminSettings;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-session_regenerate_id(true);
+// Bootstrap
+$appContext = require 'bootstrap.php';
 
-require 'includes/ini.php';               // Include ini file
-require 'includes/error_handling.php';    // Include error handler
-
-$msg = new Message($appConfig);
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
+// Content
 if (!isset($_SESSION['user_pending_2fa'])) :
     $msg->logMessage('[ERROR]', 'Access to verify_2fa.php attempted without completing first factor authentication');
     header('Location: login.php');

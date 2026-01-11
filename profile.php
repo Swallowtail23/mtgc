@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.20
+Version:     14.21
 Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -15,27 +15,17 @@ To do:       -
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\Label\LabelAlignment;
-use Endroid\QrCode\Label\Font\OpenSans;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use OTPHP\TOTP;
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php';      // Setup page variables
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-$msg = new Message($appConfig);
+// Content
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');

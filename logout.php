@@ -12,25 +12,16 @@ To do:       -
 */
 
 use MTG\Auth\TrustedDeviceManager;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-
-startCustomSession();
+// Bootstrap
+$appContext = require 'bootstrap.php';
 session_regenerate_id();
 
+// Content
 $userEmail = $_SESSION['useremail'] ?? 'Unknown User';
 $userId = $_SESSION['user'] ?? 0;
 $removeTrusted = 1;
 
-require 'includes/ini.php';
-require 'includes/error_handling.php';
-
-$msg = new Message($appConfig);
 $msg->logMessage('[NOTICE]', "User $userEmail logging out from {$_SERVER['REMOTE_ADDR']}");
 
 // Remove trusted device token

@@ -69,50 +69,7 @@ class IndexTest extends TestCase
 
     private function stubDatabase(): void
     {
-        $dbStub = new class {
-            public $error = '';
-
-            public function execute_query()
-            {
-                return new class {
-                    public $num_rows = 0;
-
-                    public function fetch_row()
-                    {
-                        return [0];
-                    }
-
-                    public function fetch_array()
-                    {
-                        return false;
-                    }
-
-                    public function fetch_assoc()
-                    {
-                        return ['usemin' => 0];
-                    }
-                };
-            }
-
-            public function query()
-            {
-                return new class {
-                    public $num_rows = 0;
-
-                    public function fetch_assoc()
-                    {
-                        return false;
-                    }
-                };
-            }
-
-            public function real_escape_string($str)
-            {
-                return $str;
-            }
-        };
-
-        $GLOBALS['db'] = $dbStub;
+        $GLOBALS['db'] = new DummyMysqli();
         $GLOBALS['logfile'] = null;
     }
 

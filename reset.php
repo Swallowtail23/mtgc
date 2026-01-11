@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     3.20
+Version:     3.22
 Date:        11/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
-Notes:       Does not run secpagesetup - not a secure page!
+Notes:       Not a secure page!
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -13,23 +13,11 @@ To do:       -
 
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TwoFactorManager;
-use MTG\Admin\AdminSettings;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
+// Bootstrap
+$appContext = require 'bootstrap.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-$msg = new Message($appConfig);
-$msg->logMessage('[DEBUG]', 'reset.php loaded');
-$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-
+// Content
 $pwReset = new PasswordCheck($db, $appConfig);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
@@ -163,6 +151,8 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     $pwReset->requestResetToken($email);
     $message = "If the email address exists, a reset link has been sent.";
 endif;
+
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
 <!DOCTYPE html>

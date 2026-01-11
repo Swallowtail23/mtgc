@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.54
+Version:     14.56
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -11,29 +11,16 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Auth\SessionManager;
 use MTG\Cards\CardUtils;
 use MTG\Cards\ImageManager;
 use MTG\Cards\ImportExport;
 use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-startCustomSession();
-require 'includes/ini.php';               // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php';      // Setup page variables
-// Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($appConfig);
-
-$msg = new Message($appConfig);
-
+// Content
 // Default numbers per page and max
 $listperpage = 30;
 $gridperpage = 30;
@@ -254,8 +241,18 @@ endif;
 $tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
 $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
 
+$tableExists = false;
 $result = $db->query($tableExistsQuery);
-if ($result->num_rows == 0) :
+if ($result !== false && is_object($result) && method_exists($result, 'fetch_assoc')) :
+    $row = $result->fetch_assoc();
+    if (method_exists($result, 'free')) :
+        $result->free();
+    endif;
+    if (!empty($row)) :
+        $tableExists = true;
+    endif;
+endif;
+if ($tableExists === false) :
     $msg->logMessage('[NOTICE]', "No existing collection table...");
     $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
     $msg->logMessage('[DEBUG]', "Copying collection template...: $query2");

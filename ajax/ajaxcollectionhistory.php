@@ -13,19 +13,12 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\CollectionHistory;
-use MTG\Core\Message;
 use MTG\Core\Http\AjaxResponse;
 
-if (file_exists('../includes/sessionname.local.php')) :
-    require '../includes/sessionname.local.php';
-else :
-    require '../includes/sessionname_template.php';
-endif;
-startCustomSession();
-require '../includes/ini.php';
-require '../includes/error_handling.php';
+// Bootstrap
+$appContext = require '../bootstrap.php';
 
-$msg = new Message($appConfig);
+// Content
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
 $expectedReferringPages = [
     $myURL . '/collection.php'

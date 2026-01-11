@@ -13,33 +13,23 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Auth\TrustedDeviceManager;
-use MTG\Admin\AdminSettings;
 use MTG\Core\Http\UrlHelper;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
+// Bootstrap
+$appContext = require 'bootstrap.php';
+
+// Regenerate session on privilege transition
+if (session_status() === PHP_SESSION_ACTIVE) :
+    session_regenerate_id(true);
 endif;
-startCustomSession();
-session_regenerate_id(true);
 
-if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
+// Redirect if not logged in
+if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) :
     header('Location: login.php');
     exit();
-}
-require 'includes/ini.php';               // Include ini file
-require 'includes/error_handling.php';    // Include error handler
+endif;
 
-$msg = new Message($appConfig);
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-if (!isset($db) || !$db instanceof mysqli) {
-    $msg->logMessage('[ERROR]', 'Database connection is invalid in trust_device.php');
-    die('A database error occurred, please try again later');
-}
-
+// Content
 $redirect_candidate = $_POST['redirect_to'] ?? $_GET['redirect_to'] ?? $_SESSION['redirect_url'] ?? 'index.php';
 $redirect_to = UrlHelper::normalizeRedirectUrl($redirect_candidate) ?? 'index.php';
 $msg->logMessage('[DEBUG]', "Resolved trust device redirect target: $redirect_to");

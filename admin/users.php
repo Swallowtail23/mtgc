@@ -12,21 +12,11 @@ To do:       -
 */
 
 use MTG\Auth\PasswordCheck;
-use MTG\Auth\SessionManager;
-use MTG\Core\Message;
 
-if (file_exists('../includes/sessionname.local.php')) :
-    require('../includes/sessionname.local.php');
-else :
-    require('../includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('../includes/ini.php');                //Initialise and load ini file
-require('../includes/error_handling.php');
-require('../includes/secpagesetup.php');       //Setup page variables
-// Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($appConfig);
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require '../bootstrap_secure.php';
+
+// Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
 function shouldRequirePasswordForNewUser($emailEnabled)
 {

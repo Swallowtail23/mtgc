@@ -11,18 +11,10 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Auth\SessionManager;
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php';                // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php';       // Setup page variables
-SessionManager::forcePasswordChange($appConfig);
+// Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 

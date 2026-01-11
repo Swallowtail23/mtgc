@@ -11,23 +11,13 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require 'includes/sessionname.local.php';
-else :
-    require 'includes/sessionname_template.php';
-endif;
-startCustomSession();
-require 'includes/ini.php'; // Initialise and load ini file
-require 'includes/error_handling.php';
-require 'includes/secpagesetup.php'; // Setup page variables
-SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
 
-//page specific variables
+// Content
+// page specific variables
 $newdeck = isset($_POST['newdeck']) ? 'yes' : '';
 $deckName = isset($_POST['deckname'])
     ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES)

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.3
+Version:     3.4
 Date:        11/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -12,28 +12,21 @@ To do:       -
 */
 
 use MTG\Auth\SessionManager;
-use MTG\Core\Message;
 
 if (defined('INCLUDE_CHECK') && INCLUDE_CHECK === true) :
     if (!isset($uniquecard_ref) || !is_array($uniquecard_ref)) :
         $uniquecard_ref = [];
     endif;
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
-    if (file_exists('../includes/sessionname.local.php')) :
-        require('../includes/sessionname.local.php');
-    else :
-        require('../includes/sessionname_template.php');
-    endif;
-    startCustomSession();
-    require('../includes/ini.php');
-    require('../includes/error_handling.php');
-    $msg = new Message($appConfig);
+    // Bootstrap
+    $appContext = require '../bootstrap.php';
+
     $expectedReferringPages = [
         $myURL . '/deckdetail.php'
     ];
     $ajaxValidation = SessionManager::validateAjaxRequest(
         $expectedReferringPages,
-        $logfile,
+        $appConfig,
         'ajaxrandomdraw.php',
         false
     );

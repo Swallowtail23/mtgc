@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Weekly exports now define any-quantity deck rules to avoid undefined variable errors.
 - Scryfall sets import now initializes Message after namespace imports to avoid missing class errors.
 - Scryfall rulings import now initializes Message after namespace imports to avoid missing class errors.
+- Random draw ajax now passes AppConfig into AJAX validation to avoid type errors.
 - Random draw fragment now enforces allowlisted classes before rendering.
 - Random draw fragment now extracts the expected container before injecting HTML.
 - Random draw now validates carddetail URLs against UUIDs and uses ENT_SUBSTITUTE escapes.
@@ -63,6 +64,10 @@ All notable changes to this project will be documented in this file.
 - Fatal DB exception alerts now send via MyPHPMailer in app and bulk bootstrap.
 - ScryfallImport now takes AppConfig and GameRules dependencies instead of globals.
 - Moved remaining utility helpers out of includes/functions.php into Core/Admin classes and replaced AJAX helpers with AjaxResponse.
+- Added AppContext bootstrap container and bootstrap.php entrypoint for future ini.php replacement.
+- Added ErrorHandler class and bootstrap registration for migrated pages.
+- Added bootstrap_secure.php for secure page setup during bootstrap migration.
+- Bootstrap now accepts a provided mysqli instance to support test stubs without real DB connections.
 
 ## [v0.4.10] - 2026-01-01
 

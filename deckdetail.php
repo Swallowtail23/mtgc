@@ -13,26 +13,17 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
-use MTG\Core\Message;
 
-if (file_exists('includes/sessionname.local.php')) :
-    require('includes/sessionname.local.php');
-else :
-    require('includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('includes/ini.php');                //Initialise and load ini file
-require('includes/error_handling.php');
-require('includes/secpagesetup.php');       //Setup page variables
-require_once 'ajax/ajaxdeckfragments_lib.php';
+// Bootstrap
+$appContext = require 'bootstrap_secure.php';
+
+// Content
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
-// Check if user is disabled or needs to change password
-SessionManager::forcePasswordChange($appConfig);
-$msg = new Message($appConfig);
-$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+require_once 'ajax/ajaxdeckfragments_lib.php';
 
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $uniquecard_ref = [];
 ?>
 

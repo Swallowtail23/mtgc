@@ -13,19 +13,12 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
-use MTG\Core\Message;
 use MTG\Core\Http\AjaxResponse;
 
-if (file_exists('../includes/sessionname.local.php')) :
-    require('../includes/sessionname.local.php');
-else :
-    require('../includes/sessionname_template.php');
-endif;
-startCustomSession();
-require('../includes/ini.php');
-require('../includes/error_handling.php');
-$msg = new Message($appConfig);
+// Bootstrap
+$appContext = require '../bootstrap.php';
 
+// Content
 $expectedReferringPages = [
     $myURL . '/deckdetail.php'
 ];
