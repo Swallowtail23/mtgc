@@ -15,7 +15,6 @@ use MTG\Auth\SessionManager;
 use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
-
 // Bootstrap
 $appContext = require '../bootstrap.php';
 

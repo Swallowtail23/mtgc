@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Random draw fragment now enforces allowlisted classes before rendering.
 - Random draw fragment now extracts the expected container before injecting HTML.
 - Random draw now validates carddetail URLs against UUIDs and uses ENT_SUBSTITUTE escapes.
+- Ajax grid now reloads user context when using bootstrap-only to avoid missing session/table values.
+- PHPUnit dummy mysqli signatures now match mysqli to avoid static analysis errors.
 - Deck photo upload/delete status messages now render as plain text to avoid HTML injection.
 - Deck rename now pre-fills the existing name when the rename form opens.
 - Deck rename now resets the input to the current name after a failed rename.
@@ -68,6 +70,8 @@ All notable changes to this project will be documented in this file.
 - Added ErrorHandler class and bootstrap registration for migrated pages.
 - Added bootstrap_secure.php for secure page setup during bootstrap migration.
 - Bootstrap now accepts a provided mysqli instance to support test stubs without real DB connections.
+- Index tests now use safer mysqli stubs and avoid deprecated init calls.
+- Cleanup tokens CLI job now boots via bootstrap.php instead of includes/ini.php.
 
 ## [v0.4.10] - 2026-01-01
 

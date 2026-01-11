@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.17
+Version:     5.18
 Date:        11/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -21,7 +21,6 @@ use MTG\Core\Http\AjaxResponse;
 $appContext = require '../bootstrap.php';
 
 // Content
-$priceMgr = new PriceManager($db, $appConfig, $userEmail);
 $msg->logMessage('[DEBUG]', "Ajax grid update called");
 
 $expectedReferringPages = [
@@ -44,6 +43,15 @@ $msg->logMessage('[DEBUG]', "Ajax grid update, referrer is valid");
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
+    //Need to run these as secpagesetup not run (see page notes)
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
+    $userArray = $sessionManager->getUserInfo();
+    $user = $userArray['usernumber'];
+    $mytable = $userArray['table'];
+    $userEmail = $_SESSION['useremail'];
+    $priceMgr = new PriceManager($db, $appConfig, $userEmail);
+    $msg->logMessage('[DEBUG]', "Ajax grid update user context loaded");
+
     $cardId = $_POST['cardid'] ?? '';
     if (Validation::validUUID($cardId, $appConfig) === false) :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");

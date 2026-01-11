@@ -19,7 +19,7 @@
 - Weekly exports: `php bulk/weekly_exports.php`.
 
 ## Autoloading
-- Composer autoload is loaded in `includes/ini.php` and `bulk/bulk_ini.php`; third-party deps live in `vendor/`.
+- Composer autoload is loaded in `bootstrap.php`, `includes/ini.php`, and `bulk/bulk_ini.php`; third-party deps live in `vendor/`.
 - App classes live under `src/MTG/` and are PSR-4 autoloaded via Composer. Use namespaced classes (e.g., `MTG\Auth`, `MTG\Cards`, `MTG\Core`).
 - Shared helpers now live in Core classes (e.g., `MTG\Core\Validation`, `MTG\Core\Http\UrlHelper`).
 

@@ -12,7 +12,7 @@ if (!class_exists('DummyMysqli')) :
         {
         }
 
-        public function set_charset($charset)
+        public function set_charset(string $charset): bool
         {
             return true;
         }
@@ -31,7 +31,7 @@ if (!class_exists('DummyMysqli')) :
                 $row = ['count' => 0];
             endif;
 
-            return new class($row) extends \mysqli_result {
+            return new class ($row) extends \mysqli_result {
                 private array $row;
 
                 public function __construct(array $row)
@@ -83,7 +83,7 @@ if (!class_exists('DummyMysqli')) :
                 $row = ['table' => 'collectionTemplate'];
             endif;
 
-            return new class($row) extends \mysqli_result {
+            return new class ($row) extends \mysqli_result {
                 private array $row;
 
                 public function __construct(array $row)
@@ -108,7 +108,7 @@ if (!class_exists('DummyMysqli')) :
         }
 
         // phpcs:ignore PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-        public function real_escape_string($str)
+        public function real_escape_string(string $str): string
         {
             return $str;
         }
