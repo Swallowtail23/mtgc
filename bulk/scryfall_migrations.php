@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.17
+Version:     2.18
 Date:        11/01/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -69,6 +69,7 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber, $appC
             $url,
             $page,
             $msg,
+            $appConfig,
             'Scryfall migration data download',
             false
         );

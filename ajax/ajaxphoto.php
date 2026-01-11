@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.21
 Date:        11/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -41,7 +41,7 @@ if ($ajaxValidation['valid'] === false) :
         http_response_code(403);
         $response['error'] = 'Access forbidden';
     endif;
-    returnResponse();
+    returnResponse($response);
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
@@ -64,7 +64,7 @@ else :
             $msg->logMessage('[ERROR]', "Invalid deck number supplied: '$deckNumber'");
             http_response_code(400);
             $response['message'] = 'Invalid deck number';
-            returnResponse();
+            returnResponse($response);
         endif;
 
         $deckManager = new DeckManager(
@@ -76,7 +76,7 @@ else :
         if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
             http_response_code(403);
             $response['message'] = 'Access forbidden';
-            returnResponse();
+            returnResponse($response);
         endif;
 
             // Check if the file was uploaded without errors and it's a JPEG file
@@ -87,7 +87,7 @@ else :
             finfo_close($finfo);
             if ($_FILES['photo']['size'] > 20971520) :
                 $response['message'] = 'File size exceeds 20MB';
-                returnResponse();
+                returnResponse($response);
             elseif ($mimeType === 'image/jpeg') :
                     $deckPhotosDir = $imgLocation . 'deck_photos/';
 
@@ -97,7 +97,7 @@ else :
 
                     if (!@mkdir($deckPhotosDir, 0755, true)) :
                         $response['message'] = 'Failed to create directory for deck photos';
-                        returnResponse();
+                        returnResponse($response);
                     endif;
                 else :
                         $msg->logMessage('[DEBUG]', "'deck_photos' folder already in $imgLocation");
@@ -142,7 +142,7 @@ else :
                             $newWidth = $newHeight = 800;
                     else :
                             $response['message'] = 'Failed to get image size';
-                            returnResponse();
+                            returnResponse($response);
                     endif;
                         $msg->logMessage('[DEBUG]', "Width: $width --> $newWidth, Height: $height --> $newHeight");
 
@@ -166,7 +166,7 @@ else :
                             || !imagejpeg($resizedImage, $uploadFile, 80)
                     ) :
                         $response['message'] = 'Failed to resize and save the image using GD';
-                        returnResponse();
+                        returnResponse($response);
                     endif;
                         // Destroy temp files
                         imagedestroy($uploadedImage);
@@ -177,21 +177,21 @@ else :
                         // Move the uploaded file to the specified directory with the specific name
                     if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) :
                         $response['message'] = 'Failed to move the uploaded file';
-                        returnResponse();
+                        returnResponse($response);
                     endif;
                 endif;
                     $msg->logMessage('[DEBUG]', "Image upload success");
                     $response['success'] = true;
                     $response['message'] = 'File is valid and was successfully uploaded';
-                    returnResponse();
+                    returnResponse($response);
             else :
                     $response['message'] = 'Invalid file type. Only JPEG images are allowed.';
-                    returnResponse();
+                    returnResponse($response);
             endif;
         else :
                 $msg->logMessage('[ERROR]', "Image upload failed");
                 $response['message'] = 'File upload error';
-                returnResponse();
+                returnResponse($response);
         endif;
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) :
             $msg->logMessage('[DEBUG]', "Called with 'delete'");
@@ -201,7 +201,7 @@ else :
             $msg->logMessage('[ERROR]', "Invalid deck number supplied for delete: '$deckNumber'");
             http_response_code(400);
             $response['message'] = 'Invalid deck number';
-            returnResponse();
+            returnResponse($response);
         endif;
 
         $deckManager = new DeckManager(
@@ -213,7 +213,7 @@ else :
         if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxphoto.php') === false) :
             http_response_code(403);
             $response['message'] = 'Access forbidden';
-            returnResponse();
+            returnResponse($response);
         endif;
 
             // Path to the file to be deleted
@@ -226,14 +226,14 @@ else :
             if (unlink($imageFilePath)) :
                 $response['success'] = true;
                 $response['message'] = 'Image deleted successfully';
-                returnResponse();
+                returnResponse($response);
             else :
                     $response['message'] = 'Failed to delete the image';
-                    returnResponse();
+                    returnResponse($response);
             endif;
         else :
                 $response['message'] = 'Image not found';
-                returnResponse();
+                returnResponse($response);
         endif;
     else :
         // Unknown or missing action
@@ -241,13 +241,12 @@ else :
             http_response_code(400);
             $response['success'] = false;
             $response['message'] = 'Invalid action';
-            returnResponse();
+            returnResponse($response);
     endif;
 endif;
 
 // Function to echo JSON response and exit
-function returnResponse()
+function returnResponse(array $response)
 {
-    global $response;
     ajaxRespondJson($response, http_response_code());
 }

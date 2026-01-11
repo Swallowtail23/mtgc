@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.14
+Version:     2.15
 Date:        11/01/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
@@ -81,6 +81,7 @@ $setsreturn = ScryfallImport::downloadBulk(
     $url,
     $file_location,
     $msg,
+    $appConfig,
     'Scryfall sets data download',
     false
 );
@@ -160,6 +161,7 @@ foreach ($data as $key => $value) :
                         $icon_svg_uri . "?" . $time,
                         $seticon,
                         $msg,
+                        $appConfig,
                         'Set icon download',
                         false
                     );

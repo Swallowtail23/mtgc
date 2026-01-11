@@ -237,7 +237,6 @@ try {
     die();
 }
 
-
 $gameRules = GameRules::fromFile(__DIR__ . '/game_rules.php');
 $gameRulesData = $gameRules->all();
 foreach ($gameRulesData as $ruleName => $ruleValue) :

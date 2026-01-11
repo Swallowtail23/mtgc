@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.17
+Version:     1.18
 Date:        11/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -44,13 +44,13 @@ if ($ajaxValidation['valid'] === false) :
         http_response_code(403);
         $response['error'] = 'Access forbidden';
     endif;
-    returnResponse();
+    returnResponse($response);
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $response['success'] = false;
     $response['error'] = 'User not logged in';
-    returnResponse();
+    returnResponse($response);
 else :
     // Need to run these as secpagesetup is not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -110,7 +110,7 @@ else :
         if ($setdecktype !== 0) :
             $response['success'] = false;
             $response['error'] = 'Deck type set failed';
-            returnResponse();
+            returnResponse($response);
         endif;
 
             //import the card list to the new deck
@@ -123,22 +123,21 @@ else :
         if ($decksuccess['flag'] === 1 && $cardlist !== '' && $setdecktype === 0) :
             $response['success'] = true;
             $response['decknumber'] = $decksuccess['decknumber'];
-            returnResponse();
+            returnResponse($response);
         else :
                 $response['success'] = false;
                 $response['error'] = 'Failed to duplicate deck';
-                returnResponse();
+                returnResponse($response);
         endif;
     else :
         $response['success'] = false;
         $response['error'] = 'Invalid input';
-        returnResponse();
+        returnResponse($response);
     endif;
 endif;
 
 // Function to echo JSON response and exit
-function returnResponse()
+function returnResponse(array $response)
 {
-    global $response;
     ajaxRespondJson($response, http_response_code());
 }

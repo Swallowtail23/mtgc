@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        11/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -17,14 +17,21 @@ use JsonMachine\Items;
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use Throwable;
 use MTG\Cards\ImageManager;
+use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\UserAgent;
 
 class ScryfallImport
 {
-    public static function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
-    {
-        global $appConfig;
+    public static function downloadBulk(
+        $url,
+        $dest,
+        $msg,
+        AppConfig $appConfig,
+        $context = 'downloadBulk',
+        $debug = false
+    ) {
         $dir = dirname($dest);
         if (!is_dir($dir)) :
             if (!mkdir($dir, 0775, true)) :
@@ -87,9 +94,8 @@ class ScryfallImport
         return true;
     }
 
-    public static function fetchJson($url, $msg, $context)
+    public static function fetchJson($url, $msg, $context, AppConfig $appConfig)
     {
-        global $appConfig;
         $userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -131,10 +137,12 @@ class ScryfallImport
         return $data;
     }
 
-    public static function getBulkInfo($type)
+    public static function getBulkInfo($type, AppConfig $appConfig, GameRules $gameRules)
     {
         // Function to return the URI for the Scryfall bulk data file, and the file location where it needs to go
-        global $appConfig, $defaultCardsUrl, $allCardsUrl, $imgLocation;
+        $defaultCardsUrl = (string) $gameRules->get('defaultCardsUrl', '');
+        $allCardsUrl = (string) $gameRules->get('allCardsUrl', '');
+        $imgLocation = (string) $appConfig->general('imageBaseDir', '');
         $msg = new Message($appConfig);
         $bulkInfo = false;
 
@@ -161,7 +169,7 @@ class ScryfallImport
 
         if (!empty($url) && !empty($fileLocation)) :
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $url");
-            $scryfallBulk = static::fetchJson($url, $msg, 'Scryfall bulk API');
+            $scryfallBulk = static::fetchJson($url, $msg, 'Scryfall bulk API', $appConfig);
             if ($scryfallBulk === false) :
                 return false;
             endif;
@@ -173,12 +181,12 @@ class ScryfallImport
         ) :
             // Run twice, once for each file and location
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $urlDefault");
-            $scryfallBulkDefault = static::fetchJson($urlDefault, $msg, 'Scryfall bulk API');
+            $scryfallBulkDefault = static::fetchJson($urlDefault, $msg, 'Scryfall bulk API', $appConfig);
             if ($scryfallBulkDefault === false) :
                 return false;
             endif;
             $msg->logMessage('[NOTICE]', "Scryfall bulk API: fetching current URL $urlAll");
-            $scryfallBulkAll = static::fetchJson($urlAll, $msg, 'Scryfall bulk API');
+            $scryfallBulkAll = static::fetchJson($urlAll, $msg, 'Scryfall bulk API', $appConfig);
             if ($scryfallBulkAll === false) :
                 return false;
             endif;
@@ -242,10 +250,9 @@ class ScryfallImport
         return $bulkInfo;
     }
 
-    public static function getBulkJson($uri, $file_location, $max_fileage)
+    public static function getBulkJson($uri, $file_location, $max_fileage, AppConfig $appConfig)
     {
         // Function to download and save bulk Scryfall data files
-        global $appConfig;
         $msg = new Message($appConfig);
 
         $shouldDownload = true;
@@ -283,7 +290,7 @@ class ScryfallImport
 
         $msg->logMessage('[NOTICE]', "Scryfall bulk API: $reason");
 
-        $ok = static::downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
+        $ok = static::downloadBulk($uri, $file_location, $msg, $appConfig, 'Scryfall bulk API download', false);
         if ($ok === true) :
             $size = filesize($file_location);
             $msg->logMessage(
@@ -297,7 +304,7 @@ class ScryfallImport
         $msg->logMessage('[ERROR]', "Scryfall bulk API: Download failed, retrying in 20 seconds");
         sleep(20);
 
-        $ok = static::downloadBulk($uri, $file_location, $msg, 'Scryfall bulk API download', false);
+        $ok = static::downloadBulk($uri, $file_location, $msg, $appConfig, 'Scryfall bulk API download', false);
         if ($ok === true) :
             $size = filesize($file_location);
             $msg->logMessage(
@@ -314,22 +321,30 @@ class ScryfallImport
     public static function scryfallImport(
         $file_location,
         $type,
-        $tableName = 'cards_scry',
+        $tableName,
+        $db,
+        AppConfig $appConfig,
+        GameRules $gameRules,
         &$stats = null
     ) {
         // Function to process and import lines within Scryfall bulk data files
-        global
-            $db,
-            $logfile,
-            $appConfig,
-            $gameRules,
-            $games_to_include,
-            $langs_to_skip,
-            $langs_to_skip_all,
-            $layouts_to_skip,
-            $serverEmail,
-            $adminEmail;
         $msg = new Message($appConfig);
+        $games_to_include = $gameRules->get('games_to_include', []);
+        $langs_to_skip = $gameRules->get('langs_to_skip', []);
+        $langs_to_skip_all = $gameRules->get('langs_to_skip_all', []);
+        $layouts_to_skip = $gameRules->get('layouts_to_skip', []);
+        if (!is_array($games_to_include)) :
+            $games_to_include = [];
+        endif;
+        if (!is_array($langs_to_skip)) :
+            $langs_to_skip = [];
+        endif;
+        if (!is_array($langs_to_skip_all)) :
+            $langs_to_skip_all = [];
+        endif;
+        if (!is_array($layouts_to_skip)) :
+            $layouts_to_skip = [];
+        endif;
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
         if (!in_array($tableName, $allowedTables, true)) :
@@ -1820,7 +1835,7 @@ class ScryfallImport
             . "included $count_inc, updated: $count_update (content: $count_update_content, "
             . "price: $count_update_price, both: $count_update_both), unchanged: $count_other"
         );
-        if (func_num_args() >= 4) :
+        if (func_num_args() >= 7) :
             $stats = [
                 'total' => $total_count,
                 'included' => $count_inc,

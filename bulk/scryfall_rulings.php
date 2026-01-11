@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.10
+Version:     3.11
 Date:        11/01/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -91,6 +91,7 @@ $rulingreturn = ScryfallImport::downloadBulk(
     $rulings_uri,
     $file_location,
     $msg,
+    $appConfig,
     'Scryfall rulings data download',
     false
 );
