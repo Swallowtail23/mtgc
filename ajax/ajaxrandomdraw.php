@@ -103,7 +103,10 @@ for ($i = 0; $i < 7; $i++) :
     $cardurl = $uniquecard_ref[$a[$i]]['cardurl'] ?? '';
     if (
         !is_string($cardurl)
-        || !preg_match('#^/carddetail\.php\?id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$#i', $cardurl)
+        || !preg_match(
+            '#^/carddetail\.php\?id=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$#i',
+            $cardurl
+        )
     ) :
         $cardurl = '#';
     endif;
