@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - Random draw fragment now extracts the expected container before injecting HTML.
 - Random draw now validates carddetail URLs against UUIDs and uses ENT_SUBSTITUTE escapes.
 - Deck photo upload/delete status messages now render as plain text to avoid HTML injection.
+- Deck rename now pre-fills the existing name when the rename form opens.
+- Deck rename now resets the input to the current name after a failed rename.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
@@ -33,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Deck detail and deck action endpoints now share a unified ownership check to prevent IDOR access.
 - CSV export redirects now normalize same-origin referrers and fall back to profile.php to prevent open redirects.
 - Deck detail now sanitizes hero image and link URLs before applying them in the DOM.
+- Deck rename responses and deck detail headers now render deck names as text with newline spacing instead of HTML.
 
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.

@@ -1,6 +1,6 @@
 /*
-Version:     2.80
-Date:        10/01/26
+Version:     2.83
+Date:        11/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -2116,11 +2116,12 @@ function bindDeckDetailHandlers() {
                 } else {
                     showDeckMessage('Unknown error');
                 }
+                $('#newname').val(deckName || '').focus().select();
                 return;
             }
             updateDeckVersion(response.deck_version);
-            if (response.deckname_html) {
-                $('#deckname').html(response.deckname_html);
+            if (response.deckname_text) {
+                $('#deckname').text(response.deckname_text);
             } else if (response.deckname) {
                 $('#deckname').text(response.deckname);
             }
@@ -2134,6 +2135,7 @@ function bindDeckDetailHandlers() {
             applyFragmentResponse(response);
         }).fail(function () {
             alert('That did not work. Please try again.');
+            $('#newname').val(deckName || '').focus().select();
         }).always(function () {
             $form.data('busy', false);
         });
@@ -2530,7 +2532,13 @@ function refreshDeckFragments(options) {
     });
 
 window.toggleForm = function () {
-    $("#renameForm, #changeType, #currentType").toggle("block");
+    var $renameForm = $("#renameForm");
+    $renameForm.toggle("block");
+    $("#changeType, #currentType").toggle("block");
+    if ($renameForm.is(':visible')) {
+        var currentName = deckName || '';
+        $('#newname').val(currentName).focus().select();
+    }
 };
 
 window.ComparePrep = function () {

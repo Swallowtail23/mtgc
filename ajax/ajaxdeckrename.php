@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.0
-Date:        10/01/26
+Version:     2.1
+Date:        11/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -128,10 +128,9 @@ endif;
 $deckManager->bumpDeckUpdatedAt($deckNumber);
 $response['success'] = true;
 $response['deckname'] = $newname;
+$response['deckname_text'] = $newname;
 if (strlen($newname) > 17) :
-    $response['deckname_html'] = $newname . '<br><br>';
-else :
-    $response['deckname_html'] = $newname;
+    $response['deckname_text'] = $newname . "\n\n";
 endif;
 $response['deck_version'] = getDeckVersion($db, $deckNumber);
 

@@ -179,7 +179,7 @@ else :
 
                         // Move the uploaded file to the specified directory with the specific name
                     if (!move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) :
-                    $response['message'] = 'Failed to move the uploaded file';
+                        $response['message'] = 'Failed to move the uploaded file';
                         returnResponse();
                     endif;
                 endif;

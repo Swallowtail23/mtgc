@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.72
-Date:        10/01/26
+Version:     25.73
+Date:        11/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -184,12 +184,13 @@ m13,12,"Fog",en,1,0,0,{id}
                 <input type='hidden' name="deletedeck" value="yes">
                 <input type='hidden' name="decktodelete" value="<?php echo $deckNumber; ?>">
             </form>
-            <h2 class='h2pad'><span id="deckname"><?php
-            if (strlen($deckName) > 17) :
-                echo $deckName . '<br><br>';
-            else :
-                        echo $deckName;
-            endif; ?></span>
+            <h2 class='h2pad'><span id="deckname" style="white-space: pre-line;"><?php
+            $deckNameDisplay = $deckName;
+            if (strlen($deckNameDisplay) > 17) :
+                $deckNameDisplay .= "\n\n";
+            endif;
+            echo htmlspecialchars($deckNameDisplay, ENT_QUOTES, 'UTF-8');
+            ?></span>
                 &nbsp;
                 <span
                     title="Delete"
