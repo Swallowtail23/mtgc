@@ -129,6 +129,7 @@ namespace {
     use MTG\Auth\TrustedDeviceManager;
     use MTG\Auth\TwoFactorManager;
     use MTG\Auth\UserStatus;
+    use MTG\Core\AppConfig;
     use PHPUnit\Framework\TestCase;
 
     require_once __DIR__ . '/bootstrap.php';
@@ -270,26 +271,83 @@ namespace {
 
         private function buildHandler(FakeDb $db, ?callable $terminator = null, int $turnstileEnabled = 0): LoginHandler
         {
-            global $logfile, $smtpParameters, $serverEmail, $Badloglimit, $turnstile, $turnstile_secret_key, $siteTitle;
             $logfile = sys_get_temp_dir() . '/mtg_loginhandler_test.log';
-            $smtpParameters = [];
             $serverEmail = 'server@example.com';
             $Badloglimit = 3;
-            $turnstile = $turnstileEnabled;
-            $turnstile_secret_key = '';
             $siteTitle = 'MTG Test';
+            $adminEmail = 'admin@example.com';
+            $smtpParameters = [
+                'SMTPDebug' => 'SMTP::DEBUG_OFF',
+                'SMTPHost' => 'localhost',
+                'SMTPAuth' => '',
+                'SMTPUsername' => '',
+                'SMTPPassword' => '',
+                'SMTPSecure' => '',
+                'SMTPPort' => 25,
+                'SMTPHelo' => 'localhost',
+                'SMTPVerifySSL' => 1,
+                'globalDebug' => 0
+            ];
+            $iniArray = [
+                'general' => [
+                    'URL' => 'https://test.example',
+                    'title' => $siteTitle,
+                    'tier' => 'dev',
+                    'Loglevel' => 0,
+                    'Logfile' => $logfile,
+                    'ImgLocation' => sys_get_temp_dir() . '/cardimg/',
+                    'Timezone' => 'UTC',
+                    'Locale' => 'en_US',
+                    'Copyright' => ''
+                ],
+                'security' => [
+                    'Turnstile' => $turnstileEnabled === 1 ? 'enabled' : 'disabled',
+                    'Turnstile_site_key' => '',
+                    'Turnstile_secret_key' => '',
+                    'TrustDuration' => 0,
+                    'Badloginlimit' => $Badloglimit,
+                    'AdminIP' => ''
+                ],
+                'email' => [
+                    'Email' => 'enabled',
+                    'AdminEmail' => $adminEmail,
+                    'ServerEmail' => $serverEmail,
+                    'SMTPDebug' => $smtpParameters['SMTPDebug'],
+                    'Host' => $smtpParameters['SMTPHost'],
+                    'SMTPAuth' => $smtpParameters['SMTPAuth'],
+                    'Username' => $smtpParameters['SMTPUsername'],
+                    'Password' => $smtpParameters['SMTPPassword'],
+                    'SMTPSecure' => $smtpParameters['SMTPSecure'],
+                    'Port' => $smtpParameters['SMTPPort'],
+                    'SMTPHelo' => $smtpParameters['SMTPHelo'],
+                    'SMTPVerifySSL' => $smtpParameters['SMTPVerifySSL']
+                ],
+                'fx' => [
+                    'FreecurrencyAPI' => '',
+                    'TargetCurrency' => ''
+                ],
+                'comments' => [
+                    'Disqus' => 'disabled',
+                    'DisqusDevURL' => '',
+                    'DisqusProdURL' => ''
+                ],
+            ];
+            $appConfig = AppConfig::fromIni($iniArray, [
+                'general' => [
+                    'logLevel' => 0,
+                    'logFile' => $logfile,
+                ],
+                'email' => [
+                    'enabled' => true,
+                    'adminEmail' => $adminEmail,
+                    'serverEmail' => $serverEmail,
+                    'smtp' => $smtpParameters,
+                ],
+            ]);
 
-            return new LoginHandler(
-                $db,
-                $logfile,
-                $turnstile,
-                $turnstile_secret_key,
-                $Badloglimit,
-                $siteTitle,
-                $smtpParameters,
-                $serverEmail,
-                $terminator
-            );
+            $GLOBALS['logfile'] = $logfile;
+
+            return new LoginHandler($db, $appConfig, $terminator);
         }
 
         public function testTrustedDeviceLoginReturnsRedirect()

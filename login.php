@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.7
-Date:        27/12/25
+Version:     8.8
+Date:        11/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -29,16 +29,7 @@ require 'includes/functions.php';         // Includes basic functions for non-se
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $msg = new Message($logfile);
-$loginHandler = new LoginHandler(
-    $db,
-    $logfile,
-    $turnstile,
-    $turnstile_secret_key,
-    $Badloglimit,
-    $siteTitleEsc,
-    $smtpParameters,
-    $serverEmail
-);
+$loginHandler = new LoginHandler($db, $appConfig);
 
 if (!isset($db) || !$db instanceof mysqli) :
     $msg->logMessage('[ERROR]', 'Database connection is null or invalid in login.php');

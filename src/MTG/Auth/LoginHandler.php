@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.13
-Date:        10/01/26
+Version:     1.14
+Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -31,6 +31,7 @@ Current flow:
 namespace MTG\Auth;
 
 use andkab\Turnstile\Turnstile;
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -48,28 +49,27 @@ class LoginHandler
     private $siteTitle;
     private $smtpParameters;
     private $serverEmail;
+    private $adminEmail;
+    private $emailEnabled;
+    private $baseUrl;
+    private $appConfig;
     private $terminator;
 
-    public function __construct(
-        $db,
-        $logfile,
-        $turnstileEnabled,
-        $turnstileSecretKey,
-        $badLoginLimit,
-        $siteTitle,
-        $smtpParameters,
-        $serverEmail,
-        $terminator = null
-    ) {
+    public function __construct($db, AppConfig $appConfig, $terminator = null)
+    {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
         $this->message = new Message($this->logfile);
-        $this->turnstileEnabled = $turnstileEnabled;
-        $this->turnstileSecretKey = $turnstileSecretKey;
-        $this->badLoginLimit = $badLoginLimit;
-        $this->siteTitle = $siteTitle;
-        $this->smtpParameters = $smtpParameters;
-        $this->serverEmail = $serverEmail;
+        $this->turnstileEnabled = (bool) $this->appConfig->security('turnstileEnabled', false);
+        $this->turnstileSecretKey = (string) $this->appConfig->security('turnstileSecretKey', '');
+        $this->badLoginLimit = (int) $this->appConfig->security('badLoginLimit', 0);
+        $this->siteTitle = (string) $this->appConfig->general('title', '');
+        $this->smtpParameters = $this->appConfig->getSmtpParameters();
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
+        $this->baseUrl = (string) $this->appConfig->general('url', '');
         $this->terminator = $terminator;
     }
 
@@ -197,7 +197,7 @@ class LoginHandler
 
     public function handleTurnstileCheck($post, $remoteAddress)
     {
-        if ($this->turnstileEnabled !== 1 || !isset($post['cf-turnstile-response'])) :
+        if (!$this->turnstileEnabled || !isset($post['cf-turnstile-response'])) :
             return;
         endif;
 
@@ -592,8 +592,7 @@ class LoginHandler
 
     private function sendLockNotification($email)
     {
-        global $myURL, $adminEmail;
-        if (!isset($GLOBALS['emailEnabled']) || $GLOBALS['emailEnabled'] !== true) :
+        if ($this->emailEnabled !== true) :
             $this->message->logMessage('[NOTICE]', "Lock notice suppressed; email disabled for $email");
             return false;
         endif;
@@ -605,8 +604,8 @@ class LoginHandler
             return false;
         endif;
 
-        $resetLink = (isset($myURL) && $myURL !== '')
-            ? rtrim($myURL, '/') . '/reset.php'
+        $resetLink = ($this->baseUrl !== '')
+            ? rtrim($this->baseUrl, '/') . '/reset.php'
             : '/reset.php';
         $subject = "{$this->siteTitle} account locked";
         $plain = "Your account on {$this->siteTitle} has been locked after too many incorrect logins.\n"
@@ -625,10 +624,13 @@ class LoginHandler
             $this->logfile,
             $this->siteTitle
         );
-        if (isset($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) :
-            $mailer->addCC($adminEmail);
+        if ($this->adminEmail !== '' && filter_var($this->adminEmail, FILTER_VALIDATE_EMAIL)) :
+            $mailer->addCC($this->adminEmail);
         else :
-            $this->message->logMessage('[NOTICE]', "Admin CC skipped; invalid adminEmail: " . ($adminEmail ?? 'unset'));
+            $this->message->logMessage(
+                '[NOTICE]',
+                "Admin CC skipped; invalid adminEmail: " . ($this->adminEmail !== '' ? $this->adminEmail : 'unset')
+            );
         endif;
         if ($mailer->sendEmail($email, true, $subject, $html, $plain)) :
             $this->message->logMessage('[NOTICE]', "Lock notice sent to $email");
