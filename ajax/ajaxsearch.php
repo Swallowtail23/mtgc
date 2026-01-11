@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.4
+Version:     7.52
 Date:        11/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -16,7 +16,11 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

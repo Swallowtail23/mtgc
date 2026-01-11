@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.13
 Date:        26/11/25
 Name:        mtcestub.php
 Purpose:     PHP script to display Maintenance message
@@ -23,11 +23,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <meta charset='UTF-8'>
         <meta name='viewport' content='initial-scale=1'>
         <?php echo "<title>$siteTitleEsc</title><link rel='stylesheet' type='text/css' href='/style$cssver.css'>"; ?>
-        <?php include('includes/googlefonts.php');?>
+        <?php include APP_ROOT . '/includes/googlefonts.php';?>
     </head>
     <body>
         <div id ='page'>
             <div class='alert-box error' id='adminerror'>Site is down for maintenance. Redirecting to login page.</div>
-            <?php require('includes/header.php');  //build header ?>
+            <?php require APP_ROOT . '/includes/header.php';  //build header ?>
         </div>
     </body>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.51
 Date:        11/01/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
@@ -86,7 +86,7 @@ class AppContext
             'globalDebug' => $logLevelIni,
         ];
 
-        $rulesPath = dirname(__DIR__, 3) . '/includes/game_rules.php';
+        $rulesPath = APP_ROOT . '/includes/game_rules.php';
         $rules = GameRules::fromFile($rulesPath);
         $rulesData = $rules->all();
         $maxCardDataAge = $rulesData['max_card_data_age'] ?? 0;

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.17
 Date:        11/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
@@ -15,7 +15,11 @@ use MTG\Auth\SessionManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

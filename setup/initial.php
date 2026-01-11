@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.6
+Version:     2.62
 Date:        25/11/25
 Name:        initial.php
 Purpose:     Generate a usable password without site access.
@@ -18,7 +18,11 @@ History:
 
 use MTG\Core\INI;
 
-require_once __DIR__ . '/../src/MTG/Core/INI.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+require_once APP_ROOT . '/src/MTG/Core/INI.php';
 $ini = new INI('/opt/mtg/mtg_new.ini');
 $iniArray = $ini->data;
 

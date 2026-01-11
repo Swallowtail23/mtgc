@@ -39,7 +39,7 @@ class DeckManagerActionsTest extends TestCase
             ['decknumber' => 1, 'cardqty' => 2, 'sideqty' => 0, 'deckname' => 'Test 1'],
             ['decknumber' => 2, 'cardqty' => 1, 'sideqty' => 1, 'deckname' => 'Test 2'],
         ];
-        $db = new class($rows) {
+        $db = new class ($rows) {
             private $rows;
             public function __construct($rows)
             {
@@ -47,7 +47,7 @@ class DeckManagerActionsTest extends TestCase
             }
             public function execute_query($sql, $params)
             {
-                return new class($this->rows) {
+                return new class ($this->rows) {
                     private $rows;
                     private $index = 0;
                     public function __construct($rows)
@@ -176,7 +176,7 @@ class DeckManagerCommanderDbStub
     public function prepare($query)
     {
         if (strpos($query, 'SELECT commander') !== false) {
-            $result = new class($this->existing) {
+            $result = new class ($this->existing) {
                 public $num_rows;
                 public function __construct($count)
                 {

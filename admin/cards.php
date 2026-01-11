@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.20
+Version:     5.24
 Date:        11/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -15,7 +15,11 @@ use MTG\Cards\ImageManager;
 use MTG\Core\Validation;
 
 // Bootstrap
-$appContext = require '../bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 // Check if user is logged in, if not redirect to login.php
@@ -24,7 +28,7 @@ $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail)");
 // Is admin running the page
 $msg->logMessage('[ERROR]', "Admin is $admin");
 if ($admin !== 1) :
-    require('reject.php');
+    require APP_ROOT . '/admin/reject.php';
 endif;
 
 // Find if this card is in any decks
@@ -198,15 +202,15 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver ?>.css">
-    <?php include('../includes/googlefonts.php'); ?>
+    <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="../js/jquery.js"></script>
 </head>
 <body id="body" class="body">
 
 <?php
-include '../includes/overlays.php';
-include '../includes/header.php';
-require('../includes/menu.php');
+include APP_ROOT . '/includes/overlays.php';
+include APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php';
 ?>
     <div id='page'>
         <div class='staticpagecontent'>
@@ -337,6 +341,6 @@ require('../includes/menu.php');
         </div>
     </div>
 <?php
-require('../includes/footer.php'); ?>
+require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

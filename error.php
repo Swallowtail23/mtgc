@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.3
+Version:     2.32
 Date:        29/12/25
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
@@ -13,7 +13,7 @@ To do:       -
 
 $iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
 $serviceWorkerVersion = 'v6';
-$versionFile = __DIR__ . '/VERSION';
+$versionFile = APP_ROOT . '/VERSION';
 if (file_exists($versionFile)) :
     $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
     if ($serviceWorkerVersion === '') :
@@ -38,7 +38,7 @@ $cssver = "";
     <title> <?php echo $siteTitleEsc;?> error page</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-    <?php include('includes/googlefonts.php');?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
@@ -47,9 +47,9 @@ $cssver = "";
 // Start building the page here, so errors show in the website template
 // Includes first - menu and header
 if ((isset($_SESSION["logged"])) and ($_SESSION["logged"] == true)) :
-    require('includes/overlays.php');
+    require APP_ROOT . '/includes/overlays.php';
 endif;
-require('includes/header.php'); ?>
+require APP_ROOT . '/includes/header.php'; ?>
 <div id='menubuttondiv' class="togglemenu">
     <a href="#" id='toggle-menu'><span class="material-symbols-outlined menu">menu</span></a>
 </div>
@@ -77,6 +77,6 @@ require('includes/header.php'); ?>
 </div>
 
 <?php
-require('includes/footer.php'); ?>
+require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.51
 Date:        11/01/26
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
@@ -20,7 +20,7 @@ class UserAgent
         static $cache = array();
 
         if ($versionPath === null) :
-            $versionPath = dirname(__DIR__, 3) . '/VERSION';
+            $versionPath = APP_ROOT . '/VERSION';
         endif;
 
         $url = trim((string) $config->general('url', ''));

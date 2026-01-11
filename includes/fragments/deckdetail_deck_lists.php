@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.31
 Date:        26/12/25
 Name:        deckdetail_deck_lists.php
 Purpose:     Deck detail deck lists fragment wrapper.
@@ -17,9 +17,9 @@ $hasDeckLists = ($total + $sidetotal > 0);
     <?php if ($hasDeckLists) : ?>
         <h4>Deck lists</h4>
         <table id="decklists-table" style="width:100%;">
-            <?php include __DIR__ . '/deckdetail_export_list.php'; ?>
-            <?php include __DIR__ . '/deckdetail_missing.php'; ?>
-            <?php include __DIR__ . '/deckdetail_buy_missing.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_export_list.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_missing.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_buy_missing.php'; ?>
         </table> <?php
     endif; ?>
 </div>

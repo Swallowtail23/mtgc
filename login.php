@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.11
+Version:     8.15
 Date:        11/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -15,7 +15,11 @@ use MTG\Auth\LoginHandler;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-$appContext = require 'bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 ob_start();
 
 // Content
@@ -92,11 +96,11 @@ endif;
         type="text/css"
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
     >
-    <?php include 'includes/googlefonts.php'; ?>
+    <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body id="loginbody" class="body">
-<?php include_once 'includes/analyticstracking.php'; ?>
+<?php include_once APP_ROOT . '/includes/analyticstracking.php'; ?>
     <div id="loginheader">
         <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
         <?php

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.41
 Date:        27/12/25
 Name:        deckdetail_random_draw.php
 Purpose:     Deck detail random draw fragment.
@@ -31,7 +31,7 @@ $uniquecard_ref = $random_draw_refs;
         <div id="table-container">
             <?php
             define('INCLUDE_CHECK', true);
-            include __DIR__ . '/../../ajax/ajaxrandomdraw.php'; ?>
+            include APP_ROOT . '/ajax/ajaxrandomdraw.php'; ?>
         </div>
     <?php endif; ?>
 </div>

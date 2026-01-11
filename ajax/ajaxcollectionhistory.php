@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.18
 Date:        11/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -16,7 +16,11 @@ use MTG\Cards\CollectionHistory;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');

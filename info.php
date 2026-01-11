@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.10
+Version:     2.15
 Date:        11/01/26
 Name:        info.php
 Purpose:     Site information page.
@@ -12,7 +12,11 @@ To do:       -
 */
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
@@ -25,16 +29,16 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <title><?php echo $siteTitleEsc;?> - info</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-    <?php include('includes/googlefonts.php');?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
 <body id="body" class="body">
 <?php
-include_once("includes/analyticstracking.php");
-require('includes/overlays.php');
-require('includes/header.php');
-require('includes/menu.php');
+include_once APP_ROOT . '/includes/analyticstracking.php';
+require APP_ROOT . '/includes/overlays.php';
+require APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php';
 
 ?>
 <div id='page'>
@@ -91,7 +95,7 @@ require('includes/menu.php');
 </div>
 </div>
 <?php
-require('includes/footer.php');
+require APP_ROOT . '/includes/footer.php';
 ?>
 </body>
 </html>

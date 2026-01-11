@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.18
 Date:        11/01/26
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
@@ -15,7 +15,11 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Validation;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $msg->logMessage('[DEBUG]', 'Loading valueupdate.php...');

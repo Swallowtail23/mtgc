@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.72
 Date:        11/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
@@ -19,13 +19,17 @@ use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 use MTG\Admin\AdminSettings;
 
-require_once __DIR__ . '/vendor/autoload.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+require_once APP_ROOT . '/vendor/autoload.php';
 
 if (session_status() === PHP_SESSION_NONE && PHP_SAPI !== 'cli') :
-    if (file_exists(__DIR__ . '/includes/sessionname.local.php')) :
-        require __DIR__ . '/includes/sessionname.local.php';
+    if (file_exists(APP_ROOT . '/includes/sessionname.local.php')) :
+        require APP_ROOT . '/includes/sessionname.local.php';
     else :
-        require __DIR__ . '/includes/sessionname_template.php';
+        require APP_ROOT . '/includes/sessionname_template.php';
     endif;
     startCustomSession();
 endif;
@@ -98,7 +102,7 @@ $cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 $myURL = $iniArray['general']['URL'] ?? '';
 $siteTitle = $iniArray['general']['title'] ?? '';
 
-$versionFile = __DIR__ . '/VERSION';
+$versionFile = APP_ROOT . '/VERSION';
 $serviceWorkerVersion = 'v6';
 if (file_exists($versionFile)) :
     $serviceWorkerVersion = trim((string) file_get_contents($versionFile));

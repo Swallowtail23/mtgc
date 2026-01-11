@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.18
+Version:     4.22
 Date:        11/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -14,7 +14,11 @@ To do:       -
 use MTG\Auth\SessionManager;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
@@ -58,7 +62,7 @@ endif;
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-    <?php include 'includes/googlefonts.php';?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script>
         const csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
@@ -400,10 +404,10 @@ endif;
 
 <body class="body">
 <?php
-include_once 'includes/analyticstracking.php';
-require 'includes/overlays.php';
-require 'includes/header.php';
-require 'includes/menu.php';
+include_once APP_ROOT . '/includes/analyticstracking.php';
+require APP_ROOT . '/includes/overlays.php';
+require APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php';
 ?>
 
 <div id='page'>
@@ -620,7 +624,7 @@ require 'includes/menu.php';
     </div>echo '<br>&nbsp;</div>';
 </div>
 <?php
-    require 'includes/footer.php';
+    require APP_ROOT . '/includes/footer.php';
 ?>
     <script>
         document.getElementById('cancelsetfilter').addEventListener('click', function() {

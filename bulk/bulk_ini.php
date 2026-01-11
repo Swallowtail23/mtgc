@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.15
+Version:     3.17
 Date:        11/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -16,4 +16,8 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
 endif;
 
 // Bootstrap (shared app init)
-$appContext = require __DIR__ . '/../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';

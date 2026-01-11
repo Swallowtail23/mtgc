@@ -1,6 +1,10 @@
 <?php
 
 // Basic bootstrap for tests
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', realpath(__DIR__ . '/..'));
+endif;
+
 $GLOBALS['logfile'] = sys_get_temp_dir() . '/phpunit.log';
 $GLOBALS['loglevelini'] = 0;
 $GLOBALS['logLevelIni'] = 0;

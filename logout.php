@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.92
 Date:        11/01/26
 Name:        logout.php
 Purpose:     Destroy the session, log it, and head to login.php.
@@ -14,7 +14,11 @@ To do:       -
 use MTG\Auth\TrustedDeviceManager;
 
 // Bootstrap
-$appContext = require 'bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 session_regenerate_id();
 
 // Content

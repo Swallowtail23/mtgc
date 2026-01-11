@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.19
 Date:        11/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
@@ -14,7 +14,11 @@ To do:       -
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.23
+Version:     2.25
 Date:        11/01/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -17,7 +17,7 @@ use MTG\Bulk\ScryfallImport;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
-require('bulk_ini.php');
+require APP_ROOT . '/bulk/bulk_ini.php';
 Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // URLs

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.22
+Version:     9.24
 Date:        11/01/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -15,7 +15,7 @@ use MTG\Bulk\ScryfallImport;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
-require('bulk_ini.php');
+require APP_ROOT . '/bulk/bulk_ini.php';
 
 // Start time tracking
 $start = microtime(true);
@@ -46,8 +46,8 @@ endif;
 $targetTable = $useTestTable ? 'cards_scry_test' : 'cards_scry';
 
 if ($useTestTable) :
-    $testFileFirst = __DIR__ . '/../tests/test_data/bulk_sample_10.json';
-    $testFileSecond = __DIR__ . '/../tests/test_data/bulk_sample_10_copy.json';
+    $testFileFirst = APP_ROOT . '/tests/test_data/bulk_sample_10.json';
+    $testFileSecond = APP_ROOT . '/tests/test_data/bulk_sample_10_copy.json';
 
     $msg->logMessage('[DEBUG]', 'Preparing cards_scry_test for bulk import test');
     $tableCheck = $db->query("SHOW TABLES LIKE 'cards_scry_test'");

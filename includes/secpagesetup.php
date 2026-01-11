@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.3
+Version:     3.33
 Date:        11/01/26
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -43,7 +43,7 @@ else :
 
         $mtceStatus = AdminSettings::checkMaintenanceMode($user, $db, $appConfig);
         if ($mtceStatus == 1) :                           // check if site is in maintenance mode
-            include('includes/mtcestub.php');
+            include APP_ROOT . '/includes/mtcestub.php';
             session_destroy();
             exit();
         endif;

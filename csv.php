@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.16
+Version:     4.19
 Date:        11/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -16,7 +16,11 @@ use MTG\Core\Http\UrlHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);

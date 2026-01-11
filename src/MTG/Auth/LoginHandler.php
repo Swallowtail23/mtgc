@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.25
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -157,11 +157,11 @@ class LoginHandler
         echo "<title>{$siteTitleEsc} - login</title>";
         echo "<link rel='manifest' href='/manifest.json' />";
         echo "<link rel='stylesheet' type='text/css' href='css/style{$cssverEsc}.css'>";
-        include 'includes/googlefonts.php';
+        include APP_ROOT . '/includes/googlefonts.php';
         echo "<meta http-equiv='refresh' content='2;url=index.php'>";
         echo "</head>";
         echo "<body id='loginbody' class='body'>";
-        include_once 'includes/analyticstracking.php';
+        include_once APP_ROOT . '/includes/analyticstracking.php';
         echo "<div id='loginheader'>";
         echo "<h2 id='h2'>{$siteTitleEsc}</h2>";
         echo "<div class='alert-box notice' style='margin:20px;'>{$messageEsc}</div>";
@@ -473,7 +473,7 @@ class LoginHandler
         type="text/css"
         href="css/style<?php echo htmlspecialchars($cssVersionSuffix, ENT_QUOTES, 'UTF-8'); ?>.css"
     >
-        <?php include 'includes/googlefonts.php'; ?>
+        <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
     <div id="loginheader">
@@ -569,7 +569,7 @@ class LoginHandler
     <title><?php echo $safeTitle; ?> - login</title>
     <link rel='manifest' href='/manifest.json' />
     <link rel='stylesheet' type='text/css' href='css/style<?php echo $cssver; ?>.css'>
-        <?php include 'includes/googlefonts.php'; ?>
+        <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>
 <body id='loginbody' class='body'>
     <div id='loginheader'>

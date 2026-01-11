@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.22
+Version:     3.26
 Date:        11/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -15,7 +15,11 @@ use MTG\Auth\PasswordCheck;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-$appContext = require 'bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $pwReset = new PasswordCheck($db, $appConfig);
@@ -170,7 +174,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         type="text/css"
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
     >
-    <?php include 'includes/googlefonts.php';?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
 </head>
 <body id="loginbody" class="body">
 <div id="loginheader">

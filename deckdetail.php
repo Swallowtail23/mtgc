@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.77
+Version:     25.82
 Date:        11/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -15,13 +15,17 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
-require_once 'ajax/ajaxdeckfragments_lib.php';
+require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';
 
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $uniquecard_ref = [];
@@ -40,7 +44,7 @@ $uniquecard_ref = [];
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css"
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-    <?php include('includes/googlefonts.php'); ?>
+    <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
@@ -52,9 +56,9 @@ $uniquecard_ref = [];
 
 <body class="body">
 <?php
-include_once("includes/analyticstracking.php");
-require('includes/overlays.php');
-require('includes/header.php');
+include_once APP_ROOT . '/includes/analyticstracking.php';
+require APP_ROOT . '/includes/overlays.php';
+require APP_ROOT . '/includes/header.php';
 if ($tier == 'dev') :
     echo '<div id="deckdetail-width-banner" style="position: fixed; top: 10px; right: 10px; z-index: 100000; '
         . 'padding: 8px 10px; border: 1px solid #3f51b5; border-radius: 4px; background: #fff; '
@@ -77,7 +81,7 @@ if ($tier == 'dev') :
         . 'setTimeout(updateDeckdetailWidthBanner,0);'
         . '</script>';
 endif;
-require('includes/menu.php'); //mobile menu
+require APP_ROOT . '/includes/menu.php'; //mobile menu
 
 $redirect = false;
 
@@ -94,7 +98,7 @@ else : ?>
     <meta http-equiv='refresh' content='2;url=decks.php'>
     </div>
     </div> <?php
-    require('includes/footer.php');
+    require APP_ROOT . '/includes/footer.php';
     exit();
 endif;?>
 <?php
@@ -113,11 +117,11 @@ if ($obj->assertDeckOwner($deckNumber, $user, 'deckdetail.php') === false) : ?>
     <meta http-equiv='refresh' content='2;url=decks.php'>
     </div>
     </div> <?php
-    require('includes/footer.php');
+    require APP_ROOT . '/includes/footer.php';
     exit();
 endif;
 
-include 'includes/deckdetail_data.php';
+include APP_ROOT . '/includes/deckdetail_data.php';
 
 // Next the main DIV section ?>
 <?php ?>
@@ -240,9 +244,9 @@ m13,12,"Fog",en,1,0,0,{id}
                     <input type="hidden"name="deck" value="<?php echo $deckNumber;?>" />
                 </form>
 
-            <?php include 'includes/fragments/deckdetail_colour_identity.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_colour_identity.php'; ?>
 
-            <?php include 'includes/fragments/deckdetail_decklist.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_decklist.php'; ?>
         </div>
         <div id="deckside-wrap">
             <div id="deckside">
@@ -260,7 +264,7 @@ m13,12,"Fog",en,1,0,0,{id}
                     </button>
                 </div>
                 <div id="decknotesdiv">
-            <?php include 'includes/fragments/deckdetail_warnings.php'; ?>
+            <?php include APP_ROOT . '/includes/fragments/deckdetail_warnings.php'; ?>
             <form id="updatenotesform" action="?" method="POST">
                 <h4>Notes</h4>
                 <textarea class='decknotes textinput' id="notes" name='newnotes' rows='2' cols='40'><?php
@@ -277,10 +281,10 @@ m13,12,"Fog",en,1,0,0,{id}
             </form>
             <hr id='deckline' class='hr324'>
             <?php
-            include 'includes/fragments/deckdetail_mana_data.php';
-            include 'includes/fragments/deckdetail_mana_value.php';
-            include 'includes/fragments/deckdetail_mana_costs.php';
-            include 'includes/fragments/deckdetail_deck_value.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_mana_data.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_mana_value.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_mana_costs.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_deck_value.php';
             if ($decktype != 'Wishlist') : // Condense to 2 columns for wishlists
                 ?>
             </div>
@@ -288,8 +292,8 @@ m13,12,"Fog",en,1,0,0,{id}
                 <?php
             endif;
             echo '<div id="deck-random-draw-anchor"></div>';
-            include 'includes/fragments/deckdetail_random_draw.php';
-            include 'includes/fragments/deckdetail_deck_lists.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_random_draw.php';
+            include APP_ROOT . '/includes/fragments/deckdetail_deck_lists.php';
             ?>
             <div id="deck-quickadd-group">
                 <div class="section-header-row">
@@ -371,6 +375,6 @@ m13,12,"Fog",en,1,0,0,{id}
 
 <?php
 $msg->logMessage('[DEBUG]', "Page complete");
-require('includes/footer.php'); ?>
+require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

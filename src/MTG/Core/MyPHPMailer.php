@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.16
 Date:        11/01/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
@@ -19,7 +19,7 @@ namespace MTG\Core;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require __DIR__ . "/../../../vendor/autoload.php";
+require APP_ROOT . '/vendor/autoload.php';
 
 class MyPHPMailer extends PHPMailer
 {

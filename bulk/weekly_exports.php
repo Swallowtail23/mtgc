@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.23
+Version:     2.25
 Date:        11/01/26
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
@@ -16,7 +16,7 @@ use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
 use MTG\Core\MyPHPMailer;
 
-require('bulk_ini.php');
+require APP_ROOT . '/bulk/bulk_ini.php';
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $obj   = new ImportExport($db, $appConfig, $gameRules, $serverEmail);
 $historyExporter = new CollectionHistory($db, $appConfig);

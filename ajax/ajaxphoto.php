@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.25
 Date:        11/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -16,7 +16,11 @@ use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $response = ['success' => false, 'message' => ''];

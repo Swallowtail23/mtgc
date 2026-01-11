@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.18
 Date:        11/01/26
 Name:        ajaxweekly.php
 Purpose:     PHP script to turn weekly export on/off
@@ -15,7 +15,11 @@ use MTG\Auth\SessionManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.56
+Version:     14.61
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -18,7 +18,11 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 // Default numbers per page and max
@@ -311,7 +315,7 @@ $selectAll = "SELECT
                 LEFT JOIN `sets` ON cards_scry.setcode = sets.code
                 WHERE ";
 $sorting = "LIMIT $start_from, $perpage";
-require('includes/criteria.php'); //Builds $criteria and assesses validity
+require APP_ROOT . '/includes/criteria.php'; //Builds $criteria and assesses validity
 // If search is Mycollection / Sort By Price:
 // Update pricing in case any new cards have been added to collection
 if (($sortBy == 'price') and ( $scope == 'mycollection')) :
@@ -386,7 +390,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <title> <?php echo $siteTitleEsc;?> </title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
-        <?php include('includes/googlefonts.php'); ?>
+        <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
             window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
@@ -597,7 +601,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     </head>
 
     <body> <?php
-        include_once("includes/analyticstracking.php");
+        include_once APP_ROOT . '/includes/analyticstracking.php';
         $getString = UrlHelper::getStringParameters($_GET, 'page'); ?>
         <div class="top"> <?php
             echo "<a id='prevlink' href='index.php"
@@ -605,17 +609,17 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 . "'>&nbsp;</a>"; ?>
         </div>
         <?php
-        require('includes/overlays.php'); //menus
-        require('includes/header.php');  //build header
-        require('includes/menu.php'); //mobile menu
+        require APP_ROOT . '/includes/overlays.php'; //menus
+        require APP_ROOT . '/includes/header.php';  //build header
+        require APP_ROOT . '/includes/menu.php'; //mobile menu
 
         if ((isset($qtyresults)) and ( $qtyresults != 0)) : //Display Bulk / List / Grid menus and results header row
             if ($layout == 'bulk') :
-                require('includes/bulkmenus.php');
+                require APP_ROOT . '/includes/bulkmenus.php';
             elseif ($layout == 'list') :
-                require('includes/listmenus.php');
+                require APP_ROOT . '/includes/listmenus.php';
             elseif ($layout == 'grid') :
-                require('includes/gridmenus.php');
+                require APP_ROOT . '/includes/gridmenus.php';
             endif;
         else : ?>
             <script>
@@ -1387,11 +1391,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 endif;
             else :
                 $msg->logMessage('[DEBUG]', "Loading search layout");
-                require('includes/search.php');
+                require APP_ROOT . '/includes/search.php';
             endif;
             ?>
         </div> <?php
-        require('includes/footer.php');
+        require APP_ROOT . '/includes/footer.php';
         $msg->logMessage('[DEBUG]', "Finished");?>
         <script>
             if ('serviceWorker' in navigator) {

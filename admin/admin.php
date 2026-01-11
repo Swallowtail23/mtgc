@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.25
+Version:     6.29
 Date:        11/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -19,7 +19,11 @@ use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
 // Bootstrap
-$appContext = require '../bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $csrfToken = SessionManager::generateCsrfToken();
@@ -66,7 +70,7 @@ function getAppVersion(Message $msg, string $fallback = 'dev'): string
     endif;
 
     // Then VERSION file (normal)
-    $versionFile = __DIR__ . '/../VERSION';
+    $versionFile = APP_ROOT . '/VERSION';
     if (is_readable($versionFile)) :
         $fileVersion = $sanitize((string) file_get_contents($versionFile));
         if ($fileVersion !== '') :
@@ -217,7 +221,7 @@ function minifyCssFile(string $sourcePath, string $targetPath, Message $msg): ar
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail) Admin result: " . $admin);
 if ($admin !== 1) :
-    require('reject.php');
+    require APP_ROOT . '/admin/reject.php';
 endif;
 
 //Get date for update form
@@ -842,7 +846,7 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
-    <?php include('../includes/googlefonts.php');?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="../js/jquery.js"></script>
     <script type="text/javascript">
         jQuery( function($) {
@@ -1040,9 +1044,9 @@ $disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
 <body id="body" class="body">
 
 <?php
-include '../includes/overlays.php';
-include '../includes/header.php';
-require('../includes/menu.php');
+include APP_ROOT . '/includes/overlays.php';
+include APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php';
 ?>
 <div id='page'>
     <div class='staticpagecontent'>
@@ -2376,6 +2380,6 @@ require('../includes/menu.php');
     </div>
 </div>
 
-<?php require('../includes/footer.php'); ?>
+<?php require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

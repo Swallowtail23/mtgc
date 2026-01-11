@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.17
+Version:     1.21
 Date:        11/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
@@ -16,10 +16,14 @@ use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
-require_once 'ajaxdeckfragments_lib.php';
+require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';
 
 $response = [
     'success' => false,
@@ -158,8 +162,8 @@ if (count($requestedFragments) === 0) :
 endif;
 
 $skip_deckdetail_actions = true;
-include '../includes/deckdetail_data.php';
-include '../includes/fragments/deckdetail_mana_data.php';
+include APP_ROOT . '/includes/deckdetail_data.php';
+include APP_ROOT . '/includes/fragments/deckdetail_mana_data.php';
 $msg->logMessage(
     '[DEBUG]',
     "Deck type fragments requested for deck $deckNumber: " . implode(', ', array_map('strval', $requestedFragments))

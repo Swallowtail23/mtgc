@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.72
 Date:        10/01/26
 Name:        header.php
 Purpose:     PHP script to display header
@@ -181,7 +181,7 @@ if (
     </div>
     <?php
 elseif ($adminpages !== false) :
-    include 'adminmenus.php';
+    include APP_ROOT . '/includes/adminmenus.php';
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>

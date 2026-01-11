@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.28
+Version:     22.33
 Date:        11/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -19,7 +19,11 @@ use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 // Is admin running the page
@@ -58,7 +62,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
-    <?php include('includes/googlefonts.php');?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         window.mtgImageCacheName = 'mtg-images-<?php echo $serviceWorkerVersion; ?>';
@@ -69,12 +73,12 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 <body class="body">
 <?php
-include_once("includes/analyticstracking.php");
+include_once APP_ROOT . '/includes/analyticstracking.php';
 // Start building the page here, so errors show in the website template
 // Includes first - menu and header
-require('includes/overlays.php');
-require('includes/header.php');
-require('includes/menu.php'); //mobile menu
+require APP_ROOT . '/includes/overlays.php';
+require APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php'; //mobile menu
 ?>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
@@ -2307,6 +2311,6 @@ endif;
 </script>
 <script src="/js/carddetail.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 <?php
-require('includes/footer.php'); ?>
+require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

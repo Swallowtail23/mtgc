@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.12
 Date:        11/01/26
 Name:        bootstrap_secure.php
 Purpose:     Secure bootstrap wrapper that runs secpagesetup.
@@ -13,8 +13,12 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 
-$ctx = require __DIR__ . '/bootstrap.php';
-require __DIR__ . '/includes/secpagesetup.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$ctx = require APP_ROOT . '/bootstrap.php';
+require APP_ROOT . '/includes/secpagesetup.php';
 
 // Don't enforce password change on page to change password!
 if (basename($_SERVER['PHP_SELF']) !== 'profile.php') :

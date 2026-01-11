@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.24
 Date:        11/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -16,7 +16,11 @@ use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $msg->logMessage('[DEBUG]', "Collection page load");
@@ -123,7 +127,7 @@ endif;
         <title><?php echo $siteTitleEsc;?> - collection</title>
         <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-        <?php include('includes/googlefonts.php');?>
+        <?php include APP_ROOT . '/includes/googlefonts.php';?>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script>
@@ -383,11 +387,11 @@ endif;
     </head>
 
     <body> <?php
-        include_once 'includes/analyticstracking.php';
-        require 'includes/overlays.php';
-        require 'includes/header.php';
-        require 'includes/menu.php';
-        require 'includes/profilemenus.php'; ?>
+        include_once APP_ROOT . '/includes/analyticstracking.php';
+        require APP_ROOT . '/includes/overlays.php';
+        require APP_ROOT . '/includes/header.php';
+        require APP_ROOT . '/includes/menu.php';
+        require APP_ROOT . '/includes/profilemenus.php'; ?>
         <div id="csvsuccess" class="msg-new" onclick='closeMe(this)' style="display: none;">
             <span>CSV email send was successful</span>
             <br>
@@ -466,7 +470,7 @@ endif;
         <div id='page'>
             <div class='staticpagecontent'>
                 <div class="profile-container">
-                    <?php require 'includes/profile_collection.php'; ?>
+                    <?php require APP_ROOT . '/includes/profile_collection.php'; ?>
                     <div id="collection-history" class="collection-history">
                         <div class="history-header">
                             <h3 class="history-title">Value history</h3>
@@ -769,6 +773,6 @@ endif;
                 </div>
             </div>
         </div> <?php
-        require('includes/footer.php'); ?>
+        require APP_ROOT . '/includes/footer.php'; ?>
     </body>
 </html>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.84
 Date:        11/01/26
 Name:        template.php
 Purpose:     Site template.
@@ -12,7 +12,11 @@ To do:       -
 */
 
 // Bootstrap
-$appContext = require 'bootstrap_secure.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap_secure.php';
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
@@ -30,17 +34,17 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         type="text/css"
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
     >
-    <?php include 'includes/googlefonts.php';?>
+    <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
 <body class="body">
 <?php
 // Start building the page here, so errors show in the website template
-include_once 'includes/analyticstracking.php';
-require 'includes/overlays.php';
-require 'includes/header.php';
-require 'includes/menu.php';
+include_once APP_ROOT . '/includes/analyticstracking.php';
+require APP_ROOT . '/includes/overlays.php';
+require APP_ROOT . '/includes/header.php';
+require APP_ROOT . '/includes/menu.php';
 ?>
 <div id="page">
     <div class="staticpagecontent">
@@ -48,6 +52,6 @@ require 'includes/menu.php';
     </div>
 </div>
 
-<?php require 'includes/footer.php'; ?>
+<?php require APP_ROOT . '/includes/footer.php'; ?>
 </body>
 </html>

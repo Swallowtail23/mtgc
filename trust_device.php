@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.11
+Version:     2.15
 Date:        11/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -16,7 +16,11 @@ use MTG\Auth\TrustedDeviceManager;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-$appContext = require 'bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Regenerate session on privilege transition
 if (session_status() === PHP_SESSION_ACTIVE) :
@@ -107,10 +111,10 @@ else :
             type="text/css"
             href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
         >
-        <?php include 'includes/googlefonts.php'; ?>
+        <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     </head>
     <body id="loginbody" class="body">
-        <?php include_once 'includes/analyticstracking.php'; ?>
+        <?php include_once APP_ROOT . '/includes/analyticstracking.php'; ?>
         <div id="loginheader">
             <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
                 <p>You are logged in<?php echo isset($_SESSION['admin']) && $_SESSION['admin'] ? '!' : ''; ?></p>

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.82
 Date:        24/12/25
 Name:        ajaxdeckfragments_lib.php
 Purpose:     Fragment rendering helpers for deck detail AJAX updates.
@@ -17,67 +17,67 @@ function deckdetailFragmentRegistry()
         [
             'key' => 'decklist',
             'id' => 'decklist-fragment',
-            'include' => '../includes/fragments/deckdetail_decklist.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_decklist.php',
             'default' => true
         ],
         [
             'key' => 'colour_identity',
             'id' => 'deck-colour-identity-fragment',
-            'include' => '../includes/fragments/deckdetail_colour_identity.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_colour_identity.php',
             'default' => true
         ],
         [
             'key' => 'warnings',
             'id' => 'deck-warnings-fragment',
-            'include' => '../includes/fragments/deckdetail_warnings.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_warnings.php',
             'default' => true
         ],
         [
             'key' => 'mana_value',
             'id' => 'deck-mana-value-fragment',
-            'include' => '../includes/fragments/deckdetail_mana_value.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_mana_value.php',
             'default' => true
         ],
         [
             'key' => 'mana_costs',
             'id' => 'deck-mana-costs-fragment',
-            'include' => '../includes/fragments/deckdetail_mana_costs.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_mana_costs.php',
             'default' => true
         ],
         [
             'key' => 'deck_value',
             'id' => 'deck-value-fragment',
-            'include' => '../includes/fragments/deckdetail_deck_value.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_deck_value.php',
             'default' => true
         ],
         [
             'key' => 'deck_lists',
             'id' => 'deck-lists-fragment',
-            'include' => '../includes/fragments/deckdetail_deck_lists.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_deck_lists.php',
             'default' => true
         ],
         [
             'key' => 'export_list',
             'id' => 'deck-export-fragment',
-            'include' => '../includes/fragments/deckdetail_export_list.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_export_list.php',
             'default' => true
         ],
         [
             'key' => 'missing',
             'id' => 'deck-missing-fragment',
-            'include' => '../includes/fragments/deckdetail_missing.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_missing.php',
             'default' => true
         ],
         [
             'key' => 'buy_missing',
             'id' => 'deck-buy-fragment',
-            'include' => '../includes/fragments/deckdetail_buy_missing.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_buy_missing.php',
             'default' => true
         ],
         [
             'key' => 'random_draw',
             'id' => 'deck-random-draw-fragment',
-            'include' => '../includes/fragments/deckdetail_random_draw.php',
+            'include' => APP_ROOT . '/includes/fragments/deckdetail_random_draw.php',
             'default' => true
         ]
     ];

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.16
 Date:        11/01/26
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
@@ -13,7 +13,7 @@ To do:       -
 
 use MTG\Cards\CollectionStats;
 
-require('bulk_ini.php');
+require APP_ROOT . '/bulk/bulk_ini.php';
 
 $msg->logMessage('[NOTICE]', 'Starting collection value snapshot run');
 

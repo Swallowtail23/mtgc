@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.23
 Date:        11/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -17,7 +17,11 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require '../bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', dirname(__DIR__));
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

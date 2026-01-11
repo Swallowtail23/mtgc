@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.20
 Date:        11/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -16,7 +16,11 @@ use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-$appContext = require 'bootstrap.php';
+if (!defined('APP_ROOT')) :
+    define('APP_ROOT', __DIR__);
+endif;
+
+$appContext = require APP_ROOT . '/bootstrap.php';
 
 // Content
 if (!isset($_SESSION['user_pending_2fa'])) :
@@ -135,10 +139,10 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         type="text/css"
         href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
     >
-    <?php include 'includes/googlefonts.php'; ?>
+    <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>
 <body id="loginbody" class="body">
-    <?php include_once 'includes/analyticstracking.php'; ?>
+    <?php include_once APP_ROOT . '/includes/analyticstracking.php'; ?>
     <div id="loginheader">
     <h2 id="h2"><?php echo $siteTitleEsc;?> - Verification</h2>
 
