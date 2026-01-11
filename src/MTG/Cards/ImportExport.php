@@ -1110,6 +1110,5 @@ class ImportExport
             );
         endif;
     }
-
 }
 // phpcs:enable

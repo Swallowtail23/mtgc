@@ -413,5 +413,4 @@ class SessionManager
             'reason' => ''
         ];
     }
-
 }

@@ -178,5 +178,4 @@ class UserStatus
             $this->message->logMessage('[DEBUG]', "Locking account $this->email: {$this->db->info}");
         endif;
     }
-
 }

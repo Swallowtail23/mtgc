@@ -78,11 +78,11 @@ class IniDebugTest extends TestCase
         $this->assertStringContainsString('Debug message', $contents);
     }
 
-    public function testToStringReturnsMessage()
+    public function testToStringIsNotImplemented()
     {
         $logfile = tempnam(sys_get_temp_dir(), 'mtgdebug_');
         $logger = new IniDebug($this->buildConfig($logfile));
 
-        $this->assertSame('Called as a string', (string) $logger);
+        $this->assertFalse(method_exists($logger, '__toString'));
     }
 }

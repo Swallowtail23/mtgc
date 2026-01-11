@@ -341,5 +341,4 @@ class TrustedDeviceManager
             return false;
         endif;
     }
-
 }

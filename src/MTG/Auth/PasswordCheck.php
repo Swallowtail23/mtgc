@@ -673,5 +673,4 @@ class PasswordCheck
             return 0;
         endif;
     }
-
 }

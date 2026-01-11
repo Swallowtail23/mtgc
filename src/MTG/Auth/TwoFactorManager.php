@@ -555,5 +555,4 @@ class TwoFactorManager
 
         return [];
     }
-
 }

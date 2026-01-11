@@ -770,5 +770,4 @@ class PriceManager
             endif;
         endif;
     }
-
 }
