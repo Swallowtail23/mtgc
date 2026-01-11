@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.14
-Date:        28/12/25
+Version:     5.16
+Date:        11/01/26
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
 Notes:       -
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Core\AppConfig;
 use MTG\Core\INI;
 use MTG\Core\Message;
 
@@ -163,6 +164,31 @@ endif;
 
 //Copyright string
 $copyright = $iniArray['general']['Copyright'];
+
+$appConfig = AppConfig::fromIni($iniArray, [
+    'general' => [
+        'tier' => $tier,
+        'logLevel' => $logLevelIni,
+        'logFile' => $logfile,
+    ],
+    'security' => [
+        'turnstileEnabled' => ($turnstile === 1),
+        'turnstileSiteKey' => $turnstile_site_key,
+        'turnstileSecretKey' => $turnstile_secret_key,
+        'adminIp' => $adminip,
+    ],
+    'email' => [
+        'enabled' => $emailEnabled,
+        'adminEmail' => $adminEmail,
+        'serverEmail' => $serverEmail,
+        'smtp' => $smtpParameters,
+    ],
+    'comments' => [
+        'disqusEnabled' => ($disqus === 1),
+        'disqusDevUrl' => $disqusDev,
+        'disqusProdUrl' => $disqusProd,
+    ],
+]);
 
 //DB connect
 define('DB_HOST', $iniArray['database']['DBServer']);  //host

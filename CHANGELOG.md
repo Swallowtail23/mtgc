@@ -50,6 +50,7 @@ All notable changes to this project will be documented in this file.
 - Removed unused globals from CardUtils and ImportExport, and injected any-quantity rules into DeckManager.
 - Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 - Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
+- Added AppConfig container for ini-derived config to support future dependency injection.
 
 ## [v0.4.10] - 2026-01-01
 
