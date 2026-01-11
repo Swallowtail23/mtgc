@@ -5,6 +5,59 @@ $GLOBALS['logfile'] = sys_get_temp_dir() . '/phpunit.log';
 $GLOBALS['loglevelini'] = 0;
 $GLOBALS['logLevelIni'] = 0;
 
+$iniPath = sys_get_temp_dir() . '/mtg_test.ini';
+if (!file_exists($iniPath)) :
+    $iniContents = <<<INI
+[general]
+URL = "https://test.example"
+title = "Test"
+tier = "dev"
+Loglevel = 0
+Logfile = "/tmp/mtg_test.log"
+ImgLocation = "/tmp/cardimg/"
+Timezone = "UTC"
+Locale = "en_US"
+Copyright = ""
+
+[security]
+Turnstile = "disabled"
+Turnstile_site_key = ""
+Turnstile_secret_key = ""
+AdminIP = ""
+Badloginlimit = 0
+TrustDuration = 0
+
+[email]
+Email = "disabled"
+AdminEmail = "admin@example.test"
+ServerEmail = "server@example.test"
+SMTPDebug = 0
+Host = ""
+SMTPAuth = ""
+Username = ""
+Password = ""
+SMTPSecure = ""
+Port = 25
+
+[fx]
+FreecurrencyAPI = ""
+TargetCurrency = ""
+
+[comments]
+Disqus = "disabled"
+DisqusDevURL = ""
+DisqusProdURL = ""
+
+[database]
+DBServer = "localhost"
+DBUser = "user"
+DBPass = "pass"
+DBName = "db"
+INI;
+    file_put_contents($iniPath, $iniContents);
+endif;
+putenv("MTG_INI_PATH=$iniPath");
+
 if (!class_exists('DummyMysqli')) :
     class DummyMysqli extends \mysqli
     {

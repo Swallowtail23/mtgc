@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.5
+Version:     1.6
 Date:        11/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
@@ -30,7 +30,10 @@ if (session_status() === PHP_SESSION_NONE && PHP_SAPI !== 'cli') :
     startCustomSession();
 endif;
 
-$iniPath = '/opt/mtg/mtg_new.ini';
+$iniPath = getenv('MTG_INI_PATH');
+if ($iniPath === false || $iniPath === '') :
+    $iniPath = '/opt/mtg/mtg_new.ini';
+endif;
 
 $dbOverride = null;
 if (isset($GLOBALS['db']) && $GLOBALS['db'] instanceof \mysqli) :

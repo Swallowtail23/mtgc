@@ -12,22 +12,15 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Collection async refresh now seeds CSRF token before header scripts load to prevent invalid tokens.
 - Deck detail sideboard notes no longer render whitespace when empty.
-- Ajax grid quantity updates no longer fail due to a parse error.
-- Ajax grid quantity updates now accept numeric string inputs without failing validation.
+- Ajax grid quantity updates no longer fail due to parse errors, accept numeric string inputs, and reload user context
+after bootstrap-only.
 - forcePasswordChange now halts execution after redirecting to profile.php.
-- Weekly export toggle now accepts collection.php as a valid referrer.
-- Weekly exports now define any-quantity deck rules to avoid undefined variable errors.
-- Scryfall sets import now initializes Message after namespace imports to avoid missing class errors.
-- Scryfall rulings import now initializes Message after namespace imports to avoid missing class errors.
-- Random draw ajax now passes AppConfig into AJAX validation to avoid type errors.
-- Random draw fragment now enforces allowlisted classes before rendering.
-- Random draw fragment now extracts the expected container before injecting HTML.
-- Random draw now validates carddetail URLs against UUIDs and uses ENT_SUBSTITUTE escapes.
-- Ajax grid now reloads user context when using bootstrap-only to avoid missing session/table values.
-- PHPUnit dummy mysqli signatures now match mysqli to avoid static analysis errors.
+- Weekly exports now accept collection.php as a valid referrer and define any-quantity deck rules.
+- Scryfall sets/rulings imports now initialize Message after namespace imports to avoid missing class errors.
+- Random draw now validates carddetail URLs, enforces allowlisted classes, extracts the expected container, and passes
+AppConfig into AJAX validation.
 - Deck photo upload/delete status messages now render as plain text to avoid HTML injection.
-- Deck rename now pre-fills the existing name when the rename form opens.
-- Deck rename now resets the input to the current name after a failed rename.
+- Deck rename now pre-fills the existing name and resets the input after a failed rename.
 
 ### Security
 - Centralized AJAX referrer/CSRF validation and added CSRF tokens to profile, collection, index, and card detail flows.
@@ -44,35 +37,25 @@ All notable changes to this project will be documented in this file.
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.
 - Added DeckManager helper tests covering deck legality and copy limits.
 - Added tests for SessionManager CSRF validation, PasswordCheck password rules, LoginHandler login stamps, and import CSV parsing.
+- Added AppContext bootstrap test coverage for ini parsing and db overrides.
+- Bootstrap now supports MTG_INI_PATH overrides for test ini configuration.
+- Added tests for AppConfig redaction/normalization, Validation helpers, UrlHelper utilities, and GameRules language labels.
+- Added tests for DateYMD, TextHelper, Filesystem directory creation, AdminSettings maintenance, and UserAgent config paths.
+- Added tests for AjaxResponse and ErrorHandler using fixture scripts to validate exit paths.
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
-- Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport with tests for bulk info, JSON downloads, and guard rails.
-- Moved downloadBulk and fetchJson into MTG\Bulk\ScryfallImport and updated bulk scripts to use the class helpers.
+- Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport (including downloadBulk/fetchJson) with tests and updated bulk scripts.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.
 - Moved colourFunction into MTG\Cards\CardUtils and updated call sites/tests.
 - Standardized MTG class references to use statements across PHP scripts and class files.
 - Removed unused globals from CardUtils and ImportExport, and injected any-quantity rules into DeckManager.
-- Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
-- Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
-- Added AppConfig container for ini-derived config to support future dependency injection.
-- UserAgent now supports AppConfig-backed construction while keeping legacy ini-based entrypoints.
-- UserAgent call sites now build from AppConfig, and ImageManager now derives email/logging config from AppConfig.
-- LoginHandler now derives Turnstile, email, and limits from AppConfig.
-- PasswordCheck now derives email settings and URLs from AppConfig.
-- SessionManager now derives admin/FX/logging settings from AppConfig, with call sites updated.
-- TrustedDeviceManager now derives logging config from AppConfig, with call sites updated.
-- Message now supports AppConfig-backed log configuration to reduce reliance on globals.
-- MyPHPMailer now supports AppConfig-backed email settings to reduce reliance on globals.
-- IniDebug now supports AppConfig-backed logging configuration.
-- Fatal DB exception alerts now send via MyPHPMailer in app and bulk bootstrap.
-- ScryfallImport now takes AppConfig and GameRules dependencies instead of globals.
-- Moved remaining utility helpers out of includes/functions.php into Core/Admin classes and replaced AJAX helpers with AjaxResponse.
-- Added AppContext bootstrap container and bootstrap.php entrypoint for future ini.php replacement.
-- Added ErrorHandler class and bootstrap registration for migrated pages.
-- Added bootstrap_secure.php for secure page setup during bootstrap migration.
-- Bootstrap now accepts a provided mysqli instance to support test stubs without real DB connections.
-- Index tests now use safer mysqli stubs and avoid deprecated init calls.
-- Cleanup tokens CLI job now boots via bootstrap.php instead of includes/ini.php.
-- Removed legacy includes/ini.php bootstrap entrypoint.
+- Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes and
+inputInterpreter into ImportExport with updated call sites.
+- Introduced AppConfig/AppContext bootstrap with ErrorHandler + bootstrap_secure.php, and migrated core services
+(UserAgent, ImageManager, LoginHandler, PasswordCheck, SessionManager, TrustedDeviceManager, Message, MyPHPMailer,
+IniDebug, ScryfallImport) to AppConfig-backed configuration.
+- Bulk/CLI bootstrap now supports db overrides for testing, cleanup_tokens uses bootstrap.php, and legacy includes/ini.php
+entrypoint has been removed.
+- Index tests now use safer mysqli stubs and signatures (no deprecated init).
 
 ## [v0.4.10] - 2026-01-01
 
