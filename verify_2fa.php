@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.14
-Date:        10/01/26
+Version:     1.16
+Date:        11/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
 Notes:       {none}
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\LoginHandler;
 use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
+use MTG\Admin\AdminSettings;
 use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -26,10 +27,9 @@ session_regenerate_id(true);
 
 require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
-require 'includes/functions.php';         // Include needed functions
 
 $msg = new Message($appConfig);
-$cssver = cssVersionCheck();
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 if (!isset($_SESSION['user_pending_2fa'])) :
     $msg->logMessage('[ERROR]', 'Access to verify_2fa.php attempted without completing first factor authentication');

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        10/01/26
+Version:     1.8
+Date:        11/01/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
 Notes:       -
@@ -404,5 +404,10 @@ class CardUtils
         endif;
 
         return $promo_description;
+    }
+
+    public static function escapeCardNotesForTextarea($notes): string
+    {
+        return htmlspecialchars((string) $notes, ENT_QUOTES, 'UTF-8');
     }
 }

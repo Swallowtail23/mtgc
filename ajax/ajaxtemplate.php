@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxtemplate.php
 Purpose:     PHP script to...
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -22,7 +23,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -33,15 +33,15 @@ $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+        AjaxResponse::json(['error' => 'Access forbidden'], 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>");
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>");
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -58,6 +58,6 @@ else :
         $msg->logMessage('[DEBUG]', "Called with filter '$filter', setsPerPage '$setsPerPage', offset '$offset'");
     else :  // Error handling
         $msg->logMessage('[ERROR]', "Offset not in range");
-        ajaxRespondJson(['error' => 'Offset not in range'], 400);
+        AjaxResponse::json(['error' => 'Offset not in range'], 400);
     endif;
 endif;

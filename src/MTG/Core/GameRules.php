@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.3
 Date:        11/01/26
 Name:        GameRules.php
 Purpose:     Container for game-specific rules and constants.
@@ -47,6 +47,23 @@ class GameRules
     public function get(string $key, $default = null)
     {
         return $this->rules[$key] ?? $default;
+    }
+
+    public function getLanguageLabel(string $code): string
+    {
+        $searchLangs = $this->get('search_langs', []);
+        if (!is_array($searchLangs)) :
+            return $code;
+        endif;
+        foreach ($searchLangs as $lang) :
+            if (!is_array($lang) || !isset($lang['code'])) :
+                continue;
+            endif;
+            if ($lang['code'] == $code) :
+                return (string) ($lang['pretty'] ?? $code);
+            endif;
+        endforeach;
+        return $code;
     }
 
     public function all(): array

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.14
-Date:        10/01/26
+Version:     1.15
+Date:        11/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
 Notes:       -
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\CollectionHistory;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require '../includes/sessionname.local.php';
@@ -23,7 +24,6 @@ endif;
 startCustomSession();
 require '../includes/ini.php';
 require '../includes/error_handling.php';
-require '../includes/functions.php';
 
 $msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', 'ajaxcollectionhistory.php: start');
@@ -38,16 +38,16 @@ $ajaxValidation = SessionManager::validateAjaxRequest(
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: Invalid CSRF token');
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: Not called from valid page');
-        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+        AjaxResponse::json(['error' => 'Access forbidden'], 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: not authenticated');
-    ajaxRespondJson(['error' => 'Not authenticated'], 401);
+    AjaxResponse::json(['error' => 'Not authenticated'], 401);
 endif;
 
 $userId = (int) $_SESSION['user'];
@@ -64,14 +64,14 @@ $history = new CollectionHistory($db, $appConfig);
 $data = $history->getHistoryData($userId, $range);
 if ($data === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: unable to fetch history');
-    ajaxRespondJson(['error' => 'Query failed'], 500);
+    AjaxResponse::json(['error' => 'Query failed'], 500);
 endif;
 
 if ($format === 'csv') :
     $csv = $history->buildCsv($data);
     if ($csv === '') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionhistory.php: CSV build failed');
-        ajaxRespondJson(['error' => 'CSV build failed'], 500);
+        AjaxResponse::json(['error' => 'CSV build failed'], 500);
     endif;
 
     $filename = "value_history_{$range}.csv";
@@ -85,4 +85,4 @@ if ($format === 'csv') :
 endif;
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionhistory.php: returned " . count($data) . " rows");
-ajaxRespondJson(['success' => true, 'data' => $data]);
+AjaxResponse::json(['success' => true, 'data' => $data]);

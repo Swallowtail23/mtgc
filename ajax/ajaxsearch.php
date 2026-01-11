@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.2
+Version:     7.4
 Date:        11/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -13,6 +13,8 @@ To do:      -
 
 use MTG\Auth\SessionManager;
 use MTG\Core\Message;
+use MTG\Core\Validation;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -22,7 +24,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -31,11 +32,11 @@ $expectedReferringPages = [
 $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxsearch.php');
 if ($ajaxValidation['valid'] === false) :
     $msg->logMessage('[ERROR]', "Not called from valid page");
-    ajaxRespondText('Access forbidden', 403);
+    AjaxResponse::text('Access forbidden', 403);
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -102,7 +103,7 @@ else :
                         $teststring = trim($setcode);
                 endif;
                     $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                if (isset($teststring) && inArrayCaseInsensitive($teststring, $bracketsInNames)) :
+                if (isset($teststring) && Validation::inArrayCaseInsensitive($teststring, $bracketsInNames)) :
                     $msg->logMessage(
                         '[DEBUG]',
                         "Bracket contents match a card with brackets in name, resetting name, set to match"

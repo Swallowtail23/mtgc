@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.11
+Version:     4.12
 Date:        11/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
@@ -22,7 +22,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.19
+Version:     14.20
 Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -33,7 +33,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
 $msg = new Message($appConfig);

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.18
+Version:     9.20
 Date:        11/01/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -12,18 +12,18 @@ To do:       -
 */
 
 use MTG\Bulk\ScryfallImport;
+use MTG\Core\Filesystem;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
 require('bulk_ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 // Start time tracking
 $start = microtime(true);
 
-ensureDirectoryExists($imgLocation . 'json');
+Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // Get and interpret parameter 1
 

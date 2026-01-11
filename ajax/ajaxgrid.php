@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.15
-Date:        10/01/26
+Version:     5.17
+Date:        11/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
 Notes:       {none}
@@ -14,6 +14,8 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\PriceManager;
 use MTG\Core\Message;
+use MTG\Core\Validation;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -23,7 +25,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
-require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 $msg = new Message($appConfig);
 $priceMgr = new PriceManager($db, $appConfig, $userEmail);
@@ -37,24 +38,24 @@ $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        ajaxRespondText('Access forbidden', 403);
+        AjaxResponse::text('Access forbidden', 403);
     endif;
 endif;
 
 $msg->logMessage('[DEBUG]', "Ajax grid update, referrer is valid");
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     $cardId = $_POST['cardid'] ?? '';
-    if (validUUID($cardId) === false) :
+    if (Validation::validUUID($cardId, $appConfig) === false) :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Called with invalid card UUID");
         $response['status'] = 'error';
         $response['message'] = "Called with invalid card UUID";
-        ajaxRespondJson($response, 400);
+        AjaxResponse::json($response, 400);
     endif;
 
     //Process and log new quantity request
@@ -74,7 +75,7 @@ else :
             );
             $response['status'] = 'error';
             $response['message'] = "Invalid normal qty";
-            ajaxRespondJson($response, 400);
+            AjaxResponse::json($response, 400);
         endif;
     elseif (isset($_POST['newfoil'])) :
         $msg->logMessage('[DEBUG]', "Processing foil quantity update");
@@ -92,7 +93,7 @@ else :
             );
             $response['status'] = 'error';
             $response['message'] = "Invalid foil qty";
-            ajaxRespondJson($response, 400);
+            AjaxResponse::json($response, 400);
         endif;
     elseif (isset($_POST['newetch'])) :
         $msg->logMessage('[DEBUG]', "Processing etched quantity update");
@@ -110,14 +111,14 @@ else :
             );
             $response['status'] = 'error';
             $response['message'] = "Invalid etch qty";
-            ajaxRespondJson($response, 400);
+            AjaxResponse::json($response, 400);
         endif;
     else :
         $msg->logMessage('[DEBUG]', "No quantity arguments provided in request");
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) called with no arguments");
         $response['status'] = 'error';
         $response['message'] = "Invalid call";
-        ajaxRespondJson($response, 400);
+        AjaxResponse::json($response, 400);
     endif;
 
         //Should only be here if newqty, newfoil or newetch are set
@@ -127,7 +128,7 @@ else :
     else :
             $response['status'] = 'error';
             $response['message'] = "Invalid qty";
-            ajaxRespondJson($response, 400);
+            AjaxResponse::json($response, 400);
     endif;
 
         $sqlid = $cardId;
@@ -141,7 +142,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to get 'before' values");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        ajaxRespondJson($response, 400);
+        AjaxResponse::json($response, 400);
     else :
             $beforeresult = $beforeresultqry->fetch_assoc();
         if (empty($beforeresult['normal'])) :
@@ -191,7 +192,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        ajaxRespondJson($response, 400);
+        AjaxResponse::json($response, 400);
     else :
             $affected_rows = $db->affected_rows;
         if ($affected_rows === 2) :
@@ -215,7 +216,7 @@ else :
         $msg->logMessage('[ERROR]', "User $userEmail({$_SERVER['REMOTE_ADDR']}) Unable to update: $db->error");
         $response['status'] = 'error';
         $response['message'] = "SQL update error: $db->error";
-        ajaxRespondJson($response, 400);
+        AjaxResponse::json($response, 400);
     else :
             $checkresult = $checkresultqry->fetch_assoc();
         if (isset($_POST['newqty'])) :
@@ -281,5 +282,5 @@ else :
     endif;
 
         // Send JSON response
-        ajaxRespondJson($response, http_response_code());
+        AjaxResponse::json($response, http_response_code());
 endif;

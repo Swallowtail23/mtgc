@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.9
+Version:     2.11
 Date:        11/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -13,6 +13,8 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Auth\TrustedDeviceManager;
+use MTG\Admin\AdminSettings;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -29,10 +31,9 @@ if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
 }
 require 'includes/ini.php';               // Include ini file
 require 'includes/error_handling.php';    // Include error handler
-require 'includes/functions.php';         // Include needed functions
 
 $msg = new Message($appConfig);
-$cssver = cssVersionCheck();
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 if (!isset($db) || !$db instanceof mysqli) {
     $msg->logMessage('[ERROR]', 'Database connection is invalid in trust_device.php');
@@ -40,7 +41,7 @@ if (!isset($db) || !$db instanceof mysqli) {
 }
 
 $redirect_candidate = $_POST['redirect_to'] ?? $_GET['redirect_to'] ?? $_SESSION['redirect_url'] ?? 'index.php';
-$redirect_to = normalizeRedirectUrl($redirect_candidate) ?? 'index.php';
+$redirect_to = UrlHelper::normalizeRedirectUrl($redirect_candidate) ?? 'index.php';
 $msg->logMessage('[DEBUG]', "Resolved trust device redirect target: $redirect_to");
 
 if (empty($_SESSION['trust_device_flow'])) :

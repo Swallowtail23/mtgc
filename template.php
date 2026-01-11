@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        10/01/26
+Version:     1.8
+Date:        11/01/26
 Name:        template.php
 Purpose:     Site template.
 Notes:       {none}
@@ -21,7 +21,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';                // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
 SessionManager::forcePasswordChange($appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

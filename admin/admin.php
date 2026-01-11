@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.23
+Version:     6.25
 Date:        11/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\SessionManager;
+use MTG\Admin\AdminSettings;
 use MTG\Core\DateYMD;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
@@ -25,7 +26,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');             //Initialise and load ini file
 require('../includes/error_handling.php');
-require('../includes/functions.php');       //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');    //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);
@@ -309,9 +309,9 @@ if ($mtceAction !== null) :
     $ok = false;
 
     if ($mtceAction === 'on') :
-        $ok = setMtceMode('on');
+        $ok = AdminSettings::setMaintenanceMode('on', $db, $appConfig);
     elseif ($mtceAction === 'off') :
-        $ok = setMtceMode('off');
+        $ok = AdminSettings::setMaintenanceMode('off', $db, $appConfig);
     endif;
 
     if ($ok) :
@@ -1138,7 +1138,7 @@ require('../includes/menu.php');
                 ?>
             </div>
 
-            <?php $mtceStatus = mtceModeCheck($user); ?>
+            <?php $mtceStatus = AdminSettings::checkMaintenanceMode($user, $db, $appConfig); ?>
             <br>
             <h3>Site administration</h3>
             <table>

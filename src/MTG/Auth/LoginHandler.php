@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.22
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -30,7 +30,9 @@ Current flow:
 namespace MTG\Auth;
 
 use andkab\Turnstile\Turnstile;
+use MTG\Admin\AdminSettings;
 use MTG\Core\AppConfig;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -441,7 +443,7 @@ class LoginHandler
         $email = $loginData['email'];
         $userNumber = $loginData['usernumber'];
         $userStatusResult = $loginData['userstat_result'];
-        $redirectUrl = normalizeRedirectUrl($redirectUrl) ?? 'index.php';
+        $redirectUrl = UrlHelper::normalizeRedirectUrl($redirectUrl) ?? 'index.php';
 
         $this->message->logMessage('[NOTICE]', "User $email logged in from {$_SERVER['REMOTE_ADDR']}");
 
@@ -449,7 +451,7 @@ class LoginHandler
             $this->message->logMessage('[ERROR]', "Failed to update last login timestamp for $email");
         endif;
 
-        $mtceStatus = mtceModeCheck($userNumber);
+        $mtceStatus = AdminSettings::checkMaintenanceMode($userNumber, $this->db, $this->appConfig);
         if ($mtceStatus == 1) :
             $noticeText = "Site is undergoing maintenance, please try again later...";
         else :
@@ -458,6 +460,7 @@ class LoginHandler
                 : 'You are logged in';
             $_SESSION['admin'] = ($userStatusResult['admin'] === 1);
         endif;
+        $cssVersionSuffix = AdminSettings::getCssVersionSuffix($this->db, $this->appConfig);
         ?>
 <!DOCTYPE html>
 <html>
@@ -468,7 +471,7 @@ class LoginHandler
     <link 
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars(cssVersionCheck(), ENT_QUOTES, 'UTF-8');?>.css"
+        href="css/style<?php echo htmlspecialchars($cssVersionSuffix, ENT_QUOTES, 'UTF-8'); ?>.css"
     >
         <?php include 'includes/googlefonts.php'; ?>
 </head>
@@ -524,7 +527,7 @@ class LoginHandler
         $this->message->logMessage($logLevel, $logMessage);
         $redirectUrl = null;
         if (isset($_SESSION['redirect_url'])) :
-            $redirectUrl = normalizeRedirectUrl($_SESSION['redirect_url']);
+            $redirectUrl = UrlHelper::normalizeRedirectUrl($_SESSION['redirect_url']);
             if ($redirectUrl) :
                 $this->message->logMessage('[DEBUG]', "Preserving redirect URL on login abort: $redirectUrl");
             endif;
@@ -545,7 +548,7 @@ class LoginHandler
 
     private function renderLoginErrorPage($message, $delaySeconds, $redirectUrl = null)
     {
-        $cssver = function_exists('cssVersionCheck') ? cssVersionCheck() : '';
+        $cssver = AdminSettings::getCssVersionSuffix($this->db, $this->appConfig);
         $safeTitle = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
         $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         $delay = (int) $delaySeconds;

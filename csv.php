@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.14
+Version:     4.16
 Date:        11/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
@@ -12,7 +12,9 @@ To do:       -
 */
 
 use MTG\Cards\ImportExport;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
+use MTG\Core\Validation;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -27,7 +29,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new Message($appConfig);
 
@@ -41,7 +42,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
         '[DEBUG]',
         "csv.php requested table '$requestedTable' by user $userEmail, admin status $admin"
     );
-    $validatedTable = validTableName($requestedTable);
+    $validatedTable = Validation::validTableName($requestedTable, $appConfig);
     if ($validatedTable === false) :
         $msg->logMessage('[ERROR]', "csv.php invalid table '$requestedTable' requested by $userEmail");
         throw new Exception("[ERROR] csv.php: Invalid table requested");
@@ -98,7 +99,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
                         if ($fragment !== '') :
                             $pathWithQuery .= '#' . $fragment;
                         endif;
-                        $normalizedReturn = normalizeRedirectUrl($pathWithQuery);
+                        $normalizedReturn = UrlHelper::normalizeRedirectUrl($pathWithQuery);
                         if ($normalizedReturn !== null) :
                             $returnUrl = $normalizedReturn;
                         else :

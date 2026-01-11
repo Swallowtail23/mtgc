@@ -76,4 +76,3 @@ if (class_exists('MTG\\Core\\AppConfig')) :
         ],
     ]);
 endif;
-require_once __DIR__ . '/../includes/functions.php';

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.4
-Date:        05/12/25
+Version:     8.6
+Date:        11/01/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Core\Validation;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -715,10 +717,10 @@ else :
                 // Auto / The List
                 $plstName = ($searchsetcode === 'yes' && str_contains(strtolower($name), 'plst'));
                 $plstRegex = (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch), 'plst'));
-                $plstSelected = (isset($selectedSets) && inArrayCaseInsensitive('plst', $selectedSets));
+                $plstSelected = (isset($selectedSets) && Validation::inArrayCaseInsensitive('plst', $selectedSets));
                 $sldName = ($searchsetcode === 'yes' && str_contains(strtolower($name), 'sld'));
                 $sldRegex = (isset($setcoderegexsearch) && str_contains(strtolower($setcoderegexsearch), 'sld'));
-                $sldSelected = (isset($selectedSets) && inArrayCaseInsensitive('sld', $selectedSets));
+                $sldSelected = (isset($selectedSets) && Validation::inArrayCaseInsensitive('sld', $selectedSets));
                 $isEmptyCollectionSearch = (
                     $scope === "mycollection"
                     and $searchname === "yes"

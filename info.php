@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.8
-Date:        10/01/26
+Version:     2.9
+Date:        11/01/26
 Name:        info.php
 Purpose:     Site information page.
 Notes:       {none}
@@ -21,7 +21,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

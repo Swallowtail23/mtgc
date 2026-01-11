@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.23
+Version:     2.25
 Date:        11/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -17,6 +17,7 @@ use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
+use MTG\Core\Validation;
 
 class DeckManager
 {
@@ -110,13 +111,19 @@ class DeckManager
                     $partnerTrigger = true;
                     $commanderTrigger = false;
                     $this->message->logMessage('[DEBUG]', "Row $row: Partner/Background header");
-                elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $importLinestoIgnore)) :
+                elseif (
+                    trim($line) === ''
+                    || Validation::inArrayCaseInsensitive(trim($line), $importLinestoIgnore)
+                ) :
                     if (trim($line) === 'Sideboard') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Sideboard header");
                         $sideboardTrigger = true;
                         $commanderTrigger = false;
                         $partnerTrigger = false;
-                    elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $importLinestoIgnore)) :
+                    elseif (
+                        trim($line) === ''
+                        || Validation::inArrayCaseInsensitive(trim($line), $importLinestoIgnore)
+                    ) :
                         $this->message->logMessage('[DEBUG]', "Row $row: Empty row");
                         if ($commanderTrigger || $partnerTrigger) :
                             $this->message->logMessage('[DEBUG]', "Row $row: Resetting commander mode");
@@ -291,7 +298,7 @@ class DeckManager
             $placeholders = array_fill(0, count($noQuickAddLayouts), '?');
             $placeholdersString = implode(',', $placeholders);
 
-            if ($quickAddUuid !== '' && validUUID($quickAddUuid) !== false) :
+            if ($quickAddUuid !== '' && Validation::validUUID($quickAddUuid, $this->appConfig) !== false) :
                 // Card UUID provided and valid UUID
                 $this->message->logMessage(
                     '[DEBUG]',

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.20
 Date:        11/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -24,7 +24,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 
 $msg = new Message($appConfig);

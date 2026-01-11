@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.34
+Version:     1.35
 Date:        11/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -15,6 +15,7 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -25,7 +26,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 require_once 'ajaxdeckfragments_lib.php';
 $msg = new Message($appConfig);
 
@@ -401,5 +401,5 @@ function returnResponse($response)
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    ajaxRespondJson($response, http_response_code());
+    AjaxResponse::json($response, http_response_code());
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.12
 Date:        11/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
@@ -16,6 +16,8 @@ use MTG\Cards\CardUtils;
 use MTG\Cards\PriceDisplay;
 use MTG\Cards\PriceManager;
 use MTG\Core\Message;
+use MTG\Core\Validation;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -25,7 +27,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -35,17 +36,17 @@ $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        ajaxRespondText('Access forbidden', 403);
+        AjaxResponse::text('Access forbidden', 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     $msg->logMessage('[DEBUG]', "Unauthenticated ajax price request - redirecting to login");
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -57,10 +58,10 @@ else :
     $targetCurrency = $userArray['currency'];
     $rate = $userArray['rate'];
 
-    $cardUUID = isset($_POST['cardid']) ? validUUID($_POST['cardid']) : false;
+    $cardUUID = isset($_POST['cardid']) ? Validation::validUUID($_POST['cardid'], $appConfig) : false;
     if ($cardUUID === false) :
         $msg->logMessage('[ERROR]', "Invalid card UUID provided");
-        ajaxRespondJson(['error' => 'Invalid UUID provided'], 400);
+        AjaxResponse::json(['error' => 'Invalid UUID provided'], 400);
     endif;
 
     $msg->logMessage('[DEBUG]', "Async price refresh for card $cardUUID");
@@ -71,7 +72,7 @@ else :
 
     if ($scryfallresult['action'] === 'nocard') :
         $msg->logMessage('[ERROR]', "Scryfall refresh failed - no card for $cardUUID");
-        ajaxRespondJson(['error' => 'Card not found'], 404);
+        AjaxResponse::json(['error' => 'Card not found'], 404);
     endif;
 
     if ($scryfallresult['action'] === 'update' or $scryfallresult['action'] === 'get') :
@@ -93,7 +94,7 @@ else :
     $result = $db->execute_query($query, [$cardUUID]);
     if ($result === false or $result->num_rows < 1) :
         $msg->logMessage('[ERROR]', "Price lookup failed for $cardUUID");
-        ajaxRespondJson(['error' => 'Card not found'], 404);
+        AjaxResponse::json(['error' => 'Card not found'], 404);
     endif;
 
     $row = $result->fetch_assoc();
@@ -126,5 +127,5 @@ else :
     $priceHtml = PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
     $msg->logMessage('[DEBUG]', "Price HTML built for $cardUUID");
 
-    ajaxRespondJson(PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
+    AjaxResponse::json(PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));
 endif;

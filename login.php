@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.9
+Version:     8.11
 Date:        11/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -12,6 +12,8 @@ To do:       -
 */
 
 use MTG\Auth\LoginHandler;
+use MTG\Admin\AdminSettings;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -25,7 +27,6 @@ ob_start();
 
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 $msg = new Message($appConfig);
@@ -36,15 +37,15 @@ if (!isset($db) || !$db instanceof mysqli) :
     die('A database error occurred. Please try again later.');
 endif;
 
-$cssver = cssVersionCheck();
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 // Temporary variable to store a redirection URL
 $redirectUrl = $_SESSION['redirect_url'] ?? null;
 $redirectCandidate = null;
 if (isset($_GET['redirect_to'])) :
-    $redirectCandidate = normalizeRedirectUrl($_GET['redirect_to']);
+    $redirectCandidate = UrlHelper::normalizeRedirectUrl($_GET['redirect_to']);
 elseif (isset($_POST['redirect_to'])) :
-    $redirectCandidate = normalizeRedirectUrl($_POST['redirect_to']);
+    $redirectCandidate = UrlHelper::normalizeRedirectUrl($_POST['redirect_to']);
 endif;
 if ($redirectCandidate) :
     $redirectUrl = $redirectCandidate;

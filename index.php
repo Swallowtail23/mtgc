@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.52
+Version:     14.54
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -16,6 +16,7 @@ use MTG\Cards\CardUtils;
 use MTG\Cards\ImageManager;
 use MTG\Cards\ImportExport;
 use MTG\Cards\PriceManager;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
 
 // Call script initiation mechs
@@ -28,7 +29,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);
@@ -376,7 +376,7 @@ if (isset($qtyresults)) :
 endif;
 // Get the current GET string, less the layout and page keys if in there
 // also run input through htmlspecialchars (via function)
-$getstringbulk = getStringParameters($_GET, 'layout', 'page');
+$getstringbulk = UrlHelper::getStringParameters($_GET, 'layout', 'page');
 
 // Page layout starts here
 $msg->logMessage('[DEBUG]', "Loading page layout");
@@ -602,7 +602,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
     <body> <?php
         include_once("includes/analyticstracking.php");
-        $getString = getStringParameters($_GET, 'page'); ?>
+        $getString = UrlHelper::getStringParameters($_GET, 'page'); ?>
         <div class="top"> <?php
             echo "<a id='prevlink' href='index.php"
                 . htmlspecialchars($getString . '&page=1', ENT_QUOTES, 'UTF-8')
@@ -848,7 +848,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         </div>
                         <!--page navigation--> <?php
                         if (isset($next) or isset($prev)) :
-                            $getString = getStringParameters($_GET, 'page');
+                            $getString = UrlHelper::getStringParameters($_GET, 'page');
                             $msg->logMessage('[DEBUG]', "Rendering pagination links");
                             if (isset($prev)) :
                                 $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;
@@ -990,7 +990,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <!--page navigation-->
                         <?php
                         if (isset($next) or isset($prev)) :
-                            $getString = getStringParameters($_GET, 'page');
+                            $getString = UrlHelper::getStringParameters($_GET, 'page');
                             $msg->logMessage('[DEBUG]', "Rendering pagination links");
                             if (isset($prev)) :
                                 $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;
@@ -1353,7 +1353,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                         <!--page navigation-->
                         <?php
                         if (isset($next) or isset($prev)) :
-                            $getString = getStringParameters($_GET, 'page');
+                            $getString = UrlHelper::getStringParameters($_GET, 'page');
                             $msg->logMessage('[DEBUG]', "Rendering pagination links");
                             if (isset($prev)) :
                                 $prevHref = 'index.php' . $getString . '&page=' . (int) $prev;

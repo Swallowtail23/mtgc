@@ -3,6 +3,7 @@
 use MTG\Cards\ImageManager;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
+use MTG\Core\Network\RemoteFileChecker;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -186,7 +187,7 @@ class ImageManagerTest extends TestCase
 
         $fileUrl = 'file://' . $remoteFile;
 
-        $this->assertTrue(checkRemoteFile($fileUrl));
+        $this->assertTrue(RemoteFileChecker::exists($fileUrl, $this->appConfig));
         $result = $fetch->invoke($manager, $fileUrl, $this->imgRoot, $setcode, $dest);
 
         $this->assertFileExists($dest);

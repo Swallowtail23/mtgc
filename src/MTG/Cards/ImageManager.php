@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.16
 Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -23,6 +23,7 @@ use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
+use MTG\Core\Network\RemoteFileChecker;
 use MTG\Core\UserAgent;
 
 class ImageManager
@@ -331,7 +332,7 @@ class ImageManager
             return 'empty';
         endif;
 
-        if (checkRemoteFile($remoteUrl) == false) :
+        if (RemoteFileChecker::exists($remoteUrl, $this->appConfig, $this->message) == false) :
             $subject = "Invalid image from Scryfall API";
             $message = "$remoteUrl does not exist - check database entry against API, has it been deleted?";
             if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :

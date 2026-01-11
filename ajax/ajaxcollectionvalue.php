@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        11/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -15,6 +15,7 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\CollectionStats;
 use MTG\Cards\PriceManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require '../includes/sessionname.local.php';
@@ -24,7 +25,6 @@ endif;
 startCustomSession();
 require '../includes/ini.php';
 require '../includes/error_handling.php';
-require '../includes/functions.php';
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -39,15 +39,15 @@ $ajaxValidation = SessionManager::validateAjaxRequest(
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: Invalid CSRF token');
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: Not called from valid page');
-        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+        AjaxResponse::json(['error' => 'Access forbidden'], 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 endif;
 
 // Need to run these as secpagesetup not run (see page notes)
@@ -55,7 +55,7 @@ $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 if ($userArray === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: User array returned false');
-    ajaxRespondJson(['error' => 'User not found'], 500);
+    AjaxResponse::json(['error' => 'User not found'], 500);
 endif;
 
 $user = $userArray['usernumber'];
@@ -102,7 +102,7 @@ echo "scryfall.com</a>.)<br>";
 $rowcounttotal = number_format($rowcount);
 $html = ob_get_clean();
 
-ajaxRespondJson(
+AjaxResponse::json(
     [
         'success' => true,
         'html' => $html,

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.18
+Version:     1.19
 Date:        11/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -23,7 +24,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -33,16 +33,16 @@ $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         //Otherwise forbid access
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        ajaxRespondText('Access forbidden', 403);
+        AjaxResponse::text('Access forbidden', 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -66,7 +66,7 @@ else :
         $userEmail
     );
     if ($deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdecknotes.php') === false) :
-        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+        AjaxResponse::json(['error' => 'Access forbidden'], 403);
     endif;
 
     try {
@@ -74,14 +74,14 @@ else :
         $result = $db->execute_query($query, [$newnotes, $newsidenotes, $deckNumber]);
 
         if ($result) {
-            ajaxRespondJson(['success' => true]);
+            AjaxResponse::json(['success' => true]);
         } else {
-            ajaxRespondJson(['error' => 'No rows updated or SQL error occurred'], 400);
+            AjaxResponse::json(['error' => 'No rows updated or SQL error occurred'], 400);
         }
     } catch (Exception $e) {
         throw new Exception(
             "[ERROR] ajaxdecknotes.php: " . $e->getMessage() . " SQLSTATE: " . $db->error
         );
-        ajaxRespondJson(['error' => 'Database error'], 400);
+        AjaxResponse::json(['error' => 'Database error'], 400);
     }
 endif;

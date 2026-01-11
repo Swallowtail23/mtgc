@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.6
-Date:        29/11/25
+Version:     2.8
+Date:        11/01/26
 Name:        loggedout.php
 Purpose:     Logged out landing page.
 Notes:       {none}
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Admin\AdminSettings;
 use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -22,10 +23,9 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
 $msg = new Message($appConfig);
-$cssver = cssVersionCheck();
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>

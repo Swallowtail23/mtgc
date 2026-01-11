@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.17
-Date:        10/01/26
+Version:     4.18
+Date:        11/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -22,7 +22,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';      // Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);

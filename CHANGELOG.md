@@ -62,6 +62,7 @@ All notable changes to this project will be documented in this file.
 - IniDebug now supports AppConfig-backed logging configuration.
 - Fatal DB exception alerts now send via MyPHPMailer in app and bulk bootstrap.
 - ScryfallImport now takes AppConfig and GameRules dependencies instead of globals.
+- Moved remaining utility helpers out of includes/functions.php into Core/Admin classes and replaced AJAX helpers with AjaxResponse.
 
 ## [v0.4.10] - 2026-01-01
 

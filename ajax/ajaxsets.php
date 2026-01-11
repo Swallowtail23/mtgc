@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        11/01/26
 Name:        ajaxsets.php
 Purpose:     PHP script to update sets page
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -22,7 +23,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [
@@ -32,15 +32,15 @@ $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $
 if ($ajaxValidation['valid'] === false) :
     if ($ajaxValidation['reason'] === 'csrf') :
         $msg->logMessage('[ERROR]', "Invalid CSRF token");
-        ajaxRespondJson(['error' => 'Invalid request token'], 403);
+        AjaxResponse::json(['error' => 'Invalid request token'], 403);
     else :
         $msg->logMessage('[ERROR]', "Not called from valid page");
-        ajaxRespondJson(['error' => 'Access forbidden'], 403);
+        AjaxResponse::json(['error' => 'Access forbidden'], 403);
     endif;
 endif;
 
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
-    ajaxRespondText("<meta http-equiv='refresh' content='2;url=/login.php'>");
+    AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>");
 else :
     //Need to run these as secpagesetup not run (see page notes)
     $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
@@ -65,17 +65,17 @@ else :
 
         if (strlen($filter) < 3 && strlen($filter) !== 0) :
             $msg->logMessage('[ERROR]', "Filter not long enough after trimming");
-            ajaxRespondJson(['error' => 'Filter not long enough after trimming'], 400);
+            AjaxResponse::json(['error' => 'Filter not long enough after trimming'], 400);
         endif;
 
         if ($offset < 0 || $offset > 10000) :
             $msg->logMessage('[ERROR]', "Offset not in range");
-            ajaxRespondJson(['error' => 'Offset not in range'], 400);
+            AjaxResponse::json(['error' => 'Offset not in range'], 400);
         endif;
 
         if ($setsPerPage < 2 || $setsPerPage > 100) :
             $msg->logMessage('[ERROR]', "Sets per page not in range");
-            ajaxRespondJson(['error' => 'Sets per page not in range'], 400);
+            AjaxResponse::json(['error' => 'Sets per page not in range'], 400);
         endif;
 
         // Construct the SQL query with the filter condition and WITHOUT pagination
@@ -91,14 +91,14 @@ else :
 
         if ($stmt === false) :
             $msg->logMessage('[ERROR]', "SQL error: " . $db->error);
-            ajaxRespondJson(['error' => 'Error preparing SQL: ' . $db->error], 400);
+            AjaxResponse::json(['error' => 'Error preparing SQL: ' . $db->error], 400);
         endif;
 
         $exec = $stmt->execute();
 
         if ($exec === false) :
             $msg->logMessage('[ERROR]', "SQL error: " . $db->error);
-            ajaxRespondJson(['error' => 'Error executing SQL: ' . $db->error], 400);
+            AjaxResponse::json(['error' => 'Error executing SQL: ' . $db->error], 400);
         else :
                 $result = $stmt->get_result();
                 $filteredSets = [];
@@ -147,14 +147,14 @@ else :
 
         if ($stmt === false) :
             $msg->logMessage('[ERROR]', "SQL error: " . $db->error);
-            ajaxRespondJson(['error' => 'Error preparing SQL: ' . $db->error], 400);
+            AjaxResponse::json(['error' => 'Error preparing SQL: ' . $db->error], 400);
         endif;
 
         $exec = $stmt->execute();
 
         if ($exec === false) :
             $msg->logMessage('[ERROR]', "SQL error: " . $db->error);
-            ajaxRespondJson(['error' => 'Error executing SQL: ' . $db->error], 400);
+            AjaxResponse::json(['error' => 'Error executing SQL: ' . $db->error], 400);
         else :
                 $result = $stmt->get_result();
                 $filteredSets = [];
@@ -188,10 +188,10 @@ else :
                             'filteredSets' => $filteredSets,
                             'setsPerPage' => $setsPerPage
                             ];
-                ajaxRespondJson($response);
+                AjaxResponse::json($response);
         endif;
     else :
             $msg->logMessage('[ERROR]', "Called without required GETS");
-            ajaxRespondJson(['error' => 'No filter, page, or setsPerPage provided'], 400);
+            AjaxResponse::json(['error' => 'No filter, page, or setsPerPage provided'], 400);
     endif;
 endif;

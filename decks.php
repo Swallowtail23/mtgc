@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.15
+Version:     5.16
 Date:        11/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -23,7 +23,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 SessionManager::forcePasswordChange($appConfig); // Check if user is disabled or needs to change password
 $msg = new Message($appConfig);

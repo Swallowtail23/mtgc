@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.15
 Date:        11/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -17,6 +17,7 @@ use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
+use MTG\Core\Validation;
 
 class ImportExport
 {
@@ -331,11 +332,11 @@ class ImportExport
                 // Validate and determine CSV format
                 if ($qtyFields === 6) :
                     if (
-                        !\isValidSetcode($fields[0])
-                        || !\isValidCardName($fields[2])
+                        !Validation::isValidSetcode($fields[0])
+                        || !Validation::isValidCardName($fields[2])
                         || !(is_numeric($fields[3]) || empty($fields[3]))
                         || !(is_numeric($fields[4]) || empty($fields[4]))
-                        || !\validUUID($fields[5])
+                        || !Validation::validUUID($fields[5], $appConfig)
                     ) :
                         $csvFormat = 'invalid';
                     else :
@@ -343,13 +344,13 @@ class ImportExport
                     endif;
                 elseif ($qtyFields === 8) :
                     if (
-                        !\isValidSetcode($fields[0])
-                        || !\isValidCardName($fields[2])
-                        || !\isValidLanguageCode($fields[3])
+                        !Validation::isValidSetcode($fields[0])
+                        || !Validation::isValidCardName($fields[2])
+                        || !Validation::isValidLanguageCode($fields[3])
                         || !(is_numeric($fields[4]) || empty($fields[4]))
                         || !(is_numeric($fields[5]) || empty($fields[5]))
                         || !(is_numeric($fields[6]) || empty($fields[6]))
-                        || !(\validUUID($fields[7]) || empty($fields[7]))
+                        || !(Validation::validUUID($fields[7], $appConfig) || empty($fields[7]))
                     ) :
                         $csvFormat = 'invalid';
                     else :
@@ -439,7 +440,8 @@ class ImportExport
                 return false;
             endif;
         elseif (
-            trim($sanitised_string) === '' || \inArrayCaseInsensitive(trim($sanitised_string), $importLinestoIgnore)
+            trim($sanitised_string) === ''
+            || Validation::inArrayCaseInsensitive(trim($sanitised_string), $importLinestoIgnore)
         ) :
             return 'empty line';
         else :
@@ -603,7 +605,7 @@ class ImportExport
                         $teststring = trim($matches[2]);
                     endif;
                 endif;
-                if (isset($teststring) && \inArrayCaseInsensitive($teststring, $bracketsInNames)) :
+                if (isset($teststring) && Validation::inArrayCaseInsensitive($teststring, $bracketsInNames)) :
                     $msg->logMessage(
                         '[DEBUG]',
                         "Bracket contents match a card with brackets in name, resetting name, set to match"
@@ -763,7 +765,7 @@ class ImportExport
                 );
                 $stmt = null;
 
-                if ($quickAddUuid !== '' && validUUID($quickAddUuid) !== false) :
+                if ($quickAddUuid !== '' && Validation::validUUID($quickAddUuid, $this->appConfig) !== false) :
                     // Card UUID provided and valid UUID
                     $this->message->logMessage(
                         '[DEBUG]',

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.18
+Version:     1.19
 Date:        11/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -24,7 +25,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 $msg = new Message($appConfig);
 
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
@@ -139,5 +139,5 @@ endif;
 // Function to echo JSON response and exit
 function returnResponse(array $response)
 {
-    ajaxRespondJson($response, http_response_code());
+    AjaxResponse::json($response, http_response_code());
 }

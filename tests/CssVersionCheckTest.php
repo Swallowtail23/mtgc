@@ -1,43 +1,72 @@
 <?php
 
+use MTG\Admin\AdminSettings;
+use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
 class CssVersionCheckTest extends TestCase
 {
-    private $originalDb;
-    private $originalLogfile;
     private $tempLog;
+    private $appConfig;
 
     protected function setUp(): void
     {
-        global $db, $logfile;
-        $this->originalDb = $db;
-        $this->originalLogfile = $logfile;
         $this->tempLog = tempnam(sys_get_temp_dir(), 'cssver_');
-        $logfile = $this->tempLog;
+        $this->appConfig = $this->buildAppConfig($this->tempLog);
     }
 
     protected function tearDown(): void
     {
-        global $db, $logfile;
-        $db = $this->originalDb;
-        $logfile = $this->originalLogfile;
         if ($this->tempLog && file_exists($this->tempLog)) {
             unlink($this->tempLog);
         }
     }
 
+    private function buildAppConfig(string $logFile): AppConfig
+    {
+        $ini = [
+            'general' => [
+                'URL' => '',
+                'title' => '',
+                'tier' => 'dev',
+                'Loglevel' => '',
+                'Logfile' => $logFile,
+                'ImgLocation' => '',
+                'Timezone' => 'UTC',
+                'Locale' => 'en_US',
+                'Copyright' => '',
+                'MaxCardDataAge' => 0,
+            ],
+            'security' => [],
+            'email' => [
+                'Email' => 'enabled',
+                'AdminEmail' => '',
+                'ServerEmail' => '',
+                'SMTPDebug' => '',
+                'Host' => '',
+                'SMTPAuth' => '',
+                'Username' => '',
+                'Password' => '',
+                'SMTPSecure' => '',
+                'Port' => 0,
+                'SMTPVerifySSL' => 1,
+            ],
+            'fx' => [],
+            'comments' => [],
+        ];
+
+        return AppConfig::fromIni($ini);
+    }
+
     public function testReturnsMinWhenDatabaseUnavailable()
     {
-        global $db;
         $db = null;
 
-        $this->assertSame('-min', cssVersionCheck());
+        $this->assertSame('-min', AdminSettings::getCssVersionSuffix($db, $this->appConfig));
     }
 
     public function testReturnsMinWhenQueryFails()
     {
-        global $db;
         $db = new class {
             public $error = 'fail';
             public function execute_query($sql)
@@ -46,12 +75,11 @@ class CssVersionCheckTest extends TestCase
             }
         };
 
-        $this->assertSame('-min', cssVersionCheck());
+        $this->assertSame('-min', AdminSettings::getCssVersionSuffix($db, $this->appConfig));
     }
 
     public function testReturnsExpectedBasedOnUseminFlag()
     {
-        global $db;
         $db = new class {
             public function execute_query($sql)
             {
@@ -77,7 +105,7 @@ class CssVersionCheckTest extends TestCase
             }
         };
 
-        $this->assertSame('-min', cssVersionCheck());
+        $this->assertSame('-min', AdminSettings::getCssVersionSuffix($db, $this->appConfig));
 
         $db = new class {
             public function execute_query($sql)
@@ -99,6 +127,6 @@ class CssVersionCheckTest extends TestCase
             }
         };
 
-        $this->assertSame('', cssVersionCheck());
+        $this->assertSame('', AdminSettings::getCssVersionSuffix($db, $this->appConfig));
     }
 }

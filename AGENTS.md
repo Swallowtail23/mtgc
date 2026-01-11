@@ -21,7 +21,7 @@
 ## Autoloading
 - Composer autoload is loaded in `includes/ini.php` and `bulk/bulk_ini.php`; third-party deps live in `vendor/`.
 - App classes live under `src/MTG/` and are PSR-4 autoloaded via Composer. Use namespaced classes (e.g., `MTG\Auth`, `MTG\Cards`, `MTG\Core`).
-- Shared functions belong in `includes/functions.php`.
+- Shared helpers now live in Core classes (e.g., `MTG\Core\Validation`, `MTG\Core\Http\UrlHelper`).
 
 ## Code Style Guidelines
 - PHP 8.4 with direct `mysqli` queries (no ORM).
@@ -37,7 +37,7 @@
 -- Classify changes as Added / Changed / Fixed / Removed / Security / Infrastructure / Deprecated
 -- If someone asked “what changed since last time?” — would this help them? If yes, include it
 - Do not split SQL statements with string concatenation; keep them as single literals (with embedded newlines if needed)
-- App classes are namespaced under `MTG\*`; shared functions remain in `includes/functions.php`.
+- App classes are namespaced under `MTG\*`; shared helpers are now in Core/Admin classes, and AJAX responses use `MTG\Core\Http\AjaxResponse`.
 - All code changes should result in clean phpcs runs with PHP 8.4 compatibility
 - phpcbf can be used to find and automatically resolve simple style issues, e.g. indentation
 - Code control structures should contain suitable DEBUG-level logging to track code flow

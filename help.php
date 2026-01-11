@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.13
-Date:        10/01/26
+Version:     2.14
+Date:        11/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
 Notes:       {none}
@@ -22,7 +22,6 @@ endif;
 startCustomSession();
 require('includes/ini.php');               //Initialise and load ini file
 require('includes/error_handling.php');
-require('includes/functions.php');     //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');      //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);

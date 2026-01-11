@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.26
+Version:     22.28
 Date:        11/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -15,7 +15,10 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
+use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
+use MTG\Core\Text\TextHelper;
+use MTG\Core\Validation;
 
 if (file_exists('includes/sessionname.local.php')) :
     require('includes/sessionname.local.php');
@@ -25,7 +28,6 @@ endif;
 startCustomSession();
 require('includes/ini.php');                //Initialise and load ini file
 require('includes/error_handling.php');     //Initialise and load error/logging file
-require('includes/functions.php');          //Includes basic functions for non-secure pages
 require('includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);
@@ -40,9 +42,9 @@ $decks_on = 1;
 // Pass data to this form by e.g. ?id=123456
 // GET is used from results page, POST is used for database update query.
 if (isset($_GET["id"])) :
-    $cardId = validUUID($_GET["id"]);
+    $cardId = Validation::validUUID($_GET["id"], $appConfig);
 elseif (isset($_POST["id"])) :
-    $cardId = validUUID($_POST["id"]);
+    $cardId = Validation::validUUID($_POST["id"], $appConfig);
 endif;
 
 $decktoaddto = filter_input(INPUT_GET, 'decktoaddto', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
@@ -1044,9 +1046,10 @@ require('includes/menu.php'); //mobile menu
                                     and $card_lang != 'en'
                                     and $row['primary_card'] === 1
                                 ) :
-                                    echo "<br><b>Language: </b>" . langReplace($card_lang) . " (primary print)";
+                                    echo "<br><b>Language: </b>" . $gameRules->getLanguageLabel($card_lang)
+                                        . " (primary print)";
                                 elseif (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                        echo "<br><b>Language: </b>" . langReplace($card_lang);
+                                        echo "<br><b>Language: </b>" . $gameRules->getLanguageLabel($card_lang);
                                 endif;
                                     echo "<br>";
                                     echo "<b>Rarity: </b>";
@@ -1060,7 +1063,7 @@ require('includes/menu.php'); //mobile menu
                                         echo "Common";
                                 endif;
                                 echo "<br>";
-                                if (validateTrueDecimal($row['cmc']) === false) :
+                                if (Validation::validateTrueDecimal($row['cmc'], $appConfig) === false) :
                                     $msg->logMessage('[DEBUG]', "Trying to round cmc {$row['cmc']}");
                                     $row['cmc'] = round($row['cmc']);
                                 endif;
@@ -1082,7 +1085,7 @@ require('includes/menu.php'); //mobile menu
                                 echo "<br>";
                                 if ($row['layout'] === 'reversible_card') :
                                     if ($row['f1_cmc'] !== null) :
-                                        if (validateTrueDecimal($row['f1_cmc']) === false) :
+                                        if (Validation::validateTrueDecimal($row['f1_cmc'], $appConfig) === false) :
                                             $msg->logMessage('[DEBUG]', "Trying to round f1_cmc {$row['f1_cmc']}");
                                             $row['f1_cmc'] = round($row['f1_cmc']);
                                         endif;
@@ -1100,7 +1103,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langReplace($card_lang);
+                                    echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
@@ -1308,7 +1311,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langReplace($card_lang);
+                                    echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
@@ -1334,7 +1337,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langReplace($card_lang);
+                                    echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
@@ -1457,7 +1460,7 @@ require('includes/menu.php'); //mobile menu
                             </table>
                             <form id="updatenotesform" action="?" method="POST">
                                 <table style="margin-top:10px"><?php
-                                    $notesEsc = escapeCardNotesForTextarea($notes);
+                                    $notesEsc = CardUtils::escapeCardNotesForTextarea($notes);
                                     echo "<tr><td><textarea class='textinput' id='cardnotes' name='notes' rows='2' "
                                         . "cols='40' placeholder='My notes'>$notesEsc</textarea></td></tr>"; ?>
                                 </table> <?php
@@ -2129,7 +2132,13 @@ require('includes/menu.php'); //mobile menu
                                         . CardUtils::symbolReplace($rulingrow['comment'])
                                         . " (" . $source . ")<br>";
                                 endwhile;
-                                $ruling = autoLink($ruling, array("target" => "_blank","rel" => "nofollow"));
+                                $ruling = TextHelper::autoLink(
+                                    $ruling,
+                                    array(
+                                        "target" => "_blank",
+                                        "rel" => "nofollow"
+                                    )
+                                );
                                 if (!in_array($row['layout'], $twoCardDetailSections)) :
                                     echo "<h3 class='shallowh3'>Rulings:</h3> " . $ruling . "&nbsp;";
                                 endif;
@@ -2200,12 +2209,12 @@ require('includes/menu.php'); //mobile menu
                                 endif;
                                 echo "<br>";
                                 if (isset($row['f2_cmc']) and $row['f2_cmc'] !== null) :
-                                    if (validateTrueDecimal($row['f2_cmc']) === false) :
+                                    if (Validation::validateTrueDecimal($row['f2_cmc'], $appConfig) === false) :
                                         $msg->logMessage('[DEBUG]', "Trying to round f2_cmc {$row['f2_cmc']}");
                                         $row['f2_cmc'] = round($row['f2_cmc']);
                                         echo "<b>Mana value: </b>" . $row['f2_cmc'];
                                         echo "<br>";
-                                    elseif (validateTrueDecimal($row['f2_cmc']) === true) :
+                                    elseif (Validation::validateTrueDecimal($row['f2_cmc'], $appConfig) === true) :
                                         echo "<b>Mana value: </b>" . $row['f2_cmc'];
                                         echo "<br>";
                                     endif;
@@ -2220,7 +2229,7 @@ require('includes/menu.php'); //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                    echo "<b>Lang: </b>" . langReplace($card_lang);
+                                    echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability !== null and $flipability != '') :
@@ -2256,7 +2265,7 @@ require('includes/menu.php'); //mobile menu
                 <?php
                 if ($disqus === 1) :
                     $msg->logMessage('[DEBUG]', "Disqus enabled");
-                    $page_url = strtok(getFullURL(), '?') . "?id=" . $cardId;
+                    $page_url = strtok(UrlHelper::getFullUrl(), '?') . "?id=" . $cardId;
                     if ($tier === 'dev') :
                         $msg->logMessage('[DEBUG]', "Disqus site is '$disqusDev'");
                         $disqus_site = "$disqusDev/embed.js";

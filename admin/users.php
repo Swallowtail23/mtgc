@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.12
+Version:     6.13
 Date:        11/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -23,7 +23,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
-require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);

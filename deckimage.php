@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.16
 Date:        11/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
@@ -22,7 +22,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php'; // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php'; // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php'; // Setup page variables
 $msg = new Message($appConfig);
 

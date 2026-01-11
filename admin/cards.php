@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.18
+Version:     5.20
 Date:        11/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\ImageManager;
 use MTG\Core\Message;
+use MTG\Core\Validation;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -23,7 +24,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');                //Initialise and load ini file
 require('../includes/error_handling.php');
-require('../includes/functions.php');      //Includes basic functions for non-secure pages
 require('../includes/secpagesetup.php');       //Setup page variables
 // Check if user is disabled or needs to change password
 SessionManager::forcePasswordChange($appConfig);
@@ -42,7 +42,7 @@ endif;
 
 // Find if this card is in any decks
 if (isset($_GET['cardtoedit'])) :
-    $id = validUUID($_GET['cardtoedit']);
+    $id = Validation::validUUID($_GET['cardtoedit'], $appConfig);
     if ($id === false) :
         $msg->logMessage('[ERROR]', "Admin card page called without valid UUID");
         throw new Exception("[ERROR] cards.php: Invalid UUID");

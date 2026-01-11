@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.5
+Version:     2.6
 Date:        11/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Core\Message;
+use MTG\Core\Http\AjaxResponse;
 
 if (file_exists('../includes/sessionname.local.php')) :
     require('../includes/sessionname.local.php');
@@ -24,7 +25,6 @@ endif;
 startCustomSession();
 require('../includes/ini.php');
 require('../includes/error_handling.php');
-require('../includes/functions.php');
 require_once 'ajaxdeckfragments_lib.php';
 $msg = new Message($appConfig);
 
@@ -168,5 +168,5 @@ function returnResponse($response)
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     header('Pragma: no-cache');
     header('Expires: 0');
-    ajaxRespondJson($response, http_response_code());
+    AjaxResponse::json($response, http_response_code());
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.1
+Version:     3.3
 Date:        11/01/26
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
@@ -12,13 +12,14 @@ To do:       -
 */
 
 use MTG\Auth\SessionManager;
+use MTG\Admin\AdminSettings;
 use MTG\Core\Message;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-$cssver = cssVersionCheck();                              // find CSS Version
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);                              // find CSS Version
 if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];  // capture entered URL
     header("Location: /login.php");                       // check if user is logged in; else redirect to login.php
@@ -41,7 +42,7 @@ else :
 
         $userEmail = $_SESSION['useremail'];              // get email address of user, available in SESSION
 
-        $mtceStatus = mtceModeCheck($user);                    // check mtce mode active and if an admin user
+        $mtceStatus = AdminSettings::checkMaintenanceMode($user, $db, $appConfig);
         if ($mtceStatus == 1) :                           // check if site is in maintenance mode
             include('includes/mtcestub.php');
             session_destroy();

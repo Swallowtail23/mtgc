@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.18
+Version:     3.20
 Date:        11/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TwoFactorManager;
+use MTG\Admin\AdminSettings;
 use MTG\Core\Message;
 
 if (file_exists('includes/sessionname.local.php')) :
@@ -23,9 +24,8 @@ endif;
 startCustomSession();
 require 'includes/ini.php';               // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';         // Includes basic functions for non-secure pages
 
-$cssver = cssVersionCheck();
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 $msg = new Message($appConfig);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

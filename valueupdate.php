@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        21/12/25
+Version:     1.14
+Date:        11/01/26
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
 Notes:       Currently called after import function is run.
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Cards\PriceManager;
 use MTG\Core\Message;
+use MTG\Core\Validation;
 
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
@@ -22,7 +23,6 @@ endif;
 startCustomSession();
 require 'includes/ini.php';                // Initialise and load ini file
 require 'includes/error_handling.php';
-require 'includes/functions.php';          // Includes basic functions for non-secure pages
 require 'includes/secpagesetup.php';       // Setup page variables
 $msg = new Message($appConfig);
 
@@ -30,7 +30,7 @@ $msg->logMessage('[NOTICE]', 'Loading valueupdate.php...');
 
 if (isset($_GET['table'])) :
     $table = filter_input(INPUT_GET, 'table', FILTER_SANITIZE_SPECIAL_CHARS);
-    if (validTableName($table) !== false) :
+    if (Validation::validTableName($table, $appConfig) !== false) :
         $obj = new PriceManager($db, $appConfig, $userEmail);
         $obj->updateCollectionValues($table);
     else :
