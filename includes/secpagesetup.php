@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.9
-Date:        29/11/25
+Version:     3.0
+Date:        11/01/26
 Name:        secpagesetup.php
 Purpose:     Establish variables on secure pages
 Notes:       -
@@ -25,7 +25,7 @@ if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
     exit();
 else :
     // Session information \\
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
     $userArray = $sessionManager->getUserInfo();
     if ($userArray !== false) :
         $user = $userArray['usernumber'];

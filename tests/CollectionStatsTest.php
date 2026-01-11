@@ -44,7 +44,7 @@ class CollectionStatsTest extends TestCase
     public function testGetStatsReturnsExpectedTotals()
     {
         $db = new CollectionStatsDbStub();
-        $stats = new CollectionStats($db, $GLOBALS['logfile'], '', '', 1);
+        $stats = new CollectionStats($db, $GLOBALS['appConfig']);
 
         $result = $stats->getStats(1, 'collection');
 

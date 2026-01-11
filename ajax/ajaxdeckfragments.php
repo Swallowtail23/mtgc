@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.16
-Date:        10/01/26
+Version:     1.17
+Date:        11/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -82,7 +82,7 @@ $msg->logMessage(
     "Deck fragment request fragments: " . implode(', ', array_map('strval', $requestedFragments))
 );
 
-$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];

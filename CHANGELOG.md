@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - UserAgent call sites now build from AppConfig, and ImageManager now derives email/logging config from AppConfig.
 - LoginHandler now derives Turnstile, email, and limits from AppConfig.
 - PasswordCheck now derives email settings and URLs from AppConfig.
+- SessionManager now derives admin/FX/logging settings from AppConfig, with call sites updated.
 
 ## [v0.4.10] - 2026-01-01
 

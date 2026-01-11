@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        07/12/25
+Version:     1.8
+Date:        11/01/26
 Name:        profile_collection.php
 Purpose:     Shared collection value display for profile/collection pages.
 Notes:       -
@@ -22,7 +22,7 @@ if (!isset($msg) || !($msg instanceof Message)) :
     $msg = new Message($logfile ?? null);
 endif;
 
-$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$statsHelper = new CollectionStats($db, $appConfig);
 $stats = $statsHelper->getStats($user, $mytable, $targetCurrency ?? null);
 
 $valueUsd = $stats['value_usd'];

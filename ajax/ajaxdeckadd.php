@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        10/01/26
+Version:     1.13
+Date:        11/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -78,7 +78,7 @@ if ($quickadd === '') :
     returnResponse($response);
 endif;
 
-$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];

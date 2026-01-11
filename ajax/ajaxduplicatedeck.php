@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.13
-Date:        10/01/26
+Version:     1.14
+Date:        11/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -53,7 +53,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     returnResponse();
 else :
     // Need to run these as secpagesetup is not run (see page notes)
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

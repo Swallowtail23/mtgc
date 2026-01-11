@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        10/01/26
+Version:     1.8
+Date:        11/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Auth;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 
 class SessionManager
@@ -28,19 +29,21 @@ class SessionManager
     private $sessionArray = [];
     private $logfile;
     private $message;
+    private $appConfig;
 
     private const ADMIN_OK = 1;
     private const ADMIN_WRONG_LOCATION = 2;
     private const ADMIN_NONE = 3;
 
-    public function __construct($db, $adminip, $session, $fxAPI, $fxLocal, $logfile)
+    public function __construct($db, $session, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->adminip = $adminip;
         $this->session = $session;
-        $this->fxAPI = $fxAPI;
-        $this->fxLocal = $fxLocal;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
+        $this->adminip = $this->appConfig->security('adminIp', '');
+        $this->fxAPI = $this->appConfig->fx('api', '');
+        $this->fxLocal = $this->appConfig->fx('local', '');
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
         $this->message = new Message($this->logfile);
         $this->sessionArray = [
             'usernumber' => '',

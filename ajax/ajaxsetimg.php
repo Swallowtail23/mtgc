@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        10/01/26
+Version:     1.12
+Date:        11/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -44,7 +44,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     ajaxRespondJson(["status" => "error", "message" => "You are not logged in."]);
 else :
     // Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

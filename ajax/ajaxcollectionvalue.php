@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        10/01/26
+Version:     1.11
+Date:        11/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -51,7 +51,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
 endif;
 
 // Need to run these as secpagesetup not run (see page notes)
-$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 if ($userArray === false) :
     $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: User array returned false');
@@ -70,7 +70,7 @@ $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for ta
 $priceManager = new PriceManager($db, $logfile, $userEmail);
 $updatedRows = $priceManager->updateCollectionValues($mytable);
 
-$statsHelper = new CollectionStats($db, $logfile, $fxAPI ?? '', $fxLocal ?? '', $adminip ?? 1);
+$statsHelper = new CollectionStats($db, $appConfig);
 $stats = $statsHelper->getStats($user, $mytable, $targetCurrency);
 
 $unformatted_value = $stats['value_usd'];

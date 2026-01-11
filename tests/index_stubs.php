@@ -64,14 +64,8 @@ namespace MTG\Auth {
     if (!class_exists(SessionManager::class, false)) {
         class SessionManager
         {
-            public function __construct(
-                $db = null,
-                $adminip = null,
-                $session = null,
-                $fxAPI = null,
-                $fxLocal = null,
-                $logfile = null
-            ) {
+            public function __construct(...$args)
+            {
             }
 
             public function getUserInfo()
@@ -110,8 +104,12 @@ namespace MTG\Auth {
                     && hash_equals($_SESSION['csrf_token'], $submittedToken);
             }
 
-            public static function validateAjaxRequest($expectedReferringPages, $logfile, $context = '', $requireCsrf = true)
-            {
+            public static function validateAjaxRequest(
+                $expectedReferringPages,
+                $logfile,
+                $context = '',
+                $requireCsrf = true
+            ) {
                 return [
                     'valid' => true,
                     'reason' => ''

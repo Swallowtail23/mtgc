@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.1
+Version:     2.2
 Date:        11/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -82,7 +82,7 @@ if ($newname === '') :
     returnResponse($response);
 endif;
 
-$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];

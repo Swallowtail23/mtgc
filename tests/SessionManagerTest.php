@@ -96,7 +96,7 @@ class SessionManagerTest extends TestCase
         $class = getRealSessionManagerClass();
         $stmt = new RateStmtStub('1.25', time());
         $db = new RateDbStub($stmt);
-        $manager = new $class($db, 1, [], '', '', $GLOBALS['logfile']);
+        $manager = new $class($db, [], $GLOBALS['appConfig']);
 
         $rate = $manager->getRateForCurrencyPair('usd_eur');
 

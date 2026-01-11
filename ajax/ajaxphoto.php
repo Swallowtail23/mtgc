@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.17
 Date:        11/01/26
 Name:        ajaxphoto.php
 Purpose:     PHP script to import deck photo
@@ -49,7 +49,7 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     exit();
 else :
     // Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
     $userArray = $sessionManager->getUserInfo();
     $user = $userArray['usernumber'];
     $mytable = $userArray['table'];

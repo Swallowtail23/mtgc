@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        21/12/25
+Version:     1.8
+Date:        11/01/26
 Name:        CollectionStats.php
 Purpose:     Compute collection totals and values for a user.
 Notes:       -
@@ -14,6 +14,7 @@ To do:       -
 namespace MTG\Cards;
 
 use MTG\Auth\SessionManager;
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 
 class CollectionStats
@@ -22,20 +23,19 @@ class CollectionStats
     * @var mysqli
     */
     private $db;
-    private $logfile;
     private $message;
     private $fxAPI;
     private $fxLocal;
-    private $adminip;
+    private $appConfig;
 
-    public function __construct($db, $logfile, $fxAPI, $fxLocal, $adminip = 1)
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
-        $this->fxAPI = $fxAPI;
-        $this->fxLocal = $fxLocal;
-        $this->adminip = $adminip;
-        $this->message = new Message($this->logfile);
+        $this->appConfig = $appConfig;
+        $this->fxAPI = $this->appConfig->fx('api', '');
+        $this->fxLocal = $this->appConfig->fx('local', '');
+        $logfile = (string) $this->appConfig->general('logFile', '');
+        $this->message = new Message($logfile);
     }
 
     public function getStats($userNumber, $tableName, $preferredCurrency = null)
@@ -52,14 +52,7 @@ class CollectionStats
         $targetCurrency = strtoupper(trim((string) $targetCurrency));
 
         if (!empty($targetCurrency) && $targetCurrency !== 'USD' && !empty($this->fxAPI)) :
-            $sessionManager = new SessionManager(
-                $this->db,
-                $this->adminip,
-                [],
-                $this->fxAPI,
-                $this->fxLocal,
-                $this->logfile
-            );
+            $sessionManager = new SessionManager($this->db, [], $this->appConfig);
             $currencies = "usd_" . strtolower($targetCurrency);
             $rate = $sessionManager->getRateForCurrencyPair($currencies);
             if ($rate !== null && $rate !== false) :

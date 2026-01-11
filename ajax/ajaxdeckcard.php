@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.29
+Version:     1.30
 Date:        11/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -75,7 +75,7 @@ endif;
 
 $msg->logMessage('[DEBUG]', "Deck action '$action' for deck $deckNumber and card $cardId");
 
-$sessionManager = new SessionManager($db, $adminip, $_SESSION, $fxAPI, $fxLocal, $logfile);
+$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
 $userArray = $sessionManager->getUserInfo();
 $user = $userArray['usernumber'];
 $userEmail = $_SESSION['useremail'];
