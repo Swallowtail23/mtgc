@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.20
-Date:        10/01/26
+Version:     6.21
+Date:        11/01/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -612,7 +612,7 @@ if ($configAction === 'start_reauth') :
     $configAuthRequested = true;
 elseif ($configAction === 'reauth_submit') :
     $reauthPassword = filter_input(INPUT_POST, 'config_password', FILTER_UNSAFE_RAW);
-    $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+    $passwordCheck = new PasswordCheck($db, $appConfig);
     $reauthResult = $passwordCheck->validatePassword($userEmail, $reauthPassword);
     if ($reauthResult === 10) :
         $_SESSION['config_edit_expires'] = time() + $configAuthWindowSeconds;

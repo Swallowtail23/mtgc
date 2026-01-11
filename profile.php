@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.16
+Version:     14.17
 Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -239,7 +239,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                     . "<span>success: </span>"
                                                     . "Password changed and trusted devices cleared - log in again"
                                                     . "</div>";
-                                                $passwordCheck = new PasswordCheck($db, $logfile, $siteTitle);
+                                                $passwordCheck = new PasswordCheck($db, $appConfig);
                                                 $passwordCheck->clearResetForEmail($userEmail);
                                                 $passwordCheck->sendPasswordChangeNotification($userEmail);
                                                 $_SESSION['chgpwd'] = false;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.16
-Date:        10/01/26
+Version:     3.17
+Date:        11/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Does not run secpagesetup - not a secure page!
@@ -30,7 +30,7 @@ $msg = new Message($logfile);
 $msg->logMessage('[DEBUG]', 'reset.php loaded');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
-$pwReset = new PasswordCheck($db, $logfile, $siteTitle);
+$pwReset = new PasswordCheck($db, $appConfig);
 $emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
 $emailEnabledFlag = ($emailEnabledSetting === 'enabled');
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');

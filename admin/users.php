@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.10
-Date:        10/01/26
+Version:     6.11
+Date:        11/01/26
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -133,7 +133,7 @@ require('../includes/menu.php');
                 echo "<div class='alert-box error'><span>error: </span>Email is disabled; you must supply a "
                      . "temporary password.</div>";
             else :
-                $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                $obj = new PasswordCheck($db, $appConfig);
                 $msg->logMessage(
                     '[DEBUG]',
                     "Attempting to create user $username_raw with email $postemail_raw"
@@ -278,7 +278,7 @@ require('../includes/menu.php');
                         "Reset password call for $sql_id/$sql_name/$sql_eml from {$_SERVER['REMOTE_ADDR']}"
                     );
                     if ($emailEnabled) :
-                        $obj = new PasswordCheck($db, $logfile, $siteTitle);
+                        $obj = new PasswordCheck($db, $appConfig);
                         $sent = $obj->requestResetToken($sql_eml, true);
                         if ($sent) :
                             echo "<div class='alert-box success'><span>success: </span>Password reset link sent"

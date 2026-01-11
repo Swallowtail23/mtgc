@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        10/01/26
+Version:     1.6
+Date:        11/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Auth;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -25,15 +26,27 @@ class PasswordCheck
     private $logfile;
     private $message;
     private $siteTitle;
+    private $serverEmail;
+    private $adminEmail;
+    private $emailEnabled;
+    private $baseUrl;
+    private $smtpParameters;
+    private $appConfig;
 
     public $passwordvalidate;
 
-    public function __construct($db, $logfile, $siteTitle = null)
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
         $this->message = new Message($this->logfile);
-        $this->siteTitle = $siteTitle ?: $GLOBALS['siteTitle'];
+        $this->siteTitle = (string) $this->appConfig->general('title', '');
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
+        $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
+        $this->baseUrl = (string) $this->appConfig->general('url', '');
+        $this->smtpParameters = $this->appConfig->getSmtpParameters();
     }
 
     /**
@@ -41,8 +54,7 @@ class PasswordCheck
      */
     public function requestResetToken($email, $forceChange = false)
     {
-        global $serverEmail, $myURL, $smtpParameters, $emailEnabled;
-        if (!$emailEnabled) :
+        if (!$this->emailEnabled) :
             $this->message->logMessage('[NOTICE]', 'Password reset request blocked; email disabled');
             return false;
         endif;
@@ -72,8 +84,18 @@ class PasswordCheck
             return false;
         endif;
 
-        $link = rtrim($myURL, '/') . "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
-        return $this->sendResetEmail($email, $link, $this->siteTitle, $serverEmail, $smtpParameters);
+        $linkBase = ($this->baseUrl !== '') ? rtrim($this->baseUrl, '/') : '';
+        $link = $linkBase . "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
+        if ($linkBase === '') :
+            $link = "/reset.php?email=" . urlencode($email) . "&token=" . urlencode($token);
+        endif;
+        return $this->sendResetEmail(
+            $email,
+            $link,
+            $this->siteTitle,
+            $this->serverEmail,
+            $this->smtpParameters
+        );
     }
 
     /**
@@ -81,8 +103,7 @@ class PasswordCheck
      */
     public function completeReset($email, $token, $newPassword)
     {
-        global $emailEnabled;
-        if (!$emailEnabled) :
+        if (!$this->emailEnabled) :
             $this->message->logMessage('[NOTICE]', 'Complete reset blocked; email disabled');
             return false;
         endif;
@@ -188,7 +209,6 @@ class PasswordCheck
 
     public function passwordReset($email, $admin, $dbname)
     {
-        global $serverEmail, $adminEmail, $myURL, $emailEnabled;
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
             return 0;
@@ -197,7 +217,7 @@ class PasswordCheck
             $this->message->logMessage("[DEBUG]", "Called by non-admin user");
             return 0;
             exit;
-        elseif (!$emailEnabled) :
+        elseif (!$this->emailEnabled) :
             $this->message->logMessage("[NOTICE]", "Password reset requested but email disabled");
             return 0;
         else :
@@ -219,13 +239,14 @@ class PasswordCheck
                     $reset = $this->newUser($userName, $email, $randompassword, $dbname);
                     $this->message->logMessage("[DEBUG]", "Newuser result: $reset");
                     if ($reset === 1) :
-                        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
+                        $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                         $subject = "Password reset";
-                        $message = "A new password was requested for your email at $this->siteTitle ($myURL)\n\n"
+                        $message = "A new password was requested for your email at $this->siteTitle "
+                            . "({$this->baseUrl})\n\n"
                             . "Please login with this temporary password: $randompassword\n"
                             . "You will need to then choose a new password.\n\n"
                             . "If you did not request a new password at $this->siteTitle, you can ignore this email.";
-                        if ($emailEnabled) :
+                        if ($this->emailEnabled) :
                             mail($email, $subject, $message, $from);
                         else :
                             $this->message->logMessage(
@@ -234,11 +255,11 @@ class PasswordCheck
                             );
                         endif;
                     elseif ($reset === 0) :
-                        $from = "From: $serverEmail\r\nReturn-path: $serverEmail";
+                        $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                         $subject = "Password reset failed";
                         $message = "Password reset failed for $userName / $email";
-                        if ($emailEnabled) :
-                            mail($adminEmail, $subject, $message, $from);
+                        if ($this->emailEnabled) :
+                            mail($this->adminEmail, $subject, $message, $from);
                         else :
                             $this->message->logMessage(
                                 '[NOTICE]',
@@ -343,8 +364,7 @@ class PasswordCheck
      */
     public function sendPasswordChangeNotification($email)
     {
-        global $emailEnabled, $serverEmail, $smtpParameters;
-        if (!$emailEnabled) :
+        if (!$this->emailEnabled) :
             $this->message->logMessage(
                 '[NOTICE]',
                 "Password change notification suppressed; email disabled for $email"
@@ -365,8 +385,8 @@ class PasswordCheck
 
         $mailer = new MyPHPMailer(
             true,
-            $smtpParameters,
-            $serverEmail,
+            $this->smtpParameters,
+            $this->serverEmail,
             $this->logfile,
             $this->siteTitle
         );
@@ -534,7 +554,6 @@ class PasswordCheck
 
     public function newUser($userName, $postemail, $password = '', $dbname = '')
     {
-        global $serverEmail, $adminEmail, $emailEnabled;
         $msg = new Message($this->logfile);
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
@@ -645,7 +664,7 @@ class PasswordCheck
         endif;
 
         if ($usersuccess === 1 && $noSuppliedPW === true) :
-            if ($emailEnabled) :
+            if ($this->emailEnabled) :
                 $this->message->logMessage('[NOTICE]', "Triggering reset token for new user $postemail");
                 $this->requestResetToken($postemail, true);
             else :

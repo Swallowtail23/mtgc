@@ -1,5 +1,6 @@
 <?php
 
+use MTG\Core\AppConfig;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -102,25 +103,93 @@ class PasswordCheckStub extends PasswordCheckReal
 class PasswordResetTest extends TestCase
 {
     private $checker;
+    private $baseUrl = 'http://example.test';
 
     protected function setUp(): void
     {
-        global $emailEnabled, $serverEmail, $siteTitle, $myURL, $smtpParameters;
-        $emailEnabled = true;
-        $serverEmail = 'server@example.test';
-        $siteTitle = 'MTG';
-        $myURL = 'http://example.test';
-        $smtpParameters = ['SMTPDebug' => 'SMTP::DEBUG_OFF'];
-
-        $this->checker = new PasswordCheckStub(null, $GLOBALS['logfile'], $siteTitle);
+        $this->checker = new PasswordCheckStub(null, $this->buildAppConfig(true));
         $this->checker->users['user@example.test'] = ['usernumber' => 1, 'email' => 'user@example.test'];
+    }
+
+    private function buildAppConfig(bool $emailEnabled): AppConfig
+    {
+        $logfile = $GLOBALS['logfile'] ?? sys_get_temp_dir() . '/mtg_passwordreset_test.log';
+        $siteTitle = 'MTG';
+        $serverEmail = 'server@example.test';
+        $adminEmail = 'admin@example.test';
+        $smtpParameters = [
+            'SMTPDebug' => 'SMTP::DEBUG_OFF',
+            'SMTPHost' => 'localhost',
+            'SMTPAuth' => '',
+            'SMTPUsername' => '',
+            'SMTPPassword' => '',
+            'SMTPSecure' => '',
+            'SMTPPort' => 25,
+            'SMTPHelo' => 'localhost',
+            'SMTPVerifySSL' => 1,
+            'globalDebug' => 0
+        ];
+        $iniArray = [
+            'general' => [
+                'URL' => $this->baseUrl,
+                'title' => $siteTitle,
+                'tier' => 'dev',
+                'Loglevel' => 0,
+                'Logfile' => $logfile,
+                'ImgLocation' => sys_get_temp_dir() . '/cardimg/',
+                'Timezone' => 'UTC',
+                'Locale' => 'en_US',
+                'Copyright' => ''
+            ],
+            'security' => [
+                'Turnstile' => 'disabled',
+                'Turnstile_site_key' => '',
+                'Turnstile_secret_key' => '',
+                'TrustDuration' => 0,
+                'Badloginlimit' => 0,
+                'AdminIP' => ''
+            ],
+            'email' => [
+                'Email' => $emailEnabled ? 'enabled' : 'disabled',
+                'AdminEmail' => $adminEmail,
+                'ServerEmail' => $serverEmail,
+                'SMTPDebug' => $smtpParameters['SMTPDebug'],
+                'Host' => $smtpParameters['SMTPHost'],
+                'SMTPAuth' => $smtpParameters['SMTPAuth'],
+                'Username' => $smtpParameters['SMTPUsername'],
+                'Password' => $smtpParameters['SMTPPassword'],
+                'SMTPSecure' => $smtpParameters['SMTPSecure'],
+                'Port' => $smtpParameters['SMTPPort'],
+                'SMTPHelo' => $smtpParameters['SMTPHelo'],
+                'SMTPVerifySSL' => $smtpParameters['SMTPVerifySSL']
+            ],
+            'fx' => [
+                'FreecurrencyAPI' => '',
+                'TargetCurrency' => ''
+            ],
+            'comments' => [
+                'Disqus' => 'disabled',
+                'DisqusDevURL' => '',
+                'DisqusProdURL' => ''
+            ],
+        ];
+
+        return AppConfig::fromIni($iniArray, [
+            'general' => [
+                'logLevel' => 0,
+                'logFile' => $logfile,
+            ],
+            'email' => [
+                'enabled' => $emailEnabled,
+                'adminEmail' => $adminEmail,
+                'serverEmail' => $serverEmail,
+                'smtp' => $smtpParameters,
+            ],
+        ]);
     }
 
     public function testRequestResetCreatesTokenAndSendsLink()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
-
         $result = $this->checker->requestResetToken('user@example.test');
 
         $this->assertTrue($result);
@@ -130,8 +199,7 @@ class PasswordResetTest extends TestCase
 
     public function testRequestResetBlockedWhenEmailDisabled()
     {
-        global $emailEnabled;
-        $emailEnabled = false;
+        $this->checker = new PasswordCheckStub(null, $this->buildAppConfig(false));
 
         $result = $this->checker->requestResetToken('user@example.test');
 
@@ -141,8 +209,6 @@ class PasswordResetTest extends TestCase
 
     public function testCompleteResetSucceedsWithValidToken()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
         $this->checker->tokens['user@example.test'] = [
             'token_hash' => password_hash('token123', PASSWORD_DEFAULT),
             'expires_at' => date('Y-m-d H:i:s', time() + 3600),
@@ -157,8 +223,6 @@ class PasswordResetTest extends TestCase
 
     public function testCompleteResetFailsWhenExpired()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
         $this->checker->tokens['user@example.test'] = [
             'token_hash' => password_hash('token123', PASSWORD_DEFAULT),
             'expires_at' => date('Y-m-d H:i:s', time() - 10),
@@ -171,8 +235,6 @@ class PasswordResetTest extends TestCase
 
     public function testExpiredTokensAreClearedOnRequest()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
         $this->checker->tokens['old@example.test'] = [
             'token_hash' => password_hash('old', PASSWORD_DEFAULT),
             'expires_at' => date('Y-m-d H:i:s', time() - 3600),
@@ -185,9 +247,6 @@ class PasswordResetTest extends TestCase
 
     public function testRequestResetWithInvalidEmailIsNonDestructive()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
-
         $result = $this->checker->requestResetToken('not-an-email');
 
         $this->assertTrue($result);
@@ -197,9 +256,6 @@ class PasswordResetTest extends TestCase
 
     public function testRequestResetForUnknownUserDoesNotPersistToken()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
-
         $result = $this->checker->requestResetToken('missing@example.test');
 
         $this->assertTrue($result);
@@ -209,9 +265,6 @@ class PasswordResetTest extends TestCase
 
     public function testRequestResetWithForceChangeUpdatesStatus()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
-
         $result = $this->checker->requestResetToken('user@example.test', true);
 
         $this->assertTrue($result);
@@ -224,8 +277,6 @@ class PasswordResetTest extends TestCase
 
     public function testCompleteResetFailsWithInvalidToken()
     {
-        global $emailEnabled;
-        $emailEnabled = true;
         $this->checker->tokens['user@example.test'] = [
             'token_hash' => password_hash('token123', PASSWORD_DEFAULT),
             'expires_at' => date('Y-m-d H:i:s', time() + 3600),

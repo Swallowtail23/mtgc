@@ -32,7 +32,7 @@ namespace MTG\Auth {
         {
             public static $result = 10;
 
-            public function __construct($db = null, $logfile = null, $siteTitle = null)
+            public function __construct($db = null, $appConfig = null)
             {
             }
 

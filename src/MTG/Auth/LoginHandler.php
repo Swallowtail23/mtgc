@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -349,7 +349,7 @@ class LoginHandler
         endif;
 
         // At this point, account is in a "normal" status; now we check password
-        $passwordCheck = new PasswordCheck($this->db, $this->logfile, $this->siteTitle);
+        $passwordCheck = new PasswordCheck($this->db, $this->appConfig);
         $passwordResult = $passwordCheck->validatePassword($email, $password);
 
         if ($passwordResult !== 10) :

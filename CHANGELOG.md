@@ -54,6 +54,7 @@ All notable changes to this project will be documented in this file.
 - UserAgent now supports AppConfig-backed construction while keeping legacy ini-based entrypoints.
 - UserAgent call sites now build from AppConfig, and ImageManager now derives email/logging config from AppConfig.
 - LoginHandler now derives Turnstile, email, and limits from AppConfig.
+- PasswordCheck now derives email settings and URLs from AppConfig.
 
 ## [v0.4.10] - 2026-01-01
 
