@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.16
+Version:     2.20
 Date:        10/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
@@ -23,15 +23,41 @@ class DeckManager
     * @var mysqli
     */
     private $db;
+    /**
+    * @var AppConfig
+    */
     private $appConfig;
+    /**
+    * @var array<int,array<string,mixed>>
+    */
     private $batchedCardIds = []; // Array to store batched cards to add
+    /**
+    * @var Message
+    */
     private $message;
+    /**
+    * @var string
+    */
     private $userEmail;
-    private $serverEmail;
+    /**
+    * @var bool
+    */
     private $emailEnabled;
+    /**
+    * @var array<int,string>
+    */
     private $importLinestoIgnore;
+    /**
+    * @var array<int,string>
+    */
     private $nonPreferredSetCodes;
+    /**
+    * @var array<int,string>
+    */
     private $anyQuantity = [];
+    /**
+    * @var array<int,string>
+    */
     private $limitWarnings = [];
 
     public function __construct(
@@ -46,7 +72,6 @@ class DeckManager
         $this->appConfig = $appConfig;
         $this->message = new Message($this->appConfig);
         $this->userEmail = $userEmail;
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->importLinestoIgnore = $importLinestoIgnore;
         $this->nonPreferredSetCodes = $nonPreferredSetCodes;
@@ -159,11 +184,17 @@ class DeckManager
             $this->limitWarnings = [];
         endif;
         if ($warningSummary !== '') :
-            $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Deck Import failures / warnings";
             $message = "$warningHeading\n\n$warningSummary\n";
             if ($this->emailEnabled) :
-                mail($this->userEmail, $subject, $message, $from);
+                $mailer = new MyPHPMailer(true, $this->appConfig);
+                $mailResult = $mailer->sendEmail($this->userEmail, false, $subject, $message);
+                if ($mailResult !== true) :
+                    $this->message->logMessage(
+                        '[ERROR]',
+                        "Deck import warning email failed to send to {$this->userEmail}"
+                    );
+                endif;
             else :
                 $this->message->logMessage(
                     '[NOTICE]',
@@ -565,7 +596,6 @@ class DeckManager
         endforeach;
 
         if (!empty($values)) :
-            $valuesString = implode(', ', $values);
             $placeholdersString = implode(', ', $placeholders);
 
             $query = "INSERT INTO deckcards (decknumber, cardnumber, cardqty, sideqty) VALUES $placeholdersString
@@ -1763,11 +1793,6 @@ class DeckManager
         return true;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 
     public function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
     {

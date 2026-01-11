@@ -26,7 +26,6 @@ class CollectionHistory
     private $appConfig;
     private $message;
     private $siteTitle;
-    private $serverEmail;
     private $emailEnabled;
 
     public function __construct($db, AppConfig $appConfig)
@@ -35,7 +34,6 @@ class CollectionHistory
         $this->appConfig = $appConfig;
         $this->message = new Message($this->appConfig);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
     }
 

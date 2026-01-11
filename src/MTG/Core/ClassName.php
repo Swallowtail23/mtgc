@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        11/01/26
 Name:        ClassName.php
 Purpose:     {Short description of what this class does}.
@@ -153,9 +153,4 @@ class ClassName
      *
      * @return string
      */
-    public function __toString(): string
-    {
-        $this->message->logMessage('[ERROR]', __CLASS__ . ' called as string');
-        return __CLASS__ . ' instance';
-    }
 }

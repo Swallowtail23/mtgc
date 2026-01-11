@@ -46,7 +46,7 @@ class CollectionStatsTest extends TestCase
         $db = new CollectionStatsDbStub();
         $stats = new CollectionStats($db, $GLOBALS['appConfig']);
 
-        $result = $stats->getStats(1, 'collection');
+        $result = $stats->getStats('collection');
 
         $this->assertSame(7, $result['card_count']);
         $this->assertSame(3, $result['mr_count']);

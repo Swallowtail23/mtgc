@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.5
 Date:        11/01/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
@@ -30,8 +30,6 @@ class TwoFactorManager
     private $code_length = 6;
     private $code_expiry = 600; // 10 minutes in seconds
     private $max_attempts = 3;
-    private $smtp_parameters;
-    private $serverEmail;
     private $emailEnabled;
     private $siteTitle;
 
@@ -43,8 +41,6 @@ class TwoFactorManager
         $this->db = $db;
         $this->appConfig = $appConfig;
         $this->logfile = (string) $this->appConfig->general('logFile', '');
-        $this->smtp_parameters = $this->appConfig->getSmtpParameters();
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
         $this->log = new Message($this->appConfig);
@@ -560,8 +556,4 @@ class TwoFactorManager
         return [];
     }
 
-    public function __toString()
-    {
-        return "TwoFactorManager";
-    }
 }

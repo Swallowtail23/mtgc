@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.20
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -25,7 +25,6 @@ Current flow:
 - If password OK:
 -- If 2FA enabled → set pending 2FA session, clear bad login if needed, redirect to verify_2fa.
 -- Else → mark logged in, clear bad login if needed, return user info.
-    1.8 21/12/25 Replace E_USER_ERROR trigger_error with exceptions for PHP 8.4 compatibility
 */
 
 namespace MTG\Auth;
@@ -46,7 +45,6 @@ class LoginHandler
     private $turnstileSecretKey;
     private $badLoginLimit;
     private $siteTitle;
-    private $serverEmail;
     private $adminEmail;
     private $emailEnabled;
     private $baseUrl;
@@ -62,7 +60,6 @@ class LoginHandler
         $this->turnstileSecretKey = (string) $this->appConfig->security('turnstileSecretKey', '');
         $this->badLoginLimit = (int) $this->appConfig->security('badLoginLimit', 0);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->baseUrl = (string) $this->appConfig->general('url', '');

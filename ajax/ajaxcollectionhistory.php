@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        10/01/26
 Name:        ajaxcollectionhistory.php
 Purpose:     Return collection value history for charting.
@@ -32,7 +32,7 @@ $expectedReferringPages = [
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaxcollectionhistory.php'
 );
 if ($ajaxValidation['valid'] === false) :

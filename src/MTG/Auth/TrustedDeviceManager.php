@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.6
 Date:        11/01/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
@@ -37,13 +37,6 @@ class TrustedDeviceManager
 
         // Load HMAC secret from environment variable
         $this->hmacSecret = getenv('HMAC_SECRET');
-
-        if (!class_exists(Message::class)) :
-            $autoload = __DIR__ . '/../../../vendor/autoload.php';
-            if (file_exists($autoload)) :
-                require_once $autoload;
-            endif;
-        endif;
 
         try {
             $this->msg = new Message($this->appConfig);
@@ -349,9 +342,4 @@ class TrustedDeviceManager
         endif;
     }
 
-    public function __toString()
-    {
-        $this->log("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }

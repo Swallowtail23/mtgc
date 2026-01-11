@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.4
+Version:     1.5
 Date:        11/01/26
 Name:        UserStatus.php
 Purpose:     Get user status, bad login counts, and lock users on threshold.
@@ -179,9 +179,4 @@ class UserStatus
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        11/01/26
 Name:        PriceManager.php
 Purpose:     Price management class.
@@ -771,9 +771,4 @@ class PriceManager
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }

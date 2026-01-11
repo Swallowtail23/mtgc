@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.14
 Date:        11/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -33,7 +33,7 @@ $expectedReferringPages = [
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaxcollectionvalue.php'
 );
 if ($ajaxValidation['valid'] === false) :
@@ -71,7 +71,7 @@ $priceManager = new PriceManager($db, $appConfig, $userEmail);
 $updatedRows = $priceManager->updateCollectionValues($mytable);
 
 $statsHelper = new CollectionStats($db, $appConfig);
-$stats = $statsHelper->getStats($user, $mytable, $targetCurrency);
+$stats = $statsHelper->getStats($mytable, $targetCurrency);
 
 $unformatted_value = $stats['value_usd'];
 $rowcount = $stats['card_count'];

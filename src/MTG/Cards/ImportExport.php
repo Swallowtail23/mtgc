@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -1111,10 +1111,5 @@ class ImportExport
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }
 // phpcs:enable

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        11/01/26
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
@@ -61,7 +61,7 @@ while ($user = $users->fetch_assoc()) :
         endif;
     endif;
 
-    $stats = $statsHelper->getStats($userNumber, $tableName, $userCurrency);
+    $stats = $statsHelper->getStats($tableName, $userCurrency);
     $valueUsd = $stats['value_usd'];
     $localValue = $stats['value_local'];
     $localCurrency = $stats['local_currency'];

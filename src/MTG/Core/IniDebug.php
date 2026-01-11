@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.9
+Version:     1.10
 Date:        11/01/26
 Name:        IniDebug.php
 Purpose:     Pre-database debugging; logs messages to logfiles or syslog when enabled.
@@ -44,9 +44,4 @@ class IniDebug
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }

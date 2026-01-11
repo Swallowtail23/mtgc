@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.11
 Date:        11/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
@@ -318,25 +318,6 @@ class SessionManager
     }
 
     /**
-     * Regenerate session ID to help prevent session fixation attacks
-     *
-     * This method should be called after authentication events such as:
-     * - Successful login
-     * - Password changes
-     * - Email changes
-     * - Privilege/role changes
-     *
-     * @param bool $deleteOldSession Whether to delete data from old session
-     * @return bool Success of operation
-     */
-
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
-
-    /**
     * Optionally inject redirect/terminate handlers to allow testing without exiting the process.
     */
     public static function forcePasswordChange(
@@ -432,4 +413,5 @@ class SessionManager
             'reason' => ''
         ];
     }
+
 }

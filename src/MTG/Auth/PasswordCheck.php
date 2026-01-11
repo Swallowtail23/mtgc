@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.10
 Date:        11/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
@@ -25,7 +25,6 @@ class PasswordCheck
     private $db;
     private $message;
     private $siteTitle;
-    private $serverEmail;
     private $adminEmail;
     private $emailEnabled;
     private $baseUrl;
@@ -39,7 +38,6 @@ class PasswordCheck
         $this->appConfig = $appConfig;
         $this->message = new Message($this->appConfig);
         $this->siteTitle = (string) $this->appConfig->general('title', '');
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
         $this->baseUrl = (string) $this->appConfig->general('url', '');
@@ -229,7 +227,6 @@ class PasswordCheck
                     $reset = $this->newUser($userName, $email, $randompassword, $dbname);
                     $this->message->logMessage("[DEBUG]", "Newuser result: $reset");
                     if ($reset === 1) :
-                        $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                         $subject = "Password reset";
                         $message = "A new password was requested for your email at $this->siteTitle "
                             . "({$this->baseUrl})\n\n"
@@ -237,7 +234,14 @@ class PasswordCheck
                             . "You will need to then choose a new password.\n\n"
                             . "If you did not request a new password at $this->siteTitle, you can ignore this email.";
                         if ($this->emailEnabled) :
-                            mail($email, $subject, $message, $from);
+                            $mailer = new MyPHPMailer(true, $this->appConfig);
+                            $mailResult = $mailer->sendEmail($email, false, $subject, $message);
+                            if ($mailResult !== true) :
+                                $this->message->logMessage(
+                                    '[ERROR]',
+                                    "Password reset email failed to send to $email"
+                                );
+                            endif;
                         else :
                             $this->message->logMessage(
                                 '[NOTICE]',
@@ -245,11 +249,17 @@ class PasswordCheck
                             );
                         endif;
                     elseif ($reset === 0) :
-                        $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
                         $subject = "Password reset failed";
                         $message = "Password reset failed for $userName / $email";
                         if ($this->emailEnabled) :
-                            mail($this->adminEmail, $subject, $message, $from);
+                            $mailer = new MyPHPMailer(true, $this->appConfig);
+                            $mailResult = $mailer->sendEmail($this->adminEmail, false, $subject, $message);
+                            if ($mailResult !== true) :
+                                $this->message->logMessage(
+                                    '[ERROR]',
+                                    "Password reset failure email failed to send for $email"
+                                );
+                            endif;
                         else :
                             $this->message->logMessage(
                                 '[NOTICE]',
@@ -664,9 +674,4 @@ class PasswordCheck
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 }

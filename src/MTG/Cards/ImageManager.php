@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.10
+Version:     1.12
 Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -32,9 +32,21 @@ class ImageManager
     * @var mysqli
     */
     private $db;
+    /**
+    * @var string
+    */
     private $serverEmail;
+    /**
+    * @var string
+    */
     private $adminEmail;
+    /**
+    * @var Message
+    */
     private $message;
+    /**
+    * @var AppConfig
+    */
     private $appConfig;
 
     public function __construct($db, AppConfig $appConfig)
@@ -227,11 +239,6 @@ class ImageManager
         endif;
     }
 
-    public function __toString()
-    {
-        $this->message->logMessage("[ERROR]", "Called as string");
-        return "Called as a string";
-    }
 
     public function checkAndRefreshImage($cardId)
     {
