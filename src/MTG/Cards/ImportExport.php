@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.8
+Version:     1.9
 Date:        10/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -23,11 +23,29 @@ class ImportExport
     * @var mysqli
     */
     private $db;
+    /**
+    * @var AppConfig
+    */
     private $appConfig;
+    /**
+    * @var string
+    */
     private $userEmail;
+    /**
+    * @var string
+    */
     private $serverEmail;
+    /**
+    * @var Message
+    */
     private $message;
+    /**
+    * @var string
+    */
     private $siteTitle;
+    /**
+    * @var bool
+    */
     private $emailEnabled;
     private $batchedCardIds = []; // Array to store batched cards to add
 
