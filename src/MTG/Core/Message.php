@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        30/12/25
+Version:     1.6
+Date:        11/01/26
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -19,12 +19,31 @@ class Message
 {
     private $logfile;
     private $logLevel;
+    private $appConfig;
     public $textstring;
 
-    public function __construct($logfile = null, $logLevel = null)
+    public function __construct($logfile = null, $logLevel = null, ?AppConfig $appConfig = null)
     {
-        $this->logfile = $logfile ?: ($GLOBALS['logfile'] ?? '');
-        $this->logLevel = $logLevel ?? ($GLOBALS['logLevelIni'] ?? 3);
+        $this->appConfig = $appConfig;
+
+        $configLogfile = $this->appConfig ? $this->appConfig->general('logFile', null) : null;
+        $configLogLevel = $this->appConfig ? $this->appConfig->general('logLevel', null) : null;
+
+        if ($logfile !== null) :
+            $this->logfile = $logfile;
+        elseif ($configLogfile !== null) :
+            $this->logfile = $configLogfile;
+        else :
+            $this->logfile = $GLOBALS['logfile'] ?? '';
+        endif;
+
+        if ($logLevel !== null) :
+            $this->logLevel = $logLevel;
+        elseif ($configLogLevel !== null) :
+            $this->logLevel = $configLogLevel;
+        else :
+            $this->logLevel = $GLOBALS['logLevelIni'] ?? 3;
+        endif;
     }
 
     public function logMessage($errorlevel, $text, $logfile = '')
