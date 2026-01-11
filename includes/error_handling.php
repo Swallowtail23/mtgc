@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.8
-Date:        25/11/25
+Version:     2.9
+Date:        11/01/26
 Name:        error_handling.php
 Purpose:     Process page initiation and setup error handling.
 Notes:       {none}
@@ -11,16 +11,20 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-function mtgError($number, $string, $file, $line, $context = '')
+function mtgError($number, $string, $file, $line, AppConfig $appConfig)
 {
-    global $logfile, $adminEmail, $serverEmail, $emailEnabled;
     $msg = new Message($appConfig);
+    $adminEmail = (string) $appConfig->email('adminEmail', '');
+    $serverEmail = (string) $appConfig->email('serverEmail', '');
+    $emailEnabled = (bool) $appConfig->email('enabled', false);
 
     if (isset($_SESSION['useremail']) && !empty($_SESSION['useremail'])) :
         $userEmail = $_SESSION['useremail'];
@@ -35,11 +39,15 @@ function mtgError($number, $string, $file, $line, $context = '')
     switch ($number) :
         case E_USER_ERROR:
             $msg->logMessage('[ERROR]', "$string (E_USER_ERROR) in $file on line $line");
-            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_ERROR) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
             if ($emailEnabled) :
-                mail($adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $appConfig);
+                $mail->clearReplyTos();
+                if ($userEmail !== '') :
+                    $mail->addReplyTo($userEmail, $userEmail);
+                endif;
+                $mail->sendEmail($adminEmail, false, $subject, $message);
             else :
                 $msg->logMessage(
                     '[NOTICE]',
@@ -50,11 +58,15 @@ function mtgError($number, $string, $file, $line, $context = '')
             exit();
         case E_USER_WARNING:
             $msg->logMessage('[ERROR]', "$string (E_USER_WARNING) in $file on line $line");
-            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_WARNING) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
             if ($emailEnabled) :
-                mail($adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $appConfig);
+                $mail->clearReplyTos();
+                if ($userEmail !== '') :
+                    $mail->addReplyTo($userEmail, $userEmail);
+                endif;
+                $mail->sendEmail($adminEmail, false, $subject, $message);
             else :
                 $msg->logMessage(
                     '[NOTICE]',
@@ -65,11 +77,15 @@ function mtgError($number, $string, $file, $line, $context = '')
             exit();
         case E_USER_NOTICE:
             $msg->logMessage('[ERROR]', "$string (E_USER_NOTICE) in $file on line $line");
-            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error (E_USER_NOTICE) on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
             if ($emailEnabled) :
-                mail($adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $appConfig);
+                $mail->clearReplyTos();
+                if ($userEmail !== '') :
+                    $mail->addReplyTo($userEmail, $userEmail);
+                endif;
+                $mail->sendEmail($adminEmail, false, $subject, $message);
             else :
                 $msg->logMessage(
                     '[NOTICE]',
@@ -80,11 +96,15 @@ function mtgError($number, $string, $file, $line, $context = '')
             exit();
         default:
             $msg->logMessage('[ERROR]', "$string Error in $file on line $line");
-            $from = "From: $userEmail\r\nReturn-path: $userEmail";
             $subject = "Error on MTGCollection in file $file line $line";
             $message = wordwrap($string, 70);
             if ($emailEnabled) :
-                mail($adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $appConfig);
+                $mail->clearReplyTos();
+                if ($userEmail !== '') :
+                    $mail->addReplyTo($userEmail, $userEmail);
+                endif;
+                $mail->sendEmail($adminEmail, false, $subject, $message);
             else :
                 $msg->logMessage('[NOTICE]', "Email disabled; error notification not sent for $file:$line");
             endif;
@@ -93,9 +113,12 @@ function mtgError($number, $string, $file, $line, $context = '')
     endswitch;
 }
 
-function mtgException($err)
+function mtgException($err, AppConfig $appConfig)
 {
-    global $logfile, $adminEmail, $serverEmail, $emailEnabled;
+    $logfile = (string) $appConfig->general('logFile', '');
+    $adminEmail = (string) $appConfig->email('adminEmail', '');
+    $serverEmail = (string) $appConfig->email('serverEmail', '');
+    $emailEnabled = (bool) $appConfig->email('enabled', false);
     if (($fd = fopen($logfile, 'a')) !== false) :
         $msg = "[ERROR] Fatal exception: {$err->getMessage()}";
         $str = "[" . date('Y/m/d H:i:s', time()) . "] " . $msg;
@@ -106,11 +129,11 @@ function mtgException($err)
         syslog(LOG_ERR, "[MTG-DEBUG] Fatal exception: {$err->getMessage()}");
         closelog();
     endif;
-    $from = "From: " . $serverEmail;
     $subject = "Exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
     if ($emailEnabled) :
-        mail($adminEmail, $subject, $message, $from);
+        $mail = new MyPHPMailer(true, $appConfig);
+        $mail->sendEmail($adminEmail, false, $subject, $message);
     else :
         $fallback = new Message($appConfig);
         $fallback->logMessage(
@@ -122,5 +145,9 @@ function mtgException($err)
     exit();
 }
 
-set_error_handler('mtgError');
-set_exception_handler('mtgException');
+set_error_handler(function ($number, $string, $file, $line) use ($appConfig) {
+    mtgError($number, $string, $file, $line, $appConfig);
+});
+set_exception_handler(function ($err) use ($appConfig) {
+    mtgException($err, $appConfig);
+});

@@ -204,7 +204,7 @@ function langReplace($str)
 
 function checkRemoteFile($url)
 {
-    global $appConfig, $logfile;
+    global $appConfig;
     $msg = new Message($appConfig);
 
     if (stripos($url, 'file://') === 0) :
@@ -364,7 +364,7 @@ function validUUID($uuid)
 
 function validTableName($input)
 {
-    global $db, $appConfig;
+    global $appConfig;
     $msg = new Message($appConfig);
 
     $msg->logMessage('[DEBUG]', "Checking for valid table name ($input)");

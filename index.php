@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.51
+Version:     14.52
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -92,7 +92,7 @@ if (isset($_GET['name']) and $_GET['name'] !== "") :
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
     $name = preg_replace($regex, ' ', $nametrim);
     $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
-    $interpretedString = ImportExport::inputInterpreter($name);
+    $interpretedString = ImportExport::inputInterpreter($name, $appConfig, $gameRules);
     if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
         $name = $interpretedString['name'];
     else :

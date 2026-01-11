@@ -1,14 +1,27 @@
 <?php
 
 use MTG\Cards\ImportExport;
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class InputInterpreterTest extends TestCase
 {
+    private $appConfig;
+    private $gameRules;
+
+    protected function setUp(): void
+    {
+        $this->appConfig = $GLOBALS['appConfig'];
+        $this->gameRules = new GameRules([
+            'bracketsInNames' => [],
+            'importLinestoIgnore' => [],
+        ]);
+    }
+
     public function testCsvHeader()
     {
         $line = 'set,number,name,lang,normal,foil,etched,uuid';
-        $this->assertSame('header', ImportExport::inputInterpreter($line));
+        $this->assertSame('header', ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testValidCsvRow()
@@ -25,7 +38,7 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertSame($expected, ImportExport::inputInterpreter($line));
+        $this->assertSame($expected, ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testDelverCsvRow()
@@ -42,7 +55,7 @@ class InputInterpreterTest extends TestCase
             'foil' => 2,
             'etched' => 0
         ];
-        $this->assertSame($expected, ImportExport::inputInterpreter($line));
+        $this->assertSame($expected, ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testMtgcCsvRowWithEtched()
@@ -59,7 +72,7 @@ class InputInterpreterTest extends TestCase
             'foil' => 2,
             'etched' => 3
         ];
-        $this->assertSame($expected, ImportExport::inputInterpreter($line));
+        $this->assertSame($expected, ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testNonCsvText()
@@ -76,13 +89,13 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, ImportExport::inputInterpreter($line));
+        $this->assertEquals($expected, ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testInvalidCsvRowReturnsFalse()
     {
         $line = 'MH3,304,Plains,1,0';
-        $this->assertFalse(ImportExport::inputInterpreter($line));
+        $this->assertFalse(ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
     }
 
     public function testNoPatternMatches()
@@ -98,6 +111,9 @@ class InputInterpreterTest extends TestCase
             'foil' => 0,
             'etched' => 0
         ];
-        $this->assertEquals($expected, ImportExport::inputInterpreter('@@@'));
+        $this->assertEquals(
+            $expected,
+            ImportExport::inputInterpreter('@@@', $this->appConfig, $this->gameRules)
+        );
     }
 }

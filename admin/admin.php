@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.22
+Version:     6.23
 Date:        11/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -44,10 +44,8 @@ function requireCsrfToken(): void
 /**
  * Determine current version from env or VERSION file.
  */
-function getAppVersion(string $fallback = 'dev'): string
+function getAppVersion(Message $msg, string $fallback = 'dev'): string
 {
-    global $msg;
-
     $sanitize = function (string $value): string {
         $value = trim($value);
 
@@ -90,27 +88,21 @@ function getAppVersion(string $fallback = 'dev'): string
     return $fallback !== '' ? $fallback : 'dev';
 }
 
-$currentVersion = getAppVersion();
+$currentVersion = getAppVersion($msg);
 
 /**
  * Read the last N lines from a log file without loading it entirely.
  */
-function getLogTailLines($filepath, $maxLines = 8)
+function getLogTailLines(Message $msg, $filepath, $maxLines = 8)
 {
-    global $msg;
-
     if (!is_readable($filepath)) :
-        if (isset($msg)) :
-            $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
-        endif;
+        $msg->logMessage('[ERROR]', "Log file not readable: $filepath");
         return [];
     endif;
 
     $handle = fopen($filepath, 'rb');
     if ($handle === false) :
-        if (isset($msg)) :
-            $msg->logMessage('[ERROR]', "Failed to open log file: $filepath");
-        endif;
+        $msg->logMessage('[ERROR]', "Failed to open log file: $filepath");
         return [];
     endif;
 
@@ -1113,7 +1105,7 @@ require('../includes/menu.php');
             $logLinesToShow = ($logLinesRequested !== null && $logLinesRequested !== false && $logLinesRequested > 0)
                 ? (int) $logLinesRequested
                 : 10;
-            $recentLogLines = getLogTailLines($logfile, $logLinesToShow); ?>
+            $recentLogLines = getLogTailLines($msg, $logfile, $logLinesToShow); ?>
             <h3 id="logs">Logs</h3>
             <form action="admin.php#logs" method="get" style="margin-bottom: 8px;">
                 <label for="log_lines">

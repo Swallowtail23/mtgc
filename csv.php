@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.13
-Date:        10/01/26
+Version:     4.14
+Date:        11/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -63,7 +63,7 @@ if ($requestedTable !== null && $requestedTable !== '') :
 
     $msg->logMessage('[NOTICE]', "csv.php running for '$table'");
 
-    $obj = new ImportExport($db, $appConfig, $userEmail);
+    $obj = new ImportExport($db, $appConfig, $gameRules, $userEmail);
 
     // Can be called with type 'echo', 'email'
     // Difference is that 'echo' outputs to browser for download, 'email' triggers email output

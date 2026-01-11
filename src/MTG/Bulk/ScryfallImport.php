@@ -1080,11 +1080,23 @@ class ScryfallImport
         );
 
         if ($bind === false) :
-            mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error, __FILE__, __LINE__);
+            mtgError(
+                E_USER_ERROR,
+                '[ERROR] scryfall_bulk.php: Binding parameters: ' . $db->error,
+                __FILE__,
+                __LINE__,
+                $appConfig
+            );
         endif;
         $hashBind = $hashStmt->bind_param("s", $hash_id);
         if ($hashBind === false) :
-            mtgError(E_USER_ERROR, '[ERROR] scryfall_bulk.php: Binding hash id: ' . $db->error, __FILE__, __LINE__);
+            mtgError(
+                E_USER_ERROR,
+                '[ERROR] scryfall_bulk.php: Binding hash id: ' . $db->error,
+                __FILE__,
+                __LINE__,
+                $appConfig
+            );
         endif;
         $lastGoodId = null;
         $lastGoodCount = 0;
@@ -1096,7 +1108,8 @@ class ScryfallImport
                 E_USER_ERROR,
                 '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
                 __FILE__,
-                __LINE__
+                __LINE__,
+                $appConfig
             );
         endif;
 
@@ -1118,7 +1131,8 @@ class ScryfallImport
                                 E_USER_ERROR,
                                 '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
                                 __FILE__,
-                                __LINE__
+                                __LINE__,
+                                $appConfig
                             );
                         endif;
                         $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
@@ -1128,7 +1142,8 @@ class ScryfallImport
                                 E_USER_ERROR,
                                 '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
                                 __FILE__,
-                                __LINE__
+                                __LINE__,
+                                $appConfig
                             );
                         endif;
                     endif;
@@ -1646,7 +1661,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Checking existing hashes: ' . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     endif;
                     $hashStore = $hashStmt->store_result();
@@ -1655,7 +1671,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Storing hash results: ' . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     endif;
                     $hashBindResult = $hashStmt->bind_result($existing_content_hash, $existing_price_hash);
@@ -1664,7 +1681,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Binding hash results: ' . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     endif;
                     if ($hashStmt->num_rows > 0) :
@@ -1685,7 +1703,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             "[ERROR] scryfall_bulk.php: Writing new card details: " . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     else :
                         $lastGoodId = $id;
@@ -1742,7 +1761,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Committing transaction batch: ' . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     endif;
                     $msg->logMessage('[DEBUG]', "Committed transaction batch at record $total_count");
@@ -1752,7 +1772,8 @@ class ScryfallImport
                             E_USER_ERROR,
                             '[ERROR] scryfall_bulk.php: Starting transaction batch: ' . $db->error,
                             __FILE__,
-                            __LINE__
+                            __LINE__,
+                            $appConfig
                         );
                     endif;
                 endif;

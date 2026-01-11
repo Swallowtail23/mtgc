@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.19
+Version:     5.20
 Date:        11/01/26
 Name:        ini.php
 Purpose:     PHP script to manage error routines, logging and setup global variables/arrays
@@ -15,6 +15,7 @@ use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\INI;
 use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -220,11 +221,11 @@ try {
         closelog();
     endif;
     $databaseaccess = 0;
-    $from = "From: " . $serverEmail;
     $subject = "Fatal database exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
     if ($emailEnabled) :
-        mail($adminEmail, $subject, $message, $from);
+        $mail = new MyPHPMailer(true, $appConfig);
+        $mail->sendEmail($adminEmail, false, $subject, $message);
     else :
         $fallbackMsg = new Message($appConfig);
         $fallbackMsg->logMessage(

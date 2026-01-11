@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -22,6 +22,7 @@ namespace MTG\Cards;
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\Message;
+use MTG\Core\MyPHPMailer;
 use MTG\Core\UserAgent;
 
 class ImageManager
@@ -33,10 +34,6 @@ class ImageManager
     * @var mysqli
     */
     private $db;
-    /**
-    * @var string
-    */
-    private $serverEmail;
     /**
     * @var string
     */
@@ -59,7 +56,6 @@ class ImageManager
         $this->db = $db;
         $this->appConfig = $appConfig;
         $this->gameRules = $gameRules;
-        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->message = new Message($this->appConfig);
     }
@@ -193,7 +189,7 @@ class ImageManager
                 try {
                     if (!unlink($imageUrl)) :
                         $this->message->logMessage('[ERROR]', "Failed to unlink $imageUrl");
-                        mtgError(E_USER_ERROR, 'Failed to unlink image', __FILE__, __LINE__);
+                        mtgError(E_USER_ERROR, 'Failed to unlink image', __FILE__, __LINE__, $this->appConfig);
                     endif;
                     $imagedelete = 'success';
                 } catch (\Exception $e) {
@@ -213,7 +209,7 @@ class ImageManager
                 try {
                     if (!unlink($imagebackurl)) :
                         $this->message->logMessage('[ERROR]', "Failed to unlink $imagebackurl");
-                        mtgError(E_USER_ERROR, 'Failed to unlink back image', __FILE__, __LINE__);
+                        mtgError(E_USER_ERROR, 'Failed to unlink back image', __FILE__, __LINE__, $this->appConfig);
                     endif;
                     $imagebackdelete = 'success';
                 } catch (\Exception $e) {
@@ -225,11 +221,11 @@ class ImageManager
         endif;
         //Refresh image
         if ($imagebackdelete === 'failure' || $imagedelete === 'failure') :
-            $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Image unlink failure";
             $message = "Failed image unlink: $imageUrl. Front: $imagedelete; Back: $imagebackdelete";
             if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                mail($this->adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $this->appConfig);
+                $mail->sendEmail($this->adminEmail, false, $subject, $message);
             else :
                 $this->message->logMessage(
                     '[NOTICE]',
@@ -336,11 +332,11 @@ class ImageManager
         endif;
 
         if (checkRemoteFile($remoteUrl) == false) :
-            $from = "From: $this->serverEmail\r\nReturn-path: $this->serverEmail";
             $subject = "Invalid image from Scryfall API";
             $message = "$remoteUrl does not exist - check database entry against API, has it been deleted?";
             if (isset($GLOBALS['emailEnabled']) && $GLOBALS['emailEnabled'] === true) :
-                mail($this->adminEmail, $subject, $message, $from);
+                $mail = new MyPHPMailer(true, $this->appConfig);
+                $mail->sendEmail($this->adminEmail, false, $subject, $message);
             else :
                 $this->message->logMessage(
                     '[NOTICE]',

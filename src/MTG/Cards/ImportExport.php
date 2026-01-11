@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        10/01/26
+Version:     1.12
+Date:        11/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -14,6 +14,7 @@ To do:       -
 namespace MTG\Cards;
 
 use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -27,6 +28,10 @@ class ImportExport
     * @var AppConfig
     */
     private $appConfig;
+    /**
+    * @var GameRules
+    */
+    private $gameRules;
     /**
     * @var string
     */
@@ -49,10 +54,11 @@ class ImportExport
     private $emailEnabled;
     private $batchedCardIds = []; // Array to store batched cards to add
 
-    public function __construct($db, AppConfig $appConfig, $userEmail)
+    public function __construct($db, AppConfig $appConfig, GameRules $gameRules, $userEmail)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
+        $this->gameRules = $gameRules;
         $this->userEmail = $userEmail;
         $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->message = new Message($this->appConfig);
@@ -250,7 +256,7 @@ class ImportExport
         return $out;
     }
 
-    public static function inputInterpreter($input_string)
+    public static function inputInterpreter($input_string, AppConfig $appConfig, GameRules $gameRules)
     {
         // Called by quickAdd in deckmanager class, index.php search inputs and collection imports
         // This function takes an input string, either from deck quick add or search strings,
@@ -260,8 +266,15 @@ class ImportExport
         // - cardname
         // - set
         // - collector number
-        global $appConfig, $bracketsInNames, $importLinestoIgnore;
         $msg = new Message($appConfig);
+        $bracketsInNames = $gameRules->get('bracketsInNames', []);
+        if (!is_array($bracketsInNames)) :
+            $bracketsInNames = [];
+        endif;
+        $importLinestoIgnore = $gameRules->get('importLinestoIgnore', []);
+        if (!is_array($importLinestoIgnore)) :
+            $importLinestoIgnore = [];
+        endif;
 
         $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
         $raw_string = $input_string;
@@ -647,7 +660,10 @@ class ImportExport
         // 'regex' may have no header row, and content like '1 All Is Dust [M3C 152]'
         // or any other style that inputInterpreter() can assess
         $importFormat = 'regex';
-        global $noQuickAddLayouts;
+        $noQuickAddLayouts = $this->gameRules->get('noQuickAddLayouts', []);
+        if (!is_array($noQuickAddLayouts)) :
+            $noQuickAddLayouts = [];
+        endif;
         $this->message->logMessage('[DEBUG]', "Import starting in '$importType' mode, '$importFormat' format");
 
         $handle = fopen($filename, "r");
@@ -664,7 +680,7 @@ class ImportExport
             $rowNumber = $i + 1;
             $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Reviewing line");
             $linestring = htmlspecialchars($line, ENT_NOQUOTES, 'UTF-8');
-            $interpretedString = self::inputInterpreter($linestring);
+            $interpretedString = self::inputInterpreter($linestring, $this->appConfig, $this->gameRules);
             if ($interpretedString === 'header') :
                 $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Header row");
             elseif ($interpretedString === 'empty line') :
@@ -906,11 +922,11 @@ class ImportExport
         fclose($handle);
         $summary = "Import done - $count unique cards, $importType total: $total.";
         print $summary;
-        $from = "From: {$this->serverEmail}\r\nReturn-path: {$this->serverEmail}";
         $subject = "Import failures / warnings";
         $message = "$warningSummary \n \n$summary";
         if ($this->emailEnabled === true) :
-            mail($userEmail, $subject, $message, $from);
+            $mail = new MyPHPMailer(true, $this->appConfig);
+            $mail->sendEmail($userEmail, false, $subject, $message);
         else :
             $this->message->logMessage(
                 '[NOTICE]',

@@ -61,7 +61,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
 if ($deletecollection === 'DELETE') :
     $msg->logMessage('[DEBUG]', "Called to delete collection '$mytable'");
-    $obj = new ImportExport($db, $appConfig, $userEmail);
+    $obj = new ImportExport($db, $appConfig, $gameRules, $userEmail);
     $msg->logMessage('[DEBUG]', "Exporting collection to email...");
     $csvResult = $obj->exportCollectionToCsv($mytable, $myURL, 'email');
     if ($csvResult !== true) :
@@ -707,7 +707,7 @@ endif;
                             exit;
                         endif;
                         $importfile = $_FILES['filename']['tmp_name'];
-                        $obj = new ImportExport($db, $appConfig, $userEmail);
+                        $obj = new ImportExport($db, $appConfig, $gameRules, $userEmail);
                         $importcards = $obj->importCollectionRegex(
                             $importfile,
                             $mytable,

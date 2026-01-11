@@ -60,6 +60,7 @@ All notable changes to this project will be documented in this file.
 - Message now supports AppConfig-backed log configuration to reduce reliance on globals.
 - MyPHPMailer now supports AppConfig-backed email settings to reduce reliance on globals.
 - IniDebug now supports AppConfig-backed logging configuration.
+- Fatal DB exception alerts now send via MyPHPMailer in app and bulk bootstrap.
 
 ## [v0.4.10] - 2026-01-01
 

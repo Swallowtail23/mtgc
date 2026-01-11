@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.12
+Version:     3.13
 Date:        11/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -14,6 +14,7 @@ To do:       -
 use MTG\Core\AppConfig;
 use MTG\Core\GameRules;
 use MTG\Core\INI;
+use MTG\Core\MyPHPMailer;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -136,11 +137,11 @@ try {
         closelog();
     endif;
     $databaseaccess = 0;
-    $from = "From: " . $serverEmail;
     $subject = "Fatal database exception on MTGCollection";
     $message = wordwrap($err->getMessage(), 70);
     if (isset($emailEnabled) && $emailEnabled === true) :
-        mail($adminEmail, $subject, $message, $from);
+        $mail = new MyPHPMailer(true, $appConfig);
+        $mail->sendEmail($adminEmail, false, $subject, $message);
     endif;
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();

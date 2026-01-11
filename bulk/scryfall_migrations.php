@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.14
-Date:        21/12/25
+Version:     2.17
+Date:        11/01/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -33,15 +33,13 @@ $file_folder = $imgLocation . 'json/';
 // Row counts
 $total_count = 0;
 $need_action = 0;
-$deleted = 0;
 $action_text = '';
 
 // How old to overwrite
 $max_fileage = 23 * 3600;
 
-function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
+function getMigrationData($url, $file_location, $max_fileage, $pageNumber, $appConfig)
 {
-    global $db, $logfile;
     $msg = new Message($appConfig);
     $msg->logMessage('[DEBUG]', "Fetching Download URI: $url");
     if ($pageNumber == 0) :
@@ -77,9 +75,9 @@ function getMigrationData($url, $file_location, $max_fileage, $pageNumber)
     endif;
     return $page;
 }
-function checkMigrationDataForMore($file)
+
+function checkMigrationDataForMore($file, $appConfig)
 {
-    global $db, $logfile;
     $msg = new Message($appConfig);
 
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
@@ -95,43 +93,40 @@ function checkMigrationDataForMore($file)
     endforeach;
     return $next_page;
 }
-function clearDBMigrations()
+
+function clearDBMigrations($db, $appConfig)
 {
-    global $db, $logfile;
     $msg = new Message($appConfig);
 
-    if ($result = $db->query('TRUNCATE TABLE migrations')) :
+    if ($db->query('TRUNCATE TABLE migrations')) :
         $msg->logMessage('[NOTICE]', "Scryfall migrations API: migrations table cleared");
     else :
         throw new Exception('[ERROR] scryfall_migrations.php: Preparing SQL: ' . $db->error);
     endif;
 }
+
 function getRowCount($file)
 {
     $data = Items::fromFile($file, ['decoder' => new ExtJsonDecoder(true)]);
     $count = 0;
     foreach ($data as $key => $value) :
         if ($key == 'data') :
-            foreach ($value as $key2 => $value2) :
-                foreach ($value2 as $key3 => $value3) :
-                    if ($key3 == 'id') :
-                        $count = $count + 1;
-                    endif;
-                endforeach;
+            foreach ($value as $migration) :
+                if (is_array($migration) && isset($migration['id'])) :
+                    $count = $count + 1;
+                endif;
             endforeach;
         endif;
     endforeach;
     return $count;
 }
 
-function safeDeleteCheck($id)
+function safeDeleteCheck($id, $db, $appConfig)
 {
-    global $db, $logfile;
     $safeScore = null;
     $msg = new Message($appConfig);
 
     //Find if it's in any decks
-    $userResultArray = $collectionResultArray = $resultArray = array();
     $sql = "SELECT deckname, username FROM decks
         LEFT JOIN users ON decks.owner = users.usernumber
         LEFT JOIN deckcards ON decks.decknumber = deckcards.decknumber
@@ -199,24 +194,23 @@ function safeDeleteCheck($id)
 
 // Script logic runs from here
 $page = 0;
-$file = getMigrationData($starturl, $file_folder, $max_fileage, $page);
+$file = getMigrationData($starturl, $file_folder, $max_fileage, $page, $appConfig);
 $result_files = array();
 $result_files[$page] = $file;
-$moreurl = checkMigrationDataForMore($file);
+$moreurl = checkMigrationDataForMore($file, $appConfig);
 while ($moreurl != 'none') :
     $page = $page + 1;
-    $file = getMigrationData($moreurl, $file_folder, $max_fileage, $page);
+    $file = getMigrationData($moreurl, $file_folder, $max_fileage, $page, $appConfig);
     $result_files[$page] = $file;
-    $moreurl = checkMigrationDataForMore($file);
+    $moreurl = checkMigrationDataForMore($file, $appConfig);
 endwhile;
-$results = $page + 1;
 $total_rows = 0;
 foreach ($result_files as $data) :
     $rows = getRowCount($data);
     $total_rows = $total_rows + $rows;
 endforeach;
 if ($total_rows > 0) :
-    clearDBMigrations();
+    clearDBMigrations($db, $appConfig);
 endif;
 
 foreach ($result_files as $data) :
@@ -279,7 +273,7 @@ foreach ($result_files as $data) :
                 if ($stmt === false) :
                     throw new Exception('[ERROR] scryfall_migrations: Preparing SQL: ' . $db->error);
                 else :
-                    $deleteCheck = safeDeleteCheck($old_scryfall_id);
+                    $deleteCheck = safeDeleteCheck($old_scryfall_id, $db, $appConfig);
                     if ($stmt->num_rows > 0 && $deleteCheck > 10000) :
                     //In db, but safety check failed
                         $db_match = 1;
@@ -314,7 +308,6 @@ foreach ($result_files as $data) :
                             "$old_scryfall_id exists in existing data, but not in any decks or collections "
                             . "- can be deleted"
                         );
-                        $deleted = $deleted + 1;
                         //Delete query here
                         $sql = "DELETE FROM cards_scry WHERE id = ?";
                         $params = [$old_scryfall_id];

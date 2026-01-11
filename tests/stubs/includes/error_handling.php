@@ -2,13 +2,13 @@
 
 // Stub error handling to avoid mail/redirect during tests.
 
-function mtgError($number = null, $string = null, $file = null, $line = null, $context = null)
+function mtgError($number = null, $string = null, $file = null, $line = null, $appConfig = null)
 {
     // Swallow errors during tests
     return true;
 }
 
-function mtgException($err = null)
+function mtgException($err = null, $appConfig = null)
 {
     // Swallow exceptions during tests
     return true;

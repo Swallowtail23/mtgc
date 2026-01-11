@@ -4,6 +4,7 @@ use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use MTG\Cards\ImportExport;
 use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\MyPHPMailer;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -154,9 +155,11 @@ class ImportExportEmailTest extends TestCase
             }
         };
 
+        $gameRules = new GameRules([]);
         $exporter = new ImportExport(
             $db,
             $appConfig,
+            $gameRules,
             'user@example.com'
         );
 
@@ -246,9 +249,11 @@ class ImportExportEmailTest extends TestCase
         };
 
         $logfile = tempnam(sys_get_temp_dir(), 'impexp_');
+        $gameRules = new GameRules([]);
         $exporter = new ImportExport(
             $db,
             $this->buildConfig($logfile, false),
+            $gameRules,
             'user@example.com'
         );
 
