@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        10/01/26
+Version:     1.6
+Date:        11/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
 Notes:       -
@@ -24,6 +24,7 @@ class ScryfallImport
 {
     public static function downloadBulk($url, $dest, $msg, $context = 'downloadBulk', $debug = false)
     {
+        global $appConfig;
         $dir = dirname($dest);
         if (!is_dir($dir)) :
             if (!mkdir($dir, 0775, true)) :
@@ -32,7 +33,7 @@ class ScryfallImport
             endif;
         endif;
 
-        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        $userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
         $tmp = $dest . '.tmp';
         if (is_file($tmp)) :
             @unlink($tmp);
@@ -88,7 +89,8 @@ class ScryfallImport
 
     public static function fetchJson($url, $msg, $context)
     {
-        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $GLOBALS['logfile'] ?? null);
+        global $appConfig;
+        $userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
@@ -319,6 +321,7 @@ class ScryfallImport
         global
             $db,
             $logfile,
+            $appConfig,
             $games_to_include,
             $langs_to_skip,
             $langs_to_skip_all,
@@ -403,7 +406,7 @@ class ScryfallImport
         endif;
 
         if ($imageDownloads === true) :
-            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+            $imageManager = new ImageManager($db, $appConfig);
         endif;
 
         $insertSql = sprintf("INSERT INTO

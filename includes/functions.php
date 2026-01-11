@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     28.26
-Date:        10/01/26
+Version:     28.27
+Date:        11/01/26
 Name:        functions.php
 Purpose:     Functions for all pages
 Notes:       -
@@ -204,7 +204,7 @@ function langReplace($str)
 
 function checkRemoteFile($url)
 {
-    global $logfile;
+    global $appConfig, $logfile;
     $msg = new Message($logfile);
 
     if (stripos($url, 'file://') === 0) :
@@ -218,7 +218,7 @@ function checkRemoteFile($url)
     endif;
 
     $ch = curl_init();
-    $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
+    $userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_NOBODY, 1);
     curl_setopt($ch, CURLOPT_VERBOSE, 1);

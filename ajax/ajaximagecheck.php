@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        10/01/26
+Version:     1.12
+Date:        11/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
 Notes:       Lightweight head/refresh; relies on ImageManager.
@@ -60,7 +60,7 @@ endif;
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
 
 try {
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $appConfig);
     $result = $obj->checkAndRefreshImage($cardUUID);
     $msg->logMessage(
         '[DEBUG]',

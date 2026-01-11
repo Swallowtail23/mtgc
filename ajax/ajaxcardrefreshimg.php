@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        10/01/26
+Version:     1.14
+Date:        11/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -64,7 +64,7 @@ else :
     $msg->logMessage('[NOTICE]', "Image refresh called for $cardUUID by $userEmail");
 
     try {
-        $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+        $obj = new ImageManager($db, $appConfig);
         $newImage = $obj->refreshImage($cardUUID);
 
         if ($newImage === 'success') :

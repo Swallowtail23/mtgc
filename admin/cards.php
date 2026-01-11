@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.14
-Date:        10/01/26
+Version:     5.16
+Date:        11/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -198,7 +198,7 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $appConfig);
     $obj->refreshImage($id);
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

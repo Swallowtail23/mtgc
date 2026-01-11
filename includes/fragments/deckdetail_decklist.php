@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.8
-Date:        10/01/26
+Version:     2.10
+Date:        11/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -125,7 +125,7 @@ endif;
                                 $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                                $imageManager = new ImageManager($db, $appConfig);
                                 $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
@@ -313,12 +313,7 @@ endif;
                                     $cardId = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
-                                    $imageManager = new ImageManager(
-                                        $db,
-                                        $logfile,
-                                        $serverEmail,
-                                        $adminEmail
-                                    );
+                                    $imageManager = new ImageManager($db, $appConfig);
                                     $imageFunction = $imageManager->getImage(
                                         $cardset,
                                         $cardId,
@@ -530,7 +525,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -850,7 +845,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1139,7 +1134,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1496,7 +1491,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -1818,7 +1813,7 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2142,7 +2137,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2235,7 +2230,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2384,7 +2379,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
@@ -2512,7 +2507,7 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,

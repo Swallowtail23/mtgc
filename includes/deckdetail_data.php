@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.5
-Date:        01/01/26
+Version:     2.7
+Date:        11/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
 Notes:       -
@@ -376,7 +376,7 @@ while ($row = $result->fetch_assoc()) :
     elseif ($isPlanePhenomenon) :
         $planes = $planes + $row['cardqty'];
     endif;
-    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new ImageManager($db, $appConfig);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
@@ -419,7 +419,7 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
-    $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $imageManager = new ImageManager($db, $appConfig);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],

@@ -125,7 +125,7 @@ namespace MTG\Cards {
     if (!class_exists(PriceManager::class, false)) {
         class PriceManager
         {
-            public function __construct()
+            public function __construct(...$args)
             {
             }
 
@@ -138,7 +138,7 @@ namespace MTG\Cards {
     if (!class_exists(ImageManager::class, false)) {
         class ImageManager
         {
-            public function __construct()
+            public function __construct(...$args)
             {
             }
 

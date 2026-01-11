@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.20
-Date:        10/01/26
+Version:     22.22
+Date:        11/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -378,7 +378,7 @@ require('includes/menu.php'); //mobile menu
                     '[DEBUG]',
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
-                $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                $imageManager = new ImageManager($db, $appConfig);
                 $imageFunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],

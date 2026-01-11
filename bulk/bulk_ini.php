@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.10
-Date:        25/11/25
+Version:     3.11
+Date:        11/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
 Notes:       -
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Core\AppConfig;
 use MTG\Core\INI;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -84,6 +85,20 @@ elseif ($logLevelIni === '3' and ($fd = fopen($logfile, "a")) !== false) :
     $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
     fclose($fd);
 endif;
+
+$appConfig = AppConfig::fromIni($iniArray, [
+    'general' => [
+        'tier' => $tier,
+        'logLevel' => $logLevelIni,
+        'logFile' => $logfile,
+    ],
+    'email' => [
+        'enabled' => $emailEnabled,
+        'adminEmail' => $adminEmail,
+        'serverEmail' => $serverEmail,
+        'smtp' => $smtpParameters,
+    ],
+]);
 
 //Web root URL and site title
 $myURL = $iniArray['general']['URL'];

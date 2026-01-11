@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        20/12/25
+Version:     1.12
+Date:        11/01/26
 Name:        MyPHPMailer.php
 Purpose:     Extends PHPMailer with standard options.
 Notes:       Usage:
@@ -17,7 +17,6 @@ namespace MTG\Core;
 
 //Import PHPMailer classes into the global namespace
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . "/../../../vendor/autoload.php";
@@ -30,7 +29,6 @@ class MyPHPMailer extends PHPMailer
      * @param bool|null $exceptions
      * @param string    $body A default HTML message body
      */
-    private $smtpParameters;
     private $serverEmail;
     private $logfile;
     private $message;
@@ -41,7 +39,6 @@ class MyPHPMailer extends PHPMailer
         //Don't forget to do this or other things may not be set correctly!
         parent::__construct($exceptions);
         // Set variables
-        $this->smtpParameters = $smtpParameters;
         $this->serverEmail = $serverEmail;
         $this->logfile = $logfile;
         $this->message = new Message($this->logfile);

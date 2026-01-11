@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.47
-Date:        10/01/26
+Version:     14.49
+Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -1098,7 +1098,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+                            $imageManager = new ImageManager($db, $appConfig);
                             $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],

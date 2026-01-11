@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.27
-Date:        10/01/26
+Version:     1.29
+Date:        11/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -237,7 +237,7 @@ if ($action === 'maintoside' && $sideqty > 0) :
             $card_type = $detailRow['f1_type'];
         endif;
         $cardref = str_replace('.', '-', $detailRow['cardsid']);
-        $imageManager = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+        $imageManager = new ImageManager($db, $appConfig);
         $imageFunction = $imageManager->getImage(
             $cardset,
             $cardId,

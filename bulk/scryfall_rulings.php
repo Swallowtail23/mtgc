@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.8
+Version:     3.9
 Date:        11/01/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
@@ -46,7 +46,7 @@ $log_interval = 2500;
 $timeslice_start = microtime(true);
 
 $msg->logMessage('[NOTICE]', "Scryfall Rulings API: fetching $url");
-$userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $logfile);
+$userAgent = UserAgent::buildFromConfig($appConfig, null, $msg);
 $msg->logMessage('[DEBUG]', "Scryfall Rulings API user agent set to $userAgent");
 $options = array(
     CURLOPT_RETURNTRANSFER => true,

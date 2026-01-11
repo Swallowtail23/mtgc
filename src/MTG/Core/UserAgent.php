@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        23/12/25
+Version:     1.4
+Date:        11/01/26
 Name:        UserAgent.php
 Purpose:     Build consistent HTTP user agent strings from config and version data.
 Notes:       -
@@ -17,71 +17,62 @@ class UserAgent
 {
     public static function build($iniPath = '/opt/mtg/mtg_new.ini', $versionPath = null, $logfile = null)
     {
-        static $cache = array();
-        $cacheKey = $iniPath . '|' . ($versionPath ?? '');
-        if (isset($cache[$cacheKey])) :
-            if (!empty($logfile)) :
-                $msg = new Message($logfile);
-                $msg->logMessage('[DEBUG]', "User agent cache hit for $iniPath");
-            endif;
-            return $cache[$cacheKey];
+        $msg = null;
+        if (!empty($logfile)) :
+            $msg = new Message($logfile);
         endif;
+
+        $iniArray = [];
+        if (is_file($iniPath)) :
+            $ini = new INI($iniPath);
+            $iniArray = $ini->data;
+        else :
+            if ($msg !== null) :
+                $msg->logMessage('[DEBUG]', "User agent ini file missing at $iniPath");
+            endif;
+        endif;
+
+        $config = AppConfig::fromIni($iniArray);
+        return self::buildFromConfig($config, $versionPath, $msg);
+    }
+
+    public static function buildFromConfig(AppConfig $config, $versionPath = null, $msg = null): string
+    {
+        static $cache = array();
 
         if ($versionPath === null) :
             $versionPath = dirname(__DIR__, 3) . '/VERSION';
         endif;
 
-        $version = 'unknown';
-        if (is_file($versionPath)) :
-            $rawVersion = trim((string) file_get_contents($versionPath));
-            if ($rawVersion !== '') :
-                $version = ltrim($rawVersion, "vV");
-            else :
-                if (!empty($logfile)) :
-                    $msg = new Message($logfile);
-                    $msg->logMessage('[DEBUG]', "Version file is empty at $versionPath");
-                endif;
+        $url = trim((string) $config->general('url', ''));
+        $adminEmail = trim((string) $config->email('adminEmail', ''));
+
+        if ($url === '') :
+            $url = 'unknown';
+            if ($msg instanceof Message) :
+                $msg->logMessage('[DEBUG]', 'User agent URL missing from config');
             endif;
-        else :
-            if (!empty($logfile)) :
-                $msg = new Message($logfile);
-                $msg->logMessage('[DEBUG]', "Version file missing at $versionPath");
+        endif;
+        if ($adminEmail === '') :
+            $adminEmail = 'unknown';
+            if ($msg instanceof Message) :
+                $msg->logMessage('[DEBUG]', 'User agent admin email missing from config');
             endif;
         endif;
 
-        $url = 'unknown';
-        $adminEmail = 'unknown';
-        if (is_file($iniPath)) :
-            $ini = new INI($iniPath);
-            $iniArray = $ini->data;
-            if (!empty($iniArray['general']['URL'])) :
-                $url = trim((string) $iniArray['general']['URL']);
-            else :
-                if (!empty($logfile)) :
-                    $msg = new Message($logfile);
-                    $msg->logMessage('[DEBUG]', "User agent URL missing from ini file");
-                endif;
+        $cacheKey = $versionPath . '|' . $url . '|' . $adminEmail;
+        if (isset($cache[$cacheKey])) :
+            if ($msg instanceof Message) :
+                $msg->logMessage('[DEBUG]', "User agent cache hit for $versionPath");
             endif;
-            if (!empty($iniArray['email']['AdminEmail'])) :
-                $adminEmail = trim((string) $iniArray['email']['AdminEmail']);
-            else :
-                if (!empty($logfile)) :
-                    $msg = new Message($logfile);
-                    $msg->logMessage('[DEBUG]', "User agent admin email missing from ini file");
-                endif;
-            endif;
-        else :
-            if (!empty($logfile)) :
-                $msg = new Message($logfile);
-                $msg->logMessage('[DEBUG]', "User agent ini file missing at $iniPath");
-            endif;
+            return $cache[$cacheKey];
         endif;
 
+        $version = self::resolveVersion($versionPath, $msg);
         $userAgent = self::buildFromParts($version, $url, $adminEmail);
         $cache[$cacheKey] = $userAgent;
 
-        if (!empty($logfile)) :
-            $msg = new Message($logfile);
+        if ($msg instanceof Message) :
             $msg->logMessage('[DEBUG]', "User agent built as $userAgent");
         endif;
 
@@ -95,5 +86,26 @@ class UserAgent
         $adminEmail = trim((string) $adminEmail);
 
         return "MtGCollection/{$version} ({$url}; {$adminEmail})";
+    }
+
+    private static function resolveVersion(string $versionPath, $msg = null): string
+    {
+        $version = 'unknown';
+        if (is_file($versionPath)) :
+            $rawVersion = trim((string) file_get_contents($versionPath));
+            if ($rawVersion !== '') :
+                $version = ltrim($rawVersion, "vV");
+            else :
+                if ($msg instanceof Message) :
+                    $msg->logMessage('[DEBUG]', "Version file is empty at $versionPath");
+                endif;
+            endif;
+        else :
+            if ($msg instanceof Message) :
+                $msg->logMessage('[DEBUG]', "Version file missing at $versionPath");
+            endif;
+        endif;
+
+        return $version;
     }
 }

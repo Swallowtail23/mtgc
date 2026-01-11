@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        21/12/25
+Version:     1.13
+Date:        11/01/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -20,7 +20,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 
 $msg = new Message($logfile);
-$obj  = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+$obj  = new ImageManager($db, $appConfig);
 
 if (isset($argv[1])) :
     $setcode = $argv[1];

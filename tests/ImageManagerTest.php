@@ -81,7 +81,7 @@ class ImageManagerTest extends TestCase
         $cardId = 'fresh-card';
         $path = $this->createLocalImage($setcode, $cardId, 10); // 10 seconds old
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']);
+        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
         $manager->diffReturn = true; // would refresh if invoked
 
         $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
@@ -99,7 +99,7 @@ class ImageManagerTest extends TestCase
         $age = (new ReflectionClass(ImageManager::class))->getConstant('IMAGE_MAX_AGE') + 100;
         $path = $this->createLocalImage($setcode, $cardId, $age);
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']);
+        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
         $manager->diffReturn = false; // simulate remote same size
 
         $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
@@ -116,7 +116,7 @@ class ImageManagerTest extends TestCase
         $cardId = 'new-card';
         $dest = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']);
+        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
 
         $fetch = new ReflectionMethod(ImageManager::class, 'fetchAndStoreImage');
         $fetch->setAccessible(true);
@@ -138,7 +138,7 @@ class ImageManagerTest extends TestCase
 
     public function testDiffImageTouchOnMatch()
     {
-        $manager = new class (new FakeDbForImages(), $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']) extends ImageManager {
+        $manager = new class (new FakeDbForImages(), $GLOBALS['appConfig']) extends ImageManager {
             public function diffImage($remoteUrl, $localFilePath)
             {
                 clearstatcache(true, $localFilePath);
@@ -196,7 +196,7 @@ class ImageManagerTest extends TestCase
             }
         };
 
-        $manager = new TestImageManager($db, $GLOBALS['logfile'], $GLOBALS['serverEmail'], $GLOBALS['adminEmail']);
+        $manager = new TestImageManager($db, $GLOBALS['appConfig']);
         $manager->diffReturn = false; // treat as same size
 
         $result = $manager->checkAndRefreshImage($cardId);

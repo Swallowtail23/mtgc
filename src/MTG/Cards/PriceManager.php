@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        23/12/25
+Version:     1.4
+Date:        11/01/26
 Name:        PriceManager.php
 Purpose:     Price management class.
 Notes:       -
@@ -38,7 +38,7 @@ class PriceManager
     public function scryfall($cardId, $action = '')
     {
         //Set up the function
-        global $max_card_data_age; //From ini.php
+        global $appConfig, $max_card_data_age; //From ini.php
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail for $cardId");
         if (!isset($cardId)) :
             $this->message->logMessage('[ERROR]', "Scryfall API by $this->userEmail without required card id");
@@ -50,7 +50,7 @@ class PriceManager
         //Set the URL
         $url = $baseurl . "cards/" . $cardId . "?" . $time;
         $this->message->logMessage('[DEBUG]', "Scryfall API by $this->userEmail URL for $cardId is $url");
-        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $userAgent = UserAgent::buildFromConfig($appConfig, null, $this->message);
         $this->message->logMessage('[DEBUG]', "Scryfall API user agent set to $userAgent");
 
         if ($row = $this->db->execute_query("Select id FROM cards_scry WHERE id = ?", [$cardId])) :

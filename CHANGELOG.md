@@ -51,6 +51,8 @@ All notable changes to this project will be documented in this file.
 - Moved auth helpers (CSRF validation, password checks, login stamping, force-password redirects) into Auth classes.
 - Moved inputInterpreter into ImportExport and updated call sites for collection imports and quick add flows.
 - Added AppConfig container for ini-derived config to support future dependency injection.
+- UserAgent now supports AppConfig-backed construction while keeping legacy ini-based entrypoints.
+- UserAgent call sites now build from AppConfig, and ImageManager now derives email/logging config from AppConfig.
 
 ## [v0.4.10] - 2026-01-01
 

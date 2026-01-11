@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        28/12/25
+Version:     1.9
+Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
 Notes:       -
@@ -13,12 +13,13 @@ To do:       -
 
 /*
 Example usage:
-    $obj = new ImageManager($db, $logfile, $serverEmail, $adminEmail);
+    $obj = new ImageManager($db, $appConfig);
     $result = $obj->getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections);
 */
 
 namespace MTG\Cards;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 use MTG\Core\UserAgent;
 
@@ -35,13 +36,15 @@ class ImageManager
     private $serverEmail;
     private $adminEmail;
     private $message;
+    private $appConfig;
 
-    public function __construct($db, $logfile, $serverEmail, $adminEmail)
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
-        $this->serverEmail = $serverEmail;
-        $this->adminEmail = $adminEmail;
+        $this->appConfig = $appConfig;
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
+        $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
+        $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->message = new Message($this->logfile);
     }
 
@@ -327,7 +330,7 @@ class ImageManager
             return 'error';
         endif;
 
-        $userAgent = UserAgent::build('/opt/mtg/mtg_new.ini', null, $this->logfile);
+        $userAgent = UserAgent::buildFromConfig($this->appConfig, null, $this->message);
         $this->message->logMessage('[DEBUG]', "Image fetch user agent set to $userAgent");
         $options = array('http' => array('user_agent' => $userAgent));
         $context = stream_context_create($options);
