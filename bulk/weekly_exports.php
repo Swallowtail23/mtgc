@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.17
-Date:        21/12/25
+Version:     2.19
+Date:        11/01/26
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
 Notes:       Exports csv card collections where users are active and have opted in
@@ -37,10 +37,8 @@ while ($user = $usersExport->fetch_assoc()) :
     $decks = new DeckManager(
         $db,
         $appConfig,
-        $userEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes,
-        $any_quantity
+        $gameRules,
+        $userEmail
     );
     // Decks
     $deckZipPath = '';

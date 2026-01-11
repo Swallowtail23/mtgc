@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.18
+Version:     1.20
 Date:        11/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
@@ -98,10 +98,8 @@ endif;
 $deckManager = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity,
+    $gameRules,
+    $userEmail
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckfragments.php');

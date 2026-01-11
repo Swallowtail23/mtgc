@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.7
+Version:     1.8
 Date:        11/01/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
@@ -322,14 +322,13 @@ class ScryfallImport
             $db,
             $logfile,
             $appConfig,
+            $gameRules,
             $games_to_include,
             $langs_to_skip,
             $langs_to_skip_all,
             $layouts_to_skip,
             $serverEmail,
-            $adminEmail,
-            $imgLocation,
-            $twoCardDetailSections;
+            $adminEmail;
         $msg = new Message($appConfig);
 
         $allowedTables = ['cards_scry', 'cards_scry_test'];
@@ -406,7 +405,7 @@ class ScryfallImport
         endif;
 
         if ($imageDownloads === true) :
-            $imageManager = new ImageManager($db, $appConfig);
+            $imageManager = new ImageManager($db, $appConfig, $gameRules);
         endif;
 
         $insertSql = sprintf("INSERT INTO
@@ -1701,9 +1700,7 @@ class ScryfallImport
                                 $imageManager->getImage(
                                     $set_code,
                                     $id,
-                                    $imgLocation,
-                                    $layout,
-                                    $twoCardDetailSections
+                                    $layout
                                 );
                             endif;
                         elseif ($status === 2) :

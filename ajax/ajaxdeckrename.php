@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.3
+Version:     2.5
 Date:        11/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -98,10 +98,8 @@ endif;
 $deckManager = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity,
+    $gameRules,
+    $userEmail
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckrename.php');

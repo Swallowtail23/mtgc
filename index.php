@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.50
+Version:     14.51
 Date:        11/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -1098,13 +1098,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],
-                                $imgLocation,
                                 $row['layout'],
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :

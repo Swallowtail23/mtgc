@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.9
-Date:        10/01/26
+Version:     4.11
+Date:        11/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -37,10 +37,8 @@ if (isset($_POST['decknumber'])) :
     $obj = new DeckManager(
         $db,
         $appConfig,
-        $userEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes,
-        $any_quantity,
+        $gameRules,
+        $userEmail
     );
     $obj->exportDeck($deckNumber, "download");
 elseif (isset($_POST['text'])) :
@@ -65,10 +63,8 @@ elseif (isset($_POST['text'])) :
     $obj = new DeckManager(
         $db,
         $appConfig,
-        $userEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes,
-        $any_quantity,
+        $gameRules,
+        $userEmail
     );
     $obj->exportMissing($textdata, $filename);
 else :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.11
+Version:     2.14
 Date:        11/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
@@ -30,10 +30,8 @@ if (!isset($deckManager) || !($deckManager instanceof DeckManager)) :
     $deckManager = new DeckManager(
         $db,
         $appConfig,
-        $userEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes,
-        $any_quantity,
+        $gameRules,
+        $userEmail
     );
 endif;
 ?>
@@ -124,13 +122,11 @@ endif;
                                 $cardId = $row['cardsid'];
                                 $cardnumber = $row["number_import"];
                                 $layout = $row['layout'];
-                                $imageManager = new ImageManager($db, $appConfig);
+                                $imageManager = new ImageManager($db, $appConfig, $gameRules);
                                 $imageFunction = $imageManager->getImage(
                                     $cardset,
                                     $cardId,
-                                    $imgLocation,
                                     $layout,
-                                    $twoCardDetailSections,
                                     false
                                 );
                                 if ($imageFunction['front'] == 'error') :
@@ -312,13 +308,11 @@ endif;
                                     $cardId = $row['cardsid'];
                                     $cardnumber = $row["number_import"];
                                     $layout = $row['layout'];
-                                    $imageManager = new ImageManager($db, $appConfig);
+                                    $imageManager = new ImageManager($db, $appConfig, $gameRules);
                                     $imageFunction = $imageManager->getImage(
                                         $cardset,
                                         $cardId,
-                                        $imgLocation,
                                         $layout,
-                                        $twoCardDetailSections,
                                         false
                                     );
                                     if ($imageFunction['front'] == 'error') :
@@ -524,13 +518,11 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -844,13 +836,11 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -1133,13 +1123,11 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -1490,13 +1478,11 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -1812,13 +1798,11 @@ endif;
                             $cardId = $row['cardsid'];
                             $cardnumber = $row["number_import"];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -2136,13 +2120,11 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -2229,13 +2211,11 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -2378,13 +2358,11 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :
@@ -2506,13 +2484,11 @@ endif;
                             $cardref = str_replace('.', '-', $row['cardsid']);
                             $cardId = $row['cardsid'];
                             $layout = $row['layout'];
-                            $imageManager = new ImageManager($db, $appConfig);
+                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $cardset,
                                 $cardId,
-                                $imgLocation,
                                 $layout,
-                                $twoCardDetailSections,
                                 false
                             );
                             if ($imageFunction['front'] == 'error') :

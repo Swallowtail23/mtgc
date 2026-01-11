@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.17
+Version:     5.18
 Date:        11/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -198,7 +198,7 @@ elseif ((isset($_GET['deleteimg'])) and ($_GET['deleteimg'] == 'DELETEIMG')) :
     if (isset($_GET['id'])) :
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_SPECIAL_CHARS);
     endif;
-    $obj = new ImageManager($db, $appConfig);
+    $obj = new ImageManager($db, $appConfig, $gameRules);
     $obj->refreshImage($id);
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

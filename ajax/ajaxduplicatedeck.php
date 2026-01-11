@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.17
 Date:        11/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -93,10 +93,8 @@ else :
             $obj = new DeckManager(
                 $db,
                 $appConfig,
-                $userEmail,
-                $importLinestoIgnore,
-                $nonPreferredSetCodes,
-                $any_quantity,
+                $gameRules,
+                $userEmail
             );
 
             //Create the new deck shell

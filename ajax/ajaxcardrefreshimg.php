@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.17
 Date:        11/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -64,7 +64,7 @@ else :
     $msg->logMessage('[NOTICE]', "Image refresh called for $cardUUID by $userEmail");
 
     try {
-        $obj = new ImageManager($db, $appConfig);
+        $obj = new ImageManager($db, $appConfig, $gameRules);
         $newImage = $obj->refreshImage($cardUUID);
 
         if ($newImage === 'success') :

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.13
-Date:        10/01/26
+Version:     1.15
+Date:        11/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
 Notes:       {none}
@@ -53,10 +53,8 @@ if ($isValidReferrer) :
         $deckManager = new DeckManager(
             $db,
             $appConfig,
-            $userEmail,
-            $importLinestoIgnore,
-            $nonPreferredSetCodes,
-            $any_quantity,
+            $gameRules,
+            $userEmail
         );
         $ownerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'deckimage.php');
         if ($ownerCheck === false) :

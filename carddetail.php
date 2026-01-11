@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.23
+Version:     22.26
 Date:        11/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -378,13 +378,11 @@ require('includes/menu.php'); //mobile menu
                     '[DEBUG]',
                     "Call for getImage by $userEmail with $setcode,$id,$imgLocation, {$row['layout']}"
                 );
-                $imageManager = new ImageManager($db, $appConfig);
+                $imageManager = new ImageManager($db, $appConfig, $gameRules);
                 $imageFunction = $imageManager->getImage(
                     $setcode,
                     $row['cs_id'],
-                    $imgLocation,
                     $row['layout'],
-                    $twoCardDetailSections,
                     false
                 );
                 $msg->logMessage('[DEBUG]', "getImage result: {$imageFunction['front']} / {$imageFunction['back']}");
@@ -1802,10 +1800,8 @@ require('includes/menu.php'); //mobile menu
                                         $obj = new DeckManager(
                                             $db,
                                             $appConfig,
-                                            $userEmail,
-                                            $importLinestoIgnore,
-                                            $nonPreferredSetCodes,
-                                            $any_quantity,
+                                            $gameRules,
+                                            $userEmail
                                         );
                                         $decksuccess = $obj->addDeck($user, $newdeckname);
                                         if ($decksuccess['flag'] === 1) :
@@ -1818,10 +1814,8 @@ require('includes/menu.php'); //mobile menu
                                             $obj = new DeckManager(
                                                 $db,
                                                 $appConfig,
-                                                $userEmail,
-                                                $importLinestoIgnore,
-                                                $nonPreferredSetCodes,
-                                                $any_quantity,
+                                                $gameRules,
+                                                $userEmail
                                             );
                                         if ($obj->assertDeckOwner($decktoaddto, $user, 'carddetail.php') === false) : ?>
                                                 <div class="msg-new error-new">
@@ -1891,10 +1885,8 @@ require('includes/menu.php'); //mobile menu
                                             $obj = new DeckManager(
                                                 $db,
                                                 $appConfig,
-                                                $userEmail,
-                                                $importLinestoIgnore,
-                                                $nonPreferredSetCodes,
-                                                $any_quantity,
+                                                $gameRules,
+                                                $userEmail
                                             );
                                             $obj->addDeckCard($decktoaddto, $cardId, 'main', $deckqty);
 
@@ -1957,10 +1949,8 @@ require('includes/menu.php'); //mobile menu
                                 $obj = new DeckManager(
                                     $db,
                                     $appConfig,
-                                    $userEmail,
-                                    $importLinestoIgnore,
-                                    $nonPreferredSetCodes,
-                                    $any_quantity,
+                                    $gameRules,
+                                    $userEmail
                                 );
                                 $inmydecks = $obj->deckCardCheck($cardId, $user);
                                 echo "<b>Decks</b><br>";
@@ -1986,10 +1976,8 @@ require('includes/menu.php'); //mobile menu
                                         $obj = new DeckManager(
                                             $db,
                                             $appConfig,
-                                            $userEmail,
-                                            $importLinestoIgnore,
-                                            $nonPreferredSetCodes,
-                                            $any_quantity,
+                                            $gameRules,
+                                            $userEmail
                                         );
                                         $ingrpdecks = $obj->deckCardCheck($cardId, $grpuserid);
                                         $t = $t + 1;

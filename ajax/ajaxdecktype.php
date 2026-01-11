@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.16
 Date:        11/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
@@ -92,10 +92,8 @@ endif;
 $deckManager = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity,
+    $gameRules,
+    $userEmail
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdecktype.php');

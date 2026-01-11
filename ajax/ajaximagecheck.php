@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.13
+Version:     1.14
 Date:        11/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -60,7 +60,7 @@ endif;
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
 
 try {
-    $obj = new ImageManager($db, $appConfig);
+    $obj = new ImageManager($db, $appConfig, $gameRules);
     $result = $obj->checkAndRefreshImage($cardUUID);
     $msg->logMessage(
         '[DEBUG]',

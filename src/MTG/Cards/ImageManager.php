@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.13
 Date:        11/01/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
@@ -13,13 +13,14 @@ To do:       -
 
 /*
 Example usage:
-    $obj = new ImageManager($db, $appConfig);
-    $result = $obj->getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections);
+    $obj = new ImageManager($db, $appConfig, $gameRules);
+    $result = $obj->getImage($setcode, $cardId, $layout);
 */
 
 namespace MTG\Cards;
 
 use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\UserAgent;
 
@@ -48,19 +49,29 @@ class ImageManager
     * @var AppConfig
     */
     private $appConfig;
+    /**
+    * @var GameRules
+    */
+    private $gameRules;
 
-    public function __construct($db, AppConfig $appConfig)
+    public function __construct($db, AppConfig $appConfig, GameRules $gameRules)
     {
         $this->db = $db;
         $this->appConfig = $appConfig;
+        $this->gameRules = $gameRules;
         $this->serverEmail = (string) $this->appConfig->email('serverEmail', '');
         $this->adminEmail = (string) $this->appConfig->email('adminEmail', '');
         $this->message = new Message($this->appConfig);
     }
 
-    public function getImage($setcode, $cardId, $imgLocation, $layout, $twoCardDetailSections, $allowFetch = true)
+    public function getImage($setcode, $cardId, $layout, $allowFetch = true)
     {
         $allowFetchLabel = ($allowFetch) ? 'true' : 'false';
+        $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
+        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
+        if (!is_array($twoCardDetailSections)) :
+            $twoCardDetailSections = [];
+        endif;
         $this->message->logMessage(
             '[DEBUG]',
             "Called for $setcode, $cardId, $imgLocation, $layout (fetch $allowFetchLabel)"
@@ -151,7 +162,11 @@ class ImageManager
 
     public function refreshImage($cardId)
     {
-        global $imgLocation, $twoCardDetailSections;
+        $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
+        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
+        if (!is_array($twoCardDetailSections)) :
+            $twoCardDetailSections = [];
+        endif;
         $this->message->logMessage('[DEBUG]', "Refresh image called for $cardId");
 
         set_error_handler(function ($errno, $errstr, $errfile, $errline) {
@@ -170,9 +185,7 @@ class ImageManager
             $imageFunction = $this->getImage(
                 $row['setcode'],
                 $cardId,
-                $imgLocation,
-                $row['layout'],
-                $twoCardDetailSections
+                $row['layout']
             );
             if ($imageFunction['front'] != 'error') :
                 $imagename = substr($imageFunction['front'], strrpos($imageFunction['front'], '/') + 1);
@@ -231,9 +244,7 @@ class ImageManager
             $imageFunction = $this->getImage(
                 $row['setcode'],
                 $cardId,
-                $imgLocation,
-                $row['layout'],
-                $twoCardDetailSections
+                $row['layout']
             );
             return 'success';
         endif;
@@ -242,7 +253,11 @@ class ImageManager
 
     public function checkAndRefreshImage($cardId)
     {
-        global $imgLocation, $twoCardDetailSections;
+        $imgLocation = (string) $this->appConfig->general('imageBaseDir', '');
+        $twoCardDetailSections = $this->gameRules->get('twoCardDetailSections', []);
+        if (!is_array($twoCardDetailSections)) :
+            $twoCardDetailSections = [];
+        endif;
 
         $cardData = $this->getCardImageUris($cardId);
         $setcode = $cardData['setcode'];

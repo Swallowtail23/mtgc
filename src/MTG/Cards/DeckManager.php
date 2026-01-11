@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.20
-Date:        10/01/26
+Version:     2.22
+Date:        11/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -14,6 +14,7 @@ To do:       -
 namespace MTG\Cards;
 
 use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -27,6 +28,10 @@ class DeckManager
     * @var AppConfig
     */
     private $appConfig;
+    /**
+    * @var GameRules
+    */
+    private $gameRules;
     /**
     * @var array<int,array<string,mixed>>
     */
@@ -46,42 +51,30 @@ class DeckManager
     /**
     * @var array<int,string>
     */
-    private $importLinestoIgnore;
-    /**
-    * @var array<int,string>
-    */
-    private $nonPreferredSetCodes;
-    /**
-    * @var array<int,string>
-    */
-    private $anyQuantity = [];
-    /**
-    * @var array<int,string>
-    */
     private $limitWarnings = [];
 
     public function __construct(
         $db,
         AppConfig $appConfig,
-        $userEmail,
-        $importLinestoIgnore,
-        $nonPreferredSetCodes,
-        $anyQuantity
+        GameRules $gameRules,
+        $userEmail
     ) {
         $this->db = $db;
         $this->appConfig = $appConfig;
+        $this->gameRules = $gameRules;
         $this->message = new Message($this->appConfig);
         $this->userEmail = $userEmail;
         $this->emailEnabled = (bool) $this->appConfig->email('enabled', false);
-        $this->importLinestoIgnore = $importLinestoIgnore;
-        $this->nonPreferredSetCodes = $nonPreferredSetCodes;
-        $this->anyQuantity = is_array($anyQuantity) ? $anyQuantity : [];
     }
 
     public function processInput($deckNumber, $input)
     {
         // processInput can handle either single-line or multi-line 'add card' inputs using quickadd.
         // Multi-line inputs are batched for combined data write by addDeckCardsBatch; called from deckdetail.php.
+        $importLinestoIgnore = $this->gameRules->get('importLinestoIgnore', []);
+        if (!is_array($importLinestoIgnore)) :
+            $importLinestoIgnore = [];
+        endif;
 
         $this->message->logMessage(
             '[DEBUG]',
@@ -117,13 +110,13 @@ class DeckManager
                     $partnerTrigger = true;
                     $commanderTrigger = false;
                     $this->message->logMessage('[DEBUG]', "Row $row: Partner/Background header");
-                elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
+                elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $importLinestoIgnore)) :
                     if (trim($line) === 'Sideboard') :
                         $this->message->logMessage('[DEBUG]', "Row $row: Sideboard header");
                         $sideboardTrigger = true;
                         $commanderTrigger = false;
                         $partnerTrigger = false;
-                    elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $this->importLinestoIgnore)) :
+                    elseif (trim($line) === '' || inArrayCaseInsensitive(trim($line), $importLinestoIgnore)) :
                         $this->message->logMessage('[DEBUG]', "Row $row: Empty row");
                         if ($commanderTrigger || $partnerTrigger) :
                             $this->message->logMessage('[DEBUG]', "Row $row: Resetting commander mode");
@@ -222,7 +215,14 @@ class DeckManager
         $rowNumber = null,
         $originalLine = null
     ) {
-        global $noQuickAddLayouts;
+        $noQuickAddLayouts = $this->gameRules->get('noQuickAddLayouts', []);
+        if (!is_array($noQuickAddLayouts)) :
+            $noQuickAddLayouts = [];
+        endif;
+        $nonPreferredSetCodes = $this->gameRules->get('nonPreferredSetCodes', []);
+        if (!is_array($nonPreferredSetCodes)) :
+            $nonPreferredSetCodes = [];
+        endif;
 
         $this->message->logMessage(
             '[NOTICE]',
@@ -353,7 +353,7 @@ class DeckManager
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
             elseif ($quickAddCard !== '' and $quickAddSet === '') :
                 // Card name only provided, or with a number (but useless without setcode) - just grab a name match
-                $setcodePlaceholders = implode(',', array_fill(0, count($this->nonPreferredSetCodes), '?'));
+                $setcodePlaceholders = implode(',', array_fill(0, count($nonPreferredSetCodes), '?'));
                 $query = "SELECT id FROM cards_scry WHERE (name = ? OR f1_name = ? OR f2_name = ? OR
                     printed_name = ? OR f1_printed_name = ? OR f2_printed_name = ? OR
                     flavor_name = ? OR f1_flavor_name = ? OR f2_flavor_name = ?) AND
@@ -362,7 +362,7 @@ class DeckManager
                     ORDER BY LENGTH(setcode) ASC, release_date DESC, number ASC LIMIT 1";
                 $params = array_fill(0, 9, $quickAddCard); // First 9 are for the name variations
                 $params = array_merge($params, $noQuickAddLayouts); // Add layout exclusions
-                $params = array_merge($params, $this->nonPreferredSetCodes); // Add non-preferred set codes
+                $params = array_merge($params, $nonPreferredSetCodes); // Add non-preferred set codes
                 $stmt = $this->db->prepare($query);
                 $stmt->bind_param(str_repeat('s', count($params)), ...$params);
             elseif ($quickAddCard === '' and $quickAddSet !== '' and $quickAddNumber !== '') :
@@ -433,9 +433,9 @@ class DeckManager
     public function addDeckCardsBatch($deckNumber, $batchedCardIds)
     {
         $this->message->logMessage('[DEBUG]', "deckManager batch process called");
-        global $commander_decktypes;
-        if (!is_array($commander_decktypes)) :
-            $commander_decktypes = [];
+        $commanderDecktypes = $this->gameRules->get('commander_decktypes', []);
+        if (!is_array($commanderDecktypes)) :
+            $commanderDecktypes = [];
         endif;
         $values = [];
         $placeholders = [];
@@ -461,7 +461,7 @@ class DeckManager
             endif;
         endif;
 
-        $cdr_type_deck = in_array($decktype, $commander_decktypes);
+        $cdr_type_deck = in_array($decktype, $commanderDecktypes);
         if ($cdr_type_deck == true) :
             $this->message->logMessage('[DEBUG]', "Batch insert: Commander deck; skipping copy limits");
         endif;
@@ -751,7 +751,18 @@ class DeckManager
 
     public function addDeckCard($deck, $card, $section, $quantity)
     {
-        global $commander_decktypes, $commander_multiples;
+        $commanderDecktypes = $this->gameRules->get('commander_decktypes', []);
+        if (!is_array($commanderDecktypes)) :
+            $commanderDecktypes = [];
+        endif;
+        $commanderMultiples = $this->gameRules->get('commander_multiples', []);
+        if (!is_array($commanderMultiples)) :
+            $commanderMultiples = [];
+        endif;
+        $anyQuantity = $this->gameRules->get('any_quantity', []);
+        if (!is_array($anyQuantity)) :
+            $anyQuantity = [];
+        endif;
         $this->message->logMessage(
             '[NOTICE]',
             "Add card called: '$quantity' x '$card' to '$deck' ($section)"
@@ -783,9 +794,9 @@ class DeckManager
                 $card_type = 'None';
             endif;
 
-            while ($i < count($commander_multiples)) :
-                $this->message->logMessage('[DEBUG]', "Checking type for: {$commander_multiples[$i]}");
-                if (str_contains($card_type, $commander_multiples[$i]) == true) :
+            while ($i < count($commanderMultiples)) :
+                $this->message->logMessage('[DEBUG]', "Checking type for: {$commanderMultiples[$i]}");
+                if (str_contains($card_type, $commanderMultiples[$i]) == true) :
                     $cdr_1_plus = true;
                 endif;
                 $i++;
@@ -798,10 +809,10 @@ class DeckManager
                 ]
             );
             $i = 0;
-            while ($i < count($this->anyQuantity)) :
-                $this->message->logMessage('[DEBUG]', "Checking ability for: {$this->anyQuantity[$i]}");
+            while ($i < count($anyQuantity)) :
+                $this->message->logMessage('[DEBUG]', "Checking ability for: {$anyQuantity[$i]}");
                 foreach ($ability_candidates as $ability_text) :
-                    if (str_contains($ability_text, $this->anyQuantity[$i]) == true) :
+                    if (str_contains($ability_text, $anyQuantity[$i]) == true) :
                         $cdr_1_plus = true;
                         break;
                     endif;
@@ -852,7 +863,7 @@ class DeckManager
         else :
             $already_in_deck = false;
         endif;
-        if (in_array($decktype, $commander_decktypes)) :
+        if (in_array($decktype, $commanderDecktypes)) :
             $this->message->logMessage('[DEBUG]', "Deck $deck is Commander-type");
             $cdr_type_deck = true;
         else :
@@ -1486,7 +1497,10 @@ class DeckManager
         // - Bulk
         // - Variable (returns the decklist from the function, used in duplicate deck function)
 
-        global $commander_decktypes;
+        $commanderDecktypes = $this->gameRules->get('commander_decktypes', []);
+        if (!is_array($commanderDecktypes)) :
+            $commanderDecktypes = [];
+        endif;
         $this->message->logMessage('[NOTICE]', "Deck export called for deck $deckNumber");
 
         $detectPlanePhenomenon = function ($cardType) {
@@ -1580,7 +1594,7 @@ class DeckManager
                 $planeLines = [];
                 $tokenLines = [];
                 $sideLines = [];
-                if (in_array($decktype, $commander_decktypes)) :
+                if (in_array($decktype, $commanderDecktypes)) :
                     $cdrDeck = 1;
                     foreach ($allRows as $row) :
                         if ($row['commander'] === 1) :
@@ -1796,6 +1810,10 @@ class DeckManager
 
     public function mtgCardCopyLimit($card_type, $ability, $f1_ability = null, $f2_ability = null, $decktype = null)
     {
+        $anyQuantity = $this->gameRules->get('any_quantity', []);
+        if (!is_array($anyQuantity)) :
+            $anyQuantity = [];
+        endif;
         if ($decktype === 'Wishlist') :
             return null;
         endif;
@@ -1813,7 +1831,7 @@ class DeckManager
         );
 
         foreach ($ability_candidates as $ability_text) :
-            foreach ($this->anyQuantity as $rule) :
+            foreach ($anyQuantity as $rule) :
                 if (str_contains($ability_text, $rule)) :
                     return null;
                 endif;
@@ -1858,12 +1876,15 @@ class DeckManager
 
     public function cardLegalDBField($decktype)
     {
-        global $deck_legality_map;
+        $deckLegalityMap = $this->gameRules->get('deck_legality_map', []);
+        if (!is_array($deckLegalityMap)) :
+            $deckLegalityMap = [];
+        endif;
 
         $this->message->logMessage('[DEBUG]', "Looking up db_field for legality for deck type '$decktype'");
-        $index = array_search("$decktype", array_column($deck_legality_map, 'decktype'));
+        $index = array_search("$decktype", array_column($deckLegalityMap, 'decktype'));
         if ($index !== false) :
-            $db_field = $deck_legality_map[$index]['db_field'];
+            $db_field = $deckLegalityMap[$index]['db_field'];
         endif;
         $this->message->logMessage('[DEBUG]', "Deck type '$decktype' has legality in '$db_field'");
         return $db_field;

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.31
+Version:     1.34
 Date:        11/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -91,10 +91,8 @@ endif;
 $deckManager = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity,
+    $gameRules,
+    $userEmail
 );
 
 $deckOwnerCheck = $deckManager->assertDeckOwner($deckNumber, $user, 'ajaxdeckcard.php');
@@ -236,13 +234,11 @@ if ($action === 'maintoside' && $sideqty > 0) :
             $card_type = $detailRow['f1_type'];
         endif;
         $cardref = str_replace('.', '-', $detailRow['cardsid']);
-        $imageManager = new ImageManager($db, $appConfig);
+        $imageManager = new ImageManager($db, $appConfig, $gameRules);
         $imageFunction = $imageManager->getImage(
             $cardset,
             $cardId,
-            $imgLocation,
             $layout,
-            $twoCardDetailSections,
             false
         );
         if ($imageFunction['front'] == 'error') :

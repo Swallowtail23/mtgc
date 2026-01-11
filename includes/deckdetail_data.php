@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.8
+Version:     2.11
 Date:        11/01/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
@@ -38,10 +38,8 @@ endif;
 $deckManager = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity,
+    $gameRules,
+    $userEmail
 );
 
 // Get relevant db_field with legality
@@ -375,13 +373,11 @@ while ($row = $result->fetch_assoc()) :
     elseif ($isPlanePhenomenon) :
         $planes = $planes + $row['cardqty'];
     endif;
-    $imageManager = new ImageManager($db, $appConfig);
+    $imageManager = new ImageManager($db, $appConfig, $gameRules);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
-        $imgLocation,
         $row['layout'],
-        $twoCardDetailSections,
         false
     );
     if ($imageFunction['front'] == 'error') :
@@ -418,13 +414,11 @@ while ($row = $sideresult->fetch_assoc()) :
         $row['name'] = $row['flavor_name'];
     endif;
     $cardset = strtolower($row["setcode"]);
-    $imageManager = new ImageManager($db, $appConfig);
+    $imageManager = new ImageManager($db, $appConfig, $gameRules);
     $imageFunction = $imageManager->getImage(
         $cardset,
         $row['cardsid'],
-        $imgLocation,
         $row['layout'],
-        $twoCardDetailSections,
         false
     );
     if ($imageFunction['front'] == 'error') :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.11
+Version:     3.12
 Date:        11/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
@@ -12,6 +12,7 @@ To do:       -
 */
 
 use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use MTG\Core\INI;
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
@@ -103,7 +104,12 @@ $appConfig = AppConfig::fromIni($iniArray, [
 //Web root URL and site title
 $myURL = $iniArray['general']['URL'];
 $siteTitle = $iniArray['general']['title'];
-$any_quantity = array("A deck can have any number of cards named"); // E.g. Relentless Rats
+
+$gameRules = GameRules::fromFile(__DIR__ . '/../includes/game_rules.php');
+$gameRulesData = $gameRules->all();
+foreach ($gameRulesData as $ruleName => $ruleValue) :
+    $$ruleName = $ruleValue;
+endforeach;
 
 //DB connect
 define('DB_HOST', $iniArray['database']['DBServer']);  //host
@@ -139,49 +145,3 @@ try {
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
 }
-
-//Primary definition is in ini.php - used here for image retrieval for new cards
-$twoCardDetailSections = array('transform',
-                                  'modal_dfc',
-                                  'reversible_card',
-                                  'double_faced_token',
-                                  'battle',
-                                  'art_series');
-
-// Langs and layouts (used in card bulk)
-
-/// Languages to ignore in Default cards download (currently importing all)
-// $langs_to_skip = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
-$langs_to_skip = [];
-
-/// Languages to ignore in All cards download (currently importing all)
-// $langs_to_skip_all = ['fr','es','it','zhs','sa','he','de','ru','ar','grc','la','zht','ko','pt'];
-$langs_to_skip_all = [];
-
-/// Layouts to skip (currently empty, so all layouts are imported)
-$layouts_to_skip = [];
-
-// Which type of cards to include
-$games_to_include = ['paper','arena'];
-
-// Where to get URL of latest bulk downloads
-$defaultCardsUrl = "https://api.scryfall.com/bulk-data/default-cards";
-$allCardsUrl = "https://api.scryfall.com/bulk-data/all-cards";
-
-$importLinestoIgnore = array(
-                    "Creatures",
-                    "Instants and Sorceries",
-                    "Other",
-                    "Lands",
-                    "Sideboard",
-                    "Notes",
-                    "Sideboard notes",
-                    "Planes and Phenomena",
-                    "Tokens"
-);
-
-$commander_decktypes = array('Commander',
-                             'Tiny Leader');
-
-// Setcodes to not include by default when card-adding (i.e. excluding plst in favour of originals)
-$nonPreferredSetCodes = array('plst','sld','spg');

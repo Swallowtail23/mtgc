@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        11/01/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
@@ -20,7 +20,7 @@ require('../includes/error_handling.php');
 require('../includes/functions.php');
 
 $msg = new Message($appConfig);
-$obj  = new ImageManager($db, $appConfig);
+$obj  = new ImageManager($db, $appConfig, $gameRules);
 
 if (isset($argv[1])) :
     $setcode = $argv[1];

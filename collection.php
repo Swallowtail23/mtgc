@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.17
-Date:        10/01/26
+Version:     1.19
+Date:        11/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -724,10 +724,8 @@ endif;
                                 $obj = new DeckManager(
                                     $db,
                                     $appConfig,
-                                    $userEmail,
-                                    $importLinestoIgnore,
-                                    $nonPreferredSetCodes,
-                                    $any_quantity,
+                                    $gameRules,
+                                    $userEmail
                                 );
                                 $msg->logMessage(
                                     '[DEBUG]',
@@ -747,10 +745,8 @@ endif;
                                     $deckManager = new DeckManager(
                                         $db,
                                         $appConfig,
-                                        $userEmail,
-                                        $importLinestoIgnore,
-                                        $nonPreferredSetCodes,
-                                        $any_quantity,
+                                        $gameRules,
+                                        $userEmail
                                     );
                                     // Read the entire file content into a variable
                                     $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.13
-Date:        10/01/26
+Version:     5.15
+Date:        11/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -123,10 +123,8 @@ require('includes/menu.php'); //mobile menu
                 $obj = new DeckManager(
                     $db,
                     $appConfig,
-                    $userEmail,
-                    $importLinestoIgnore,
-                    $nonPreferredSetCodes,
-                    $any_quantity,
+                    $gameRules,
+                    $userEmail
                 );
                 // returns array with success flag, and if success flag is 1, the deck number (otherwise NULL)
                 $decksuccess = $obj->addDeck($user, $deckName);
@@ -139,10 +137,8 @@ require('includes/menu.php'); //mobile menu
             $obj = new DeckManager(
                 $db,
                 $appConfig,
-                $userEmail,
-                $importLinestoIgnore,
-                $nonPreferredSetCodes,
-                $any_quantity,
+                $gameRules,
+                $userEmail
             );
             $obj->delDeck($decktodelete);
         endif;

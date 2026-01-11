@@ -1,6 +1,7 @@
 <?php
 
 use MTG\Cards\DeckManager;
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckStmtStub
@@ -53,14 +54,14 @@ class DeckManagerTest extends TestCase
         $stmt = new DeckStmtStub();
         $db = new DeckDbStub($stmt);
         $GLOBALS['siteTitle'] = 'MTG';
-        $anyQuantity = $GLOBALS['any_quantity'] ?? [];
+        $gameRules = new GameRules([
+            'commander_decktypes' => []
+        ]);
         $manager = new DeckManager(
             $db,
             $GLOBALS['appConfig'],
-            'user@example.com',
-            [],
-            [],
-            $anyQuantity
+            $gameRules,
+            'user@example.com'
         );
 
         $batch = [

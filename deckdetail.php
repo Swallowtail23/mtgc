@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.74
+Version:     25.76
 Date:        11/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -113,10 +113,8 @@ $msg->logMessage('[NOTICE]', "Checking deck $deckNumber");
 $obj = new DeckManager(
     $db,
     $appConfig,
-    $userEmail,
-    $importLinestoIgnore,
-    $nonPreferredSetCodes,
-    $any_quantity
+    $gameRules,
+    $userEmail
 );
 if ($obj->assertDeckOwner($deckNumber, $user, 'deckdetail.php') === false) : ?>
     <div id='page'>

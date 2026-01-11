@@ -1,6 +1,8 @@
 <?php
 
 use MTG\Cards\ImageManager;
+use MTG\Core\AppConfig;
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
@@ -25,6 +27,8 @@ class TestImageManager extends ImageManager
 
 class ImageManagerTest extends TestCase
 {
+    private $appConfig;
+    private $gameRules;
     private $tempDir;
     private $imgRoot;
     private $remoteUrl;
@@ -35,10 +39,63 @@ class ImageManagerTest extends TestCase
         $this->imgRoot = $this->tempDir . '/cardimg/';
         mkdir($this->imgRoot, 0777, true);
 
-        $GLOBALS['imgLocation'] = $this->imgRoot;
-        $GLOBALS['twoCardDetailSections'] = [];
-        $GLOBALS['serverEmail'] = 'server@example.test';
-        $GLOBALS['adminEmail'] = 'admin@example.test';
+        $this->appConfig = AppConfig::fromIni(
+            [
+                'general' => [
+                    'URL' => 'http://localhost',
+                    'title' => 'Test',
+                    'tier' => 'dev',
+                    'Loglevel' => 0,
+                    'Logfile' => sys_get_temp_dir() . '/mtg_test.log',
+                    'ImgLocation' => $this->imgRoot,
+                    'Timezone' => 'UTC',
+                    'Locale' => 'en_US',
+                    'Copyright' => ''
+                ],
+                'security' => [
+                    'Turnstile' => 'disabled',
+                    'Turnstile_site_key' => '',
+                    'Turnstile_secret_key' => '',
+                    'TrustDuration' => 0,
+                    'Badloginlimit' => 0,
+                    'AdminIP' => ''
+                ],
+                'email' => [
+                    'Email' => 'disabled',
+                    'AdminEmail' => 'admin@example.test',
+                    'ServerEmail' => 'server@example.test',
+                    'SMTPDebug' => '',
+                    'Host' => '',
+                    'SMTPAuth' => '',
+                    'Username' => '',
+                    'Password' => '',
+                    'SMTPSecure' => '',
+                    'Port' => 0,
+                    'SMTPHelo' => '',
+                    'SMTPVerifySSL' => 1
+                ],
+                'fx' => [
+                    'FreecurrencyAPI' => '',
+                    'TargetCurrency' => ''
+                ],
+                'comments' => [
+                    'Disqus' => 'disabled',
+                    'DisqusDevURL' => '',
+                    'DisqusProdURL' => ''
+                ]
+            ],
+            [
+                'general' => [
+                    'imageBaseDir' => $this->imgRoot
+                ],
+                'email' => [
+                    'enabled' => false
+                ],
+            ]
+        );
+        $this->gameRules = new GameRules([
+            'twoCardDetailSections' => []
+        ]);
         $this->remoteUrl = 'http://example.test/front.jpg';
     }
 
@@ -81,7 +138,7 @@ class ImageManagerTest extends TestCase
         $cardId = 'fresh-card';
         $path = $this->createLocalImage($setcode, $cardId, 10); // 10 seconds old
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
+        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
         $manager->diffReturn = true; // would refresh if invoked
 
         $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
@@ -99,7 +156,7 @@ class ImageManagerTest extends TestCase
         $age = (new ReflectionClass(ImageManager::class))->getConstant('IMAGE_MAX_AGE') + 100;
         $path = $this->createLocalImage($setcode, $cardId, $age);
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
+        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
         $manager->diffReturn = false; // simulate remote same size
 
         $process = new ReflectionMethod(ImageManager::class, 'processImageFace');
@@ -116,7 +173,7 @@ class ImageManagerTest extends TestCase
         $cardId = 'new-card';
         $dest = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
 
-        $manager = new TestImageManager(new FakeDbForImages(), $GLOBALS['appConfig']);
+        $manager = new TestImageManager(new FakeDbForImages(), $this->appConfig, $this->gameRules);
 
         $fetch = new ReflectionMethod(ImageManager::class, 'fetchAndStoreImage');
         $fetch->setAccessible(true);
@@ -138,7 +195,7 @@ class ImageManagerTest extends TestCase
 
     public function testDiffImageTouchOnMatch()
     {
-        $manager = new class (new FakeDbForImages(), $GLOBALS['appConfig']) extends ImageManager {
+        $manager = new class (new FakeDbForImages(), $this->appConfig, $this->gameRules) extends ImageManager {
             public function diffImage($remoteUrl, $localFilePath)
             {
                 clearstatcache(true, $localFilePath);
@@ -196,7 +253,7 @@ class ImageManagerTest extends TestCase
             }
         };
 
-        $manager = new TestImageManager($db, $GLOBALS['appConfig']);
+        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
         $manager->diffReturn = false; // treat as same size
 
         $result = $manager->checkAndRefreshImage($cardId);

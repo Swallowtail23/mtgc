@@ -1,6 +1,7 @@
 <?php
 
 use MTG\Cards\DeckManager;
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckOwnerAssertTest extends TestCase
@@ -41,13 +42,18 @@ class DeckOwnerAssertTest extends TestCase
     private function buildDeckManager($db)
     {
         $anyQuantity = $GLOBALS['any_quantity'] ?? [];
+        $gameRules = new GameRules([
+            'any_quantity' => $anyQuantity,
+            'commander_decktypes' => [],
+            'commander_multiples' => [],
+            'deck_legality_map' => [],
+            'noQuickAddLayouts' => [],
+        ]);
         return new DeckManager(
             $db,
             $GLOBALS['appConfig'],
-            'user@example.test',
-            [],
-            [],
-            $anyQuantity
+            $gameRules,
+            'user@example.test'
         );
     }
 }

@@ -1,14 +1,22 @@
 <?php
 
 use MTG\Cards\DeckManager;
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckManagerHelpersTest extends TestCase
 {
+    private $gameRules;
+
     protected function setUp(): void
     {
-        $GLOBALS['any_quantity'] = ['You may have any number of cards named'];
-        $GLOBALS['deck_legality_map'] = [
+        $anyQuantity = ['You may have any number of cards named'];
+        $this->gameRules = new GameRules([
+            'any_quantity' => $anyQuantity,
+            'commander_decktypes' => [],
+            'commander_multiples' => [],
+            'noQuickAddLayouts' => [],
+            'deck_legality_map' => [
             [
                 'decktype' => 'Standard',
                 'db_field' => 'legal_standard'
@@ -17,7 +25,8 @@ class DeckManagerHelpersTest extends TestCase
                 'decktype' => 'Commander',
                 'db_field' => 'legal_commander'
             ]
-        ];
+            ]
+        ]);
     }
 
     public function testMtgCardCopyLimitReturnsNullForWishlist()
@@ -94,15 +103,12 @@ class DeckManagerHelpersTest extends TestCase
 
     private function buildDeckManager($db = null)
     {
-        $anyQuantity = $GLOBALS['any_quantity'] ?? [];
         $db = $db ?: new DeckManagerHelpersDb([], []);
         return new DeckManager(
             $db,
             $GLOBALS['appConfig'],
-            'user@example.test',
-            [],
-            [],
-            $anyQuantity
+            $this->gameRules,
+            'user@example.test'
         );
     }
 }
