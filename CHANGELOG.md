@@ -72,6 +72,7 @@ All notable changes to this project will be documented in this file.
 - Bootstrap now accepts a provided mysqli instance to support test stubs without real DB connections.
 - Index tests now use safer mysqli stubs and avoid deprecated init calls.
 - Cleanup tokens CLI job now boots via bootstrap.php instead of includes/ini.php.
+- Removed legacy includes/ini.php bootstrap entrypoint.
 
 ## [v0.4.10] - 2026-01-01
 
@@ -137,7 +138,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Async image refresh now briefly highlights refreshed images via a CSS class.
-- Service worker version now loads from `VERSION` in `includes/ini.php` and is shared across pages.
+- Service worker version now loads from `VERSION` in `bootstrap.php` and is shared across pages.
 - Service worker update toast now shows old/new cache versions.
 
 ### Fixed
