@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.18
 Date:        11/01/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
@@ -12,13 +12,10 @@ To do:       -
 */
 
 use MTG\Cards\ImageManager;
-use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
 require('bulk_ini.php');
-require('../includes/error_handling.php');
 
-$msg = new Message($appConfig);
 $obj  = new ImageManager($db, $appConfig, $gameRules);
 
 if (isset($argv[1])) :

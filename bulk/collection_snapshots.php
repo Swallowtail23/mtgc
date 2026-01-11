@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.12
+Version:     1.14
 Date:        11/01/26
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
@@ -12,12 +12,9 @@ To do:       -
 */
 
 use MTG\Cards\CollectionStats;
-use MTG\Core\Message;
 
 require('bulk_ini.php');
-require('../includes/error_handling.php');
 
-$msg = new Message($appConfig);
 $msg->logMessage('[NOTICE]', 'Starting collection value snapshot run');
 
 $fxAPI = $iniArray['fx']['FreecurrencyAPI'] ?? '';

@@ -1,148 +1,19 @@
 <?php
 
 /*
-Version:     3.13
+Version:     3.15
 Date:        11/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
-Notes:       -
+Notes:       Wrapper for shared bootstrap
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Core\AppConfig;
-use MTG\Core\GameRules;
-use MTG\Core\INI;
-use MTG\Core\MyPHPMailer;
-
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-// Class autoloading
-// Composer
-$root = realpath(__DIR__ . '/..');
-require_once $root . "/vendor/autoload.php";
-
-//Set error reporting based on ini file's dev setting
-$ini = new INI("/opt/mtg/mtg_new.ini");
-$iniArray = $ini->data;
-if ($iniArray['general']['tier'] === 'dev') :
-    $tier = 'dev';
-    error_reporting(E_ALL);
-elseif ($iniArray['general']['tier'] === 'prod') :
-    $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE);
-else :
-    $tier = 'prod';
-    error_reporting(E_ALL & ~E_NOTICE);
-endif;
-
-//Logging levels
-$logLevelIni = $iniArray['general']['Loglevel'];
-$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
-
-//Email settings (PHPMailer, see https://github.com/PHPMailer/PHPMailer
-//Note, Debug settings other than SMTP::DEBUG_OFF will have no effect without $iniArray['general']['Loglevel'] = 3
-$smtpParameters =   [
-                    'SMTPDebug' => $iniArray['email']['SMTPDebug'],
-                    'SMTPHost' => $iniArray['email']['Host'],
-                    'SMTPAuth' => $iniArray['email']['SMTPAuth'],
-                    'SMTPUsername' => $iniArray['email']['Username'],
-                    'SMTPPassword' => $iniArray['email']['Password'],
-                    'SMTPSecure' => $iniArray['email']['SMTPSecure'],
-                    'SMTPPort' => $iniArray['email']['Port'],
-                    'SMTPHelo' => $iniArray['email']['SMTPHelo'] ?? gethostname(),
-                    'SMTPVerifySSL' => $iniArray['email']['SMTPVerifySSL'] ?? 1,
-                    'globalDebug' => $logLevelIni
-                    ];
-
-//Email addresses
-$adminEmail = $iniArray['email']['AdminEmail'];
-$serverEmail = $iniArray['email']['ServerEmail'];
-
-//Card image location
-$imgLocation = $iniArray['general']['ImgLocation'];
-
-//Location settings
-date_default_timezone_set($iniArray['general']['Timezone']);
-$localeini = $iniArray['general']['Locale'];
-setlocale(LC_MONETARY, $localeini);  //used to display $ values
-
-//Logfile check
-$logfile = $iniArray['general']['Logfile'];
-if (($fd = fopen($logfile, "a")) === false) :
-    openlog("MTG", LOG_NDELAY, LOG_USER);
-    syslog(
-        LOG_ERR,
-        "[MTG-DEBUG] Ini.php: Can't write to MTG log file ($logfile) - check path and permissions. "
-        . "Falling back to syslog."
-    );
-    closelog();
-    $logfile = 0;
-elseif ($logLevelIni === '3' and ($fd = fopen($logfile, "a")) !== false) :
-    $msg = "[DEBUG] Ini.php (direct write to logfile) ({$_SERVER['PHP_SELF']}): Successfully checked logfile "
-        . "access to $logfile";
-    $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
-    fclose($fd);
-endif;
-
-$appConfig = AppConfig::fromIni($iniArray, [
-    'general' => [
-        'tier' => $tier,
-        'logLevel' => $logLevelIni,
-        'logFile' => $logfile,
-    ],
-    'email' => [
-        'enabled' => $emailEnabled,
-        'adminEmail' => $adminEmail,
-        'serverEmail' => $serverEmail,
-        'smtp' => $smtpParameters,
-    ],
-]);
-
-//Web root URL and site title
-$myURL = $iniArray['general']['URL'];
-$siteTitle = $iniArray['general']['title'];
-
-$gameRules = GameRules::fromFile(__DIR__ . '/../includes/game_rules.php');
-$gameRulesData = $gameRules->all();
-foreach ($gameRulesData as $ruleName => $ruleValue) :
-    $$ruleName = $ruleValue;
-endforeach;
-
-//DB connect
-define('DB_HOST', $iniArray['database']['DBServer']);  //host
-define('DB_USER', $iniArray['database']['DBUser']);    // db username
-define('DB_PASS', $iniArray['database']['DBPass']);    // db password
-define('DB_NAME', $iniArray['database']['DBName']);    // db name
-
-try {
-    $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    if ($db->connect_error) :
-        throw new Exception('Failed to connect to MySQL Database <br /> Error Info : ' . $db->connect_error);
-    endif;
-    $db->set_charset('utf8mb4');
-
-} catch (Exception $err) {
-    if (($fd = fopen($logfile, "a")) !== false) :
-        $msg = "[ERROR] Fatal database exception: {$err->getMessage()}";
-        $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $msg;
-        fwrite($fd, $str . "\n");
-        fclose($fd);
-    else :
-        openlog("MTG", LOG_NDELAY, LOG_USER);
-        syslog(LOG_ERR, "[MTG-DEBUG] Fatal database exception: {$err->getMessage()}");
-        closelog();
-    endif;
-    $databaseaccess = 0;
-    $subject = "Fatal database exception on MTGCollection";
-    $message = wordwrap($err->getMessage(), 70);
-    if (isset($emailEnabled) && $emailEnabled === true) :
-        $mail = new MyPHPMailer(true, $appConfig);
-        $mail->sendEmail($adminEmail, false, $subject, $message);
-    endif;
-    echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
-    die();
-}
+// Bootstrap (shared app init)
+$appContext = require __DIR__ . '/../bootstrap.php';

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.6
+Version:     1.7
 Date:        11/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
@@ -78,6 +78,10 @@ try {
             '[NOTICE]',
             "Email disabled; fatal DB alert not sent to admin ({$err->getMessage()})"
         );
+    endif;
+    if (PHP_SAPI === 'cli') :
+        fwrite(STDERR, "Fatal database exception: {$err->getMessage()}\n");
+        exit(1);
     endif;
     echo "<meta http-equiv='refresh' content='0;url=/error.php'>";
     die();
@@ -193,7 +197,9 @@ foreach ($gameRulesData as $ruleName => $ruleValue) :
     $$ruleName = $ruleValue;
 endforeach;
 
-$errorHandler = new ErrorHandler($appConfig);
-$errorHandler->register();
+if (PHP_SAPI !== 'cli') :
+    $errorHandler = new ErrorHandler($appConfig);
+    $errorHandler->register();
+endif;
 
 return $ctx;
