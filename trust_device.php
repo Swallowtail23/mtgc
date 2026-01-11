@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.7
-Date:        10/01/26
+Version:     2.8
+Date:        11/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -82,7 +82,7 @@ if ($trust_choice !== 'none') :
         try {
             $user_id = (int) $_SESSION['user'];
             $msg->logMessage('[DEBUG]', "Creating trusted device for user $user_id");
-            $deviceManager = new TrustedDeviceManager($db, $logfile);
+            $deviceManager = new TrustedDeviceManager($db, $appConfig);
             $result = $deviceManager->createTrustedDevice($user_id, $trustDuration);
             $msg->logMessage(
                 '[NOTICE]',

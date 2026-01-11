@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        21/12/25
+Version:     1.3
+Date:        11/01/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
 Notes:       -
@@ -13,6 +13,7 @@ To do:       -
 
 namespace MTG\Auth;
 
+use MTG\Core\AppConfig;
 use MTG\Core\Message;
 
 class TrustedDeviceManager
@@ -21,16 +22,18 @@ class TrustedDeviceManager
     * @var mysqli
     */
     private $db;
+    private $appConfig;
     private $logfile;
     private $msg;
     private $tokenLength = 64;
     private $cookieName = 'mtgc_trusted_device';
     private $hmacSecret;
 
-    public function __construct($db, $logfile)
+    public function __construct($db, AppConfig $appConfig)
     {
         $this->db = $db;
-        $this->logfile = $logfile;
+        $this->appConfig = $appConfig;
+        $this->logfile = (string) $this->appConfig->general('logFile', '');
 
         // Load HMAC secret from environment variable
         $this->hmacSecret = getenv('HMAC_SECRET');

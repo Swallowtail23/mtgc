@@ -141,7 +141,7 @@ class TrustedDeviceManagerTest extends TestCase
     private $originalServer;
     private $originalCookie;
     private $originalSecret;
-    private $logfile;
+    private $appConfig;
     private $managerClass;
 
     protected function setUp(): void
@@ -149,7 +149,11 @@ class TrustedDeviceManagerTest extends TestCase
         $this->originalServer = $_SERVER;
         $this->originalCookie = $_COOKIE;
         $this->originalSecret = getenv('HMAC_SECRET');
-        $this->logfile = sys_get_temp_dir() . '/trusted_device_manager.log';
+        $this->appConfig = $GLOBALS['appConfig'] ?? null;
+
+        if ($this->appConfig === null) :
+            $this->markTestSkipped('AppConfig not available for TrustedDeviceManager tests.');
+        endif;
 
         $_COOKIE = [];
         $_SERVER = [];
@@ -173,7 +177,7 @@ class TrustedDeviceManagerTest extends TestCase
     private function makeManager(TrustedDeviceMysqliStub $db)
     {
         $class = $this->managerClass;
-        return new $class($db, $this->logfile);
+        return new $class($db, $this->appConfig);
     }
 
     public function testGetCookieNameReturnsConfiguredName()

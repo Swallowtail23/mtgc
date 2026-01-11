@@ -110,7 +110,7 @@ namespace MTG\Auth {
         {
             public static $result = false;
 
-            public function __construct($db = null, $logfile = null)
+            public function __construct($db = null, $appConfig = null)
             {
             }
 

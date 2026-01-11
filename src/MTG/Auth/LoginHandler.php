@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.15
+Version:     1.16
 Date:        11/01/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
@@ -93,7 +93,7 @@ class LoginHandler
             '[DEBUG]',
             'Checking for trusted device cookie with db connection: ' . (isset($this->db) ? 'valid' : 'missing')
         );
-        $deviceManager = new TrustedDeviceManager($this->db, $this->logfile);
+        $deviceManager = new TrustedDeviceManager($this->db, $this->appConfig);
 
         $trustedDeviceUser = $deviceManager->validateTrustedDevice();
         $trustedDeviceUser = (int) $trustedDeviceUser;

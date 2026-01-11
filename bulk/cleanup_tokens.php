@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        28/11/25
+Version:     1.10
+Date:        11/01/26
 Name:        cleanup_tokens.php
 Purpose:     Cleanup expired trusted device tokens
 Notes:       To be run via cron, e.g. daily
@@ -22,7 +22,7 @@ $msg = new Message($logfile);
 $msg->logMessage('[NOTICE]', "Starting trusted device token cleanup");
 
 // Initialize the device manager
-$deviceManager = new TrustedDeviceManager($db, $logfile);
+$deviceManager = new TrustedDeviceManager($db, $appConfig);
 
 // Perform cleanup
 $cleanedCount = $deviceManager->cleanupExpiredTokens();

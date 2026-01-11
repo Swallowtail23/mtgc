@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.17
+Version:     14.18
 Date:        11/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -233,7 +233,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                                     . "$userEmail from {$_SERVER['REMOTE_ADDR']}"
                                                 );
                                                 // Removing all trusted devices
-                                                    (new TrustedDeviceManager($db, $logfile))
+                                                    (new TrustedDeviceManager($db, $appConfig))
                                                         ->removeAllUserDevices($userId);
                                                 echo "<div class='alert-box success' id='pwdchange'>"
                                                     . "<span>success: </span>"
@@ -650,7 +650,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                 </div> <?php
 
                 // Get trusted devices for this user
-                $deviceManager = new TrustedDeviceManager($db, $logfile);
+                $deviceManager = new TrustedDeviceManager($db, $appConfig);
                 // Get the current device's token hash, if the cookie is set.
                 $currentDeviceHash = null;
                 if (isset($_COOKIE[$deviceManager->getCookieName()])) :
