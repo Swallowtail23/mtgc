@@ -19,7 +19,6 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
 use MTG\Core\Message;
 
-// Call script initiation mechs
 if (file_exists('includes/sessionname.local.php')) :
     require 'includes/sessionname.local.php';
 else :

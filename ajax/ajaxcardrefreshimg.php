@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.20
 Date:        11/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
@@ -32,7 +32,7 @@ $expectedReferringPages = [
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest(
     $expectedReferringPages,
-    $logfile,
+    $appConfig,
     'ajaxcardrefreshimg.php'
 );
 if ($ajaxValidation['valid'] === false) :
