@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.82
-Date:        11/01/26
+Version:     25.83
+Date:        12/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -15,11 +15,8 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

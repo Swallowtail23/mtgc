@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.19
-Date:        11/01/26
+Version:     4.20
+Date:        12/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -16,11 +16,8 @@ use MTG\Core\Http\UrlHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 $requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);

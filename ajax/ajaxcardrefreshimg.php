@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.23
-Date:        11/01/26
+Version:     1.24
+Date:        12/01/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -17,11 +17,8 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require dirname(__DIR__) . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

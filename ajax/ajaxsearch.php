@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.52
-Date:        11/01/26
+Version:     7.53
+Date:        12/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -16,11 +16,8 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require dirname(__DIR__) . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

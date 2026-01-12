@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.26
-Date:        11/01/26
+Version:     3.27
+Date:        12/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Not a secure page!
@@ -15,11 +15,8 @@ use MTG\Auth\PasswordCheck;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require __DIR__ . '/bootstrap.php';
 
 // Content
 $pwReset = new PasswordCheck($db, $appConfig);

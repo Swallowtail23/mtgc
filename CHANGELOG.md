@@ -55,6 +55,7 @@ AppConfig into AJAX validation.
 - Bulk scripts now rely on bootstrap for Message setup and no longer load includes/error_handling.php (removed).
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
 - Standardized internal include/require paths to use APP_ROOT for consistent resolution.
+- Standardized entrypoint bootstraps to require bootstrap files directly (APP_ROOT defined only within bootstrap).
 - Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport (including downloadBulk/fetchJson) with tests and updated bulk scripts.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.
 - Moved colourFunction into MTG\Cards\CardUtils and updated call sites/tests.

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.84
-Date:        11/01/26
+Version:     1.85
+Date:        12/01/26
 Name:        template.php
 Purpose:     Site template.
 Notes:       {none}
@@ -12,11 +12,8 @@ To do:       -
 */
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.15
-Date:        11/01/26
+Version:     4.16
+Date:        12/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -14,11 +14,8 @@ To do:       -
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 if (isset($_POST['decknumber'])) :

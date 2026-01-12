@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.20
-Date:        11/01/26
+Version:     1.21
+Date:        12/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
 Notes:       {none}
@@ -16,11 +16,8 @@ use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require __DIR__ . '/bootstrap.php';
 
 // Content
 if (!isset($_SESSION['user_pending_2fa'])) :

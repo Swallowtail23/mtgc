@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.24
-Date:        11/01/26
+Version:     5.25
+Date:        12/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -15,11 +15,8 @@ use MTG\Cards\ImageManager;
 use MTG\Core\Validation;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
 
 // Content
 // Check if user is logged in, if not redirect to login.php

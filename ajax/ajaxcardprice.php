@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.15
-Date:        11/01/26
+Version:     1.16
+Date:        12/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
 Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
@@ -19,11 +19,8 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require dirname(__DIR__) . '/bootstrap.php';
 
 // Content
 $expectedReferringPages = [

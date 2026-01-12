@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.15
-Date:        11/01/26
+Version:     8.16
+Date:        12/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -15,11 +15,8 @@ use MTG\Auth\LoginHandler;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap.php';
+$appContext = require __DIR__ . '/bootstrap.php';
 ob_start();
 
 // Content

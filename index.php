@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.61
-Date:        11/01/26
+Version:     14.62
+Date:        12/01/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -18,11 +18,8 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 // Default numbers per page and max

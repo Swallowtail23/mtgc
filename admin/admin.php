@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.29
-Date:        11/01/26
+Version:     6.30
+Date:        12/01/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -19,11 +19,8 @@ use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
 
 // Content
 $csrfToken = SessionManager::generateCsrfToken();

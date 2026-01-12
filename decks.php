@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.21
-Date:        11/01/26
+Version:     5.22
+Date:        12/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -14,11 +14,8 @@ To do:       -
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 // page specific variables

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.17
-Date:        11/01/26
+Version:     6.18
+Date:        12/01/26
 Name:        users.php
 Purpose:     User administrative tasks
 Notes:       {none}
@@ -14,11 +14,8 @@ To do:       -
 use MTG\Auth\PasswordCheck;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', dirname(__DIR__));
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
 
 // Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');

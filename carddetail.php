@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.33
-Date:        11/01/26
+Version:     22.34
+Date:        12/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -19,11 +19,8 @@ use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 // Is admin running the page

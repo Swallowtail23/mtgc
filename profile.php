@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.25
-Date:        11/01/26
+Version:     14.26
+Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -23,11 +23,8 @@ use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-if (!defined('APP_ROOT')) :
-    define('APP_ROOT', __DIR__);
-endif;
 
-$appContext = require APP_ROOT . '/bootstrap_secure.php';
+$appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
