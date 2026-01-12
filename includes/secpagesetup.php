@@ -45,7 +45,7 @@ function mtgSecurePageSetup($db, AppConfig $appConfig): array
 
     $mtceStatus = AdminSettings::checkMaintenanceMode($userNumber, $db, $appConfig);
     if ($mtceStatus == 1) :                           // check if site is in maintenance mode
-        include APP_ROOT . '/includes/mtcestub.php';
+        include APP_ROOT . '/mtcestub.php';
         session_destroy();
         exit();
     endif;
