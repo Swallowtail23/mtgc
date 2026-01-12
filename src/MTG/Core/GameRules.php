@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.31
+Version:     1.32
 Date:        11/01/26
 Name:        GameRules.php
 Purpose:     Container for game-specific rules and constants.
@@ -40,7 +40,7 @@ class GameRules
 
     public static function fromDefaults(): self
     {
-        $path = APP_ROOT . '/src/includes/game_rules.php';
+        $path = APP_ROOT . '/includes/game_rules.php';
         return self::fromFile($path);
     }
 
