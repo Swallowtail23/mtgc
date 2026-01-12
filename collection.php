@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.25
+Version:     1.26
 Date:        12/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -22,7 +22,7 @@ $appContext = require __DIR__ . '/bootstrap_secure.php';
 // Content
 $msg->logMessage('[DEBUG]', "Collection page load");
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
-$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
 // Has DELETE collection been called?
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';
 $delcollresult = ''; // Variable to hold error message

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.30
+Version:     6.31
 Date:        12/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -510,47 +510,43 @@ $configEditError = '';
 $configEditErrorTarget = '';
 $configAuthWindowSeconds = 600;
 $configAction = filter_input(INPUT_POST, 'config_action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$logLevelIni = $iniArray['general']['Loglevel'];
+$configRaw = $appConfig->toArrayRaw();
+$generalConfig = $configRaw['general'] ?? [];
+$securityConfig = $configRaw['security'] ?? [];
+$emailConfig = $configRaw['email'] ?? [];
+$fxConfig = $configRaw['fx'] ?? [];
+$commentsConfig = $configRaw['comments'] ?? [];
+$smtpConfig = $emailConfig['smtp'] ?? [];
+$logLevelIni = $generalConfig['logLevel'] ?? '';
 $timezoneList = timezone_identifiers_list();
 sort($timezoneList);
 $configInputStyle = 'style="width:220px"';
-$turnstileSiteKeyIni = $iniArray['security']['Turnstile_site_key'] ?? '';
-$turnstileSecretKeyIni = $iniArray['security']['Turnstile_secret_key'] ?? '';
-$trustDurationIni = $iniArray['security']['TrustDuration'] ?? '';
-$fxApiIni = $iniArray['fx']['FreecurrencyAPI'] ?? '';
-$fxUrlIni = $iniArray['fx']['FreecurrencyURL'] ?? '';
-$fxTargetCurrencyIni = $iniArray['fx']['TargetCurrency'] ?? '';
-$smtpDebugIni = $iniArray['email']['SMTPDebug'] ?? '';
-$smtpHostIni = $iniArray['email']['Host'] ?? '';
-$smtpPortIni = $iniArray['email']['Port'] ?? '';
-$smtpUserIni = $iniArray['email']['Username'] ?? '';
-$smtpPasswordIni = $iniArray['email']['Password'] ?? '';
-$smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
-$smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? gethostname();
-$smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
+$turnstileSiteKeyIni = $securityConfig['turnstileSiteKey'] ?? '';
+$turnstileSecretKeyIni = $securityConfig['turnstileSecretKey'] ?? '';
+$trustDurationIni = $securityConfig['trustDuration'] ?? '';
+$fxApiIni = $fxConfig['api'] ?? '';
+$fxUrlIni = $fxConfig['url'] ?? '';
+$fxTargetCurrencyIni = $fxConfig['local'] ?? '';
+$smtpDebugIni = $smtpConfig['SMTPDebug'] ?? '';
+$smtpHostIni = $smtpConfig['SMTPHost'] ?? '';
+$smtpPortIni = $smtpConfig['SMTPPort'] ?? '';
+$smtpUserIni = $smtpConfig['SMTPUsername'] ?? '';
+$smtpPasswordIni = $smtpConfig['SMTPPassword'] ?? '';
+$smtpSecureIni = $smtpConfig['SMTPSecure'] ?? '';
+$smtpHeloIni = $smtpConfig['SMTPHelo'] ?? gethostname();
+$smtpVerifyIni = $smtpConfig['SMTPVerifySSL'] ?? 1;
 $smtpSecureChoice = 'none';
 if ($smtpSecureIni === 'PHPMailer::ENCRYPTION_SMTPS') :
     $smtpSecureChoice = 'smtps';
 elseif ($smtpSecureIni === 'PHPMailer::ENCRYPTION_STARTTLS') :
     $smtpSecureChoice = 'starttls';
 endif;
-$disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
-$disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
+$disqusDevUrlIni = $commentsConfig['disqusDevUrl'] ?? '';
+$disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
 $smtpDebugEnabled = ($smtpDebugIni !== 'SMTP::DEBUG_OFF' && $smtpDebugIni !== '');
-$smtpParameters = [
-    'SMTPHost' => $smtpHostIni,
-    'SMTPPort' => $smtpPortIni,
-    'SMTPAuth' => $iniArray['email']['SMTPAuth'] ?? 0,
-    'SMTPUsername' => $smtpUserIni,
-    'SMTPPassword' => $smtpPasswordIni,
-    'SMTPSecure' => $smtpSecureIni,
-    'SMTPHelo' => $smtpHeloIni,
-    'SMTPVerifySSL' => $smtpVerifyIni,
-    'SMTPDebug' => $smtpDebugIni,
-    'globalDebug' => $logLevelIni
-];
+$smtpParameters = $appConfig->getSmtpParameters();
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
-$titleValue = $iniArray['general']['title'] ?? '';
+$titleValue = $generalConfig['title'] ?? '';
 
 if (isset($_SESSION['config_edit_expires'])) :
     if ($_SESSION['config_edit_expires'] > time()) :
@@ -807,33 +803,33 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
     endif;
 endif;
 
-$turnstileEnabled = ($iniArray['security']['Turnstile'] === 'enabled');
-$commentsEnabled = ($iniArray['comments']['Disqus'] === 'enabled');
-$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
-$emailEnabled = ($emailEnabledSetting === 'enabled');
+$turnstileEnabled = (bool) $appConfig->security('turnstileEnabled', false);
+$commentsEnabled = (bool) $appConfig->comments('disqusEnabled', false);
+$emailEnabled = (bool) $appConfig->email('enabled', false);
+$smtpAuthValue = $smtpParameters['SMTPAuth'] ?? 0;
 $emailAuthEnabled = (
-    $iniArray['email']['SMTPAuth'] === true
-    || $iniArray['email']['SMTPAuth'] === 1
-    || $iniArray['email']['SMTPAuth'] === '1'
-    || $iniArray['email']['SMTPAuth'] === 'true'
+    $smtpAuthValue === true
+    || $smtpAuthValue === 1
+    || $smtpAuthValue === '1'
+    || $smtpAuthValue === 'true'
 );
 $configEditExpiry = $_SESSION['config_edit_expires'] ?? 0;
-$turnstileSiteKeyIni = $iniArray['security']['Turnstile_site_key'] ?? '';
-$turnstileSecretKeyIni = $iniArray['security']['Turnstile_secret_key'] ?? '';
-$trustDurationIni = $iniArray['security']['TrustDuration'] ?? '';
-$fxApiIni = $iniArray['fx']['FreecurrencyAPI'] ?? '';
-$fxUrlIni = $iniArray['fx']['FreecurrencyURL'] ?? '';
-$fxTargetCurrencyIni = $iniArray['fx']['TargetCurrency'] ?? '';
-$smtpDebugIni = $iniArray['email']['SMTPDebug'] ?? '';
-$smtpHostIni = $iniArray['email']['Host'] ?? '';
-$smtpPortIni = $iniArray['email']['Port'] ?? '';
-$smtpUserIni = $iniArray['email']['Username'] ?? '';
-$smtpPasswordIni = $iniArray['email']['Password'] ?? '';
-$smtpSecureIni = $iniArray['email']['SMTPSecure'] ?? '';
-$smtpHeloIni = $iniArray['email']['SMTPHelo'] ?? '';
-$smtpVerifyIni = $iniArray['email']['SMTPVerifySSL'] ?? 1;
-$disqusDevUrlIni = $iniArray['comments']['DisqusDevURL'] ?? '';
-$disqusProdUrlIni = $iniArray['comments']['DisqusProdURL'] ?? '';
+$turnstileSiteKeyIni = $securityConfig['turnstileSiteKey'] ?? '';
+$turnstileSecretKeyIni = $securityConfig['turnstileSecretKey'] ?? '';
+$trustDurationIni = $securityConfig['trustDuration'] ?? '';
+$fxApiIni = $fxConfig['api'] ?? '';
+$fxUrlIni = $fxConfig['url'] ?? '';
+$fxTargetCurrencyIni = $fxConfig['local'] ?? '';
+$smtpDebugIni = $smtpConfig['SMTPDebug'] ?? '';
+$smtpHostIni = $smtpConfig['SMTPHost'] ?? '';
+$smtpPortIni = $smtpConfig['SMTPPort'] ?? '';
+$smtpUserIni = $smtpConfig['SMTPUsername'] ?? '';
+$smtpPasswordIni = $smtpConfig['SMTPPassword'] ?? '';
+$smtpSecureIni = $smtpConfig['SMTPSecure'] ?? '';
+$smtpHeloIni = $smtpConfig['SMTPHelo'] ?? '';
+$smtpVerifyIni = $smtpConfig['SMTPVerifySSL'] ?? 1;
+$disqusDevUrlIni = $commentsConfig['disqusDevUrl'] ?? '';
+$disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -1287,18 +1283,18 @@ require APP_ROOT . '/includes/menu.php';
                     <tr>
                         <td colspan="2">
                             <?php if ($configEditUnlocked) :
-                                $imgLocationValue    = $iniArray['general']['ImgLocation'] ?? '';
-                                $copyrightValue      = $iniArray['general']['Copyright'] ?? '';
-                                $tierValue           = $iniArray['general']['tier'] ?? '';
-                                $logfileValue        = $iniArray['general']['Logfile'] ?? '';
-                                $timezoneValue       = $iniArray['general']['Timezone'] ?? '';
-                                $localeValue         = $iniArray['general']['Locale'] ?? '';
-                                $urlValue            = $iniArray['general']['URL'] ?? '';
+                                $imgLocationValue    = $generalConfig['imageBaseDir'] ?? '';
+                                $copyrightValue      = $generalConfig['copyright'] ?? '';
+                                $tierValue           = $generalConfig['tier'] ?? '';
+                                $logfileValue        = $generalConfig['logFile'] ?? '';
+                                $timezoneValue       = $generalConfig['timezone'] ?? '';
+                                $localeValue         = $generalConfig['locale'] ?? '';
+                                $urlValue            = $generalConfig['url'] ?? '';
                                 $dbServerValue       = $iniArray['database']['DBServer'] ?? '';
                                 $dbNameValue         = $iniArray['database']['DBName']   ?? '';
                                 $dbUserValue         = $iniArray['database']['DBUser']   ?? '';
-                                $badLoginLimitValue  = $iniArray['security']['Badloginlimit'] ?? '';
-                                $adminIpValue        = $iniArray['security']['AdminIP'] ?? '';
+                                $badLoginLimitValue  = $securityConfig['badLoginLimit'] ?? '';
+                                $adminIpValue        = $securityConfig['adminIp'] ?? '';
                                 ?>
                                 <form id="configedit" method="post" action="/admin/admin.php">
                                     <?php $csrfEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>

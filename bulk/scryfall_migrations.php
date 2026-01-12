@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.25
-Date:        11/01/26
+Version:     2.26
+Date:        12/01/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
 Notes:       {none}
@@ -22,7 +22,7 @@ Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // URLs
 $starturl = "https://api.scryfall.com/migrations";
-$myURL = $iniArray['general']['URL'];
+$myURL = (string) $appConfig->general('url', '');
 
 // Bulk file store point
 $file_folder = $imgLocation . 'json/';

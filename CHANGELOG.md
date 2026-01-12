@@ -56,6 +56,7 @@ AppConfig into AJAX validation.
 - Added optional handlers to forcePasswordChange to allow redirect/exit paths to be tested.
 - Standardized internal include/require paths to use APP_ROOT for consistent resolution.
 - Game rules now load via a dedicated builder function, and rule globals are removed in favor of GameRules accessors.
+- Admin config display/runtime now uses AppConfig defaults, and remaining iniArray email/fx/url checks moved to AppConfig.
 - Standardized entrypoint bootstraps to require bootstrap files directly (APP_ROOT defined only within bootstrap).
 - Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport (including downloadBulk/fetchJson) with tests and updated bulk scripts.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.

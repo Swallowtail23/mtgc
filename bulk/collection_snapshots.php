@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.16
-Date:        11/01/26
+Version:     1.17
+Date:        12/01/26
 Name:        collection_snapshots.php
 Purpose:     Capture daily collection value snapshots for all active users.
 Notes:       Uses collection_values table to store historical values.
@@ -17,9 +17,12 @@ require APP_ROOT . '/bulk/bulk_ini.php';
 
 $msg->logMessage('[NOTICE]', 'Starting collection value snapshot run');
 
-$fxAPI = $iniArray['fx']['FreecurrencyAPI'] ?? '';
-$fxLocal = $iniArray['fx']['TargetCurrency'] ?? '';
-$adminip = isset($iniArray['security']['AdminIP']) ? $iniArray['security']['AdminIP'] : 1;
+$fxAPI = (string) $appConfig->fx('api', '');
+$fxLocal = (string) $appConfig->fx('local', '');
+$adminip = (string) $appConfig->security('adminIp', '');
+if ($adminip === '') :
+    $adminip = 1;
+endif;
 $statsHelper = new CollectionStats($db, $appConfig);
 
 $todayStart = strtotime('today');

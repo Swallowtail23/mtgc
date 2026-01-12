@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.28
+Version:     14.29
 Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -30,7 +30,7 @@ $rulesCurrencies = $gameRules->getArray('currencies');
 // Content
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
-$emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 

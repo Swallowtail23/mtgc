@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.27
+Version:     3.28
 Date:        12/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -20,8 +20,7 @@ $appContext = require __DIR__ . '/bootstrap.php';
 
 // Content
 $pwReset = new PasswordCheck($db, $appConfig);
-$emailEnabledSetting = $iniArray['email']['Email'] ?? 'enabled';
-$emailEnabledFlag = ($emailEnabledSetting === 'enabled');
+$emailEnabledFlag = (bool) $appConfig->email('enabled', false);
 $token = $_POST['token'] ?? ($_GET['token'] ?? '');
 $tokenEmail = $_POST['email'] ?? ($_GET['email'] ?? '');
 $message = $_SESSION['reset_message'] ?? '';

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.32
-Date:        29/12/25
+Version:     2.34
+Date:        12/01/26
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
 Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes not loaded in this page.
@@ -13,7 +13,7 @@ To do:       -
 
 $iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
 $serviceWorkerVersion = 'v6';
-$versionFile = APP_ROOT . '/VERSION';
+$versionFile = __DIR__ . '/VERSION';
 if (file_exists($versionFile)) :
     $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
     if ($serviceWorkerVersion === '') :
@@ -38,7 +38,7 @@ $cssver = "";
     <title> <?php echo $siteTitleEsc;?> error page</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
-    <?php include APP_ROOT . '/includes/googlefonts.php';?>
+    <?php include __DIR__ . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>
 
@@ -47,9 +47,9 @@ $cssver = "";
 // Start building the page here, so errors show in the website template
 // Includes first - menu and header
 if ((isset($_SESSION["logged"])) and ($_SESSION["logged"] == true)) :
-    require APP_ROOT . '/includes/overlays.php';
+    require __DIR__ . '/includes/overlays.php';
 endif;
-require APP_ROOT . '/includes/header.php'; ?>
+require __DIR__ . '/includes/header.php'; ?>
 <div id='menubuttondiv' class="togglemenu">
     <a href="#" id='toggle-menu'><span class="material-symbols-outlined menu">menu</span></a>
 </div>
@@ -77,6 +77,6 @@ require APP_ROOT . '/includes/header.php'; ?>
 </div>
 
 <?php
-require APP_ROOT . '/includes/footer.php'; ?>
+require __DIR__ . '/includes/footer.php'; ?>
 </body>
 </html>

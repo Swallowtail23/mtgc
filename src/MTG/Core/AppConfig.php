@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.2
-Date:        11/01/26
+Version:     1.3
+Date:        12/01/26
 Name:        AppConfig.php
 Purpose:     App-wide config container built from ini values.
 Notes:       -
@@ -28,7 +28,7 @@ class AppConfig
      * - general: array (url, title, tier, logLevel, logFile, imageBaseDir, timezone, locale, copyright)
      * - security: array (turnstileEnabled, turnstileSiteKey, turnstileSecretKey, trustDuration, badLoginLimit, adminIp)
      * - email: array (enabled, adminEmail, serverEmail, smtp => array(...))
-     * - fx: array (api, local)
+     * - fx: array (api, local, url)
      * - comments: array (disqusEnabled, disqusDevUrl, disqusProdUrl)
      */
     public static function fromIni(array $iniArray, array $overrides = []): self
@@ -84,6 +84,7 @@ class AppConfig
         $config->fx = [
             'api' => $iniArray['fx']['FreecurrencyAPI'] ?? '',
             'local' => $iniArray['fx']['TargetCurrency'] ?? '',
+            'url' => $iniArray['fx']['FreecurrencyURL'] ?? '',
         ];
 
         $config->comments = [
