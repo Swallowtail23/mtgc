@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.85
+Version:     1.86
 Date:        12/01/26
 Name:        template.php
 Purpose:     Site template.
@@ -14,6 +14,8 @@ To do:       -
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

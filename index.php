@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.64
+Version:     14.65
 Date:        12/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -19,6 +19,8 @@ use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 $rulesFlipButtonCards = $gameRules->getArray('flip_button_cards');
 $rulesLayoutsDouble = $gameRules->getArray('layouts_double');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.16
+Version:     2.17
 Date:        12/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -18,6 +18,9 @@ use MTG\Core\Http\UrlHelper;
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$trustDuration = (int) $appConfig->security('trustDuration', 0);
 
 // Regenerate session on privilege transition
 if (session_status() === PHP_SESSION_ACTIVE) :

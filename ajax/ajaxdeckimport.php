@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.54
+Version:     2.55
 Date:        12/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
@@ -18,6 +18,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';

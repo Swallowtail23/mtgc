@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     9.24
-Date:        11/01/26
+Version:     9.26
+Date:        12/01/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
 Notes:       {none}
@@ -11,11 +11,17 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+
 use MTG\Bulk\ScryfallImport;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
 require APP_ROOT . '/bulk/bulk_ini.php';
+
+
+$adminEmail = (string) $appConfig->email('adminEmail', '');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
 
 // Start time tracking
 $start = microtime(true);

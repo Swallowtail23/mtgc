@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.21
-Date:        11/01/26
+Version:     2.24
+Date:        12/01/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
@@ -18,6 +19,11 @@ use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
 require APP_ROOT . '/bulk/bulk_ini.php';
+
+$adminEmail = (string) $appConfig->email('adminEmail', '');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+
 Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // How old to overwrite

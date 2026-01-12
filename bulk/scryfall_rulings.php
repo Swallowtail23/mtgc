@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.17
-Date:        11/01/26
+Version:     3.20
+Date:        12/01/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       -
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 History:     See git history / CHANGELOG.md
 To do:       -
 */
+
 
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
@@ -21,6 +22,11 @@ use MTG\Core\MyPHPMailer;
 use MTG\Core\UserAgent;
 
 require APP_ROOT . '/bulk/bulk_ini.php';
+
+$adminEmail = (string) $appConfig->email('adminEmail', '');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+
 Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // How old to overwrite

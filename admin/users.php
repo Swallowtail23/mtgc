@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.20
+Version:     6.25
 Date:        12/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -15,6 +15,9 @@ use MTG\Auth\PasswordCheck;
 
 // Bootstrap
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
 
 $rulesCurrencies = $gameRules->getArray('currencies');
 
@@ -132,8 +135,7 @@ require APP_ROOT . '/includes/menu.php';
                 $newuserstatus = $obj->newUser(
                     $username_raw,
                     $postemail_raw,
-                    $password,
-                    $dbname
+                    $password
                 ); // Use "_raw" variables as newuser() uses parameterised query, so no need to quote
                 if ($newuserstatus === 2) :
                     $msg->logMessage('[DEBUG]', 'New user created with collection table initialised');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.55
+Version:     7.56
 Date:        12/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -17,6 +17,8 @@ use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 $rulesBracketsInNames = $gameRules->getArray('bracketsInNames');
 

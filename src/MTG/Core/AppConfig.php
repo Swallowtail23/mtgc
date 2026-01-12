@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        12/01/26
 Name:        AppConfig.php
 Purpose:     App-wide config container built from ini values.
@@ -20,6 +20,7 @@ class AppConfig
     private $email = [];
     private $fx = [];
     private $comments = [];
+    private $database = [];
 
     /**
      * Build AppConfig from ini array with optional overrides.
@@ -30,6 +31,7 @@ class AppConfig
      * - email: array (enabled, adminEmail, serverEmail, smtp => array(...))
      * - fx: array (api, local, url)
      * - comments: array (disqusEnabled, disqusDevUrl, disqusProdUrl)
+     * - database: array (host, user, pass, name)
      */
     public static function fromIni(array $iniArray, array $overrides = []): self
     {
@@ -93,6 +95,13 @@ class AppConfig
             'disqusProdUrl' => $iniArray['comments']['DisqusProdURL'] ?? '',
         ];
 
+        $config->database = [
+            'host' => $iniArray['database']['DBServer'] ?? '',
+            'user' => $iniArray['database']['DBUser'] ?? '',
+            'pass' => $iniArray['database']['DBPass'] ?? '',
+            'name' => $iniArray['database']['DBName'] ?? '',
+        ];
+
         $config->applyOverrides($overrides);
 
         return $config;
@@ -121,6 +130,11 @@ class AppConfig
     public function comments($key, $default = null)
     {
         return $this->comments[$key] ?? $default;
+    }
+
+    public function database($key, $default = null)
+    {
+        return $this->database[$key] ?? $default;
     }
 
     public function getSmtpParameters(): array
@@ -170,6 +184,7 @@ class AppConfig
             'email' => $this->email,
             'fx' => $this->fx,
             'comments' => $this->comments,
+            'database' => $this->database,
         ];
 
         if ($redact) :

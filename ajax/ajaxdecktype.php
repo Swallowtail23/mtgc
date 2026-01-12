@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.24
+Version:     1.25
 Date:        12/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
@@ -17,6 +17,8 @@ use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesValidTypes = $gameRules->getArray('validtypes');

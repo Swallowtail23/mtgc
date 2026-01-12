@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.36
+Version:     22.38
 Date:        12/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -20,6 +20,13 @@ use MTG\Core\Validation;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+$tier = (string) $appConfig->general('tier', 'prod');
+$disqus = (int) $appConfig->comments('disqusEnabled', false);
+$disqusDev = (string) $appConfig->comments('disqusDevUrl', '');
+$disqusProd = (string) $appConfig->comments('disqusProdUrl', '');
 
 $rulesImage90Rotate = $gameRules->getArray('image90rotate');
 $rulesLayoutsDouble = $gameRules->getArray('layouts_double');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.20
 Date:        12/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -19,6 +19,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [

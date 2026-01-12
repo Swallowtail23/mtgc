@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.17
 Date:        12/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
@@ -21,6 +21,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [

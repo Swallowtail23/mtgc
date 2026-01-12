@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.76
+Version:     1.79
 Date:        12/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
@@ -99,9 +99,6 @@ $msg = $ctx->message();
 
 $cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
-$myURL = $iniArray['general']['URL'] ?? '';
-$siteTitle = $iniArray['general']['title'] ?? '';
-
 $versionFile = APP_ROOT . '/VERSION';
 $serviceWorkerVersion = 'v6';
 if (file_exists($versionFile)) :
@@ -111,89 +108,43 @@ if (file_exists($versionFile)) :
     endif;
 endif;
 
-$fxAPI = $iniArray['fx']['FreecurrencyAPI'] ?? '';
-$fxLocal = $iniArray['fx']['TargetCurrency'] ?? '';
-
-$tier = (string) $appConfig->general('tier', 'prod');
-if ($tier === 'dev') :
+$tierValue = (string) $appConfig->general('tier', 'prod');
+if ($tierValue === 'dev') :
     error_reporting(E_ALL);
 else :
     error_reporting(E_ALL & ~E_NOTICE);
 endif;
 
-$turnstileEnabled = (bool) $appConfig->security('turnstileEnabled', false);
-$turnstile_site_key = (string) $appConfig->security('turnstileSiteKey', '');
-$turnstile_secret_key = (string) $appConfig->security('turnstileSecretKey', '');
-$turnstile = $turnstileEnabled ? 1 : 0;
-
-$trustDuration = $appConfig->security('trustDuration', 0);
-
-$emailEnabled = (bool) $appConfig->email('enabled', false);
-
-$disqusEnabled = (bool) $appConfig->comments('disqusEnabled', false);
-$disqus = $disqusEnabled ? 1 : 0;
-$disqusDev = $disqusEnabled ? (string) $appConfig->comments('disqusDevUrl', '') : '';
-$disqusProd = $disqusEnabled ? (string) $appConfig->comments('disqusProdUrl', '') : '';
-
-$adminip = $appConfig->security('adminIp', '');
-if ($adminip === '') :
-    $adminip = 1;
-endif;
-
-$logfile = (string) $appConfig->general('logFile', '');
-$logLevelIni = (string) $appConfig->general('logLevel', '');
-if (($fd = fopen($logfile, "a")) === false) :
+$logFile = (string) $appConfig->general('logFile', '');
+$logLevel = (string) $appConfig->general('logLevel', '');
+if (($fd = fopen($logFile, "a")) === false) :
     openlog("MTG", LOG_NDELAY, LOG_USER);
     syslog(
         LOG_ERR,
-        "[MTG-DEBUG] bootstrap.php: Can't write to MTG log file ($logfile) "
+        "[MTG-DEBUG] bootstrap.php: Can't write to MTG log file ($logFile) "
         . "- check path and permissions. Falling back to syslog."
     );
     closelog();
-    $logfile = 0;
-elseif ($logLevelIni === '3' and ($fd = fopen($logfile, "a")) !== false) :
+    $logFile = 0;
+elseif ($logLevel === '3' and ($fd = fopen($logFile, "a")) !== false) :
     $logMessage = "[DEBUG] bootstrap.php (direct write to logfile) ({$_SERVER['PHP_SELF']}): "
-                . "Successfully checked logfile access to $logfile";
+                . "Successfully checked logfile access to $logFile";
     $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $logMessage;
     fclose($fd);
 endif;
 
-if ($logfile === 0) :
+if ($logFile === 0) :
     $configOverrides = $appConfig->toArrayRaw();
-    $configOverrides['general']['logFile'] = $logfile;
+    $configOverrides['general']['logFile'] = $logFile;
     $appConfig = AppConfig::fromIni($iniArray, $configOverrides);
     $msg = new Message($appConfig);
     $ctx = new AppContext($db, $appConfig, $gameRules, $iniArray, $msg);
 endif;
 
-$smtpParameters = $appConfig->getSmtpParameters();
-
-$adminEmail = (string) $appConfig->email('adminEmail', '');
-$serverEmail = (string) $appConfig->email('serverEmail', '');
-
-$Badloglimit = $appConfig->security('badLoginLimit', 0);
-$imgLocation = (string) $appConfig->general('imageBaseDir', '');
-
 date_default_timezone_set((string) $appConfig->general('timezone', 'UTC'));
 $localeini = (string) $appConfig->general('locale', '');
 setlocale(LC_MONETARY, $localeini);
 
-$copyright = $iniArray['general']['Copyright'] ?? '';
-
-if (!defined('DB_HOST')) :
-    define('DB_HOST', $iniArray['database']['DBServer'] ?? '');
-endif;
-if (!defined('DB_USER')) :
-    define('DB_USER', $iniArray['database']['DBUser'] ?? '');
-endif;
-if (!defined('DB_PASS')) :
-    define('DB_PASS', $iniArray['database']['DBPass'] ?? '');
-endif;
-if (!defined('DB_NAME')) :
-    define('DB_NAME', $iniArray['database']['DBName'] ?? '');
-endif;
-
-$dbname = $iniArray['database']['DBName'] ?? '';
 
 
 if (PHP_SAPI !== 'cli') :

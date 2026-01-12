@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.42
+Version:     1.43
 Date:        12/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -18,6 +18,8 @@ use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesImage90Rotate = $gameRules->getArray('image90rotate');

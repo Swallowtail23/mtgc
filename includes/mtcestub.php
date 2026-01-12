@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.13
-Date:        26/11/25
+Version:     1.14
+Date:        12/01/26
 Name:        mtcestub.php
 Purpose:     PHP script to display Maintenance message
 Notes:       -
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');

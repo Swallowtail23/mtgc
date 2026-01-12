@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.16
+Version:     2.17
 Date:        12/01/26
 Name:        info.php
 Purpose:     Site information page.
@@ -14,6 +14,9 @@ To do:       -
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$copyright = (string) $appConfig->general('copyright', '');
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

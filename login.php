@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.16
+Version:     8.18
 Date:        12/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -17,6 +17,10 @@ use MTG\Core\Http\UrlHelper;
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$turnstile = (int) $appConfig->security('turnstileEnabled', false);
+$turnstile_site_key = (string) $appConfig->security('turnstileSiteKey', '');
 ob_start();
 
 // Content

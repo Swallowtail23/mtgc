@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.31
+Version:     6.32
 Date:        12/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -21,6 +21,11 @@ use MTG\Core\MyPHPMailer;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$myURL = (string) $appConfig->general('url', '');
+$siteTitle = (string) $appConfig->general('title', '');
+$adminEmail = (string) $appConfig->email('adminEmail', '');
+$serverEmail = (string) $appConfig->email('serverEmail', '');
 
 // Content
 $csrfToken = SessionManager::generateCsrfToken();

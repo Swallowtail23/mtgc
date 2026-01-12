@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.26
+Version:     1.27
 Date:        12/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -18,6 +18,9 @@ use MTG\Cards\ImportExport;
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$myURL = (string) $appConfig->general('url', '');
+$siteTitle = (string) $appConfig->general('title', '');
 
 // Content
 $msg->logMessage('[DEBUG]', "Collection page load");

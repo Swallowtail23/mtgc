@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.23
+Version:     1.24
 Date:        12/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
@@ -18,6 +18,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [

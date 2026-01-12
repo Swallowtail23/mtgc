@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.25
+Version:     5.26
 Date:        12/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -17,6 +17,8 @@ use MTG\Core\Validation;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 // Content
 // Check if user is logged in, if not redirect to login.php

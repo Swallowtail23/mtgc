@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.72
-Date:        10/01/26
+Version:     1.75
+Date:        12/01/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -11,7 +11,12 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+
 use MTG\Auth\SessionManager;
+
+
+$siteTitle = (string) $appConfig->general('title', '');
+$tier = (string) $appConfig->general('tier', 'prod');
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.26
+Version:     2.29
 Date:        12/01/26
 Name:        scryfall_migrations.php
 Purpose:     Import/update Scryfall migrations/deletions data
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+
 use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use JsonMachine\Items;
 use MTG\Bulk\ScryfallImport;
@@ -18,11 +19,16 @@ use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
 require APP_ROOT . '/bulk/bulk_ini.php';
+
+$adminEmail = (string) $appConfig->email('adminEmail', '');
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+
 Filesystem::ensureDirectoryExists($imgLocation . 'json', $appConfig, $msg);
 
 // URLs
 $starturl = "https://api.scryfall.com/migrations";
 $myURL = (string) $appConfig->general('url', '');
+$emailEnabled = (bool) $appConfig->email('enabled', false);
 
 // Bulk file store point
 $file_folder = $imgLocation . 'json/';

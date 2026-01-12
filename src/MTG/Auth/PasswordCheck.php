@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.10
-Date:        11/01/26
+Version:     1.11
+Date:        12/01/26
 Name:        PasswordCheck.php
 Purpose:     Password validation class.
 Notes:       -
@@ -195,7 +195,7 @@ class PasswordCheck
         $hole = '';
     }
 
-    public function passwordReset($email, $admin, $dbname)
+    public function passwordReset($email, $admin)
     {
         if (!isset($email)) :
             $this->message->logMessage("[DEBUG]", "Called without target account");
@@ -224,7 +224,7 @@ class PasswordCheck
                     $userName = $row['username'];
                     $randompassword = $this->generateRandomPassword(12);
                     $this->message->logMessage("[DEBUG]", "New password generated for $email, $userName");
-                    $reset = $this->newUser($userName, $email, $randompassword, $dbname);
+                    $reset = $this->newUser($userName, $email, $randompassword);
                     $this->message->logMessage("[DEBUG]", "Newuser result: $reset");
                     if ($reset === 1) :
                         $subject = "Password reset";
@@ -540,9 +540,10 @@ class PasswordCheck
         return $mail->sendEmail($email, true, $subject, $bodyHtml, $bodyText);
     }
 
-    public function newUser($userName, $postemail, $password = '', $dbname = '')
+    public function newUser($userName, $postemail, $password = '')
     {
         $msg = new Message($this->appConfig);
+        $dbName = (string) $this->appConfig->database('name', '');
         $postemail = trim($postemail);
         if (!filter_var($postemail, FILTER_VALIDATE_EMAIL)) :
             $msg->logMessage('[NOTICE]', "Email validation failed in newUser for input '$postemail'");
@@ -605,7 +606,7 @@ class PasswordCheck
                     $mytable = "{$db_usernumber}collection";
 
                     // Does it already exist
-                    $queryexists = "SHOW TABLES FROM $dbname LIKE '$mytable'";
+                    $queryexists = "SHOW TABLES FROM $dbName LIKE '$mytable'";
                     $stmt_exists = $this->db->prepare($queryexists);
 
                     if ($stmt_exists->execute()) :

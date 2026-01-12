@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.23
 Date:        12/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -18,6 +18,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';

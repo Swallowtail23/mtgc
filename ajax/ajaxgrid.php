@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.22
+Version:     5.23
 Date:        12/01/26
 Name:        ajaxgrid.php
 Purpose:     Processes updates from Grid/Bulk views of index.php
@@ -20,6 +20,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 $msg->logMessage('[DEBUG]', "Ajax grid update called");

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.74
+Version:     2.75
 Date:        12/01/26
 Name:        ajaxdeckrename.php
 Purpose:     AJAX deck rename for deck detail.
@@ -18,6 +18,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';

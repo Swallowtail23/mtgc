@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.51
-Date:        11/01/26
+Version:     1.52
+Date:        12/01/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
 Notes:       -
@@ -121,10 +121,10 @@ class AppContext
         if ($dbOverride instanceof \mysqli) :
             $db = $dbOverride;
         else :
-            $dbHost = $iniArray['database']['DBServer'] ?? '';
-            $dbUser = $iniArray['database']['DBUser'] ?? '';
-            $dbPass = $iniArray['database']['DBPass'] ?? '';
-            $dbName = $iniArray['database']['DBName'] ?? '';
+            $dbHost = (string) $config->database('host', '');
+            $dbUser = (string) $config->database('user', '');
+            $dbPass = (string) $config->database('pass', '');
+            $dbName = (string) $config->database('name', '');
             $db = new \mysqli($dbHost, $dbUser, $dbPass, $dbName);
             if ($db->connect_error) :
                 throw new \RuntimeException(

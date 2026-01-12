@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.04
+Version:     3.05
 Date:        12/01/26
 Name:        loggedout.php
 Purpose:     Logged out landing page.
@@ -14,6 +14,8 @@ To do:       -
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

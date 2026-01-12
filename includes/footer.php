@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.1
-Date:        26/11/25
+Version:     1.11
+Date:        12/01/26
 Name:        footer.php
 Purpose:     PHP script to display footer
 Notes:       {none}
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+$copyright = (string) $appConfig->general('copyright', '');
 
 if (__FILE__ === $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');

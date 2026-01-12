@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.56
+Version:     3.58
 Date:        12/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -21,6 +21,8 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     // Bootstrap
 
     $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+    $myURL = (string) $appConfig->general('url', '');
 
     $rulesImage90Rotate = $gameRules->getArray('image90rotate');
 

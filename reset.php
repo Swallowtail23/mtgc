@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.28
+Version:     3.29
 Date:        12/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -17,6 +17,8 @@ use MTG\Auth\TwoFactorManager;
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
 
 // Content
 $pwReset = new PasswordCheck($db, $appConfig);

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.18
+Version:     1.19
 Date:        12/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
@@ -17,6 +17,8 @@ use MTG\Core\Http\AjaxResponse;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$myURL = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [

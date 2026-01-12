@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.29
+Version:     14.30
 Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -24,6 +24,9 @@ use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$trustDuration = (int) $appConfig->security('trustDuration', 0);
 
 $rulesCurrencies = $gameRules->getArray('currencies');
 

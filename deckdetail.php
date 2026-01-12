@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.85
+Version:     25.87
 Date:        12/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -16,6 +16,10 @@ use MTG\Cards\DeckManager;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$siteTitle = (string) $appConfig->general('title', '');
+$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+$tier = (string) $appConfig->general('tier', 'prod');
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesValidTypes = $gameRules->getArray('validtypes');
