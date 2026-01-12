@@ -54,8 +54,7 @@ class AppContext
         Message $message,
         array $meta = [],
         ?SessionUser $sessionUser = null
-    )
-    {
+    ) {
         $this->db = $db;
         $this->config = $config;
         $this->rules = $rules;
