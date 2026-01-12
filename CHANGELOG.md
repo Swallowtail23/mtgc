@@ -47,6 +47,9 @@ AppConfig into AJAX validation.
 - Added ImportExport CSV builder test coverage and additional input interpreter edge cases.
 - Added PriceManager updateCollectionValues tests covering bulk and single-card transactions.
 - Expanded ScryfallImport tests for bulk info failures, stale downloads, and price_hash column checks.
+- Fixed GameRules::fromDefaults path to load the correct rules file.
+- Added UserStatus tests for bad login increment/reset and account lock updates.
+- Added manual checklist coverage notes to guide what remains unit-testable vs manual-only.
 - Added test coverage report, and bulk_ini now wraps bootstrap with CLI-friendly error handling.
 - Index test no longer resets global error handlers to avoid PHPUnit risky warnings.
 - Bulk scripts now rely on bootstrap for Message setup and no longer load includes/error_handling.php (removed).

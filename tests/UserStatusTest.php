@@ -58,6 +58,21 @@ class UserStatusDbStub
     }
 }
 
+class UserStatusExecuteDbStub
+{
+    public $lastQuery;
+    public $lastParams;
+    public $error = '';
+    public $info = 'ok';
+
+    public function execute_query($query, $params)
+    {
+        $this->lastQuery = $query;
+        $this->lastParams = $params;
+        return true;
+    }
+}
+
 class UserStatusTest extends TestCase
 {
     public function testGetUserStatusActiveReturnsCode10()
@@ -94,5 +109,42 @@ class UserStatusTest extends TestCase
 
         $this->assertSame(1, $result['code']);
         $this->assertSame(0, $result['count']);
+    }
+
+    public function testIncrementBadLoginUpdatesBadlogins()
+    {
+        $class = getRealUserStatusClass();
+        $db = new UserStatusExecuteDbStub();
+        $status = new $class($db, $GLOBALS['appConfig'], 'user@example.com');
+
+        $status->incrementBadLogin();
+
+        $this->assertStringContainsString('UPDATE users', $db->lastQuery);
+        $this->assertStringContainsString('badlogins', $db->lastQuery);
+        $this->assertSame(['user@example.com'], $db->lastParams);
+    }
+
+    public function testZeroBadLoginResetsCount()
+    {
+        $class = getRealUserStatusClass();
+        $db = new UserStatusExecuteDbStub();
+        $status = new $class($db, $GLOBALS['appConfig'], 'user@example.com');
+
+        $status->zeroBadLogin();
+
+        $this->assertSame('UPDATE users SET  badlogins = 0 WHERE email=?', $db->lastQuery);
+        $this->assertSame(['user@example.com'], $db->lastParams);
+    }
+
+    public function testTriggerLockedUpdatesStatus()
+    {
+        $class = getRealUserStatusClass();
+        $db = new UserStatusExecuteDbStub();
+        $status = new $class($db, $GLOBALS['appConfig'], 'user@example.com');
+
+        $status->triggerLocked();
+
+        $this->assertSame('UPDATE users SET status=? WHERE email=?', $db->lastQuery);
+        $this->assertSame(['locked', 'user@example.com'], $db->lastParams);
     }
 }

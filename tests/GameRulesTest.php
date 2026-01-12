@@ -31,5 +31,6 @@ class GameRulesTest extends TestCase
     {
         $rules = GameRules::fromDefaults();
         $this->assertIsArray($rules->all());
+        $this->assertArrayHasKey('search_langs', $rules->all());
     }
 }
