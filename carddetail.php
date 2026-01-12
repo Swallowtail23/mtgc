@@ -19,37 +19,46 @@ use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-$ctx = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$appConfig              = $ctx->config();
-$db                     = $ctx->db();
-$msg                    = $ctx->message();
-$gameRules              = $ctx->rules();
-$cssver                 = (string) $ctx->meta('cssver', '');
-$serviceWorkerVersion   = (string) $ctx->meta('serviceWorkerVersion', 'v6');
-$sessionUser            = $ctx->sessionUser();
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
+if (!$sessionUser) :
+    // should never happen; fail closed
+    if (!headers_sent()) :
+        header('Location: /login.php', true, 302);
+    else :
+        echo "<meta http-equiv='refresh' content='0;url=/login.php'>";
+    endif;
+    exit;
+endif;
 
-$siteTitle = (string) $appConfig->general('title', '');
-$imgLocation = (string) $appConfig->general('imageBaseDir', '');
-$tier = (string) $appConfig->general('tier', 'prod');
-$disqus = (int) $appConfig->comments('disqusEnabled', false);
-$disqusDev = (string) $appConfig->comments('disqusDevUrl', '');
-$disqusProd = (string) $appConfig->comments('disqusProdUrl', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$imgLocation                = (string) $appConfig->general('imageBaseDir', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$disqus                     = (int) $appConfig->comments('disqusEnabled', false);
+$disqusDev                  = (string) $appConfig->comments('disqusDevUrl', '');
+$disqusProd                 = (string) $appConfig->comments('disqusProdUrl', '');
 
-$user = $sessionUser ? $sessionUser->id() : 0;
-$admin = $sessionUser ? $sessionUser->adminLevel() : 0;
-$mytable = $sessionUser ? $sessionUser->table() : '';
-$userEmail = $sessionUser ? $sessionUser->email() : '';
-$fx = $sessionUser ? $sessionUser->fxEnabled() : false;
-$targetCurrency = $sessionUser ? $sessionUser->currency() : '';
-$rate = $sessionUser ? $sessionUser->rate() : 0.0;
-$groupInOut = $sessionUser ? $sessionUser->groupInOut() : 0;
-$groupId = $sessionUser ? $sessionUser->groupId() : 0;
+$user                       = $sessionUser->id();
+$admin                      = $sessionUser->adminLevel();
+$mytable                    = $sessionUser->table();
+$userEmail                  = $sessionUser->email();
+$fx                         = $sessionUser->fxEnabled();
+$targetCurrency             = $sessionUser->currency();
+$rate                       = $sessionUser->rate();
+$groupInOut                 = $sessionUser->groupInOut();
+$groupId                    = $sessionUser->groupId();
 
-$rulesImage90Rotate = $gameRules->getArray('image90rotate');
-$rulesLayoutsDouble = $gameRules->getArray('layouts_double');
-$rulesPromosToShow = $gameRules->getArray('promos_to_show');
-$rulesTokenLayouts = $gameRules->getArray('token_layouts');
+$rulesImage90Rotate         = $gameRules->getArray('image90rotate');
+$rulesLayoutsDouble         = $gameRules->getArray('layouts_double');
+$rulesPromosToShow          = $gameRules->getArray('promos_to_show');
+$rulesTokenLayouts          = $gameRules->getArray('token_layouts');
 $rulesTwoCardDetailSections = $gameRules->getArray('twoCardDetailSections');
 
 // Content
