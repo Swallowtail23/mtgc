@@ -22,12 +22,19 @@ $ctx = require APP_ROOT . '/bootstrap.php';
 $appConfig = $ctx->config();
 $db = $ctx->db();
 
+define('MTG_SECURE_PAGESETUP', true);
 require APP_ROOT . '/includes/secpagesetup.php';
 $secureData = mtgSecurePageSetup($db, $appConfig);
 // TODO: Legacy session globals are a temporary compatibility layer. Prefer $ctx->sessionUser() and local assignments.
 $sessionUser = $secureData['sessionUser'] ?? null;
-if ($sessionUser instanceof SessionUser) :
-    $ctx = $ctx->withSessionUser($sessionUser);
+if (!$sessionUser instanceof SessionUser) :
+    // Should not happen if secpagesetup enforces auth, but keep contract strict.
+    if (!headers_sent()) :
+        header('Location: /login.php', true, 302);
+    else :
+        echo "<meta http-equiv='refresh' content='0;url=/login.php'>";
+    endif;
+    exit;
 endif;
 
 $legacy = $secureData['legacy'] ?? [];

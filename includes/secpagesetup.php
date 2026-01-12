@@ -17,7 +17,7 @@ use MTG\Core\AppConfig;
 use MTG\Admin\AdminSettings;
 use MTG\Core\Message;
 
-if (__FILE__ == $_SERVER['PHP_SELF']) :
+if (!defined('MTG_SECURE_PAGESETUP')) :
     die('Direct access prohibited');
 endif;
 

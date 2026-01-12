@@ -28,15 +28,6 @@ $gameRules                  = $ctx->rules();
 $cssver                     = (string) $ctx->meta('cssver', '');
 $serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 $sessionUser                = $ctx->sessionUser();
-if (!$sessionUser) :
-    // should never happen; fail closed
-    if (!headers_sent()) :
-        header('Location: /login.php', true, 302);
-    else :
-        echo "<meta http-equiv='refresh' content='0;url=/login.php'>";
-    endif;
-    exit;
-endif;
 
 $siteTitle                  = (string) $appConfig->general('title', '');
 $imgLocation                = (string) $appConfig->general('imageBaseDir', '');
