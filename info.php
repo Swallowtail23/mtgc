@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.17
+Version:     2.19
 Date:        12/01/26
 Name:        info.php
 Purpose:     Site information page.
@@ -11,9 +11,13 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Admin\AdminSettings;
+
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 $copyright = (string) $appConfig->general('copyright', '');

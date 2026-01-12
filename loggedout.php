@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.05
+Version:     3.07
 Date:        12/01/26
 Name:        loggedout.php
 Purpose:     Logged out landing page.
@@ -11,9 +11,13 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Admin\AdminSettings;
+
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     4.24
+Version:     4.26
 Date:        12/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
@@ -12,10 +12,13 @@ To do:       -
 */
 
 use MTG\Auth\SessionManager;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

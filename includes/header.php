@@ -14,7 +14,6 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 
-
 $siteTitle = (string) $appConfig->general('title', '');
 $tier = (string) $appConfig->general('tier', 'prod');
 

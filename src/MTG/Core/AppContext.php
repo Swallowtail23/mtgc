@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.52
+Version:     1.54
 Date:        12/01/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
@@ -12,6 +12,8 @@ To do:       -
 */
 
 namespace MTG\Core;
+
+use MTG\Auth\SessionUser;
 
 class AppContext
 {
@@ -35,14 +37,32 @@ class AppContext
     * @var Message
     */
     private $message;
+    /**
+    * @var array<string,mixed>
+    */
+    private $meta = [];
+    /**
+    * @var SessionUser|null
+    */
+    private $sessionUser;
 
-    public function __construct($db, AppConfig $config, GameRules $rules, array $iniArray, Message $message)
+    public function __construct(
+        $db,
+        AppConfig $config,
+        GameRules $rules,
+        array $iniArray,
+        Message $message,
+        array $meta = [],
+        ?SessionUser $sessionUser = null
+    )
     {
         $this->db = $db;
         $this->config = $config;
         $this->rules = $rules;
         $this->iniArray = $iniArray;
         $this->message = $message;
+        $this->meta = $meta;
+        $this->sessionUser = $sessionUser;
     }
 
     public static function fromIniPath(string $iniPath, ?\mysqli $dbOverride = null): self
@@ -162,6 +182,48 @@ class AppContext
     public function message(): Message
     {
         return $this->message;
+    }
+
+    public function sessionUser(): ?SessionUser
+    {
+        return $this->sessionUser;
+    }
+
+    public function meta(string $key, $default = null)
+    {
+        return $this->meta[$key] ?? $default;
+    }
+
+    public function metaAll(): array
+    {
+        return $this->meta;
+    }
+
+    public function withMeta(array $meta): self
+    {
+        $merged = array_merge($this->meta, $meta);
+        return new self(
+            $this->db,
+            $this->config,
+            $this->rules,
+            $this->iniArray,
+            $this->message,
+            $merged,
+            $this->sessionUser
+        );
+    }
+
+    public function withSessionUser(SessionUser $sessionUser): self
+    {
+        return new self(
+            $this->db,
+            $this->config,
+            $this->rules,
+            $this->iniArray,
+            $this->message,
+            $this->meta,
+            $sessionUser
+        );
     }
 
     private static function normalizeTier(string $tier): string

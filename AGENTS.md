@@ -56,6 +56,12 @@
 - Standard Tidyup: No approval needed. Remove end of line whitespaces, apply phpcs automatic tidyup, split long lines to be <=120 characters, apply standard header format (see below). Do not change logic, program flow, or control structures. Must not change output.
 - Advanced Tidyup: Standard Tidyup plus also conduct a basic review of logic and possible optimisation. Make no logic code changes or optimisation without approval.
 
+## Bootstrap context rules
+- Make `$ctx` the only object promised to callers; treat ambient variables as deprecated.
+- Keep `$appConfig`, `$db`, `$msg`, and `$gameRules` ambient for now; do not introduce new ambient globals beyond those.
+- Prefer reading values via `$ctx->...()` or local assignments as files are edited.
+- Avoid introducing new ambient variables in `bootstrap.php`; add data to `$ctx` instead.
+
 ## Problem-Solving Expectations
 - For complex or contentious issues, insist on a minimal reproducible test with fixed inputs and expected outputs before concluding.
 - Validate the full data path end-to-end (inputs → transforms → storage → readback) rather than assuming any step.

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.27
+Version:     1.29
 Date:        12/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -14,10 +14,13 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $myURL = (string) $appConfig->general('url', '');
 $siteTitle = (string) $appConfig->general('title', '');

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.6
-Date:        11/01/26
+Version:     1.7
+Date:        12/01/26
 Name:        TrustedDeviceManager.php
 Purpose:     Manage trusted device tokens for extended session handling.
 Notes:       -
@@ -54,6 +54,12 @@ class TrustedDeviceManager
         endif;
 
         // Fallback to direct file logging
+        if ($this->logfile === '') :
+            openlog("MTG", LOG_NDELAY, LOG_USER);
+            syslog(LOG_NOTICE, "TrustedDeviceManager: $text");
+            closelog();
+            return;
+        endif;
         if (($fd = fopen($this->logfile, "a")) !== false) :
             if (flock($fd, LOCK_EX)) :
                 $timestamp = date("[d/m/Y:H:i:s]");

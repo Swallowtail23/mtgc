@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.38
+Version:     22.42
 Date:        12/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -19,7 +19,15 @@ use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx = require __DIR__ . '/bootstrap_secure.php';
+
+$appConfig              = $ctx->config();
+$db                     = $ctx->db();
+$msg                    = $ctx->message();
+$gameRules              = $ctx->rules();
+$cssver                 = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion   = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser            = $ctx->sessionUser();
 
 $siteTitle = (string) $appConfig->general('title', '');
 $imgLocation = (string) $appConfig->general('imageBaseDir', '');
@@ -27,6 +35,16 @@ $tier = (string) $appConfig->general('tier', 'prod');
 $disqus = (int) $appConfig->comments('disqusEnabled', false);
 $disqusDev = (string) $appConfig->comments('disqusDevUrl', '');
 $disqusProd = (string) $appConfig->comments('disqusProdUrl', '');
+
+$user = $sessionUser ? $sessionUser->id() : 0;
+$admin = $sessionUser ? $sessionUser->adminLevel() : 0;
+$mytable = $sessionUser ? $sessionUser->table() : '';
+$userEmail = $sessionUser ? $sessionUser->email() : '';
+$fx = $sessionUser ? $sessionUser->fxEnabled() : false;
+$targetCurrency = $sessionUser ? $sessionUser->currency() : '';
+$rate = $sessionUser ? $sessionUser->rate() : 0.0;
+$groupInOut = $sessionUser ? $sessionUser->groupInOut() : 0;
+$groupId = $sessionUser ? $sessionUser->groupId() : 0;
 
 $rulesImage90Rotate = $gameRules->getArray('image90rotate');
 $rulesLayoutsDouble = $gameRules->getArray('layouts_double');
@@ -1678,18 +1696,8 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <?php
 
                             // Others with this card section
-                            $usergrprowqry = "SELECT grpinout,groupid FROM users WHERE usernumber = ? LIMIT 1";
-                            $usergrprowparams = [$user];
-                            if ($sqlusergrp = $db->execute_query($usergrprowqry, $usergrprowparams)) :
-                                $msg->logMessage('[DEBUG]', "SQL query succeeded");
-                            else :
-                                throw new Exception(
-                                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
-                                );
-                            endif;
-                            $usergrprow = $sqlusergrp->fetch_array(MYSQLI_ASSOC);
-                            if ($usergrprow['grpinout'] == 1) :
-                                $usergroup = $usergrprow['groupid'];
+                            if ($groupInOut === 1 && $groupId > 0) :
+                                $usergroup = $groupId;
                                 $msg->logMessage('[DEBUG]', "Groups are active, group ID = $usergroup");
                                 $grpquery = "SELECT usernumber, username, status, groupid, groupname, owner FROM users "
                                     . "LEFT JOIN `groups` ON users.groupid = groups.groupnumber "

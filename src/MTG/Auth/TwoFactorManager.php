@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.5
-Date:        11/01/26
+Version:     1.6
+Date:        12/01/26
 Name:        TwoFactorManager.php
 Purpose:     Handles 2FA setup, verification, and management.
 Notes:       -
@@ -50,6 +50,12 @@ class TwoFactorManager
     {
         if ($this->log !== null) :
             $this->log->logMessage($level, $text);
+            return;
+        endif;
+        if ($this->logfile === '') :
+            openlog("MTG", LOG_NDELAY, LOG_USER);
+            syslog(LOG_NOTICE, "TwoFactorManager: $text");
+            closelog();
             return;
         endif;
         if (($fd = fopen($this->logfile, "a")) !== false) :

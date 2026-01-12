@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.16
 Date:        12/01/26
 Name:        mtcestub.php
 Purpose:     PHP script to display Maintenance message
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Admin\AdminSettings;
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

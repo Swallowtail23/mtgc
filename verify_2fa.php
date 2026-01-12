@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.24
 Date:        12/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -14,10 +14,13 @@ To do:       -
 use MTG\Auth\LoginHandler;
 use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

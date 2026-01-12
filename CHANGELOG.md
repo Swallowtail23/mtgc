@@ -35,6 +35,9 @@ AppConfig into AJAX validation.
 
 ### Infrastructure
 - Centralized AJAX response output through shared JSON/text helpers to keep response formatting consistent.
+- Added AppContext session user accessor and wired bootstrap_secure/secpagesetup to populate it.
+- bootstrap_secure now centralizes secure-session setup and exposes legacy session variables from a single entry point.
+- carddetail now consumes session data from AppContext SessionUser instead of ambient session globals.
 - Added DeckManager helper tests covering deck legality and copy limits.
 - Added tests for SessionManager CSRF validation, PasswordCheck password rules, LoginHandler login stamps, and import CSV parsing.
 - Added AppContext bootstrap test coverage for ini parsing and db overrides.
@@ -60,6 +63,9 @@ AppConfig into AJAX validation.
 - AppConfig now exposes database settings; AppContext and bootstrap DB constants now derive from AppConfig.
 - PasswordCheck now reads DB name from AppConfig internally; newUser/passwordReset no longer accept dbname.
 - Removed legacy DB_* constants from bootstrap; app code now relies on AppConfig for DB settings.
+- Log handling now treats empty logFile as a syslog fallback (no numeric sentinel).
+- CSS version suffix is now resolved in each consuming page/include instead of bootstrap.
+- AppContext now carries optional meta values (serviceWorkerVersion, cssver) for future de-ambienting.
 - Standardized entrypoint bootstraps to require bootstrap files directly (APP_ROOT defined only within bootstrap).
 - Moved Scryfall bulk helpers into MTG\Bulk\ScryfallImport (including downloadBulk/fetchJson) with tests and updated bulk scripts.
 - Moved symbolReplace, cardTypes, and promoLookup into MTG\Cards\CardUtils with coverage for card types and promo display.

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        11/01/26
+Version:     1.8
+Date:        12/01/26
 Name:        Message.php
 Purpose:     Simple message and log writing class with internal logging.
 Notes:       Usage:
@@ -43,8 +43,11 @@ class Message
     {
         $log = $log ?: $this->logfile;
 
-        // Short-circuit if log path is empty or explicitly disabled
-        if (empty($log) || $log === 0) :
+        // Empty log path means syslog fallback
+        if ($log === '') :
+            openlog("MTG", LOG_NDELAY, LOG_USER);
+            syslog(LOG_NOTICE, $msg);
+            closelog();
             return;
         endif;
 

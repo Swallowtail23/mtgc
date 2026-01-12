@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.86
+Version:     1.88
 Date:        12/01/26
 Name:        template.php
 Purpose:     Site template.
@@ -11,9 +11,13 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Admin\AdminSettings;
+
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

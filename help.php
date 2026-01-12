@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.24
+Version:     2.26
 Date:        12/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -12,9 +12,12 @@ To do:       -
 */
 
 use MTG\Core\MyPHPMailer;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 $adminEmail = (string) $appConfig->email('adminEmail', '');

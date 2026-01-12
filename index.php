@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.65
+Version:     14.67
 Date:        12/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -16,9 +16,12 @@ use MTG\Cards\ImageManager;
 use MTG\Cards\ImportExport;
 use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

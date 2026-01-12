@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.23
+Version:     5.25
 Date:        12/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -12,10 +12,13 @@ To do:       -
 */
 
 use MTG\Cards\DeckManager;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

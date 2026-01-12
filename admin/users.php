@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.25
+Version:     6.27
 Date:        12/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -12,9 +12,12 @@ To do:       -
 */
 
 use MTG\Auth\PasswordCheck;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);

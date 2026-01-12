@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.87
+Version:     25.89
 Date:        12/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -13,9 +13,12 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 $imgLocation = (string) $appConfig->general('imageBaseDir', '');

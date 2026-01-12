@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.84
+Version:     2.86
 Date:        12/01/26
 Name:        reject.php
 Purpose:     Non-admin rejection page called by admin pages on attempted load by non-admin or from non-secure page
@@ -13,8 +13,9 @@ To do:       -
 
 
 use MTG\Core\Message;
+use MTG\Admin\AdminSettings;
 
-
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 $siteTitle = (string) $appConfig->general('title', '');
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :

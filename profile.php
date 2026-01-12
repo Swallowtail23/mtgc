@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.30
+Version:     14.32
 Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -21,9 +21,12 @@ use OTPHP\TOTP;
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 $trustDuration = (int) $appConfig->security('trustDuration', 0);

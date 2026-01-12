@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.11
+Version:     1.13
 Date:        12/01/26
 Name:        footer.php
 Purpose:     PHP script to display footer
@@ -10,6 +10,10 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Admin\AdminSettings;
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $copyright = (string) $appConfig->general('copyright', '');
 

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.26
+Version:     5.28
 Date:        12/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -13,10 +13,13 @@ To do:       -
 
 use MTG\Cards\ImageManager;
 use MTG\Core\Validation;
+use MTG\Admin\AdminSettings;
 
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $siteTitle = (string) $appConfig->general('title', '');
 

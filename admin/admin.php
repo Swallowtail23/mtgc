@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.32
+Version:     6.34
 Date:        12/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -21,6 +21,8 @@ use MTG\Core\MyPHPMailer;
 // Bootstrap
 
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
 
 $myURL = (string) $appConfig->general('url', '');
 $siteTitle = (string) $appConfig->general('title', '');
