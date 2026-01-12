@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.67
+Version:     14.70
 Date:        12/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -16,19 +16,31 @@ use MTG\Cards\ImageManager;
 use MTG\Cards\ImportExport;
 use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$user                       = $sessionUser->id();
+$admin                      = $sessionUser->adminLevel();
+$userEmail                  = $sessionUser->email();
+$collection_view            = $sessionUser->collectionView();
+$mytable                    = $sessionUser->table();
 
-$rulesFlipButtonCards = $gameRules->getArray('flip_button_cards');
-$rulesLayoutsDouble = $gameRules->getArray('layouts_double');
-$rulesSearchLangCodes = $gameRules->getArray('search_langs_codes');
-$rulesValidTribe = $gameRules->getArray('valid_tribe');
+$rulesFlipButtonCards       = $gameRules->getArray('flip_button_cards');
+$rulesLayoutsDouble         = $gameRules->getArray('layouts_double');
+$rulesSearchLangCodes       = $gameRules->getArray('search_langs_codes');
+$rulesValidTribe            = $gameRules->getArray('valid_tribe');
 
 // Content
 // Default numbers per page and max
@@ -227,7 +239,6 @@ $loyalty = filter_input(INPUT_GET, 'loyalty', FILTER_VALIDATE_INT, [
 $collqty = filter_input(INPUT_GET, 'collQtyValue', FILTER_VALIDATE_INT, [
     'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
 ]);
-$mytable = $user . "collection";
 $adv = isset($_GET['complex']) ? 'yes' : '';
 $scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
 $valid_scope = array("all","mycollection","notcollection");

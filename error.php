@@ -1,17 +1,22 @@
 <?php
 
 /*
-Version:     2.34
+Version:     2.39
 Date:        12/01/26
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
-Notes:       Ini file is parsed with parse_ini_file, not INI class, as classes not loaded in this page.
+Notes:       Ini file is parsed with parse_ini_file and AppConfig is loaded for page config values.
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
 
-$iniArray = parse_ini_file("/opt/mtg/mtg_new.ini");
+$iniArray = parse_ini_file("/opt/mtg/mtg_new.ini", true);
+if (!is_array($iniArray)) :
+    $iniArray = [];
+endif;
+require_once __DIR__ . '/vendor/autoload.php';
+$appConfig = \MTG\Core\AppConfig::fromIni($iniArray);
 $serviceWorkerVersion = 'v6';
 $versionFile = __DIR__ . '/VERSION';
 if (file_exists($versionFile)) :
@@ -21,13 +26,10 @@ if (file_exists($versionFile)) :
     endif;
 endif;
 //Copyright string
-$copyright = $iniArray['Copyright'];
-if ($iniArray['tier'] === 'dev') :
-    $tier = 'dev';
-else :
-    $tier = 'prod';
-endif;
-$siteTitleEsc = htmlspecialchars($iniArray['title'], ENT_QUOTES, 'UTF-8');
+$siteTitle = (string) $appConfig->general('title', 'MTG Collection');
+$tier = (string) $appConfig->general('tier', 'prod');
+$copyright = (string) $appConfig->general('copyright', '');
+$siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $cssver = "";
 ?>
 
@@ -61,8 +63,8 @@ require __DIR__ . '/includes/header.php'; ?>
         <h3>Error</h3>
         We've encountered a problem!<br><br>
         <?php
-        $emailEnabledSetting = $iniArray['Email'] ?? 'enabled';
-        if ($emailEnabledSetting === 'enabled') :
+        $emailEnabled = (bool) $appConfig->email('enabled', false);
+        if ($emailEnabled) :
             echo "That page returned an error, and details have been emailed to site admins.";
         else :
             echo "That page returned an error. Email alerts are disabled in this environment,";

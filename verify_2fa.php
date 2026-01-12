@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.24
+Version:     1.26
 Date:        12/01/26
 Name:        verify_2fa.php
 Purpose:     Complete the second step of two-factor authentication.
@@ -14,15 +14,18 @@ To do:       -
 use MTG\Auth\LoginHandler;
 use MTG\Auth\SessionManager;
 use MTG\Auth\TwoFactorManager;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap.php';
 
-$appContext = require __DIR__ . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
 
 // Content
 if (!isset($_SESSION['user_pending_2fa'])) :

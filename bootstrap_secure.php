@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.14
+Version:     1.15
 Date:        12/01/26
 Name:        bootstrap_secure.php
 Purpose:     Secure bootstrap wrapper that runs session setup.
@@ -36,6 +36,8 @@ if (!$sessionUser instanceof SessionUser) :
     endif;
     exit;
 endif;
+// Inject SessionUser info into $ctx
+$ctx = $ctx->withSessionUser($sessionUser);
 
 $legacy = $secureData['legacy'] ?? [];
 $user = (int) ($legacy['user'] ?? 0);

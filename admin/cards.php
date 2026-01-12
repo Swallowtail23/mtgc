@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.28
+Version:     5.30
 Date:        12/01/26
 Name:        cards.php
 Purpose:     Card administrative tasks
@@ -16,12 +16,23 @@ use MTG\Core\Validation;
 use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$user                       = $sessionUser->id();
+$userName                   = $sessionUser->userName();
+$userEmail                  = $sessionUser->email();
+$admin                      = $sessionUser->adminLevel();
 
 // Content
 // Check if user is logged in, if not redirect to login.php

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.22
 Date:        12/01/26
 Name:        issues.php
 Purpose:     Issues page.
@@ -11,15 +11,20 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Admin\AdminSettings;
-
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

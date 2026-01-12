@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.25
+Version:     5.28
 Date:        12/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -12,15 +12,23 @@ To do:       -
 */
 
 use MTG\Cards\DeckManager;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$user                       = $sessionUser->id();
+$userEmail                  = $sessionUser->email();
 
 // Content
 // page specific variables

@@ -11,11 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-
 use MTG\Auth\SessionManager;
-
-$siteTitle = (string) $appConfig->general('title', '');
-$tier = (string) $appConfig->general('tier', 'prod');
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -185,7 +181,7 @@ if (
     </div>
     <?php
 elseif ($adminpages !== false) :
-    include APP_ROOT . '/includes/adminmenus.php';
+    include APP_ROOT . '/admin/adminmenus.php';
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>

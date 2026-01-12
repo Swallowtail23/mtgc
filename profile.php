@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.32
+Version:     14.35
 Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -21,20 +21,29 @@ use OTPHP\TOTP;
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$siteTitle = (string) $appConfig->general('title', '');
-$trustDuration = (int) $appConfig->security('trustDuration', 0);
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$trustDuration              = (int) $appConfig->security('trustDuration', 0);
+$userId                     = $sessionUser->id();
+$userEmail                  = $sessionUser->email();
+$mytable                    = $sessionUser->table();
 
-$rulesCurrencies = $gameRules->getArray('currencies');
+$rulesCurrencies            = $gameRules->getArray('currencies');
 
 // Content
-$userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $msg->logMessage('[DEBUG]', "Page load");
 $emailEnabled = (bool) $appConfig->email('enabled', false);
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

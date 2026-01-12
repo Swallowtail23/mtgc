@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.29
+Version:     1.32
 Date:        12/01/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -14,20 +14,28 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$myURL = (string) $appConfig->general('url', '');
-$siteTitle = (string) $appConfig->general('title', '');
+$myURL                      = (string) $appConfig->general('url', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$userId                     = $sessionUser->id();
+$userEmail                  = $sessionUser->email();
+$mytable                    = $sessionUser->table();
 
 // Content
 $msg->logMessage('[DEBUG]', "Collection page load");
-$userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
 $emailEnabled = (bool) $appConfig->email('enabled', false);
 // Has DELETE collection been called?
 $deletecollection = (isset($_GET['deletecollection']) && $_GET['deletecollection'] === 'DELETE') ? 'DELETE' : '';

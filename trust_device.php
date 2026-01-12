@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.19
+Version:     2.21
 Date:        12/01/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
@@ -14,16 +14,19 @@ To do:       -
 use MTG\Auth\SessionManager;
 use MTG\Auth\TrustedDeviceManager;
 use MTG\Core\Http\UrlHelper;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap.php';
 
-$appContext = require __DIR__ . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
-$trustDuration = (int) $appConfig->security('trustDuration', 0);
+$siteTitle                  = (string) $appConfig->general('title', '');
+$trustDuration              = (int) $appConfig->security('trustDuration', 0);
 
 // Regenerate session on privilege transition
 if (session_status() === PHP_SESSION_ACTIVE) :

@@ -11,12 +11,6 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Admin\AdminSettings;
-
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$copyright = (string) $appConfig->general('copyright', '');
-
 if (__FILE__ === $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;

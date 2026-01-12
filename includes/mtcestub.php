@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.16
+Version:     1.19
 Date:        12/01/26
 Name:        mtcestub.php
 Purpose:     PHP script to display Maintenance message
@@ -11,29 +11,42 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
-use MTG\Admin\AdminSettings;
-
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
-
-if (__FILE__ == $_SERVER['PHP_SELF']) :
-    die('Direct access prohibited');
+$iniArray = parse_ini_file("/opt/mtg/mtg_new.ini", true);
+if (!is_array($iniArray)) :
+    $iniArray = [];
 endif;
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+$appConfig = \MTG\Core\AppConfig::fromIni($iniArray);
+//Copyright string
+$siteTitle = (string) $appConfig->general('title', 'MTG Collection');
+$tier = (string) $appConfig->general('tier', 'prod');
+$copyright = (string) $appConfig->general('copyright', '');
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 ?>
 
+<!DOCTYPE html>
 <meta http-equiv='refresh' content='3;url=../login.php'>
 <html>
     <head>
-        <meta charset='UTF-8'>
-        <meta name='viewport' content='initial-scale=1'>
-        <?php echo "<title>$siteTitleEsc</title><link rel='stylesheet' type='text/css' href='/style$cssver.css'>"; ?>
-        <?php include APP_ROOT . '/includes/googlefonts.php';?>
+        <meta charset="UTF-8">
+        <title> <?php echo $siteTitleEsc;?> Maintenance page</title>
+        <link rel="stylesheet" type="text/css" href="/css/style-min.css">
+        <?php include dirname(__DIR__) . '/includes/googlefonts.php';?>
+        <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     </head>
-    <body>
-        <div id ='page'>
-            <div class='alert-box error' id='adminerror'>Site is down for maintenance. Redirecting to login page.</div>
-            <?php require APP_ROOT . '/includes/header.php';  //build header ?>
+    <body class="body">
+    <?php
+    // Start building the page here, so errors show in the website template
+    require dirname(__DIR__) . '/includes/header.php'; ?>
+    <div id="menu"></div>
+    <div id="page">
+        <div class="staticpagecontent">
+            <h3>Site maintenance</h3>
+            Site is down for maintenance. Redirecting to login page.<br><br>
         </div>
+    </div>
+
+    <?php
+    require dirname(__DIR__) . '/includes/footer.php'; ?>
     </body>
+</html>

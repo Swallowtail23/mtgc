@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.34
+Version:     6.37
 Date:        12/01/26
 Name:        admin.php
 Purpose:     Site control panel
@@ -19,15 +19,28 @@ use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$myURL                      = (string) $appConfig->general('url', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$logfile                    = (string) $appConfig->general('logFile', '');
+$adminEmail                 = (string) $appConfig->email('adminEmail', '');
+$serverEmail                = (string) $appConfig->email('serverEmail', '');
 
-$myURL = (string) $appConfig->general('url', '');
-$siteTitle = (string) $appConfig->general('title', '');
-$adminEmail = (string) $appConfig->email('adminEmail', '');
-$serverEmail = (string) $appConfig->email('serverEmail', '');
+$user                       = $sessionUser->id();
+$userName                   = $sessionUser->userName();
+$userEmail                  = $sessionUser->email();
+$admin                      = $sessionUser->adminLevel();
 
 // Content
 $csrfToken = SessionManager::generateCsrfToken();
@@ -225,7 +238,21 @@ function minifyCssFile(string $sourcePath, string $targetPath, Message $msg): ar
 //Check if user is logged in, if not redirect to login.php
 $msg->logMessage('[DEBUG]', "Admin page called by user $userName ($userEmail) Admin result: " . $admin);
 if ($admin !== 1) :
-    require APP_ROOT . '/admin/reject.php';
+    if ($admin == 3) :
+        echo "<meta http-equiv='refresh' content='0;url=../index.php'>";
+        $msg->logMessage(
+            '[ERROR]',
+            "Admin page called by non-admin user from " . $_SERVER['REMOTE_ADDR'] . ", exiting"
+        );
+        exit();
+    elseif ($admin == 2) :
+        echo "<meta http-equiv='refresh' content='0;url=../index.php'>";
+        $msg->logMessage(
+            '[ERROR]',
+            "Admin page called by admin user from non-secure location: " . $_SERVER['REMOTE_ADDR'] . ", exiting"
+        );
+        exit();
+    endif;
 endif;
 
 //Get date for update form

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.26
+Version:     2.29
 Date:        12/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -12,16 +12,25 @@ To do:       -
 */
 
 use MTG\Core\MyPHPMailer;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$siteTitle = (string) $appConfig->general('title', '');
-$adminEmail = (string) $appConfig->email('adminEmail', '');
-$emailEnabled = (bool) $appConfig->email('enabled', false);
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$adminEmail                 = (string) $appConfig->email('adminEmail', '');
+$emailEnabled               = (bool) $appConfig->email('enabled', false);
+$userName                   = $sessionUser->userName();
+$userEmail                  = $sessionUser->email();
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');

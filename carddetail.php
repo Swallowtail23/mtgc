@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.42
+Version:     22.43
 Date:        12/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -35,6 +35,7 @@ $tier                       = (string) $appConfig->general('tier', 'prod');
 $disqus                     = (int) $appConfig->comments('disqusEnabled', false);
 $disqusDev                  = (string) $appConfig->comments('disqusDevUrl', '');
 $disqusProd                 = (string) $appConfig->comments('disqusProdUrl', '');
+$copyright                  = (string) $appConfig->general('copyright', '');
 
 $user                       = $sessionUser->id();
 $admin                      = $sessionUser->adminLevel();

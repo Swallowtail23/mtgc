@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.31
+Version:     3.33
 Date:        12/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
@@ -13,15 +13,18 @@ To do:       -
 
 use MTG\Auth\PasswordCheck;
 use MTG\Auth\TwoFactorManager;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap.php';
 
-$appContext = require __DIR__ . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
 
 // Content
 $pwReset = new PasswordCheck($db, $appConfig);

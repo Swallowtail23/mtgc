@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.89
+Version:     25.92
 Date:        12/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -13,16 +13,24 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$siteTitle = (string) $appConfig->general('title', '');
-$imgLocation = (string) $appConfig->general('imageBaseDir', '');
-$tier = (string) $appConfig->general('tier', 'prod');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$imgLocation                = (string) $appConfig->general('imageBaseDir', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$user                       = $sessionUser->id();
+$userEmail                  = $sessionUser->email();
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesValidTypes = $gameRules->getArray('validtypes');

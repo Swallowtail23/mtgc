@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.27
+Version:     6.29
 Date:        12/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -15,14 +15,27 @@ use MTG\Auth\PasswordCheck;
 use MTG\Admin\AdminSettings;
 
 // Bootstrap
-$appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+$ctx                        = require dirname(__DIR__) . '/bootstrap_secure.php';
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
+$sessionUser                = $ctx->sessionUser();
 
-$siteTitle = (string) $appConfig->general('title', '');
-$emailEnabled = (bool) $appConfig->email('enabled', false);
+$siteTitle                  = (string) $appConfig->general('title', '');
+$tier                       = (string) $appConfig->general('tier', 'prod');
+$copyright                  = (string) $appConfig->general('copyright', '');
+$emailEnabled               = (bool) $appConfig->email('enabled', false);
 
-$rulesCurrencies = $gameRules->getArray('currencies');
+$user                       = $sessionUser->id();
+$userName                   = $sessionUser->userName();
+$userEmail                  = $sessionUser->email();
+$admin                      = $sessionUser->adminLevel();
+
+$rulesCurrencies            = $gameRules->getArray('currencies');
 
 // Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     8.20
+Version:     8.22
 Date:        12/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
@@ -13,17 +13,20 @@ To do:       -
 
 use MTG\Auth\LoginHandler;
 use MTG\Core\Http\UrlHelper;
-use MTG\Admin\AdminSettings;
 
 // Bootstrap
+$ctx                        = require __DIR__ . '/bootstrap.php';
 
-$appContext = require __DIR__ . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$cssver                     = (string) $ctx->meta('cssver', '');
+$serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 
-$cssver = AdminSettings::getCssVersionSuffix($db, $appConfig);
-
-$siteTitle = (string) $appConfig->general('title', '');
-$turnstile = (int) $appConfig->security('turnstileEnabled', false);
-$turnstile_site_key = (string) $appConfig->security('turnstileSiteKey', '');
+$siteTitle                  = (string) $appConfig->general('title', '');
+$turnstile                  = (int) $appConfig->security('turnstileEnabled', false);
+$turnstile_site_key         = (string) $appConfig->security('turnstileSiteKey', '');
 ob_start();
 
 // Content
