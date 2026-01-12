@@ -15,6 +15,7 @@ What It Does
 Run
 php bulk/scryfall_bulk.php test
 php tests/manual_bulk_import_test.php
+MTG_BULK_TEST_INI=/opt/mtg/mtg_new.ini vendor/bin/phpunit --filter BulkScryfallImportTest
 
 Expected Summary
 Test summary: total 10, added 1, price only 2, content only 2, both 2
@@ -22,3 +23,6 @@ Test summary: total 10, added 1, price only 2, content only 2, both 2
 Notes
 - This is a manual/local test only.
 - The test will wipe all data in `cards_scry_test`.
+- The PHPUnit test uses `MTG_BULK_TEST_INI` or defaults to `/opt/mtg/mtg_new.ini`.
+- The test runs only when the ini `general.tier` is set to `dev`.
+- The test is skipped in GitHub Actions via `GITHUB_ACTIONS` and in CI via `CI`.
