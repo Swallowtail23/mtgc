@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     9.26
+Version:     9.27
 Date:        12/01/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
@@ -16,7 +16,7 @@ use MTG\Bulk\ScryfallImport;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
-require APP_ROOT . '/bulk/bulk_ini.php';
+require __DIR__ . '/bulk_ini.php';
 
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
