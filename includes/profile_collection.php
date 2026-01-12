@@ -18,9 +18,7 @@ if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
 endif;
 
-if (!isset($msg) || !($msg instanceof Message)) :
-    $msg = new Message($appConfig);
-endif;
+$msg = new Message($appConfig);
 
 $statsHelper = new CollectionStats($db, $appConfig);
 $stats = $statsHelper->getStats($mytable, $targetCurrency ?? null);
