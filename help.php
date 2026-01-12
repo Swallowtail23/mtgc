@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.20
+Version:     2.22
 Date:        12/01/26
 Name:        help.php
 Purpose:     Provides a help submission form and place for help notes.
@@ -14,7 +14,6 @@ To do:       -
 use MTG\Core\MyPHPMailer;
 
 // Bootstrap
-
 $appContext = require __DIR__ . '/bootstrap_secure.php';
 
 // Content
@@ -131,7 +130,7 @@ $name = ucfirst($userName);
     <br><br><b>Prices</b><br>
     Prices are updated each night from Scryfall for every card in the database.
     When going to a card detail page, if the price was fetched more than
-    <?php echo $max_data_age_in_hours; ?> hours, it will automatically update.
+    <?php echo $gameRules->getFloat('max_data_age_in_hours', 0.0); ?> hours, it will automatically update.
     If no price is available for the card, this will be because Scryfall do not currently have a price.
     <br><br><b>Card updates</b><br>
     Please use the form above if you find an issue with a card, or missing cards.

@@ -1,5 +1,6 @@
 <?php
 
+use MTG\Core\GameRules;
 use PHPUnit\Framework\TestCase;
 
 class DeckDetailFragmentsTest extends TestCase
@@ -7,7 +8,9 @@ class DeckDetailFragmentsTest extends TestCase
     public function testColourIdentityFragmentRendersForCommander()
     {
         $decktype = 'Commander';
-        $commander_decktypes = ['Commander'];
+        $gameRules = new GameRules([
+            'commander_decktypes' => ['Commander']
+        ]);
         $i = 1;
         $cdr_colours = 'five';
 

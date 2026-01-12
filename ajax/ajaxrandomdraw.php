@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.53
+Version:     3.56
 Date:        12/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -21,6 +21,8 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     // Bootstrap
 
     $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+    $rulesImage90Rotate = $gameRules->getArray('image90rotate');
 
     $expectedReferringPages = [
         $myURL . '/deckdetail.php'
@@ -116,8 +118,8 @@ for ($i = 0; $i < 7; $i++) :
     $f1_type = $uniquecard_ref[$a[$i]]['f1_type'] ?? null;
     $randomref = $i + 1;
     if (
-        (isset($layout) and in_array($layout, $image90rotate))
-        or (isset($f1_type) and in_array($f1_type, $image90rotate))
+        (isset($layout) and in_array($layout, $rulesImage90Rotate))
+        or (isset($f1_type) and in_array($f1_type, $rulesImage90Rotate))
     ) :
         $hoverclass = 'randomcardimgdiv splitfloat';
         $is_rotated = true;

@@ -174,9 +174,6 @@ endif;
 
 $GLOBALS['db'] = new DummyMysqli();
 
-$bracketsInNames = [];
-$importLinestoIgnore = [];
-
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) :
     require_once $autoload;

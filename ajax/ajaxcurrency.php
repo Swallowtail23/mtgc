@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.21
 Date:        12/01/26
 Name:        ajaxcurrency.php
 Purpose:     PHP script to set user's local currency
@@ -15,8 +15,9 @@ use MTG\Auth\SessionManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$rulesCurrencies = $gameRules->getArray('currencies');
 
 // Content
 $expectedReferringPages = [
@@ -47,7 +48,7 @@ else :
 
     if (isset($_GET['currency'])) :  //Update GET details
         $usercurrency = $db->real_escape_string($_GET['currency']);
-        if ($usercurrency === 'zzz' || !in_array($usercurrency, array_column($currencies, 'code'))) :
+        if ($usercurrency === 'zzz' || !in_array($usercurrency, array_column($rulesCurrencies, 'code'))) :
             $usercurrency = null;
         endif;
         $msg->logMessage('[DEBUG]', "Called with user currency '$usercurrency'");

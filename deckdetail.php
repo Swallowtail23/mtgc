@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     25.83
+Version:     25.85
 Date:        12/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
@@ -15,8 +15,10 @@ use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 
 // Bootstrap
-
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+$rulesValidTypes = $gameRules->getArray('validtypes');
 
 // Content
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -130,7 +132,7 @@ include APP_ROOT . '/includes/deckdetail_data.php';
     ?>
     window.mtgDeckDetailConfig = {
         deckNumber: <?php echo (int) $deckNumber; ?>,
-        isCommanderDeck: <?php echo in_array($decktype, $commander_decktypes) ? 'true' : 'false'; ?>,
+        isCommanderDeck: <?php echo in_array($decktype, $rulesCommanderDeckTypes) ? 'true' : 'false'; ?>,
         deckName: <?php echo json_encode($deckName); ?>,
         deckVersion: <?php echo isset($deck_version) ? (int) $deck_version : 0; ?>,
         csrfToken: <?php echo json_encode(SessionManager::generateCsrfToken()); ?>,
@@ -230,7 +232,7 @@ m13,12,"Fog",en,1,0,0,{id}
                             echo "selected='selected'";
                                 endif;?>disabled='disabled'>Pick one</option>
                         <?php
-                        foreach ($validtypes as $deck) :
+                        foreach ($rulesValidTypes as $deck) :
                             if ($decktype == $deck) :
                                 echo "<option value='$deck' selected='selected'>$deck</option>";
                             else :

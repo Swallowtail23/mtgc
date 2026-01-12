@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.2
-Date:        21/12/25
+Version:     6.22
+Date:        12/01/26
 Name:        search.php
 Purpose:     Layout for search on index.php
 Notes:       -
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+$rulesSearchLangs = $gameRules->getArray('search_langs');
 
 if (__FILE__ == $_SERVER['PHP_SELF']) :
     die('Direct access prohibited');
@@ -624,7 +626,7 @@ endif;
             <h4 class="h4">Language</h4>
             <select class="dropdown" name='lang' id='langSelect'>
                 <option value='default' selected>Default</option><?php
-                foreach ($search_langs as $lang) : ?>
+                foreach ($rulesSearchLangs as $lang) : ?>
                     <option value='<?php echo $lang['code']; ?>'>
                         <?php echo $lang['pretty']; ?>
                     </option> <?php

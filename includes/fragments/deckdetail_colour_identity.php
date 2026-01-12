@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        24/12/25
+Version:     1.32
+Date:        12/01/26
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
 Notes:       -
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 
 ?>
 <div id="deck-colour-identity-fragment">
@@ -27,7 +29,7 @@ To do:       -
         );
     endif;
 
-    if (in_array($decktype, $commander_decktypes) && $hasCommanderColours === true) :
+    if (in_array($decktype, $rulesCommanderDeckTypes) && $hasCommanderColours === true) :
         if ($cdr_colours == 'five') :
             $identity_title = 'All';
         else :

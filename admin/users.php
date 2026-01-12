@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     6.18
+Version:     6.20
 Date:        12/01/26
 Name:        users.php
 Purpose:     User administrative tasks
@@ -14,8 +14,9 @@ To do:       -
 use MTG\Auth\PasswordCheck;
 
 // Bootstrap
-
 $appContext = require dirname(__DIR__) . '/bootstrap_secure.php';
+
+$rulesCurrencies = $gameRules->getArray('currencies');
 
 // Content
 $msg->logMessage('[DEBUG]', 'users.php loaded; initialising admin user management page');
@@ -173,7 +174,7 @@ require APP_ROOT . '/includes/menu.php';
                 if ($sql_fx === 'zzz') :
                     $msg->logMessage('[DEBUG]', "User $id currency set to default via placeholder");
                     $sql_fx = null;
-                elseif (!in_array($sql_fx, array_column($currencies, 'code'))) :
+                elseif (!in_array($sql_fx, array_column($rulesCurrencies, 'code'))) :
                     $msg->logMessage('[DEBUG]', "User $id currency not recognised; clearing to default");
                     $sql_fx = null;
                 endif;
@@ -445,7 +446,7 @@ require APP_ROOT . '/includes/menu.php';
                             </td>
                             <td style="padding: 5px;">
                                 <select class="dropdown" name='currency[]'>
-                                    <?php foreach ($currencies as $currency) : ?>
+                                    <?php foreach ($rulesCurrencies as $currency) : ?>
                                         <option value='<?php echo $currency['code']; ?>'
                                             <?php if ($alluserresults['currency'] === $currency['db']) :
                                                 ?>selected<?php

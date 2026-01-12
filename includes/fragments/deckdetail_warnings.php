@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        26/12/25
+Version:     1.32
+Date:        12/01/26
 Name:        deckdetail_warnings.php
 Purpose:     Deck detail warnings fragment.
 Notes:       -
@@ -11,18 +11,22 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+$rulesFiftyCardDecks = $gameRules->getArray('fiftycarddecks');
+$rulesHundredCardDecks = $gameRules->getArray('hundredcarddecks');
+$rulesSixtyCardDecks = $gameRules->getArray('sixtycarddecks');
+
 ?>
 <?php
 $hasWarnings = false;
-if ((in_array($decktype, $hundredcarddecks) and $total < 100)) :
+if ((in_array($decktype, $rulesHundredCardDecks) and $total < 100)) :
     $warnings = true;
     $hundred_not_enough = true;
 endif;
-if ((in_array($decktype, $sixtycarddecks) and $total < 60)) :
+if ((in_array($decktype, $rulesSixtyCardDecks) and $total < 60)) :
     $warnings = true;
     $sixty_not_enough = true;
 endif;
-if ((in_array($decktype, $fiftycarddecks) and $total < 50)) :
+if ((in_array($decktype, $rulesFiftyCardDecks) and $total < 50)) :
     $warnings = true;
     $fifty_not_enough = true;
 endif;

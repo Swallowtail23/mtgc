@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.14
-Date:        11/01/26
+Version:     2.16
+Date:        12/01/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -13,6 +13,14 @@ To do:       -
 
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
+
+$rulesAnyQuantity = $gameRules->getArray('any_quantity');
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+$rulesCommanderMultiples = $gameRules->getArray('commander_multiples');
+$rulesImage90Rotate = $gameRules->getArray('image90rotate');
+$rulesSecondCommanderOnlyType = $gameRules->getArray('second_commander_only_type');
+$rulesSecondCommanderText = $gameRules->getArray('second_commander_text');
+$rulesValidCommanderText = $gameRules->getArray('valid_commander_text');
 
 ?>
 <?php
@@ -48,7 +56,7 @@ endif;
                         <span class="noprint">Card</span>
                     </td>
                     <?php
-                    if (in_array($decktype, $commander_decktypes)) : ?>
+                    if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                         <td class="deckcardlisthead3">
                             <span class="noprint">Cdr</span>
                         </td> <?php
@@ -63,7 +71,7 @@ endif;
                             <span class="noprint">Side</span>
                         </td> <?php
                     endif;
-                    if (!in_array($decktype, $commander_decktypes)) : ?>
+                    if (!in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                         <td class='deckcardlisthead3 deckcardlistright'>
                             <span class="noprint">- &nbsp;</span>
                         </td>
@@ -77,7 +85,7 @@ endif;
                 </tr>
                 <?php
                 // Only show this row if the decktype is Commander style
-                if (in_array($decktype, $commander_decktypes)) :
+                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                     $msg->logMessage('[DEBUG]', "This is a '$decktype' deck, adding commander row");
                     ?>
                     <tr>
@@ -175,10 +183,10 @@ endif;
                                             . "or background"
                                         );
                                         $i = 0;
-                                    while ($i < count($second_commander_text)) :
+                                    while ($i < count($rulesSecondCommanderText)) :
                                         if (
                                             isset($row['ability'])
-                                            and str_contains($row['ability'], $second_commander_text[$i]) == true
+                                            and str_contains($row['ability'], $rulesSecondCommanderText[$i]) == true
                                         ) :
                                             $validpartner = true;
                                         endif;
@@ -210,8 +218,8 @@ endif;
                                         echo "</td>";
                                         echo "</td>";
                                     if (
-                                        in_array($row['layout'], $image90rotate)
-                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                        in_array($row['layout'], $rulesImage90Rotate)
+                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                     ) :
                                         $hoverclass = 'deckcardimgdiv splitfloat';
                                         $msg->logMessage(
@@ -263,7 +271,7 @@ endif;
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistcenter js-qty-main' id='qty-main-$cardref'>";
                                     echo $quantity;
                                     echo "</td>";
@@ -274,7 +282,7 @@ endif;
                             endif;
                         endwhile;
                     endif;
-                    if (in_array($decktype, $commander_decktypes)) :
+                    if (in_array($decktype, $rulesCommanderDeckTypes)) :
                         ?>
                         <tr>
                             <td colspan='4'>
@@ -368,8 +376,8 @@ endif;
                                     <?php
                                     echo "</td>";
                                     if (
-                                        in_array($row['layout'], $image90rotate)
-                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                        in_array($row['layout'], $rulesImage90Rotate)
+                                        or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                     ) :
                                         $hoverclass = 'deckcardimgdiv splitfloat';
                                         $msg->logMessage(
@@ -421,7 +429,7 @@ endif;
                                     </span>
                                     <?php
                                     echo "</td>";
-                                    if (!in_array($decktype, $commander_decktypes)) :
+                                    if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                         echo "<td class='deckcardlistcenter'>";
                                         echo $quantity;
                                         echo "</td>";
@@ -450,7 +458,7 @@ endif;
                     ?>
                     <tr class="deck-section-header" data-section="creatures">
                         <?php
-                        if (in_array($decktype, $commander_decktypes)) : ?>
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                             <td colspan='4'> <?php
                         elseif ($decktype == 'Wishlist') : ?>
                             <td colspan='5'> <?php
@@ -559,7 +567,7 @@ endif;
                             else :
                                 $illegal_tag = '';
                             endif;
-                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                            if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
                                 $colour_id = count_chars(
                                     str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
                                     3
@@ -602,26 +610,26 @@ endif;
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
-                                while ($i < count($commander_multiples)) :
+                                while ($i < count($rulesCommanderMultiples)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                        and str_contains($card_type, $rulesCommanderMultiples[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while ($i < count($any_quantity)) :
+                                while ($i < count($rulesAnyQuantity)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                        and str_contains($row['ability'], $rulesAnyQuantity[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
@@ -631,7 +639,7 @@ endif;
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
                                 endif;
                                 $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
-                                if (in_array($decktype, $commander_decktypes)) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                     $validcommander = false;
                                     $msg->logMessage(
                                         '[DEBUG]',
@@ -644,10 +652,10 @@ endif;
                                         $validcommander = true;
                                     endif;
                                     $i = 0;
-                                    while ($i < count($valid_commander_text)) :
+                                    while ($i < count($rulesValidCommanderText)) :
                                         if (
                                             isset($row['ability'])
-                                            and str_contains($row['ability'], $valid_commander_text[$i]) == true
+                                            and str_contains($row['ability'], $rulesValidCommanderText[$i]) == true
                                         ) :
                                             $validcommander = true;
                                         endif;
@@ -671,8 +679,8 @@ endif;
                                 endif;
                                 echo "</td>";
                                 if (
-                                    in_array($row['layout'], $image90rotate)
-                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    in_array($row['layout'], $rulesImage90Rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                 ) :
                                     $hoverclass = 'deckcardimgdiv splitfloat';
                                     $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -722,7 +730,7 @@ endif;
                                 <?php
                                 echo "</td>";
                             endif;
-                            if (!in_array($decktype, $commander_decktypes)) :
+                            if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span
@@ -781,7 +789,7 @@ endif;
                 endif; ?>
                 <tr class="deck-section-header" data-section="instantsorcery">
                     <?php
-                    if (in_array($decktype, $commander_decktypes)) : ?>
+                    if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                         <td colspan='4'> <?php
                     elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
@@ -877,7 +885,7 @@ endif;
                             else :
                                 $illegal_tag = '';
                             endif;
-                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                            if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
                                 $colour_id = count_chars(
                                     str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
                                     3
@@ -919,26 +927,26 @@ endif;
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
-                                while ($i < count($commander_multiples)) :
+                                while ($i < count($rulesCommanderMultiples)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                        and str_contains($card_type, $rulesCommanderMultiples[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while ($i < count($any_quantity)) :
+                                while ($i < count($rulesAnyQuantity)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                        and str_contains($row['ability'], $rulesAnyQuantity[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
@@ -949,8 +957,8 @@ endif;
                                 endif;
                                 echo "</td>";
                                 if (
-                                    in_array($row['layout'], $image90rotate)
-                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    in_array($row['layout'], $rulesImage90Rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                 ) :
                                     $hoverclass = 'deckcardimgdiv splitfloat';
                                     $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -973,7 +981,7 @@ endif;
                                 ></a>
                             </div> <?php
                             $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
-                            if (in_array($decktype, $commander_decktypes)) :
+                            if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -1005,7 +1013,7 @@ endif;
                                 <?php
                                 echo "</td>";
                             endif;
-                            if (!in_array($decktype, $commander_decktypes)) :
+                            if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span
@@ -1064,7 +1072,7 @@ endif;
                 endif; ?>
                 <tr class="deck-section-header" data-section="other">
                     <?php
-                    if (in_array($decktype, $commander_decktypes)) : ?>
+                    if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                         <td colspan='4'> <?php
                     elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
@@ -1164,7 +1172,7 @@ endif;
                             else :
                                 $illegal_tag = '';
                             endif;
-                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                            if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
                                 $colour_id = count_chars(
                                     str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
                                     3
@@ -1206,26 +1214,26 @@ endif;
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
-                                while ($i < count($commander_multiples)) :
+                                while ($i < count($rulesCommanderMultiples)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                        and str_contains($card_type, $rulesCommanderMultiples[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while ($i < count($any_quantity)) :
+                                while ($i < count($rulesAnyQuantity)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                        and str_contains($row['ability'], $rulesAnyQuantity[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
@@ -1236,8 +1244,8 @@ endif;
                                 endif;
                                 echo "</td>";
                                 if (
-                                    in_array($row['layout'], $image90rotate)
-                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    in_array($row['layout'], $rulesImage90Rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                 ) :
                                     $hoverclass = 'deckcardimgdiv splitfloat';
                                     $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -1260,17 +1268,17 @@ endif;
                                 ></a>
                             </div> <?php
                             $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
-                            if (in_array($decktype, $commander_decktypes)) :
+                            if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                 $validcommander = false;
                                 $msg->logMessage(
                                     '[DEBUG]',
                                     "This is a '$decktype' deck, checking if $cardname is valid as a commander"
                                 );
                                 $i = 0;
-                                while ($i < count($valid_commander_text)) :
+                                while ($i < count($rulesValidCommanderText)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $valid_commander_text[$i]) == true
+                                        and str_contains($row['ability'], $rulesValidCommanderText[$i]) == true
                                     ) :
                                         $validcommander = true;
                                     endif;
@@ -1282,10 +1290,10 @@ endif;
                                     "This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander"
                                 );
                                 $i = 0;
-                                while ($i < count($second_commander_text)) :
+                                while ($i < count($rulesSecondCommanderText)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $second_commander_text[$i]) == true
+                                        and str_contains($row['ability'], $rulesSecondCommanderText[$i]) == true
                                     ) :
                                         $secondcommander = true;
                                     endif;
@@ -1297,10 +1305,10 @@ endif;
                                     "This is a '$decktype' deck, checking if $cardname is valid as a 2nd commander only"
                                 );
                                 $i = 0;
-                                while ($i < count($second_commander_only_type)) :
+                                while ($i < count($rulesSecondCommanderOnlyType)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $second_commander_only_type[$i]) == true
+                                        and str_contains($card_type, $rulesSecondCommanderOnlyType[$i]) == true
                                     ) :
                                         $secondcommanderonly = true;
                                     endif;
@@ -1362,7 +1370,7 @@ endif;
                                 <?php
                                 echo "</td>";
                             endif;
-                            if (!in_array($decktype, $commander_decktypes)) :
+                            if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span
@@ -1422,7 +1430,7 @@ endif;
                 ?>
                 <tr class="deck-section-header" data-section="lands">
                     <?php
-                    if (in_array($decktype, $commander_decktypes)) : ?>
+                    if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                         <td colspan='4'> <?php
                     elseif ($decktype == 'Wishlist') : ?>
                         <td colspan='5'> <?php
@@ -1517,7 +1525,7 @@ endif;
                             else :
                                 $illegal_tag = '';
                             endif;
-                            if (in_array($decktype, $commander_decktypes) and $illegal_tag == '') :
+                            if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
                                 $colour_id = count_chars(
                                     str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
                                     3
@@ -1553,16 +1561,16 @@ endif;
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
-                                while ($i < count($commander_multiples)) :
+                                while ($i < count($rulesCommanderMultiples)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                        and str_contains($card_type, $rulesCommanderMultiples[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
-                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='list-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)</a></a>";
@@ -1573,8 +1581,8 @@ endif;
                                 endif;
                                 echo "</td>";
                                 if (
-                                    in_array($row['layout'], $image90rotate)
-                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    in_array($row['layout'], $rulesImage90Rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                 ) :
                                     $hoverclass = 'deckcardimgdiv splitfloat';
                                     $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -1597,7 +1605,7 @@ endif;
                                 ></a>
                             </div> <?php
                             $cardActionBase = "deckdetail.php?deck={$deckNumber}&amp;card={$cardId}";
-                            if (in_array($decktype, $commander_decktypes)) :
+                            if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -1629,7 +1637,7 @@ endif;
                                 <?php
                                 echo "</td>";
                             endif;
-                            if (!in_array($decktype, $commander_decktypes)) :
+                            if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistright noprint'>";
                                 ?>
                                 <span
@@ -1692,7 +1700,7 @@ endif;
                     <tr
                         style="border-bottom: 1pt solid black; border-top: 1pt solid black;"
                         id="main-total-row"> <?php
-                        if (in_array($decktype, $commander_decktypes)) :
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) :
                             $msg->logMessage('[DEBUG]', "Commander type colspan 2");
                             echo "<td colspan='2'><i><b>Total</b></i></td>";
                         else :
@@ -1753,7 +1761,7 @@ endif;
                     <tr style="border-top: 1pt solid black;" id="sideboard-start" class="deck-section-header"
                         data-section="sideboard">
                         <?php
-                        if (in_array($decktype, $commander_decktypes)) :
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) :
                             ?>
                             <td colspan='4'>
                             <?php
@@ -1839,7 +1847,7 @@ endif;
                                 $illegal_tag = '';
                             endif;
                             if (
-                                in_array($decktype, $commander_decktypes)
+                                in_array($decktype, $rulesCommanderDeckTypes)
                                 and $illegal_tag == ''
                                 and !$isPlanePhenomenon
                             ) :
@@ -1892,20 +1900,20 @@ endif;
                                 <?php
                                 $i = 0;
                                 $cdr_1_plus = false;
-                                while ($i < count($commander_multiples)) :
+                                while ($i < count($rulesCommanderMultiples)) :
                                     if (
                                         isset($card_type)
-                                        and str_contains($card_type, $commander_multiples[$i]) == true
+                                        and str_contains($card_type, $rulesCommanderMultiples[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
                                     $i++;
                                 endwhile;
                                 $i = 0;
-                                while ($i < count($any_quantity)) :
+                                while ($i < count($rulesAnyQuantity)) :
                                     if (
                                         isset($row['ability'])
-                                        and str_contains($row['ability'], $any_quantity[$i]) == true
+                                        and str_contains($row['ability'], $rulesAnyQuantity[$i]) == true
                                     ) :
                                         $cdr_1_plus = true;
                                     endif;
@@ -1915,7 +1923,7 @@ endif;
                                 ?>
                                 <td class="deckcardname hoverTD">
                                 <?php
-                                if (in_array($decktype, $commander_decktypes) and $cdr_1_plus == true) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes) and $cdr_1_plus == true) :
                                     echo "<a class='taphover' $illegal_tag id='listside-$cardref-taphover' "
                                         . "href='carddetail.php?id={$row['cardsid']}'>$quantity x $cardname "
                                         . "($cardset <i class='ss ss-$cardset ss-$rarity ss-grad ss-fw'></i>)"
@@ -1929,7 +1937,7 @@ endif;
                                 ?>
                             </td>
                             <?php
-                            if (in_array($decktype, $commander_decktypes)) :
+                            if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                 echo "<td class='deckcardlistcenter noprint'>";
                                 echo "</td>";
                             endif;
@@ -1959,7 +1967,7 @@ endif;
                                 </span>
                                 <?php
                                 echo "</td>";
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistright noprint'>";
                                     ?>
                                     <span
@@ -2012,8 +2020,8 @@ endif;
                                 endif;
                                 echo "</tr>";
                                 if (
-                                    in_array($row['layout'], $image90rotate)
-                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                    in_array($row['layout'], $rulesImage90Rotate)
+                                    or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                                 ) :
                                     $hoverclass = 'deckcardimgdiv splitfloat';
                                     $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -2042,7 +2050,7 @@ endif;
                         style="border-bottom: 1pt solid black; border-top: 1pt solid black;"
                         id="sideboard-total-row">
                         <?php
-                        if (in_array($decktype, $commander_decktypes)) :
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) :
                             ?>
                             <td colspan="2">
                             <?php
@@ -2089,7 +2097,7 @@ endif;
                 if ($planesTotal > 0) :?>
                     <tr class="deck-section-header" data-section="planes">
                         <?php
-                        if (in_array($decktype, $commander_decktypes)) : ?>
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                             <td colspan='4'> <?php
                         elseif ($decktype == 'Wishlist') : ?>
                             <td colspan='5'> <?php
@@ -2144,7 +2152,7 @@ endif;
                                     ?>
                                 </td>
                                 <?php
-                                if (in_array($decktype, $commander_decktypes)) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistcenter noprint'></td>";
                                 endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
@@ -2163,7 +2171,7 @@ endif;
                                 if ($decktype != 'Wishlist') :
                                     echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
                                 endif;
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistright noprint'>&nbsp;</td>";
                                     echo "<td class='deckcardlistcenter'>$quantity</td>";
                                     echo "<td class='deckcardlistleft noprint'>&nbsp;</td>";
@@ -2172,8 +2180,8 @@ endif;
                             </tr>
                             <?php
                             if (
-                                in_array($row['layout'], $image90rotate)
-                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                in_array($row['layout'], $rulesImage90Rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                             ) :
                                 $hoverclass = 'deckcardimgdiv splitfloat';
                                 $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -2235,7 +2243,7 @@ endif;
                                     ?>
                                 </td>
                                 <?php
-                                if (in_array($decktype, $commander_decktypes)) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistcenter noprint'></td>";
                                 endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
@@ -2254,7 +2262,7 @@ endif;
                                 if ($decktype != 'Wishlist') :
                                     echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
                                 endif;
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistright noprint'>&nbsp;</td>";
                                     echo "<td class='deckcardlistcenter'>$quantity</td>";
                                     echo "<td class='deckcardlistleft noprint'>&nbsp;</td>";
@@ -2263,8 +2271,8 @@ endif;
                             </tr>
                             <?php
                             if (
-                                in_array($row['layout'], $image90rotate)
-                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                in_array($row['layout'], $rulesImage90Rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                             ) :
                                 $hoverclass = 'deckcardimgdiv splitfloat';
                                 $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -2320,7 +2328,7 @@ endif;
                 if ($tokensTotal > 0) :?>
                     <tr class="deck-section-header" data-section="tokens">
                         <?php
-                        if (in_array($decktype, $commander_decktypes)) : ?>
+                        if (in_array($decktype, $rulesCommanderDeckTypes)) : ?>
                             <td colspan='4'> <?php
                         elseif ($decktype == 'Wishlist') : ?>
                             <td colspan='5'> <?php
@@ -2350,7 +2358,7 @@ endif;
                                 $card_type = $row['f1_type'];
                             endif;
                             $isEmblem = (strpos($card_type, 'Emblem') !== false);
-                            $displayName = (in_array($decktype, $commander_decktypes) && !$isEmblem)
+                            $displayName = (in_array($decktype, $rulesCommanderDeckTypes) && !$isEmblem)
                                 ? "{$quantity} x {$cardname}"
                                 : $cardname;
                             $rarity = $row['rarity'];
@@ -2382,7 +2390,7 @@ endif;
                                     ?>
                                 </td>
                                 <?php
-                                if (in_array($decktype, $commander_decktypes)) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistcenter noprint'></td>";
                                 endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
@@ -2401,7 +2409,7 @@ endif;
                                 if ($decktype != 'Wishlist') :
                                     echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
                                 endif;
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistright noprint'>";
                                     ?>
                                     <span
@@ -2438,8 +2446,8 @@ endif;
                             </tr>
                             <?php
                             if (
-                                in_array($row['layout'], $image90rotate)
-                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                in_array($row['layout'], $rulesImage90Rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                             ) :
                                 $hoverclass = 'deckcardimgdiv splitfloat';
                                 $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");
@@ -2476,7 +2484,7 @@ endif;
                                 $card_type = $row['f1_type'];
                             endif;
                             $isEmblem = (strpos($card_type, 'Emblem') !== false);
-                            $displayName = (in_array($decktype, $commander_decktypes) && !$isEmblem)
+                            $displayName = (in_array($decktype, $rulesCommanderDeckTypes) && !$isEmblem)
                                 ? "{$quantity} x {$cardname}"
                                 : $cardname;
                             $rarity = $row['rarity'];
@@ -2508,7 +2516,7 @@ endif;
                                     ?>
                                 </td>
                                 <?php
-                                if (in_array($decktype, $commander_decktypes)) :
+                                if (in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistcenter noprint'></td>";
                                 endif;
                                 echo "<td class='deckcardlistcenter noprint'>";
@@ -2527,7 +2535,7 @@ endif;
                                 if ($decktype != 'Wishlist') :
                                     echo "<td class='deckcardlistcenter noprint'>&nbsp;</td>";
                                 endif;
-                                if (!in_array($decktype, $commander_decktypes)) :
+                                if (!in_array($decktype, $rulesCommanderDeckTypes)) :
                                     echo "<td class='deckcardlistright noprint'>";
                                     ?>
                                     <span
@@ -2562,8 +2570,8 @@ endif;
                             </tr>
                             <?php
                             if (
-                                in_array($row['layout'], $image90rotate)
-                                or (isset($row['f1_type']) and in_array($row['f1_type'], $image90rotate))
+                                in_array($row['layout'], $rulesImage90Rotate)
+                                or (isset($row['f1_type']) and in_array($row['f1_type'], $rulesImage90Rotate))
                             ) :
                                 $hoverclass = 'deckcardimgdiv splitfloat';
                                 $msg->logMessage('[DEBUG]', "Hover image rotated for deckdetail card '$cardname'");

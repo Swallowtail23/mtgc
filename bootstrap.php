@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.72
-Date:        11/01/26
+Version:     1.76
+Date:        12/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
 Notes:       -
@@ -179,7 +179,6 @@ $localeini = (string) $appConfig->general('locale', '');
 setlocale(LC_MONETARY, $localeini);
 
 $copyright = $iniArray['general']['Copyright'] ?? '';
-$max_card_data_age = $gameRules->get('max_card_data_age', 0);
 
 if (!defined('DB_HOST')) :
     define('DB_HOST', $iniArray['database']['DBServer'] ?? '');
@@ -196,10 +195,6 @@ endif;
 
 $dbname = $iniArray['database']['DBName'] ?? '';
 
-$gameRulesData = $gameRules->all();
-foreach ($gameRulesData as $ruleName => $ruleValue) :
-    $$ruleName = $ruleValue;
-endforeach;
 
 if (PHP_SAPI !== 'cli') :
     $errorHandler = new ErrorHandler($appConfig);

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.53
+Version:     7.55
 Date:        12/01/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -16,8 +16,9 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$rulesBracketsInNames = $gameRules->getArray('bracketsInNames');
 
 // Content
 $expectedReferringPages = [
@@ -97,7 +98,7 @@ else :
                         $teststring = trim($setcode);
                 endif;
                     $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                if (isset($teststring) && Validation::inArrayCaseInsensitive($teststring, $bracketsInNames)) :
+                if (isset($teststring) && Validation::inArrayCaseInsensitive($teststring, $rulesBracketsInNames)) :
                     $msg->logMessage(
                         '[DEBUG]',
                         "Bracket contents match a card with brackets in name, resetting name, set to match"

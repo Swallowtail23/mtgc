@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.26
+Version:     14.28
 Date:        12/01/26
 Name:        profile.php
 Purpose:     User profile page.
@@ -23,8 +23,9 @@ use MTG\Auth\TrustedDeviceManager;
 use MTG\Auth\TwoFactorManager;
 
 // Bootstrap
-
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$rulesCurrencies = $gameRules->getArray('currencies');
 
 // Content
 $userId = isset($_SESSION['user']) ? $_SESSION['user'] : 0;
@@ -988,7 +989,7 @@ HTML;
                                             ?>disabled<?php
                                         endif; ?>
                                     >
-                                        <?php foreach ($currencies as $currency) : ?>
+                                        <?php foreach ($rulesCurrencies as $currency) : ?>
                                             <option value='<?php echo $currency['code']; ?>'
                                                 <?php if ($current_currency === $currency['db']) :
                                                     ?>selected<?php

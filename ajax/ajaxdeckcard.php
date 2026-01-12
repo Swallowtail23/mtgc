@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.40
+Version:     1.42
 Date:        12/01/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
@@ -17,8 +17,10 @@ use MTG\Cards\ImageManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+$rulesImage90Rotate = $gameRules->getArray('image90rotate');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';
@@ -164,7 +166,7 @@ if ($action === 'maintoside' && $sideqty > 0) :
         $decktypeRow = $decktypeResult->fetch_assoc();
         $decktype = $decktypeRow['type'] ?? '';
     endif;
-    $isCommanderDeck = in_array($decktype, $commander_decktypes);
+    $isCommanderDeck = in_array($decktype, $rulesCommanderDeckTypes);
     $msg->logMessage('[DEBUG]', "Deck type for sideboard insert: $decktype");
     $red_font_tag = "style='color: OrangeRed; font-weight: bold'";
     $firebrick_font_tag = "style='color: FireBrick; font-weight: bold'";
@@ -287,8 +289,8 @@ if ($action === 'maintoside' && $sideqty > 0) :
             endif;
         endif;
         if (
-            in_array($layout, $image90rotate)
-            or (isset($detailRow['f1_type']) and in_array($detailRow['f1_type'], $image90rotate))
+            in_array($layout, $rulesImage90Rotate)
+            or (isset($detailRow['f1_type']) and in_array($detailRow['f1_type'], $rulesImage90Rotate))
         ) :
             $hoverclass = 'deckcardimgdiv splitfloat';
         else :

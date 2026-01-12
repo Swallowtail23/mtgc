@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.62
+Version:     14.64
 Date:        12/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -18,8 +18,12 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Http\UrlHelper;
 
 // Bootstrap
-
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$rulesFlipButtonCards = $gameRules->getArray('flip_button_cards');
+$rulesLayoutsDouble = $gameRules->getArray('layouts_double');
+$rulesSearchLangCodes = $gameRules->getArray('search_langs_codes');
+$rulesValidTribe = $gameRules->getArray('valid_tribe');
 
 // Content
 // Default numbers per page and max
@@ -152,7 +156,7 @@ $enchantment = isset($_GET['enchantment']) ? 'yes' : '';
 $planeswalker = isset($_GET['planeswalker']) ? 'yes' : '';
 $tribal = isset($_GET['tribal']) ? 'yes' : '';
 $tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
-if (!in_array($tribe, $valid_tribe)) :
+if (!in_array($tribe, $rulesValidTribe)) :
     $tribe = '';
 endif;
 $legendary = isset($_GET['legendary']) ? 'yes' : '';
@@ -234,7 +238,7 @@ $foilonly = isset($_GET['foilonly']) ? 'yes' : '';
 $searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
 if ($searchLang === 'all') :
     $searchLang = 'all';
-elseif ($searchLang === 'default' || !in_array($searchLang, $search_langs_codes)) :
+elseif ($searchLang === 'default' || !in_array($searchLang, $rulesSearchLangCodes)) :
     $searchLang = '';
 endif;
 
@@ -1143,7 +1147,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             $card_lang = $row['lang'] ?? '';
                             $displayLang = strtoupper(htmlspecialchars($card_lang, ENT_QUOTES, 'UTF-8'));
                             $displayNameHtml = '';
-                            if (in_array($row['layout'], $layouts_double)) :
+                            if (in_array($row['layout'], $rulesLayoutsDouble)) :
                                 $f1Flavor = $row['f1_flavor_name'] ?? '';
                                 $f1Name = $row['f1_name'] ?? '';
                                 if ($f1Flavor !== null and $f1Flavor !== '') :
@@ -1213,7 +1217,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             <div class='gridbox item'>
                                 <?php
                                 $msg->logMessage('[DEBUG]', "$imageUrl");
-                                if (in_array($row['layout'], $flip_button_cards)) :
+                                if (in_array($row['layout'], $rulesFlipButtonCards)) :
                                     $flipstyle = (strpos($imageUrl, 'cardimg') !== false
                                         and strpos($imagebackurl, 'cardimg') !== false)
                                         ? 'cursor: pointer;'

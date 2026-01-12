@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.24
 Date:        12/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
@@ -16,8 +16,10 @@ use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-
 $appContext = require dirname(__DIR__) . '/bootstrap.php';
+
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+$rulesValidTypes = $gameRules->getArray('validtypes');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';
@@ -65,7 +67,7 @@ if ($deckNumber === null || $updateType === null) :
     returnResponse($response);
 endif;
 
-if (!in_array($updateType, $validtypes, true)) :
+if (!in_array($updateType, $rulesValidTypes, true)) :
     $response['error'] = 'Invalid deck type';
     returnResponse($response);
 endif;
@@ -104,7 +106,7 @@ if ($setDeckType !== 0) :
     returnResponse($response);
 endif;
 
-if (!in_array($updateType, $commander_decktypes, true)) :
+if (!in_array($updateType, $rulesCommanderDeckTypes, true)) :
     if (
         $db->execute_query(
             "UPDATE deckcards SET commander = 0 WHERE decknumber = ?",
@@ -116,7 +118,7 @@ if (!in_array($updateType, $commander_decktypes, true)) :
     endif;
 endif;
 
-if (in_array($updateType, $commander_decktypes, true)) :
+if (in_array($updateType, $rulesCommanderDeckTypes, true)) :
     $query = "UPDATE deckcards LEFT JOIN cards_scry ON deckcards.cardnumber = cards_scry.id SET cardqty=?
         WHERE deckcards.decknumber = ? AND (deckcards.sideqty IS NULL or sideqty = 0)
         AND cards_scry.type NOT LIKE 'Basic Land%'";
@@ -150,7 +152,7 @@ $deckManager->bumpDeckUpdatedAt($deckNumber);
 
 $response['success'] = true;
 $response['decktype'] = $updateType;
-$response['is_commander'] = in_array($updateType, $commander_decktypes, true);
+$response['is_commander'] = in_array($updateType, $rulesCommanderDeckTypes, true);
 $response['deck_version'] = getDeckVersion($db, $deckNumber);
 
 $requestedFragments = isset($_POST['fragments']) ? (array) $_POST['fragments'] : [];

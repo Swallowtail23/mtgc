@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.34
+Version:     22.36
 Date:        12/01/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -19,8 +19,13 @@ use MTG\Core\Text\TextHelper;
 use MTG\Core\Validation;
 
 // Bootstrap
-
 $appContext = require __DIR__ . '/bootstrap_secure.php';
+
+$rulesImage90Rotate = $gameRules->getArray('image90rotate');
+$rulesLayoutsDouble = $gameRules->getArray('layouts_double');
+$rulesPromosToShow = $gameRules->getArray('promos_to_show');
+$rulesTokenLayouts = $gameRules->getArray('token_layouts');
+$rulesTwoCardDetailSections = $gameRules->getArray('twoCardDetailSections');
 
 // Content
 // Is admin running the page
@@ -301,7 +306,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 $msg->logMessage('[DEBUG]', "Card has a promo_type set: {$row['promo_types']}");
                 $full_promo_text = '';
                 foreach ($promo as $value) :
-                    $promo_description = CardUtils::promoLookup($value, $promos_to_show, $msg);
+                    $promo_description = CardUtils::promoLookup($value, $rulesPromosToShow, $msg);
                     if ($promo_description !== 'skip') :
                         if ($full_promo_text === '') :
                             $full_promo_text = $full_promo_text . "$promo_description";
@@ -562,7 +567,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             </div> <?php
                     endif;
                         $img_id = 'cardimg';
-                    if (in_array($row['layout'], $twoCardDetailSections)) :
+                    if (in_array($row['layout'], $rulesTwoCardDetailSections)) :
                         $flipReady = (
                             strpos($imageUrl, 'cardimg') !== false and strpos($imagebackurl, 'cardimg') !== false
                             )
@@ -673,8 +678,8 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         $msg->logMessage('[DEBUG]', "Image location is " . $imagelocation);
                                         // Set classes for hover image
                                     if (
-                                            in_array($row['layout'], $image90rotate)
-                                            or in_array($row['f1_type'], $image90rotate)
+                                            in_array($row['layout'], $rulesImage90Rotate)
+                                            or in_array($row['f1_type'], $rulesImage90Rotate)
                                     ) :
                                         $hoverclass = 'imgfloat splitfloat';
                                     else :
@@ -1057,12 +1062,12 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     $msg->logMessage('[DEBUG]', "Trying to round cmc {$row['cmc']}");
                                     $row['cmc'] = round($row['cmc']);
                                 endif;
-                                if (!in_array($row['layout'], $token_layouts)) :
+                                if (!in_array($row['layout'], $rulesTokenLayouts)) :
                                     echo "<b>Mana value: </b>" . $row['cmc'];
                                     echo "<br>";
                                 endif;
                             endif;
-                            if (in_array($row["layout"], $layouts_double)) :
+                            if (in_array($row["layout"], $rulesLayoutsDouble)) :
                                 if (
                                     isset($row['f1_flavor_name'])
                                     and $row['f1_flavor_name'] !== null
@@ -1773,7 +1778,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <hr class='hr324'>
                             <?php
                             $msg->logMessage('[NOTICE]', "Decks enabled: $decks_on");
-                            if (in_array($row['layout'], $token_layouts)) :
+                            if (in_array($row['layout'], $rulesTokenLayouts)) :
                                 $decks_on = 0;
                             endif;
                             if ($decks_on === 1) :
@@ -2096,7 +2101,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                         else :
                             $result = $stmt->get_result();
                             $msg->logMessage('[NOTICE]', "Rulings: {$result->num_rows} ({$row['oracle_id']})");
-                            if (($result->num_rows === 0) and !in_array($row['layout'], $twoCardDetailSections)) :
+                            if (($result->num_rows === 0) and !in_array($row['layout'], $rulesTwoCardDetailSections)) :
                                 // no rulings ?>
                             <div>
                             <h3 class='shallowh3'>Rulings</h3>&nbsp;
@@ -2129,7 +2134,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         "rel" => "nofollow"
                                     )
                                 );
-                                if (!in_array($row['layout'], $twoCardDetailSections)) :
+                                if (!in_array($row['layout'], $rulesTwoCardDetailSections)) :
                                     echo "<h3 class='shallowh3'>Rulings:</h3> " . $ruling . "&nbsp;";
                                 endif;
                                 echo("</div>");
@@ -2138,7 +2143,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 </div>
                 <!-- Flip card -->
                     <?php
-                    if (in_array($row['layout'], $twoCardDetailSections)) : ?>
+                    if (in_array($row['layout'], $rulesTwoCardDetailSections)) : ?>
                     <div id="carddetailflip">
                         <div id="carddetailflipimg">
                             <table>
