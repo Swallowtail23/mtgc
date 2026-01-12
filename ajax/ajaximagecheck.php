@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.21
+Version:     1.23
 Date:        12/01/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
@@ -17,10 +17,14 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
 
-$myURL = (string) $appConfig->general('url', '');
+$myURL                      = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [

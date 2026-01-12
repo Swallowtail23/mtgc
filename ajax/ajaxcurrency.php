@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.22
+Version:     1.24
 Date:        12/01/26
 Name:        ajaxcurrency.php
 Purpose:     PHP script to set user's local currency
@@ -15,9 +15,14 @@ use MTG\Auth\SessionManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$myURL = (string) $appConfig->general('url', '');
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+
+$myURL                      = (string) $appConfig->general('url', '');
 
 $rulesCurrencies = $gameRules->getArray('currencies');
 
@@ -40,13 +45,14 @@ endif;
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>");
 else :
-    //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
-    $userArray = $sessionManager->getUserInfo();
-    $user = $userArray['usernumber'];
-    $mytable = $userArray['table'];
-    $fx = $userArray['fx'];
-    $userEmail = $_SESSION['useremail'];
+    // AJAX session context
+    require_once APP_ROOT . '/ajax/ajax_session.php';
+    $sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+    $ctx                        = $ctx->withSessionUser($sessionUser);
+    $user                       = $ctx->sessionUser()->id();
+    $mytable                    = $ctx->sessionUser()->table();
+    $userEmail                  = $ctx->sessionUser()->email();
+    $fx                         = $ctx->sessionUser()->fxEnabled();
 
     if (isset($_GET['currency'])) :  //Update GET details
         $usercurrency = $db->real_escape_string($_GET['currency']);

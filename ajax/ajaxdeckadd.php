@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.23
+Version:     1.25
 Date:        12/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
@@ -16,10 +16,14 @@ use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
 
-$myURL = (string) $appConfig->general('url', '');
+$myURL                      = (string) $appConfig->general('url', '');
 
 // Content
 require_once APP_ROOT . '/ajax/ajaxdeckfragments_lib.php';
@@ -74,13 +78,15 @@ if ($quickadd === '') :
     returnResponse($response);
 endif;
 
-$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
-$userArray = $sessionManager->getUserInfo();
-$user = $userArray['usernumber'];
-$userEmail = $_SESSION['useremail'];
-$rate = $userArray['rate'] ?? null;
-$targetCurrency = $userArray['currency'] ?? null;
-$mytable = $userArray['table'] ?? '';
+// AJAX session context
+require_once APP_ROOT . '/ajax/ajax_session.php';
+$sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+$ctx                        = $ctx->withSessionUser($sessionUser);
+$user                       = $ctx->sessionUser()->id();
+$mytable                    = $ctx->sessionUser()->table();
+$userEmail                  = $ctx->sessionUser()->email();
+$targetCurrency             = $ctx->sessionUser()->currency();
+$rate                       = $ctx->sessionUser()->rate();
 if ($mytable === '') :
     $msg->logMessage('[ERROR]', "Missing collection table for user $user");
     $response['error'] = 'Missing collection table';

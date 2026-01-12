@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.22
 Date:        12/01/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
@@ -17,10 +17,14 @@ use MTG\Cards\PriceManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
 
-$myURL = (string) $appConfig->general('url', '');
+$myURL                      = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [
@@ -46,20 +50,16 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 endif;
 
-// Need to run these as secpagesetup not run (see page notes)
-$sessionManager = new SessionManager($db, $_SESSION, $appConfig);
-$userArray = $sessionManager->getUserInfo();
-if ($userArray === false) :
-    $msg->logMessage('[ERROR]', 'ajaxcollectionvalue.php: User array returned false');
-    AjaxResponse::json(['error' => 'User not found'], 500);
-endif;
-
-$user = $userArray['usernumber'];
-$mytable = $userArray['table'];
-$fx = $userArray['fx'];
-$targetCurrency = $userArray['currency'];
-$rate = $userArray['rate'];
-$userEmail = $_SESSION['useremail'];
+// AJAX session context
+require_once APP_ROOT . '/ajax/ajax_session.php';
+$sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+$ctx                        = $ctx->withSessionUser($sessionUser);
+$user                       = $ctx->sessionUser()->id();
+$mytable                    = $ctx->sessionUser()->table();
+$userEmail                  = $ctx->sessionUser()->email();
+$fx                         = $ctx->sessionUser()->fxEnabled();
+$targetCurrency             = $ctx->sessionUser()->currency();
+$rate                       = $ctx->sessionUser()->rate();
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for table $mytable");
 

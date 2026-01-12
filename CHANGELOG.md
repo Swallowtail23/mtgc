@@ -29,6 +29,8 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Card and rules helpers (symbolReplace, cardTypes, promoLookup, colour helpers) moved into MTG\Cards\CardUtils.
 - Auth helpers (CSRF, password checks, login stamps, forced password changes) moved into MTG\Auth classes.
 - Internal include paths now consistently resolve from APP_ROOT.
+- AJAX endpoints now bootstrap via $ctx locals instead of ambient globals.
+- AJAX endpoints now share a session-user helper to avoid duplicated SessionManager blocks.
 
 ### Fixed
 
@@ -74,6 +76,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
   - AdminSettings maintenance mode
   - UserStatus login tracking
   - AjaxResponse and ErrorHandler exit paths
+- Added PHPUnit coverage to validate bulk scripts load `bulk_ini.php` via local paths.
 - Added test coverage reports and manual-check guidance.
 - Bulk scripts now use bootstrap for logging and configuration.
 - Legacy includes/ini.php entrypoint has been removed.

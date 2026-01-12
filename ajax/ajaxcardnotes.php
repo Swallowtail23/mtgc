@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.22
 Date:        12/01/26
 Name:        ajaxcardnotes.php
 Purpose:     PHP script to save card notes
@@ -16,10 +16,14 @@ use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
 
-$myURL = (string) $appConfig->general('url', '');
+$myURL                      = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [
@@ -40,12 +44,13 @@ endif;
 if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
     AjaxResponse::text("<meta http-equiv='refresh' content='2;url=/login.php'>"); // redirect if not logged in
 else :
-    //Need to run these as secpagesetup not run (see page notes)
-    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
-    $userArray = $sessionManager->getUserInfo();
-    $user = $userArray['usernumber'];
-    $mytable = $userArray['table'];
-    $userEmail = $_SESSION['useremail'];
+    // AJAX session context
+    require_once APP_ROOT . '/ajax/ajax_session.php';
+    $sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+    $ctx                        = $ctx->withSessionUser($sessionUser);
+    $user                       = $ctx->sessionUser()->id();
+    $mytable                    = $ctx->sessionUser()->table();
+    $userEmail                  = $ctx->sessionUser()->email();
     $newnotes = isset($_POST['newnotes']) ? trim($_POST['newnotes']) : '';
     $cardUUID = isset($_POST['cardid']) ? Validation::validUUID($_POST['cardid'], $appConfig) : false;
 

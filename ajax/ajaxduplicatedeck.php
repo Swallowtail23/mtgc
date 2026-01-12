@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.24
+Version:     1.26
 Date:        12/01/26
 Name:        ajaxduplicatedeck.php
 Purpose:     PHP script to duplicate deck
@@ -16,10 +16,14 @@ use MTG\Cards\DeckManager;
 use MTG\Core\Http\AjaxResponse;
 
 // Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
 
-$myURL = (string) $appConfig->general('url', '');
+$myURL                      = (string) $appConfig->general('url', '');
 
 // Content
 $expectedReferringPages = [$myURL . '/deckdetail.php'];
@@ -47,12 +51,13 @@ if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== tr
     $response['error'] = 'User not logged in';
     returnResponse($response);
 else :
-    // Need to run these as secpagesetup is not run (see page notes)
-    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
-    $userArray = $sessionManager->getUserInfo();
-    $user = $userArray['usernumber'];
-    $mytable = $userArray['table'];
-    $userEmail = $_SESSION['useremail'];
+    // AJAX session context
+    require_once APP_ROOT . '/ajax/ajax_session.php';
+    $sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+    $ctx                        = $ctx->withSessionUser($sessionUser);
+    $user                       = $ctx->sessionUser()->id();
+    $mytable                    = $ctx->sessionUser()->table();
+    $userEmail                  = $ctx->sessionUser()->email();
 
     if (
         isset($_POST['user'])
