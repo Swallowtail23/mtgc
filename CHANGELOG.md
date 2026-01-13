@@ -2,11 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.0-dev] - Unreleased
+## [v0.5.0] - 2026-01-13
 
 This release establishes a new internal baseline for MTG Collection, introducing a centralized bootstrap and configuration system, tightening security across all request flows, and significantly expanding automated test coverage.
 
-### Added (v0.5.0-dev)
+### Added
 
 - AppContext and AppConfig bootstrap layer with centralized initialization and error handling.
 - Secure bootstrap (bootstrap_secure.php) that attaches authenticated SessionUser context to requests.
@@ -17,7 +17,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - AppContext meta storage (e.g. service worker version, CSS version suffix).
 - Extensive new PHPUnit coverage across Auth, Cards, Import/Export, Utilities, and Bootstrap.
 
-### Changed (v0.5.0-dev)
+### Changed
 
 - Application configuration is now accessed exclusively through AppConfig (no direct INI or global config access).
 - Header/footer now rely on per-page config variables for title, tier, and copyright; CSS version suffix is provided via AppContext meta.
@@ -36,7 +36,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - AJAX endpoints now bootstrap via $ctx locals instead of ambient globals.
 - AJAX endpoints now share a session-user helper to avoid duplicated SessionManager blocks.
 
-### Fixed (v0.5.0-dev)
+### Fixed
 
 - Collection async refresh now seeds CSRF tokens before header scripts load.
 - Deck detail sideboard notes no longer render whitespace when empty.
@@ -65,7 +65,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - GameRules::fromDefaults() now loads the correct rules file.
 - PHPUnit bootstrap no longer resets global error handlers.
 
-### Security (v0.5.0-dev)
+### Security
 
 - CSRF and referrer validation centralized and applied across admin, profile, collection, index, and card detail flows.
 - All remaining AJAX endpoints migrated to shared CSRF/referrer validation.
@@ -76,7 +76,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Hero images and deck links are sanitized before being applied to the DOM.
 - Deck names are now rendered as text in headers and AJAX responses.
 
-### Infrastructure (v0.5.0-dev)
+### Infrastructure
 
 - Added test coverage for:
   - SessionManager CSRF handling and login stamps
