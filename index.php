@@ -53,8 +53,7 @@ $time = time();
 // Is admin running the page
 $msg->logMessage('[DEBUG]', "Admin is $admin");
 
-// Define layout and results per page for each layout type
-$validLayout = array("grid", "list", "bulk");
+$remoteAddr = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 if (!empty($_GET)) :
     $fullQueryString = $_SERVER['QUERY_STRING'];
@@ -63,25 +62,21 @@ else :
     $msg->logMessage('[DEBUG]', "Query string: none");
 endif;
 
-$layout = 'grid'; // default layout
-$perpage = $gridperpage;
+// Define layout and results per page for each layout type
+$perPageMap = [
+    'grid' => $gridperpage,
+    'list' => $listperpage,
+    'bulk' => $bulkperpage,
+];
 
-if (isset($_GET['layout'])) :
-    $layout = $_GET['layout'];
-    if (!in_array($layout, $validLayout)) :
-        $layout = 'grid';
-    endif;
-    if ($layout == 'grid') :
-        $perpage = $gridperpage;
-    elseif ($layout == 'list') :
-        $perpage = $listperpage;
-    elseif ($layout == 'bulk') :
-        $perpage = $bulkperpage;
-    else :
-        $layout = 'grid';
-        $perpage = $gridperpage;
-    endif;
+$layout = $_GET['layout'] ?? 'grid';
+
+if (!isset($perPageMap[$layout])) :
+    $layout = 'grid';
 endif;
+
+$perpage = $perPageMap[$layout];
+$validLayout = array_keys($perPageMap);
 
 // Set up all the stuff we need and filter GET variables
 if (isset($_GET["page"])) :
@@ -92,193 +87,197 @@ endif;
 $perpage = (int) $perpage;
 $start_from = ($page - 1) * $perpage;
 $start_from = (int) $start_from;
-if (isset($_GET['name']) and $_GET['name'] !== "") :
-    $nameget = htmlspecialchars($_GET["name"], ENT_NOQUOTES, 'UTF-8');
+
+$name = $setcoderegexsearch = $numberregexsearch = '';
+
+$nameRaw = $_GET['name'] ?? '';
+if ($nameRaw !== '') :
+    $nameget = htmlspecialchars($nameRaw, ENT_NOQUOTES, 'UTF-8');
     $msg->logMessage('[DEBUG]', "Name in GET is $nameget");
-    $nametrim = trim($nameget, " \t\n\r\0\x0B");
+
+    $nametrim = trim($nameget);
     $msg->logMessage('[DEBUG]', "Name after trimming is $nametrim");
+
     $regex = "@(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?).*$)@";
-    $name = preg_replace($regex, ' ', $nametrim);
-    $msg->logMessage('[DEBUG]', "Name after URL removal is $name");
-    $interpretedString = ImportExport::inputInterpreter($name, $appConfig, $gameRules);
-    if (isset($interpretedString['name']) and $interpretedString['name'] !== '') :
-        $name = $interpretedString['name'];
-    else :
-        $name = '';
+    $nameNoUrl = (string) preg_replace($regex, ' ', $nametrim);
+    $msg->logMessage('[DEBUG]', "Name after URL removal is $nameNoUrl");
+
+    $interpreted = ImportExport::inputInterpreter($nameNoUrl, $appConfig, $gameRules);
+
+    $name = (string) ($interpreted['name'] ?? '');
+    $setcoderegexsearch = (string) ($interpreted['set'] ?? '');
+    if ($setcoderegexsearch !== '') :
+        $setcoderegexsearch = strtoupper($setcoderegexsearch);
     endif;
-    // Set
-    if (isset($interpretedString['set']) and $interpretedString['set'] !== '') :
-        $setcoderegexsearch = strtoupper($interpretedString['set']);
-    else :
-        $setcoderegexsearch = '';
-    endif;
-    // Collector number
-    if (isset($interpretedString['number']) and $interpretedString['number'] !== '') :
-        $numberregexsearch = $interpretedString['number'];
-    else :
-        $numberregexsearch = '';
-    endif;
+
+    $numberregexsearch = (string) ($interpreted['number'] ?? '');
+
     $card = htmlspecialchars_decode($name, ENT_QUOTES);
-    $name = trim(preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
-else :
-    $name = '';
-    $setcoderegexsearch = '';
-    $numberregexsearch = '';
+
+    $name = trim((string) preg_replace('/\[[A-Za-z0-9]+\]/', '', $name));
 endif;
-$searchname = isset($_GET['searchname']) ? 'yes' : '';
-$searchtype = isset($_GET['searchtype']) ? 'yes' : '';
-$searchsetcode = isset($_GET['searchsetcode']) ? 'yes' : '';
-$searchability = isset($_GET['searchability']) ? 'yes' : '';
-$searchnotes = isset($_GET['searchnotes']) ? 'yes' : '';
-$searchpromo = isset($_GET['searchpromo']) ? 'yes' : '';
-$new = isset($_GET['searchnew']) ? 'yes' : '';
-$white = isset($_GET['white']) ? 'yes' : '';
-$blue = isset($_GET['blue']) ? 'yes' : '';
-$black = isset($_GET['black']) ? 'yes' : '';
-$red = isset($_GET['red']) ? 'yes' : '';
-$green = isset($_GET['green']) ? 'yes' : '';
-$artifact = isset($_GET['artifact']) ? 'yes' : '';
-$colourless = isset($_GET['colourless']) ? 'yes' : '';
-$land = isset($_GET['land']) ? 'yes' : '';
-$battle = isset($_GET['battle']) ? 'yes' : '';
-$valid_colourOp = array("AND","OR","");
-$colourOp = isset($_GET['colourOp']) ? "{$_GET['colourOp']}" : '';
-if (!in_array($colourOp, $valid_colourOp)) :
-    $colourOp = '';
+
+if (!function_exists('mtgGetFlagYes')) :
+    function mtgGetFlagYes(string $key): string
+    {
+        return isset($_GET[$key]) ? 'yes' : '';
+    }
 endif;
-$colourExcl = isset($_GET['colourExcl']) ? 'ONLY' : '';
-$valid_typeOp = array("AND","OR","");
-$typeOp = isset($_GET['typeOp']) ? "{$_GET['typeOp']}" : '';
-if (!in_array($typeOp, $valid_typeOp)) :
-    $typeOp = '';
+
+if (!function_exists('mtgGetFlagOnly')) :
+    function mtgGetFlagOnly(string $key): string
+    {
+        return isset($_GET[$key]) ? 'ONLY' : '';
+    }
 endif;
-$common = isset($_GET['common']) ? 'yes' : '';
-$uncommon = isset($_GET['uncommon']) ? 'yes' : '';
-$rare = isset($_GET['rare']) ? 'yes' : '';
-$mythic = isset($_GET['mythic']) ? 'yes' : '';
-$paper = isset($_GET['paper']) ? 'yes' : '';
-$arena = isset($_GET['arena']) ? 'yes' : '';
-$online = isset($_GET['online']) ? 'yes' : '';
-$valid_gametypeOp = array("AND","OR","");
-$gametypeOp = isset($_GET['gametypeOp']) ? "{$_GET['gametypeOp']}" : '';
-if (!in_array($gametypeOp, $valid_gametypeOp)) :
-    $gametypeOp = '';
+
+if (!function_exists('mtgGetEnum')) :
+    function mtgGetEnum(string $key, array $valid, string $default = ''): string
+    {
+        $value = (string) ($_GET[$key] ?? $default);
+        if (!in_array($value, $valid, true)) :
+            return $default;
+        endif;
+        return $value;
+    }
 endif;
-$gametypeExcl = isset($_GET['gametypeExcl']) ? 'ONLY' : '';
-$online = isset($_GET['online']) ? 'yes' : '';
-$creature = isset($_GET['creature']) ? 'yes' : '';
-$instant = isset($_GET['instant']) ? 'yes' : '';
-$sorcery = isset($_GET['sorcery']) ? 'yes' : '';
-$enchantment = isset($_GET['enchantment']) ? 'yes' : '';
-$planeswalker = isset($_GET['planeswalker']) ? 'yes' : '';
-$tribal = isset($_GET['tribal']) ? 'yes' : '';
-$tribe = isset($_GET['tribe']) ? "{$_GET['tribe']}" : '';
-if (!in_array($tribe, $rulesValidTribe)) :
+
+/**
+ * Convenience: assign $var = 'yes' if $_GET[$key] is set, else ''.
+ * Map is ['getKey' => 'varName'].
+ */
+$flagMap = [
+    'searchname'     => 'searchname',
+    'searchtype'     => 'searchtype',
+    'searchsetcode'  => 'searchsetcode',
+    'searchability'  => 'searchability',
+    'searchnotes'    => 'searchnotes',
+    'searchpromo'    => 'searchpromo',
+    'searchnew'      => 'new',
+
+    'white'          => 'white',
+    'blue'           => 'blue',
+    'black'          => 'black',
+    'red'            => 'red',
+    'green'          => 'green',
+    'artifact'       => 'artifact',
+    'colourless'     => 'colourless',
+    'land'           => 'land',
+    'battle'         => 'battle',
+
+    'common'         => 'common',
+    'uncommon'       => 'uncommon',
+    'rare'           => 'rare',
+    'mythic'         => 'mythic',
+
+    'paper'          => 'paper',
+    'arena'          => 'arena',
+    'online'         => 'online',
+
+    'creature'       => 'creature',
+    'instant'        => 'instant',
+    'sorcery'        => 'sorcery',
+    'enchantment'    => 'enchantment',
+    'planeswalker'   => 'planeswalker',
+    'tribal'         => 'tribal',
+
+    'legendary'      => 'legendary',
+    'token'          => 'token',
+    'exact'          => 'exact',
+    'allprintings'   => 'allprintings',
+
+    'complex'        => 'adv',
+    'foilonly'       => 'foilonly',
+];
+
+foreach ($flagMap as $getKey => $varName) :
+    $$varName = mtgGetFlagYes($getKey);
+endforeach;
+
+$colourExcl   = mtgGetFlagOnly('colourExcl');
+$gametypeExcl = mtgGetFlagOnly('gametypeExcl');
+
+$validAndOr = ['AND', 'OR', ''];
+$colourOp   = mtgGetEnum('colourOp', $validAndOr, '');
+$typeOp     = mtgGetEnum('typeOp', $validAndOr, '');
+$gametypeOp = mtgGetEnum('gametypeOp', $validAndOr, '');
+
+$valid_sortBy = [
+    'name','price','cmc','cmcdown','set','setdown','setnumberdown',
+    'powerup','powerdown','toughup','toughdown','auto'
+];
+$sortBy = mtgGetEnum('sortBy', $valid_sortBy, '');
+
+$valid_operator = ['ltn', 'gtr', 'eq'];
+$poweroperator   = mtgGetEnum('poweroperator', $valid_operator, '');
+$toughoperator   = mtgGetEnum('toughoperator', $valid_operator, '');
+$loyaltyoperator = mtgGetEnum('loyaltyoperator', $valid_operator, '');
+$cmcoperator     = mtgGetEnum('cmcoperator', $valid_operator, '');
+$collqtyoperator = mtgGetEnum('collQtyOp', $valid_operator, '');
+
+$tribe = (string) ($_GET['tribe'] ?? '');
+if (!in_array($tribe, $rulesValidTribe, true)) :
     $tribe = '';
 endif;
-$legendary = isset($_GET['legendary']) ? 'yes' : '';
-$token = isset($_GET['token']) ? 'yes' : '';
-$exact = isset($_GET['exact']) ? 'yes' : '';
-$allprintings = isset($_GET['allprintings']) ? 'yes' : '';
-if ((isset($_GET['set'])) and (is_array($_GET['set']))) :
+
+$selectedSets = [];
+if (isset($_GET['set']) && is_array($_GET['set'])) :
     $selectedSets = filter_var_array(
         $_GET['set'],
         FILTER_SANITIZE_FULL_SPECIAL_CHARS,
         FILTER_FLAG_NO_ENCODE_QUOTES
     );
 endif;
-$valid_sortBy = array(
-    "name",
-    "price",
-    "cmc",
-    "cmcdown",
-    "set",
-    "setdown",
-    "setnumberdown",
-    "powerup",
-    "powerdown",
-    "toughup",
-    "toughdown",
-    "auto"
-);
-$sortBy = isset($_GET['sortBy']) ? "{$_GET['sortBy']}" : '';
-if (!in_array($sortBy, $valid_sortBy)) :
-    $sortBy = '';
-endif;
-$valid_operator = ["ltn", "gtr", "eq"];
-$poweroperator = isset($_GET['poweroperator']) ? "{$_GET['poweroperator']}" : '';
-if (!in_array($poweroperator, $valid_operator, true)) :
-    $poweroperator = '';
-endif;
-$toughoperator = isset($_GET['toughoperator']) ? "{$_GET['toughoperator']}" : '';
-if (!in_array($toughoperator, $valid_operator, true)) :
-    $toughoperator = '';
-endif;
-$loyaltyoperator = isset($_GET['loyaltyoperator']) ? "{$_GET['loyaltyoperator']}" : '';
-if (!in_array($loyaltyoperator, $valid_operator, true)) :
-    $loyaltyoperator = '';
-endif;
-$cmcoperator = isset($_GET['cmcoperator']) ? "{$_GET['cmcoperator']}" : '';
-if (!in_array($cmcoperator, $valid_operator, true)) :
-    $cmcoperator = '';
-endif;
-$collqtyoperator = $_GET['collQtyOp'] ?? '';
-if (!in_array($collqtyoperator, $valid_operator, true)) :
-    $collqtyoperator = '';
-endif;
-$cmcvalue = isset($_GET['cmcvalue']) ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT) : '';
+
+$cmcvalue = isset($_GET['cmcvalue'])
+    ? filter_input(INPUT_GET, 'cmcvalue', FILTER_SANITIZE_NUMBER_INT)
+    : '';
+
 $power = filter_input(INPUT_GET, 'power', FILTER_VALIDATE_INT, [
-    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+    'options' => ['default' => 0, 'min_range' => 0]
 ]);
 $tough = filter_input(INPUT_GET, 'tough', FILTER_VALIDATE_INT, [
-    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+    'options' => ['default' => 0, 'min_range' => 0]
 ]);
 $loyalty = filter_input(INPUT_GET, 'loyalty', FILTER_VALIDATE_INT, [
-    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+    'options' => ['default' => 0, 'min_range' => 0]
 ]);
 $collqty = filter_input(INPUT_GET, 'collQtyValue', FILTER_VALIDATE_INT, [
-    'options' => ['default' => 0, 'min_range' => 0] // Ensures a valid, non-negative integer
+    'options' => ['default' => 0, 'min_range' => 0]
 ]);
-$adv = isset($_GET['complex']) ? 'yes' : '';
-$scope = isset($_GET['scope']) ? "{$_GET['scope']}" : '';
-$valid_scope = array("all","mycollection","notcollection");
-if (!in_array($scope, $valid_scope)) :
-    $scope = '';
-endif;
-$valid_legal = array("std","pnr","mdn","vin","lgc","alc","his");
-$legal = isset($_GET['legal']) ? "{$_GET['legal']}" : '';
-if (!in_array($legal, $valid_legal)) :
-    $legal = '';
-endif;
-$foilonly = isset($_GET['foilonly']) ? 'yes' : '';
-$searchLang = isset($_GET['lang']) ? "{$_GET['lang']}" : '';
+
+$valid_scope = ['all', 'mycollection', 'notcollection'];
+$scope = mtgGetEnum('scope', $valid_scope, '');
+
+$valid_legal = ['std', 'pnr', 'mdn', 'vin', 'lgc', 'alc', 'his'];
+$legal = mtgGetEnum('legal', $valid_legal, '');
+
+$searchLang = (string) ($_GET['lang'] ?? '');
 if ($searchLang === 'all') :
     $searchLang = 'all';
-elseif ($searchLang === 'default' || !in_array($searchLang, $rulesSearchLangCodes)) :
+elseif ($searchLang === 'default' || !in_array($searchLang, $rulesSearchLangCodes, true)) :
     $searchLang = '';
 endif;
 
 // Does the user have a collection table?
-$tableExistsQuery = "SHOW TABLES LIKE '$mytable'";
 $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
-
 $tableExists = false;
-$result = $db->query($tableExistsQuery);
-if ($result !== false && is_object($result) && method_exists($result, 'fetch_assoc')) :
-    $row = $result->fetch_assoc();
-    if (method_exists($result, 'free')) :
-        $result->free();
-    endif;
-    if (!empty($row)) :
-        $tableExists = true;
-    endif;
+$pattern = $db->real_escape_string($mytable);
+$pattern = str_replace(['%', '_'], ['\\%', '\\_'], $pattern);
+$sql = "SHOW TABLES LIKE '{$pattern}' ESCAPE '\\\\'";
+$result = $db->query($sql);
+if ($result instanceof \mysqli_result) :
+    $tableExists = ($result->num_rows > 0);
+    $result->free();
 endif;
-if ($tableExists === false) :
+
+if (!$tableExists) :
     $msg->logMessage('[NOTICE]', "No existing collection table...");
-    $query2 = "CREATE TABLE `$mytable` LIKE collectionTemplate";
+    $tableIdent = str_replace('`', '``', $mytable);
+    $query2 = "CREATE TABLE `{$tableIdent}` LIKE `collectionTemplate`";
     $msg->logMessage('[DEBUG]', "Copying collection template...: $query2");
 
-    if ($db->query($query2) === true) :
+    if ($db->query($query2)) :
         $msg->logMessage('[NOTICE]', "Collection template copy successful");
     else :
         $msg->logMessage('[NOTICE]', "Collection template copy failed: " . $db->error);
@@ -341,31 +340,34 @@ if (($sortBy == 'price') and ( $scope == 'mycollection')) :
     $obj->updateCollectionValues($mytable);
 endif;
 //Set variable to ignore maxresults if this is a collection search
-if ($scope == 'mycollection' or $sortBy == 'price') : // Price search waives the limit
+if ($scope == 'mycollection' or $sortBy == 'price') : // Price search also waives the limit
     $collectionsearch = true;
 else :
     $collectionsearch = false;
 endif;
 // Run the query
 if ($validsearch === "true") :
-    $msg->logMessage('[DEBUG]', "User $userEmail called query $query from {$_SERVER['REMOTE_ADDR']}");
+    $msg->logMessage('[DEBUG]', "User $userEmail called query $query from {$remoteAddr}");
     $msg->logMessage('[DEBUG]', "with parameters: " . var_export($params, true));
     // parameterised query has been built in criteria.php, proceed with it
-    if ($result = $db->execute_query($query, $params)) :
+    $result = $db->execute_query($query, $params);
+    if ($result) :
         $msg->logMessage('[DEBUG]', "SQL query succeeded");
         $queryQty = "SELECT COUNT(*) FROM cards_scry
                 LEFT JOIN `$mytable` ON cards_scry.id = `$mytable`.id
                 WHERE " . $criteria;
         $msg->logMessage('[DEBUG]', "User $userEmail called count query $queryQty");
+
         // Execute the count query
-        if ($countResult = $db->execute_query($queryQty, $params)) :
+        $countResult = $db->execute_query($queryQty, $params);
+        if ($countResult) :
             $row = $countResult->fetch_row();
             $qtyresults = $row[0];
             $msg->logMessage('[DEBUG]', "Query has $qtyresults results");
-
             if ($qtyresults > $maxresults and $collectionsearch == false) :
-                $validsearch = "toomany"; //variable set for header.php to display warning
+                $validsearch = "toomany"; // variable set for header.php to display warning
             endif;
+            $countResult->free();
         else :
             $error = "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error;
             throw new Exception($error);
@@ -374,6 +376,7 @@ if ($validsearch === "true") :
 else :
     $msg->logMessage('[DEBUG]', "Not a valid search");
 endif;
+
 # query for page navigation
 if (isset($qtyresults)) :
     if ($qtyresults > ($page * $perpage)) :
