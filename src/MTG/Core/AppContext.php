@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.54
-Date:        12/01/26
+Version:     1.55
+Date:        13/01/26
 Name:        AppContext.php
 Purpose:     Bootstrap context container for app-wide dependencies.
 Notes:       -
@@ -80,9 +80,6 @@ class AppContext
         $turnstileEnabled = ($iniArray['security']['Turnstile'] ?? '') === 'enabled';
 
         $adminIp = $iniArray['security']['AdminIP'] ?? '';
-        if ($adminIp === '') :
-            $adminIp = 1;
-        endif;
 
         $emailEnabled = (($iniArray['email']['Email'] ?? 'enabled') === 'enabled');
 
