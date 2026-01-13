@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.92
-Date:        12/01/26
+Version:     25.93
+Date:        13/01/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -31,6 +31,7 @@ $tier                       = (string) $appConfig->general('tier', 'prod');
 $copyright                  = (string) $appConfig->general('copyright', '');
 $user                       = $sessionUser->id();
 $userEmail                  = $sessionUser->email();
+$mytable                    = $sessionUser->table();
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesValidTypes = $gameRules->getArray('validtypes');
