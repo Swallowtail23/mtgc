@@ -20,7 +20,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 ### Changed
 
 - Application configuration is now accessed exclusively through AppConfig (no direct INI or global config access).
-- Header/footer now rely on per-page config variables for title, tier, copyright, and css version.
+- Header/footer now rely on per-page config variables for title, tier, and copyright; CSS version suffix is provided via AppContext meta.
 - Database connection and settings now derive from AppConfig instead of legacy DB_* constants.
 - Game rules now load via a dedicated builder and are accessed through GameRules instead of globals.
 - Secure pages now consume user/session state via SessionUser instead of ambient session globals.

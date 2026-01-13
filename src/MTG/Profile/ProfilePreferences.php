@@ -35,8 +35,13 @@ class ProfilePreferences
         return $currency;
     }
 
-    public static function updateCurrency($db, array $rulesCurrencies, int $userId, ?string $currency, Message $msg): ?string
-    {
+    public static function updateCurrency(
+        $db,
+        array $rulesCurrencies,
+        int $userId,
+        ?string $currency,
+        Message $msg
+    ): ?string {
         $normalized = self::normalizeCurrency($currency, $rulesCurrencies);
         $msg->logMessage('[DEBUG]', "Called with user currency '$normalized'");
 

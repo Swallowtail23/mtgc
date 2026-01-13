@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.95
-Date:        12/01/26
+Version:     1.98
+Date:        13/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
 Notes:       -
@@ -44,24 +44,28 @@ if (!function_exists('mtgOpenLogFile')) :
     }
 endif;
 
-$iniPath = getenv('MTG_INI_PATH');
-if ($iniPath === false || $iniPath === '') :
-    $iniPath = '/opt/mtg/mtg_new.ini';
+$_iniPath = getenv('MTG_INI_PATH');
+if ($_iniPath === false || $_iniPath === '') :
+    $_iniPath = '/opt/mtg/mtg_new.ini';
 endif;
 
-$dbOverride = null;
-$allowDbOverride = (PHP_SAPI === 'cli')
+// If defined, mtgDbOverride(): ?mysqli returns a mysqli handle for tests/CLI
+$_dbOverride = null;
+$_allowDbOverride = (PHP_SAPI === 'cli')
     || (defined('ALLOW_DB_OVERRIDE') && constant('ALLOW_DB_OVERRIDE') === true);
-if ($allowDbOverride && isset($GLOBALS['db']) && $GLOBALS['db'] instanceof \mysqli) :
-    $dbOverride = $GLOBALS['db'];
+if ($_allowDbOverride && function_exists('mtgDbOverride')) :
+    $_candidate = mtgDbOverride();
+    if ($_candidate instanceof \mysqli) :
+        $_dbOverride = $_candidate;
+    endif;
 endif;
 
 try {
-    $ctx = AppContext::fromIniPath($iniPath, $dbOverride);
+    $ctx = AppContext::fromIniPath($_iniPath, $_dbOverride);
 } catch (Exception $err) {
     $iniArray = [];
     try {
-        $ini = new INI($iniPath);
+        $ini = new INI($_iniPath);
         $iniArray = is_array($ini->data) ? $ini->data : [];
     } catch (Exception $ignored) {
         $iniArray = [];
@@ -100,7 +104,7 @@ try {
     $host = gethostname() ?: 'unknown';
     $detail = $err->getMessage()
         . "\n\nContext:"
-        . "\n- iniPath: {$iniPath}"
+        . "\n- iniPath: {$_iniPath}"
         . "\n- sapi: " . PHP_SAPI
         . "\n- host: {$host}"
         . "\n- tier: {$tier}";
@@ -130,89 +134,77 @@ try {
     die();
 }
 
-// Locals (also currently exported implicitly to callers because this file is included)
-$iniArray = $ctx->iniArray();
-$appConfig = $ctx->config();
-$gameRules = $ctx->rules();
-$db = $ctx->db();
-$msg = $ctx->message();
+// Internal locals for bootstrap-only use.
+$_iniArray = $ctx->iniArray();
+$_appConfig = $ctx->config();
+$_gameRules = $ctx->rules();
+$_db = $ctx->db();
+$_msg = $ctx->message();
 
-// Dev-only deprecation warning
-$tierValue = (string) $appConfig->general('tier', 'prod');
-$warnDeprecatedGlobals = ($tierValue === 'dev')
-    && (defined('MTG_WARN_DEPRECATED_BOOTSTRAP_GLOBALS') ? constant('MTG_WARN_DEPRECATED_BOOTSTRAP_GLOBALS') : true);
-
-if ($warnDeprecatedGlobals) :
-    $msg->logMessage(
-        '[DEBUG]',
-        'bootstrap.php: deprecated ambient variables ($appConfig/$db/$msg/$gameRules/$iniArray). Use $ctx->...'
-    );
-endif;
-
-$tierValue = (string) $appConfig->general('tier', 'prod');
-if ($tierValue === 'dev') :
+$_tierValue = (string) $_appConfig->general('tier', 'prod');
+if ($_tierValue === 'dev') :
     error_reporting(E_ALL);
 else :
     error_reporting(E_ALL & ~E_NOTICE);
 endif;
 
-$logFile = (string) $appConfig->general('logFile', '');
-$logLevel = (string) $appConfig->general('logLevel', '');
-$fd = mtgOpenLogFile($logFile);
-if ($fd === false) :
-    if ($logFile !== '') :
+$_logFile = (string) $_appConfig->general('logFile', '');
+$_logLevel = (string) $_appConfig->general('logLevel', '');
+$_fd = mtgOpenLogFile($_logFile);
+if ($_fd === false) :
+    if ($_logFile !== '') :
         openlog("MTG", LOG_NDELAY, LOG_USER);
         syslog(
             LOG_ERR,
-            "[MTG-DEBUG] bootstrap.php: Can't write to MTG log file ($logFile) "
+            "[MTG-DEBUG] bootstrap.php: Can't write to MTG log file ($_logFile) "
             . "- check path and permissions. Falling back to syslog."
         );
         closelog();
     endif;
-    $logFile = '';
+    $_logFile = '';
 else :
-    if ($logLevel === '3') :
-        $script = $_SERVER['SCRIPT_NAME'] ?? ($_SERVER['PHP_SELF'] ?? 'unknown');
-        $logMessage = "[DEBUG] bootstrap.php (direct write to logfile) ({$script}): "
-                    . "Successfully checked logfile access to $logFile";
-        $str = "[" . date("Y/m/d H:i:s", time()) . "] " . $logMessage;
-        fwrite($fd, $str . "\n");
+    if ($_logLevel === '3') :
+        $_script = $_SERVER['SCRIPT_NAME'] ?? ($_SERVER['PHP_SELF'] ?? 'unknown');
+        $_logMessage = "[DEBUG] bootstrap.php (direct write to logfile) ({$_script}): "
+                    . "Successfully checked logfile access to $_logFile";
+        $_str = "[" . date("Y/m/d H:i:s", time()) . "] " . $_logMessage;
+        fwrite($_fd, $_str . "\n");
     endif;
-    fclose($fd);
+    fclose($_fd);
 endif;
 
-if ($logFile === '') :
-    $configOverrides = $appConfig->toArrayRaw();
-    $configOverrides['general']['logFile'] = $logFile;
-    $appConfig = AppConfig::fromIni($iniArray, $configOverrides);
-    $msg = new Message($appConfig);
-    $ctx = new AppContext($db, $appConfig, $gameRules, $iniArray, $msg, $ctx->metaAll());
+if ($_logFile === '') :
+    $_configOverrides = $_appConfig->toArrayRaw();
+    $_configOverrides['general']['logFile'] = $_logFile;
+    $_appConfig = AppConfig::fromIni($_iniArray, $_configOverrides);
+    $_msg = new Message($_appConfig);
+    $ctx = new AppContext($_db, $_appConfig, $_gameRules, $_iniArray, $_msg, $ctx->metaAll());
 endif;
 
 // Build meta variables into $ctx
-$versionFile = APP_ROOT . '/VERSION';
-$serviceWorkerVersion = 'v6';
-if (file_exists($versionFile)) :
-    $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
-    if ($serviceWorkerVersion === '') :
-        $serviceWorkerVersion = 'v6';
+$_versionFile = APP_ROOT . '/VERSION';
+$_serviceWorkerVersion = 'v6';
+if (file_exists($_versionFile)) :
+    $_serviceWorkerVersion = trim((string) file_get_contents($_versionFile));
+    if ($_serviceWorkerVersion === '') :
+        $_serviceWorkerVersion = 'v6';
     endif;
 endif;
-$cssverMeta = AdminSettings::getCssVersionSuffix($db, $appConfig);
+$_cssverMeta = AdminSettings::getCssVersionSuffix($_db, $_appConfig);
 $ctx = $ctx->withMeta([
-    'serviceWorkerVersion' => $serviceWorkerVersion,
-    'cssver' => $cssverMeta
+    'serviceWorkerVersion' => $_serviceWorkerVersion,
+    'cssver' => $_cssverMeta
 ]);
 
-date_default_timezone_set((string) $appConfig->general('timezone', 'UTC'));
-$localeini = (string) $appConfig->general('locale', '');
-if (setlocale(LC_MONETARY, $localeini) === false) :
-    $msg->logMessage('[DEBUG]', "Locale not available for LC_MONETARY: $localeini");
+date_default_timezone_set((string) $_appConfig->general('timezone', 'UTC'));
+$_localeini = (string) $_appConfig->general('locale', '');
+if (setlocale(LC_MONETARY, $_localeini) === false) :
+    $_msg->logMessage('[DEBUG]', "Locale not available for LC_MONETARY: $_localeini");
 endif;
 
 if (PHP_SAPI !== 'cli') :
-    $errorHandler = new ErrorHandler($appConfig);
-    $errorHandler->register();
+    $_errorHandler = new ErrorHandler($_appConfig);
+    $_errorHandler->register();
 endif;
 
 return $ctx;

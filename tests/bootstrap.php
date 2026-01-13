@@ -174,6 +174,13 @@ endif;
 
 $GLOBALS['db'] = new DummyMysqli();
 
+if (!function_exists('mtgDbOverride')) :
+    function mtgDbOverride(): ?\mysqli
+    {
+        return $GLOBALS['db'] ?? null;
+    }
+endif;
+
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) :
     require_once $autoload;
