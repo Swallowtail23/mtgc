@@ -48,6 +48,10 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Password reset links now render the reset form instead of auto-hiding on valid tokens.
 - Reset flow now restarts a clean session to preserve validation messages after logout.
 - Collection view floating toggle now renders correctly in search results and updates card styling on add.
+- Deck detail data include now receives the collection table name from the session user.
+- Template and issues pages now pass the session user email to the menu include.
+- Header now defaults maintenance status to show the search icon when unset.
+- Secure bootstrap now stores maintenance status in AppContext meta for header rendering.
 - Maintenance stub now loads jQuery before header scripts to avoid "$ is not defined" errors.
 - Admin reject page now bootstraps via bootstrap.php so header/footer dependencies are available.
 - Error page now handles missing/invalid ini gracefully instead of fataling.

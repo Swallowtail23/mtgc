@@ -57,10 +57,11 @@
 - Advanced Tidyup: Standard Tidyup plus also conduct a basic review of logic and possible optimisation. Make no logic code changes or optimisation without approval.
 
 ## Bootstrap context rules
-- Make `$ctx` the only object promised to callers; treat ambient variables as deprecated.
-- Keep `$appConfig`, `$db`, `$msg`, and `$gameRules` ambient for now; do not introduce new ambient globals beyond those.
-- Prefer reading values via `$ctx->...()` or local assignments as files are edited.
-- Avoid introducing new ambient variables in `bootstrap.php`; add data to `$ctx` instead.
+- Contract: every entrypoint must `require` a bootstrap and receive `$ctx`; callers should rely on `$ctx`, not globals.
+- No new ambients: do not introduce any new ambient variables; add data to `$ctx` (meta or accessors) and read it from there.
+- Locals: assign `$appConfig`, `$db`, `$msg`, `$gameRules` per file from `$ctx` if needed, but not as  ambient globals.
+- Locals: prefix bootstrap-internal locals with `$_` and keep them scoped to the bootstrap files.
+- Usage: prefer `$ctx->...()` accessors or local assignments in each file; migrate away from ambients as you touch files.
 
 ## Problem-Solving Expectations
 - For complex or contentious issues, insist on a minimal reproducible test with fixed inputs and expected outputs before concluding.
