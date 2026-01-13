@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.33
-Date:        12/01/26
+Version:     3.37
+Date:        13/01/26
 Name:        reset.php
 Purpose:     Password reset page, called from login.php.
 Notes:       Not a secure page!
@@ -49,30 +49,64 @@ if (!empty($tokenEmail)) :
         $resetUserId = (int) $resetRow['usernumber'];
         $twofaRequired = (bool) $resetRow['tfa_enabled'];
         $twofaMethod = $resetRow['tfa_method'] ?? '';
+        $msg->logMessage(
+            '[DEBUG]',
+            "Reset lookup: email={$tokenEmail}, user={$resetUserId}, 2fa=" . ($twofaRequired ? 'yes' : 'no')
+        );
+    else :
+        $msg->logMessage('[DEBUG]', "Reset lookup: no user found for email={$tokenEmail}");
     endif;
 endif;
 
 if (!empty($token) && !empty($tokenEmail)) :
     $record = $pwReset->fetchResetRecord($tokenEmail);
+    $msg->logMessage('[DEBUG]', "Reset token check requested for email={$tokenEmail}");
     if (
         $record === null || $record['expires_at'] < date('Y-m-d H:i:s')
         || !password_verify($token, $record['token_hash'])
     ) :
+        $msg->logMessage('[NOTICE]', "Reset token invalid or expired for {$tokenEmail}");
         $message = "Reset link invalid or expired.";
         $token = '';
         $tokenEmail = '';
-        if (!empty($_SESSION)) :
-            $_SESSION = [];
-        endif;
+        $redirectLogin = true;
         if (session_status() === PHP_SESSION_ACTIVE) :
-            session_regenerate_id(true);
+            $_SESSION = [];
+            session_unset();
+            $cookieParams = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $cookieParams['path'],
+                $cookieParams['domain'],
+                $cookieParams['secure'],
+                $cookieParams['httponly']
+            );
+            session_destroy();
+        endif;
+        if (session_status() !== PHP_SESSION_ACTIVE && function_exists('startCustomSession')) :
+            startCustomSession();
         endif;
     else :
-        if (!empty($_SESSION)) :
-            $_SESSION = [];
-        endif;
+        $msg->logMessage('[DEBUG]', "Reset token accepted for email={$tokenEmail}");
         if (session_status() === PHP_SESSION_ACTIVE) :
-            session_regenerate_id(true);
+            $_SESSION = [];
+            session_unset();
+            $cookieParams = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $cookieParams['path'],
+                $cookieParams['domain'],
+                $cookieParams['secure'],
+                $cookieParams['httponly']
+            );
+            session_destroy();
+        endif;
+        if (session_status() !== PHP_SESSION_ACTIVE && function_exists('startCustomSession')) :
+            startCustomSession();
         endif;
     endif;
 endif;
@@ -89,6 +123,9 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
                 '[DEBUG]',
                 "2FA code send requested during reset for $tokenEmail, result: " . ($sent ? 'sent' : 'failed')
             );
+        endif;
+        if ($sent) :
+            $msg->logMessage('[NOTICE]', "2FA code sent for reset to {$tokenEmail}");
         endif;
         header('Content-Type: text/html');
         if ($sent) :
@@ -118,12 +155,14 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
     endif;
     if (!PasswordCheck::validPass($newPassword)) :
         $_SESSION['reset_message'] = "Password does not meet complexity requirements.";
+        $msg->logMessage('[NOTICE]', "Reset rejected: password complexity failed for {$email}");
         header(
             'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)
         );
         exit();
     elseif (!empty($currentHash) && password_verify($newPassword, $currentHash)) :
         $_SESSION['reset_message'] = "New password must be different from the current password.";
+        $msg->logMessage('[NOTICE]', "Reset rejected: password reused for {$email}");
         header(
             'Location: reset.php?token=' . urlencode($token) . '&email=' . urlencode($tokenEmail)
         );
@@ -147,17 +186,35 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['token'])) :
         endif;
 
         if (empty($message) && $pwReset->completeReset($email, $_POST['token'], $newPassword)) :
-            session_destroy();
+            if (session_status() === PHP_SESSION_ACTIVE) :
+                $_SESSION = [];
+                session_unset();
+                $cookieParams = session_get_cookie_params();
+                setcookie(
+                    session_name(),
+                    '',
+                    time() - 42000,
+                    $cookieParams['path'],
+                    $cookieParams['domain'],
+                    $cookieParams['secure'],
+                    $cookieParams['httponly']
+                );
+                session_destroy();
+            endif;
             $message = "Password updated. Please log in with your new password.";
             $redirectLogin = true;
+            $msg->logMessage('[NOTICE]', "Password reset completed for {$email}");
         elseif (empty($message)) :
             $message = "Reset failed. The link may be invalid or expired.";
+            $msg->logMessage('[NOTICE]', "Password reset failed for {$email}");
         endif;
     endif;
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST') :
     $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
     $pwReset->requestResetToken($email);
     $message = "If the email address exists, a reset link has been sent.";
+    $redirectLogin = true;
+    $msg->logMessage('[NOTICE]', "Password reset requested for {$email}");
 endif;
 
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
@@ -189,7 +246,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
     </div>
         <?php if (!empty($redirectLogin)) : ?>
-        <meta http-equiv='refresh' content='3;url=login.php'>
+        <meta http-equiv='refresh' content='3;url=login.php?no_trusted=1'>
         <?php endif; ?>
     <?php endif; ?>
 
@@ -230,7 +287,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <button
             class='sendreset'
             type="button"
-            onclick="window.location.href='login.php';"
+            onclick="window.location.href='login.php?no_trusted=1';"
         >CANCEL</button>
     </form>
 <?php elseif ($emailEnabledFlag && empty($redirectLogin)) : ?>
@@ -243,7 +300,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <button
             class='sendreset'
             type="button"
-            onclick="window.location.href='login.php';"
+            onclick="window.location.href='login.php?no_trusted=1';"
         >CANCEL</button>
     </form>
 <?php endif; ?>
