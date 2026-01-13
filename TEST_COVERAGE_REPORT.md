@@ -7,10 +7,12 @@
 - Config: `/opt/mtg/mtg_new.ini` must point to a test database and logging location.
 - PHPUnit: `vendor/bin/phpunit` (after `composer install`).
 - Autoload: Composer PSR-4 for classes under `src/MTG/`.
+- Bulk opt-in test: `MTG_BULK_TEST_INI` (defaults to `/opt/mtg/mtg_new.ini`), runs only when ini `general.tier=dev`,
+  and skips in CI (`CI`/`GITHUB_ACTIONS`).
 
 ## Current PHPUnit Coverage Summary
 
-- Status: 186 tests, 367 assertions (latest run).
+- Status: last recorded full run was 200 tests, 426 assertions (re-run to refresh after recent additions).
 - Focus: core helpers and high-risk business logic paths.
 
 ## Coverage by Class (test references)
@@ -69,6 +71,12 @@
 
 - UserStatus now has explicit tests for incrementing bad logins, zeroing bad logins, and locking accounts
   (supports manual checks for bad login increments/resets and account lock behavior).
+- Bulk scripts now have bootstrap path checks (`BulkScriptBootstrapTest`) and an opt-in test-mode run for
+  Scryfall bulk imports (`BulkScryfallImportTest`).
+- ImportExport input parsing now covers headers, ignored lines, invalid CSV, and shortcut parsing.
+- DeckManager processInput now has coverage for commander/sideboard modes and multi-line warning handling.
+- Profile currency updates now have stubbed persistence tests.
+- ScryfallImport hash update branches now have explicit content/price/both path assertions.
 
 ## Remaining Gaps / Notes
 
@@ -77,6 +85,7 @@
   but still contain untested branches (error handling and edge-case DB outcomes).
 - `ErrorHandler`/`AjaxResponse` are covered via fixture subprocess tests; deeper branch coverage would require further
   harnessing or refactoring.
+- JS sanitizer tests (`js/deckdetail.js`) are deferred to a future version once a JS harness is introduced.
 
 ## Feasible PHPUnit Additions (not covered yet)
 
@@ -85,6 +94,12 @@
 - Profile preferences: currency changes persisting and updateCollectionValues invocation (with stubs).
 - Search criteria building: header/advanced search criteria parsing (unit-level), beyond IndexTest smoke coverage.
 - Deck imports: more import path tests on validation and dedupe rules (unit-level).
+
+## Easy Targets for Next Pass
+
+- Search criteria parsing (pure helper logic): easy to isolate without DB.
+- Profile preferences persistence: add a stubbed update path test.
+- Deck import validation edge cases: use small fixture arrays to cover rejects.
 
 ## Manual-only / E2E-only (keep on checklist)
 

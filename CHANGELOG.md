@@ -82,6 +82,8 @@ This release establishes a new internal baseline for MTG Collection, introducing
   - AjaxResponse and ErrorHandler exit paths
 - Added PHPUnit coverage to validate bulk scripts load `bulk_ini.php` via local paths.
 - Added PHPUnit coverage for the Scryfall bulk test-mode import path.
+- Added PHPUnit coverage for ImportExport input parsing, DeckManager import warnings, profile currency updates,
+  and ScryfallImport hash-path branch counts.
 - Added test coverage reports and manual-check guidance.
 - Bulk scripts now use bootstrap for logging and configuration.
 - Legacy includes/ini.php entrypoint has been removed.

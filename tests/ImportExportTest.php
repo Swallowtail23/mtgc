@@ -30,6 +30,48 @@ class ImportExportTest extends TestCase
         $this->assertStringContainsString('"MH3","304","Plains","en","1","0","0","uuid-1"', $csv);
         $this->assertStringContainsString('"MH3","305","Island \\"Alt\\"","en","0","2","0","uuid-2"', $csv);
     }
+
+    public function testInputInterpreterDetectsHeader()
+    {
+        $gameRules = new GameRules([]);
+        $input = 'set,number,name,lang,normal,foil,etched,uuid';
+
+        $result = ImportExport::inputInterpreter($input, $GLOBALS['appConfig'], $gameRules);
+
+        $this->assertSame('header', $result);
+    }
+
+    public function testInputInterpreterRejectsInvalidCsv()
+    {
+        $gameRules = new GameRules([]);
+        $input = 'mh3,304,Plains,en,1,0,0,not-a-uuid';
+
+        $result = ImportExport::inputInterpreter($input, $GLOBALS['appConfig'], $gameRules);
+
+        $this->assertFalse($result);
+    }
+
+    public function testInputInterpreterHandlesIgnoredLine()
+    {
+        $gameRules = new GameRules([
+            'importLinestoIgnore' => ['Sideboard']
+        ]);
+
+        $result = ImportExport::inputInterpreter('Sideboard', $GLOBALS['appConfig'], $gameRules);
+
+        $this->assertSame('empty line', $result);
+    }
+
+    public function testInputInterpreterParsesShortcutInput()
+    {
+        $gameRules = new GameRules([]);
+
+        $result = ImportExport::inputInterpreter('(mh3) 304', $GLOBALS['appConfig'], $gameRules);
+
+        $this->assertSame('MH3', $result['set']);
+        $this->assertSame('304', $result['number']);
+        $this->assertSame('', $result['name']);
+    }
 }
 
 class ImportExportDbStub
