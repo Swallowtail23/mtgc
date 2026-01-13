@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.21
-Date:        12/01/26
+Version:     4.23
+Date:        13/01/26
 Name:        csv.php
 Purpose:     Export collection and redirect from profile.php.
 Notes:       Redirects to profile.php if not in SMTP debug, with flag on success/fail.
@@ -17,10 +17,19 @@ use MTG\Core\Validation;
 
 // Bootstrap
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$myURL = (string) $appConfig->general('url', '');
-$smtpParameters = $appConfig->getSmtpParameters();
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$sessionUser                = $ctx->sessionUser();
+
+$userEmail                  = $sessionUser->email();
+$mytable                    = $sessionUser->table();
+$admin                      = $sessionUser->adminLevel();
+$myURL                      = (string) $appConfig->general('url', '');
+$smtpParameters             = $appConfig->getSmtpParameters();
 
 // Content
 $requestedTable = filter_input(INPUT_GET, 'table', FILTER_UNSAFE_RAW);

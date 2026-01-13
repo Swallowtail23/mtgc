@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.19
-Date:        12/01/26
+Version:     1.21
+Date:        13/01/26
 Name:        valueupdate.php
 Purpose:     PHP script to update topvalue across collection.
 Notes:       Currently called after import function is run.
@@ -16,7 +16,14 @@ use MTG\Core\Validation;
 
 // Bootstrap
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
+
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$sessionUser                = $ctx->sessionUser();
+
+$userEmail                  = $sessionUser->email();
 
 // Content
 $msg->logMessage('[DEBUG]', 'Loading valueupdate.php...');

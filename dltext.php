@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.16
-Date:        12/01/26
+Version:     4.18
+Date:        13/01/26
 Name:        dltext.php
 Purpose:     Text file export page.
 Notes:       Call with Post 'text' and optionally 'filename'.
@@ -15,7 +15,15 @@ use MTG\Cards\DeckManager;
 
 // Bootstrap
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
+
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$sessionUser                = $ctx->sessionUser();
+
+$userEmail                  = $sessionUser->email();
 
 // Content
 if (isset($_POST['decknumber'])) :

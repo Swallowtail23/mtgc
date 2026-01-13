@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.93
-Date:        12/01/26
+Version:     2.95
+Date:        13/01/26
 Name:        logout.php
 Purpose:     Destroy the session, log it, and head to login.php.
 Notes:       {none}
@@ -15,7 +15,11 @@ use MTG\Auth\TrustedDeviceManager;
 
 // Bootstrap
 
-$appContext = require __DIR__ . '/bootstrap.php';
+$ctx                        = require __DIR__ . '/bootstrap.php';
+
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
 session_regenerate_id();
 
 // Content

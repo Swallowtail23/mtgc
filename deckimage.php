@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.21
-Date:        12/01/26
+Version:     1.23
+Date:        13/01/26
 Name:        deckimage.php
 Purpose:     PHP script to get and output raw jpg.
 Notes:       {none}
@@ -15,10 +15,18 @@ use MTG\Cards\DeckManager;
 
 // Bootstrap
 
-$appContext = require __DIR__ . '/bootstrap_secure.php';
+$ctx                        = require __DIR__ . '/bootstrap_secure.php';
 
-$myURL = (string) $appConfig->general('url', '');
-$imgLocation = (string) $appConfig->general('imageBaseDir', '');
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+$sessionUser                = $ctx->sessionUser();
+
+$user                       = $sessionUser->id();
+$userEmail                  = $sessionUser->email();
+$myURL                      = (string) $appConfig->general('url', '');
+$imgLocation                = (string) $appConfig->general('imageBaseDir', '');
 
 // Content
 $msg->logMessage('[DEBUG]', "Called to generate jpg...");

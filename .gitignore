@@ -18,4 +18,3 @@ docker/.env
 docker/docker-compose.override.yml
 scripts/
 CODEBASE_REVIEW_FINDINGS.md
-AMBIENT_VARIABLES_CHECKLIST.md
