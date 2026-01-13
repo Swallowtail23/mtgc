@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.19
-Date:        12/01/26
+Version:     1.20
+Date:        13/01/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

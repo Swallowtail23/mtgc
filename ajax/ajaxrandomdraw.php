@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     3.60
-Date:        12/01/26
+Version:     3.61
+Date:        13/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

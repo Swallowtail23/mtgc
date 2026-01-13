@@ -5,7 +5,7 @@ Version:     1.25
 Date:        13/01/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
@@ -15,16 +15,18 @@ To do:       -
 use MTG\Cards\ImageManager;
 use MTG\Core\MyPHPMailer;
 
-$ctx = require __DIR__ . '/bulk_ini.php';
+// Bootstrap
+$ctx                = require __DIR__ . '/bulk_ini.php';
 
-$appConfig = $ctx->config();
-$db = $ctx->db();
-$msg = $ctx->message();
-$gameRules = $ctx->rules();
+$appConfig          = $ctx->config();
+$db                 = $ctx->db();
+$msg                = $ctx->message();
+$gameRules          = $ctx->rules();
 
-$adminEmail = (string) $appConfig->email('adminEmail', '');
-$emailEnabled = (bool) $appConfig->email('enabled', false);
+$adminEmail         = (string) $appConfig->email('adminEmail', '');
+$emailEnabled       = (bool) $appConfig->email('enabled', false);
 
+// Content
 $obj  = new ImageManager($db, $appConfig, $gameRules);
 
 if (isset($argv[1])) :

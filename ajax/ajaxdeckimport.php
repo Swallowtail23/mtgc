@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     2.57
-Date:        12/01/26
+Version:     2.58
+Date:        13/01/26
 Name:        ajaxdeckimport.php
 Purpose:     AJAX text/CSV deck import for deck detail.
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

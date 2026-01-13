@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.22
-Date:        12/01/26
+Version:     1.23
+Date:        13/01/26
 Name:        ajaxweekly.php
 Purpose:     PHP script to turn weekly export on/off
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:      -

@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.29
-Date:        12/01/26
+Version:     1.30
+Date:        13/01/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

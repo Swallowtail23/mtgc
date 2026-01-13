@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.26
-Date:        12/01/26
+Version:     1.27
+Date:        13/01/26
 Name:        ajaxdecknotes.php
 Purpose:     PHP script to save deck notes
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

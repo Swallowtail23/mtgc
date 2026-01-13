@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.25
-Date:        12/01/26
+Version:     1.26
+Date:        13/01/26
 Name:        ajaxdeckadd.php
 Purpose:     AJAX quick add for deck detail.
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -

@@ -1,11 +1,11 @@
 <?php
 
 /*
-Version:     1.21
-Date:        12/01/26
+Version:     1.22
+Date:        13/01/26
 Name:        ajaxsetimg.php
 Purpose:     Trigger reload all images for a set
-Notes:       The page does not run standard secpagesetup as it breaks the ajax login catch.
+Notes:       -
 Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
