@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.75
-Date:        12/01/26
+Version:     1.78
+Date:        13/01/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -155,9 +155,9 @@ endif;
 </script>
 <?php
 $adminpages = strpos($_SERVER['PHP_SELF'], "/admin/");
+$mtceStatus = (int) $ctx->meta('mtceStatus', 0);
 if (
-    (isset($mtceStatus))
-    and ($mtceStatus != 1)
+    ($mtceStatus != 1)
     and (!isset($_SESSION["chgpwd"]))
     and ($adminpages === false)
 ) :
