@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.11
-Date:        11/01/26
+Version:     1.12
+Date:        13/01/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       -
@@ -207,7 +207,9 @@ class SessionManager
     {
         // Check for Session variable for admin access. Every page load rechecks this
         if ($adminDb) :
-            if (($this->adminip === 1) or ($this->adminip === $_SERVER['REMOTE_ADDR'])) :
+            $adminIp = (string) $this->adminip;
+            $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '';
+            if ($adminIp === '' || $adminIp === '1' || ($remoteAddr !== '' && $adminIp === $remoteAddr)) :
                 //Admin and secure location, or Admin and admin IP set to ''
                 return self::ADMIN_OK;
             else :
