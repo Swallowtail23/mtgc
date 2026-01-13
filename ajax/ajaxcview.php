@@ -53,24 +53,24 @@ else :
     $userEmail                  = $ctx->sessionUser()->email();
 
     if (isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN OFF') :
-        $msg->logMessage('[ERROR]', "Call to turn off collection view");
+        $msg->logMessage('[DEBUG]', "Call to turn off collection view");
         $query = "UPDATE users SET collection_view = ? WHERE usernumber = ?";
         $params = ['0', $user];
         $result = $db->execute_query($query, $params);
         if ($result === false) :
             throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
         else :
-            $msg->logMessage('[ERROR]', "Call to turn off collection view run for $userEmail");
+            $msg->logMessage('[DEBUG]', "Call to turn off collection view run for $userEmail");
         endif;
     elseif (isset($_POST['collection_view']) && $_POST['collection_view'] === 'TURN ON') :
-        $msg->logMessage('[ERROR]', "Call to turn on collection view");
+        $msg->logMessage('[DEBUG]', "Call to turn on collection view");
         $query = "UPDATE users SET collection_view = ? WHERE usernumber = ?";
         $params = ['1', $user];
         $result = $db->execute_query($query, $params);
         if ($result === false) :
             throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
         else :
-            $msg->logMessage('[ERROR]', "Call to turn on collection view run for $userEmail");
+            $msg->logMessage('[DEBUG]', "Call to turn on collection view run for $userEmail");
         endif;
     else :
         $msg->logMessage('[ERROR]', "Called with invalid input");
