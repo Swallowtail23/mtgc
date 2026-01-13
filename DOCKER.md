@@ -34,7 +34,7 @@ compose definitions), keeping the project root clean of Docker-specific files.
 ## Directory layout
 
 - `docker/Dockerfile` / `docker/Dockerfile.mysql` – build the web and MySQL
-  images (Debian bookworm + PHP 8.2).
+  images (Debian bookworm + PHP 8.4).
 - `docker/docker-compose.yml` – base two-service stack; combine with
   `docker-compose.dev.yml` for host bind-mounts or
   `docker-compose.override.yml.example` when extending the stack. The init
