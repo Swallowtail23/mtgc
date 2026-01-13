@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.18
-Date:        12/01/26
+Version:     3.19
+Date:        13/01/26
 Name:        bulk_ini.php
 Purpose:     Ini settings for bulk files
 Notes:       Wrapper for shared bootstrap
@@ -17,4 +17,6 @@ endif;
 
 // Bootstrap (shared app init)
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$ctx = require dirname(__DIR__) . '/bootstrap.php';
+
+return $ctx;

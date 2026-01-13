@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.29
-Date:        12/01/26
+Version:     2.30
+Date:        13/01/26
 Name:        weekly_exports.php
 Purpose:     Weekly collection exports
 Notes:       Exports csv card collections where users are active and have opted in
@@ -17,7 +17,12 @@ use MTG\Cards\DeckManager;
 use MTG\Cards\ImportExport;
 use MTG\Core\MyPHPMailer;
 
-require __DIR__ . '/bulk_ini.php';
+$ctx = require __DIR__ . '/bulk_ini.php';
+
+$appConfig = $ctx->config();
+$db = $ctx->db();
+$msg = $ctx->message();
+$gameRules = $ctx->rules();
 
 $myURL = (string) $appConfig->general('url', '');
 $siteTitle = (string) $appConfig->general('title', '');

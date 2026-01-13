@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.25
-Date:        12/01/26
+Version:     2.26
+Date:        13/01/26
 Name:        scryfall_sets.php
 Purpose:     Import/update Scryfall sets data
 Notes:       {none}
@@ -18,7 +18,11 @@ use MTG\Bulk\ScryfallImport;
 use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 
-require __DIR__ . '/bulk_ini.php';
+$ctx = require __DIR__ . '/bulk_ini.php';
+
+$appConfig = $ctx->config();
+$db = $ctx->db();
+$msg = $ctx->message();
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);

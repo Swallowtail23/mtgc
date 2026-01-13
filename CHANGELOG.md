@@ -24,6 +24,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Database connection and settings now derive from AppConfig instead of legacy DB_* constants.
 - Game rules now load via a dedicated builder and are accessed through GameRules instead of globals.
 - Secure pages now consume user/session state via SessionUser instead of ambient session globals.
+- Bulk scripts now read config/db/logging via AppContext locals instead of ambient bootstrap variables.
 - Bulk and CLI scripts now bootstrap through bootstrap.php and no longer use legacy includes.
 - Scryfall bulk helpers have been moved into MTG\Bulk\ScryfallImport.
 - Card and rules helpers (symbolReplace, cardTypes, promoLookup, colour helpers) moved into MTG\Cards\CardUtils.

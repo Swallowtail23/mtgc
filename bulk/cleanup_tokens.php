@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.16
-Date:        12/01/26
+Version:     1.17
+Date:        13/01/26
 Name:        cleanup_tokens.php
 Purpose:     Cleanup expired trusted device tokens
 Notes:       To be run via cron, e.g. daily
@@ -15,7 +15,11 @@ use MTG\Auth\TrustedDeviceManager;
 
 // Load required files
 
-$appContext = require dirname(__DIR__) . '/bootstrap.php';
+$ctx = require __DIR__ . '/bulk_ini.php';
+
+$appConfig = $ctx->config();
+$db = $ctx->db();
+$msg = $ctx->message();
 $msg->logMessage('[NOTICE]', "Starting trusted device token cleanup");
 
 // Initialize the device manager

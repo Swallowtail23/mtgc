@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.21
-Date:        12/01/26
+Version:     3.22
+Date:        13/01/26
 Name:        scryfall_rulings.php
 Purpose:     Import/update Scryfall rulings data
 Notes:       -
@@ -21,7 +21,11 @@ use MTG\Core\Filesystem;
 use MTG\Core\MyPHPMailer;
 use MTG\Core\UserAgent;
 
-require __DIR__ . '/bulk_ini.php';
+$ctx = require __DIR__ . '/bulk_ini.php';
+
+$appConfig = $ctx->config();
+$db = $ctx->db();
+$msg = $ctx->message();
 
 $adminEmail = (string) $appConfig->email('adminEmail', '');
 $emailEnabled = (bool) $appConfig->email('enabled', false);
