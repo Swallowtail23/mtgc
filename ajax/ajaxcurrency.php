@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.25
+Version:     1.26
 Date:        13/01/26
 Name:        ajaxcurrency.php
 Purpose:     PHP script to set user's local currency
@@ -13,6 +13,7 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Core\Http\AjaxResponse;
+use MTG\Profile\ProfilePreferences;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap.php';
@@ -55,24 +56,17 @@ else :
     $fx                         = $ctx->sessionUser()->fxEnabled();
 
     if (isset($_GET['currency'])) :  //Update GET details
-        $usercurrency = $db->real_escape_string($_GET['currency']);
-        if ($usercurrency === 'zzz' || !in_array($usercurrency, array_column($rulesCurrencies, 'code'))) :
-            $usercurrency = null;
-        endif;
-        $msg->logMessage('[DEBUG]', "Called with user currency '$usercurrency'");
-        $query = "UPDATE users SET currency = ? WHERE usernumber = ?";
-        $params = [$usercurrency, $user];
-        $result = $db->execute_query($query, $params);
-        if ($result === false) :
-            throw new Exception('[ERROR] profile.php: Error: ' . $db->error);
-        else :
-            // Set string to NULL to provide feedback in success message if $usercurrency is NULL
-            if ($usercurrency === null) :
-                $usercurrency = 'NULL';
-            endif;
-            $msg->logMessage('[NOTICE]', "User currency change for $userEmail");
-            AjaxResponse::json(['success' => 'User currency changed to: ' . $usercurrency]);
-        endif;
+        $usercurrency = (string) $_GET['currency'];
+        $normalizedCurrency = ProfilePreferences::updateCurrency(
+            $db,
+            $rulesCurrencies,
+            $user,
+            $usercurrency,
+            $msg
+        );
+        $displayCurrency = $normalizedCurrency === null ? 'NULL' : $normalizedCurrency;
+        $msg->logMessage('[NOTICE]', "User currency change for $userEmail");
+        AjaxResponse::json(['success' => 'User currency changed to: ' . $displayCurrency]);
     else :  // Error handling
         $msg->logMessage('[ERROR]', "Not correctly called");
         AjaxResponse::json(['error' => 'Offset not in range'], 400);
