@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.70
-Date:        12/01/26
+Version:     14.72
+Date:        13/01/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -267,8 +267,16 @@ $pattern = str_replace(['%', '_'], ['\\%', '\\_'], $pattern);
 $sql = "SHOW TABLES LIKE '{$pattern}' ESCAPE '\\\\'";
 $result = $db->query($sql);
 if ($result instanceof \mysqli_result) :
-    $tableExists = ($result->num_rows > 0);
+    $row = $result->fetch_assoc();
+    $tableExists = (!empty($row));
     $result->free();
+elseif (is_object($result) && method_exists($result, 'fetch_assoc')) :
+    // Test double / stub compatibility (no hard dependency on mysqli_result)
+    $row = $result->fetch_assoc();
+    $tableExists = (!empty($row));
+    if (method_exists($result, 'free')) :
+        $result->free();
+    endif;
 endif;
 
 if (!$tableExists) :

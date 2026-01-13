@@ -148,8 +148,6 @@ if (!class_exists('DummyMysqli')) :
                     $this->row = $row;
                 }
 
-                public int|string $num_rows = 0;
-
                 public function fetch_assoc(): array|null
                 {
                     if (!empty($this->row)) :
