@@ -135,21 +135,22 @@ try {
 }
 
 // Internal locals for bootstrap-only use.
-$_iniArray = $ctx->iniArray();
-$_appConfig = $ctx->config();
-$_gameRules = $ctx->rules();
-$_db = $ctx->db();
-$_msg = $ctx->message();
+$_iniArray      = $ctx->iniArray();
+$_appConfig     = $ctx->config();
+$_gameRules     = $ctx->rules();
+$_db            = $ctx->db();
+$_msg           = $ctx->message();
 
-$_tierValue = (string) $_appConfig->general('tier', 'prod');
+$_tierValue     = (string) $_appConfig->general('tier', 'prod');
+
 if ($_tierValue === 'dev') :
     error_reporting(E_ALL);
 else :
     error_reporting(E_ALL & ~E_NOTICE);
 endif;
 
-$_logFile = (string) $_appConfig->general('logFile', '');
-$_logLevel = (string) $_appConfig->general('logLevel', '');
+$_logFile       = (string) $_appConfig->general('logFile', '');
+$_logLevel      = (string) $_appConfig->general('logLevel', '');
 $_fd = mtgOpenLogFile($_logFile);
 if ($_fd === false) :
     if ($_logFile !== '') :
