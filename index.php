@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     14.72
+Version:     14.73
 Date:        13/01/26
 Name:        index.php
 Purpose:     Main site page
@@ -34,7 +34,7 @@ $copyright                  = (string) $appConfig->general('copyright', '');
 $user                       = $sessionUser->id();
 $admin                      = $sessionUser->adminLevel();
 $userEmail                  = $sessionUser->email();
-$collection_view            = $sessionUser->collectionView();
+$collection_view            = (int) $sessionUser->collectionView();
 $mytable                    = $sessionUser->table();
 
 $rulesFlipButtonCards       = $gameRules->getArray('flip_button_cards');
@@ -264,7 +264,7 @@ $msg->logMessage('[DEBUG]', "Checking if user has a collection table...");
 $tableExists = false;
 $pattern = $db->real_escape_string($mytable);
 $pattern = str_replace(['%', '_'], ['\\%', '\\_'], $pattern);
-$sql = "SHOW TABLES LIKE '{$pattern}' ESCAPE '\\\\'";
+$sql = "SHOW TABLES LIKE '{$pattern}'";
 $result = $db->query($sql);
 if ($result instanceof \mysqli_result) :
     $row = $result->fetch_assoc();
