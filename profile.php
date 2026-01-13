@@ -37,9 +37,11 @@ $siteTitle                  = (string) $appConfig->general('title', '');
 $tier                       = (string) $appConfig->general('tier', 'prod');
 $copyright                  = (string) $appConfig->general('copyright', '');
 $trustDuration              = (int) $appConfig->security('trustDuration', 0);
+
 $userId                     = $sessionUser->id();
 $userEmail                  = $sessionUser->email();
 $mytable                    = $sessionUser->table();
+$fx                         = $ctx->sessionUser()->fxEnabled();
 
 $rulesCurrencies            = $gameRules->getArray('currencies');
 

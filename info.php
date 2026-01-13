@@ -21,6 +21,9 @@ $gameRules                  = $ctx->rules();
 $cssver                     = (string) $ctx->meta('cssver', '');
 $serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 $sessionUser                = $ctx->sessionUser();
+$sessionUser                = $ctx->sessionUser();
+
+$userEmail                  = $sessionUser->email();
 
 $siteTitle                  = (string) $appConfig->general('title', '');
 $tier                       = (string) $appConfig->general('tier', 'prod');

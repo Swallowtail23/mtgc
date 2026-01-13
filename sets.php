@@ -27,6 +27,8 @@ $sessionUser                = $ctx->sessionUser();
 $siteTitle                  = (string) $appConfig->general('title', '');
 $tier                       = (string) $appConfig->general('tier', 'prod');
 $copyright                  = (string) $appConfig->general('copyright', '');
+
+$userEmail                  = $sessionUser->email();
 $admin                      = $sessionUser->adminLevel();
 
 // Content
