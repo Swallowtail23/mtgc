@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.22
-Date:        12/01/26
+Version:     1.23
+Date:        13/01/26
 Name:        issues.php
 Purpose:     Issues page.
 Notes:       No db functions.
@@ -25,6 +25,7 @@ $sessionUser                = $ctx->sessionUser();
 $siteTitle                  = (string) $appConfig->general('title', '');
 $tier                       = (string) $appConfig->general('tier', 'prod');
 $copyright                  = (string) $appConfig->general('copyright', '');
+$userEmail                  = $sessionUser->email();
 
 // Content
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
