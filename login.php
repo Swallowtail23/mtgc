@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.22
-Date:        12/01/26
+Version:     8.23
+Date:        13/01/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -48,7 +48,13 @@ endif;
 
 $loginHandler = new LoginHandler($db, $appConfig);
 $loginHandler->logStart();
-$trustedDeviceResult = $loginHandler->attemptTrustedDeviceLogin($redirectUrl);
+$skipTrustedDevice = isset($_GET['no_trusted']) || isset($_POST['no_trusted']);
+if ($skipTrustedDevice) :
+    $msg->logMessage('[DEBUG]', 'Skipping trusted device auto-login (no_trusted flag set).');
+    $trustedDeviceResult = ['trusted_login' => false, 'redirect' => null];
+else :
+    $trustedDeviceResult = $loginHandler->attemptTrustedDeviceLogin($redirectUrl);
+endif;
 
 if ($trustedDeviceResult['redirect'] !== null) :
     header("Location: {$trustedDeviceResult['redirect']}");

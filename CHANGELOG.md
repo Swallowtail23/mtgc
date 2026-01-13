@@ -42,6 +42,12 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Deck detail sideboard notes no longer render whitespace when empty.
 - AJAX quantity updates accept numeric strings and reload user context correctly.
 - Secure bootstrap now injects SessionUser into AppContext to avoid null session access.
+- Admin IP allowlist now treats empty/1 values consistently to prevent unintended admin lockouts and no longer
+  forces an empty AdminIP to 1.
+- Login now supports skipping trusted-device auto-login via a reset flow flag.
+- Password reset links now render the reset form instead of auto-hiding on valid tokens.
+- Reset flow now restarts a clean session to preserve validation messages after logout.
+- Collection view floating toggle now renders correctly in search results and updates card styling on add.
 - Maintenance stub now loads jQuery before header scripts to avoid "$ is not defined" errors.
 - Admin reject page now bootstraps via bootstrap.php so header/footer dependencies are available.
 - Error page now handles missing/invalid ini gracefully instead of fataling.
@@ -70,6 +76,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Added test coverage for:
   - SessionManager CSRF handling and login stamps
   - PasswordCheck rules
+  - PasswordCheck new-user email validation
   - AppConfig normalization and redaction
   - AppContext bootstrap and ini/db overrides
   - DeckManager legality, copy limits, and actions
@@ -87,6 +94,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Added test coverage reports and manual-check guidance.
 - Bulk scripts now use bootstrap for logging and configuration.
 - Legacy includes/ini.php entrypoint has been removed.
+- Password reset flow now logs key events at DEBUG/NOTICE level for easier tracing.
 
 ## [v0.4.10] - 2026-01-01
 
