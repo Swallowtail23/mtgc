@@ -1,6 +1,6 @@
 /*
-Version:     2.83
-Date:        11/01/26
+Version:     2.86
+Date:        13/01/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -1157,12 +1157,14 @@ function applyFragmentResponse(response, options) {
     var replaceDecklist = true;
     var refreshImages = true;
     var newCardIds = [];
+    var postImport = false;
     if (options) {
         replaceDecklist = options.replaceDecklist !== false;
         refreshImages = options.refreshImages !== false;
         if (Array.isArray(options.newCardIds)) {
             newCardIds = options.newCardIds;
         }
+        postImport = options.postImport === true;
     }
     try {
         var targets = getFragmentTargets();
@@ -1200,6 +1202,21 @@ function applyFragmentResponse(response, options) {
         renderManaValueChart();
         updateDeckTotals();
         updateRandomDrawState();
+        updateDecksideHeroFlipButton();
+        preloadFirstDeckImage();
+        updateRandomDrawPlacement();
+        if (randomDrawEnabled) {
+            $('#deck-random-draw-fragment .random-draw-content').addClass('is-visible');
+        }
+        if (postImport) {
+            decksideHeroAutoLoaded = false;
+            updateDecksideHeroFlipButton();
+            preloadFirstDeckImage();
+            updateRandomDrawPlacement();
+            if (randomDrawEnabled) {
+                refreshTable();
+            }
+        }
         if (responseVersion) {
             updateDeckVersion(responseVersion);
         }
@@ -1405,7 +1422,7 @@ function bindDeckDetailHandlers() {
                 alert(limitedQty + ' imported due to card name limit');
             }
             updateDeckTotals();
-            applyFragmentResponse(response);
+            applyFragmentResponse(response, { postImport: true });
         }).fail(function () {
             alert('That did not work. Please try again.');
         }).always(function () {
@@ -1962,6 +1979,7 @@ function bindDeckDetailHandlers() {
                     .text(selectedText)
                     .appendTo($currentType);
                 $currentType.append('<br>');
+                $("#renameForm").hide();
                 $("#changeType").hide();
                 $("#currentType").show();
                 applyFragmentResponse(response);
