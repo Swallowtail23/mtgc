@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.19
+Version:     1.21
 Date:        13/01/26
 Name:        bootstrap_secure.php
 Purpose:     Secure bootstrap wrapper that runs session setup.
@@ -24,7 +24,7 @@ endif;
 $ctx = require APP_ROOT . '/bootstrap.php';
 
 if (!function_exists('mtgSecurePageSetup')) :
-    function mtgSecurePageSetup($db, AppConfig $appConfig): SessionUser
+    function mtgSecurePageSetup($db, AppConfig $appConfig): array
     {
         if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
             // capture entered URL
@@ -55,13 +55,18 @@ if (!function_exists('mtgSecurePageSetup')) :
             exit();
         endif;
 
-        return new SessionUser($userArray, $userEmail);
+        return [
+            'sessionUser' => new SessionUser($userArray, $userEmail),
+            'mtceStatus' => $mtceStatus,
+        ];
     }
 endif;
 
-$_sessionUser = mtgSecurePageSetup($ctx->db(), $ctx->config());
-$ctx = $ctx->withSessionUser($_sessionUser);
-unset($_sessionUser);
+$_secureContext = mtgSecurePageSetup($ctx->db(), $ctx->config());
+$_sessionUser = $_secureContext['sessionUser'];
+$_mtceStatus = $_secureContext['mtceStatus'];
+$ctx = $ctx->withSessionUser($_sessionUser)->withMeta(['mtceStatus' => $_mtceStatus]);
+unset($_sessionUser, $_mtceStatus, $_secureContext);
 
 // Don't enforce password change on page to change password!
 $_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
