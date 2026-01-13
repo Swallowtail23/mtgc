@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 This release establishes a new internal baseline for MTG Collection, introducing a centralized bootstrap and configuration system, tightening security across all request flows, and significantly expanding automated test coverage.
 
-### Added
+### Added (v0.5.0-dev)
 
 - AppContext and AppConfig bootstrap layer with centralized initialization and error handling.
 - Secure bootstrap (bootstrap_secure.php) that attaches authenticated SessionUser context to requests.
@@ -17,7 +17,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - AppContext meta storage (e.g. service worker version, CSS version suffix).
 - Extensive new PHPUnit coverage across Auth, Cards, Import/Export, Utilities, and Bootstrap.
 
-### Changed
+### Changed (v0.5.0-dev)
 
 - Application configuration is now accessed exclusively through AppConfig (no direct INI or global config access).
 - Header/footer now rely on per-page config variables for title, tier, and copyright; CSS version suffix is provided via AppContext meta.
@@ -36,22 +36,23 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - AJAX endpoints now bootstrap via $ctx locals instead of ambient globals.
 - AJAX endpoints now share a session-user helper to avoid duplicated SessionManager blocks.
 
-### Fixed
+### Fixed (v0.5.0-dev)
 
 - Collection async refresh now seeds CSRF tokens before header scripts load.
 - Deck detail sideboard notes no longer render whitespace when empty.
 - AJAX quantity updates accept numeric strings and reload user context correctly.
 - Secure bootstrap now injects SessionUser into AppContext to avoid null session access.
-- Admin IP allowlist now treats empty/1 values consistently to prevent unintended admin lockouts and no longer
-  forces an empty AdminIP to 1.
+- Admin IP allowlist now treats empty values consistently to prevent unintended admin lockouts.
 - Login now supports skipping trusted-device auto-login via a reset flow flag.
-- Password reset links now render the reset form instead of auto-hiding on valid tokens.
-- Reset flow now restarts a clean session to preserve validation messages after logout.
+- Password reset now consistently renders the reset form, restarts a clean session, and preserves validation messages.
 - Collection view floating toggle now renders correctly in search results and updates card styling on add.
 - Deck detail data include now receives the collection table name from the session user.
 - Template and issues pages now pass the session user email to the menu include.
-- Header now defaults maintenance status to show the search icon when unset.
-- Secure bootstrap now stores maintenance status in AppContext meta for header rendering.
+- Maintenance status is now stored in AppContext meta for header rendering (search icon now displays correctly).
+- Deck detail edit panel now keeps rename and type controls in sync after type changes.
+- Deck detail now refreshes hero image and auto-refreshes random draw after deck imports.
+- Sets admin image reload now shows a non-blocking status toast and resets the cursor once per request.
+- Profile currency updates now flash success reliably with JSON responses.
 - Maintenance stub now loads jQuery before header scripts to avoid "$ is not defined" errors.
 - Admin reject page now bootstraps via bootstrap.php so header/footer dependencies are available.
 - Error page now handles missing/invalid ini gracefully instead of fataling.
@@ -64,7 +65,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - GameRules::fromDefaults() now loads the correct rules file.
 - PHPUnit bootstrap no longer resets global error handlers.
 
-### Security
+### Security (v0.5.0-dev)
 
 - CSRF and referrer validation centralized and applied across admin, profile, collection, index, and card detail flows.
 - All remaining AJAX endpoints migrated to shared CSRF/referrer validation.
@@ -75,7 +76,7 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Hero images and deck links are sanitized before being applied to the DOM.
 - Deck names are now rendered as text in headers and AJAX responses.
 
-### Infrastructure
+### Infrastructure (v0.5.0-dev)
 
 - Added test coverage for:
   - SessionManager CSRF handling and login stamps
@@ -102,37 +103,44 @@ This release establishes a new internal baseline for MTG Collection, introducing
 
 ## [v0.4.10] - 2026-01-01
 
-### Added
+### Added (v0.4.10)
+
 - Added `ACCESSIBILITY.md` with minimal accessibility actions and review checklist.
 - Deck detail decklist now separates Planes/Phenomena and Tokens after the sideboard.
 - Added flip card handling to deck detail hero image.
 
-### Changed
+### Changed (v0.4.10)
+
 - Token rows now use the standard add/remove quantity controls for quick updates.
 - Commander deck token and land rows now show quantities in the card name.
 - Commander deck quantity prefixes now use "x" (e.g. "4 x Island").
 - Commander deck totals now include commander/partner quantities after quick updates.
 - Deck export lists now break out Planes/Phenomena and Tokens into their own sections.
 
-### Infrastructure
+### Infrastructure (v0.4.10)
+
 -
 
-### Removed
+### Removed (v0.4.10)
+
 - Admin config no longer offers loglevel 4 bulk diagnostic mode; logging now only accepts levels 1-3.
 
 ## [v0.4.9] - 2025-12-30
 
-### Added
+### Added (v0.4.9)
+
 - Manual test stub for bulk import fixtures (`tests/manual_bulk_import_test.php`).
 
-### Changed
+### Changed (v0.4.9)
+
 - Removed bulk diagnostic logging from Scryfall bulk import.
 - Added test mode for bulk import to target `cards_scry_test`, which runs two fixture passes
 and reports change buckets.
 - Hash lookup now re-binds result columns per execution for prepared statement reliability.
 - Bulk import summary now labels no-change rows as unchanged instead of other.
 
-### Fixed
+### Fixed (v0.4.9)
+
 - Deck detail touch previews now allow taps on preview images to open card detail pages.
 - Card detail flip rotate now targets the visible image instead of the hidden hover image.
 - Card detail hover image rotation now tracks the main image rotation for flip cards.
@@ -140,34 +148,38 @@ and reports change buckets.
 
 ## [v0.4.8] - 2025-12-29
 
-### Infrastructure
+### Infrastructure (v0.4.8)
+
 - Append service worker version query strings to JS asset includes to bust CDN caches on deploy.
 
 ## [v0.4.7] - 2025-12-29
 
-### Added
+### Added (v0.4.7)
+
 - Index grid now shows a card info placeholder when images are missing.
 
-### Changed
+### Changed (v0.4.7)
+
 - Rulings import now aborts if the content_hash column or unique key are missing instead of altering schema.
 
-### Fixed
+### Fixed (v0.4.7)
+
 - Sets page now loads the requested page when opened with a `page` query parameter.
 - Sets page now hides initial results when loading a non-first page to avoid visible jumps.
 - Card detail async image refresh more robust to avoid skipping images.
 - Index async image refresh now swaps placeholders through the DOM when a local card image exists even if
 unchanged, to ensure all images are updated and loaded, even if loaded async in another tab.
 
-All notable changes to this project will be documented in this file.
-
 ## [v0.4.6] - 2025-12-28
 
-### Changed
+### Changed (v0.4.6)
+
 - Async image refresh now briefly highlights refreshed images via a CSS class.
 - Service worker version now loads from `VERSION` in `bootstrap.php` and is shared across pages.
 - Service worker update toast now shows old/new cache versions.
 
-### Fixed
+### Fixed (v0.4.6)
+
 - Index async image refresh now triggers after IAS appends new results and skips already-seen cards.
 - Index async image refresh now refreshes the base card image cache entry on change (front/back).
 - Async image refresh now uses a shared helper across index, carddetail, and deckdetail pages.
@@ -180,68 +192,82 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.4.5] - 2025-12-28
 
-### Changed
+### Changed (v0.4.5)
+
 - Service worker cache version now derives from the registration query string.
 
-### Fixed
+### Fixed (v0.4.5)
+
 - Index async image refresh now only swaps images when the backend detects a change and restores placeholders on load errors.
 - Added debug logging for async image refresh change decisions.
 
 ## [v0.4.4] - 2025-12-28
 
-### Added
+### Added (v0.4.4)
+
 - Index.php infinite scroll now supports loading previous pages when scrolling up (IAS v3.1.0).
 
-### Changed
+### Changed (v0.4.4)
+
 - Top button now hidden when the page parameter is missing or set to 1.
 
-### Fixed
+### Fixed (v0.4.4)
+
 - Infinite scroll no longer appends timestamp cache-busters to index page URLs.
 
-### Infrastructure
+### Infrastructure (v0.4.4)
+
 - Sample Apache configs now disable caching for `index.php` to prevent CDN or proxy caching of paged results.
 - Documented Cloudflare cache bypass rules for dynamic app routes.
 
 ## [v0.4.3] - 2025-12-27
 
-### Added
+### Added (v0.4.3)
+
 - Added loglevel 4 bulk diagnostic mode to emit verbose Scryfall bulk row diagnostics.
 
-### Fixed
+### Fixed (v0.4.3)
+
 - Login flow now preserves requested destinations across failed logins and trust-device prompts.
 - Deck detail random draw spacing and hover behavior corrected for single-column layouts and new draws.
 
 ## [v0.4.2] - 2025-12-26
 
-### Changed
+### Changed (v0.4.2)
+
 - Service worker now shows an update toast to allow immediate refresh after new deployments.
 - Service worker registration now includes a version query to force revalidation on deploy.
 
-### Fixed
+### Fixed (v0.4.2)
+
 - Service worker now avoids caching HTML/fragments and uses safer asset/image caching to prevent blank renders.
 - Service worker now forces PHP requests to stay network-only for safety.
 - Deck detail random draw hover now detaches previews from masonry flow to restore hover behavior.
 
 ## [v0.4.1] - 2025-12-26
 
-### Fixed
+### Fixed (v0.4.1)
+
 - CSS minifier now preserves media query spacing to prevent rule breakage.
 
 ## [v0.4.0] - 2025-12-26
 
-### Changed
+### Changed (v0.4.0)
+
 - Deck detail now uses a masonry-style sidebar layout with responsive stacking for notes, stats, and actions.
 - Deck detail moves Random Draw below the masonry group for tall, three-column layouts.
 - Deck detail adds 'hero' image section on wider screen displays (1890px+).
 - Deck detail uses a scrollable deck list when the masonry is side-by-side.
 - Admin panel now regenerates `css/style-min.css` before enabling minified CSS.
 
-### Fixed
+### Fixed (v0.4.0)
+
 - Sets pagination now restores the correct page when navigating back in history.
 
 ## [v0.3.0] - 2025-12-25
 
-### Changed
+### Changed (v0.3.0)
+
 - Docker init now confirms the admin email will be written to the mtg_new.ini email section.
 - HTTP user agent strings are now built from the app version, site URL, and admin email.
 - Card detail prices now refresh via an async Scryfall call after initial render.
@@ -258,7 +284,8 @@ All notable changes to this project will be documented in this file.
 - Documented deckdetail fragment dependencies and refresh flow.
 - Added fragment rendering tests for deck detail and the fragment renderer.
 
-### Fixed
+### Fixed (v0.3.0)
+
 - Login already-logged-in page now renders with the login-style layout instead of a blank/unstyled view.
 - Trust device prompt now requires the post-login flow flag so it can’t be opened directly.
 - Trust device direct access now logs an error before redirecting.
@@ -278,11 +305,13 @@ All notable changes to this project will be documented in this file.
 - Deck detail hover/touch and image-loading JS now lives in `js/deckdetail.js`.
 - Card detail navigation now centralizes arrow key handling and adds swipe navigation.
 
-### Security
+### Security (v0.3.0)
+
 - Deck detail ajax endpoints now require CSRF tokens; referrer checks removed from deck endpoints.
 - Deck detail ajax responses and deck detail pages now disable caching to avoid CSRF token leakage.
 
-### Infrastructure
+### Infrastructure (v0.3.0)
+
 - PHP config now suppresses display_errors and logs to mtgapp.log (container + bare metal).
 - Added PHPUnit coverage for the UserAgent builder.
 - Added PHPUnit coverage for async card price rendering.
@@ -293,15 +322,18 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.2.2] - 2025-12-22
 
-### Fixed
+### Fixed (v0.2.2)
+
 - VERSION increment only.
 
 ## [v0.2.1] - 2025-12-22
 
-### Added
+### Added (v0.2.1)
+
 - Added: PHPUnit check to ensure `src/MTG` class names and namespaces match their file paths for PSR-4 autoloading.
 
-### Fixed
+### Fixed (v0.2.1)
+
 - Resolve PasswordCheck autoloading by aligning the class filename with its namespace.
 
 ## [v0.2.0] - 2025-12-22
