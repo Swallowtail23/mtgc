@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.35
-Date:        12/01/26
+Version:     14.36
+Date:        13/01/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -795,9 +795,17 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                             $.ajax({
                                                 url: "/ajax/ajaxcurrency.php",
                                                 method: "GET",
+                                                dataType: "json",
                                                 data: { "currency": selectedCurrency, "csrf_token": csrfToken },
                                                 success: function (data) {
-                                                    var response = JSON.parse(data);
+                                                    var response = data;
+                                                    if (typeof data === 'string') {
+                                                        try {
+                                                            response = JSON.parse(data);
+                                                        } catch (e) {
+                                                            response = null;
+                                                        }
+                                                    }
                                                     console.log(response);
                                                     currencySelect.addClass('flash-success');
                                                     setTimeout(function () {
