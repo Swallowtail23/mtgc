@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.15
-Date:        12/01/26
+Version:     1.17
+Date:        13/01/26
 Name:        bootstrap_secure.php
 Purpose:     Secure bootstrap wrapper that runs session setup.
 Notes:       -
@@ -13,22 +13,51 @@ To do:       -
 
 use MTG\Auth\SessionManager;
 use MTG\Auth\SessionUser;
+use MTG\Core\AppConfig;
+use MTG\Admin\AdminSettings;
+use MTG\Core\Message;
 
 if (!defined('APP_ROOT')) :
     define('APP_ROOT', __DIR__);
 endif;
 
 $ctx = require APP_ROOT . '/bootstrap.php';
-$appConfig = $ctx->config();
-$db = $ctx->db();
 
-define('MTG_SECURE_PAGESETUP', true);
-require APP_ROOT . '/includes/secpagesetup.php';
-$secureData = mtgSecurePageSetup($db, $appConfig);
-// TODO: Legacy session globals are a temporary compatibility layer. Prefer $ctx->sessionUser() and local assignments.
-$sessionUser = $secureData['sessionUser'] ?? null;
+function mtgSecurePageSetup($db, AppConfig $appConfig): SessionUser
+{
+    if (!isset($_SESSION['user']) or !$_SESSION["logged"]) :
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];  // capture entered URL
+        header("Location: /login.php");                       // check if user is logged in; else redirect to login.php
+        exit();
+    endif;
+
+    // Session information \\
+    $sessionManager = new SessionManager($db, $_SESSION, $appConfig);
+    $userArray = $sessionManager->getUserInfo();
+    if ($userArray === false) :
+        $msg = new Message($appConfig);
+        $msg->logMessage('[ERROR]', "User array returned false - user no longer exists?");
+        session_destroy();
+        echo "<meta http-equiv='refresh' content='1;url=login.php'>";
+        exit();
+    endif;
+
+    $userEmail = $_SESSION['useremail'] ?? '';              // get email address of user, available in SESSION
+    $userNumber = (int) ($userArray['usernumber'] ?? 0);
+
+    $mtceStatus = AdminSettings::checkMaintenanceMode($userNumber, $db, $appConfig);
+    if ($mtceStatus == 1) :                           // check if site is in maintenance mode
+        include APP_ROOT . '/mtcestub.php';
+        session_destroy();
+        exit();
+    endif;
+
+    return new SessionUser($userArray, $userEmail);
+}
+
+$sessionUser = mtgSecurePageSetup($ctx->db(), $ctx->config());
 if (!$sessionUser instanceof SessionUser) :
-    // Should not happen if secpagesetup enforces auth, but keep contract strict.
+    // Should not happen if mtgSecurePageSetup enforces auth, but keep contract strict.
     if (!headers_sent()) :
         header('Location: /login.php', true, 302);
     else :
@@ -38,21 +67,7 @@ if (!$sessionUser instanceof SessionUser) :
 endif;
 // Inject SessionUser info into $ctx
 $ctx = $ctx->withSessionUser($sessionUser);
-
-$legacy = $secureData['legacy'] ?? [];
-$user = (int) ($legacy['user'] ?? 0);
-$userName = (string) ($legacy['userName'] ?? '');
-$mytable = (string) ($legacy['mytable'] ?? '');
-$collection_view = (string) ($legacy['collection_view'] ?? '');
-$admin = (int) ($legacy['admin'] ?? 0);
-$grpinout = (int) ($legacy['grpinout'] ?? 0);
-$groupid = (int) ($legacy['groupid'] ?? 0);
-$fx = (bool) ($legacy['fx'] ?? false);
-$targetCurrency = (string) ($legacy['targetCurrency'] ?? '');
-$rate = is_numeric($legacy['rate'] ?? null) ? (float) $legacy['rate'] : 0.0;
-$userEmail = (string) ($legacy['userEmail'] ?? '');
-
-unset($secureData, $legacy, $sessionUser);
+unset($sessionUser);
 
 // Don't enforce password change on page to change password!
 $script = basename($_SERVER['SCRIPT_NAME'] ?? '');

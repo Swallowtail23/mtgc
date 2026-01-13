@@ -24,6 +24,8 @@ This release establishes a new internal baseline for MTG Collection, introducing
 - Database connection and settings now derive from AppConfig instead of legacy DB_* constants.
 - Game rules now load via a dedicated builder and are accessed through GameRules instead of globals.
 - Secure pages now consume user/session state via SessionUser instead of ambient session globals.
+- Secure bootstrap now returns SessionUser directly and no longer exports legacy session globals.
+- Secure bootstrap now inlines the secure session setup (secpagesetup merged).
 - Bulk scripts now read config/db/logging via AppContext locals instead of ambient bootstrap variables.
 - Root utility scripts now read config/db/user info via AppContext locals instead of ambient variables.
 - Bulk and CLI scripts now bootstrap through bootstrap.php and no longer use legacy includes.
