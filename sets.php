@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     4.29
-Date:        12/01/26
+Version:     4.32
+Date:        13/01/26
 Name:        sets.php
 Purpose:     Lists all setcodes and sets in the database.
 Notes:       This page is the only one NOT mobile responsive design. Access via profile link hidden on mobile.
@@ -83,9 +83,17 @@ endif;
             $.ajax({
                 type: 'POST',
                 url: 'ajax/ajaxsetimg.php',
+                dataType: 'json',
                 data: { setcode: setcode, csrf_token: csrfToken },
                 success: function(response) {
-                    var result = JSON.parse(response);
+                    var result = response;
+                    if (typeof response === 'string') {
+                        try {
+                            result = JSON.parse(response);
+                        } catch (e) {
+                            result = { status: 'error', message: 'Unexpected response from server.' };
+                        }
+                    }
 
                     showMessage(result.status, result.message);
 
@@ -94,18 +102,35 @@ endif;
                     } else {
                         console.error(result.message);
                     }
-                    document.body.style.cursor = "default";
                 },
                 error: function(error) {
                     showMessage('error', 'An error occurred.');
                     console.error(error);
+                },
+                complete: function() {
                     document.body.style.cursor = "default";
                 }
             });
         }
 
         function showMessage(status, message) {
-            alert(message);
+            var $message = $('<div class="msg-new"></div>');
+            if (status === 'success') {
+                $message.addClass('success-new');
+            } else {
+                $message.addClass('error-new');
+            }
+            $message.append($('<span></span>').text(message)).append('<br>');
+            $message.append("<p onmouseover=\"\" style=\"cursor: pointer;\" id='dismiss'>OK</p>");
+            $message.on('click', function () {
+                $(this).remove();
+            });
+            $('body').append($message);
+            setTimeout(function () {
+                $message.fadeOut(200, function () {
+                    $(this).remove();
+                });
+            }, 5000);
         }
 
         var isAdmin = <?php echo json_encode($admin == 1); ?>;
