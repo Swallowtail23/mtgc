@@ -4,7 +4,7 @@
 
 - [Requirements](#requirements)
 - [Directory layout](#directory-layout)
-- [Initial bootstrap](#initial-bootstrap-recommended)
+- [Initial bootstrap](#initial-bootstrap)
 - [Host data directories](#host-data-directories)
 - [Images and bulk imports](#images-and-bulk-imports)
 - [Log rotation](#log-rotation)
@@ -44,7 +44,7 @@ compose definitions), keeping the project root clean of Docker-specific files.
 - `docker/docker-init.sh` / `docker/docker-init.bat` – bootstrap scripts for
   Linux/macOS/WSL and Windows respectively.
 - `docker/entrypoint.sh` – container init tasks (link config, log setup,
-  composer install). 
+  composer install).
 - `docker/wait-for-mysql.sh` – waits on MySQL before Apache starts.
 - `docker/mtgc_ctr.conf` – Apache vhost used inside the web image.
 - `docker/my.cnf` – MySQL server config baked into the DB image.
@@ -95,12 +95,12 @@ Clone the repo to your local host:
         the next container start and create the file; if it exists, the script
         asks whether you want to delete it and re-run Composer install.
         Invalid or empty responses default to the container copy.
-   - It creates `docker/.env` with those values, builds both images, starts the
-     stack, and prompts for the first admin user credentials.
-   - On a fresh database it runs all Scryfall bulk import scripts. Expect the
-     initial download to take a long time.
-   - Finally, ownership of the mounted directories is handed to the container
-     user (`www-data` inside the rootless container).
+    - It creates `docker/.env` with those values, builds both images, starts the
+      stack, and prompts for the first admin user credentials.
+    - On a fresh database it runs all Scryfall bulk import scripts. Expect the
+      initial download to take a long time.
+    - Finally, ownership of the mounted directories is handed to the container
+      user (`www-data` inside the rootless container).
 
 3. When the script finishes it prints the login URL. Use the admin credentials
    you provided during the prompt.
@@ -126,9 +126,9 @@ Clone the repo to your local host:
       files, builds the containers via Docker Desktop, waits for MySQL, runs the
       initial admin setup, and executes the bulk import unless the marker
       already exists inside the container.
-      - If you later disable the dev bind-mount, remove
-        `docker/docker-compose.override.yml` so compose stops layering the host
-        checkout automatically.
+        - If you later disable the dev bind-mount, remove
+          `docker/docker-compose.override.yml` so compose stops layering the host
+          checkout automatically.
 3. When the batch script completes it prints the login URL.
 
 ### Re-running the init scripts
@@ -161,7 +161,7 @@ for you; there is no longer a root-level `.env`.
   `EnableEmail = true`, supply host, port, username, password, and TLS mode.
 - Or, inside the Admin UI navigate to Settings → Email to toggle email features,
   set the sender address, and test delivery once SMTP is configured.
-- For new-user onboarding, the admin workflow sends a reset link (no temporary 
+- For new-user onboarding, the admin workflow sends a reset link (no temporary
   password). Ensure email works so users can complete their account setup promptly.
 - The init scripts leave `EnableEmail` disabled by default; after editing the
   ini, restart the web container (`podman-compose restart web`) so PHP picks up
@@ -200,13 +200,13 @@ or added in future bulk runs download on demand, so storage grows gradually
 rather than all at once. Full image sets can be downloaded per set from the
 Sets page.
 
-The bulk `default` run is designed to be a nightly card data maintenance task - 
+The bulk `default` run is designed to be a nightly card data maintenance task -
 getting new cards with their images and any data changes released by Scryfall.
 
 Bare-metal installs should follow the same command order (see `INSTALL.md`) to avoid
 pulling the full image set unnecessarily.
 
-DO NOT abuse the Scryfall service. See https://scryfall.com/docs/api for rules.
+DO NOT abuse the Scryfall service. See <https://scryfall.com/docs/api> for rules.
 
 ## Log rotation
 
@@ -258,7 +258,7 @@ Recommended artifacts:
 - Host directories under `${BASE_DIR}` (`cardimg`, `config`, `logs`).
 
 Use `docker/backup.sh`, executed on the host, as a starting point.
-It reads `docker/.env`, dumps the database via 
+It reads `docker/.env`, dumps the database via
 `podman exec mtgc_db_1 mysqldump`, and archives `${BASE_DIR}/config`
 and `${BASE_DIR}/logs` into `./backups/<gitref>_<timestamp>/` (it uses
 `git describe --tags` to label the snapshot). Customize the script to include
@@ -412,7 +412,7 @@ Repeat after major releases. For bare-metal installs follow the same order:
 back up, pull, rerun `INSTALL.md` steps where configs changed, rerun Composer,
 then restart Apache/PHP-FPM.
 
-## Email configuration
+## Email configuration (post-install)
 
 - Configure SMTP via `${BASE_DIR}/config/mtg_new.ini` (`[smtp]` section). Set
   `Email = "enabled"`, supply host, port, username, password, and TLS mode.
@@ -446,7 +446,9 @@ remain untouched.
 By default, the instructions above assume you want to deploy the latest stable
 code from the `master` branch:
 
-    git clone --branch master https://github.com/Swallowtail23/mtgc.git
+```bash
+git clone --branch master https://github.com/Swallowtail23/mtgc.git
+```
 
 This is the recommended approach, as it always provides the most recent stable
 fixes and improvements.
@@ -454,9 +456,11 @@ fixes and improvements.
 If you prefer to deploy a specific tagged release (for example `v0.1.1`), you
 can do so by checking out the tag before running the init script:
 
-    git fetch --all --tags
-    git checkout v0.1.1
-    ./docker/docker-init.sh
+```bash
+git fetch --all --tags
+git checkout v0.1.1
+./docker/docker-init.sh
+```
 
 The init script and compose stack then build the containers from that exact
 release snapshot.
@@ -465,12 +469,14 @@ release snapshot.
 
 To move an existing installation to a newer release:
 
-    cd /path/to/mtgc
-    git fetch --all --tags
-    git checkout v0.1.2
-    cd docker
-    podman-compose build web db     # or: docker compose build web db
-    podman-compose up -d            # or: docker compose up -d
+```bash
+cd /path/to/mtgc
+git fetch --all --tags
+git checkout v0.1.2
+cd docker
+podman-compose build web db     # or: docker compose build web db
+podman-compose up -d            # or: docker compose up -d
+```
 
 All persistent data remains in the volumes and `${BASE_DIR}` directories; only
 the application code inside the containers is replaced.
@@ -479,10 +485,12 @@ the application code inside the containers is replaced.
 
 To revert to an earlier tag, repeat the same process using the desired version:
 
-    git checkout v0.1.0
-    cd docker
-    podman-compose build web db
-    podman-compose up -d
+```bash
+git checkout v0.1.0
+cd docker
+podman-compose build web db
+podman-compose up -d
+```
 
 This restores the containers to the exact code state of that release while
 preserving database and configuration data.
