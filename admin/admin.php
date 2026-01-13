@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.37
-Date:        12/01/26
+Version:     6.39
+Date:        13/01/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -15,6 +15,7 @@ use MTG\Auth\PasswordCheck;
 use MTG\Auth\SessionManager;
 use MTG\Admin\AdminSettings;
 use MTG\Core\DateYMD;
+use MTG\Core\INI;
 use MTG\Core\Message;
 use MTG\Core\MyPHPMailer;
 
@@ -28,6 +29,7 @@ $gameRules                  = $ctx->rules();
 $cssver                     = (string) $ctx->meta('cssver', '');
 $serviceWorkerVersion       = (string) $ctx->meta('serviceWorkerVersion', 'v6');
 $sessionUser                = $ctx->sessionUser();
+$iniArray                   = $ctx->iniArray();
 
 $myURL                      = (string) $appConfig->general('url', '');
 $siteTitle                  = (string) $appConfig->general('title', '');
@@ -645,6 +647,20 @@ elseif ($configAction === 'cancel_config_edit') :
     exit();
 endif;
 
+if ($configEditUnlocked && $configAction === 'save_ini') :
+    $iniPath = getenv('MTG_INI_PATH');
+    if ($iniPath === false || $iniPath === '') :
+        $iniPath = '/opt/mtg/mtg_new.ini';
+    endif;
+    try {
+        $ini = new INI($iniPath);
+    } catch (Exception $err) {
+        $msg->logMessage('[ERROR]', "Failed to load INI at $iniPath: {$err->getMessage()}");
+        $configEditUnlocked = false;
+        $configEditError = 'Unable to load configuration file.';
+    }
+endif;
+
 function getPostedValue($name, $default = '')
 {
     $value = filter_input(INPUT_POST, $name, FILTER_UNSAFE_RAW);
@@ -810,11 +826,6 @@ if ($configEditUnlocked && $configAction === 'save_ini') :
                     $_SESSION['config_save_message'] .= " (2FA clear failed; check logs.)";
                 endif;
             endif;
-            // Update runtime values to reflect saved config for the next request
-            $iniArray = $updatedIni;
-            $logfile = $updatedIni['general']['Logfile'];
-            $logLevelIni = $updatedIni['general']['Loglevel'] ?? $logLevelIni;
-            $msg = new Message($appConfig);
             header('Location: admin.php');
             exit();
         else :
