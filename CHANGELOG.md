@@ -6,15 +6,23 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
--
+- Decks list edit mode now offers an Export action for selected decks (single or bulk zip).
+- Decks list edit mode now supports bulk deck type changes.
 
 ### Changed
 
--
+- Deck export filenames now use a `{decknumber}-{deckname}.txt` format.
+- Deck import now hides the Import button until a file is selected.
+- Decks edit mode can now be dismissed with the Escape key.
+- Decks export/delete actions now share a single selection panel.
+- Bulk deck type changes now reload the decks list after completion.
 
 ### Fixed
 
 - Deck imports now abort and remove newly created decks when no cards are added.
+- Decks list export/delete buttons no longer clip drop shadows.
+- Deck type updates now treat no-change updates as success.
+- Decks edit action panel now accommodates the delete button.
 
 ### Security
 

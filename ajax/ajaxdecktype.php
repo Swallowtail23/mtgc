@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.28
-Date:        13/01/26
+Version:     1.29
+Date:        15/01/26
 Name:        ajaxdecktype.php
 Purpose:     AJAX deck type updates for deck detail.
 Notes:       -
@@ -37,7 +37,8 @@ $response = [
 ];
 
 $expectedReferringPages = [
-    $myURL . '/deckdetail.php'
+    $myURL . '/deckdetail.php',
+    $myURL . '/decks.php'
 ];
 $ajaxValidation = SessionManager::validateAjaxRequest($expectedReferringPages, $appConfig, 'ajaxdecktype.php');
 if ($ajaxValidation['valid'] === false) :

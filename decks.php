@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.37
+Version:     5.42
 Date:        15/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -44,6 +44,15 @@ if (!is_array($decktodeleteRaw)) :
 endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $csrfToken = SessionManager::generateCsrfToken();
+$csrfTokenEsc = htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8');
+$rulesValidTypes = $gameRules->getArray('validtypes');
+$rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
+if (!is_array($rulesValidTypes)) :
+    $rulesValidTypes = [];
+endif;
+if (!is_array($rulesCommanderDeckTypes)) :
+    $rulesCommanderDeckTypes = [];
+endif;
 ?>
 <!DOCTYPE html>
 <html>
@@ -105,21 +114,32 @@ $csrfToken = SessionManager::generateCsrfToken();
         function deleteready() {
             var selectedCount = document.querySelectorAll('.deck-delete-checkbox:checked').length;
             updateButtonState("deletebutton", selectedCount > 0 ? "selected" : "");
-            var deleteActions = document.getElementById("deck-delete-actions");
-            if (deleteActions) {
-                deleteActions.classList.toggle('is-visible', selectedCount > 0);
+            updateButtonState("exportbutton", selectedCount > 0 ? "selected" : "");
+            var selectionActions = document.getElementById("deck-selection-actions");
+            if (selectionActions) {
+                selectionActions.classList.toggle('is-visible', selectedCount > 0);
             }
         };
     </script>
     <script type="text/javascript">
         window.mtgDecksConfig = {
-            csrfToken: <?php echo json_encode($csrfToken); ?>
+            csrfToken: <?php echo json_encode($csrfToken); ?>,
+            commanderDeckTypes: <?php echo json_encode(array_values($rulesCommanderDeckTypes)); ?>
         };
 
         $(function() {
             var $importFile = $('#importfile');
+            function setImportButtonState(hasFile) {
+                var $importSubmit = $('#importsubmit');
+                if (hasFile) {
+                    $importSubmit.prop('disabled', false).show();
+                } else {
+                    $importSubmit.prop('disabled', true).hide();
+                }
+            }
+
             if ($importFile.length && $importFile.val() === '') {
-                $('#importsubmit').prop('disabled', true);
+                setImportButtonState(false);
             }
 
             function submitDeckImport(formData) {
@@ -149,13 +169,13 @@ $csrfToken = SessionManager::generateCsrfToken();
                     $form.data('busy', false);
                     document.body.style.cursor = '';
                     $('#importfile').val('');
-                    $('#importsubmit').prop('disabled', true);
+                    setImportButtonState(false);
                 });
             }
 
             $(document).off('change.decks', '#importfile').on('change.decks', '#importfile', function () {
                 var hasFile = $(this).val() !== '';
-                $('#importsubmit').prop('disabled', !hasFile);
+                setImportButtonState(hasFile);
             });
 
             $(document).off('submit.decks', '#import-form').on('submit.decks', '#import-form', function (event) {
@@ -202,9 +222,30 @@ $csrfToken = SessionManager::generateCsrfToken();
                 var isEditing = document.body.classList.toggle('deck-edit-mode');
                 $('.deck-delete-cell').toggle(isEditing);
                 if (!isEditing) {
-                    $('.deck-delete-checkbox').prop('checked', false);
+                    exitEditMode();
+                    return;
                 }
                 deleteready();
+            });
+
+            function exitEditMode() {
+                document.body.classList.remove('deck-edit-mode');
+                $('.deck-delete-cell').hide();
+                $('.deck-delete-checkbox').prop('checked', false);
+                $('#deck-type-bulk').prop('selectedIndex', 0);
+                deleteready();
+            }
+
+            $(document)
+                .off('keydown.decks', document)
+                .on('keydown.decks', document, function (event) {
+                if (event.key !== 'Escape') {
+                    return;
+                }
+                if (!document.body.classList.contains('deck-edit-mode')) {
+                    return;
+                }
+                exitEditMode();
             });
 
             $(document)
@@ -220,25 +261,107 @@ $csrfToken = SessionManager::generateCsrfToken();
                 event.stopPropagation();
             });
 
-            function positionDeleteActions() {
-                var $deleteActions = $('#deck-delete-actions');
-                var $mobileAnchor = $('#deck-delete-anchor');
-                var $desktopAnchor = $('#deck-delete-operations-anchor');
-                if (!$deleteActions.length) {
+            $(document)
+                .off('change.decks', '#deck-type-bulk')
+                .on('change.decks', '#deck-type-bulk', function () {
+                var selectedType = $(this).val();
+                if (!selectedType) {
+                    return;
+                }
+                var selectedDecks = document.querySelectorAll('.deck-delete-checkbox:checked');
+                if (!selectedDecks.length) {
+                    $(this).prop('selectedIndex', 0);
+                    return;
+                }
+                if (
+                    window.mtgDecksConfig.commanderDeckTypes
+                        .indexOf(selectedType) !== -1
+                    && !confirm(
+                        "Changing decks to Commander types may result in cards being removed to enforce singleton limits. Continue?"
+                    )
+                ) {
+                    $(this).prop('selectedIndex', 0);
+                    return;
+                }
+                var requests = [];
+                selectedDecks.forEach(function (checkbox) {
+                    requests.push(
+                        $.ajax({
+                            url: 'ajax/ajaxdecktype.php',
+                            method: 'POST',
+                            dataType: 'json',
+                            data: {
+                                decknumber: checkbox.value,
+                                updatetype: selectedType,
+                                csrf_token: window.mtgDecksConfig.csrfToken
+                            }
+                        })
+                    );
+                });
+                $.when.apply($, requests).done(function () {
+                    var args = arguments;
+                    var responses = [];
+                    if (requests.length === 1) {
+                        responses = [args[0]];
+                    } else {
+                        responses = $.map(args, function (item) {
+                            return item[0];
+                        });
+                    }
+                    var failed = responses.some(function (response) {
+                        return !response || response.success !== true;
+                    });
+                    if (failed) {
+                        alert('Deck type update failed for one or more decks.');
+                    }
+                    exitEditMode();
+                    window.location.reload();
+                }).fail(function () {
+                    alert('Deck type update failed. Please try again.');
+                    exitEditMode();
+                    window.location.reload();
+                });
+            });
+
+            function positionDeckActions() {
+                var $selectionActions = $('#deck-selection-actions');
+                var $mobileAnchor = $('#deck-selection-anchor');
+                var $desktopAnchor = $('#deck-selection-operations-anchor');
+                if (!$selectionActions.length) {
                     return;
                 }
                 if (window.innerWidth <= 513) {
                     if ($mobileAnchor.length) {
-                        $deleteActions.insertAfter($mobileAnchor);
+                        $selectionActions.insertAfter($mobileAnchor);
                     }
                 } else if ($desktopAnchor.length) {
-                    $deleteActions.insertAfter($desktopAnchor);
+                    $selectionActions.insertAfter($desktopAnchor);
                 }
             }
 
-            positionDeleteActions();
+            $(document)
+                .off('submit.decks', '#exportdecks')
+                .on('submit.decks', '#exportdecks', function (event) {
+                var $form = $(this);
+                $form.find('input[name="decktoexport[]"]').remove();
+                var selectedDecks = document.querySelectorAll('.deck-delete-checkbox:checked');
+                if (!selectedDecks.length) {
+                    event.preventDefault();
+                    return;
+                }
+                selectedDecks.forEach(function (checkbox) {
+                    var $input = $('<input>', {
+                        type: 'hidden',
+                        name: 'decktoexport[]',
+                        value: checkbox.value
+                    });
+                    $form.append($input);
+                });
+            });
+
+            positionDeckActions();
             $(window).on('resize.decks', function () {
-                positionDeleteActions();
+                positionDeckActions();
             });
         });
     </script>
@@ -315,7 +438,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 edit
             </span>
         </h2>
-        <div id="deck-delete-anchor"></div>
+        <div id="deck-selection-anchor"></div>
         <?php
         if (
             $sqlquery = $db->execute_query(
@@ -378,6 +501,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     type='submit'
                     value='IMPORT'
                     disabled
+                    style='display: none;'
                 >
                 <div class="import-title">From clipboard:</div>
                 <input
@@ -387,19 +511,44 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     value='PASTE'
                 >
             </form>
-            <div id="deck-delete-operations-anchor"></div>
-            <div id="deck-delete-actions">
-                <h3 class="deck-delete-title">Delete selected decks</h3>
-                <form id="deletedecks" action="decks.php" method="POST">
-                    <input type='hidden' name="deletedeck" value="yes">
-                    <input
-                        class='profilebutton'
-                        id="deletebutton"
-                        type="submit"
-                        value="DELETE"
-                        disabled
-                    >
-                </form>
+            <div id="deck-selection-operations-anchor"></div>
+            <div id="deck-selection-actions">
+                <h3 class="deck-delete-title">Edit selected decks</h3>
+                <div class="deck-selection-block">
+                    Change type: <br>
+                    <select id="deck-type-bulk" class='dropdown' size="1" name="bulkdecktype">
+                        <option selected="selected" disabled="disabled">Pick one</option>
+                        <?php foreach ($rulesValidTypes as $deckType) : ?>
+                            <option value="<?php echo htmlspecialchars($deckType, ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($deckType, ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="deck-selection-block">
+                    <form id="exportdecks" action="decksexport.php" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo $csrfTokenEsc; ?>">
+                        <input
+                            class='profilebutton'
+                            id="exportbutton"
+                            type="submit"
+                            value="EXPORT"
+                            disabled
+                        >
+                    </form>
+                </div>
+                <div class="deck-selection-block">
+                    <form id="deletedecks" action="decks.php" method="POST">
+                        <input type='hidden' name="deletedeck" value="yes">
+                        <input
+                            class='profilebutton'
+                            id="deletebutton"
+                            type="submit"
+                            value="DELETE"
+                            disabled
+                        >
+                    </form>
+                </div>
             </div>
             <br> &nbsp;
             <?php

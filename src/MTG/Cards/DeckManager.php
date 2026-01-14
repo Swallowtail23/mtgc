@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.27
-Date:        14/01/26
+Version:     2.29
+Date:        15/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -1568,9 +1568,27 @@ class DeckManager
                     . ": SQL failure: " . $this->db->error
             );
         else :
-            $decktypereturn = 0;
             $this->message->logMessage('[DEBUG]', "Deck type '$decktype' query run");
-            if ($this->db->affected_rows !== 1) :
+            $decktypereturn = 0;
+            if ($this->db->affected_rows === 0) :
+                $checkQuery = 'SELECT decknumber FROM decks WHERE decknumber = ? AND type = ?';
+                $checkStmt = $this->db->execute_query($checkQuery, [$deck,$decktype]);
+                if ($checkStmt !== false && $checkStmt->num_rows === 1) :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "...result: No change needed; deck already set to '$decktype'"
+                    );
+                else :
+                    $decktypereturn = 1; //Error
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "...result: Unknown error: {$this->db->affected_rows} row(s) affected"
+                    );
+                endif;
+                if ($checkStmt !== false) :
+                    $checkStmt->close();
+                endif;
+            elseif ($this->db->affected_rows !== 1) :
                 $decktypereturn = 1; //Error
                 $this->message->logMessage(
                     '[DEBUG]',
@@ -1774,7 +1792,23 @@ class DeckManager
 
         if ($emptyDeck !== true) :
             if ($format !== "variable") :
-                $filename = 'deck_' . $deckNumber . '.txt';
+                $sanitizedDeckName = preg_replace('/[^A-Za-z0-9 _.-]/', '', $deckName);
+                $sanitizedDeckName = trim($sanitizedDeckName);
+                $sanitizedDeckName = preg_replace('/\s+/', '-', $sanitizedDeckName);
+                $sanitizedDeckName = trim($sanitizedDeckName, '.-_');
+                if ($sanitizedDeckName === '') :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Deck export filename fallback; deck $deckNumber has empty sanitized name from '$deckName'"
+                    );
+                    $sanitizedDeckName = 'Deck';
+                elseif ($sanitizedDeckName !== $deckName) :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Deck export filename sanitized for deck $deckNumber: '$deckName' -> '$sanitizedDeckName'"
+                    );
+                endif;
+                $filename = $deckNumber . '-' . $sanitizedDeckName . '.txt';
                 $tmpName = tempnam(sys_get_temp_dir(), 'deck_' . $deckNumber);
                 file_put_contents($tmpName, $textfile);
             endif;

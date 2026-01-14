@@ -1790,7 +1790,7 @@ body.deck-edit-mode .resultsrow:hover
     background: transparent;
 }
 
-#deck-delete-actions
+#deck-selection-actions
 {
     max-height: 0;
     opacity: 0;
@@ -1800,12 +1800,18 @@ body.deck-edit-mode .resultsrow:hover
     transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
 }
 
-#deck-delete-actions.is-visible
+#deck-selection-actions.is-visible
 {
-    max-height: 140px;
+    max-height: 260px;
     opacity: 1;
     pointer-events: auto;
     margin-top: 10px;
+    padding-bottom: 6px;
+}
+
+.deck-selection-block + .deck-selection-block
+{
+    margin-top: 8px;
 }
 
 @media (max-width: 513px)
