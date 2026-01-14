@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
--
+- Deck imports now abort and remove newly created decks when no cards are added.
 
 ### Security
 

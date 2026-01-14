@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        14/01/26
+Version:     1.5
+Date:        15/01/26
 Name:        ajaxdecksimport.php
 Purpose:     AJAX deck import for deck list page.
 Notes:       -
@@ -133,6 +133,24 @@ endif;
 $msg->logMessage('[DEBUG]', "Decks import created deck $deckNumber, importing cards");
 $result = $deckManager->processInput($deckNumber, $fileContent);
 $msg->logMessage('[DEBUG]', "Decks import completed for deck $deckNumber with status '$result'");
+$cardCount = getDeckCardCount($db, $deckNumber, $msg);
+if ($cardCount === null) :
+    $msg->logMessage(
+        '[DEBUG]',
+        "Decks import aborted: unable to validate card count for deck $deckNumber"
+    );
+    $response['error'] = 'Import validation failed';
+    returnResponse($response);
+endif;
+if ($cardCount === 0) :
+    $msg->logMessage(
+        '[DEBUG]',
+        "Decks import aborted: no cards were added for deck $deckNumber, deleting empty deck"
+    );
+    deleteDeckByNumber($db, $deckNumber, $msg);
+    $response['error'] = 'Import produced no cards';
+    returnResponse($response);
+endif;
 
 $response['success'] = true;
 $response['decknumber'] = (int) $deckNumber;
@@ -175,4 +193,32 @@ function returnResponse($response)
     header('Pragma: no-cache');
     header('Expires: 0');
     AjaxResponse::json($response, http_response_code());
+}
+
+function getDeckCardCount($db, $deckNumber, $msg)
+{
+    $sql = "SELECT COUNT(*) AS total FROM deckcards WHERE decknumber = ? AND (cardqty > 0 OR sideqty > 0)";
+    $msg->logMessage('[DEBUG]', "Decks import card count query for deck $deckNumber");
+    $result = $db->execute_query($sql, [$deckNumber]);
+    if ($result === false) :
+        $msg->logMessage('[ERROR]', "Decks import card count failed for deck $deckNumber");
+        return null;
+    endif;
+    $row = $result->fetch_assoc();
+    return (int) ($row['total'] ?? 0);
+}
+
+function deleteDeckByNumber($db, $deckNumber, $msg)
+{
+    $msg->logMessage('[DEBUG]', "Decks import removing empty deck $deckNumber");
+    $deleteCardsSql = "DELETE FROM deckcards WHERE decknumber = ?";
+    $deleteDeckSql = "DELETE FROM decks WHERE decknumber = ?";
+    $deleteCardsResult = $db->execute_query($deleteCardsSql, [$deckNumber]);
+    if ($deleteCardsResult === false) :
+        $msg->logMessage('[ERROR]', "Decks import failed to delete deckcards for deck $deckNumber");
+    endif;
+    $deleteDeckResult = $db->execute_query($deleteDeckSql, [$deckNumber]);
+    if ($deleteDeckResult === false) :
+        $msg->logMessage('[ERROR]', "Decks import failed to delete deck $deckNumber");
+    endif;
 }
