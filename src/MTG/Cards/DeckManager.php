@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.25
-Date:        11/01/26
+Version:     2.27
+Date:        14/01/26
 Name:        DeckManager.php
 Purpose:     Class for quickAdd and deck import.
 Notes:       ProcessInput() called with deck number and input string; quickAdd() interprets and adds cards.
@@ -85,6 +85,7 @@ class DeckManager
         $lines = explode("\n", $input);
         $inputType = '';
         $qtyLines = count($lines);
+        $appliedHeaderType = false;
         if ($qtyLines > 1) :
             $this->message->logMessage(
                 '[DEBUG]',
@@ -98,11 +99,30 @@ class DeckManager
             $warningHeading = 'Warning type, Row number, Input line';
             foreach ($lines as $line) :
                 $line = trim($line);
+                if (strncmp($line, "\xEF\xBB\xBF", 3) === 0) :
+                    $this->message->logMessage('[DEBUG]', "Row $row: UTF-8 BOM detected; stripping");
+                    $line = substr($line, 3);
+                endif;
                 $start = substr($line, 0, 8);
                 if (strpos($start, 'setcode') !== false || strpos($start, 'Edition') !== false) :
                     $this->message->logMessage('[DEBUG]', "Row $row: Header row: '$line'");
                 elseif (stripos($line, 'Deckname:') === 0) :
                     $this->message->logMessage('[DEBUG]', "Row $row: Deckname header");
+                    if (!$appliedHeaderType) :
+                        $headerData = $this->extractDeckHeader($line);
+                        if (!empty($headerData['type'])) :
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Row $row: Deck type detected in header: '{$headerData['type']}'"
+                            );
+                            $setTypeResult = $this->setDeckType($deckNumber, $headerData['type']);
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Row $row: Deck type set result: {$setTypeResult}"
+                            );
+                            $appliedHeaderType = true;
+                        endif;
+                    endif;
                 elseif ($line === 'Commander') :
                     $commanderTrigger = true;
                     $partnerTrigger = false;
@@ -210,6 +230,68 @@ class DeckManager
         endif;
     }
 
+    public function extractDeckHeader($input)
+    {
+        $header = [
+            'name' => '',
+            'type' => ''
+        ];
+        $lines = preg_split("/\\r\\n|\\n|\\r/", (string) $input);
+        $line = '';
+        foreach ($lines as $candidate) :
+            $candidate = trim($candidate);
+            if ($candidate === '') :
+                continue;
+            endif;
+            $candidate = ltrim($candidate, "\xEF\xBB\xBF");
+            if (stripos($candidate, 'Deckname:') === 0) :
+                $line = $candidate;
+                break;
+            endif;
+        endforeach;
+        if ($line === '') :
+            return $header;
+        endif;
+
+        $value = trim(substr($line, strlen('Deckname:')));
+        if ($value === '') :
+            return $header;
+        endif;
+
+        $name = $value;
+        $type = '';
+        if (preg_match('/^(.*)\\s*\\(([^)]+)\\)\\s*$/', $value, $matches) === 1) :
+            $name = trim($matches[1]);
+            $type = trim($matches[2]);
+        endif;
+
+        if ($type !== '') :
+            $rulesValidTypes = $this->gameRules->getArray('validtypes');
+            if (!is_array($rulesValidTypes)) :
+                $rulesValidTypes = [];
+            endif;
+            $resolvedType = '';
+            foreach ($rulesValidTypes as $validType) :
+                if (strcasecmp((string) $validType, $type) === 0) :
+                    $resolvedType = (string) $validType;
+                    break;
+                endif;
+            endforeach;
+            if ($resolvedType !== '') :
+                $type = $resolvedType;
+            else :
+                $type = '';
+            endif;
+        endif;
+
+        if (mb_strlen($name) > 150) :
+            $name = mb_substr($name, 0, 150);
+        endif;
+        $header['name'] = $name;
+        $header['type'] = $type;
+        return $header;
+    }
+
     /**
      * Called from processInput().
      */
@@ -241,6 +323,10 @@ class DeckManager
             $this->appConfig,
             $this->gameRules
         );
+        if ($interpretedString === 'header' || $interpretedString === 'empty line') :
+            $this->message->logMessage('[DEBUG]', "Quick add interpreter result: $interpretedString");
+            return $interpretedString;
+        endif;
         if ($interpretedString !== false) :
             // UUID
             if (isset($interpretedString['uuid']) and $interpretedString['uuid'] !== '') :

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.15
-Date:        11/01/26
+Version:     1.18
+Date:        14/01/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -279,7 +279,11 @@ class ImportExport
 
         $msg->logMessage('[DEBUG]', "Input interpreter called with '$input_string'");
         $raw_string = $input_string;
-        $sanitised_string = htmlspecialchars($input_string, ENT_NOQUOTES, 'UTF-8');
+        if (strncmp($raw_string, "\xEF\xBB\xBF", 3) === 0) :
+            $msg->logMessage('[DEBUG]', "Input interpreter: UTF-8 BOM detected; stripping");
+            $raw_string = substr($raw_string, 3);
+        endif;
+        $sanitised_string = htmlspecialchars($raw_string, ENT_NOQUOTES, 'UTF-8');
 
         // Define is_csv as a closure
         $is_csv = function ($string) use ($appConfig) {
@@ -464,6 +468,15 @@ class ImportExport
             else :
                 $qty = '';
                 $sanitised_string = trim($sanitised_string);
+            endif;
+
+            if (strpos($sanitised_string, ' / ') !== false) :
+                $replaceCount = 0;
+                $normalizedString = preg_replace('/\\s\\/\\s/', ' // ', $sanitised_string, -1, $replaceCount);
+                if ($replaceCount > 0 && $normalizedString !== null) :
+                    $sanitised_string = $normalizedString;
+                    $msg->logMessage('[DEBUG]', "Input interpreter normalized split card delimiter to '//'");
+                endif;
             endif;
 
             // If string contains an opening ( or [ but no closing ) or ], then terminate the string with %] and submit

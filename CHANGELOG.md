@@ -17,10 +17,13 @@ All notable changes to this project will be documented in this file.
 - Deck list edit mode now toggles selection on row click and suppresses hover highlight.
 - Deck list delete actions now reposition to the header area on narrow screens with a slide-in transition.
 - Deck list delete header now hides on narrow screens to keep the mobile layout compact.
+- Deck imports now honor deck type when present in the Deckname header and match a valid deck type.
 
 ### Fixed
 
 - CSS minifier now preserves custom property names inside calc expressions.
+- Moxfield deck imports now accept single-slash split card names by normalizing to double slashes.
+- Deck imports now ignore CSV header rows with UTF-8 BOMs to avoid false warning entries.
 
 ### Security
 

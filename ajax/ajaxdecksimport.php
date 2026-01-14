@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        14/01/26
 Name:        ajaxdecksimport.php
 Purpose:     AJAX deck import for deck list page.
@@ -94,7 +94,15 @@ $ctx                        = $ctx->withSessionUser($sessionUser);
 $user                       = $ctx->sessionUser()->id();
 $userEmail                  = $ctx->sessionUser()->email();
 
-$deckName = extractDeckName($fileContent, $msg);
+$deckManager = new DeckManager(
+    $db,
+    $appConfig,
+    $gameRules,
+    $userEmail
+);
+
+$headerData = $deckManager->extractDeckHeader($fileContent);
+$deckName = $headerData['name'];
 if ($deckName !== '') :
     $msg->logMessage('[DEBUG]', "Decks import detected deck name: '$deckName'");
 else :
@@ -107,13 +115,6 @@ if ($deckName !== $originalDeckName) :
     $msg->logMessage('[DEBUG]', "Decks import adjusted deck name to '$deckName' due to name conflict");
 endif;
 
-$deckManager = new DeckManager(
-    $db,
-    $appConfig,
-    $gameRules,
-    $userEmail
-);
-
 $msg->logMessage('[DEBUG]', "Creating deck '$deckName' for user $user");
 $decksuccess = $deckManager->addDeck($user, $deckName);
 if (!isset($decksuccess['flag']) || $decksuccess['flag'] !== 1) :
@@ -123,6 +124,12 @@ if (!isset($decksuccess['flag']) || $decksuccess['flag'] !== 1) :
 endif;
 
 $deckNumber = $decksuccess['decknumber'];
+$deckType = $headerData['type'];
+if ($deckType !== '') :
+    $msg->logMessage('[DEBUG]', "Decks import applying deck type '$deckType' to deck $deckNumber");
+    $setTypeResult = $deckManager->setDeckType($deckNumber, $deckType);
+    $msg->logMessage('[DEBUG]', "Decks import set deck type result: {$setTypeResult}");
+endif;
 $msg->logMessage('[DEBUG]', "Decks import created deck $deckNumber, importing cards");
 $result = $deckManager->processInput($deckNumber, $fileContent);
 $msg->logMessage('[DEBUG]', "Decks import completed for deck $deckNumber with status '$result'");
@@ -130,33 +137,9 @@ $msg->logMessage('[DEBUG]', "Decks import completed for deck $deckNumber with st
 $response['success'] = true;
 $response['decknumber'] = (int) $deckNumber;
 $response['deckname'] = $deckName;
+$response['decktype'] = $deckType;
 $response['status'] = $result;
 returnResponse($response);
-
-function extractDeckName($fileContent, $msg)
-{
-    $lines = preg_split("/\\r\\n|\\n|\\r/", $fileContent);
-    foreach ($lines as $line) :
-        $trimmed = trim($line);
-        if ($trimmed === '') :
-            continue;
-        endif;
-        $trimmed = ltrim($trimmed, "\xEF\xBB\xBF");
-        if (stripos($trimmed, 'Deckname:') === 0) :
-            $deckName = trim(substr($trimmed, strlen('Deckname:')));
-            if ($deckName === '') :
-                $msg->logMessage('[DEBUG]', "Decks import found empty Deckname header");
-                return '';
-            endif;
-            if (mb_strlen($deckName) > 150) :
-                $msg->logMessage('[DEBUG]', "Decks import trimmed deck name to 150 characters");
-                $deckName = mb_substr($deckName, 0, 150);
-            endif;
-            return $deckName;
-        endif;
-    endforeach;
-    return '';
-}
 
 function resolveDeckNameConflict($db, $user, $deckName, $msg)
 {
