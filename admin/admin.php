@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.39
-Date:        13/01/26
+Version:     6.40
+Date:        14/01/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -213,11 +213,20 @@ function minifyCssFile(string $sourcePath, string $targetPath, Message $msg): ar
     $minified = preg_replace('/\\s*([{}:;,\\[\\]])\\s*/', '$1', $minified);
     $minified = preg_replace_callback('/calc\\(([^)]*)\\)/', function ($matches) {
         $expr = $matches[1];
+        $placeholders = [];
+        $expr = preg_replace_callback('/--[a-zA-Z0-9-]+/', function ($nameMatches) use (&$placeholders) {
+            $token = '__CSSVAR' . count($placeholders) . '__';
+            $placeholders[$token] = $nameMatches[0];
+            return $token;
+        }, $expr);
         $expr = preg_replace(
             '/([0-9a-zA-Z%.)])\\s*([+-])\\s*([0-9a-zA-Z.(])/',
             '$1 $2 $3',
             $expr
         );
+        if (!empty($placeholders)) :
+            $expr = strtr($expr, $placeholders);
+        endif;
 
         return 'calc(' . $expr . ')';
     }, $minified);
