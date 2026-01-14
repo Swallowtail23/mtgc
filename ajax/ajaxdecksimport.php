@@ -1,0 +1,195 @@
+<?php
+
+/*
+Version:     1.3
+Date:        14/01/26
+Name:        ajaxdecksimport.php
+Purpose:     AJAX deck import for deck list page.
+Notes:       -
+Author:      Simon Wilson
+Copyright:   2025 MTG Collection
+To do:       -
+*/
+
+use MTG\Auth\SessionManager;
+use MTG\Cards\DeckManager;
+use MTG\Core\Http\AjaxResponse;
+
+// Bootstrap
+$ctx                        = require dirname(__DIR__) . '/bootstrap.php';
+
+$appConfig                  = $ctx->config();
+$db                         = $ctx->db();
+$msg                        = $ctx->message();
+$gameRules                  = $ctx->rules();
+
+$myURL                      = (string) $appConfig->general('url', '');
+
+$response = [
+    'success' => false,
+    'error' => '',
+    'decknumber' => null,
+    'deckname' => ''
+];
+
+$expectedReferringPages = [
+    $myURL . '/decks.php'
+];
+$ajaxValidation = SessionManager::validateAjaxRequest(
+    $expectedReferringPages,
+    $appConfig,
+    'ajaxdecksimport.php'
+);
+if ($ajaxValidation['valid'] === false) :
+    $msg->logMessage('[DEBUG]', "Decks import failed referrer/CSRF validation");
+    if ($ajaxValidation['reason'] === 'csrf') :
+        $response['error'] = 'Invalid request token';
+    else :
+        $response['error'] = 'Access forbidden';
+    endif;
+    http_response_code(403);
+    returnResponse($response);
+endif;
+
+if (!isset($_SESSION["logged"], $_SESSION['user']) || $_SESSION["logged"] !== true) :
+    $msg->logMessage('[DEBUG]', "Decks import blocked: user not logged in");
+    $response['error'] = 'User not logged in';
+    returnResponse($response);
+endif;
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') :
+    $msg->logMessage('[DEBUG]', "Decks import blocked: invalid request method");
+    $response['error'] = 'Invalid request method';
+    returnResponse($response);
+endif;
+
+$csrfToken = $_POST['csrf_token'] ?? '';
+if (!SessionManager::validateCsrfToken($csrfToken)) :
+    $msg->logMessage('[DEBUG]', "Decks import blocked: invalid CSRF token");
+    $response['error'] = 'Invalid request token';
+    returnResponse($response);
+endif;
+
+$fileContent = '';
+if (isset($_FILES['filename']) && is_uploaded_file($_FILES['filename']['tmp_name'])) :
+    $filePath = $_FILES['filename']['tmp_name'];
+    $fileContent = file_get_contents($filePath);
+    $msg->logMessage('[DEBUG]', "Decks import file received");
+elseif (isset($_POST['paste'])) :
+    $fileContent = (string) $_POST['paste'];
+    $msg->logMessage('[DEBUG]', "Decks import paste received");
+endif;
+
+$fileContent = trim($fileContent);
+if ($fileContent === '') :
+    $msg->logMessage('[DEBUG]', "Decks import blocked: file or paste empty");
+    $response['error'] = 'Import content empty';
+    returnResponse($response);
+endif;
+
+// AJAX session context
+require_once APP_ROOT . '/ajax/ajax_session.php';
+$sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
+$ctx                        = $ctx->withSessionUser($sessionUser);
+$user                       = $ctx->sessionUser()->id();
+$userEmail                  = $ctx->sessionUser()->email();
+
+$deckName = extractDeckName($fileContent, $msg);
+if ($deckName !== '') :
+    $msg->logMessage('[DEBUG]', "Decks import detected deck name: '$deckName'");
+else :
+    $deckName = date("j F Y, g:i:sa");
+    $msg->logMessage('[DEBUG]', "Decks import using fallback deck name: '$deckName'");
+endif;
+$originalDeckName = $deckName;
+$deckName = resolveDeckNameConflict($db, $user, $deckName, $msg);
+if ($deckName !== $originalDeckName) :
+    $msg->logMessage('[DEBUG]', "Decks import adjusted deck name to '$deckName' due to name conflict");
+endif;
+
+$deckManager = new DeckManager(
+    $db,
+    $appConfig,
+    $gameRules,
+    $userEmail
+);
+
+$msg->logMessage('[DEBUG]', "Creating deck '$deckName' for user $user");
+$decksuccess = $deckManager->addDeck($user, $deckName);
+if (!isset($decksuccess['flag']) || $decksuccess['flag'] !== 1) :
+    $msg->logMessage('[DEBUG]', "Decks import failed to create deck for user $user");
+    $response['error'] = 'Deck creation failed';
+    returnResponse($response);
+endif;
+
+$deckNumber = $decksuccess['decknumber'];
+$msg->logMessage('[DEBUG]', "Decks import created deck $deckNumber, importing cards");
+$result = $deckManager->processInput($deckNumber, $fileContent);
+$msg->logMessage('[DEBUG]', "Decks import completed for deck $deckNumber with status '$result'");
+
+$response['success'] = true;
+$response['decknumber'] = (int) $deckNumber;
+$response['deckname'] = $deckName;
+$response['status'] = $result;
+returnResponse($response);
+
+function extractDeckName($fileContent, $msg)
+{
+    $lines = preg_split("/\\r\\n|\\n|\\r/", $fileContent);
+    foreach ($lines as $line) :
+        $trimmed = trim($line);
+        if ($trimmed === '') :
+            continue;
+        endif;
+        $trimmed = ltrim($trimmed, "\xEF\xBB\xBF");
+        if (stripos($trimmed, 'Deckname:') === 0) :
+            $deckName = trim(substr($trimmed, strlen('Deckname:')));
+            if ($deckName === '') :
+                $msg->logMessage('[DEBUG]', "Decks import found empty Deckname header");
+                return '';
+            endif;
+            if (mb_strlen($deckName) > 150) :
+                $msg->logMessage('[DEBUG]', "Decks import trimmed deck name to 150 characters");
+                $deckName = mb_substr($deckName, 0, 150);
+            endif;
+            return $deckName;
+        endif;
+    endforeach;
+    return '';
+}
+
+function resolveDeckNameConflict($db, $user, $deckName, $msg)
+{
+    $candidate = $deckName;
+    $counter = 1;
+    while (deckNameExists($db, $user, $candidate)) :
+        $counter++;
+        $suffix = " ($counter)";
+        $maxLength = 150 - mb_strlen($suffix);
+        if ($maxLength < 1) :
+            $maxLength = 150;
+        endif;
+        $baseName = mb_substr($deckName, 0, $maxLength);
+        $candidate = $baseName . $suffix;
+        $msg->logMessage('[DEBUG]', "Decks import name conflict, trying '$candidate'");
+    endwhile;
+    return $candidate;
+}
+
+function deckNameExists($db, $user, $deckName)
+{
+    $query = "SELECT decknumber FROM decks WHERE owner = ? AND deckname = ? LIMIT 1";
+    $result = $db->execute_query($query, [$user, $deckName]);
+    if ($result === false) :
+        return false;
+    endif;
+    return $result->num_rows > 0;
+}
+
+function returnResponse($response)
+{
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    AjaxResponse::json($response, http_response_code());
+}

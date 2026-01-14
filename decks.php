@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.28
-Date:        12/01/26
+Version:     5.30
+Date:        14/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Auth\SessionManager;
 use MTG\Cards\DeckManager;
 
 // Bootstrap
@@ -41,6 +42,7 @@ $decktodelete = isset($_POST['decktodelete'])
     ? filter_input(INPUT_POST, 'decktodelete', FILTER_SANITIZE_NUMBER_INT)
     : '';
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
+$csrfToken = SessionManager::generateCsrfToken();
 ?>
 <!DOCTYPE html>
 <html>
@@ -95,6 +97,89 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             var deckselect = document.getElementById("deckselect");
             updateButtonState("deletebutton", deckselect.value);
         };
+    </script>
+    <script type="text/javascript">
+        window.mtgDecksConfig = {
+            csrfToken: <?php echo json_encode($csrfToken); ?>
+        };
+
+        $(function() {
+            var $importFile = $('#importfile');
+            if ($importFile.length && $importFile.val() === '') {
+                $('#importsubmit').prop('disabled', true);
+            }
+
+            function submitDeckImport(formData) {
+                var $form = $('#import-form');
+                if ($form.data('busy')) {
+                    return;
+                }
+                $form.data('busy', true);
+                document.body.style.cursor = 'wait';
+                formData.append('csrf_token', window.mtgDecksConfig.csrfToken);
+                $.ajax({
+                    url: 'ajax/ajaxdecksimport.php',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json'
+                }).done(function (response) {
+                    if (!response || response.success !== true || !response.decknumber) {
+                        alert('That did not work. Please try again.');
+                        return;
+                    }
+                    window.location.href = 'deckdetail.php?deck=' + response.decknumber;
+                }).fail(function () {
+                    alert('That did not work. Please try again.');
+                }).always(function () {
+                    $form.data('busy', false);
+                    document.body.style.cursor = '';
+                    $('#importfile').val('');
+                    $('#importsubmit').prop('disabled', true);
+                });
+            }
+
+            $(document).off('change.decks', '#importfile').on('change.decks', '#importfile', function () {
+                var hasFile = $(this).val() !== '';
+                $('#importsubmit').prop('disabled', !hasFile);
+            });
+
+            $(document).off('submit.decks', '#import-form').on('submit.decks', '#import-form', function (event) {
+                event.preventDefault();
+                var fileInput = $('#importfile')[0];
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    alert('Please select a file to import');
+                    return;
+                }
+                var formData = new FormData($('#import-form')[0]);
+                submitDeckImport(formData);
+            });
+
+            $(document).off('click.decks', '#importpaste').on('click.decks', '#importpaste', function () {
+                if (!navigator.clipboard || !navigator.clipboard.readText) {
+                    var fallbackText = window.prompt('Paste your deck list');
+                    if (!fallbackText) {
+                        return;
+                    }
+                    var fallbackData = new FormData();
+                    fallbackData.append('paste', fallbackText);
+                    submitDeckImport(fallbackData);
+                    return;
+                }
+                navigator.clipboard.readText().then(function (text) {
+                    if (!text || text.trim() === '') {
+                        alert('Clipboard is empty');
+                        return;
+                    }
+                    var formData = new FormData();
+                    formData.append('paste', text);
+                    submitDeckImport(formData);
+                }).catch(function () {
+                    alert('Clipboard access denied');
+                });
+            });
+        });
     </script>
 </head>
 
@@ -177,14 +262,35 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             </div>
             <div id='deckoperations'>
             <h3>Add a new deck</h3>
-                <form name="newdeck" action="decks.php" method="post">
-                    <input type='hidden' name="newdeck" value="yes">
-                    <input class='textinput' onkeyup='createready()' title="Please enter deck title"
-                        placeholder="DECK TITLE" id="newdeckname" name="deckname" type="text" size="24"
-                        maxlength="150" />
-                    <br><br>
-                <input class='inline_button_disabled stdwidthbutton' id="createsubmit" style='cursor: not-allowed;'
-                    type="submit" value="CREATE DECK" disabled/>
+            <form name="newdeck" action="decks.php" method="post">
+                <input type='hidden' name="newdeck" value="yes">
+                <input class='textinput' onkeyup='createready()' title="Please enter deck title"
+                    placeholder="DECK TITLE" id="newdeckname" name="deckname" type="text" size="24"
+                    maxlength="150" />
+                <br><br>
+            <input class='inline_button_disabled stdwidthbutton' id="createsubmit" style='cursor: not-allowed;'
+                type="submit" value="CREATE DECK" disabled/>
+            </form>
+            <h3>Import a deck</h3>
+            <form id="import-form" enctype='multipart/form-data'>
+                <div class="import-title">From text or csv file:</div>
+                <label class='importlabel'>
+                    <input id='importfile' type='file' name='filename'>
+                    <span>SELECT</span>
+                </label>
+                <input
+                    class='profilebutton'
+                    id='importsubmit'
+                    type='submit'
+                    value='IMPORT'
+                    disabled
+                >
+                <input
+                    class='profilebutton'
+                    id='importpaste'
+                    type='button'
+                    value='PASTE'
+                >
             </form>
             <h3>Delete a deck</h3>
             <form id="deletedeck" action="decks.php" method="POST">

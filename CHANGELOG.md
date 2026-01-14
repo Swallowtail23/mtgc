@@ -6,15 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
--
+- Deck list import button now creates decks from uploaded files, using embedded Deckname headers when present.
+- Deck list import now supports clipboard paste input.
 
 ### Changed
 
--
+- Deck list import now appends a numeric suffix when the deck name already exists.
 
 ### Fixed
 
--
+- CSS minifier now preserves custom property names inside calc expressions.
 
 ### Security
 
