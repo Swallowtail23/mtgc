@@ -1,6 +1,6 @@
 /*
-Version:     2.16
-Date:        01/01/26
+Version:     2.20
+Date:        14/01/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -1785,6 +1785,37 @@ table
     color: #3f51b5;
 }
 
+body.deck-edit-mode .resultsrow:hover
+{
+    background: transparent;
+}
+
+#deck-delete-actions
+{
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    margin-top: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.25s ease;
+}
+
+#deck-delete-actions.is-visible
+{
+    max-height: 140px;
+    opacity: 1;
+    pointer-events: auto;
+    margin-top: 10px;
+}
+
+@media (max-width: 513px)
+{
+    .deck-delete-title
+    {
+        display: none;
+    }
+}
+
 #deckoperations, #decklistdiv
 {
     float: left;
@@ -2002,6 +2033,7 @@ table.profile_options tr.hoverhighlight:hover {
     border: 0px;
     color: #fff;
     font-size: 14px;
+    font-weight: 400;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     padding: 3px;
 }

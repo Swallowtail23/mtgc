@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     5.30
+Version:     5.36
 Date:        14/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
@@ -38,9 +38,10 @@ $deckName = isset($_POST['deckname'])
     ? filter_input(INPUT_POST, 'deckname', FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES)
     : '';
 $deletedeck = isset($_POST['deletedeck']) ? 'yes' : '';
-$decktodelete = isset($_POST['decktodelete'])
-    ? filter_input(INPUT_POST, 'decktodelete', FILTER_SANITIZE_NUMBER_INT)
-    : '';
+$decktodeleteRaw = $_POST['decktodelete'] ?? [];
+if (!is_array($decktodeleteRaw)) :
+    $decktodeleteRaw = [$decktodeleteRaw];
+endif;
 $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 $csrfToken = SessionManager::generateCsrfToken();
 ?>
@@ -56,13 +57,21 @@ $csrfToken = SessionManager::generateCsrfToken();
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
         $(function() {
-            $('tbody tr[data-href]').addClass('clickable').click( function() {
-            window.location = $(this).attr('data-href');
-             });
+            $('tbody tr[data-href]').addClass('clickable').click(function () {
+                if (document.body.classList.contains('deck-edit-mode')) {
+                    var $checkbox = $(this).find('.deck-delete-checkbox');
+                    if ($checkbox.length) {
+                        $checkbox.prop('checked', !$checkbox.prop('checked'));
+                        deleteready();
+                    }
+                    return;
+                }
+                window.location = $(this).attr('data-href');
+            });
         });
 
         $(function() {
-            $("#deletedeck").submit(function(event){
+            $("#deletedecks").submit(function(event){
                 if (!confirm("Confirm OK to delete deck?")){
                     event.preventDefault();
                 }
@@ -94,8 +103,12 @@ $csrfToken = SessionManager::generateCsrfToken();
         };
 
         function deleteready() {
-            var deckselect = document.getElementById("deckselect");
-            updateButtonState("deletebutton", deckselect.value);
+            var selectedCount = document.querySelectorAll('.deck-delete-checkbox:checked').length;
+            updateButtonState("deletebutton", selectedCount > 0 ? "selected" : "");
+            var deleteActions = document.getElementById("deck-delete-actions");
+            if (deleteActions) {
+                deleteActions.classList.toggle('is-visible', selectedCount > 0);
+            }
         };
     </script>
     <script type="text/javascript">
@@ -181,6 +194,48 @@ $csrfToken = SessionManager::generateCsrfToken();
             });
         });
     </script>
+    <script type="text/javascript">
+        $(function() {
+            $(document).off('click.decks', '#deck-edit-toggle').on('click.decks', '#deck-edit-toggle', function () {
+                var isEditing = document.body.classList.toggle('deck-edit-mode');
+                $('.deck-delete-cell').toggle(isEditing);
+                if (!isEditing) {
+                    $('.deck-delete-checkbox').prop('checked', false);
+                }
+                deleteready();
+            });
+
+            $(document).off('click.decks', '.deck-delete-checkbox').on('click.decks', '.deck-delete-checkbox', function (event) {
+                event.stopPropagation();
+                deleteready();
+            });
+
+            $(document).off('click.decks', '.deck-delete-label').on('click.decks', '.deck-delete-label', function (event) {
+                event.stopPropagation();
+            });
+
+            function positionDeleteActions() {
+                var $deleteActions = $('#deck-delete-actions');
+                var $mobileAnchor = $('#deck-delete-anchor');
+                var $desktopAnchor = $('#deck-delete-operations-anchor');
+                if (!$deleteActions.length) {
+                    return;
+                }
+                if (window.innerWidth <= 513) {
+                    if ($mobileAnchor.length) {
+                        $deleteActions.insertAfter($mobileAnchor);
+                    }
+                } else if ($desktopAnchor.length) {
+                    $deleteActions.insertAfter($desktopAnchor);
+                }
+            }
+
+            positionDeleteActions();
+            $(window).on('resize.decks', function () {
+                positionDeleteActions();
+            });
+        });
+    </script>
 </head>
 
 <body class="body">
@@ -221,19 +276,40 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
 
         // Delete a deck
         if ($deletedeck == "yes") :
-            $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $decktodelete'");
+            $msg->logMessage('[NOTICE]', "Deck delete requested from decks.php for user $user");
             $obj = new DeckManager(
                 $db,
                 $appConfig,
                 $gameRules,
                 $userEmail
             );
-            $obj->delDeck($decktodelete);
+            foreach ($decktodeleteRaw as $deckToDeleteRaw) :
+                $deckToDelete = (int) filter_var($deckToDeleteRaw, FILTER_SANITIZE_NUMBER_INT);
+                if ($deckToDelete <= 0) :
+                    $msg->logMessage('[DEBUG]', "Deck delete skipped invalid id: '$deckToDeleteRaw'");
+                    continue;
+                endif;
+                $msg->logMessage('[NOTICE]', "Calling Deckmanager->deleteDeck: '($user) $deckToDelete'");
+                $obj->delDeck($deckToDelete);
+            endforeach;
         endif;
         // List decks
         ?>
         <div id='decklistdiv'>
-        <h2 class='h2pad'>My Decks</h2>
+        <h2 class='h2pad'>
+            My Decks
+            &nbsp;
+            <span
+                id="deck-edit-toggle"
+                title="Edit"
+                onclick="return false;"
+                onmouseover=""
+                style="cursor: pointer;"
+                class='material-symbols-outlined'>
+                edit
+            </span>
+        </h2>
+        <div id="deck-delete-anchor"></div>
         <?php
         if (
             $sqlquery = $db->execute_query(
@@ -254,7 +330,19 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     endif;?>
                     <tr class='resultsrow' style='cursor: pointer;'
                         <?php echo "data-href='deckdetail.php?deck={$row['decknumber']}'"; ?>>
-                    <?php echo "<td class='decklist_name'>" . $row['deckname'] . "</td>"; ?>
+                    <?php
+                    echo "<td class='decklist_name'>";
+                    $deckDeleteId = 'deckdelete_' . (int) $row['decknumber'];
+                    echo "<span class='deck-delete-cell checkbox-group' style='display: none;'>";
+                    echo "<input id='{$deckDeleteId}' class='deck-delete-checkbox checkbox' type='checkbox' "
+                        . "name='decktodelete[]' value='{$row['decknumber']}' form='deletedecks' />";
+                    echo "<label class='deck-delete-label' for='{$deckDeleteId}' aria-label='Select deck to delete'>";
+                    echo "<span class='check'></span><span class='box'></span>";
+                    echo "</label>";
+                    echo "</span>";
+                    echo htmlspecialchars($row['deckname'], ENT_QUOTES, 'UTF-8');
+                    echo "</td>";
+                    ?>
                     </tr>
                     <?php
                 endwhile;?>
@@ -273,7 +361,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             </form>
             <h3>Import a deck</h3>
             <form id="import-form" enctype='multipart/form-data'>
-                <div class="import-title">From text or csv file:</div>
+                <div class="import-title">From file:</div>
                 <label class='importlabel'>
                     <input id='importfile' type='file' name='filename'>
                     <span>SELECT</span>
@@ -285,6 +373,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     value='IMPORT'
                     disabled
                 >
+                <div class="import-title">From clipboard:</div>
                 <input
                     class='profilebutton'
                     id='importpaste'
@@ -292,21 +381,20 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     value='PASTE'
                 >
             </form>
-            <h3>Delete a deck</h3>
-            <form id="deletedeck" action="decks.php" method="POST">
-                <input type='hidden' name="deletedeck" value="yes">
-                <select id='deckselect' name='decktodelete' onchange='deleteready()'>
-                    <option selected='selected' disabled='disabled'>Pick one</option>
-                    <?php
-                    mysqli_data_seek($sqlquery, 0);
-                    while ($row = $sqlquery->fetch_assoc()) :
-                        echo "<option value='{$row['decknumber']}'>{$row['deckname']}</option>";
-                    endwhile;
-                    ?>
-                </select><br><br>
-                <input class='inline_button_disabled stdwidthbutton' style='cursor: not-allowed;' id="deletebutton"
-                    type="submit" value="DELETE DECK" disabled>
-            </form>
+            <div id="deck-delete-operations-anchor"></div>
+            <div id="deck-delete-actions">
+                <h3 class="deck-delete-title">Delete selected decks</h3>
+                <form id="deletedecks" action="decks.php" method="POST">
+                    <input type='hidden' name="deletedeck" value="yes">
+                    <input
+                        class='profilebutton'
+                        id="deletebutton"
+                        type="submit"
+                        value="DELETE"
+                        disabled
+                    >
+                </form>
+            </div>
             <br> &nbsp;
             <?php
         else :

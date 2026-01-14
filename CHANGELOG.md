@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Deck list import now appends a numeric suffix when the deck name already exists.
+- Deck list delete flow now uses an edit toggle with checkbox selection.
+- Profile-style buttons now enforce normal font weight for consistent styling.
+- Deck list edit mode now toggles selection on row click and suppresses hover highlight.
+- Deck list delete actions now reposition to the header area on narrow screens with a slide-in transition.
+- Deck list delete header now hides on narrow screens to keep the mobile layout compact.
 
 ### Fixed
 
