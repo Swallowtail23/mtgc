@@ -277,7 +277,8 @@ endif;
                     window.mtgDecksConfig.commanderDeckTypes
                         .indexOf(selectedType) !== -1
                     && !confirm(
-                        "Changing decks to Commander types may result in cards being removed to enforce singleton limits. Continue?"
+                        "Changing decks to Commander types may result in cards being removed "
+                            + "to enforce singleton limits. Continue?"
                     )
                 ) {
                     $(this).prop('selectedIndex', 0);
