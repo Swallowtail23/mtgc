@@ -27,7 +27,7 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Updated PHPMailer to v7.0.2
 
 ## [v0.5.0] - 2026-01-13
 
