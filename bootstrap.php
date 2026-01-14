@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.98
+Version:     1.99
 Date:        13/01/26
 Name:        bootstrap.php
 Purpose:     Bootstrap entrypoint returning the app context.
@@ -149,6 +149,12 @@ else :
     error_reporting(E_ALL & ~E_NOTICE);
 endif;
 
+date_default_timezone_set((string) $_appConfig->general('timezone', 'UTC'));
+$_localeini = (string) $_appConfig->general('locale', '');
+if (setlocale(LC_MONETARY, $_localeini) === false) :
+    $_msg->logMessage('[DEBUG]', "Locale not available for LC_MONETARY: $_localeini");
+endif;
+
 $_logFile       = (string) $_appConfig->general('logFile', '');
 $_logLevel      = (string) $_appConfig->general('logLevel', '');
 $_fd = mtgOpenLogFile($_logFile);
@@ -196,12 +202,6 @@ $ctx = $ctx->withMeta([
     'serviceWorkerVersion' => $_serviceWorkerVersion,
     'cssver' => $_cssverMeta
 ]);
-
-date_default_timezone_set((string) $_appConfig->general('timezone', 'UTC'));
-$_localeini = (string) $_appConfig->general('locale', '');
-if (setlocale(LC_MONETARY, $_localeini) === false) :
-    $_msg->logMessage('[DEBUG]', "Locale not available for LC_MONETARY: $_localeini");
-endif;
 
 if (PHP_SAPI !== 'cli') :
     $_errorHandler = new ErrorHandler($_appConfig);

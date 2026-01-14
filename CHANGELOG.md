@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - CSS minifier now preserves custom property names inside calc expressions.
 - Moxfield deck imports now accept single-slash split card names by normalizing to double slashes.
 - Deck imports now ignore CSV header rows with UTF-8 BOMs to avoid false warning entries.
+- Bootstrap direct log writes now honor configured timezone before emitting timestamps.
 
 ### Security
 
