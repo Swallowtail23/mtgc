@@ -214,7 +214,9 @@ $csrfToken = SessionManager::generateCsrfToken();
                 deleteready();
             });
 
-            $(document).off('click.decks', '.deck-delete-label').on('click.decks', '.deck-delete-label', function (event) {
+            $(document)
+                .off('click.decks', '.deck-delete-label')
+                .on('click.decks', '.deck-delete-label', function (event) {
                 event.stopPropagation();
             });
 
