@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.36
-Date:        14/01/26
+Version:     5.37
+Date:        15/01/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -196,7 +196,9 @@ $csrfToken = SessionManager::generateCsrfToken();
     </script>
     <script type="text/javascript">
         $(function() {
-            $(document).off('click.decks', '#deck-edit-toggle').on('click.decks', '#deck-edit-toggle', function () {
+            $(document)
+                .off('click.decks', '#deck-edit-toggle')
+                .on('click.decks', '#deck-edit-toggle', function () {
                 var isEditing = document.body.classList.toggle('deck-edit-mode');
                 $('.deck-delete-cell').toggle(isEditing);
                 if (!isEditing) {
@@ -205,7 +207,9 @@ $csrfToken = SessionManager::generateCsrfToken();
                 deleteready();
             });
 
-            $(document).off('click.decks', '.deck-delete-checkbox').on('click.decks', '.deck-delete-checkbox', function (event) {
+            $(document)
+                .off('click.decks', '.deck-delete-checkbox')
+                .on('click.decks', '.deck-delete-checkbox', function (event) {
                 event.stopPropagation();
                 deleteready();
             });
