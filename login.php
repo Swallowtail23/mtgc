@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.23
-Date:        13/01/26
+Version:     8.29
+Date:        02/02/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -68,7 +68,12 @@ endif;
 
 if ($loginHandler->isLoggedIn()) :
     $msg->logMessage('[DEBUG]', 'User already logged in, showing already logged in page');
-    $loginHandler->renderAlreadyLoggedInPage($siteTitleEsc, $cssver, $trustedDeviceResult['trusted_login']);
+    $loginHandler->renderAlreadyLoggedInPage(
+        $siteTitleEsc,
+        $cssver,
+        $trustedDeviceResult['trusted_login'],
+        $serviceWorkerVersion
+    );
 endif;
 
 session_destroy();
@@ -107,7 +112,8 @@ endif;
     <link
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css?v=<?php
+        echo $serviceWorkerVersion; ?>"
     >
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

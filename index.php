@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.73
-Date:        13/01/26
+Version:     14.78
+Date:        02/02/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -417,7 +417,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <meta name="viewport" content="initial-scale=1">
         <title> <?php echo $siteTitleEsc;?> </title>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver ?>.css">
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="css/style<?php echo $cssver ?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+        >
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">

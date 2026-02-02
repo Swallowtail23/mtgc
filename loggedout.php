@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.09
-Date:        12/01/26
+Version:     3.14
+Date:        02/02/26
 Name:        loggedout.php
 Purpose:     Logged out landing page.
 Notes:       {none}
@@ -38,7 +38,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css?v=<?php
+        echo $serviceWorkerVersion; ?>"
     >
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>

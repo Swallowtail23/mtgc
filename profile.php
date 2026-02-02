@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.36
-Date:        13/01/26
+Version:     14.41
+Date:        02/02/26
 Name:        profile.php
 Purpose:     User profile page.
 Notes:       This page must not run the forcePasswordChange function - this is the page that a user goes to TO change
@@ -58,7 +58,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title><?php echo $siteTitleEsc;?> - profile</title>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+        >
         <?php include APP_ROOT . '/includes/googlefonts.php';?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script>

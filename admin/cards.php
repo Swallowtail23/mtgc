@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.30
-Date:        12/01/26
+Version:     5.35
+Date:        02/02/26
 Name:        cards.php
 Purpose:     Card administrative tasks
 Notes:       {none}
@@ -214,7 +214,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver ?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="/css/style<?php echo $cssver ?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+    >
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="../js/jquery.js"></script>
 </head>

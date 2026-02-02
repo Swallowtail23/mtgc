@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.92
-Date:        13/01/26
+Version:     1.97
+Date:        02/02/26
 Name:        template.php
 Purpose:     Site template.
 Notes:       {none}
@@ -41,7 +41,8 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <link
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css?v=<?php
+        echo $serviceWorkerVersion; ?>"
     >
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>

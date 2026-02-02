@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.93
-Date:        13/01/26
+Version:     25.98
+Date:        02/02/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -56,7 +56,8 @@ $uniquecard_ref = [];
     <link 
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css"
+        href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8'); ?>.css?v=<?php
+        echo $serviceWorkerVersion; ?>"
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>

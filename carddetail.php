@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.43
-Date:        12/01/26
+Version:     22.48
+Date:        02/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -88,7 +88,11 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     <meta name="viewport" content="initial-scale=1">
     <title><?php echo $siteTitleEsc;?> - card details</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+    >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>

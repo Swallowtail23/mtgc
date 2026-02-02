@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.40
-Date:        14/01/26
+Version:     6.45
+Date:        02/02/26
 Name:        admin.php
 Purpose:     Site control panel
 Notes:       -
@@ -892,7 +892,11 @@ $disqusProdUrlIni = $commentsConfig['disqusProdUrl'] ?? '';
     <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="/css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+    >
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="../js/jquery.js"></script>
     <script type="text/javascript">

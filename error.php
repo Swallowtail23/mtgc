@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.39
-Date:        12/01/26
+Version:     2.44
+Date:        02/02/26
 Name:        error.php
 Purpose:     Very basic page with no database connectivity.
 Notes:       Ini file is parsed with parse_ini_file and AppConfig is loaded for page config values.
@@ -39,7 +39,11 @@ $cssver = "";
     <meta charset="UTF-8">
     <title> <?php echo $siteTitleEsc;?> error page</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+    >
     <?php include __DIR__ . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
 </head>

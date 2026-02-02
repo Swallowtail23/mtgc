@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.20
-Date:        12/01/26
+Version:     1.25
+Date:        02/02/26
 Name:        mtcestub.php
 Purpose:     PHP script to display Maintenance message
 Notes:       -
@@ -41,7 +41,11 @@ $cssver = '-min';
     <head>
         <meta charset="UTF-8">
         <title> <?php echo $siteTitleEsc;?> Maintenance page</title>
-        <link rel="stylesheet" type="text/css" href="/css/style<?php echo $cssver?>.css">
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="/css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+        >
         <?php include __DIR__ . '/includes/googlefonts.php';?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     </head>

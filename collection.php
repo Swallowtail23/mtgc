@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.32
-Date:        12/01/26
+Version:     1.37
+Date:        02/02/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -137,7 +137,11 @@ endif;
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title><?php echo $siteTitleEsc;?> - collection</title>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+        >
         <?php include APP_ROOT . '/includes/googlefonts.php';?>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>

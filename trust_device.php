@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.21
-Date:        12/01/26
+Version:     2.26
+Date:        02/02/26
 Name:        trust_device.php
 Purpose:     Handle trusted device creation separately from the login flow.
 Notes:       {none}
@@ -115,7 +115,8 @@ else :
         <link
             rel="stylesheet"
             type="text/css"
-            href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css"
+            href="css/style<?php echo htmlspecialchars($cssver, ENT_QUOTES, 'UTF-8');?>.css?v=<?php
+            echo $serviceWorkerVersion; ?>"
         >
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     </head>

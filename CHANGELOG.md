@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- CSS assets now include the service worker version query string to ensure cache busting on deploy.
 
 ## [v0.5.2] - 2026-02-02
 

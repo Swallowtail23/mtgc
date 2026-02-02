@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     5.42
-Date:        15/01/26
+Version:     5.47
+Date:        02/02/26
 Name:        decks.php
 Purpose:     Main decks list page.
 Notes:       {none}
@@ -61,7 +61,11 @@ endif;
     <meta name="viewport" content="initial-scale=1">
     <title> <?php echo $siteTitleEsc;?> - decks</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="stylesheet" type="text/css" href="css/style<?php echo $cssver?>.css">
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
+    >
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">

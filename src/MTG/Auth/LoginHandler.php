@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.25
-Date:        11/01/26
+Version:     1.29
+Date:        02/02/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -140,13 +140,14 @@ class LoginHandler
         return $result;
     }
 
-    public function renderAlreadyLoggedInPage($siteTitle, $cssver, $trustedLogin)
+    public function renderAlreadyLoggedInPage($siteTitle, $cssver, $trustedLogin, $serviceWorkerVersion)
     {
         $message = $trustedLogin
             ? 'Welcome back! You\'ve been automatically signed in using a trusted device.'
             : 'You are already logged in!';
         $siteTitleEsc = htmlspecialchars((string) $siteTitle, ENT_QUOTES, 'UTF-8');
         $cssverEsc = htmlspecialchars((string) $cssver, ENT_QUOTES, 'UTF-8');
+        $serviceWorkerVersionEsc = htmlspecialchars((string) $serviceWorkerVersion, ENT_QUOTES, 'UTF-8');
         $messageEsc = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
 
         echo "<!DOCTYPE html>";
@@ -156,7 +157,7 @@ class LoginHandler
             . "minimum-scale=1.1, user-scalable=no'>";
         echo "<title>{$siteTitleEsc} - login</title>";
         echo "<link rel='manifest' href='/manifest.json' />";
-        echo "<link rel='stylesheet' type='text/css' href='css/style{$cssverEsc}.css'>";
+        echo "<link rel='stylesheet' type='text/css' href='css/style{$cssverEsc}.css?v={$serviceWorkerVersionEsc}'>";
         include APP_ROOT . '/includes/googlefonts.php';
         echo "<meta http-equiv='refresh' content='2;url=index.php'>";
         echo "</head>";
@@ -461,6 +462,7 @@ class LoginHandler
             $_SESSION['admin'] = ($userStatusResult['admin'] === 1);
         endif;
         $cssVersionSuffix = AdminSettings::getCssVersionSuffix($this->db, $this->appConfig);
+        $serviceWorkerVersion = $this->getServiceWorkerVersion();
         ?>
 <!DOCTYPE html>
 <html>
@@ -471,7 +473,8 @@ class LoginHandler
     <link 
         rel="stylesheet"
         type="text/css"
-        href="css/style<?php echo htmlspecialchars($cssVersionSuffix, ENT_QUOTES, 'UTF-8'); ?>.css"
+        href="css/style<?php echo htmlspecialchars($cssVersionSuffix, ENT_QUOTES, 'UTF-8'); ?>.css?v=<?php
+            echo htmlspecialchars($serviceWorkerVersion, ENT_QUOTES, 'UTF-8'); ?>"
     >
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>
@@ -549,6 +552,7 @@ class LoginHandler
     private function renderLoginErrorPage($message, $delaySeconds, $redirectUrl = null)
     {
         $cssver = AdminSettings::getCssVersionSuffix($this->db, $this->appConfig);
+        $serviceWorkerVersion = $this->getServiceWorkerVersion();
         $safeTitle = htmlspecialchars($this->siteTitle, ENT_QUOTES, 'UTF-8');
         $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
         $delay = (int) $delaySeconds;
@@ -568,7 +572,8 @@ class LoginHandler
     >
     <title><?php echo $safeTitle; ?> - login</title>
     <link rel='manifest' href='/manifest.json' />
-    <link rel='stylesheet' type='text/css' href='css/style<?php echo $cssver; ?>.css'>
+    <link rel='stylesheet' type='text/css' href='css/style<?php echo $cssver; ?>.css?v=<?php
+        echo htmlspecialchars($serviceWorkerVersion, ENT_QUOTES, 'UTF-8'); ?>'>
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
 </head>
 <body id='loginbody' class='body'>
@@ -579,6 +584,26 @@ class LoginHandler
     </body>
     </html>
         <?php
+    }
+
+    private function getServiceWorkerVersion(): string
+    {
+        $versionFile = APP_ROOT . '/VERSION';
+        $serviceWorkerVersion = 'v6';
+
+        if (file_exists($versionFile)) :
+            $serviceWorkerVersion = trim((string) file_get_contents($versionFile));
+            if ($serviceWorkerVersion === '') :
+                $this->message->logMessage('[DEBUG]', "Service worker version empty; defaulting to v6");
+                $serviceWorkerVersion = 'v6';
+            else :
+                $this->message->logMessage('[DEBUG]', "Service worker version loaded: $serviceWorkerVersion");
+            endif;
+        else :
+            $this->message->logMessage('[DEBUG]', "Service worker version file missing; defaulting to v6");
+        endif;
+
+        return $serviceWorkerVersion;
     }
 
     private function sendLockNotification($email)
