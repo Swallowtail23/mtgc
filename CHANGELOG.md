@@ -2,14 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.2-dev] - Unreleased
+## [v0.5.2] - 2026-02-02
 
-### Added
+### Added [v0.5.2]
 
 - Decks list edit mode now offers an Export action for selected decks (single or bulk zip).
 - Decks list edit mode now supports bulk deck type changes.
 
-### Changed
+### Changed [v0.5.2]
 
 - Deck export filenames now use a `{decknumber}-{deckname}.txt` format.
 - Deck import now hides the Import button until a file is selected.
@@ -17,37 +17,29 @@ All notable changes to this project will be documented in this file.
 - Decks export/delete actions now share a single selection panel.
 - Bulk deck type changes now reload the decks list after completion.
 
-### Fixed
+### Fixed [v0.5.2]
 
 - Deck imports now abort and remove newly created decks when no cards are added.
 - Decks list export/delete buttons no longer clip drop shadows.
 - Deck type updates now treat no-change updates as success.
 - Decks edit action panel now accommodates the delete button.
 
-### Security
-
--
-
-### Infrastructure
-
--
-
 ## [v0.5.1] - 2026-01-14
 
-### Added
+### Added [v0.5.1]
 
 - Deck list import button now creates decks from uploaded files, using embedded Deckname headers when present.
 - Deck list import now supports clipboard paste input.
 - Deck list edit toggle with checkbox selection for deletions.
 
-### Fixed
+### Fixed [v0.5.1]
 
 - CSS minifier now preserves custom property names inside calc expressions.
 - Deck imports now accept single-slash split card names (e.g. Moxfield) by normalizing to double slashes.
 - Deck imports now ignore CSV header rows with UTF-8 BOMs to avoid false warning entries.
 - Bootstrap direct log writes now honor configured timezone before emitting timestamps.
 
-### Infrastructure
+### Infrastructure [v0.5.1]
 
 - Updated PHPMailer to v7.0.2
 
