@@ -2,25 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.3-dev] - Unreleased
+## [v0.5.3] - 2026-02-02
 
-### Added
-
--
-
-### Changed
-
--
-
-### Fixed
-
--
-
-### Security
-
--
-
-### Infrastructure
+### Infrastructure [v0.5.3]
 
 - CSS assets now include the service worker version query string to ensure cache busting on deploy.
 
