@@ -1,9 +1,9 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
 use MTG\Cards\CardUtils;
+use PHPUnit\Framework\TestCase;
 
-class SymbolReplaceTest extends TestCase
+class SymbolReplaceFontTest extends TestCase
 {
     public function testReplacesBasicManaSymbols()
     {
@@ -41,11 +41,8 @@ class SymbolReplaceTest extends TestCase
         $this->assertSame($expected, CardUtils::symbolReplaceFont($input));
     }
 
-    public function testPoundAndHashAreHandled()
+    public function testNullInputReturnsNull()
     {
-        $input = 'Line£With#Hash';
-        $expected = 'Line<br>WithHash';
-
-        $this->assertSame($expected, CardUtils::symbolReplaceFont($input));
+        $this->assertNull(CardUtils::symbolReplaceFont(null));
     }
 }

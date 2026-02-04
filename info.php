@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.27
-Date:        02/02/26
+Version:     2.28
+Date:        04/02/26
 Name:        info.php
 Purpose:     Site information page.
 Notes:       {none}
@@ -65,8 +65,9 @@ require APP_ROOT . '/includes/menu.php';
         Website design &copy; <?php echo $copyright;?><br>
         The information presented on this site about Magic: The Gathering is copyrighted by Wizards of the Coast.<br>
         This website is not produced, endorsed, supported, or affiliated with Wizards of the Coast.<br>
-        Thanks to Andrew Gioia for his Keyrune project (<a target='_blank'
-            href='https://keyrune.andrewgioia.com/'>https://keyrune.andrewgioia.com/</a>)<br><br>
+        Thanks to Andrew Gioia for his Keyrune and Mana Icons projects (<a target='_blank'
+            href='https://keyrune.andrewgioia.com/'>https://keyrune.andrewgioia.com/</a>, <a target='_blank'
+            href='https://mana.andrewgioia.com/'>https://mana.andrewgioia.com/</a>)<br><br>
         <h2 id='h2'>Privacy and security</h2>
         This app stores the following information:
         <ul>

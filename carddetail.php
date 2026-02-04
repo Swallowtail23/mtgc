@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.48
-Date:        02/02/26
+Version:     22.52
+Date:        04/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -94,6 +94,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
         href="css/style<?php echo $cssver?>.css?v=<?php echo $serviceWorkerVersion; ?>"
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
+    <link href="//cdn.jsdelivr.net/npm/mana-font@latest/css/mana.min.css" rel="stylesheet" type="text/css" />
     <?php include APP_ROOT . '/includes/googlefonts.php';?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">
@@ -175,7 +176,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     cmc,
                     artist,
                     flavor,
-                    color,
                     color_identity,
                     generatedmana,
                     number,
@@ -188,7 +188,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     f1_manacost,
                     f1_type,
                     f1_ability,
-                    f1_colour,
                     f1_artist,
                     f1_flavor,
                     f1_power,
@@ -201,7 +200,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     f2_manacost,
                     f2_type,
                     f2_ability,
-                    f2_colour,
                     f2_artist,
                     f2_flavor,
                     f2_power,
@@ -297,30 +295,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             $card_lang_uc = strtoupper($card_lang);
             $card_primary = $row['primary_card'];
 
-            if ($row['color'] !== null) :
-                $card_colour = CardUtils::colourFunction($row['color'], $msg);
-            else :
-                    $card_colour = '';
-            endif;
-            if ($row['f1_colour'] !== null) :
-                $f1_colour = CardUtils::colourFunction($row['f1_colour'], $msg);
-            else :
-                    $f1_colour = '';
-            endif;
-            if ($row['f2_colour'] !== null) :
-                $f2_colour = CardUtils::colourFunction($row['f2_colour'], $msg);
-            else :
-                    $f2_colour = '';
-            endif;
-            if ($card_colour !== '') :
-                $colour = $card_colour;
-            elseif ($f1_colour !== '') :
-                    $colour = $f1_colour;
-            elseif ($f2_colour !== '') :
-                    $colour = $f2_colour;
-            else :
-                    $colour = '';
-            endif;
             if ($row['f2_ability'] !== null) :
                 $flipability = $row['f2_ability'];
             endif;
@@ -487,7 +461,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 $namehtml = $row['name'];
                 $row['name'] = htmlentities($row['name'], ENT_QUOTES, "UTF-8");
                 $row['number'] = htmlentities($row['number'], ENT_QUOTES, "UTF-8");
-                $colour = (isset($colour)) ? htmlentities($colour, ENT_QUOTES, "UTF-8") : '';
                 $row['type'] = (isset($row['type'])) ? htmlentities($row['type'], ENT_QUOTES, "UTF-8") : '';
                 $row['manacost'] = (isset($row['manacost'])) ? htmlentities($row['manacost'], ENT_QUOTES, "UTF-8") : '';
                 $row['cmc'] = (isset($row['cmc'])) ? htmlentities($row['cmc'], ENT_QUOTES, "UTF-8") : '';
@@ -527,6 +500,10 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 else :
                                         echo $row['name'];
                                 endif;
+                                $colourIdentity = CardUtils::colourIdentity($row['color_identity']);
+                                if ($colourIdentity !== '') :
+                                    echo ' ' . $colourIdentity;
+                                endif;
                                 ?>
                             </td>
                             <td id="carddetailset">
@@ -538,10 +515,6 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         echo "<a href='index.php?complex=yes&amp;sortBy=auto&amp;set%5B%5D=$setcode"
                                         . "&amp;lang=$card_lang'>$setname ($card_lang_uc)</a>&nbsp;";
                                     endif; ?>
-                            </td>
-                            <td id="carddetaillogo">
-                                    <?php
-                                    echo "<img style='height: 25px' alt='image' src=images/" . $colour . "_s.png>"; ?>
                             </td>
                         </tr>
                         <tr>
@@ -1118,7 +1091,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $manacost = CardUtils::symbolReplace($row['f1_manacost']);
+                                $manacost = CardUtils::symbolReplaceFont($row['f1_manacost']);
                                 if ($manacost !== null and $manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
@@ -1132,7 +1105,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplace($row['f1_ability']);
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($row['f1_ability']);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
@@ -1146,13 +1119,13 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                             else :
-                                $manacost = CardUtils::symbolReplace($row['manacost']);
+                                $manacost = CardUtils::symbolReplaceFont($row['manacost']);
                                 if ($manacost !== '') :
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
                                 if ($row['ability'] != '') :
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplace($row['ability']);
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($row['ability']);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['type'], 'reature') !== false) :
@@ -1326,7 +1299,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 echo "<h3>Adventure: </h3>";
                                 echo "<b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplaceFont($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1352,7 +1325,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             elseif ($row['layout'] === 'split' or $row['layout'] === 'flip') :
                                 echo "<br><b>Name: </b>" . $row['f2_name'];
                                 echo "<br>";
-                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplaceFont($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -1366,7 +1339,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = CardUtils::symbolReplace($flipability);
+                                    $flipability = CardUtils::symbolReplaceFont($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;
@@ -2144,7 +2117,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         $source = $rulingrow['source'];
                                     endif;
                                     $ruling = $ruling . $newdate . ": "
-                                        . CardUtils::symbolReplace($rulingrow['comment'])
+                                        . CardUtils::symbolReplaceFont($rulingrow['comment'])
                                         . " (" . $source . ")<br>";
                                 endwhile;
                                 $ruling = TextHelper::autoLink(
@@ -2234,7 +2207,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         echo "<br>";
                                     endif;
                                 endif;
-                                $flipmanacost = CardUtils::symbolReplace($row['f2_manacost']);
+                                $flipmanacost = CardUtils::symbolReplaceFont($row['f2_manacost']);
                                 if ($flipmanacost !== null and $flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
@@ -2248,7 +2221,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability !== null and $flipability != '') :
-                                    $flipability = CardUtils::symbolReplace($flipability);
+                                    $flipability = CardUtils::symbolReplaceFont($flipability);
                                     echo "<b>Abilities: </b>" . $flipability;
                                     echo "<br>";
                                 endif;

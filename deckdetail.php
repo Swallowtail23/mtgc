@@ -60,6 +60,7 @@ $uniquecard_ref = [];
         echo $serviceWorkerVersion; ?>"
     >
     <link href="//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css" rel="stylesheet" type="text/css" />
+        <link href="//cdn.jsdelivr.net/npm/mana-font@latest/css/mana.min.css" rel="stylesheet" type="text/css" />
     <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
     <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script type="text/javascript">

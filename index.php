@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.78
-Date:        02/02/26
+Version:     14.79
+Date:        04/02/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -326,6 +326,8 @@ $selectAll = "SELECT
                 f2_ability,
                 f2_name,
                 manacost,
+                f1_manacost,
+                f2_manacost,
                 layout,
                 p1_component,
                 p2_component,
@@ -422,6 +424,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
             type="text/css"
             href="css/style<?php echo $cssver ?>.css?v=<?php echo $serviceWorkerVersion; ?>"
         >
+        <link href="//cdn.jsdelivr.net/npm/mana-font@latest/css/mana.min.css" rel="stylesheet" type="text/css" />
         <?php include APP_ROOT . '/includes/googlefonts.php'; ?>
         <script src="/js/jquery.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
         <script type="text/javascript">
@@ -959,20 +962,22 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                                 </td>
                                 <?php
                                 if (isset($row['manacost']) and !empty($row['manacost'])) :
-                                    $manac = CardUtils::symbolReplace($row['manacost']);
+                                    $manac = CardUtils::symbolReplaceFont($row['manacost']);
+                                elseif (isset($row['f1_manacost']) and !empty($row['f1_manacost'])) :
+                                    $manac = CardUtils::symbolReplaceFont($row['f1_manacost']);
                                 else :
                                     $manac = null;
                                 endif;
                                 if (isset($row['ability']) and !empty($row['ability'])) :
-                                    $ability = CardUtils::symbolReplace($row['ability']);
+                                    $ability = CardUtils::symbolReplaceFont($row['ability']);
                                     $msg->logMessage('[DEBUG]', "Ability: $ability");
                                 endif;
                                 if (isset($row['f1_ability']) and !empty($row['f1_ability'])) :
-                                    $f1Ability = CardUtils::symbolReplace($row['f1_ability']);
+                                    $f1Ability = CardUtils::symbolReplaceFont($row['f1_ability']);
                                     $msg->logMessage('[DEBUG]', "F1 Ability: $f1Ability");
                                 endif;
                                 if (isset($row['f2_ability']) and !empty($row['f2_ability'])) :
-                                    $f2Ability = CardUtils::symbolReplace($row['f2_ability']);
+                                    $f2Ability = CardUtils::symbolReplaceFont($row['f2_ability']);
                                     $msg->logMessage('[DEBUG]', "F2 Ability: $f2Ability");
                                 endif;
                                 ?>
@@ -1219,7 +1224,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             if ($manaCostRaw === '' or $manaCostRaw === '0' or $manaCostRaw === '{0}') :
                                 $manaCostDisplay = '0';
                             else :
-                                $manaCostDisplay = CardUtils::symbolReplace($manaCostRaw);
+                                $manaCostDisplay = CardUtils::symbolReplaceFont($manaCostRaw);
                             endif;
                             $cardTypeRaw = $row['type'] ?? '';
                             if ($cardTypeRaw === '' && !empty($row['f1_type'])) :

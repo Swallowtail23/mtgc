@@ -6,15 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
--
+- Added CardUtils::colourIdentity for Mana Icons color indicator output.
 
 ### Changed
 
--
+- All pages now render mana and rules symbols using Mana Icons font replacements.
+- Colour identity now renders the colorless icon when no colours are present.
+- Card detail now shows colour identity in the title row.
+- Colour identity icons now use the displayed colour combination for aria labels.
+- Card detail no longer shows the color pip logo in the header.
+- Colourless colour-identity icon now renders without the cost ring.
+- Deck detail colour identity now uses Mana Icons with ms-2x scaling.
+- Fixed missing CardUtils import in the deck detail colour identity fragment.
 
 ### Fixed
 
--
+- Double-sided cards not displaying mana cost on index "List" view
 
 ### Security
 
@@ -22,7 +29,8 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Added PHPUnit coverage for Mana Icons font replacement output.
+- Added PHPUnit coverage for colourIdentity.
 
 ## [v0.5.3] - 2026-02-02
 

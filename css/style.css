@@ -1,6 +1,6 @@
 /*
-Version:     2.20
-Date:        14/01/26
+Version:     2.25
+Date:        04/02/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -323,7 +323,7 @@ table
 
 #carddetailheader
 {
-    margin-top: 10px;
+    margin-top: 20px;
     margin-bottom: 10px;
     width: 85%;
     max-width: 1050px;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.32
-Date:        12/01/26
+Version:     1.34
+Date:        04/02/26
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
 Notes:       -
@@ -10,6 +10,8 @@ Author:      Simon Wilson
 Copyright:   2025 MTG Collection
 To do:       -
 */
+
+use MTG\Cards\CardUtils;
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 
@@ -35,6 +37,13 @@ $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
         else :
             $identity_title = ucfirst($cdr_colours);
         endif;
-        echo "Colour identity: <img alt='image' src=images/" . $cdr_colours . "_s.png> ($identity_title)<br>";
+        $colourIdentityIcon = '';
+        if (isset($cdr_colours_raw) && $cdr_colours_raw !== '') :
+            $colourIdentityIcon = CardUtils::colourIdentity($cdr_colours_raw);
+        endif;
+        if ($colourIdentityIcon !== '') :
+            $colourIdentityIcon = str_replace('class="ms ', 'class="ms ms-2x ', $colourIdentityIcon);
+        endif;
+        echo "Colour identity: " . $colourIdentityIcon . " ($identity_title)<br>";
     endif; ?>
 </div>
