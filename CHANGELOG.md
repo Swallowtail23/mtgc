@@ -27,6 +27,9 @@ All notable changes to this project will be documented in this file.
 - Cleaned up unused planeswalker loyalty replacement variable.
 - Removed remaining unused direction assignments in planeswalker loyalty replacement.
 - Planeswalker loyalty replacement now normalizes double spaces created by icon insertion.
+- Colour identity now exposes a shared meta helper and raw normalizer for deck logic.
+- Added brief purpose comments for new colour identity helpers and loyalty replacement.
+- Renamed colour identity normaliser to British spelling.
 
 ### Fixed
 

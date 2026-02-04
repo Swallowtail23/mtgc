@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.6
+Version:     3.9
 Date:        04/02/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
@@ -276,6 +276,74 @@ class CardUtils
         return $output;
     }
 
+    // Normalise colour identity JSON/strings into a compact raw letter sequence (e.g., WUBRG).
+    public static function normaliseColourIdentityRaw($colourIdentity, ?Message $msg = null): string
+    {
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', 'normaliseColourIdentityRaw called');
+        endif;
+
+        if ($colourIdentity === null) :
+            if ($msg !== null) :
+                $msg->logMessage('[DEBUG]', 'normaliseColourIdentityRaw received null input');
+            endif;
+            return '';
+        endif;
+
+        $raw = str_replace(['"', '[', ']', ',', ' '], '', (string) $colourIdentity);
+
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', "normaliseColourIdentityRaw output: $raw");
+        endif;
+
+        return $raw;
+    }
+
+    // Return colour identity icon + human-friendly name + raw abbreviation for display and logic.
+    public static function colourIdentityMeta($colourIdentity, ?Message $msg = null): array
+    {
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', 'colourIdentityMeta called');
+        endif;
+
+        $icon = self::colourIdentity($colourIdentity, $msg);
+        $raw = self::normaliseColourIdentityRaw($colourIdentity, $msg);
+
+        $matches = [];
+        preg_match_all('/[WUBRG]/', strtoupper($raw), $matches);
+        $unique = array_values(array_unique($matches[0] ?? []));
+        $count = count($unique);
+
+        $abbr = '';
+        if ($unique !== []) :
+            $order = ['W' => 0, 'U' => 1, 'B' => 2, 'R' => 3, 'G' => 4];
+            usort($unique, static function (string $a, string $b) use ($order): int {
+                return $order[$a] <=> $order[$b];
+            });
+            $abbr = implode('', $unique);
+        elseif ($icon !== '') :
+            $abbr = 'C';
+        endif;
+
+        if ($raw === '' && $icon !== '') :
+            $name = 'colourless';
+        else :
+            $name = self::colourFunction($colourIdentity, $msg);
+        endif;
+
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', "colourIdentityMeta name: $name, abbr: $abbr");
+        endif;
+
+        return [
+            'icon' => $icon,
+            'name' => $name,
+            'abbr' => $abbr,
+            'count' => $count
+        ];
+    }
+
+    // Replace planeswalker loyalty cost prefixes (e.g., +1:, -7:, 0:) with Mana Icons glyphs.
     public static function planeswalkerLoyaltyReplace(?string $str, ?Message $msg = null): ?string
     {
         if ($msg !== null) :

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.46
-Date:        13/01/26
+Version:     1.47
+Date:        04/02/26
 Name:        ajaxdeckcard.php
 Purpose:     AJAX actions for deck card updates.
 Notes:       -
@@ -12,6 +12,7 @@ To do:       -
 */
 
 use MTG\Auth\SessionManager;
+use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
 use MTG\Core\Http\AjaxResponse;
@@ -280,10 +281,8 @@ if ($action === 'maintoside' && $sideqty > 0) :
             )
             and (strpos($card_type, 'Phenomenon') === false)
         ) :
-            $colour_id = count_chars(
-                str_replace(array('"', '[', ']', ',', ' '), '', $detailRow['color_identity']),
-                3
-            );
+            $colour_id_raw = CardUtils::normaliseColourIdentityRaw($detailRow['color_identity']);
+            $colour_id = count_chars($colour_id_raw, 3);
             $colour_id_array = str_split($colour_id);
             $card_colour_mismatch = '';
             foreach ($colour_id_array as $value) :

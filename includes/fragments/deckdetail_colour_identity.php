@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.34
+Version:     1.35
 Date:        04/02/26
 Name:        deckdetail_colour_identity.php
 Purpose:     Deck detail colour identity fragment.
@@ -32,15 +32,16 @@ $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
     endif;
 
     if (in_array($decktype, $rulesCommanderDeckTypes) && $hasCommanderColours === true) :
-        if ($cdr_colours == 'five') :
+        $colourIdentityMeta = CardUtils::colourIdentityMeta($cdr_colours_raw ?? '', $msg ?? null);
+        $identity_title = $colourIdentityMeta['name'];
+        if ($identity_title === 'five') :
             $identity_title = 'All';
+        elseif ($identity_title === 'colourless' || $identity_title === '') :
+            $identity_title = 'Colourless';
         else :
-            $identity_title = ucfirst($cdr_colours);
+            $identity_title = ucfirst($identity_title);
         endif;
-        $colourIdentityIcon = '';
-        if (isset($cdr_colours_raw) && $cdr_colours_raw !== '') :
-            $colourIdentityIcon = CardUtils::colourIdentity($cdr_colours_raw);
-        endif;
+        $colourIdentityIcon = $colourIdentityMeta['icon'];
         if ($colourIdentityIcon !== '') :
             $colourIdentityIcon = str_replace('class="ms ', 'class="ms ms-2x ', $colourIdentityIcon);
         endif;

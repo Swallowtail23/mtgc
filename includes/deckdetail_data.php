@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.11
-Date:        11/01/26
+Version:     2.12
+Date:        04/02/26
 Name:        deckdetail_data.php
 Purpose:     Deck detail data calculations for fragments and page rendering.
 Notes:       -
@@ -403,7 +403,6 @@ if (isset($cdrSet) and $cdrSet === true) :
     if ($i > 0 and $cdr_colours == '[""]') :
         $cdr_colours = '["C"]';
     endif;
-    $cdr_colours = CardUtils::colourFunction($cdr_colours, $msg);
 else :
     $cdr_colours_raw = $cdr_colours = "";
 endif;

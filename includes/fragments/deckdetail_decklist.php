@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     2.16
-Date:        12/01/26
+Version:     2.17
+Date:        04/02/26
 Name:        deckdetail_decklist.php
 Purpose:     Deck detail main/sideboard list fragment.
 Notes:       -
@@ -11,6 +11,7 @@ Copyright:   2025 MTG Collection
 To do:       -
 */
 
+use MTG\Cards\CardUtils;
 use MTG\Cards\DeckManager;
 use MTG\Cards\ImageManager;
 
@@ -568,10 +569,8 @@ endif;
                                 $illegal_tag = '';
                             endif;
                             if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
-                                $colour_id = count_chars(
-                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
-                                    3
-                                );
+                                $colour_id_raw = CardUtils::normaliseColourIdentityRaw($row['color_identity']);
+                                $colour_id = count_chars($colour_id_raw, 3);
                                 $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
@@ -886,10 +885,8 @@ endif;
                                 $illegal_tag = '';
                             endif;
                             if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
-                                $colour_id = count_chars(
-                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
-                                    3
-                                );
+                                $colour_id_raw = CardUtils::normaliseColourIdentityRaw($row['color_identity']);
+                                $colour_id = count_chars($colour_id_raw, 3);
                                 $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
@@ -1173,10 +1170,8 @@ endif;
                                 $illegal_tag = '';
                             endif;
                             if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
-                                $colour_id = count_chars(
-                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
-                                    3
-                                );
+                                $colour_id_raw = CardUtils::normaliseColourIdentityRaw($row['color_identity']);
+                                $colour_id = count_chars($colour_id_raw, 3);
                                 $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
@@ -1526,10 +1521,8 @@ endif;
                                 $illegal_tag = '';
                             endif;
                             if (in_array($decktype, $rulesCommanderDeckTypes) and $illegal_tag == '') :
-                                $colour_id = count_chars(
-                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
-                                    3
-                                );
+                                $colour_id_raw = CardUtils::normaliseColourIdentityRaw($row['color_identity']);
+                                $colour_id = count_chars($colour_id_raw, 3);
                                 $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
@@ -1851,10 +1844,8 @@ endif;
                                 and $illegal_tag == ''
                                 and !$isPlanePhenomenon
                             ) :
-                                $colour_id = count_chars(
-                                    str_replace(array('"', '[', ']', ',', ' '), '', $row['color_identity']),
-                                    3
-                                );
+                                $colour_id_raw = CardUtils::normaliseColourIdentityRaw($row['color_identity']);
+                                $colour_id = count_chars($colour_id_raw, 3);
                                 $msg->logMessage('[DEBUG]', "Card's colour identity is $colour_id");
                                 $colour_id_array = str_split($colour_id);
                                 $card_colour_mismatch = '';
