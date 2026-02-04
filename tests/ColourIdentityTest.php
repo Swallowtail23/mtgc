@@ -52,6 +52,24 @@ class ColourIdentityTest extends TestCase
         $this->assertSame($expected, CardUtils::colourIdentity('["U","B","R","G"]'));
     }
 
+    public function testFourColourReturnsMissingUIndicator()
+    {
+        $expected = '<i class="ms ms-ci ms-ci-4 ms-ci-brgw" aria-label="BRGW" role="img"></i>';
+        $this->assertSame($expected, CardUtils::colourIdentity('["W","B","R","G"]'));
+    }
+
+    public function testFourColourReturnsMissingBIndicator()
+    {
+        $expected = '<i class="ms ms-ci ms-ci-4 ms-ci-rgwu" aria-label="RGWU" role="img"></i>';
+        $this->assertSame($expected, CardUtils::colourIdentity('["W","U","R","G"]'));
+    }
+
+    public function testFourColourReturnsMissingRIndicator()
+    {
+        $expected = '<i class="ms ms-ci ms-ci-4 ms-ci-gwub" aria-label="GWUB" role="img"></i>';
+        $this->assertSame($expected, CardUtils::colourIdentity('["W","U","B","G"]'));
+    }
+
     public function testFiveColourReturnsWubrgIndicator()
     {
         $expected = '<i class="ms ms-ci ms-ci-5 ms-ci-wubrg" aria-label="WUBRG" role="img"></i>';

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.52
+Version:     22.55
 Date:        04/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -1105,7 +1105,11 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($row['f1_ability']);
+                                    $abilityText = $row['f1_ability'];
+                                    if ($row['f1_type'] !== null and strpos($row['f1_type'], 'laneswalker') !== false) :
+                                        $abilityText = CardUtils::planeswalkerLoyaltyReplace($abilityText, $msg);
+                                    endif;
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($abilityText);
                                     echo "<br>";
                                 endif;
                                 if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
@@ -1125,7 +1129,11 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if ($row['ability'] != '') :
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($row['ability']);
+                                    $abilityText = $row['ability'];
+                                    if ($row['type'] !== null and strpos($row['type'], 'laneswalker') !== false) :
+                                        $abilityText = CardUtils::planeswalkerLoyaltyReplace($abilityText, $msg);
+                                    endif;
+                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($abilityText);
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['type'], 'reature') !== false) :
@@ -1313,7 +1321,18 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    echo "<b>Abilities: </b>" . $flipability;
+                                    $flipabilityText = $flipability;
+                                    if (
+                                        isset($row['f2_type'])
+                                        and strpos($row['f2_type'], 'laneswalker') !== false
+                                    ) :
+                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
+                                            $flipabilityText,
+                                            $msg
+                                        );
+                                    endif;
+                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
+                                    echo "<b>Abilities: </b>" . $flipabilityText;
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['f2_type'], 'reature') !== false) :
@@ -1339,8 +1358,18 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability != '') :
-                                    $flipability = CardUtils::symbolReplaceFont($flipability);
-                                    echo "<b>Abilities: </b>" . $flipability;
+                                    $flipabilityText = $flipability;
+                                    if (
+                                        isset($row['f2_type'])
+                                        and strpos($row['f2_type'], 'laneswalker') !== false
+                                    ) :
+                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
+                                            $flipabilityText,
+                                            $msg
+                                        );
+                                    endif;
+                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
+                                    echo "<b>Abilities: </b>" . $flipabilityText;
                                     echo "<br>";
                                 endif;
                                 if (strpos($row['f2_type'], 'reature') !== false) :
@@ -2221,8 +2250,18 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<br>";
                                 endif;
                                 if (isset($flipability) and $flipability !== null and $flipability != '') :
-                                    $flipability = CardUtils::symbolReplaceFont($flipability);
-                                    echo "<b>Abilities: </b>" . $flipability;
+                                    $flipabilityText = $flipability;
+                                    if (
+                                        $row['f2_type'] !== null
+                                        and strpos($row['f2_type'], 'laneswalker') !== false
+                                    ) :
+                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
+                                            $flipabilityText,
+                                            $msg
+                                        );
+                                    endif;
+                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
+                                    echo "<b>Abilities: </b>" . $flipabilityText;
                                     echo "<br>";
                                 endif;
                                 if ($row['f2_type'] !== null and strpos($row['f2_type'], 'reature') !== false) :

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     2.7
+Version:     3.6
 Date:        04/02/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
@@ -254,6 +254,15 @@ class CardUtils
                 'urg' => 'gur',
             ];
             $class = $triMap[$key] ?? $key;
+        elseif ($count === 4) :
+            $fourMap = [
+                'wubg' => 'gwub',
+                'wurg' => 'rgwu',
+                'wbrg' => 'brgw',
+                'wubr' => 'wubr',
+                'ubrg' => 'ubrg',
+            ];
+            $class = $fourMap[$key] ?? $key;
         endif;
 
         $label = strtoupper($class);
@@ -262,6 +271,56 @@ class CardUtils
 
         if ($msg !== null) :
             $msg->logMessage('[DEBUG]', "colourIdentity output: $output");
+        endif;
+
+        return $output;
+    }
+
+    public static function planeswalkerLoyaltyReplace(?string $str, ?Message $msg = null): ?string
+    {
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', 'planeswalkerLoyaltyReplace called');
+        endif;
+
+        if ($str === null) :
+            if ($msg !== null) :
+                $msg->logMessage('[DEBUG]', 'planeswalkerLoyaltyReplace received null input');
+            endif;
+            return null;
+        endif;
+
+        $normalized = str_replace(
+            ['âˆ’', '−', '–', '—', '‑', '‒', '−', '�'],
+            '-',
+            $str
+        );
+        $output = preg_replace_callback(
+            '/([+-]?)(\\d+):/',
+            static function (array $matches): string {
+                $sign = $matches[1];
+                $number = ltrim($matches[2], '0');
+                if ($number === '') :
+                    $number = '0';
+                endif;
+                if ($sign === '+') :
+                    $label = '+' . $number;
+                    $classes = 'ms ms-loyalty-up ms-loyalty-' . $number;
+                elseif ($sign === '-') :
+                    $label = '-' . $number;
+                    $classes = 'ms ms-loyalty-down ms-loyalty-' . $number;
+                else :
+                    $label = $number;
+                    $classes = 'ms ms-loyalty-zero ms-loyalty-0';
+                endif;
+                return '<i class="' . $classes . '" aria-label="' . $label . '" role="img"></i> ';
+            },
+            $normalized
+        );
+
+        $output = preg_replace('/\\s{2,}/', ' ', $output);
+
+        if ($msg !== null) :
+            $msg->logMessage('[DEBUG]', 'planeswalkerLoyaltyReplace output generated');
         endif;
 
         return $output;

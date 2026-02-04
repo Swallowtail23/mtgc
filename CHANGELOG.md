@@ -18,6 +18,15 @@ All notable changes to this project will be documented in this file.
 - Colourless colour-identity icon now renders without the cost ring.
 - Deck detail colour identity now uses Mana Icons with ms-2x scaling.
 - Fixed missing CardUtils import in the deck detail colour identity fragment.
+- Colour identity now maps four-colour combos to Mana Icons class ordering.
+- Planeswalker abilities now render loyalty up/down icons for +/− values in card detail.
+- Planeswalker loyalty icons now render for zero and Unicode minus values.
+- Planeswalker loyalty icons now handle replacement-character minus values.
+- Planeswalker loyalty icons now handle UTF-8 garbled minus sequences.
+- Planeswalker loyalty replacement now normalizes all minus variants before matching.
+- Cleaned up unused planeswalker loyalty replacement variable.
+- Removed remaining unused direction assignments in planeswalker loyalty replacement.
+- Planeswalker loyalty replacement now normalizes double spaces created by icon insertion.
 
 ### Fixed
 
