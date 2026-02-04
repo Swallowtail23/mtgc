@@ -2,13 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.4] - 2026-02-02
+## [v0.5.5-dev] - Unreleased
 
 ### Added
 
-- Added CardUtils::colourIdentity for Mana Icons color indicator output.
+-
 
 ### Changed
+
+-
+
+### Fixed
+
+-
+
+### Security
+
+-
+
+### Infrastructure
+
+-
+
+## [v0.5.4] - 2026-02-02
+
+### Added [v0.5.4]
+
+- Added CardUtils::colourIdentity for Mana Icons color indicator output.
+
+### Changed [v0.5.4]
 
 - All pages now render mana and rules symbols using Mana Icons font replacements.
 - Colour identity now renders the colorless icon when no colours are present.
@@ -20,11 +42,11 @@ All notable changes to this project will be documented in this file.
 - Planeswalker abilities now render loyalty up/down icons for +/− values in card detail.
 - Colour identity now exposes a shared meta helper and raw normalizer for deck logic.
 
-### Fixed
+### Fixed [v0.5.4]
 
 - Double-sided cards not displaying mana cost on index "List" view
 
-### Infrastructure
+### Infrastructure [v0.5.4]
 
 - Added PHPUnit coverage for Mana Icons font replacement output.
 - Added PHPUnit coverage for colourIdentity.
