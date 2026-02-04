@@ -10,11 +10,16 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- FX refresh now runs asynchronously and shows an updating state for missing rates.
+- Deck detail now uses session FX values when rendering deck value.
+- FX refresh now updates only targeted fragments instead of reloading the full page.
+- Missing cached FX rates now log as NOTICE instead of ERROR.
+- FX refresh now logs when targeted DOM updates are triggered.
 
 ### Fixed
 
--
+- Long-running FX and price refresh AJAX calls now release the session lock before external requests.
+- Deck hero image now resets or advances when the current hero card is removed.
 
 ### Security
 

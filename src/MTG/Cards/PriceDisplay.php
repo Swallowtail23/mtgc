@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.4
-Date:        11/01/26
+Version:     1.5
+Date:        04/02/26
 Name:        PriceDisplay.php
 Purpose:     Build price values and HTML for card detail pricing displays.
 Notes:       -
@@ -122,9 +122,16 @@ class PriceDisplay
         return $prices;
     }
 
-    public static function renderTable(array $prices, $fx, $targetCurrency): string
-    {
+    public static function renderTable(
+        array $prices,
+        $fx,
+        $targetCurrency,
+        $fxPending = false,
+        $fxMissing = false
+    ): string {
         ob_start();
+        $fxUpdating = ($fxPending === true && $fxMissing === true);
+        $fxUpdatingLabel = '<span class="fx-pending">Updating</span>';
         if ($prices['normalprice'] === false and $prices['foilprice'] === false and $prices['etchprice'] === false) :
             ?>
             <table id='tcgplayer' width="100%">
@@ -159,9 +166,13 @@ class PriceDisplay
                     </td>
                     <td class="buycell mid">
                         <?php
-                        echo ($fx === true)
-                            ? $prices['normalprice'] . " ({$prices['localnormal']})"
-                            : $prices['normalprice'];
+                        if ($fx === true) :
+                            echo $prices['normalprice'] . " ({$prices['localnormal']})";
+                        elseif ($fxUpdating === true) :
+                            echo $prices['normalprice'] . " ({$fxUpdatingLabel})";
+                        else :
+                            echo $prices['normalprice'];
+                        endif;
                         ?>
                     </td>
                 </tr>
@@ -173,9 +184,13 @@ class PriceDisplay
                     </td>
                     <td class="buycell mid">
                         <?php
-                        echo ($fx === true)
-                            ? $prices['foilprice'] . " ({$prices['localfoil']})"
-                            : $prices['foilprice'];
+                        if ($fx === true) :
+                            echo $prices['foilprice'] . " ({$prices['localfoil']})";
+                        elseif ($fxUpdating === true) :
+                            echo $prices['foilprice'] . " ({$fxUpdatingLabel})";
+                        else :
+                            echo $prices['foilprice'];
+                        endif;
                         ?>
                     </td>
                 </tr>
@@ -187,9 +202,13 @@ class PriceDisplay
                     </td>
                     <td class="buycell mid">
                         <?php
-                        echo ($fx === true)
-                            ? $prices['etchprice'] . " ({$prices['localetched']})"
-                            : $prices['etchprice'];
+                        if ($fx === true) :
+                            echo $prices['etchprice'] . " ({$prices['localetched']})";
+                        elseif ($fxUpdating === true) :
+                            echo $prices['etchprice'] . " ({$fxUpdatingLabel})";
+                        else :
+                            echo $prices['etchprice'];
+                        endif;
                         ?>
                     </td>
                 </tr>

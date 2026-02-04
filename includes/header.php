@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.78
-Date:        13/01/26
+Version:     1.81
+Date:        05/02/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -21,6 +21,111 @@ endif;
 <script>
     window.mtgAjaxConfig = window.mtgAjaxConfig || {};
     window.mtgAjaxConfig.csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
+</script>
+<?php if (isset($sessionUser)) :
+    $fxPending = $sessionUser->fxPending();
+    $fxMissing = $sessionUser->fxMissing();
+    $fxCurrency = $sessionUser->currency();
+    $fxEnabled = $sessionUser->fxEnabled();
+    ?>
+<script>
+    window.mtgFxConfig = {
+        pending: <?php echo json_encode($fxPending); ?>,
+        missing: <?php echo json_encode($fxMissing); ?>,
+        currency: <?php echo json_encode($fxCurrency); ?>,
+        enabled: <?php echo json_encode($fxEnabled); ?>
+    };
+</script>
+<?php endif; ?>
+<script>
+    $(function() {
+        if (!window.mtgFxConfig || window.mtgFxConfig.pending !== true) {
+            return;
+        }
+        var csrfToken = (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken)
+            ? window.mtgAjaxConfig.csrfToken
+            : '';
+        var updateUnavailable = function() {
+            $('.fx-pending').text('FX unavailable');
+        };
+        var refreshCardDetailPrice = function() {
+            var $priceBlock = $('#priceblock');
+            if (!$priceBlock.length) {
+                return;
+            }
+            var cardId = $priceBlock.data('cardid');
+            if (!cardId) {
+                return;
+            }
+            $.ajax({
+                url: '/ajax/ajaxcardprice.php',
+                type: 'POST',
+                data: { cardid: cardId, csrf_token: csrfToken, fx_refresh: 1 },
+                dataType: 'json',
+                success: function(response) {
+                    if (!response || response.success !== true) {
+                        return;
+                    }
+                    if (response.price_html) {
+                        $priceBlock.html(response.price_html);
+                    }
+                    if (response.tcg_link) {
+                        $('#tcgplayerlink')
+                            .attr('href', response.tcg_link)
+                            .attr('data-loading', '0')
+                            .text('TCGPlayer')
+                            .attr('style', '');
+                    }
+                }
+            });
+        };
+        var refreshCollectionValue = function() {
+            if (!$('#collection-content').length) {
+                return;
+            }
+            $.ajax({
+                url: '/ajax/ajaxcollectionvalue.php',
+                method: 'GET',
+                data: { csrf_token: csrfToken, fx_refresh: 1 },
+                dataType: 'json'
+            }).done(function(data) {
+                if (data && data.success && data.html) {
+                    $('#collection-content').html(data.html);
+                }
+            });
+        };
+        var refreshDeckValue = function() {
+            if (!$('#deck-value-fragment').length) {
+                return;
+            }
+            if (typeof refreshDeckFragments !== 'function') {
+                return;
+            }
+            refreshDeckFragments({
+                fragments: ['deck_value'],
+                refreshImages: false,
+                fxRefresh: true
+            });
+        };
+        $.ajax({
+            type: "POST",
+            url: "/ajax/ajaxfxrefresh.php",
+            data: { csrf_token: csrfToken },
+            cache: false,
+            success: function(response) {
+                if (response && response.success) {
+                    refreshCardDetailPrice();
+                    refreshCollectionValue();
+                    refreshDeckValue();
+                } else {
+                    updateUnavailable();
+                }
+            },
+            error: function() {
+                updateUnavailable();
+            }
+        });
+    });
 </script>
 <script>
     $(function() {

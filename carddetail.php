@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.55
+Version:     22.56
 Date:        04/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -42,6 +42,8 @@ $admin                      = $sessionUser->adminLevel();
 $mytable                    = $sessionUser->table();
 $userEmail                  = $sessionUser->email();
 $fx                         = $sessionUser->fxEnabled();
+$fxPending                  = $sessionUser->fxPending();
+$fxMissing                  = $sessionUser->fxMissing();
 $targetCurrency             = $sessionUser->currency();
 $rate                       = $sessionUser->rate();
 $groupInOut                 = $sessionUser->groupInOut();
@@ -1618,13 +1620,24 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         </td>
                                     </tr> <?php
 
+                                    $fxUpdating = ($fxPending === true && $fxMissing === true);
+                                    $fxUpdatingLabel = '<span class="fx-pending">Updating</span>';
+
                                     if ($normalprice !== false) : ?>
                                     <tr>
                                         <td class="buycellleft">
                                             Normal
                                         </td>
                                         <td class="buycell mid">
-                                            <?= ($fx === true) ? $normalprice . " ($localnormal)" : $normalprice; ?>
+                                            <?php
+                                            if ($fx === true) :
+                                                echo $normalprice . " ($localnormal)";
+                                            elseif ($fxUpdating === true) :
+                                                echo $normalprice . " ($fxUpdatingLabel)";
+                                            else :
+                                                echo $normalprice;
+                                            endif;
+                                            ?>
                                         </td>
                                     </tr> <?php
                                     endif;
@@ -1632,23 +1645,39 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     if ($foilprice !== false) : ?>
                                     <tr>
                                         <td class="buycellleft">
-                                            Foil
-                                        </td>
-                                        <td class="buycell mid">
-                                            <?= ($fx === true) ? $foilprice . " ($localfoil)" : $foilprice; ?>
-                                        </td>
-                                    </tr> <?php
+                                        Foil
+                                    </td>
+                                    <td class="buycell mid">
+                                        <?php
+                                        if ($fx === true) :
+                                            echo $foilprice . " ($localfoil)";
+                                        elseif ($fxUpdating === true) :
+                                            echo $foilprice . " ($fxUpdatingLabel)";
+                                        else :
+                                            echo $foilprice;
+                                        endif;
+                                        ?>
+                                    </td>
+                                </tr> <?php
                                     endif;
 
                                     if ($etchprice !== false) :?>
                                     <tr>
                                         <td class="buycellleft">
-                                            Etched
-                                        </td>
-                                        <td class="buycell mid">
-                                            <?= ($fx === true) ? $etchprice . " ($localetched)" : $etchprice; ?>
-                                        </td>
-                                    </tr> <?php
+                                        Etched
+                                    </td>
+                                    <td class="buycell mid">
+                                        <?php
+                                        if ($fx === true) :
+                                            echo $etchprice . " ($localetched)";
+                                        elseif ($fxUpdating === true) :
+                                            echo $etchprice . " ($fxUpdatingLabel)";
+                                        else :
+                                            echo $etchprice;
+                                        endif;
+                                        ?>
+                                    </td>
+                                </tr> <?php
                                     endif; ?>
                                 </table> <?php
                             endif;?>

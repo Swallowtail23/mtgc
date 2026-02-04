@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.20
-Date:        13/01/26
+Version:     1.23
+Date:        05/02/26
 Name:        ajaxcardprice.php
 Purpose:     Async card price refresh for card detail.
 Notes:       -
@@ -56,13 +56,25 @@ else :
     $mytable                    = $ctx->sessionUser()->table();
     $userEmail                  = $ctx->sessionUser()->email();
     $fx                         = $ctx->sessionUser()->fxEnabled();
+    $fxPending                  = $ctx->sessionUser()->fxPending();
+    $fxMissing                  = $ctx->sessionUser()->fxMissing();
     $targetCurrency             = $ctx->sessionUser()->currency();
     $rate                       = $ctx->sessionUser()->rate();
+
+    if (session_status() === PHP_SESSION_ACTIVE) :
+        session_write_close();
+        $msg->logMessage('[DEBUG]', 'ajaxcardprice.php: Session closed before Scryfall call');
+    endif;
 
     $cardUUID = isset($_POST['cardid']) ? Validation::validUUID($_POST['cardid'], $appConfig) : false;
     if ($cardUUID === false) :
         $msg->logMessage('[ERROR]', "Invalid card UUID provided");
         AjaxResponse::json(['error' => 'Invalid UUID provided'], 400);
+    endif;
+
+    $fxRefresh = filter_input(INPUT_POST, 'fx_refresh', FILTER_VALIDATE_INT) === 1;
+    if ($fxRefresh === true) :
+        $msg->logMessage('[DEBUG]', "FX refresh triggered card price update for $cardUUID");
     endif;
 
     $msg->logMessage('[DEBUG]', "Async price refresh for card $cardUUID");
@@ -125,7 +137,7 @@ else :
         $rate,
         $appConfig
     );
-    $priceHtml = PriceDisplay::renderTable($priceData, $fx, $targetCurrency);
+    $priceHtml = PriceDisplay::renderTable($priceData, $fx, $targetCurrency, $fxPending, $fxMissing);
     $msg->logMessage('[DEBUG]', "Price HTML built for $cardUUID");
 
     AjaxResponse::json(PriceDisplay::buildAjaxResponse($priceHtml, $tcg_buy_uri));

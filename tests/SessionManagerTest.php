@@ -83,6 +83,13 @@ class RateDbStub
 
 class SessionManagerTest extends TestCase
 {
+    private function getPrivateProperty($object, string $property)
+    {
+        $ref = new ReflectionProperty($object, $property);
+        $ref->setAccessible(true);
+        return $ref->getValue($object);
+    }
+
     private function resetRequestState(): void
     {
         $_SESSION = [];
@@ -101,6 +108,37 @@ class SessionManagerTest extends TestCase
         $rate = $manager->getRateForCurrencyPair('usd_eur');
 
         $this->assertSame('1.25', $rate);
+        $this->assertFalse($this->getPrivateProperty($manager, 'fxPending'));
+        $this->assertFalse($this->getPrivateProperty($manager, 'fxMissing'));
+    }
+
+    public function testGetRateForCurrencyPairUsesStaleCachedRateAndFlagsPending()
+    {
+        $class = getRealSessionManagerClass();
+        $stmt = new RateStmtStub('1.10', time() - 4001);
+        $db = new RateDbStub($stmt);
+        $manager = new $class($db, [], $GLOBALS['appConfig']);
+
+        $rate = $manager->getRateForCurrencyPair('usd_eur');
+
+        $this->assertSame('1.10', $rate);
+        $this->assertTrue($this->getPrivateProperty($manager, 'fxPending'));
+        $this->assertFalse($this->getPrivateProperty($manager, 'fxMissing'));
+    }
+
+    public function testGetRateForCurrencyPairMissingFlagsPending()
+    {
+        $class = getRealSessionManagerClass();
+        $stmt = new RateStmtStub('1.10', time());
+        $stmt->num_rows = 0;
+        $db = new RateDbStub($stmt);
+        $manager = new $class($db, [], $GLOBALS['appConfig']);
+
+        $rate = $manager->getRateForCurrencyPair('usd_eur');
+
+        $this->assertNull($rate);
+        $this->assertTrue($this->getPrivateProperty($manager, 'fxPending'));
+        $this->assertTrue($this->getPrivateProperty($manager, 'fxMissing'));
     }
 
     public function testGenerateCsrfTokenStoresToken()

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.23
-Date:        13/01/26
+Version:     1.25
+Date:        05/02/26
 Name:        ajaxcollectionvalue.php
 Purpose:     Recalculate collection values asynchronously for the profile page.
 Notes:       -
@@ -58,8 +58,15 @@ $user                       = $ctx->sessionUser()->id();
 $mytable                    = $ctx->sessionUser()->table();
 $userEmail                  = $ctx->sessionUser()->email();
 $fx                         = $ctx->sessionUser()->fxEnabled();
+$fxPending                  = $ctx->sessionUser()->fxPending();
+$fxMissing                  = $ctx->sessionUser()->fxMissing();
 $targetCurrency             = $ctx->sessionUser()->currency();
 $rate                       = $ctx->sessionUser()->rate();
+
+$fxRefresh = filter_input(INPUT_GET, 'fx_refresh', FILTER_VALIDATE_INT) === 1;
+if ($fxRefresh === true) :
+    $msg->logMessage('[DEBUG]', "FX refresh triggered collection value update for table $mytable");
+endif;
 
 $msg->logMessage('[DEBUG]', "ajaxcollectionvalue.php called by $userEmail for table $mytable");
 
@@ -85,6 +92,8 @@ if ($localCurrency !== null && $rateUsed !== null && $stats['value_local'] !== n
     $b = new \NumberFormatter('en-US', \NumberFormatter::CURRENCY);
     $b->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $localCurrency);
     $localValueStr = $b->format($stats['value_local']);
+elseif ($fxPending === true && $fxMissing === true) :
+    $localValueStr = '<span class="fx-pending">Updating</span>';
 endif;
 
 ob_start();

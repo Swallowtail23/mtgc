@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.3
-Date:        26/12/25
+Version:     1.4
+Date:        05/02/26
 Name:        deckdetail_deck_value.php
 Purpose:     Deck detail deck value fragment.
 Notes:       -
@@ -19,6 +19,9 @@ $hasDeckValue = $show_mana_block;
         $currencyFormatter = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
         $formattedDeckValue = $currencyFormatter->format($deckvalue);
         $msg->logMessage('[DEBUG]', "Formatted value = $formattedDeckValue");
+        $fxUpdating = (isset($fxPending) && $fxPending === true && isset($fxMissing) && $fxMissing === true);
+        $fxUpdatingLabel = '<span class="fx-pending">Updating</span>';
+
         if (isset($rate) and $rate > 0) :
             $localFormatter = new \NumberFormatter("en-US", \NumberFormatter::CURRENCY);
             $localFormatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $targetCurrency);
@@ -27,6 +30,8 @@ $hasDeckValue = $show_mana_block;
         endif;
         if (isset($rate) and $rate > 0) :
             echo "<h4>Deck value</h4>" . $formattedDeckValue . " ($localvalue)";
+        elseif ($fxUpdating === true) :
+            echo "<h4>Deck value</h4>" . $formattedDeckValue . " ($fxUpdatingLabel)";
         else :
             echo "<h4>Deck value</h4>" . $formattedDeckValue;
         endif;

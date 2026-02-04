@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.30
-Date:        13/01/26
+Version:     1.31
+Date:        05/02/26
 Name:        ajaxdeckfragments.php
 Purpose:     AJAX fragment updates for deck detail derived sections.
 Notes:       -
@@ -70,6 +70,7 @@ endif;
 
 $deckNumber = filter_input(INPUT_POST, 'decknumber', FILTER_SANITIZE_NUMBER_INT);
 $requestedFragments = isset($_POST['fragments']) ? (array) $_POST['fragments'] : [];
+$fxRefresh = filter_input(INPUT_POST, 'fx_refresh', FILTER_VALIDATE_INT) === 1;
 
 if ($deckNumber === null) :
     $response['error'] = 'Missing required parameters';
@@ -81,6 +82,9 @@ $msg->logMessage(
     '[DEBUG]',
     "Deck fragment request fragments: " . implode(', ', array_map('strval', $requestedFragments))
 );
+if ($fxRefresh === true) :
+    $msg->logMessage('[DEBUG]', "FX refresh triggered deck fragment update for deck $deckNumber");
+endif;
 
 // AJAX session context
 require_once APP_ROOT . '/ajax/ajax_session.php';

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        12/01/26
+Version:     1.1
+Date:        04/02/26
 Name:        SessionUser.php
 Purpose:     Typed session user accessor for secure pages.
 Notes:       -
@@ -82,6 +82,16 @@ class SessionUser
     {
         $rate = $this->data['rate'] ?? 0.0;
         return is_numeric($rate) ? (float) $rate : 0.0;
+    }
+
+    public function fxPending(): bool
+    {
+        return (bool) ($this->data['fx_pending'] ?? false);
+    }
+
+    public function fxMissing(): bool
+    {
+        return (bool) ($this->data['fx_missing'] ?? false);
     }
 
     public function email(): string

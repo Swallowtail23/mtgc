@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     25.98
-Date:        02/02/26
+Version:     25.99
+Date:        05/02/26
 Name:        deckdetail.php
 Purpose:     Deck detail page.
 Notes:       {none}
@@ -32,6 +32,11 @@ $copyright                  = (string) $appConfig->general('copyright', '');
 $user                       = $sessionUser->id();
 $userEmail                  = $sessionUser->email();
 $mytable                    = $sessionUser->table();
+$fx                         = $sessionUser->fxEnabled();
+$fxPending                  = $sessionUser->fxPending();
+$fxMissing                  = $sessionUser->fxMissing();
+$targetCurrency             = $sessionUser->currency();
+$rate                       = $sessionUser->rate();
 
 $rulesCommanderDeckTypes = $gameRules->getArray('commander_decktypes');
 $rulesValidTypes = $gameRules->getArray('validtypes');

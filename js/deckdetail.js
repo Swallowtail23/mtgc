@@ -1,6 +1,6 @@
 /*
-Version:     2.86
-Date:        13/01/26
+Version:     2.88
+Date:        05/02/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -219,6 +219,74 @@ function preloadFirstDeckImage() {
     }
 }
 
+function syncDecksideHeroWithDecklist(reason) {
+    var heroImg = document.getElementById('deckside-hero-img');
+    if (!heroImg) {
+        return;
+    }
+    var $deckImages = $('#decklist-fragment img.deckcardimg');
+    if (!$deckImages.length) {
+        setDecksideHeroRotatable(false);
+        setDecksideHeroImage('/images/back.jpg', { cardId: '', backSrc: '' });
+        setDecksideHeroLink('#');
+        decksideHeroAutoLoaded = false;
+        if (window.console && console.debug) {
+            console.debug('[DEBUG] Deckside hero reset to back (no cards).', {
+                reason: reason || 'unknown'
+            });
+        }
+        return;
+    }
+    var currentId = heroImg.dataset.cardid || '';
+    if (currentId) {
+        var $match = $deckImages.filter(function () {
+            return String($(this).data('cardid') || '') === String(currentId);
+        }).first();
+        if ($match.length) {
+            return;
+        }
+    }
+    var $firstImg = $deckImages.first();
+    var src = sanitizeImageUrl($firstImg.data('front-src') || $firstImg.attr('src'));
+    var backSrc = $firstImg.attr('data-back-src') || '';
+    var link = $firstImg.closest('a').attr('href') || '#';
+    setDecksideHeroRotatable(false);
+    if (src && src.indexOf('/images/back.jpg') === -1) {
+        setDecksideHeroImage(src, {
+            cardId: $firstImg.data('cardid') || '',
+            backSrc: backSrc
+        });
+        setDecksideHeroLink(link);
+        decksideHeroAutoLoaded = true;
+        if (window.console && console.debug) {
+            console.debug('[DEBUG] Deckside hero updated from deck list.', {
+                reason: reason || 'unknown'
+            });
+        }
+        return;
+    }
+    $firstImg.off('load.decksideHeroSync').on('load.decksideHeroSync', function () {
+        var loadedSrc = sanitizeImageUrl($firstImg.data('front-src') || this.src);
+        if (!loadedSrc || loadedSrc.indexOf('/images/back.jpg') !== -1) {
+            return;
+        }
+        setDecksideHeroImage(loadedSrc, {
+            cardId: $firstImg.data('cardid') || '',
+            backSrc: backSrc
+        });
+        setDecksideHeroLink(link);
+        decksideHeroAutoLoaded = true;
+        if (window.console && console.debug) {
+            console.debug('[DEBUG] Deckside hero updated after image load.', {
+                reason: reason || 'unknown'
+            });
+        }
+    });
+    setDecksideHeroImage('/images/back.jpg', { cardId: '', backSrc: '' });
+    setDecksideHeroLink('#');
+    decksideHeroAutoLoaded = false;
+}
+
 function maybeLoadDecksideHeroOnResize() {
     if (window.innerWidth < 1890) {
         return;
@@ -298,8 +366,8 @@ function setDecksideHeroImage(src, options) {
     }
     var safeSrc = sanitizeImageUrl(src) || '/images/back.jpg';
     var opts = options || {};
-    if (opts.cardId) {
-        heroImg.dataset.cardid = opts.cardId;
+    if (Object.prototype.hasOwnProperty.call(opts, 'cardId')) {
+        heroImg.dataset.cardid = opts.cardId || '';
     }
     if (Object.prototype.hasOwnProperty.call(opts, 'backSrc')) {
         heroImg.dataset.backSrc = sanitizeImageUrl(opts.backSrc) || '';
@@ -1203,6 +1271,7 @@ function applyFragmentResponse(response, options) {
         updateDeckTotals();
         updateRandomDrawState();
         updateDecksideHeroFlipButton();
+        syncDecksideHeroWithDecklist('fragment update');
         preloadFirstDeckImage();
         updateRandomDrawPlacement();
         if (randomDrawEnabled) {
@@ -1211,6 +1280,7 @@ function applyFragmentResponse(response, options) {
         if (postImport) {
             decksideHeroAutoLoaded = false;
             updateDecksideHeroFlipButton();
+            syncDecksideHeroWithDecklist('post import');
             preloadFirstDeckImage();
             updateRandomDrawPlacement();
             if (randomDrawEnabled) {
@@ -2425,6 +2495,7 @@ function refreshDeckFragments(options) {
         var newCardIds = [];
         var requestedFragments = null;
         var replaceDecklist = true;
+        var fxRefresh = false;
         if (options) {
             refreshImages = options.refreshImages !== false;
             if (Array.isArray(options.newCardIds)) {
@@ -2434,6 +2505,7 @@ function refreshDeckFragments(options) {
                 requestedFragments = options.fragments;
                 replaceDecklist = requestedFragments.indexOf('decklist') !== -1;
             }
+            fxRefresh = options.fxRefresh === true;
         }
         var fragments = requestedFragments || getFragmentList();
         $.ajax({
@@ -2443,6 +2515,7 @@ function refreshDeckFragments(options) {
             data: {
                 decknumber: deckNumber,
                 fragments: fragments,
+                fx_refresh: fxRefresh ? 1 : 0,
                 expected_version: lastAppliedVersion,
                 csrf_token: csrfToken
             }

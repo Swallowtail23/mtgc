@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.12
-Date:        13/01/26
+Version:     1.14
+Date:        04/02/26
 Name:        SessionManager.php
 Purpose:     Check login class, get user details or force session destroy and return to login.php.
 Notes:       -
@@ -26,6 +26,8 @@ class SessionManager
     private $session;
     private $fxAPI;
     private $fxLocal;
+    private $fxPending = false;
+    private $fxMissing = false;
     private $sessionArray = [];
     private $message;
     private $appConfig;
@@ -179,7 +181,7 @@ class SessionManager
                 $rate = $this->getRateForCurrencyPair($currencies);
                 if ($rate === null) :
                     $fx = false;
-                    $this->message->logMessage('[DEBUG]', "FX conversion disabled (2)");
+                    $this->message->logMessage('[DEBUG]', "FX conversion disabled (rate is null)");
                 else :
                     $this->message->logMessage('[DEBUG]', "Conversion rate for $currencies is $rate");
                 endif;
@@ -197,7 +199,9 @@ class SessionManager
                 'table' => $mytable,
                 'fx' => $fx,
                 'currency' => $targetCurrency,
-                'rate' => $rate
+                'rate' => $rate,
+                'fx_pending' => $this->fxPending,
+                'fx_missing' => $this->fxMissing
             ]);
         endif;
         return $this->sessionArray;
@@ -232,6 +236,8 @@ class SessionManager
         $stmt->store_result();
 
         $rate = null; // Default rate value
+        $this->fxPending = false;
+        $this->fxMissing = false;
 
         if ($stmt->num_rows > 0) :
             /** @var float|string|null $existingRate */
@@ -244,33 +250,42 @@ class SessionManager
             $age = time() - $lastUpdateTime;
             $this->message->logMessage('[DEBUG]', "Existing rate age is $age");
             if ($lastUpdateTime === null or $age > 3600) :
-                $rate = $this->updateFxRate($currencies, $existingRate);
-                if ($rate === null) :
+                $this->fxPending = true;
+                if ($existingRate === null || $existingRate === '') :
+                    $this->fxMissing = true;
+                    $rate = null;
                     $this->message->logMessage(
-                        '[ERROR]',
-                        "API has not provided a rate and no cached rate available for $currencies"
+                        '[NOTICE]',
+                        "No cached rate available for $currencies"
                     );
-                    return $rate;
                 else :
-                    $this->message->logMessage('[DEBUG]', "Updating... new rate is $rate");
+                    $rate = $existingRate;
+                    $this->message->logMessage('[DEBUG]', "Using stale cached rate $rate");
                 endif;
             else :
                 $rate = $existingRate; // Keep the existing rate from the database
                 $this->message->logMessage('[DEBUG]', "Not updating... rate is $rate");
             endif;
         elseif ($stmt->num_rows === 0) :
-            $rate = $this->updateFxRate($currencies);
-            if ($rate === null) :
-                $this->message->logMessage('[ERROR]', "API has not provided a rate");
-                return $rate;
-            else :
-                $this->message->logMessage('[DEBUG]', "New currency pair... rate is $rate");
-            endif;
+            $this->fxPending = true;
+            $this->fxMissing = true;
+            $rate = null;
+            $this->message->logMessage('[NOTICE]', "No cached rate available for $currencies");
         endif;
 
         $stmt->close();
 
         return $rate;
+    }
+
+    public function refreshFxRate($currencies)
+    {
+        if ($this->fxAPI === null || $this->fxAPI === '' || $this->fxAPI === 'disabled') :
+            $this->message->logMessage('[ERROR]', 'FX refresh requested without API key');
+            return null;
+        endif;
+
+        return $this->updateFxRate($currencies);
     }
 
     private function updateFxRate($currencies, $existingRate = null)
