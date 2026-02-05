@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
--
+- Prevented duplicate-key fatal errors in `scryfalljson` during card detail/API refresh races by using an upsert for Scryfall JSON writes.
 
 ### Security
 

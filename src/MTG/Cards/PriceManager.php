@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.7
-Date:        11/01/26
+Version:     1.8
+Date:        05/02/26
 Name:        PriceManager.php
 Purpose:     Price management class.
 Notes:       -
@@ -477,7 +477,11 @@ class PriceManager
                 $price_foil = 0;
                 $price_etched = 0;
             endif;
-            $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri) VALUES (?,?,?)';
+            $query = 'INSERT INTO scryfalljson (id, jsonupdatetime, tcg_buy_uri)
+                VALUES (?,?,?)
+                ON DUPLICATE KEY UPDATE
+                jsonupdatetime = VALUES(jsonupdatetime),
+                tcg_buy_uri = VALUES(tcg_buy_uri)';
             $stmt = $this->db->prepare($query);
             if ($stmt === false) :
                 throw new \Exception(
@@ -499,7 +503,7 @@ class PriceManager
             else :
                 $this->message->logMessage(
                     '[DEBUG]',
-                    "Scryfall API by $this->userEmail, new data written for $cardId: Insert ID: "
+                    "Scryfall API by $this->userEmail, upsert completed for $cardId: Insert ID: "
                         . $stmt->insert_id
                 );
             endif;
