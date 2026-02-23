@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.28
-Date:        13/01/26
+Version:     1.29
+Date:        23/02/26
 Name:        ajaxcardrefreshimg.php
 Purpose:     PHP script to refresh card image
 Notes:       -
@@ -68,11 +68,25 @@ else :
     try {
         $obj = new ImageManager($db, $appConfig, $gameRules);
         $newImage = $obj->refreshImage($cardUUID);
+        $success = isset($newImage['success']) ? (bool) $newImage['success'] : false;
+        $front = isset($newImage['front']) ? $newImage['front'] : '';
+        $back = isset($newImage['back']) ? $newImage['back'] : '';
 
-        if ($newImage === 'success') :
-            AjaxResponse::json(['success' => true]);
+        if ($success) :
+            $msg->logMessage(
+                '[DEBUG]',
+                "Image refresh returned for $cardUUID. Front: $front; Back: $back"
+            );
+            AjaxResponse::json([
+                'success' => true,
+                'front' => $front,
+                'back' => $back
+            ]);
         else :
-            AjaxResponse::json(['success' => false], 400);
+            AjaxResponse::json([
+                'success' => false,
+                'message' => 'Image refresh failed'
+            ], 400);
         endif;
     } catch (Exception $e) {
         throw new Exception("[ERROR] ajaxcardrefreshimg.php: " . $e->getMessage());

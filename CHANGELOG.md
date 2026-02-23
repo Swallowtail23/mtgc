@@ -14,6 +14,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Index/card images now force an async refresh with a cache-busted swap after image load errors.
+- Image load error handling now deduplicates in-flight async refreshes per card to avoid duplicate race requests.
+- Index/card image rendering now treats unreadable local images as missing so placeholders render instead of 404s.
+- Card detail manual image refresh now forces a swap to the refreshed card image instead of remaining on the placeholder.
+- Set image reload now correctly counts `ImageManager::refreshImage()` failures after the return contract changed to arrays.
 - Prevented duplicate-key fatal errors in `scryfalljson` during card detail/API refresh races by using an upsert for Scryfall JSON writes.
 
 ### Security
@@ -22,7 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Added deterministic ImageManager test coverage for unreadable local image handling (placeholder fallback).
+- Added PHPUnit coverage for `ImageManager::refreshImage()` success/failure array contract to prevent caller regressions.
 
 ## [v0.5.5] - 2026-02-05
 

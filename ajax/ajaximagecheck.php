@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.23
-Date:        12/01/26
+Version:     1.24
+Date:        23/02/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
 Notes:       Lightweight head/refresh; relies on ImageManager.
@@ -69,6 +69,10 @@ try {
             . ($result['front_changed'] ? 'yes' : 'no')
             . " back_changed="
             . ($result['back_changed'] ? 'yes' : 'no')
+    );
+    $msg->logMessage(
+        '[DEBUG]',
+        "Async image refresh paths for $cardUUID: front={$result['front']} back={$result['back']}"
     );
 
     AjaxResponse::json([

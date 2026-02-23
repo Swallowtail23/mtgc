@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.25
-Date:        13/01/26
+Version:     1.26
+Date:        23/02/26
 Name:        setimgreload.php
 Purpose:     Trigger reload all images for a set
 Notes:       -
@@ -49,7 +49,14 @@ if (isset($argv[1])) :
         while ($stmt->fetch()) :
             $msg->logMessage('[DEBUG]', "Image #$iteration/$num_rows");
             $refresh_result = $obj->refreshImage($cardId);
-            if ($refresh_result === 'failure') :
+            $refreshSuccess = false;
+            if (is_array($refresh_result) && isset($refresh_result['success'])) :
+                $refreshSuccess = (bool) $refresh_result['success'];
+            elseif ($refresh_result === 'success') :
+                $refreshSuccess = true;
+            endif;
+
+            if (!$refreshSuccess) :
                 $fail_count++;
                 $msg->logMessage('[ERROR]', "Function 'refreshImage' failed");
             else :
