@@ -1,6 +1,6 @@
 /*
-Version:     1.6
-Date:        10/01/26
+Version:     1.7
+Date:        23/02/26
 Name:        carddetail.js
 Purpose:     Card detail page JS handlers.
 Notes:       -
@@ -69,20 +69,36 @@ To do:       -
                     return;
                 }
 
-                if ($('.mainimg').length) {
-                    var currentSrc = $('.mainimg').attr('src');
-                    var newSrcMain = updateUrlWithTimestamp(currentSrc);
-                    $('.mainimg').fadeOut(100, function () {
-                        $(this).attr('src', newSrcMain).fadeIn(100);
-                    });
+                var frontSrc = response.front || $('.mainimg').attr('src') || '';
+                var backSrc = response.back || $('.backimg').attr('src') || '';
+                var swapper = window.mtgSwapImageWithFade || null;
+
+                if ($('.mainimg').length && frontSrc) {
+                    var newSrcMain = updateUrlWithTimestamp(frontSrc);
+                    if (swapper) {
+                        $('.mainimg').each(function () {
+                            $(this).attr('data-front-src', frontSrc);
+                            swapper($(this), newSrcMain, true);
+                        });
+                    } else {
+                        $('.mainimg').fadeOut(100, function () {
+                            $(this).attr('src', newSrcMain).fadeIn(100);
+                        });
+                    }
                 }
 
-                if ($('.backimg').length) {
-                    var currentBackSrc = $('.backimg').attr('src');
-                    var newSrcBack = updateUrlWithTimestamp(currentBackSrc);
-                    $('.backimg').fadeOut(100, function () {
-                        $(this).attr('src', newSrcBack).fadeIn(100);
-                    });
+                if ($('.backimg').length && backSrc) {
+                    var newSrcBack = updateUrlWithTimestamp(backSrc);
+                    if (swapper) {
+                        $('.backimg').each(function () {
+                            $(this).attr('data-back-src', backSrc);
+                            swapper($(this), newSrcBack, true);
+                        });
+                    } else {
+                        $('.backimg').fadeOut(100, function () {
+                            $(this).attr('src', newSrcBack).fadeIn(100);
+                        });
+                    }
                 }
             },
             error: function () {

@@ -1,6 +1,6 @@
 /*
-Version:     1.16
-Date:        10/01/26
+Version:     1.18
+Date:        23/02/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -14,10 +14,12 @@ To do:       -
 
     const mtgAsyncImage = window.mtgAsyncImage || {};
     const mtgAsyncImageSeen = window.mtgAsyncImageSeen || {};
+    const mtgAsyncImageErrorInFlight = window.mtgAsyncImageErrorInFlight || {};
     const mtgImageCacheName = window.mtgImageCacheName || 'mtg-images-v1';
 
     window.mtgAsyncImage = mtgAsyncImage;
     window.mtgAsyncImageSeen = mtgAsyncImageSeen;
+    window.mtgAsyncImageErrorInFlight = mtgAsyncImageErrorInFlight;
 
     function getAjaxCsrfToken() {
         if (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken) {
@@ -169,6 +171,7 @@ To do:       -
         }
         const opts = options || {};
         const useFaces = opts.useFaces === true;
+        const forceSwap = opts.forceSwap === true;
         const onFlipReady = opts.onFlipReady || null;
 
         const frontChanged = isChangedFlag(response.front_changed);
@@ -178,7 +181,7 @@ To do:       -
         const hasFrontImage = response.front && response.front.indexOf('cardimg') !== -1;
         const shouldRevealFront = placeholderVisible && hasFrontImage;
 
-        if (frontChanged || shouldRevealFront) {
+        if (frontChanged || shouldRevealFront || forceSwap) {
             const frontSrc = hasFrontImage ? response.front : '/images/back.jpg';
             const frontBustUrl = frontSrc + '?t=' + Date.now();
             if (useFaces) {
@@ -202,7 +205,7 @@ To do:       -
             }
         }
 
-        if (backChanged && response.back) {
+        if ((backChanged || forceSwap) && response.back) {
             const backBustUrl = response.back + '?t=' + Date.now();
             if (useFaces) {
                 const backTargets = $('img[data-cardid="' + cardId + '"][data-face="back"]');
@@ -319,6 +322,46 @@ To do:       -
             }
         });
     });
+
+    document.addEventListener('error', function (event) {
+        const target = event.target;
+        if (!target || target.tagName !== 'IMG') {
+            return;
+        }
+        const $img = $(target);
+        const cardId = $img.data('cardid');
+        if (!cardId) {
+            return;
+        }
+        if (mtgAsyncImageErrorInFlight[cardId]) {
+            return;
+        }
+        if ($img.data('errorRefresh')) {
+            return;
+        }
+        const src = $img.attr('src') || '';
+        if (src.indexOf('/images/back.jpg') !== -1 || src.indexOf('data:') === 0) {
+            return;
+        }
+        $img.data('errorRefresh', 1);
+        mtgAsyncImageErrorInFlight[cardId] = true;
+        if (window.console && console.debug) {
+            console.debug('[DEBUG] Image load error; forcing async refresh for', cardId);
+        }
+        $img.attr('src', '/images/back.jpg');
+        $.ajax({
+            url: 'ajax/ajaximagecheck.php',
+            type: 'POST',
+            data: { cardid: cardId, csrf_token: getAjaxCsrfToken() },
+            dataType: 'json',
+            success: function (response) {
+                handleImageRefresh(cardId, response, { forceSwap: true, useFaces: true });
+            },
+            complete: function () {
+                mtgAsyncImageErrorInFlight[cardId] = false;
+            }
+        });
+    }, true);
 
     window.mtgSwapImageWithFade = swapImageWithFade;
     window.mtgRefreshImageCache = refreshImageCache;

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.16
-Date:        11/01/26
+Version:     1.20
+Date:        23/02/26
 Name:        ImageManager.php
 Purpose:     Local image management class.
 Notes:       -
@@ -84,7 +84,10 @@ class ImageManager
         endif;
 
         // Front face
-        if (!file_exists($localfile)) :
+        if (!$this->isReadable($localfile)) :
+            if ($this->fileExists($localfile)) :
+                $this->message->logMessage('[DEBUG]', "File exists but is not readable at $localfile");
+            endif;
             if ($allowFetch) :
                 $this->message->logMessage('[DEBUG]', "$localfile missing, running get image function");
                 $frontImg = $this->fetchAndStoreImage($cardImages['front'], $imgLocation, $setcode, $localfile);
@@ -93,7 +96,7 @@ class ImageManager
                 $frontImg = '/images/back.jpg';
             endif;
         else :
-            $this->message->logMessage('[DEBUG]', "File exists already at $localfile");
+            $this->message->logMessage('[DEBUG]', "File readable already at $localfile");
             $relativePath = strpos($localfile, 'cardimg');
             $frontImg = substr($localfile, $relativePath);
         endif;
@@ -105,7 +108,10 @@ class ImageManager
 
         // Back face
         if (isset($localFileB)) :
-            if (!file_exists($localFileB)) :
+            if (!$this->isReadable($localFileB)) :
+                if ($this->fileExists($localFileB)) :
+                    $this->message->logMessage('[DEBUG]', "File exists but is not readable at $localFileB");
+                endif;
                 if ($allowFetch) :
                     $this->message->logMessage('[DEBUG]', "$localFileB missing, running get image function");
                     $backImg = $this->fetchAndStoreImage($cardImages['back'], $imgLocation, $setcode, $localFileB);
@@ -113,8 +119,8 @@ class ImageManager
                     $this->message->logMessage('[DEBUG]', "$localFileB missing, using placeholder");
                     $backImg = '/images/back.jpg';
                 endif;
-            elseif (file_exists($localFileB)) :
-                $this->message->logMessage('[DEBUG]', "File exists already at $localFileB");
+            elseif ($this->isReadable($localFileB)) :
+                $this->message->logMessage('[DEBUG]', "File readable already at $localFileB");
                 $relativePath2 = strpos($localFileB, 'cardimg');
                 $backImg = substr($localFileB, $relativePath2);
             endif;
@@ -174,7 +180,11 @@ class ImageManager
         $result = $this->db->execute_query($sql, [$cardId]);
         if ($result === false) :
             restore_error_handler();
-            return 'failure';
+            return array(
+                'success' => false,
+                'front' => '',
+                'back' => ''
+            );
         else :
             $imagebackdelete = $imagedelete = '';
             $row = $result->fetch_assoc();
@@ -234,7 +244,11 @@ class ImageManager
                     . "Front: $imagedelete; Back: $imagebackdelete"
                 );
             endif;
-            return 'failure';
+            return array(
+                'success' => false,
+                'front' => '',
+                'back' => ''
+            );
         else :
             $this->message->logMessage('[DEBUG]', "Re-fetching image for $cardId");
             // $imgLocation is set in ini
@@ -243,7 +257,15 @@ class ImageManager
                 $cardId,
                 $row['layout']
             );
-            return 'success';
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Refresh image complete for $cardId. Front: {$imageFunction['front']}; Back: {$imageFunction['back']}"
+            );
+            return array(
+                'success' => true,
+                'front' => $imageFunction['front'],
+                'back' => $imageFunction['back']
+            );
         endif;
     }
 
@@ -410,6 +432,16 @@ class ImageManager
 
         $this->message->logMessage('[DEBUG]', "Image unchanged for $localPath");
         return array('path' => $currentPath, 'changed' => false);
+    }
+
+    protected function isReadable($path)
+    {
+        return is_readable($path);
+    }
+
+    protected function fileExists($path)
+    {
+        return file_exists($path);
     }
 }
 // phpcs:enable

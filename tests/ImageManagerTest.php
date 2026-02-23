@@ -18,11 +18,55 @@ class TestImageManager extends ImageManager
 {
     public $diffReturn = false;
     public $diffCalled = 0;
+    public $forceUnreadable = false;
+    public $forceExists = true;
+    public $unreadablePaths = [];
 
     public function diffImage($remoteUrl, $localFilePath)
     {
         $this->diffCalled++;
         return $this->diffReturn;
+    }
+
+    protected function isReadable($path)
+    {
+        if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
+            return false;
+        }
+        if ($this->forceUnreadable) {
+            return false;
+        }
+        return parent::isReadable($path);
+    }
+
+    protected function fileExists($path)
+    {
+        if (isset($this->unreadablePaths[$path]) && $this->unreadablePaths[$path]) {
+            return $this->forceExists;
+        }
+        if ($this->forceUnreadable) {
+            return $this->forceExists;
+        }
+        return parent::fileExists($path);
+    }
+}
+
+class TestRefreshImageManager extends ImageManager
+{
+    public $responses = [];
+    public $callCount = 0;
+
+    public function getImage($setcode, $cardId, $layout, $allowFetch = true)
+    {
+        $index = $this->callCount;
+        $this->callCount++;
+        if (!isset($this->responses[$index])) {
+            return [
+                'front' => 'error',
+                'back' => '',
+            ];
+        }
+        return $this->responses[$index];
     }
 }
 
@@ -261,5 +305,144 @@ class ImageManagerTest extends TestCase
         $this->assertSame('cardimg/abc/check-card.jpg', $result['front']);
         $this->assertSame('', $result['back']);
         $this->assertSame(1, $manager->diffCalled);
+    }
+
+    public function testGetImageUsesPlaceholderWhenFrontUnreadable()
+    {
+        $setcode = 'unr';
+        $cardId = 'unreadable-front';
+        $this->createLocalImage($setcode, $cardId, 0);
+
+        $db = new class {
+            public function execute_query($sql, $params)
+            {
+                return new class {
+                    public function fetch_array()
+                    {
+                        return [
+                            'image_uri' => 'http://example.test/front.jpg',
+                            'f1_image_uri' => null,
+                            'f2_image_uri' => null,
+                            'setcode' => 'unr',
+                            'layout' => 'normal',
+                        ];
+                    }
+                };
+            }
+        };
+
+        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
+        $manager->forceUnreadable = true;
+        $manager->forceExists = true;
+        $result = $manager->getImage($setcode, $cardId, 'normal', false);
+
+        $this->assertSame('/images/back.jpg', $result['front']);
+    }
+
+    public function testGetImageUsesPlaceholderWhenBackUnreadable()
+    {
+        $setcode = 'unb';
+        $cardId = 'unreadable-back';
+        $this->createLocalImage($setcode, $cardId, 0);
+        $backPath = $this->imgRoot . $setcode . '/' . $cardId . '_b.jpg';
+        file_put_contents($backPath, 'image-bytes');
+
+        $db = new class {
+            public function execute_query($sql, $params)
+            {
+                return new class {
+                    public function fetch_array()
+                    {
+                        return [
+                            'image_uri' => 'http://example.test/front.jpg',
+                            'f1_image_uri' => null,
+                            'f2_image_uri' => 'http://example.test/back.jpg',
+                            'setcode' => 'unb',
+                            'layout' => 'transform',
+                        ];
+                    }
+                };
+            }
+        };
+
+        $gameRules = new GameRules([
+            'twoCardDetailSections' => ['transform']
+        ]);
+
+        $manager = new TestImageManager($db, $this->appConfig, $gameRules);
+        $manager->forceExists = true;
+        $manager->unreadablePaths[$backPath] = true;
+        $result = $manager->getImage($setcode, $cardId, 'transform', false);
+
+        $this->assertSame('cardimg/unb/unreadable-back.jpg', $result['front']);
+        $this->assertSame('/images/back.jpg', $result['back']);
+    }
+
+    public function testRefreshImageReturnsFailureArrayWhenCardLookupFails()
+    {
+        $db = new class {
+            public function execute_query($sql, $params)
+            {
+                return false;
+            }
+        };
+
+        $manager = new TestImageManager($db, $this->appConfig, $this->gameRules);
+        $result = $manager->refreshImage('missing-card');
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('success', $result);
+        $this->assertFalse($result['success']);
+        $this->assertSame('', $result['front']);
+        $this->assertSame('', $result['back']);
+    }
+
+    public function testRefreshImageReturnsSuccessArrayWithRefetchedPaths()
+    {
+        $setcode = 'rsh';
+        $cardId = 'refresh-card';
+        $frontPath = $this->imgRoot . $setcode . '/' . $cardId . '.jpg';
+        $backPath = $this->imgRoot . $setcode . '/' . $cardId . '_b.jpg';
+        mkdir(dirname($frontPath), 0777, true);
+        file_put_contents($frontPath, 'old-front');
+        file_put_contents($backPath, 'old-back');
+
+        $db = new class {
+            public function execute_query($sql, $params)
+            {
+                return new class {
+                    public function fetch_assoc()
+                    {
+                        return [
+                            'id' => 'refresh-card',
+                            'setcode' => 'rsh',
+                            'layout' => 'transform',
+                        ];
+                    }
+                };
+            }
+        };
+
+        $manager = new TestRefreshImageManager($db, $this->appConfig, $this->gameRules);
+        $manager->responses = [
+            [
+                'front' => 'cardimg/rsh/refresh-card.jpg',
+                'back' => 'cardimg/rsh/refresh-card_b.jpg',
+            ],
+            [
+                'front' => 'cardimg/rsh/refresh-card.jpg',
+                'back' => 'cardimg/rsh/refresh-card_b.jpg',
+            ],
+        ];
+
+        $result = $manager->refreshImage($cardId);
+
+        $this->assertIsArray($result);
+        $this->assertTrue($result['success']);
+        $this->assertSame('cardimg/rsh/refresh-card.jpg', $result['front']);
+        $this->assertSame('cardimg/rsh/refresh-card_b.jpg', $result['back']);
+        $this->assertSame(2, $manager->callCount);
+        $this->assertFileDoesNotExist($frontPath);
+        $this->assertFileDoesNotExist($backPath);
     }
 }
