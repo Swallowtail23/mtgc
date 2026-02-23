@@ -2,7 +2,7 @@
 
 ## Test Environment
 
-- PHP: 8.2+ (8.4 in Docker), with mysqli/mbstring/intl/gd/curl.
+- PHP: 8.3+ (8.4 in Docker), with mysqli/mbstring/intl/gd/curl.
 - Database: MySQL 8+.
 - Config: `/opt/mtg/mtg_new.ini` must point to a test database and logging location.
 - PHPUnit: `vendor/bin/phpunit` (after `composer install`).
