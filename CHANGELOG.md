@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Card detail now renders `qya` (Quenya) header names with local Alcarin Tengwar webfonts from `/fonts/alcarin/`.
 
 ### Fixed
 
@@ -29,6 +29,9 @@ All notable changes to this project will be documented in this file.
 
 - Added deterministic ImageManager test coverage for unreadable local image handling (placeholder fallback).
 - Added PHPUnit coverage for `ImageManager::refreshImage()` success/failure array contract to prevent caller regressions.
+- Service worker static asset precache now includes local Alcarin Tengwar font files.
+- Added `THIRD_PARTY_LICENSES.md` with attribution/license references for Alcarin Tengwar and Andrew Gioia
+  icon fonts (Keyrune and Mana).
 
 ## [v0.5.5] - 2026-02-05
 

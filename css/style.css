@@ -1,6 +1,6 @@
 /*
-Version:     2.25
-Date:        04/02/26
+Version:     2.26
+Date:        25/02/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -28,6 +28,31 @@ body
     font-family: "Roboto", sans-serif;
     background: #e8eaf6; 
     border: 0;
+}
+
+@font-face
+{
+    font-family: "AlcarinTengwar";
+    src: url('/fonts/alcarin/AlcarinTengwar-Regular.woff2') format('woff2'),
+        url('/fonts/alcarin/AlcarinTengwar-Regular.woff') format('woff');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face
+{
+    font-family: "AlcarinTengwar";
+    src: url('/fonts/alcarin/AlcarinTengwar-Bold.woff2') format('woff2'),
+        url('/fonts/alcarin/AlcarinTengwar-Bold.woff') format('woff');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+.font-alcarin-tengwar
+{
+    font-family: "AlcarinTengwar", "Roboto Condensed", sans-serif;
 }
 
 a

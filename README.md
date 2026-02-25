@@ -12,6 +12,7 @@
 - [Configuration & Admin Settings](#configuration--admin-settings)
 - [Deck Detail Fragments](#deck-detail-fragments)
 - [Work In Progress](#work-in-progress)
+- [Third-Party Licenses](#third-party-licenses)
 - [Credits](#credits)
 
 ## Description
@@ -101,9 +102,15 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 Deck detail derived sections now refresh via server-rendered fragments. See
 `docs/deckdetail_fragments.md` for the flow, fragment list, and update guidance.
 
+## Third-Party Licenses
+
+Third-party license and attribution details are tracked in
+`THIRD_PARTY_LICENSES.md`.
+
 ## Credits
 
 - Andrew Gioia for [Keyrune](https://keyrune.andrewgioia.com/)
+- Andrew Gioia for [Mana](https://mana.andrewgioia.com/)
 - [Scryfall](https://scryfall.com) for card/set/ruling/pricing data and images
 - Wizards of the Coast for Magic: The Gathering (not affiliated)
 

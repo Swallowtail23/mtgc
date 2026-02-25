@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.56
-Date:        04/02/26
+Version:     22.58
+Date:        25/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -295,6 +295,9 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             $id = $row['cs_id'];
             $card_lang = $row['lang'];
             $card_lang_uc = strtoupper($card_lang);
+            $is_qya = ($card_lang === 'qya');
+            $qya_name_open = $is_qya ? "<span class='font-alcarin-tengwar'>" : '';
+            $qya_name_close = $is_qya ? '</span>' : '';
             $card_primary = $row['primary_card'];
 
             if ($row['f2_ability'] !== null) :
@@ -494,13 +497,14 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <td class="h2pad" id='nameheading'>
                                 <?php
                                 if (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
-                                    echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close} <i>({$row['name']})</i>";
                                 elseif ($card_lang === 'ph') :
                                         echo $row['name'];
                                 elseif ($row['printed_name'] != '' and $row['printed_name'] != $row['name']) :
-                                        echo "{$row['printed_name']} <i>({$row['name']})</i>";
+                                        echo "{$qya_name_open}{$row['printed_name']}"
+                                            . "{$qya_name_close} <i>({$row['name']})</i>";
                                 else :
-                                        echo $row['name'];
+                                        echo $qya_name_open . $row['name'] . $qya_name_close;
                                 endif;
                                 $colourIdentity = CardUtils::colourIdentity($row['color_identity']);
                                 if ($colourIdentity !== '') :
@@ -550,11 +554,11 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 <div id="minicarddetailheader"> <?php
                     echo "<h2 class = 'h2pad'>";
                 if (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
-                    echo "{$row['flavor_name']} <i>({$row['name']})</i>";
+                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close} <i>({$row['name']})</i>";
                 elseif ($row['printed_name'] != '' and $row['printed_name'] != $row['name']) :
-                        echo "{$row['printed_name']} <i>({$row['name']})</i>";
+                        echo "{$qya_name_open}{$row['printed_name']}{$qya_name_close} <i>({$row['name']})</i>";
                 else :
-                        echo $row['name'];
+                        echo $qya_name_open . $row['name'] . $qya_name_close;
                 endif;
                     echo "</h2>";
                 if ($card_primary === 1) :
