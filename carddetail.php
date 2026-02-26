@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.59
+Version:     22.68
 Date:        26/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -104,6 +104,73 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
     </script>
     <script src="/js/asyncImageRefresh.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
     <script src="/js/ajaxUpdate.js?v=<?php echo $serviceWorkerVersion; ?>"></script>
+    <script type="text/javascript">
+        function setCardTextMode(mode) {
+            var showPrinted = (mode === 'pr');
+            var oracleNodes = document.querySelectorAll('.card-toggle-oracle');
+            var printedNodes = document.querySelectorAll('.card-toggle-printed');
+            var oracleLabels = document.querySelectorAll('.card-toggle-label-oracle');
+            var printedLabels = document.querySelectorAll('.card-toggle-label-printed');
+            var toggleLinks = document.querySelectorAll('.card-text-mode-toggle');
+
+            oracleNodes.forEach(function (node) {
+                node.style.display = showPrinted ? 'none' : '';
+            });
+            printedNodes.forEach(function (node) {
+                node.style.display = showPrinted ? '' : 'none';
+            });
+            oracleLabels.forEach(function (node) {
+                node.style.display = showPrinted ? 'none' : '';
+            });
+            printedLabels.forEach(function (node) {
+                node.style.display = showPrinted ? '' : 'none';
+            });
+
+            toggleLinks.forEach(function (node) {
+                node.setAttribute('data-state', mode);
+                if (showPrinted) {
+                    node.setAttribute('title', 'Show Oracle text');
+                    node.setAttribute('aria-label', 'Show Oracle text');
+                } else {
+                    node.setAttribute('title', 'Show printed text');
+                    node.setAttribute('aria-label', 'Show printed text');
+                }
+            });
+
+            var detailsModeLabel = document.getElementById('details-mode-label');
+            if (detailsModeLabel) {
+                detailsModeLabel.textContent = showPrinted ? 'Printed' : 'Oracle';
+            }
+        }
+
+        function toggleCardText(linkObj) {
+            var state = linkObj.getAttribute('data-state') || 'en';
+            var nextState = (state === 'en') ? 'pr' : 'en';
+            setCardTextMode(nextState);
+            return false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var globalToggle = document.getElementById('global-card-text-toggle');
+            if (!globalToggle) {
+                return;
+            }
+            var toggleableSectionCount = document.querySelectorAll('.card-toggle-printed').length;
+            var hasPrintedData = (globalToggle.getAttribute('data-has-printed') === '1');
+            var detailsHeaderMode = document.getElementById('details-header-mode');
+            if (hasPrintedData || toggleableSectionCount > 0) {
+                globalToggle.style.display = 'inline-flex';
+                if (detailsHeaderMode) {
+                    detailsHeaderMode.style.display = 'inline';
+                }
+            } else {
+                globalToggle.style.display = 'none';
+                if (detailsHeaderMode) {
+                    detailsHeaderMode.style.display = 'none';
+                }
+            }
+        });
+    </script>
 </head>
 
 <body class="body">
@@ -115,8 +182,6 @@ require APP_ROOT . '/includes/overlays.php';
 require APP_ROOT . '/includes/header.php';
 require APP_ROOT . '/includes/menu.php'; //mobile menu
 ?>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
 <div id="page">
     <div id="carddetail"> <?php
     if ($cardId === false) :
@@ -171,6 +236,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     finishes,
                     promo_types,
                     type,
+                    printed_type_line,
                     power,
                     toughness,
                     loyalty,
@@ -185,11 +251,14 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     layout,
                     rarity,
                     ability,
+                    printed_text,
                     keywords,
                     f1_name,
                     f1_manacost,
                     f1_type,
+                    f1_printed_type_line,
                     f1_ability,
+                    f1_printed_text,
                     f1_artist,
                     f1_flavor,
                     f1_power,
@@ -201,7 +270,9 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     f2_name,
                     f2_manacost,
                     f2_type,
+                    f2_printed_type_line,
                     f2_ability,
+                    f2_printed_text,
                     f2_artist,
                     f2_flavor,
                     f2_power,
@@ -295,9 +366,104 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
             $id = $row['cs_id'];
             $card_lang = $row['lang'];
             $card_lang_uc = strtoupper($card_lang);
+            $has_printed_mode_data = false;
+            $printed_mode_fields = [
+                'printed_name',
+                'printed_type_line',
+                'printed_text',
+                'f1_printed_name',
+                'f1_printed_type_line',
+                'f1_printed_text',
+                'f2_printed_name',
+                'f2_printed_type_line',
+                'f2_printed_text'
+            ];
+            foreach ($printed_mode_fields as $printed_mode_field) :
+                if (
+                    isset($row[$printed_mode_field])
+                    and $row[$printed_mode_field] !== null
+                    and $row[$printed_mode_field] !== ''
+                ) :
+                    $has_printed_mode_data = true;
+                    break;
+                endif;
+            endforeach;
             $is_qya = ($card_lang === 'qya');
-            $qya_name_open = $is_qya ? "<span class='font-alcarin-tengwar'>" : '';
-            $qya_name_close = $is_qya ? '</span>' : '';
+            $is_phyrexian = ($card_lang === 'ph');
+            $name_font_class = '';
+            if ($is_qya) :
+                $name_font_class = 'font-alcarin-tengwar';
+            elseif ($is_phyrexian) :
+                $name_font_class = 'font-horizontal-phyrexian';
+            endif;
+            $name_font_open = ($name_font_class !== '') ? "<span class='{$name_font_class}'>" : '';
+            $name_font_close = ($name_font_class !== '') ? '</span>' : '';
+            $ability_font_class = $name_font_class;
+            $ability_font_open = ($ability_font_class !== '') ? "<span class='{$ability_font_class}'>" : '';
+            $ability_font_close = ($ability_font_class !== '') ? '</span>' : '';
+            $renderAbilityWithToggle = static function (
+                $englishText,
+                $printedText,
+                $typeText,
+                $toggleId
+            ) use (
+                $msg,
+                $ability_font_open,
+                $ability_font_close
+            ) {
+                if (!isset($englishText) or $englishText === '') :
+                    return '';
+                endif;
+
+                $englishOutput = $englishText;
+                if ($typeText !== null and strpos($typeText, 'laneswalker') !== false) :
+                    $englishOutput = CardUtils::planeswalkerLoyaltyReplace($englishOutput, $msg);
+                endif;
+                $englishOutput = CardUtils::symbolReplaceFont($englishOutput);
+
+                if (!isset($printedText) or $printedText === '' or $printedText === $englishText) :
+                    return "<b>Abilities (Oracle): </b>{$englishOutput}<br>";
+                endif;
+
+                $printedOutput = $printedText;
+                if ($typeText !== null and strpos($typeText, 'laneswalker') !== false) :
+                    $printedOutput = CardUtils::planeswalkerLoyaltyReplace($printedOutput, $msg);
+                endif;
+                $printedOutput = CardUtils::symbolReplaceFont($printedOutput);
+                $printedOutput = $ability_font_open . $printedOutput . $ability_font_close;
+
+                return "<b><span id='{$toggleId}-label-oracle' class='card-toggle-label-oracle'>"
+                    . "Abilities (Oracle): </span><span id='{$toggleId}-label-printed' "
+                    . "class='card-toggle-label-printed' style='display: none'>Abilities (printed): </span></b>"
+                    . "<span id='{$toggleId}-en' class='card-toggle-oracle'>{$englishOutput}</span>"
+                    . "<span id='{$toggleId}-pr' class='card-toggle-printed' style='display: none'>{$printedOutput}"
+                    . "</span><br>";
+            };
+            $renderTypeWithToggle = static function (
+                $oracleType,
+                $printedType,
+                $toggleId
+            ) use (
+                $ability_font_open,
+                $ability_font_close
+            ) {
+                if (!isset($oracleType) or $oracleType === '') :
+                    return '';
+                endif;
+
+                if (!isset($printedType) or $printedType === '' or $printedType === $oracleType) :
+                    return "<b>Type: </b>{$oracleType}<br>";
+                endif;
+
+                $printedOutput = $ability_font_open . $printedType . $ability_font_close;
+
+                return "<b><span id='{$toggleId}-label-oracle' class='card-toggle-label-oracle'>"
+                    . "Type (Oracle): </span><span id='{$toggleId}-label-printed' "
+                    . "class='card-toggle-label-printed' style='display: none'>Type (printed): </span></b>"
+                    . "<span id='{$toggleId}-en' class='card-toggle-oracle'>{$oracleType}</span>"
+                    . "<span id='{$toggleId}-pr' class='card-toggle-printed' style='display: none'>{$printedOutput}"
+                    . "</span><br>";
+            };
             $card_primary = $row['primary_card'];
 
             if ($row['f2_ability'] !== null) :
@@ -467,6 +633,17 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 $row['name'] = htmlentities($row['name'], ENT_QUOTES, "UTF-8");
                 $row['number'] = htmlentities($row['number'], ENT_QUOTES, "UTF-8");
                 $row['type'] = (isset($row['type'])) ? htmlentities($row['type'], ENT_QUOTES, "UTF-8") : '';
+                $row['printed_type_line'] = (isset($row['printed_type_line']))
+                    ? htmlentities($row['printed_type_line'], ENT_QUOTES, "UTF-8")
+                    : '';
+                $row['f1_type'] = (isset($row['f1_type'])) ? htmlentities($row['f1_type'], ENT_QUOTES, "UTF-8") : '';
+                $row['f1_printed_type_line'] = (isset($row['f1_printed_type_line']))
+                    ? htmlentities($row['f1_printed_type_line'], ENT_QUOTES, "UTF-8")
+                    : '';
+                $row['f2_type'] = (isset($row['f2_type'])) ? htmlentities($row['f2_type'], ENT_QUOTES, "UTF-8") : '';
+                $row['f2_printed_type_line'] = (isset($row['f2_printed_type_line']))
+                    ? htmlentities($row['f2_printed_type_line'], ENT_QUOTES, "UTF-8")
+                    : '';
                 $row['manacost'] = (isset($row['manacost'])) ? htmlentities($row['manacost'], ENT_QUOTES, "UTF-8") : '';
                 $row['cmc'] = (isset($row['cmc'])) ? htmlentities($row['cmc'], ENT_QUOTES, "UTF-8") : '';
                 $row['power'] = (isset($row['power'])) ? htmlentities($row['power'], ENT_QUOTES, "UTF-8") : '';
@@ -496,16 +673,21 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                         <tr>
                             <td class="h2pad" id='nameheading'>
                                 <?php
-                                if (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
-                                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close}"
+                                if (
+                                    isset($row['f1_printed_name']) and $row['f1_printed_name'] !== ''
+                                    and isset($row['f2_printed_name']) and $row['f2_printed_name'] !== ''
+                                ) :
+                                    echo "{$name_font_open}{$row['f1_printed_name']}{$name_font_close}"
+                                        . " // {$name_font_open}{$row['f2_printed_name']}{$name_font_close}"
                                         . " <i>({$row['name']})</i>";
-                                elseif ($card_lang === 'ph') :
-                                        echo $row['name'];
+                                elseif (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
+                                    echo "{$name_font_open}{$row['flavor_name']}{$name_font_close}"
+                                        . " <i>({$row['name']})</i>";
                                 elseif ($row['printed_name'] != '' and $row['printed_name'] != $row['name']) :
-                                        echo "{$qya_name_open}{$row['printed_name']}"
-                                            . "{$qya_name_close} <i>({$row['name']})</i>";
+                                    echo "{$name_font_open}{$row['printed_name']}{$name_font_close}"
+                                        . " <i>({$row['name']})</i>";
                                 else :
-                                        echo $qya_name_open . $row['name'] . $qya_name_close;
+                                        echo $name_font_open . $row['name'] . $name_font_close;
                                 endif;
                                 $colourIdentity = CardUtils::colourIdentity($row['color_identity']);
                                 if ($colourIdentity !== '') :
@@ -555,11 +737,11 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                 <div id="minicarddetailheader"> <?php
                     echo "<h2 class = 'h2pad'>";
                 if (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
-                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close} <i>({$row['name']})</i>";
+                    echo "{$name_font_open}{$row['flavor_name']}{$name_font_close} <i>({$row['name']})</i>";
                 elseif ($row['printed_name'] != '' and $row['printed_name'] != $row['name']) :
-                        echo "{$qya_name_open}{$row['printed_name']}{$qya_name_close} <i>({$row['name']})</i>";
+                        echo "{$name_font_open}{$row['printed_name']}{$name_font_close} <i>({$row['name']})</i>";
                 else :
-                        echo $qya_name_open . $row['name'] . $qya_name_close;
+                        echo $name_font_open . $row['name'] . $name_font_close;
                 endif;
                     echo "</h2>";
                 if ($card_primary === 1) :
@@ -997,7 +1179,16 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                     </div>
                     <div id="carddetailinfo">
                             <?php
-                            echo "<h3 class='shallowh3'>Details</h3>";
+                            echo "<h3 class='shallowh3'>Details"
+                                . "<span id='details-header-mode' style='display: none'> ("
+                                . "<span id='details-mode-label'>Oracle</span> "
+                                . "<a href='#' id='global-card-text-toggle' class='ability-toggle-link "
+                                . "card-text-mode-toggle' data-state='en' data-has-printed='"
+                                . ($has_printed_mode_data ? '1' : '0') . "' title='Show printed text' "
+                                . "aria-label='Show printed text' style='display: none' "
+                                . "onclick='return toggleCardText(this);'><span "
+                                . "class='material-symbols-outlined' aria-hidden='true'>swap_horiz</span></a>)"
+                                . ":</span></h3>";
 
                             if (isset($admin) and $admin == 1) :
                                 echo "<a href='admin/cards.php?cardtoedit=$lookupid'><i><i class='ss ss-$setcode "
@@ -1042,21 +1233,23 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 and $row["layout"] !== 'double_faced_token'
                             ) :
                                 // no details at card level for reversible cards
-                                if (isset($row['type']) and $row['type'] != '') :
-                                    echo "<b>Type: </b>" . $row['type'];
-                                endif;
+                                echo $renderTypeWithToggle(
+                                    $row['type'] ?? null,
+                                    $row['printed_type_line'] ?? null,
+                                    'core-type'
+                                );
                                 if (
                                     isset($card_lang)
                                     and $card_lang != ''
                                     and $card_lang != 'en'
                                     and $row['primary_card'] === 1
                                 ) :
-                                    echo "<br><b>Language: </b>" . $gameRules->getLanguageLabel($card_lang)
-                                        . " (primary print)";
+                                    echo "<b>Language: </b>" . $gameRules->getLanguageLabel($card_lang)
+                                        . " (primary print)<br>";
                                 elseif (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
-                                        echo "<br><b>Language: </b>" . $gameRules->getLanguageLabel($card_lang);
+                                        echo "<b>Language: </b>" . $gameRules->getLanguageLabel($card_lang)
+                                            . "<br>";
                                 endif;
-                                    echo "<br>";
                                     echo "<b>Rarity: </b>";
                                 if (strpos($row['rarity'], "rare") !== false) :
                                     echo "Rare";
@@ -1079,11 +1272,19 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             endif;
                             if (in_array($row["layout"], $rulesLayoutsDouble)) :
                                 if (
+                                    isset($row['f1_printed_name'])
+                                    and $row['f1_printed_name'] !== null
+                                    and $row['f1_printed_name'] !== ''
+                                ) :
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f1_printed_name']}{$name_font_close}"
+                                    . " <i>({$row['f1_name']})</i>";
+                                elseif (
                                     isset($row['f1_flavor_name'])
                                     and $row['f1_flavor_name'] !== null
                                     and $row['f1_flavor_name'] !== ''
                                 ) :
-                                    echo "<b>Name: </b>{$row['f1_flavor_name']} <i>({$row['f1_name']})</i>";
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f1_flavor_name']}{$name_font_close}"
+                                    . " <i>({$row['f1_name']})</i>";
                                 else :
                                     echo "<b>Name: </b>" . $row['f1_name'];
                                 endif;
@@ -1103,22 +1304,21 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f1_type']) and $row['f1_type'] !== null and $row['f1_type'] != '') :
-                                    echo "<b>Type: </b>" . $row['f1_type'];
-                                    echo "<br>";
-                                endif;
+                                echo $renderTypeWithToggle(
+                                    $row['f1_type'] ?? null,
+                                    $row['f1_printed_type_line'] ?? null,
+                                    'f1-type'
+                                );
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
                                     echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
-                                if ($row['f1_ability'] !== null and $row['f1_ability'] != '') :
-                                    $abilityText = $row['f1_ability'];
-                                    if ($row['f1_type'] !== null and strpos($row['f1_type'], 'laneswalker') !== false) :
-                                        $abilityText = CardUtils::planeswalkerLoyaltyReplace($abilityText, $msg);
-                                    endif;
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($abilityText);
-                                    echo "<br>";
-                                endif;
+                                echo $renderAbilityWithToggle(
+                                    $row['f1_ability'],
+                                    $row['f1_printed_text'] ?? null,
+                                    $row['f1_type'] ?? null,
+                                    'f1-ability'
+                                );
                                 if ($row['f1_type'] !== null and strpos($row['f1_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>" . $row['f1_power'] . "/" . $row['f1_toughness'];
                                     echo "<br>";
@@ -1135,14 +1335,12 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<b>Mana cost: </b>" . $manacost;
                                     echo "<br>";
                                 endif;
-                                if ($row['ability'] != '') :
-                                    $abilityText = $row['ability'];
-                                    if ($row['type'] !== null and strpos($row['type'], 'laneswalker') !== false) :
-                                        $abilityText = CardUtils::planeswalkerLoyaltyReplace($abilityText, $msg);
-                                    endif;
-                                    echo "<b>Abilities: </b>" . CardUtils::symbolReplaceFont($abilityText);
-                                    echo "<br>";
-                                endif;
+                                echo $renderAbilityWithToggle(
+                                    $row['ability'],
+                                    $row['printed_text'] ?? null,
+                                    $row['type'] ?? null,
+                                    'core-ability'
+                                );
                                 if (strpos($row['type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>" . $row['power'] . "/" . $row['toughness'];
                                     echo "<br>";
@@ -1319,29 +1517,21 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f2_type']) and $row['f2_type'] != '') :
-                                    echo "<b>Type: </b>" . $row['f2_type'];
-                                    echo "<br>";
-                                endif;
+                                echo $renderTypeWithToggle(
+                                    $row['f2_type'] ?? null,
+                                    $row['f2_printed_type_line'] ?? null,
+                                    'adventure-f2-type'
+                                );
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
                                     echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
-                                if (isset($flipability) and $flipability != '') :
-                                    $flipabilityText = $flipability;
-                                    if (
-                                        isset($row['f2_type'])
-                                        and strpos($row['f2_type'], 'laneswalker') !== false
-                                    ) :
-                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
-                                            $flipabilityText,
-                                            $msg
-                                        );
-                                    endif;
-                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
-                                    echo "<b>Abilities: </b>" . $flipabilityText;
-                                    echo "<br>";
-                                endif;
+                                echo $renderAbilityWithToggle(
+                                    $flipability ?? null,
+                                    $row['f2_printed_text'] ?? null,
+                                    $row['f2_type'] ?? null,
+                                    'adventure-f2-ability'
+                                );
                                 if (strpos($row['f2_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>"
                                     . $row['f1_power'] . "/" . $row['f2_toughness'] . "<br>";
@@ -1349,36 +1539,44 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<b>Loyalty: </b>" . $row['f2_loyalty'] . "<br>";
                                 endif;
                             elseif ($row['layout'] === 'split' or $row['layout'] === 'flip') :
-                                echo "<br><b>Name: </b>" . $row['f2_name'];
+                                if (
+                                    isset($row['f2_printed_name'])
+                                    and $row['f2_printed_name'] !== null
+                                    and $row['f2_printed_name'] !== ''
+                                ) :
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f2_printed_name']}{$name_font_close}"
+                                    . " <i>({$row['f2_name']})</i>";
+                                elseif (
+                                    isset($row['f2_flavor_name'])
+                                    and $row['f2_flavor_name'] !== null
+                                    and $row['f2_flavor_name'] !== ''
+                                ) :
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f2_flavor_name']}{$name_font_close}"
+                                    . " <i>({$row['f2_name']})</i>";
+                                else :
+                                    echo "<b>Name: </b>" . $row['f2_name'];
+                                endif;
                                 echo "<br>";
                                 $flipmanacost = CardUtils::symbolReplaceFont($row['f2_manacost']);
                                 if ($flipmanacost !== '') :
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f2_type']) and $row['f2_type'] != '') :
-                                    echo "<b>Type: </b>" . $row['f2_type'];
-                                    echo "<br>";
-                                endif;
+                                echo $renderTypeWithToggle(
+                                    $row['f2_type'] ?? null,
+                                    $row['f2_printed_type_line'] ?? null,
+                                    'splitflip-f2-type'
+                                );
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
                                     echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
-                                if (isset($flipability) and $flipability != '') :
-                                    $flipabilityText = $flipability;
-                                    if (
-                                        isset($row['f2_type'])
-                                        and strpos($row['f2_type'], 'laneswalker') !== false
-                                    ) :
-                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
-                                            $flipabilityText,
-                                            $msg
-                                        );
-                                    endif;
-                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
-                                    echo "<b>Abilities: </b>" . $flipabilityText;
-                                    echo "<br>";
-                                endif;
+                                echo $renderAbilityWithToggle(
+                                    $flipability ?? null,
+                                    $row['f2_printed_text'] ?? null,
+                                    $row['f2_type'] ?? null,
+                                    'splitflip-f2-ability'
+                                );
                                 if (strpos($row['f2_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>"
                                     . $row['f1_power'] . "/" . $row['f2_toughness'] . "<br>";
@@ -2250,11 +2448,19 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <h3 class="shallowh3">Flip details</h3>
                                 <?php
                                 if (
+                                    isset($row['f2_printed_name'])
+                                    and $row['f2_printed_name'] !== null
+                                    and $row['f2_printed_name'] !== ''
+                                ) :
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f2_printed_name']}{$name_font_close}"
+                                    . " <i>({$row['f2_name']})</i>";
+                                elseif (
                                     isset($row['f2_flavor_name'])
                                     and $row['f2_flavor_name'] !== null
                                     and $row['f2_flavor_name'] !== ''
                                 ) :
-                                    echo "<b>Name: </b>{$row['f2_flavor_name']} <i>({$row['f2_name']})</i>";
+                                    echo "<b>Name: </b>{$name_font_open}{$row['f2_flavor_name']}{$name_font_close}"
+                                    . " <i>({$row['f2_name']})</i>";
                                 else :
                                     echo "<b>Name: </b>" . $row['f2_name'];
                                 endif;
@@ -2275,29 +2481,21 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                     echo "<b>Mana cost: </b>" . $flipmanacost;
                                     echo "<br>";
                                 endif;
-                                if (isset($row['f2_type']) and $row['f2_type'] !== null and $row['f2_type'] != '') :
-                                    echo "<b>Type: </b>" . $row['f2_type'];
-                                    echo "<br>";
-                                endif;
+                                echo $renderTypeWithToggle(
+                                    $row['f2_type'] ?? null,
+                                    $row['f2_printed_type_line'] ?? null,
+                                    'flipdetails-f2-type'
+                                );
                                 if (isset($card_lang) and $card_lang != '' and $card_lang != 'en') :
                                     echo "<b>Lang: </b>" . $gameRules->getLanguageLabel($card_lang);
                                     echo "<br>";
                                 endif;
-                                if (isset($flipability) and $flipability !== null and $flipability != '') :
-                                    $flipabilityText = $flipability;
-                                    if (
-                                        $row['f2_type'] !== null
-                                        and strpos($row['f2_type'], 'laneswalker') !== false
-                                    ) :
-                                        $flipabilityText = CardUtils::planeswalkerLoyaltyReplace(
-                                            $flipabilityText,
-                                            $msg
-                                        );
-                                    endif;
-                                    $flipabilityText = CardUtils::symbolReplaceFont($flipabilityText);
-                                    echo "<b>Abilities: </b>" . $flipabilityText;
-                                    echo "<br>";
-                                endif;
+                                echo $renderAbilityWithToggle(
+                                    $flipability ?? null,
+                                    $row['f2_printed_text'] ?? null,
+                                    $row['f2_type'] ?? null,
+                                    'flipdetails-f2-ability'
+                                );
                                 if ($row['f2_type'] !== null and strpos($row['f2_type'], 'reature') !== false) :
                                     echo "<b>Power / Toughness: </b>" . $row['f1_power'] . "/" . $row['f2_toughness'];
                                     echo "<br>";

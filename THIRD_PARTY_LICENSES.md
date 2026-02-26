@@ -26,3 +26,16 @@ license details are recorded below.
   - `//cdn.jsdelivr.net/npm/keyrune@latest/css/keyrune.css`
   - `//cdn.jsdelivr.net/npm/mana-font@latest/css/mana.min.css`
 - License: See each upstream package/project license terms.
+
+## Phyrexian substitution font (community)
+
+- Source files:
+  - `/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff`
+  - `/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff2`
+- Source references:
+  - <https://drive.google.com/drive/folders/1F4CX-f6mK_Cbe70POmZ21YgusLNz570N>
+  - <https://x.com/PhieOrDie/status/1492591720952999946>
+  - <https://mtg.fandom.com/wiki/Talk:Phyrexian_(language)>
+- Notes:
+  - This is used as a letter-substitution display font for Phyrexian card text.
+  - No explicit license file is bundled with these files in this repository.

@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     3.9
-Date:        04/02/26
+Version:     3.10
+Date:        26/02/26
 Name:        CardUtils.php
 Purpose:     Card utility helpers.
 Notes:       -
@@ -363,19 +363,38 @@ class CardUtils
             $str
         );
         $output = preg_replace_callback(
-            '/([+-]?)(\\d+):/',
+            '/([+-]?)(\\d+|X|Ⅰ|Ⅱ|Ⅲ|Ⅳ|Ⅴ|Ⅵ|Ⅶ|Ⅷ|Ⅸ|Ⅹ|Ⅺ|Ⅻ):/u',
             static function (array $matches): string {
                 $sign = $matches[1];
-                $number = ltrim($matches[2], '0');
-                if ($number === '') :
-                    $number = '0';
+                $rawValue = strtoupper($matches[2]);
+                $romanToValue = [
+                    'Ⅰ' => '1',
+                    'Ⅱ' => '2',
+                    'Ⅲ' => '3',
+                    'Ⅳ' => '4',
+                    'Ⅴ' => '5',
+                    'Ⅵ' => '6',
+                    'Ⅶ' => '7',
+                    'Ⅷ' => '8',
+                    'Ⅸ' => '9',
+                    'Ⅹ' => '10',
+                    'Ⅺ' => '11',
+                    'Ⅻ' => '12'
+                ];
+                $number = $romanToValue[$rawValue] ?? $rawValue;
+                if ($number !== 'X') :
+                    $number = ltrim($number, '0');
+                    if ($number === '') :
+                        $number = '0';
+                    endif;
                 endif;
+                $classValue = strtolower($number);
                 if ($sign === '+') :
                     $label = '+' . $number;
-                    $classes = 'ms ms-loyalty-up ms-loyalty-' . $number;
+                    $classes = 'ms ms-loyalty-up ms-loyalty-' . $classValue;
                 elseif ($sign === '-') :
                     $label = '-' . $number;
-                    $classes = 'ms ms-loyalty-down ms-loyalty-' . $number;
+                    $classes = 'ms ms-loyalty-down ms-loyalty-' . $classValue;
                 else :
                     $label = $number;
                     $classes = 'ms ms-loyalty-zero ms-loyalty-0';

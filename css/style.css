@@ -1,6 +1,6 @@
 /*
-Version:     2.26
-Date:        25/02/26
+Version:     2.30
+Date:        26/02/26
 Name:        style.css
 Purpose:     Provides global styling for the MTG Collection app.
 Notes:       Unminify in the site admin control panel before editing.
@@ -53,6 +53,45 @@ body
 .font-alcarin-tengwar
 {
     font-family: "AlcarinTengwar", "Roboto Condensed", sans-serif;
+}
+
+@font-face
+{
+    font-family: "PhyrexianHorizontal";
+    src: local("Phi_horizontal_gbrsh_2"),
+        url('/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff2') format('woff2'),
+        url('/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff') format('woff');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+.font-horizontal-phyrexian
+{
+    font-family: "PhyrexianHorizontal", "Roboto Condensed", sans-serif;
+}
+
+.ability-toggle-link
+{
+    display: inline-flex;
+    margin-left: 4px;
+    vertical-align: text-bottom;
+}
+
+.ability-toggle-link .material-symbols-outlined
+{
+    color: #3f51b5;
+    font-size: 16px;
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 300,
+        'GRAD' 0,
+        'opsz' 20;
+}
+
+.ability-toggle-link:hover .material-symbols-outlined, .ability-toggle-link:active .material-symbols-outlined
+{
+    color: #8c9eff;
 }
 
 a

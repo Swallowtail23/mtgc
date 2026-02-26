@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.0
-Date:        04/02/26
+Version:     1.1
+Date:        26/02/26
 Name:        PlaneswalkerLoyaltyReplaceTest.php
 Purpose:     PHPUnit coverage for planeswalker loyalty symbol replacement.
 Notes:       -
@@ -58,6 +58,26 @@ class PlaneswalkerLoyaltyReplaceTest extends TestCase
         $input = "âˆ’7: Exile target permanent.";
         $expected = '<i class="ms ms-loyalty-down ms-loyalty-7" aria-label="-7" role="img"></i> '
             . 'Exile target permanent.';
+
+        $this->assertSame($expected, CardUtils::planeswalkerLoyaltyReplace($input));
+    }
+
+    public function testReplacesVariableXLoyalty()
+    {
+        $input = '-X: Target player mills three times X cards.';
+        $expected = '<i class="ms ms-loyalty-down ms-loyalty-x" aria-label="-X" role="img"></i> '
+            . 'Target player mills three times X cards.';
+
+        $this->assertSame($expected, CardUtils::planeswalkerLoyaltyReplace($input));
+    }
+
+    public function testReplacesPhyrexianRomanNumeralLoyalty()
+    {
+        $input = "+Ⅰ: Do a thing. -Ⅱ: Do another thing. -Ⅹ: Variable thing.";
+        $expected = '<i class="ms ms-loyalty-up ms-loyalty-1" aria-label="+1" role="img"></i> '
+            . 'Do a thing. <i class="ms ms-loyalty-down ms-loyalty-2" aria-label="-2" role="img"></i> '
+            . 'Do another thing. <i class="ms ms-loyalty-down ms-loyalty-10" aria-label="-10" role="img"></i> '
+            . 'Variable thing.';
 
         $this->assertSame($expected, CardUtils::planeswalkerLoyaltyReplace($input));
     }

@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.3
+Version:     1.4
 Date:        04/12/25
 Name:        googlefonts.php
 Purpose:     PHP script to link to Google Roboto fonts
@@ -45,6 +45,7 @@ $msoIcons = [
     'skip_next',
     'skip_previous',
     'south_east',
+    'swap_horiz',
     'sync',
     'unfold_more'
 ];

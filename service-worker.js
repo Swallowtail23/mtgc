@@ -1,6 +1,6 @@
 /*
-Version:     3.5
-Date:        25/02/26
+Version:     3.6
+Date:        26/02/26
 Name:        service-worker.js
 Purpose:     Safe caching of static assets and images for MTG Collection.
 Notes:       Avoids caching HTML or dynamic fragments.
@@ -29,6 +29,8 @@ const STATIC_ASSETS = [
     '/fonts/alcarin/AlcarinTengwar-Regular.woff',
     '/fonts/alcarin/AlcarinTengwar-Bold.woff2',
     '/fonts/alcarin/AlcarinTengwar-Bold.woff',
+    '/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff2',
+    '/fonts/phyrexian/Phi_horizontal_gbrsh_2.woff',
     '/images/w_png.png',
     '/images/ajax-loader.gif'
 ];

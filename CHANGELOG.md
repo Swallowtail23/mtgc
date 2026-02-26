@@ -15,6 +15,26 @@ All notable changes to this project will be documented in this file.
   `MEDIUMTEXT` for core `ability` to align with face ability storage.
 - Scryfall bulk import now maps non-empty `printed_type_line` and `printed_text` fields for core cards and
   card faces (`f1_`/`f2_`).
+- Card detail now queries printed text fields and supports per-section English/printed abilities toggles where
+  translated rules text is available.
+- Card detail header name rendering is now standardized to prefer localized printed names when present, with
+  language font classes for `qya` and `ph`.
+- Added local Phyrexian substitution webfonts (`Phi_horizontal_gbrsh_2.woff/woff2`) and wired `ph` header
+  rendering to the `font-horizontal-phyrexian` class.
+- Card detail printed abilities text now forces language-specific fonts for `qya` and `ph` across core/f1/f2
+  ability sections.
+- Planeswalker loyalty icon replacement now handles Phyrexian printed-text loyalty prefixes (roman numeral
+  forms such as `+Ⅰ`, `-Ⅱ`, `-Ⅹ`) and `-X` variable costs.
+- Card detail ability Oracle/printed switch now uses a compact icon toggle with stateful tooltips and
+  accessibility labels.
+- Card detail type line now supports Oracle/printed toggling: `Type:` when unchanged, or
+  `Type (Oracle):`/`Type (printed):` with icon switch when values differ.
+- Card detail Oracle/printed toggles are now page-synchronized; flipping any eligible Type/Abilities toggle
+  updates all other eligible sections on the same card page.
+- Card detail now renders a single Oracle/printed toggle in the Details header and hides it unless more than
+  one section on the page supports Oracle/printed switching.
+- Card detail Details-header toggle visibility now keys off any populated printed fields (`printed_*`,
+  `f1_printed_*`, `f2_printed_*`) as well as rendered toggle sections.
 
 ### Fixed
 
@@ -36,6 +56,7 @@ All notable changes to this project will be documented in this file.
 - Added deterministic ImageManager test coverage for unreadable local image handling (placeholder fallback).
 - Added PHPUnit coverage for `ImageManager::refreshImage()` success/failure array contract to prevent caller regressions.
 - Service worker static asset precache now includes local Alcarin Tengwar font files.
+- Service worker static asset precache now includes local Phyrexian webfont files.
 - Added `THIRD_PARTY_LICENSES.md` with attribution/license references for Alcarin Tengwar and Andrew Gioia
   icon fonts (Keyrune and Mana).
 
