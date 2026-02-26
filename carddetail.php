@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.68
+Version:     22.69
 Date:        26/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -1187,7 +1187,8 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                 . ($has_printed_mode_data ? '1' : '0') . "' title='Show printed text' "
                                 . "aria-label='Show printed text' style='display: none' "
                                 . "onclick='return toggleCardText(this);'><span "
-                                . "class='material-symbols-outlined' aria-hidden='true'>swap_horiz</span></a>)"
+                                . "class='material-symbols-outlined' style='font-size: 22px;' "
+                                . "aria-hidden='true'>swap_horiz</span></a>)"
                                 . ":</span></h3>";
 
                             if (isset($admin) and $admin == 1) :
