@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.2
 Date:        26/02/26
 Name:        PlaneswalkerLoyaltyReplaceTest.php
 Purpose:     PHPUnit coverage for planeswalker loyalty symbol replacement.
@@ -78,6 +78,16 @@ class PlaneswalkerLoyaltyReplaceTest extends TestCase
             . 'Do a thing. <i class="ms ms-loyalty-down ms-loyalty-2" aria-label="-2" role="img"></i> '
             . 'Do another thing. <i class="ms ms-loyalty-down ms-loyalty-10" aria-label="-10" role="img"></i> '
             . 'Variable thing.';
+
+        $this->assertSame($expected, CardUtils::planeswalkerLoyaltyReplace($input));
+    }
+
+    public function testReplacesHighPhyrexianRomanNumeralLoyalty()
+    {
+        $input = "+Ⅺ: Add counters. -Ⅻ: Remove counters.";
+        $expected = '<i class="ms ms-loyalty-up ms-loyalty-11" aria-label="+11" role="img"></i> '
+            . 'Add counters. <i class="ms ms-loyalty-down ms-loyalty-12" aria-label="-12" role="img"></i> '
+            . 'Remove counters.';
 
         $this->assertSame($expected, CardUtils::planeswalkerLoyaltyReplace($input));
     }

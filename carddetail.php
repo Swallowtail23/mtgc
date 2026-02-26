@@ -139,7 +139,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
 
             var detailsModeLabel = document.getElementById('details-mode-label');
             if (detailsModeLabel) {
-                detailsModeLabel.textContent = showPrinted ? 'Printed' : 'Oracle';
+                detailsModeLabel.textContent = showPrinted ? 'printed' : 'Oracle';
             }
         }
 
