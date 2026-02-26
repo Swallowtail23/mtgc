@@ -18,7 +18,7 @@
 ## Description
 
 This is a "host your own" MtG collection-tracking web application. It is
-fully mobile-responsive and offers comprehensive search, deck-building, 
+fully mobile-responsive and offers comprehensive search, deck-building,
 collection tracking, localised currency conversion, import/export tooling,
 and optional 2FA and commenting integrations.
 
@@ -30,7 +30,7 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 ## Install Options
 
 - **Docker / Podman - RECOMMENDED** – See [DOCKER.md](DOCKER.md) for the
-  container workflow using `docker/docker-init.sh` (Linux/macOS/WSL) or 
+  container workflow using `docker/docker-init.sh` (Linux/macOS/WSL) or
   `docker/docker-init.bat` (Windows). The scripts manage `.env`, permissions,
   admin setup, and bulk data imports.
 - **Bare Metal / Native** – See [INSTALL.md](INSTALL.md) for Apache/PHP/MySQL
@@ -68,9 +68,9 @@ disk usage ranges from 10 GB TO 100 GB depending on downloaded images.
 
 ### Optional integrations
 
-- SMTP email infrastructure (PHPMailer) to enable email-based password 
+- SMTP email infrastructure (PHPMailer) to enable email-based password
   management and exports. For direct senders, configure SPF/DKIM/DMARC.
-- Disqus commenting. 
+- Disqus commenting.
 
 ## Configuration & Admin Settings
 
