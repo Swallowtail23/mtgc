@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.9
-Date:        11/01/26
+Version:     1.10
+Date:        26/02/26
 Name:        ScryfallImport.php
 Purpose:     Scryfall bulk import helpers.
 Notes:       -
@@ -450,13 +450,15 @@ class ScryfallImport
                                 p6_component, p6_name, p6_type_line, p6_uri, p7_id,
                                 p7_component, p7_name, p7_type_line, p7_uri, maxpower,
                                 minpower, maxtoughness, mintoughness, maxloyalty, minloyalty,
+                                printed_type_line, printed_text, f1_printed_type_line, f1_printed_text,
+                                f2_printed_type_line, f2_printed_text,
                                 price_sort, content_hash, price_hash, date_added, primary_card
                                 )
                             VALUES(
                                 ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                                 ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
                                 ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
-                                ?,?,?,?,?,?,?
+                                ?,?,?,?,?,?,?,?,?,?,?,?,?
                             )
                             ON DUPLICATE KEY UPDATE
                                 id = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(id), id),
@@ -504,7 +506,17 @@ class ScryfallImport
                                 manacost = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(manacost), manacost),
                                 cmc = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(cmc), cmc),
                                 type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(type), type),
+                                printed_type_line = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(printed_type_line),
+                                    printed_type_line
+                                ),
                                 ability = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(ability), ability),
+                                printed_text = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(printed_text),
+                                    printed_text
+                                ),
                                 power = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(power), power),
                                 toughness = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(toughness), toughness),
                                 loyalty = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(loyalty), loyalty),
@@ -630,10 +642,20 @@ class ScryfallImport
                                     f1_loyalty
                                 ),
                                 f1_type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_type), f1_type),
+                                f1_printed_type_line = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(f1_printed_type_line),
+                                    f1_printed_type_line
+                                ),
                                 f1_ability = IF(
                                     NOT (content_hash <=> VALUES(content_hash)),
                                     VALUES(f1_ability),
                                     f1_ability
+                                ),
+                                f1_printed_text = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(f1_printed_text),
+                                    f1_printed_text
                                 ),
                                 f1_colour = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_colour), f1_colour),
                                 f1_artist = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f1_artist), f1_artist),
@@ -672,10 +694,20 @@ class ScryfallImport
                                     f2_loyalty
                                 ),
                                 f2_type = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_type), f2_type),
+                                f2_printed_type_line = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(f2_printed_type_line),
+                                    f2_printed_type_line
+                                ),
                                 f2_ability = IF(
                                     NOT (content_hash <=> VALUES(content_hash)),
                                     VALUES(f2_ability),
                                     f2_ability
+                                ),
+                                f2_printed_text = IF(
+                                    NOT (content_hash <=> VALUES(content_hash)),
+                                    VALUES(f2_printed_text),
+                                    f2_printed_text
                                 ),
                                 f2_colour = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_colour), f2_colour),
                                 f2_artist = IF(NOT (content_hash <=> VALUES(content_hash)), VALUES(f2_artist), f2_artist),
@@ -852,6 +884,8 @@ class ScryfallImport
         $cmc = null;
         $type_line = null;
         $oracle_text = null;
+        $printed_type_line = null;
+        $printed_text = null;
         $power = null;
         $toughness = null;
         $loyalty = null;
@@ -904,7 +938,9 @@ class ScryfallImport
         $toughness_1 = null;
         $loyalty_1 = null;
         $type_1 = null;
+        $printed_type_1 = null;
         $ability_1 = null;
+        $printed_text_1 = null;
         $colour_1 = null;
         $artist_1 = null;
         $flavor_1 = null;
@@ -920,7 +956,9 @@ class ScryfallImport
         $toughness_2 = null;
         $loyalty_2 = null;
         $type_2 = null;
+        $printed_type_2 = null;
         $ability_2 = null;
+        $printed_text_2 = null;
         $colour_2 = null;
         $artist_2 = null;
         $flavor_2 = null;
@@ -960,7 +998,7 @@ class ScryfallImport
 
         $bind = $stmt->bind_param(
             "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
-            . "ssssssssssssssssssssssssssssssssssssssssssssssssii",
+            . "ssssssssssssssssssssssssssssssssssssssssssssssssssssssii",
             $id,
             $oracle_id,
             $tcgplayer_id,
@@ -1086,6 +1124,12 @@ class ScryfallImport
             $mintoughness,
             $maxloyalty,
             $minloyalty,
+            $printed_type_line,
+            $printed_text,
+            $printed_type_1,
+            $printed_text_1,
+            $printed_type_2,
+            $printed_text_2,
             $price_sort,
             $content_hash,
             $price_hash,
@@ -1190,7 +1234,9 @@ class ScryfallImport
                 $toughness_1 = $toughness_2 = null;
                 $loyalty_1 = $loyalty_2 = null;
                 $type_1 = $type_2 = null;
+                $printed_type_1 = $printed_type_2 = null;
                 $ability_1 = $ability_2 = null;
+                $printed_text_1 = $printed_text_2 = null;
                 $colour_1 = $colour_2 = null;
                 $artist_1 = $artist_2 = null;
                 $flavor_1 = $flavor_2 = null;
@@ -1237,6 +1283,12 @@ class ScryfallImport
                 $cmc = $value["cmc"] ?? null;
                 $type_line = $value["type_line"] ?? null;
                 $oracle_text = $value["oracle_text"] ?? null;
+                $printed_type_line = (isset($value["printed_type_line"]) and $value["printed_type_line"] !== '')
+                    ? $value["printed_type_line"]
+                    : null;
+                $printed_text = (isset($value["printed_text"]) and $value["printed_text"] !== '')
+                    ? $value["printed_text"]
+                    : null;
 
                 $power = $value["power"] ?? null;
                 $toughness = $value["toughness"] ?? null;
@@ -1331,8 +1383,14 @@ class ScryfallImport
                             if (isset($value3["type_line"])) :
                                 ${'type_' . $face_loop} = $value3["type_line"];
                             endif;
+                            if (isset($value3["printed_type_line"]) and $value3["printed_type_line"] !== '') :
+                                ${'printed_type_' . $face_loop} = $value3["printed_type_line"];
+                            endif;
                             if (isset($value3["oracle_text"])) :
                                 ${'ability_' . $face_loop} = $value3["oracle_text"];
+                            endif;
+                            if (isset($value3["printed_text"]) and $value3["printed_text"] !== '') :
+                                ${'printed_text_' . $face_loop} = $value3["printed_text"];
                             endif;
                             if (isset($value3["colors"])) :
                                 ${'colour_' . $face_loop} = json_encode($value3["colors"]);
@@ -1537,6 +1595,8 @@ class ScryfallImport
                         $cmc,
                         $type_line,
                         $oracle_text,
+                        $printed_type_line,
+                        $printed_text,
                         $power,
                         $toughness,
                         $loyalty,
@@ -1577,7 +1637,9 @@ class ScryfallImport
                         $toughness_1,
                         $loyalty_1,
                         $type_1,
+                        $printed_type_1,
                         $ability_1,
+                        $printed_text_1,
                         $colour_1,
                         $artist_1,
                         $flavor_1,
@@ -1591,7 +1653,9 @@ class ScryfallImport
                         $toughness_2,
                         $loyalty_2,
                         $type_2,
+                        $printed_type_2,
                         $ability_2,
+                        $printed_text_2,
                         $colour_2,
                         $artist_2,
                         $flavor_2,

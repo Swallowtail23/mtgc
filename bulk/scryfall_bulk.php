@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     9.28
-Date:        13/01/26
+Version:     9.29
+Date:        26/02/26
 Name:        scryfall_bulk.php
 Purpose:     Import/update Scryfall bulk data
 Notes:       {none}
@@ -70,11 +70,11 @@ if ($useTestTable) :
         endif;
         exit(1);
     endif;
-    if ($tableCheck->num_rows === 0) :
-        $msg->logMessage('[NOTICE]', 'cards_scry_test missing; creating from cards_scry structure');
-        $createResult = $db->query("CREATE TABLE `cards_scry_test` LIKE `cards_scry`");
-        if ($createResult === false) :
-            $text = "Scryfall Bulk API: Failed to create cards_scry_test: {$db->error}";
+    if ($tableCheck->num_rows > 0) :
+        $msg->logMessage('[NOTICE]', 'cards_scry_test exists; dropping to refresh schema from cards_scry');
+        $dropResult = $db->query("DROP TABLE `cards_scry_test`");
+        if ($dropResult === false) :
+            $text = "Scryfall Bulk API: Failed to drop cards_scry_test: {$db->error}";
             $msg->logMessage('[ERROR]', $text);
             if (PHP_SAPI === 'cli') :
                 fwrite(STDERR, $text . PHP_EOL);
@@ -82,17 +82,17 @@ if ($useTestTable) :
             exit(1);
         endif;
     endif;
-    $tableCheck->free();
-
-    $truncateResult = $db->query("TRUNCATE TABLE `cards_scry_test`");
-    if ($truncateResult === false) :
-        $text = "Scryfall Bulk API: Failed to truncate cards_scry_test: {$db->error}";
+    $msg->logMessage('[NOTICE]', 'Creating cards_scry_test from cards_scry structure');
+    $createResult = $db->query("CREATE TABLE `cards_scry_test` LIKE `cards_scry`");
+    if ($createResult === false) :
+        $text = "Scryfall Bulk API: Failed to create cards_scry_test: {$db->error}";
         $msg->logMessage('[ERROR]', $text);
         if (PHP_SAPI === 'cli') :
             fwrite(STDERR, $text . PHP_EOL);
         endif;
         exit(1);
     endif;
+    $tableCheck->free();
 
     if (!is_file($testFileFirst) || !is_file($testFileSecond)) :
         $text = "Scryfall Bulk API: Test files missing: {$testFileFirst} or {$testFileSecond}";

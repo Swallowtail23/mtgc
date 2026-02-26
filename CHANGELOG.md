@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Card detail now renders `qya` (Quenya) header names with local Alcarin Tengwar webfonts from `/fonts/alcarin/`.
+- `cards_scry` schema definition now includes printed type/text fields for core and face records, and uses
+  `MEDIUMTEXT` for core `ability` to align with face ability storage.
+- Scryfall bulk import now maps non-empty `printed_type_line` and `printed_text` fields for core cards and
+  card faces (`f1_`/`f2_`).
 
 ### Fixed
 
@@ -20,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Card detail manual image refresh now forces a swap to the refreshed card image instead of remaining on the placeholder.
 - Set image reload now correctly counts `ImageManager::refreshImage()` failures after the return contract changed to arrays.
 - Prevented duplicate-key fatal errors in `scryfalljson` during card detail/API refresh races by using an upsert for Scryfall JSON writes.
+- Bulk test-mode imports now rebuild `cards_scry_test` from `cards_scry` each run to avoid stale-schema failures
+  after table definition changes.
 
 ### Security
 

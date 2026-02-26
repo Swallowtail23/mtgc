@@ -29,6 +29,7 @@ CREATE TABLE `cards_scry` (
   `finishes` json DEFAULT NULL,
   `promo_types` json DEFAULT NULL,
   `type` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `printed_type_line` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `power` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `toughness` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `loyalty` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -43,7 +44,8 @@ CREATE TABLE `cards_scry` (
   `number_import` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `layout` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `rarity` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ability` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ability` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `printed_text` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `keywords` json DEFAULT NULL,
   `backid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `maxpower` int DEFAULT NULL,
@@ -55,7 +57,9 @@ CREATE TABLE `cards_scry` (
   `f1_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_manacost` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_type` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `f1_printed_type_line` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_ability` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `f1_printed_text` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `f1_colour` json DEFAULT NULL,
   `f1_artist` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f1_flavor` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -69,7 +73,9 @@ CREATE TABLE `cards_scry` (
   `f2_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_manacost` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_type` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `f2_printed_type_line` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_ability` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `f2_printed_text` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `f2_colour` json DEFAULT NULL,
   `f2_artist` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `f2_flavor` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -343,20 +349,26 @@ ALTER TABLE `cards_scry`
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `ability` (`ability`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `name` (`name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `type` (`type`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `printed_type_line` (`printed_type_line`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_name` (`f1_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_type` (`f1_type`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_printed_type_line` (`f1_printed_type_line`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_ability` (`f1_ability`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_name` (`f2_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_type` (`f2_type`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_printed_type_line` (`f2_printed_type_line`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_ability` (`f2_ability`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `printed_name` (`printed_name`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `printed_text` (`printed_text`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `flavor_name` (`flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_printed_name` (`f1_printed_name`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_printed_text` (`f1_printed_text`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f1_flavor_name` (`f1_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_printed_name` (`f2_printed_name`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_printed_text` (`f2_printed_text`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `f2_flavor_name` (`f2_flavor_name`);
 ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_name_index` (`name`,`f1_name`,`f2_name`,`printed_name`,`f1_printed_name`,`f2_printed_name`,`flavor_name`,`f1_flavor_name`,`f2_flavor_name`);
-ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`f1_ability`,`f2_ability`);
+ALTER TABLE `cards_scry` ADD FULLTEXT KEY `combined_ability_index` (`ability`,`printed_text`,`f1_ability`,`f1_printed_text`,`f2_ability`,`f2_printed_text`);
 
 ALTER TABLE `collectionTemplate`
   ADD PRIMARY KEY (`id`),

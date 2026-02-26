@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     22.58
-Date:        25/02/26
+Version:     22.59
+Date:        26/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
 Notes:       {none}
@@ -497,7 +497,8 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             <td class="h2pad" id='nameheading'>
                                 <?php
                                 if (isset($row['flavor_name']) and $row['flavor_name'] !== '') :
-                                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close} <i>({$row['name']})</i>";
+                                    echo "{$qya_name_open}{$row['flavor_name']}{$qya_name_close}"
+                                        . " <i>({$row['name']})</i>";
                                 elseif ($card_lang === 'ph') :
                                         echo $row['name'];
                                 elseif ($row['printed_name'] != '' and $row['printed_name'] != $row['name']) :
