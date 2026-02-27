@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.7] - Unreleased
+## [v0.5.7] - 2026-02-27
 
-### Added
+### Added - 2026-02-27
 
 - Added Quenya to 'pretty' language name support
 
