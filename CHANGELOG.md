@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
   ability sections.
 - Planeswalker loyalty icon replacement now handles Phyrexian printed-text loyalty prefixes (roman numeral
   forms such as `+Ⅰ`, `-Ⅱ`, `-Ⅹ`) and `-X` variable costs.
+- Arena-only cards now show links section for searching printings.
 
 ### Fixed
 
