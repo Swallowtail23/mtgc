@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - Prevented duplicate-key fatal errors in `scryfalljson` during card detail/API refresh races by using an upsert for Scryfall JSON writes.
 - Bulk test-mode imports now rebuild `cards_scry_test` from `cards_scry` each run to avoid stale-schema failures
   after table definition changes.
+- Card detail now skips the TCGPlayer link label for non-paper cards.
 
 ### Security
 

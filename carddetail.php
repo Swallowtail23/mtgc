@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     22.70
+Version:     22.71
 Date:        27/02/26
 Name:        carddetail.php
 Purpose:     Card detail page
@@ -1891,7 +1891,7 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             else :
                                 $tcgdirectlink = null;
                             endif;
-                        else:
+                        else :
                             $tcgdirectlink = null;
                         endif; ?>
 
@@ -1930,7 +1930,12 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                                         style="<?php echo ($tcgdirectlink === null)
                                             ? 'opacity:0.6;pointer-events:none;'
                                             : ''; ?>"
-                                    ><?php echo ($tcgdirectlink === null) ? 'TCGPlayer (loading)' : 'TCGPlayer'; ?>
+                                    >
+                                    <?php
+                                    if (($not_paper !== true ) and ($cardtypes != 'none' )) :
+                                        echo ($tcgdirectlink === null) ? 'TCGPlayer (loading)' : 'TCGPlayer';
+                                    endif;
+                                    ?>
                                     </a>
                                 </td>
                             </tr>
