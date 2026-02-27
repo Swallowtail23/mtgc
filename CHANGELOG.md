@@ -2,13 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.6-dev] - Unreleased
+## [v0.5.6] - 2026-02-27
 
-### Added
-
--
-
-### Changed
+### Changed - 2026-02-27
 
 - Card detail now renders `qya` (Quenya) header names with local Alcarin Tengwar webfonts from `/fonts/alcarin/`.
 - `cards_scry` schema definition now includes printed type/text fields for core and face records, and uses
@@ -24,7 +20,7 @@ All notable changes to this project will be documented in this file.
   forms such as `+Ⅰ`, `-Ⅱ`, `-Ⅹ`) and `-X` variable costs.
 - Arena-only cards now show links section for searching printings.
 
-### Fixed
+### Fixed - 2026-02-27
 
 - Index/card images now force an async refresh with a cache-busted swap after image load errors.
 - Image load error handling now deduplicates in-flight async refreshes per card to avoid duplicate race requests.
@@ -36,11 +32,7 @@ All notable changes to this project will be documented in this file.
   after table definition changes.
 - Card detail now skips the TCGPlayer link label for non-paper cards.
 
-### Security
-
--
-
-### Infrastructure
+### Infrastructure - 2026-02-27
 
 - Added deterministic ImageManager test coverage for unreadable local image handling (placeholder fallback).
 - Added PHPUnit coverage for `ImageManager::refreshImage()` success/failure array contract to prevent caller regressions.
