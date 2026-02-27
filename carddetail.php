@@ -1891,6 +1891,8 @@ require APP_ROOT . '/includes/menu.php'; //mobile menu
                             else :
                                 $tcgdirectlink = null;
                             endif;
+                        else:
+                            $tcgdirectlink = null;
                         endif; ?>
 
                         <hr class='hr324'>
