@@ -105,6 +105,10 @@ if (!function_exists('mtg_game_rules')) :
             array(
                 'code' => 'ph',
                 'pretty' => 'Phyrexian'
+            ),
+            array(
+                'code' => 'qya',
+                'pretty' => 'Quenya'
             )
         );
         $search_langs_codes = array_column($search_langs, 'code');
