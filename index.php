@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     14.79
-Date:        04/02/26
+Version:     14.80
+Date:        10/03/26
 Name:        index.php
 Purpose:     Main site page
 Notes:       -
@@ -1101,6 +1101,7 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                     <div id="resultsgrid" class='wrap'>
                         <?php
                         $x = 1;
+                        $imageManager = new ImageManager($db, $appConfig, $gameRules);
                         while ($row = $result->fetch_array(MYSQLI_BOTH)) :
                             $flipbutton = $row['cs_id'] . "flip";
                             $img_id = $row['cs_id'] . "img";
@@ -1135,7 +1136,6 @@ $siteTitleEsc = htmlspecialchars($siteTitle, ENT_QUOTES, 'UTF-8');
                             else :
                                 $meld = '';
                             endif;
-                            $imageManager = new ImageManager($db, $appConfig, $gameRules);
                             $imageFunction = $imageManager->getImage(
                                 $setcode,
                                 $row['cs_id'],

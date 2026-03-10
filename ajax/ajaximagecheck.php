@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.24
-Date:        23/02/26
+Version:     1.25
+Date:        10/03/26
 Name:        ajaximagecheck.php
 Purpose:     Check and refresh card images asynchronously.
 Notes:       Lightweight head/refresh; relies on ImageManager.
@@ -59,6 +59,11 @@ if ($cardUUID === false) :
 endif;
 
 $msg->logMessage('[DEBUG]', "Async image check for $cardUUID");
+
+if (session_status() === PHP_SESSION_ACTIVE) :
+    session_write_close();
+    $msg->logMessage('[DEBUG]', 'ajaximagecheck.php: Session closed before image refresh');
+endif;
 
 try {
     $obj = new ImageManager($db, $appConfig, $gameRules);
