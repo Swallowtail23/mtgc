@@ -2,30 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.8-dev] - Unreleased
+## [v0.5.8] - 2026-03-10
 
-### Added
-
--
-
-### Changed
-
--
-
-### Fixed
+### Fixed - 2026-03-10
 
 - Reduced index image-refresh lock contention by closing the PHP session in `ajaximagecheck.php` before running
   image diff/fetch work, so concurrent async card image checks no longer serialize on a single session lock.
 - Reduced grid render overhead by reusing one `ImageManager` instance per index page render instead of creating
   one instance per card row.
-
-### Security
-
--
-
-### Infrastructure
-
--
 
 ## [v0.5.7] - 2026-02-27
 
