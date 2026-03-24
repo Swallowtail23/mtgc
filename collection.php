@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.39
+Version:     1.40
 Date:        24/03/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -745,51 +745,95 @@ endif;
                             exit;
                         else :
                             if ($adddeck === 'yes') :
-                                $currentDateTime = date("j F Y, g:i:sa");
-                                $tmpdeckname = $currentDateTime;
-                                $obj = new DeckManager(
-                                    $db,
-                                    $appConfig,
-                                    $gameRules,
-                                    $userEmail
-                                );
-                                $msg->logMessage(
-                                    '[DEBUG]',
-                                    "Import called with 'add deck' option, $tmpdeckname to be created..."
-                                );
-                                // returns array with success flag, and deck number if success
-                                $decksuccess = $obj->addDeck($userId, $tmpdeckname);
-                                if ($decksuccess['flag'] === 1) :
-                                    $deckNumber = $decksuccess['decknumber'];
+                                $deckImportLineCount = 0;
+                                $maxDeckImportLines = 200;
+                                $deckLineHandle = fopen($_FILES['filename']['tmp_name'], 'r');
+                                if ($deckLineHandle !== false) :
+                                    while (($deckLine = fgets($deckLineHandle)) !== false) :
+                                        $interpretedDeckLine = ImportExport::inputInterpreter(
+                                            trim($deckLine),
+                                            $appConfig,
+                                            $gameRules
+                                        );
+                                        if (
+                                            $interpretedDeckLine === false
+                                            or $interpretedDeckLine === 'header'
+                                            or $interpretedDeckLine === 'empty line'
+                                        ) :
+                                            continue;
+                                        endif;
+                                        $deckImportLineCount++;
+                                        if ($deckImportLineCount > $maxDeckImportLines) :
+                                            break;
+                                        endif;
+                                    endwhile;
+                                    fclose($deckLineHandle);
+                                else :
                                     $msg->logMessage(
-                                        '[DEBUG]',
-                                        "Deck created, $tmpdeckname created, deck number is $deckNumber"
+                                        '[ERROR]',
+                                        "Unable to open import file for deck line count check"
                                     );
-                                    echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
-                                        . "var deckCreated = true;</script>";
-                                    $file = fopen($_FILES['filename']['tmp_name'], 'r');
-                                    $deckManager = new DeckManager(
+                                endif;
+
+                                if ($deckImportLineCount > $maxDeckImportLines) :
+                                    $msg->logMessage(
+                                        '[NOTICE]',
+                                        "Deck creation skipped for import: $deckImportLineCount card lines exceeds "
+                                            . "$maxDeckImportLines line limit"
+                                    );
+                                    echo "<script>alert('Too many lines to import as a deck, skipping deck creation');"
+                                        . "</script>";
+                                    echo "<meta http-equiv='refresh' content='0;url=collection.php'>";
+                                else :
+                                    $currentDateTime = date("j F Y, g:i:sa");
+                                    $tmpdeckname = $currentDateTime;
+                                    $obj = new DeckManager(
                                         $db,
                                         $appConfig,
                                         $gameRules,
                                         $userEmail
                                     );
-                                    // Read the entire file content into a variable
-                                    $fileContent = fread($file, filesize($_FILES['filename']['tmp_name']));
-                                    fclose($file);
-
-                                    // Call the processInput method with the decknumber and file content
-                                    $deckManager->processInput($deckNumber, $fileContent);
-                                else :
-                                    $msg->logMessage('[ERROR]', "Deck NOT created");
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "Import called with 'add deck' option, $tmpdeckname to be created..."
+                                    );
+                                    // returns array with success flag, and deck number if success
+                                    $decksuccess = $obj->addDeck($userId, $tmpdeckname);
+                                    if ($decksuccess['flag'] === 1) :
+                                        $deckNumber = $decksuccess['decknumber'];
+                                        $msg->logMessage(
+                                            '[DEBUG]',
+                                            "Deck created, $tmpdeckname created, deck number is $deckNumber"
+                                        );
+                                        echo "<script>var deckNumber = '$deckNumber'; var deckName = '$tmpdeckname'; "
+                                            . "var deckCreated = true;</script>";
+                                        $deckManager = new DeckManager(
+                                            $db,
+                                            $appConfig,
+                                            $gameRules,
+                                            $userEmail
+                                        );
+                                        $fileContent = file_get_contents($_FILES['filename']['tmp_name']);
+                                        if ($fileContent === false) :
+                                            $msg->logMessage(
+                                                '[ERROR]',
+                                                "Unable to read import file for deck creation input processing"
+                                            );
+                                        else :
+                                            // Call the processInput method with the decknumber and file content
+                                            $deckManager->processInput($deckNumber, $fileContent);
+                                        endif;
+                                    else :
+                                        $msg->logMessage('[ERROR]', "Deck NOT created");
+                                    endif;
+                                    $msg->logMessage(
+                                        '[DEBUG]',
+                                        "redirecting to collection.php?deckcreated=$tmpdeckname&decknumber=$deckNumber"
+                                    );
+                                    echo "<meta http-equiv='refresh' "
+                                        . "content='0;url=collection.php?deckcreated=$tmpdeckname";
+                                    echo "&decknumber=$deckNumber'>";
                                 endif;
-                                $msg->logMessage(
-                                    '[DEBUG]',
-                                    "redirecting to collection.php?deckcreated=$tmpdeckname&decknumber=$deckNumber"
-                                );
-                                echo "<meta http-equiv='refresh' "
-                                    . "content='0;url=collection.php?deckcreated=$tmpdeckname";
-                                echo "&decknumber=$deckNumber'>";
                             else :
                                 $msg->logMessage('[DEBUG]', "adddeck is not 'yes', skipping deck creation.");
                                 echo "<meta http-equiv='refresh' content='0;url=collection.php'>";
