@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.40
+Version:     1.41
 Date:        24/03/26
 Name:        collection.php
 Purpose:     Collection value tab view.
@@ -745,8 +745,8 @@ endif;
                             exit;
                         else :
                             if ($adddeck === 'yes') :
-                                $deckImportLineCount = 0;
-                                $maxDeckImportLines = 200;
+                                $deckImportCardCount = 0;
+                                $maxDeckImportCards = 200;
                                 $deckLineHandle = fopen($_FILES['filename']['tmp_name'], 'r');
                                 if ($deckLineHandle !== false) :
                                     while (($deckLine = fgets($deckLineHandle)) !== false) :
@@ -762,8 +762,24 @@ endif;
                                         ) :
                                             continue;
                                         endif;
-                                        $deckImportLineCount++;
-                                        if ($deckImportLineCount > $maxDeckImportLines) :
+                                        $rowQty = 0;
+                                        if (
+                                            is_array($interpretedDeckLine)
+                                            and isset($interpretedDeckLine['qty'])
+                                            and is_numeric($interpretedDeckLine['qty'])
+                                        ) :
+                                            $rowQty = (int) $interpretedDeckLine['qty'];
+                                        elseif (is_array($interpretedDeckLine)) :
+                                            $rowQty = (int) (($interpretedDeckLine['normal'] ?? 0)
+                                                + ($interpretedDeckLine['foil'] ?? 0)
+                                                + ($interpretedDeckLine['etched'] ?? 0));
+                                        endif;
+                                        if ($rowQty <= 0) :
+                                            $rowQty = 1;
+                                        endif;
+
+                                        $deckImportCardCount = $deckImportCardCount + $rowQty;
+                                        if ($deckImportCardCount > $maxDeckImportCards) :
                                             break;
                                         endif;
                                     endwhile;
@@ -775,13 +791,13 @@ endif;
                                     );
                                 endif;
 
-                                if ($deckImportLineCount > $maxDeckImportLines) :
+                                if ($deckImportCardCount > $maxDeckImportCards) :
                                     $msg->logMessage(
                                         '[NOTICE]',
-                                        "Deck creation skipped for import: $deckImportLineCount card lines exceeds "
-                                            . "$maxDeckImportLines line limit"
+                                        "Deck creation skipped for import: $deckImportCardCount cards exceeds "
+                                            . "$maxDeckImportCards card limit"
                                     );
-                                    echo "<script>alert('Too many lines to import as a deck, skipping deck creation');"
+                                    echo "<script>alert('Too many cards to import as a deck, skipping deck creation');"
                                         . "</script>";
                                     echo "<meta http-equiv='refresh' content='0;url=collection.php'>";
                                 else :

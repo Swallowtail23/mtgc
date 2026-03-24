@@ -28,7 +28,8 @@ All notable changes to this project will be documented in this file.
 - Header rendering now tolerates missing `$ctx` in non-bootstrap pages (such as `error.php`) instead of fataling.
 - UUID-based collection import now normalizes escaped quote sequences in incoming card names before DB cross-checks
   (for example `\"` in CSV), preventing false mismatch warnings for correctly matched quoted names.
-- Collection import with "Deck" enabled now skips deck creation and alerts the user when card-line count exceeds 200.
+- Collection import with "Deck" enabled now skips deck creation and alerts the user when total imported card
+  quantity exceeds 200.
 
 ### Security
 
