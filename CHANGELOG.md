@@ -40,6 +40,12 @@ All notable changes to this project will be documented in this file.
   trigger fresh async checks for previously seen card IDs.
 - Deck detail random-draw queue handling now forwards force-swap options and applies a direct strip-image fallback
   update so cards fetched asynchronously replace any remaining back.jpg tiles in the visible random draw row.
+- Deck detail now caches async-resolved front image paths by card ID and reuses them on random redraw so previously
+  resolved cards can render immediately in the strip instead of briefly starting on back.jpg.
+- Deck detail async image swaps no longer apply the brief brightness pulse, reducing visual noise during random-draw
+  load/re-draw updates while retaining existing hover/zoom interactions.
+- Random draw strip async image updates now swap immediately (no opacity fade), removing the remaining refresh flash
+  while keeping the row's load/re-draw slide animation.
 
 ### Security
 

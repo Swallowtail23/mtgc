@@ -1,6 +1,6 @@
 /*
-Version:     1.19
-Date:        23/02/26
+Version:     1.22
+Date:        24/03/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
 Notes:       -
@@ -15,11 +15,13 @@ To do:       -
     const mtgAsyncImage = window.mtgAsyncImage || {};
     const mtgAsyncImageSeen = window.mtgAsyncImageSeen || {};
     const mtgAsyncImageErrorInFlight = window.mtgAsyncImageErrorInFlight || {};
+    const mtgResolvedFrontImages = window.mtgResolvedFrontImages || {};
     const mtgImageCacheName = window.mtgImageCacheName || 'mtg-images-v1';
 
     window.mtgAsyncImage = mtgAsyncImage;
     window.mtgAsyncImageSeen = mtgAsyncImageSeen;
     window.mtgAsyncImageErrorInFlight = mtgAsyncImageErrorInFlight;
+    window.mtgResolvedFrontImages = mtgResolvedFrontImages;
 
     function getAjaxCsrfToken() {
         if (window.mtgAjaxConfig && window.mtgAjaxConfig.csrfToken) {
@@ -32,7 +34,9 @@ To do:       -
         return src ? src.replace(/\?.*$/, '') : '';
     }
 
-    function swapImageWithFade($img, newSrc, forceSwap) {
+    function swapImageWithFade($img, newSrc, forceSwap, options) {
+        const opts = options || {};
+        const skipFade = opts.skipFade === true;
         const currentSrc = stripCache($img.attr('src'));
         const targetSrc = stripCache(newSrc);
         if (!targetSrc || (!forceSwap && currentSrc === targetSrc)) {
@@ -40,6 +44,12 @@ To do:       -
         }
         const loader = new Image();
         loader.onload = function () {
+            if (skipFade) {
+                $img.off('load.mtgfade');
+                hideCardPlaceholder($img);
+                $img.css('opacity', '1').attr('src', newSrc);
+                return;
+            }
             $img.css('opacity', '0');
             $img.off('load.mtgfade').on('load.mtgfade', function () {
                 const $self = $(this);
@@ -47,10 +57,6 @@ To do:       -
                 requestAnimationFrame(function () {
                     requestAnimationFrame(function () {
                         $self.css('opacity', '1');
-                        $self.addClass('async-refresh-flash');
-                        setTimeout(function () {
-                            $self.removeClass('async-refresh-flash');
-                        }, 350);
                     });
                 });
             });
@@ -179,6 +185,9 @@ To do:       -
         const placeholder = $('.card-info-placeholder[data-cardid="' + cardId + '"]').first();
         const placeholderVisible = placeholder.length && !placeholder.hasClass('card-info-hidden');
         const hasFrontImage = response.front && response.front.indexOf('cardimg') !== -1;
+        if (hasFrontImage) {
+            mtgResolvedFrontImages[String(cardId)] = response.front;
+        }
         const shouldRevealFront = placeholderVisible && hasFrontImage;
         const targets = $('img[data-cardid="' + cardId + '"]');
         const hasBackImageTargets = hasFrontImage && targets.filter(function () {
@@ -196,7 +205,12 @@ To do:       -
                     frontTargets.each(function () {
                         const $target = $(this);
                         $target.attr('data-front-src', frontSrc);
-                        swapImageWithFade($target, frontBustUrl, true);
+                        swapImageWithFade(
+                            $target,
+                            frontBustUrl,
+                            true,
+                            { skipFade: $target.hasClass('random-draw-card-img') }
+                        );
                     });
                 });
             } else {
@@ -204,7 +218,12 @@ To do:       -
                     targets.each(function () {
                         const $target = $(this);
                         $target.attr('data-front-src', frontSrc);
-                        swapImageWithFade($target, frontBustUrl, true);
+                        swapImageWithFade(
+                            $target,
+                            frontBustUrl,
+                            true,
+                            { skipFade: $target.hasClass('random-draw-card-img') }
+                        );
                     });
                 });
             }

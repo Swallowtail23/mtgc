@@ -1,5 +1,5 @@
 /*
-Version:     2.92
+Version:     2.93
 Date:        24/03/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
@@ -530,6 +530,27 @@ function enforceRandomDrawImageUpdate(cardId, response) {
         $img.attr('data-front-src', response.front);
         if (src.indexOf('/images/back.jpg') !== -1 || currentFront.indexOf('/images/back.jpg') !== -1) {
             $img.attr('src', frontBust);
+        }
+    });
+}
+
+function hydrateRandomDrawFromResolvedCache() {
+    var resolved = window.mtgResolvedFrontImages || {};
+    $('#deck-random-draw-fragment img.random-draw-card-img[data-cardid]').each(function() {
+        var $img = $(this);
+        var cardId = String($img.data('cardid') || '');
+        if (!cardId) {
+            return;
+        }
+        var resolvedFront = resolved[cardId];
+        if (!resolvedFront || resolvedFront.indexOf('cardimg') === -1) {
+            return;
+        }
+        var src = $img.attr('src') || '';
+        var currentFront = $img.attr('data-front-src') || '';
+        if (src.indexOf('/images/back.jpg') !== -1 || currentFront.indexOf('/images/back.jpg') !== -1) {
+            $img.attr('data-front-src', resolvedFront);
+            $img.attr('src', resolvedFront + '?t=' + Date.now());
         }
     });
 }
@@ -1418,6 +1439,7 @@ function refreshTable() {
             if (window.bindRandomDrawStripInteractions) {
                 window.bindRandomDrawStripInteractions();
             }
+            hydrateRandomDrawFromResolvedCache();
             var seen = window.mtgAsyncImageSeen || {};
             $('#deck-random-draw-fragment img.random-draw-card-img[data-cardid]').each(function() {
                 var $img = $(this);
