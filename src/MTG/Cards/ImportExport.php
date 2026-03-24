@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.18
-Date:        14/01/26
+Version:     1.20
+Date:        24/03/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
 Notes:       -
@@ -312,103 +312,183 @@ class ImportExport
             $fields = str_getcsv($line, ',', '"', '\\');
             $qtyFields = count($fields);
 
-            if ($qtyFields === 6 || $qtyFields === 8) : // Only check if it has 6 or 8 fields, otherwise don't bother
-                // Header check
-                $headerKeywords  = ['set', 'number', 'name'];
-                $isHeader = true;
-                foreach ($headerKeywords as $keyword) :
-                    $found = false;
-                    foreach ($fields as $field) :
-                        if (stripos($field, $keyword) !== false) :
-                            $found = true;
-                            break;
-                        endif;
-                    endforeach;
-                    if (!$found) :
-                        $isHeader = false;
+            // Header checks
+            $mtgcHeaderKeywords = ['set', 'number', 'name'];
+            $manaboxHeaderKeywords = ['name', 'set code', 'collector number', 'foil', 'quantity', 'scryfall id'];
+            $isMtgcHeader = true;
+            foreach ($mtgcHeaderKeywords as $keyword) :
+                $found = false;
+                foreach ($fields as $field) :
+                    if (stripos($field, $keyword) !== false) :
+                        $found = true;
                         break;
                     endif;
                 endforeach;
-                if ($isHeader) :
-                    return 'header';
+                if (!$found) :
+                    $isMtgcHeader = false;
+                    break;
                 endif;
+            endforeach;
+            if ($isMtgcHeader && ($qtyFields === 6 || $qtyFields === 8)) :
+                return 'header';
+            endif;
 
-                // Validate and determine CSV format
-                if ($qtyFields === 6) :
-                    if (
-                        !Validation::isValidSetcode($fields[0])
-                        || !Validation::isValidCardName($fields[2])
-                        || !(is_numeric($fields[3]) || empty($fields[3]))
-                        || !(is_numeric($fields[4]) || empty($fields[4]))
-                        || !Validation::validUUID($fields[5], $appConfig)
-                    ) :
-                        $csvFormat = 'invalid';
-                    else :
-                        $csvFormat = 'delver';
+            $isManaBoxHeader = true;
+            foreach ($manaboxHeaderKeywords as $keyword) :
+                $found = false;
+                foreach ($fields as $field) :
+                    if (stripos($field, $keyword) !== false) :
+                        $found = true;
+                        break;
                     endif;
-                elseif ($qtyFields === 8) :
-                    if (
-                        !Validation::isValidSetcode($fields[0])
-                        || !Validation::isValidCardName($fields[2])
-                        || !Validation::isValidLanguageCode($fields[3])
-                        || !(is_numeric($fields[4]) || empty($fields[4]))
-                        || !(is_numeric($fields[5]) || empty($fields[5]))
-                        || !(is_numeric($fields[6]) || empty($fields[6]))
-                        || !(Validation::validUUID($fields[7], $appConfig) || empty($fields[7]))
-                    ) :
-                        $csvFormat = 'invalid';
-                    else :
-                        $csvFormat = 'mtgc';
-                    endif;
-                else :
+                endforeach;
+                if (!$found) :
+                    $isManaBoxHeader = false;
+                    break;
+                endif;
+            endforeach;
+            if ($isManaBoxHeader) :
+                return 'header';
+            endif;
+
+            // Validate and determine CSV format
+            if ($qtyFields === 6) :
+                if (
+                    !Validation::isValidSetcode($fields[0])
+                    || !Validation::isValidCardName($fields[2])
+                    || !(is_numeric($fields[3]) || empty($fields[3]))
+                    || !(is_numeric($fields[4]) || empty($fields[4]))
+                    || !Validation::validUUID($fields[5], $appConfig)
+                ) :
                     $csvFormat = 'invalid';
+                else :
+                    $csvFormat = 'delver';
                 endif;
-                $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is '$csvFormat'");
-
-                if ($csvFormat === 'invalid') :
-                    return false;
+            elseif ($qtyFields === 8) :
+                if (
+                    !Validation::isValidSetcode($fields[0])
+                    || !Validation::isValidCardName($fields[2])
+                    || !Validation::isValidLanguageCode($fields[3])
+                    || !(is_numeric($fields[4]) || empty($fields[4]))
+                    || !(is_numeric($fields[5]) || empty($fields[5]))
+                    || !(is_numeric($fields[6]) || empty($fields[6]))
+                    || !(Validation::validUUID($fields[7], $appConfig) || empty($fields[7]))
+                ) :
+                    $csvFormat = 'invalid';
+                else :
+                    $csvFormat = 'mtgc';
                 endif;
+            elseif ($qtyFields >= 15) :
+                $csvFormat = 'manabox';
+            else :
+                $csvFormat = 'invalid';
+            endif;
+            $msg->logMessage('[DEBUG]', "CSV input has $qtyFields fields, format is '$csvFormat'");
 
-                // Extracting common fields
+            if ($csvFormat === 'invalid') :
+                return false;
+            endif;
+
+            // Extracting common fields
+            $set = '';
+            $number = '';
+            $name = '';
+            $lang = '';
+            $param5 = 0;
+            $param6 = 0;
+            $param7 = 0;
+            $uuid = '';
+
+            // Extracting other fields based on format
+            if ($csvFormat === 'mtgc') :
                 $set    = $fields[0];
                 $number = $fields[1];
                 $name   = $fields[2];
+                $lang   = $fields[3];
+                $param5 = isset($fields[4]) ? (int) $fields[4] : 0;
+                $param6 = isset($fields[5]) ? (int) $fields[5] : 0;
+                $param7 = isset($fields[6]) ? (int) $fields[6] : 0;
+                $uuid   = isset($fields[7]) ? $fields[7] : '';
+            elseif ($csvFormat === 'delver') : // No etched in Delver Lens files
+                $set    = $fields[0];
+                $number = $fields[1];
+                $name   = $fields[2];
+                $lang   = 'unspecified';
+                $param5 = isset($fields[3]) ? (int) $fields[3] : 0;
+                $param6 = isset($fields[4]) ? (int) $fields[4] : 0;
+                $param7 = 0;
+                $uuid   = isset($fields[5]) ? $fields[5] : '';
+            elseif ($csvFormat === 'manabox') :
+                $name = isset($fields[0]) ? trim($fields[0]) : '';
+                $set = isset($fields[1]) ? trim($fields[1]) : '';
+                $number = isset($fields[3]) ? trim($fields[3]) : '';
+                $finish = isset($fields[4]) ? strtolower(trim($fields[4])) : '';
+                $qtyRaw = isset($fields[6]) ? trim($fields[6]) : '';
+                $uuid = isset($fields[8]) ? trim($fields[8]) : '';
+                $languageRaw = isset($fields[13]) ? strtolower(trim($fields[13])) : '';
 
-                // Extracting other fields based on format
-                if ($csvFormat === 'mtgc') :
-                    $lang   = $fields[3];
-                    $param5 = isset($fields[4]) ? (int) $fields[4] : 0;
-                    $param6 = isset($fields[5]) ? (int) $fields[5] : 0;
-                    $param7 = isset($fields[6]) ? (int) $fields[6] : 0;
-                    $uuid   = isset($fields[7]) ? $fields[7] : '';
-                elseif ($csvFormat === 'delver') : // No etched in Delver Lens files
-                    $lang   = 'unspecified';
-                    $param5 = isset($fields[3]) ? (int) $fields[3] : 0;
-                    $param6 = isset($fields[4]) ? (int) $fields[4] : 0;
-                    $param7 = 0;
-                    $uuid   = isset($fields[5]) ? $fields[5] : '';
-                else :
+                $hasValidUuid = ($uuid !== '' && Validation::validUUID($uuid, $appConfig) !== false);
+                $hasSetAndNumber = (
+                    $set !== ''
+                    && Validation::isValidSetcode($set)
+                    && $number !== ''
+                );
+
+                if (!$hasValidUuid && !$hasSetAndNumber) :
+                    $msg->logMessage('[DEBUG]', "ManaBox row rejected: no valid UUID or set/collector number pair");
                     return false;
                 endif;
 
-                // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
-                $qty = $param5 + $param6 + $param7;
+                if (!preg_match('/^\d+$/', $qtyRaw) || (int) $qtyRaw <= 0) :
+                    $msg->logMessage('[DEBUG]', "ManaBox row rejected: invalid quantity '$qtyRaw'");
+                    return false;
+                endif;
+                $qty = (int) $qtyRaw;
 
-                return [
-                    'set' => $set,
-                    'number' => $number,
-                    'name' => $name,
-                    'lang' => $lang,
-                    'qty' => $qty,
-                    'uuid' => $uuid,
-                    'normal' => $param5,
-                    'foil' => $param6,
-                    'etched' => $param7
-                ];
+                if ($finish === 'normal') :
+                    $param5 = $qty;
+                    $param6 = 0;
+                    $param7 = 0;
+                elseif ($finish === 'foil') :
+                    $param5 = 0;
+                    $param6 = $qty;
+                    $param7 = 0;
+                elseif ($finish === 'etched') :
+                    $param5 = 0;
+                    $param6 = 0;
+                    $param7 = $qty;
+                else :
+                    $msg->logMessage('[DEBUG]', "ManaBox row rejected: unknown finish '$finish'");
+                    return false;
+                endif;
+
+                if (Validation::isValidLanguageCode($languageRaw)) :
+                    $lang = $languageRaw;
+                else :
+                    $lang = '';
+                endif;
+
+                if (!$hasValidUuid) :
+                    $uuid = '';
+                endif;
             else :
-                $msg->logMessage('[ERROR]', "Invalid CSV format: $line");
                 return false;
             endif;
+
+            // Sum the values of parameters 5, 6, and 7 for merged quantity input (used in decks)
+            $qty = $param5 + $param6 + $param7;
+
+            return [
+                'set' => $set,
+                'number' => $number,
+                'name' => $name,
+                'lang' => $lang,
+                'qty' => $qty,
+                'uuid' => $uuid,
+                'normal' => $param5,
+                'foil' => $param6,
+                'etched' => $param7
+            ];
         };
 
         // MAIN PROCESSING //
@@ -690,6 +770,34 @@ class ImportExport
         $lines = explode("\n", $fileContent);
         $qtyLines = count($lines);
         $this->message->logMessage('[DEBUG]', "Regex deck import has $qtyLines lines");
+        $manaboxWarningDetail = function ($line) {
+            $fields = str_getcsv($line, ',', '"', '\\');
+            if (count($fields) < 15) :
+                return '';
+            endif;
+
+            $finish = isset($fields[4]) ? strtolower(trim($fields[4])) : '';
+            $qtyRaw = isset($fields[6]) ? trim($fields[6]) : '';
+            $uuid = isset($fields[8]) ? trim($fields[8]) : '';
+            $set = isset($fields[1]) ? trim($fields[1]) : '';
+            $number = isset($fields[3]) ? trim($fields[3]) : '';
+
+            if (!in_array($finish, ['normal', 'foil', 'etched'], true)) :
+                return "Unknown ManaBox finish '$finish'";
+            endif;
+            if (!preg_match('/^\d+$/', $qtyRaw) || (int) $qtyRaw <= 0) :
+                return "Invalid ManaBox quantity '$qtyRaw'";
+            endif;
+            if (
+                !(
+                    ($uuid !== '' && Validation::validUUID($uuid, $this->appConfig) !== false)
+                    || ($set !== '' && Validation::isValidSetcode($set) && $number !== '')
+                )
+            ) :
+                return "ManaBox row has no usable identity (need valid Scryfall ID or set code + collector number)";
+            endif;
+            return '';
+        };
 
         foreach ($lines as $line) :
             $rowNumber = $i + 1;
@@ -708,7 +816,12 @@ class ImportExport
                 )
             ) :
                 $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Not enough usable card info (or empty row)");
-                $newWarning = "$rowNumber, Not enough info to identify card (row detail: '$line') \n";
+                $manaboxIssue = $manaboxWarningDetail($line);
+                if ($manaboxIssue !== '') :
+                    $newWarning = "$rowNumber, $manaboxIssue (row detail: '$line') \n";
+                else :
+                    $newWarning = "$rowNumber, Not enough info to identify card (row detail: '$line') \n";
+                endif;
                 $warningSummary = $warningSummary . $newWarning;
             else :
                 $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Possible card");
@@ -720,6 +833,10 @@ class ImportExport
                 else :
                     $quickAddUuid = '';
                 endif;
+                $hasValidUuid = (
+                    $quickAddUuid !== ''
+                    && Validation::validUUID($quickAddUuid, $this->appConfig) !== false
+                );
 
                 // Quantity
                 if (isset($interpretedString['normal']) and $interpretedString['normal'] !== '') :
@@ -778,13 +895,15 @@ class ImportExport
                 );
                 $stmt = null;
 
-                if ($quickAddUuid !== '' && Validation::validUUID($quickAddUuid, $this->appConfig) !== false) :
+                if ($hasValidUuid) :
                     // Card UUID provided and valid UUID
                     $this->message->logMessage(
                         '[DEBUG]',
                         "Row: $rowNumber: Quick add proceeding with provided UUID: [$quickAddUuid]"
                     );
-                    $query = "SELECT id,finishes,name,setcode,number FROM cards_scry WHERE id = ? LIMIT 1";
+                    $query = "SELECT id,finishes,name,f1_name,f2_name,printed_name,f1_printed_name,f2_printed_name,
+                                flavor_name,f1_flavor_name,f2_flavor_name,setcode,number_import
+                                FROM cards_scry WHERE id = ? LIMIT 1";
                     $stmt = $this->db->prepare($query);
                     $params = [$quickAddUuid];
                     $stmt->bind_param('s', $params[0]);
@@ -868,22 +987,60 @@ class ImportExport
                     if ($result->num_rows > 0) :
                         $row = $result->fetch_assoc();
                         $stmt->close();
-                        $cardtoadd = $row['id'];
-                        $finishes = $row['finishes'];
-                        $this->message->logMessage(
-                            '[DEBUG]',
-                            "Row: $rowNumber: Quick add result: UUID result is '$cardtoadd', adding to batch"
-                        );
-                        $this->batchedCardIds[] = [
-                            'line' => $line,
-                            'row' => $rowNumber,
-                            'id' => $cardtoadd,
-                            'finishes' => $finishes,
-                            'normal' => $quickaddnormal,
-                            'foil' => $quickaddfoil,
-                            'etched' => $quickaddetched,
-                        ];
-                        $total = $total + $quickaddnormal + $quickaddfoil + $quickaddetched;
+                        $uuidMismatchReasons = [];
+                        if ($hasValidUuid) :
+                            if ($quickAddCard !== '') :
+                                $nameCandidates = [];
+                                foreach (
+                                    [
+                                        'name',
+                                        'f1_name',
+                                        'f2_name',
+                                        'printed_name',
+                                        'f1_printed_name',
+                                        'f2_printed_name',
+                                        'flavor_name',
+                                        'f1_flavor_name',
+                                        'f2_flavor_name'
+                                    ] as $nameColumn
+                                ) :
+                                    if (!empty($row[$nameColumn])) :
+                                        $nameCandidates[] = $row[$nameColumn];
+                                    endif;
+                                endforeach;
+                                if (!Validation::inArrayCaseInsensitive($quickAddCard, $nameCandidates)) :
+                                    $uuidMismatchReasons[] = "name mismatch (file '$quickAddCard')";
+                                endif;
+                            endif;
+                        endif;
+
+                        if (!empty($uuidMismatchReasons)) :
+                            $this->message->logMessage(
+                                '[NOTICE]',
+                                "Row: $rowNumber: UUID cross-check failed: " . implode('; ', $uuidMismatchReasons)
+                            );
+                            $cardtoadd = 'cardnotfound';
+                            $newWarning = "$rowNumber, UUID cross-check failed - " . implode('; ', $uuidMismatchReasons)
+                                . " (row detail: '$line') \n";
+                            $warningSummary = $warningSummary . $newWarning;
+                        else :
+                            $cardtoadd = $row['id'];
+                            $finishes = $row['finishes'];
+                            $this->message->logMessage(
+                                '[DEBUG]',
+                                "Row: $rowNumber: Quick add result: UUID result is '$cardtoadd', adding to batch"
+                            );
+                            $this->batchedCardIds[] = [
+                                'line' => $line,
+                                'row' => $rowNumber,
+                                'id' => $cardtoadd,
+                                'finishes' => $finishes,
+                                'normal' => $quickaddnormal,
+                                'foil' => $quickaddfoil,
+                                'etched' => $quickaddetched,
+                            ];
+                            $total = $total + $quickaddnormal + $quickaddfoil + $quickaddetched;
+                        endif;
                     else :
                         $stmt->close();
                         $this->message->logMessage('[NOTICE]', "Row: $rowNumber: Quick add - Card not found");
@@ -918,6 +1075,8 @@ class ImportExport
             $warningSummary = "Input file scan warnings or errors (Row number, Warning/error)\n\n" . $warningSummary;
         endif;
 
+        $actionedCards = 0;
+        $actionedRows = 0;
         // If batched card array is not empty, perform batch insert
         if (!empty($this->batchedCardIds)) :
             $batchOutput = $this->addCardsBatch($mytable, $importType, $count, $total, $this->batchedCardIds);

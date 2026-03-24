@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.37
-Date:        02/02/26
+Version:     1.39
+Date:        24/03/26
 Name:        collection.php
 Purpose:     Collection value tab view.
 Notes:       -
@@ -440,45 +440,61 @@ endif;
             <div class="info-box-inner">
                 <h2 class="h2-no-top-margin">Import help</h2>
                 <ul>
-                    <li>Select 'Add a deck' to create a deck with cards in this import</li>
+                    <li>Select 'Add a deck' to create a deck from cards in this import</li>
                     <li>
-                        Select Import type 'Add', 'Replace' or 'Remove' to add to existing, replace existing, or remove
-                        cards
+                        'Add' - add to existing quantities (default);
+                        'Replace' - replace existing quantities; 'Remove' - remove this quantity
                     </li>
-                    <li>Import file can be a MTGC CSV, e.g.:</li>
+                    <li>
+                        Import CSV file types:
+                    </li>
+                </ul>
+                <ul>
+                    <ul>
+                        <li>MTGC (recommended)</li>
+                    </ul>
                 </ul>
                 <pre>
       setcode,number,name,lang,normal,foil,etched,id
       LTR,3,Bill the Pony,en,5,0,0,{Scryfall id}</pre>
                 <ul>
-                    <li>Delver Lens lists can be imported in the CSV export format of</li>
+                    <ul>                    
+                        <li>Delver Lens (do not import etched/stamped in this format)</li>
+                    </ul>
                 </ul>
                 <pre>
       'Edition code','Collector's number','Name',
       'Non-foil quantity','Foil quantity','Scryfall ID'</pre>
                 <ul>
+                    <ul>                    
+                        <li>ManaBox (recommended)</li>
+                    </ul>
+                </ul>
+                <pre>
+      Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,
+      ManaBox ID,Scryfall ID,Purchase price,Misprint,Altered,Condition,
+      Language,Purchase price currency</pre>
+                <ul>
                     <li>
-                        <u>Do not import etched cards with Delver Lens</u>, it flags etched foils as separate cards
-                        instead of variations of a card
+                        MTGC or Moxfield decklist files can also be imported
                     </li>
                     <li>
-                        <u>Do not import stamped cards with Delver Lens</u>, it tends to misallocate
-                        (e.g. Planeswalker-stamped promos, The List, etc.
-                    </li>
-                    <li>Files can also be decklists (MTGC or Moxfield)</li>
-                    <li>
-                        If "id" is a valid Scryfall UUID value, the line will be imported as that id
-                        <i>without checking anything else</i>
+                        A valid "id"/"Scryfall ID" is treated as authoritative,
+                        subject to a cardname check (if provided)
                     </li>
                     <li>
-                        If a Scryfall UUID cannot be matched, import will try a setcode/name/collector number/language
-                        match or skip the row
+                        If UUID fails, setcode/name/number/language match is tried;
+                        if language not set, the card's primary version is imported
                     </li>
-                    <li>If language is unspecified, the primary version is imported (usually English)</li>
-                    <li>Set codes and collector numbers must be as <a href='sets.php'> here </a>for success</li>
-                    <li>For a format example: export first, use that file as a template</li>
-                    <li>Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)</li>
-                    <li>You will be emailed a list of import failures/warnings</li>
+                    <li>
+                        For a format example: export first, use that file as a template
+                    </li>
+                    <li>
+                        Edit CSVs in an app like Notepad++ (<b>don't use Excel</b>)
+                    </li>
+                    <li>
+                        You will be emailed a list of import failures/warnings
+                    </li>
                 </ul>
             </div>
         </div>

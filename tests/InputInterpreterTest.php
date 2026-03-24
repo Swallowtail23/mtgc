@@ -182,4 +182,57 @@ class InputInterpreterTest extends TestCase
         $this->assertSame('', $result['uuid']);
         $this->assertSame(1, $result['normal']);
     }
+
+    public function testManaBoxCsvHeader()
+    {
+        $line = 'Name,Set code,Set name,Collector number,Foil,Rarity,Quantity,ManaBox ID,'
+            . 'Scryfall ID,Purchase price,Misprint,Altered,Condition,Language,Purchase price currency';
+        $this->assertSame('header', ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
+    }
+
+    public function testManaBoxCsvNormalFoilAndEtchedMapping()
+    {
+        $normalLine = 'Academy Manufacturer,SLD,Secret Lair Drop,7094,normal,rare,2,111636,'
+            . 'c88eb33d-efba-4ad9-87bf-f051079c9bce,13.13,false,false,near_mint,en,AUD';
+        $foilLine = 'Academy Manufacturer,SLD,Secret Lair Drop,7094,foil,rare,3,111636,'
+            . 'c88eb33d-efba-4ad9-87bf-f051079c9bce,13.13,false,false,near_mint,en,AUD';
+        $etchedLine = 'Academy Manufacturer,SLD,Secret Lair Drop,7094,etched,rare,4,111636,'
+            . 'c88eb33d-efba-4ad9-87bf-f051079c9bce,13.13,false,false,near_mint,en,AUD';
+
+        $normalResult = ImportExport::inputInterpreter($normalLine, $this->appConfig, $this->gameRules);
+        $foilResult = ImportExport::inputInterpreter($foilLine, $this->appConfig, $this->gameRules);
+        $etchedResult = ImportExport::inputInterpreter($etchedLine, $this->appConfig, $this->gameRules);
+
+        $this->assertSame(2, $normalResult['normal']);
+        $this->assertSame(0, $normalResult['foil']);
+        $this->assertSame(0, $normalResult['etched']);
+
+        $this->assertSame(0, $foilResult['normal']);
+        $this->assertSame(3, $foilResult['foil']);
+        $this->assertSame(0, $foilResult['etched']);
+
+        $this->assertSame(0, $etchedResult['normal']);
+        $this->assertSame(0, $etchedResult['foil']);
+        $this->assertSame(4, $etchedResult['etched']);
+    }
+
+    public function testManaBoxCsvUnknownFinishReturnsFalse()
+    {
+        $line = 'Academy Manufacturer,SLD,Secret Lair Drop,7094,glossy,rare,2,111636,'
+            . 'c88eb33d-efba-4ad9-87bf-f051079c9bce,13.13,false,false,near_mint,en,AUD';
+        $this->assertFalse(ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules));
+    }
+
+    public function testManaBoxCsvValidUuidParses()
+    {
+        $line = 'Academy Manufacturer,SLD,Secret Lair Drop,7094,normal,rare,1,111636,'
+            . 'c88eb33d-efba-4ad9-87bf-f051079c9bce,13.13,false,false,near_mint,en,AUD';
+        $result = ImportExport::inputInterpreter($line, $this->appConfig, $this->gameRules);
+
+        $this->assertSame('SLD', strtoupper($result['set']));
+        $this->assertSame('7094', $result['number']);
+        $this->assertSame('c88eb33d-efba-4ad9-87bf-f051079c9bce', $result['uuid']);
+        $this->assertSame(1, $result['qty']);
+        $this->assertSame('en', $result['lang']);
+    }
 }
