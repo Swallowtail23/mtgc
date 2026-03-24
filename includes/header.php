@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.81
+Version:     1.82
 Date:        05/02/26
 Name:        header.php
 Purpose:     PHP script to display header
@@ -260,7 +260,10 @@ endif;
 </script>
 <?php
 $adminpages = strpos($_SERVER['PHP_SELF'], "/admin/");
-$mtceStatus = (int) $ctx->meta('mtceStatus', 0);
+$mtceStatus = 0;
+if (isset($ctx) && is_object($ctx) && method_exists($ctx, 'meta')) :
+    $mtceStatus = (int) $ctx->meta('mtceStatus', 0);
+endif;
 if (
     ($mtceStatus != 1)
     and (!isset($_SESSION["chgpwd"]))

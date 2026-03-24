@@ -1,6 +1,8 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
 class IndexTest extends TestCase
 {
@@ -37,12 +39,22 @@ class IndexTest extends TestCase
         ini_set('sendmail_path', $this->originalSendmailPath);
     }
 
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
     public function testIndexRendersWithStubbedEnvironment()
     {
         $_GET = [];
+        $output = '';
+        $startingBufferLevel = ob_get_level();
         ob_start();
-        include __DIR__ . '/../index.php';
-        $output = ob_get_clean();
+        try {
+            include __DIR__ . '/../index.php';
+            $output = (string) ob_get_contents();
+        } finally {
+            while (ob_get_level() > $startingBufferLevel) :
+                ob_end_clean();
+            endwhile;
+        }
 
         $this->assertStringContainsString('<!DOCTYPE html>', $output);
         $this->assertStringContainsString('Search help', $output);

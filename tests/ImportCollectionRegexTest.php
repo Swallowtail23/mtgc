@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.1
+Version:     1.4
 Date:        24/03/26
 Name:        ImportCollectionRegexTest.php
 Purpose:     Tests for collection import flow with ManaBox parsing and UUID cross-checking.
@@ -131,6 +131,82 @@ class ImportCollectionRegexTest extends TestCase
         $this->assertCount(0, $manager->capturedBatch);
     }
 
+    public function testMtgcUuidNameWithEscapedQuotesIsAccepted()
+    {
+        $uuid = '5432b863-21cc-4898-9463-29049f939e51';
+        $db = new ImportCollectionRegexDbStub(
+            [
+                $uuid => [
+                    'id' => $uuid,
+                    'finishes' => '["nonfoil","foil"]',
+                    'name' => 'Kongming, "Sleeping Dragon"',
+                    'f1_name' => '',
+                    'f2_name' => '',
+                    'printed_name' => '',
+                    'f1_printed_name' => '',
+                    'f2_printed_name' => '',
+                    'flavor_name' => '',
+                    'f1_flavor_name' => '',
+                    'f2_flavor_name' => '',
+                    'setcode' => 'C13',
+                    'number_import' => '16'
+                ]
+            ],
+            []
+        );
+        $manager = new ImportExportImportStub($db, $GLOBALS['appConfig'], new GameRules([]), 'user@example.test');
+        $file = $this->writeTempImportFile([
+            '"c13","16","Kongming, \\"Sleeping Dragon\\"","en","1","0","0","' . $uuid . '"'
+        ]);
+
+        ob_start();
+        $manager->importCollectionRegex($file, 'collection', 'replace', 'user@example.test');
+        ob_end_clean();
+
+        @unlink($file);
+        $this->assertCount(1, $manager->capturedBatch);
+        $this->assertSame($uuid, $manager->capturedBatch[0]['id']);
+        $this->assertSame(1, $manager->capturedBatch[0]['normal']);
+    }
+
+    public function testMtgcUuidNameWithEscapedOuterQuotesIsAccepted()
+    {
+        $uuid = 'cb3587b9-e727-4f37-b4d6-1baa7316262f';
+        $db = new ImportCollectionRegexDbStub(
+            [
+                $uuid => [
+                    'id' => $uuid,
+                    'finishes' => '["nonfoil","foil"]',
+                    'name' => '"Rumors of My Death . . ."',
+                    'f1_name' => '',
+                    'f2_name' => '',
+                    'printed_name' => '',
+                    'f1_printed_name' => '',
+                    'f2_printed_name' => '',
+                    'flavor_name' => '',
+                    'f1_flavor_name' => '',
+                    'f2_flavor_name' => '',
+                    'setcode' => 'UST',
+                    'number_import' => '65'
+                ]
+            ],
+            []
+        );
+        $manager = new ImportExportImportStub($db, $GLOBALS['appConfig'], new GameRules([]), 'user@example.test');
+        $file = $this->writeTempImportFile([
+            '"ust","65","\\"Rumors of My Death . . .\\"","en","2","0","0","' . $uuid . '"'
+        ]);
+
+        ob_start();
+        $manager->importCollectionRegex($file, 'collection', 'replace', 'user@example.test');
+        ob_end_clean();
+
+        @unlink($file);
+        $this->assertCount(1, $manager->capturedBatch);
+        $this->assertSame($uuid, $manager->capturedBatch[0]['id']);
+        $this->assertSame(2, $manager->capturedBatch[0]['normal']);
+    }
+
     public function testManaBoxFallbackSetAndNumberWhenUuidEmpty()
     {
         $row = [
@@ -153,6 +229,53 @@ class ImportCollectionRegexTest extends TestCase
         $this->assertSame(3, $manager->capturedBatch[0]['normal']);
     }
 
+    public function testBatchFailureStopsFlowBeforeOrphanCleanup()
+    {
+        $uuid = 'c88eb33d-efba-4ad9-87bf-f051079c9bce';
+        $db = new ImportCollectionRegexDbStub(
+            [
+                $uuid => [
+                    'id' => $uuid,
+                    'finishes' => '["nonfoil","foil","etched"]',
+                    'name' => 'Academy Manufacturer',
+                    'f1_name' => '',
+                    'f2_name' => '',
+                    'printed_name' => '',
+                    'f1_printed_name' => '',
+                    'f2_printed_name' => '',
+                    'flavor_name' => '',
+                    'f1_flavor_name' => '',
+                    'f2_flavor_name' => '',
+                    'setcode' => 'SLD',
+                    'number_import' => '7094'
+                ]
+            ],
+            []
+        );
+        $manager = new ImportExportBatchFailStub($db, $GLOBALS['appConfig'], new GameRules([]), 'user@example.test');
+        $file = $this->writeTempImportFile([
+            'Academy Manufacturer,SLD,Secret Lair Drop,7094,foil,rare,2,111636,'
+                . $uuid . ',13.13,false,false,near_mint,en,AUD'
+        ]);
+
+        $startingBufferLevel = ob_get_level();
+        try {
+            ob_start();
+            $manager->importCollectionRegex($file, 'collection', 'add', 'user@example.test');
+            ob_end_clean();
+            $this->fail('Expected batch failure exception was not thrown.');
+        } catch (\Exception $exception) {
+            $this->assertStringContainsString('Simulated batch failure', $exception->getMessage());
+        } finally {
+            while (ob_get_level() > $startingBufferLevel) :
+                ob_end_clean();
+            endwhile;
+        }
+
+        @unlink($file);
+        $this->assertSame(0, $db->executeQueryCount);
+    }
+
     private function writeTempImportFile(array $lines)
     {
         $file = tempnam(sys_get_temp_dir(), 'mtg_import_');
@@ -172,12 +295,21 @@ class ImportExportImportStub extends ImportExport
     }
 }
 
+class ImportExportBatchFailStub extends ImportExport
+{
+    public function addCardsBatch($mytable, $importType, $count, $total, $batchedCardIds)
+    {
+        throw new \Exception('Simulated batch failure');
+    }
+}
+
 class ImportCollectionRegexDbStub
 {
     private array $cardsById;
     private array $cardsBySetNumber;
     public string $error = '';
     public int $affected_rows = 0;
+    public int $executeQueryCount = 0;
 
     public function __construct(array $cardsById, array $cardsBySetNumber)
     {
@@ -192,6 +324,7 @@ class ImportCollectionRegexDbStub
 
     public function execute_query($query)
     {
+        $this->executeQueryCount++;
         return true;
     }
 

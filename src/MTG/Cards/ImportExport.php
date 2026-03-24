@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.20
+Version:     1.23
 Date:        24/03/26
 Name:        ImportExport.php
 Purpose:     Import/export management class.
@@ -884,6 +884,14 @@ class ImportExport
                 endif;
 
                 $quickAddCard = htmlspecialchars_decode($quickAddCard, ENT_QUOTES);
+                $quickAddCardNormalized = $this->normalizeImportedCardName($quickAddCard);
+                if ($quickAddCardNormalized !== $quickAddCard) :
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Row: $rowNumber: Quick add normalized escaped quote sequences in card name"
+                    );
+                    $quickAddCard = $quickAddCardNormalized;
+                endif;
                 $this->message->logMessage(
                     '[DEBUG]',
                     "Row: $rowNumber: Quick add interpreted as: "
@@ -1157,11 +1165,10 @@ class ImportExport
             '[DEBUG]',
             "Batch import process called with '$importType' ($count unique cards, $total total cards)"
         );
-        $values = [];
-        $placeholders = [];
+        $validBatchedCardIds = [];
         $batchWarnings = '';
 
-        foreach ($batchedCardIds as $key => $batchedCard) :
+        foreach ($batchedCardIds as $batchedCard) :
             $line = $batchedCard['line'];
             $rowNumber = $batchedCard['row'];
             $id = $batchedCard['id'];
@@ -1183,7 +1190,6 @@ class ImportExport
                 $batchWarnings = $batchWarnings . $newWarning;
                 $total = $total - $qty;         // Deduct cards from total card count
                 $count = $count - 1;            // Deduct the entire row from the row count
-                unset($batchedCardIds[$key]);   // Remove this row from the batch
                 continue;
             endif;
             if ($foil > 0 && !str_contains($cardtype, 'foil')) :
@@ -1194,9 +1200,8 @@ class ImportExport
                 $newWarning = "$rowNumber, Foil qty cannot be mapped to card without foil finish - row skipped "
                     . "(row detail: '$line') \n";
                 $batchWarnings = $batchWarnings . $newWarning;
-                $total = $total - $foil;
+                $total = $total - $qty;         // Row skipped, deduct all finish quantities
                 $count = $count - 1;
-                unset($batchedCardIds[$key]);
                 continue;
             endif;
             if ($etched > 0 && !str_contains($cardtype, 'etched')) :
@@ -1207,75 +1212,137 @@ class ImportExport
                 $newWarning = "$rowNumber, Etched qty cannot be mapped to card without etched finish - row skipped "
                     . "(row detail: '$line') \n";
                 $batchWarnings = $batchWarnings . $newWarning;
-                $total = $total - $etched;
+                $total = $total - $qty;         // Row skipped, deduct all finish quantities
                 $count = $count - 1;
-                unset($batchedCardIds[$key]);
                 continue;
             endif;
             // Add each card to the batch
             $this->message->logMessage('[DEBUG]', "Row: $rowNumber: Batch import - adding to batch ('$line')");
-            $values[] = "($id, $normal, $foil, $etched)";
-            $placeholders[] = '(?, ?, ?, ?)';
+            $validBatchedCardIds[] = [
+                'id' => $id,
+                'normal' => $normal,
+                'foil' => $foil,
+                'etched' => $etched,
+            ];
         endforeach;
         $this->message->logMessage('[DEBUG]', "Batch import warnings: '$batchWarnings'");
-        if (!empty($values)) :
+        if (!empty($validBatchedCardIds)) :
             $this->message->logMessage('[DEBUG]', "Batch import: Assessing import type variations ($importType)");
-            $placeholdersString = implode(', ', $placeholders);
+
+            if (
+                ($importType !== 'add')
+                and ($importType !== 'subtract')
+                and ($importType !== 'replace')
+            ) :
+                throw new \Exception(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                    . ": Unsupported import type '$importType'"
+                );
+            endif;
             if ($importType === 'add') :
-                $query = "INSERT INTO $mytable (id, normal, foil, etched) VALUES $placeholdersString 
-                            ON DUPLICATE KEY 
-                            UPDATE 
-                            normal = normal + VALUES(normal), 
-                            foil = foil + VALUES(foil), 
+                $updateClause = "normal = normal + VALUES(normal),
+                            foil = foil + VALUES(foil),
                             etched = etched + VALUES(etched)";
             elseif ($importType === 'subtract') :
-                $query = "INSERT INTO $mytable (id, normal, foil, etched) VALUES $placeholdersString 
-                            ON DUPLICATE KEY 
-                            UPDATE 
-                            normal = greatest(normal - VALUES(normal),0), 
-                            foil = greatest(foil - VALUES(foil),0),  
+                $updateClause = "normal = greatest(normal - VALUES(normal),0),
+                            foil = greatest(foil - VALUES(foil),0),
                             etched = greatest(etched - VALUES(etched),0)";
-            elseif ($importType === 'replace') :
-                $query = "INSERT INTO $mytable (id, normal, foil, etched) VALUES $placeholdersString 
-                            ON DUPLICATE KEY 
-                            UPDATE 
-                            normal = VALUES(normal), 
-                            foil = VALUES(foil),  
+            else :
+                $updateClause = "normal = VALUES(normal),
+                            foil = VALUES(foil),
                             etched = VALUES(etched)";
             endif;
-            // Bind parameters and execute the query
-            $stmt = $this->db->prepare($query);
 
-            // Generate the type definition string dynamically based on the number of batched cards
-            $typeDefinition = str_repeat('siii', count($batchedCardIds));
+            $maxPlaceholders = 65000;
+            $placeholdersPerRow = 4;
+            $maxRowsPerStatement = (int) floor($maxPlaceholders / $placeholdersPerRow);
+            if ($maxRowsPerStatement < 1) :
+                $maxRowsPerStatement = 1;
+            endif;
+            $batchChunks = array_chunk($validBatchedCardIds, $maxRowsPerStatement);
 
-            // Prepare an array with the values to be bound
-            $bindValues = [];
-            foreach ($batchedCardIds as $batchedCard) :
-                $bindValues[] = $batchedCard['id'];
-                $bindValues[] = $batchedCard['normal'];
-                $bindValues[] = $batchedCard['foil'];
-                $bindValues[] = $batchedCard['etched'];
-            endforeach;
+            $this->message->logMessage(
+                '[DEBUG]',
+                "Batch import: executing " . count($batchChunks) . " SQL chunk(s) at max "
+                    . "$maxRowsPerStatement rows/chunk"
+            );
 
-            // Bind the parameters dynamically
-            $stmt->bind_param($typeDefinition, ...$bindValues);
-            if ($stmt->execute()) :
-                $this->message->logMessage('[DEBUG]', "importCollectionRegex batch process completed");
-                $stmt->close();
-                if ($batchWarnings === '') :
-                    $batchWarnings = "\nBatch import warnings or errors\n\nNone\n\n";
-                else :
-                    $batchWarnings = "\nBatch import warnings or errors (Row number, Warning/error)\n\n"
-                        . $batchWarnings;
-                endif;
-                return array('warnings' => $batchWarnings, 'total' => $total, 'batchRows' => $count);
-            else :
-                $this->message->logMessage('[ERROR]', "Error executing batch insert query: " . $stmt->error);
-                $stmt->close();
+            if ($this->db->begin_transaction() === false) :
+                throw new \Exception(
+                    '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                    . ": SQL begin transaction failure: " . $this->db->error
+                );
             endif;
 
-            $stmt->close();
+            try {
+                foreach ($batchChunks as $chunkIndex => $batchChunk) :
+                    $placeholders = array_fill(0, count($batchChunk), '(?, ?, ?, ?)');
+                    $placeholdersString = implode(', ', $placeholders);
+                    $query = "INSERT INTO $mytable (id, normal, foil, etched) VALUES $placeholdersString
+                            ON DUPLICATE KEY
+                            UPDATE
+                            $updateClause";
+
+                    $stmt = $this->db->prepare($query);
+                    if ($stmt === false) :
+                        throw new \Exception(
+                            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                            . ": SQL prepare failure: " . $this->db->error
+                        );
+                    endif;
+
+                    $typeDefinition = str_repeat('siii', count($batchChunk));
+                    $bindValues = [];
+                    foreach ($batchChunk as $chunkCard) :
+                        $bindValues[] = $chunkCard['id'];
+                        $bindValues[] = $chunkCard['normal'];
+                        $bindValues[] = $chunkCard['foil'];
+                        $bindValues[] = $chunkCard['etched'];
+                    endforeach;
+
+                    if ($stmt->bind_param($typeDefinition, ...$bindValues) === false) :
+                        $error = $stmt->error;
+                        $stmt->close();
+                        throw new \Exception(
+                            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                            . ": SQL bind failure: " . $error
+                        );
+                    endif;
+                    if ($stmt->execute() === false) :
+                        $error = $stmt->error;
+                        $stmt->close();
+                        throw new \Exception(
+                            '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                            . ": SQL execute failure: " . $error
+                        );
+                    endif;
+
+                    $stmt->close();
+                    $this->message->logMessage(
+                        '[DEBUG]',
+                        "Batch import: SQL chunk " . ($chunkIndex + 1) . " of " . count($batchChunks)
+                            . " completed"
+                    );
+                endforeach;
+                if ($this->db->commit() === false) :
+                    throw new \Exception(
+                        '[ERROR]' . basename(__FILE__) . " " . __LINE__ . " Function " . __FUNCTION__
+                        . ": SQL commit failure: " . $this->db->error
+                    );
+                endif;
+            } catch (\Exception $batchSqlException) {
+                $this->db->rollback();
+                throw $batchSqlException;
+            }
+
+            if ($batchWarnings === '') :
+                $batchWarnings = "\nBatch import warnings or errors\n\nNone\n\n";
+            else :
+                $batchWarnings = "\nBatch import warnings or errors (Row number, Warning/error)\n\n"
+                    . $batchWarnings;
+            endif;
+            $this->message->logMessage('[DEBUG]', "importCollectionRegex batch process completed");
+            return array('warnings' => $batchWarnings, 'total' => $total, 'batchRows' => $count);
         else :
             $this->message->logMessage('[DEBUG]', "importCollectionRegex batch process completed (no writes made)");
             if ($batchWarnings === '') :
@@ -1300,5 +1367,17 @@ class ImportExport
             );
         endif;
     }
+
+    private function normalizeImportedCardName($cardName)
+    {
+        if (!is_string($cardName)) :
+            return '';
+        endif;
+        $normalized = trim($cardName);
+        $replaced = preg_replace('/\\\\([\"\'])/', '$1', $normalized);
+        if ($replaced === null) :
+            return $normalized;
+        endif;
+        return $replaced;
+    }
 }
-// phpcs:enable

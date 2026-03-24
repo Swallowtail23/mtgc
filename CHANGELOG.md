@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Collection import now supports ManaBox CSV rows in addition to MTGC and Delver Lens formats.
 - ManaBox finish mapping now reads text values (`normal`, `foil`, `etched`) and assigns quantity to that finish type.
 - Collection import help text now documents ManaBox CSV support and finish mapping behavior.
+- Collection batch import SQL execution now chunks large prepared statements to stay under placeholder limits.
 
 ### Fixed
 
@@ -20,6 +21,13 @@ All notable changes to this project will be documented in this file.
   and missing usable identifiers.
 - UUID-driven collection import now performs a rudimentary name sanity check (when name is provided) and
   warns/skips on name mismatches while allowing set/collector-number differences.
+- Batch import now validates import mode explicitly and treats row-level finish incompatibility as full-row skips
+  for consistent actioned card totals.
+- Collection import now fails fast when batch SQL execution fails, rather than continuing as a successful import
+  summary path.
+- Header rendering now tolerates missing `$ctx` in non-bootstrap pages (such as `error.php`) instead of fataling.
+- UUID-based collection import now normalizes escaped quote sequences in incoming card names before DB cross-checks
+  (for example `\"` in CSV), preventing false mismatch warnings for correctly matched quoted names.
 
 ### Security
 
@@ -27,7 +35,9 @@ All notable changes to this project will be documented in this file.
 
 ### Infrastructure
 
--
+- Added regression coverage for `includes/header.php` include paths that do not provide `$ctx`.
+- Added collection import coverage for UUID rows with escaped quotes in card names.
+- Added regression coverage to confirm batch import exceptions abort flow before orphan cleanup runs.
 
 ## [v0.5.8] - 2026-03-10
 
