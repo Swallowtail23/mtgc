@@ -2,18 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.9-dev] - Unreleased
+## [v0.5.9-dev] - 2026-03-24
 
-### Added
-
--
-
-### Changed
+### Changed - 2026-03-24
 
 - Collection import now supports ManaBox CSV in addition to MTGC and Delver Lens formats.
 - Collection batch import SQL execution now chunks large prepared statements to stay under placeholder limits.
 
-### Fixed
+### Fixed - 2026-03-24
 
 - UUID-driven collection import now performs a rudimentary name sanity check (when name is provided) and
   warns/skips on name mismatches while allowing set/collector-number differences.
@@ -43,11 +39,7 @@ All notable changes to this project will be documented in this file.
 - Random draw strip async image updates now swap immediately (no opacity fade), removing the remaining refresh flash
   while keeping the row's load/re-draw slide animation.
 
-### Security
-
--
-
-### Infrastructure
+### Infrastructure - 2026-03-24
 
 - Added regression coverage for `includes/header.php` include paths that do not provide `$ctx`.
 - Added collection import coverage for UUID rows with escaped quotes in card names.
