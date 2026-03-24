@@ -1,5 +1,5 @@
 /*
-Version:     1.18
+Version:     1.19
 Date:        23/02/26
 Name:        asyncImageRefresh.js
 Purpose:     Shared async image refresh helpers.
@@ -180,8 +180,14 @@ To do:       -
         const placeholderVisible = placeholder.length && !placeholder.hasClass('card-info-hidden');
         const hasFrontImage = response.front && response.front.indexOf('cardimg') !== -1;
         const shouldRevealFront = placeholderVisible && hasFrontImage;
+        const targets = $('img[data-cardid="' + cardId + '"]');
+        const hasBackImageTargets = hasFrontImage && targets.filter(function () {
+            const src = $(this).attr('src') || '';
+            const frontSrc = $(this).attr('data-front-src') || '';
+            return src.indexOf('/images/back.jpg') !== -1 || frontSrc.indexOf('/images/back.jpg') !== -1;
+        }).length > 0;
 
-        if (frontChanged || shouldRevealFront || forceSwap) {
+        if (frontChanged || shouldRevealFront || hasBackImageTargets || forceSwap) {
             const frontSrc = hasFrontImage ? response.front : '/images/back.jpg';
             const frontBustUrl = frontSrc + '?t=' + Date.now();
             if (useFaces) {
@@ -194,7 +200,6 @@ To do:       -
                     });
                 });
             } else {
-                const targets = $('img[data-cardid="' + cardId + '"]');
                 refreshImageCache(frontSrc, frontBustUrl).then(function () {
                     targets.each(function () {
                         const $target = $(this);

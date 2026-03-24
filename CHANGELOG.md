@@ -30,6 +30,16 @@ All notable changes to this project will be documented in this file.
   (for example `\"` in CSV), preventing false mismatch warnings for correctly matched quoted names.
 - Collection import with "Deck" enabled now skips deck creation and alerts the user when total imported card
   quantity exceeds 200.
+- Deck detail random-draw preview strip images now participate in async image refresh swaps (when starting on back.jpg).
+- Deck detail async image refresh now prioritizes visible random-draw strip cards ahead of bulk deck-list image checks.
+- Async image refresh now forces front-image swaps for any remaining back-image DOM targets for a card ID, even when
+  backend change flags are false.
+- Deck detail random re-draw now re-queues refreshed strip card IDs after fragment replacement to ensure new draw
+  DOM nodes receive async image swaps.
+- Deck detail async image queue now clears per-card queued state after each check completes, allowing re-draws to
+  trigger fresh async checks for previously seen card IDs.
+- Deck detail random-draw queue handling now forwards force-swap options and applies a direct strip-image fallback
+  update so cards fetched asynchronously replace any remaining back.jpg tiles in the visible random draw row.
 
 ### Security
 

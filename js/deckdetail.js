@@ -1,6 +1,6 @@
 /*
-Version:     2.88
-Date:        05/02/26
+Version:     2.92
+Date:        24/03/26
 Name:        deckdetail.js
 Purpose:     Deck detail page JS handlers and ajax fragment refresh.
 Notes:       -
@@ -515,6 +515,25 @@ var deckImageInFlight = 0;
 var deckImagePauseUntil = 0;
 var deckImageMaxConcurrent = 3;
 
+function enforceRandomDrawImageUpdate(cardId, response) {
+    if (!cardId || !response || response.success !== true || !response.front) {
+        return;
+    }
+    if (response.front.indexOf('cardimg') === -1) {
+        return;
+    }
+    var frontBust = response.front + '?t=' + Date.now();
+    $('#deck-random-draw-fragment img.random-draw-card-img[data-cardid="' + cardId + '"]').each(function() {
+        var $img = $(this);
+        var src = $img.attr('src') || '';
+        var currentFront = $img.attr('data-front-src') || '';
+        $img.attr('data-front-src', response.front);
+        if (src.indexOf('/images/back.jpg') !== -1 || currentFront.indexOf('/images/back.jpg') !== -1) {
+            $img.attr('src', frontBust);
+        }
+    });
+}
+
 function enqueueDeckImage(cardId, priority) {
     if (!cardId) {
         return;
@@ -553,11 +572,13 @@ function scheduleDeckImageLoad() {
         dataType: 'json',
         success: function(response) {
             if (window.mtgHandleImageRefresh) {
-                window.mtgHandleImageRefresh(cardId, response);
+                window.mtgHandleImageRefresh(cardId, response, { forceSwap: true });
             }
+            enforceRandomDrawImageUpdate(cardId, response);
         },
         complete: function() {
             deckImageInFlight -= 1;
+            delete deckImageQueued[cardId];
             setTimeout(scheduleDeckImageLoad, 0);
         }
     });
@@ -566,6 +587,14 @@ function scheduleDeckImageLoad() {
 
 function refreshCardImagesAsync() {
     var seen = window.mtgAsyncImageSeen || {};
+    $('#deck-random-draw-fragment img.random-draw-card-img[data-cardid]').each(function() {
+        var cardId = $(this).data('cardid');
+        if (!cardId || seen[cardId]) {
+            return;
+        }
+        seen[cardId] = true;
+        enqueueDeckImage(cardId, true);
+    });
     $('img[data-cardid]').each(function() {
         var cardId = $(this).data('cardid');
         if (!cardId || seen[cardId]) {
@@ -581,8 +610,8 @@ window.enqueueDeckImage = enqueueDeckImage;
 window.refreshCardImagesAsync = refreshCardImagesAsync;
 if (window.mtgHandleImageRefresh && !window.mtgHandleImageRefreshWrapped) {
     var originalHandleImageRefresh = window.mtgHandleImageRefresh;
-    window.mtgHandleImageRefresh = function (cardId, response) {
-        originalHandleImageRefresh(cardId, response);
+    window.mtgHandleImageRefresh = function () {
+        originalHandleImageRefresh.apply(this, arguments);
         updateDecksideHeroFlipButton();
     };
     window.mtgHandleImageRefreshWrapped = true;
@@ -1389,6 +1418,17 @@ function refreshTable() {
             if (window.bindRandomDrawStripInteractions) {
                 window.bindRandomDrawStripInteractions();
             }
+            var seen = window.mtgAsyncImageSeen || {};
+            $('#deck-random-draw-fragment img.random-draw-card-img[data-cardid]').each(function() {
+                var $img = $(this);
+                var cardId = $img.data('cardid');
+                if (!cardId) {
+                    return;
+                }
+                delete seen[cardId];
+                enqueueDeckImage(cardId, true);
+            });
+            window.mtgAsyncImageSeen = seen;
             window.dispatchEvent(new Event('resize'));
         }
     };

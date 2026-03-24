@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     3.61
+Version:     3.62
 Date:        13/01/26
 Name:        ajaxrandomdraw.php
 Purpose:     PHP script to generate random hand draws for decks
@@ -159,7 +159,8 @@ echo "<div class='random-draw-content'>";
 echo "<div class='random-draw-strip' aria-label='Random draw cards'>";
 foreach ($drawn_cards as $index => $card) :
     echo "<a class='{$card['cardClass']}' href='{$card['safeUrl']}' style='--random-index: {$index};'>"
-        . "<img class='random-draw-card-img' alt='{$card['safeName']}' src='{$card['safeImg']}'>"
+        . "<img class='random-draw-card-img' alt='{$card['safeName']}' "
+        . "data-cardid='{$card['safeId']}' data-front-src='{$card['safeImg']}' src='{$card['safeImg']}'>"
         . "</a>";
 endforeach;
 echo "</div>";
