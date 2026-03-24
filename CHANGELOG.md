@@ -10,15 +10,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Collection import now supports ManaBox CSV rows in addition to MTGC and Delver Lens formats.
-- ManaBox finish mapping now reads text values (`normal`, `foil`, `etched`) and assigns quantity to that finish type.
-- Collection import help text now documents ManaBox CSV support and finish mapping behavior.
+- Collection import now supports ManaBox CSV in addition to MTGC and Delver Lens formats.
 - Collection batch import SQL execution now chunks large prepared statements to stay under placeholder limits.
 
 ### Fixed
 
-- Collection import now reports explicit ManaBox row warnings for unknown finish values, invalid quantities,
-  and missing usable identifiers.
 - UUID-driven collection import now performs a rudimentary name sanity check (when name is provided) and
   warns/skips on name mismatches while allowing set/collector-number differences.
 - Batch import now validates import mode explicitly and treats row-level finish incompatibility as full-row skips
