@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     7.59
-Date:        13/01/26
+Version:     7.64
+Date:        27/03/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
 Notes:       -
@@ -14,6 +14,7 @@ To do:      -
 use MTG\Auth\SessionManager;
 use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
+use MTG\Core\Text\SearchTextHelper;
 
 // Bootstrap
 $ctx                        = require dirname(__DIR__) . '/bootstrap.php';
@@ -128,30 +129,37 @@ else :
                 "Typed: '$typed'; Search: '$searchString'; Setcode: '$setcode'; Number: '$number' "
             );
 
-        // Header search only searches within primary_card set, not additional languages
-        $query = "SELECT id, setcode, name, printed_name, flavor_name, f1_name, f1_printed_name, "
-            . "f1_flavor_name, f2_name, f2_printed_name, f2_flavor_name, release_date "
-            . "FROM cards_scry "
-            . "WHERE "
-            . "(printed_name LIKE ? "
-            . "OR flavor_name LIKE ? "
-            . "OR name LIKE ? "
-            . "OR f1_printed_name LIKE ? "
-            . "OR f1_flavor_name LIKE ? "
-            . "OR f1_name LIKE ? "
-            . "OR f2_printed_name LIKE ? "
-            . "OR f2_flavor_name LIKE ? "
-            . "OR f2_name LIKE ?) "
-            . "AND "
-            . "(setcode LIKE ? OR ? = '') "
-            . "AND "
-            . "(number_import LIKE ? or ? = '') "
-            . "AND "
-            . "(primary_card = 1) "
-            . "ORDER BY release_date DESC, name ASC LIMIT 20";
-        $stmt = $db->prepare($query);
-        $stmt->bind_param(
-            "sssssssssssss",
+        $matchedNameParams = [
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString,
+            $searchString
+        ];
+        $matchedPositionParams = [
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed,
+            $searchString,
+            $typed
+        ];
+        $filterParams = [
             $searchString,
             $searchString,
             $searchString,
@@ -165,88 +173,134 @@ else :
             $setcode,
             $number,
             $number
-        );
-        $stmt->execute();
-        $stmt->store_result();
-        $stmt->bind_result(
-            $id,
-            $setcode,
-            $name,
-            $printed_name,
-            $flavor_name,
-            $f1_name,
-            $f1_printed_name,
-            $f1_flavor_name,
-            $f2_name,
-            $f2_printed_name,
-            $f2_flavor_name,
-            $release_date
-        );
+        ];
+        $searchParams = array_merge($matchedNameParams, $matchedPositionParams, $filterParams);
+        $searchQueryBase = "SELECT
+                id,
+                setcode,
+                number_import,
+                lang,
+                CASE
+                    WHEN printed_name LIKE ? THEN printed_name
+                    WHEN flavor_name LIKE ? THEN flavor_name
+                    WHEN f1_name LIKE ? THEN f1_name
+                    WHEN f1_printed_name LIKE ? THEN f1_printed_name
+                    WHEN f1_flavor_name LIKE ? THEN f1_flavor_name
+                    WHEN f2_name LIKE ? THEN f2_name
+                    WHEN f2_printed_name LIKE ? THEN f2_printed_name
+                    WHEN f2_flavor_name LIKE ? THEN f2_flavor_name
+                    ELSE name
+                END AS matched_name,
+                CASE
+                    WHEN printed_name LIKE ? THEN LOCATE(?, printed_name)
+                    WHEN flavor_name LIKE ? THEN LOCATE(?, flavor_name)
+                    WHEN name LIKE ? THEN LOCATE(?, name)
+                    WHEN f1_printed_name LIKE ? THEN LOCATE(?, f1_printed_name)
+                    WHEN f1_flavor_name LIKE ? THEN LOCATE(?, f1_flavor_name)
+                    WHEN f1_name LIKE ? THEN LOCATE(?, f1_name)
+                    WHEN f2_printed_name LIKE ? THEN LOCATE(?, f2_printed_name)
+                    WHEN f2_flavor_name LIKE ? THEN LOCATE(?, f2_flavor_name)
+                    WHEN f2_name LIKE ? THEN LOCATE(?, f2_name)
+                    ELSE 0
+                END AS matched_position,
+                release_date
+            FROM cards_scry
+            WHERE
+                (
+                    printed_name LIKE ?
+                    OR flavor_name LIKE ?
+                    OR name LIKE ?
+                    OR f1_printed_name LIKE ?
+                    OR f1_flavor_name LIKE ?
+                    OR f1_name LIKE ?
+                    OR f2_printed_name LIKE ?
+                    OR f2_flavor_name LIKE ?
+                    OR f2_name LIKE ?
+                )
+                AND (setcode LIKE ? OR ? = '')
+                AND (number_import LIKE ? OR ? = '')";
+        $searchQueryOrder = "
+            ORDER BY release_date DESC, name ASC
+            LIMIT 20";
+        $runQuickSearch = function (bool $primaryOnly) use (
+            $db,
+            $msg,
+            $searchQueryBase,
+            $searchQueryOrder,
+            $searchParams
+        ) {
+            $query = $searchQueryBase;
+            if ($primaryOnly) :
+                $query .= "
+                AND (primary_card = 1)";
+            endif;
+            $query .= $searchQueryOrder;
+            $msg->logMessage(
+                '[DEBUG]',
+                'Ajax header search running with '
+                . ($primaryOnly ? 'primary-card-only filter' : 'all-language fallback')
+            );
+            $result = $db->execute_query($query, $searchParams);
+            if ($result === false) :
+                throw new Exception(
+                    "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
+                );
+            endif;
+            return $result;
+        };
 
-        if ($stmt->error) :
+        $result = $runQuickSearch(true);
+        $searchRows = $result->fetch_all(MYSQLI_ASSOC);
+        $usedFallbackSearch = false;
+
+        if (empty($searchRows) && mb_strlen($typed) >= 3) :
+            $usedFallbackSearch = true;
+            $msg->logMessage(
+                '[DEBUG]',
+                "Ajax header search found no primary-card matches for '$typed'; retrying without primary_card filter"
+            );
+            $result = $runQuickSearch(false);
+            $searchRows = $result->fetch_all(MYSQLI_ASSOC);
+        endif;
+
+        if ($db->error) :
             throw new Exception(
-                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $stmt->error
+                "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
             );
         else : ?>
                 <table class='ajaxshow'> <?php
-                while ($row = $stmt->fetch()) :
-                    if ($printed_name !== null and strpos(strtolower($printed_name), strtolower($typed)) !== false) :
-                        $name = $printed_name;
-                    elseif ($flavor_name !== null and strpos(strtolower($flavor_name), strtolower($typed)) !== false) :
-                        $name = $flavor_name;
-                    elseif ($f1_name !== null and strpos(strtolower($f1_name), strtolower($typed)) !== false) :
-                        $name = $f1_name;
-                    elseif (
-                        $f1_printed_name !== null
-                        and strpos(strtolower($f1_printed_name), strtolower($typed)) !== false
-                    ) :
-                        $name = $f1_printed_name;
-                    elseif (
-                        $f1_flavor_name !== null
-                        and strpos(strtolower($f1_flavor_name), strtolower($typed)) !== false
-                    ) :
-                        $name = $f1_flavor_name;
-                    elseif ($f2_name !== null and strpos(strtolower($f2_name), strtolower($typed)) !== false) :
-                        $name = $f2_name;
-                    elseif (
-                        $f2_printed_name !== null
-                        and strpos(strtolower($f2_printed_name), strtolower($typed)) !== false
-                    ) :
-                        $name = $f2_printed_name;
-                    elseif (
-                        $f2_flavor_name !== null
-                        and strpos(strtolower($f2_flavor_name), strtolower($typed)) !== false
-                    ) :
-                        $name = $f2_flavor_name;
-                    endif;
+                foreach ($searchRows as $row) :
+                    $id = $row['id'];
+                    $setcode = $row['setcode'];
+                    $ajaxnumber = $row['number_import'];
+                    $lang = $row['lang'];
+                    $name = $row['matched_name'];
+                    $matchPosition = (int) $row['matched_position'];
+                    $displayName = SearchTextHelper::appendLanguageCodeSuffix(
+                        $name,
+                        $lang !== null ? (string) $lang : null,
+                        $usedFallbackSearch
+                    );
                     $displaysetcode = strtoupper($setcode);
-                    $query = "SELECT id, number_import FROM cards_scry WHERE id LIKE ? LIMIT 1";
-                    $params = [$id];
-                    $result = $db->execute_query($query, $params);
-                    if ($result === false) :
-                        throw new Exception(
-                            "[ERROR]" . basename(__FILE__) . " " . __LINE__ . ": SQL failure: " . $db->error
-                        );
-                    else :
-                        $row = $result->fetch_assoc();
-                        if ($row) :
-                            $ajaxid = $row['id'];
-                            $ajaxnumber = $row['number_import'];
-                            $b_name = '<strong>' . $typed . '</strong>';
-                            $final_name = str_ireplace($typed, $b_name, (string)$name);
-                            ?>
-                                <tr>
-                                    <td title='<?php echo "$displaysetcode - $name" ?>' class="name">
-                                        <?php
-                                        echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - "
-                                            . "$final_name</a></td>";
-                                        ?>
-                                    </td>
-                                </tr>
-                                <?php
-                        endif;
-                    endif;
-                endwhile; ?>
+                    $ajaxid = $id;
+                    $final_name = SearchTextHelper::formatQuickSearchDisplayLabel(
+                        $name,
+                        $matchPosition,
+                        mb_strlen($typed, 'UTF-8'),
+                        $lang !== null ? (string) $lang : null,
+                        $usedFallbackSearch
+                    );
+                    ?>
+                            <tr>
+                                <td title='<?php echo "$displaysetcode - $displayName" ?>' class="name">
+                                    <?php
+                                    echo "<a href='carddetail.php?id=$ajaxid'>$displaysetcode - "
+                                        . "$final_name</a></td>";
+                                    ?>
+                                </td>
+                            </tr>
+                            <?php
+                endforeach; ?>
                 </table> <?php
         endif;
     endif;

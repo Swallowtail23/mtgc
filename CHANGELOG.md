@@ -13,6 +13,16 @@ All notable changes to this project will be documented in this file.
 - Advanced search set selector now submits immediately when a set option is double-clicked in `index.php`.
 - Header inline JavaScript now renders as a single consolidated `<script>` block in `includes/header.php`
   without changing execution order or behavior.
+- Quick header AJAX search now retries without the `primary_card` filter when a 3+ character primary-card
+  search returns no matches, allowing foreign-language names to resolve.
+- Quick header AJAX search now chooses the displayed matched name in SQL, so accented foreign-language
+  `printed_name` and `flavor_name` matches no longer fall back to the base English name.
+- Quick header AJAX search now highlights accented matches correctly and appends the row language code when
+  results come from the multilingual fallback search.
+- Quick search accent-insensitive display formatting is now centralized under `MTG\Core\Text\SearchTextHelper`
+  with regression coverage for accented highlighting and fallback language suffix rendering.
+- Quick header AJAX search now uses SQL-derived match positions for result highlighting so non-Latin matches
+  follow the actual database match field and render `<strong>` correctly.
 
 ### Fixed
 
