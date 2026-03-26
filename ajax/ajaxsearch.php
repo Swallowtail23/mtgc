@@ -12,8 +12,8 @@ To do:      -
 */
 
 use MTG\Auth\SessionManager;
-use MTG\Core\Validation;
 use MTG\Core\Http\AjaxResponse;
+use MTG\Core\Text\QuickSearchInputParser;
 use MTG\Core\Text\SearchTextHelper;
 
 // Bootstrap
@@ -45,9 +45,6 @@ else :
     require_once APP_ROOT . '/ajax/ajax_session.php';
     $sessionUser                = requireAjaxSessionUser($db, $appConfig, $msg);
     $ctx                        = $ctx->withSessionUser($sessionUser);
-    $user                       = $ctx->sessionUser()->id();
-    $mytable                    = $ctx->sessionUser()->table();
-    $userEmail                  = $ctx->sessionUser()->email();
     //
     if ($_POST) :
         $r = $_POST['search'];
@@ -56,74 +53,11 @@ else :
         $r = preg_replace($regex, ' ', $rtrim);
         $r = filter_var($r, FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_FLAG_NO_ENCODE_QUOTES);
         $msg->logMessage('[DEBUG]', "Ajax search after URL removal and filtering is '$r'");
-        // Test for the existence of a string enclosed in parentheses
-        if (strpos($r, '[') !== false || strpos($r, '(') !== false) :
-            $insideBrackets = $closingBracket = $setClosed = false;
-            $str = $no = $sc = $typed = '';
-
-            foreach (str_split($r) as $char) :
-                if ($char === '[' || $char === '(') :
-                    // stop adding to $namestr and trigger insidebrackets
-                    $insideBrackets = true;
-                elseif ($insideBrackets && $char !== ']' && $char !== ')' && !$setClosed && $char !== ' ') :
-                        // inside brackets, set not closed, no space... this is setcode
-                        $sc .= $char;
-                elseif ($insideBrackets && $char !== ']' && $char !== ')' && $char === ' ' && !$setClosed) :
-                        // inside brackets, space - setcode finished
-                        $setClosed = true;
-                elseif ($insideBrackets && $char !== ']' && $char !== ')' && $setClosed === true) :
-                        // inside brackets, set closed - this is number
-                        $no .= $char;
-                elseif ($insideBrackets && ($char === ']' || $char === ')')) :
-                        // closing bracket
-                        $setClosed = true;
-                        $closingBracket = true;
-                        break;
-                elseif (!$insideBrackets) :
-                        $str .= $char;
-                else :
-                        $msg->logMessage('[DEBUG]', "Should not be in here...");
-                endif;
-            endforeach;
-            if ($insideBrackets && !$setClosed) :
-                $setcode = trim($sc) . '%';
-                $number = '';
-            elseif ($setClosed && $no === '' && $closingBracket) :
-                    $setcode = trim($sc);
-                    $number = '';
-            elseif ($insideBrackets && $no !== '' && !$closingBracket) :
-                    $setcode = trim($sc);
-                    $number = trim($no) . '%';
-            elseif ($setClosed && $no !== '' && $closingBracket) :
-                    $setcode = trim($sc);
-                    $number = trim($no);
-            endif;
-                $typed = trim($str);
-                $searchString = '%' . trim($str) . '%';
-                // Here $typed is the text typed
-            if (isset($setcode)) :
-                if (isset($number)) :
-                    $teststring = trim(trim($setcode) . " " . trim($number));
-                else :
-                        $teststring = trim($setcode);
-                endif;
-                    $msg->logMessage('[DEBUG]', "Testing '$teststring' against Brackets list");
-                if (isset($teststring) && Validation::inArrayCaseInsensitive($teststring, $rulesBracketsInNames)) :
-                    $msg->logMessage(
-                        '[DEBUG]',
-                        "Bracket contents match a card with brackets in name, resetting name, set to match"
-                    );
-                    $searchString = $typed = $typed . " (" . $teststring . ")";
-                    $setcode = $number = '';
-                endif;
-            endif;
-        else :
-                // No brackets in this case
-                $typed = trim($r);
-                $searchString = '%' . trim($r) . '%';
-                $setcode = '';
-                $number = '';
-        endif;
+        $parsedSearch = QuickSearchInputParser::parse($r, $rulesBracketsInNames);
+        $typed = $parsedSearch['typed'];
+        $searchString = $parsedSearch['search_string'];
+        $setcode = $parsedSearch['setcode'];
+        $number = $parsedSearch['number'];
             $msg->logMessage(
                 '[DEBUG]',
                 "Typed: '$typed'; Search: '$searchString'; Setcode: '$setcode'; Number: '$number' "

@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
   reducing duplication across matched-name, match-position, and filter clauses.
 - Quick header AJAX search parameter assembly now builds `WHERE` field params in forward order to match the
   generated SQL clause order more directly.
+- Quick header AJAX search input parsing is now extracted to `MTG\Core\Text\QuickSearchInputParser`, reducing
+  entrypoint complexity and adding focused parser regression coverage.
 
 ### Fixed
 
