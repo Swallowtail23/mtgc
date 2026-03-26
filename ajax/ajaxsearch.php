@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     7.64
+Version:     7.66
 Date:        27/03/26
 Name:        ajaxsearch.php
 Purpose:     PHP script to run ajax search from header
@@ -129,51 +129,57 @@ else :
                 "Typed: '$typed'; Search: '$searchString'; Setcode: '$setcode'; Number: '$number' "
             );
 
-        $matchedNameParams = [
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString
+        $matchedNameFields = [
+            'printed_name',
+            'flavor_name',
+            'f1_name',
+            'f1_printed_name',
+            'f1_flavor_name',
+            'f2_name',
+            'f2_printed_name',
+            'f2_flavor_name'
         ];
-        $matchedPositionParams = [
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed,
-            $searchString,
-            $typed
+        $searchableFields = [
+            'printed_name',
+            'flavor_name',
+            'name',
+            'f1_printed_name',
+            'f1_flavor_name',
+            'f1_name',
+            'f2_printed_name',
+            'f2_flavor_name',
+            'f2_name'
         ];
-        $filterParams = [
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $searchString,
-            $setcode,
-            $setcode,
-            $number,
-            $number
-        ];
+        $matchedNameWhenClauses = [];
+        $matchedNameParams = [];
+        foreach ($matchedNameFields as $fieldName) :
+            $matchedNameWhenClauses[] = "WHEN {$fieldName} LIKE ? THEN {$fieldName}";
+            $matchedNameParams[] = $searchString;
+        endforeach;
+
+        $matchedPositionWhenClauses = [];
+        $matchedPositionParams = [];
+        foreach ($searchableFields as $fieldName) :
+            $matchedPositionWhenClauses[] = "WHEN {$fieldName} LIKE ? THEN LOCATE(?, {$fieldName})";
+            $matchedPositionParams[] = $searchString;
+            $matchedPositionParams[] = $typed;
+        endforeach;
+
+        $whereLikeClauses = [];
+        $whereLikeParams = [];
+        foreach ($searchableFields as $fieldName) :
+            $whereLikeClauses[] = "{$fieldName} LIKE ?";
+            $whereLikeParams[] = $searchString;
+        endforeach;
+        $filterParams = array_merge(
+            $whereLikeParams,
+            [
+                $setcode,
+                $setcode,
+                $number,
+                $number
+            ]
+        );
         $searchParams = array_merge($matchedNameParams, $matchedPositionParams, $filterParams);
         $searchQueryBase = "SELECT
                 id,
@@ -181,41 +187,21 @@ else :
                 number_import,
                 lang,
                 CASE
-                    WHEN printed_name LIKE ? THEN printed_name
-                    WHEN flavor_name LIKE ? THEN flavor_name
-                    WHEN f1_name LIKE ? THEN f1_name
-                    WHEN f1_printed_name LIKE ? THEN f1_printed_name
-                    WHEN f1_flavor_name LIKE ? THEN f1_flavor_name
-                    WHEN f2_name LIKE ? THEN f2_name
-                    WHEN f2_printed_name LIKE ? THEN f2_printed_name
-                    WHEN f2_flavor_name LIKE ? THEN f2_flavor_name
+                    " . implode("
+                    ", $matchedNameWhenClauses) . "
                     ELSE name
                 END AS matched_name,
                 CASE
-                    WHEN printed_name LIKE ? THEN LOCATE(?, printed_name)
-                    WHEN flavor_name LIKE ? THEN LOCATE(?, flavor_name)
-                    WHEN name LIKE ? THEN LOCATE(?, name)
-                    WHEN f1_printed_name LIKE ? THEN LOCATE(?, f1_printed_name)
-                    WHEN f1_flavor_name LIKE ? THEN LOCATE(?, f1_flavor_name)
-                    WHEN f1_name LIKE ? THEN LOCATE(?, f1_name)
-                    WHEN f2_printed_name LIKE ? THEN LOCATE(?, f2_printed_name)
-                    WHEN f2_flavor_name LIKE ? THEN LOCATE(?, f2_flavor_name)
-                    WHEN f2_name LIKE ? THEN LOCATE(?, f2_name)
+                    " . implode("
+                    ", $matchedPositionWhenClauses) . "
                     ELSE 0
                 END AS matched_position,
                 release_date
             FROM cards_scry
             WHERE
                 (
-                    printed_name LIKE ?
-                    OR flavor_name LIKE ?
-                    OR name LIKE ?
-                    OR f1_printed_name LIKE ?
-                    OR f1_flavor_name LIKE ?
-                    OR f1_name LIKE ?
-                    OR f2_printed_name LIKE ?
-                    OR f2_flavor_name LIKE ?
-                    OR f2_name LIKE ?
+                    " . implode("
+                    OR ", $whereLikeClauses) . "
                 )
                 AND (setcode LIKE ? OR ? = '')
                 AND (number_import LIKE ? OR ? = '')";

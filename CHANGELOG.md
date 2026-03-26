@@ -23,6 +23,10 @@ All notable changes to this project will be documented in this file.
   with regression coverage for accented highlighting and fallback language suffix rendering.
 - Quick header AJAX search now uses SQL-derived match positions for result highlighting so non-Latin matches
   follow the actual database match field and render `<strong>` correctly.
+- Quick header AJAX search SQL field lists are now generated from single ordered arrays in `ajax/ajaxsearch.php`,
+  reducing duplication across matched-name, match-position, and filter clauses.
+- Quick header AJAX search parameter assembly now builds `WHERE` field params in forward order to match the
+  generated SQL clause order more directly.
 
 ### Fixed
 
