@@ -29,6 +29,8 @@ All notable changes to this project will be documented in this file.
   generated SQL clause order more directly.
 - Quick header AJAX search input parsing is now extracted to `MTG\Core\Text\QuickSearchInputParser`, reducing
   entrypoint complexity and adding focused parser regression coverage.
+- Quick header AJAX search SQL building and fallback execution are now centralized in
+  `MTG\Core\Text\QuickSearchService`, reducing AJAX entrypoint responsibilities and adding query contract tests.
 
 ### Fixed
 
