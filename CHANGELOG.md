@@ -10,11 +10,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
--
+- Advanced search set selector now submits immediately when a set option is double-clicked in `index.php`.
 
 ### Fixed
 
--
+- Service worker now catches network failures for `.php` requests and returns a controlled `503 Offline` response
+  instead of an unhandled rejected fetch promise in production.
 
 ### Security
 

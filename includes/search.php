@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     6.22
-Date:        12/01/26
+Version:     6.23
+Date:        26/03/26
 Name:        search.php
 Purpose:     Layout for search on index.php
 Notes:       -
@@ -22,6 +22,22 @@ endif;
         {
             document.body.style.cursor='wait';
         }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var setSelect = document.querySelector('.setselect');
+        if (!setSelect) {
+            return;
+        }
+
+        setSelect.addEventListener('dblclick', function (event) {
+            if (event.target && event.target.tagName === 'OPTION') {
+                submitPrep();
+                if (setSelect.form) {
+                    setSelect.form.submit();
+                }
+            }
+        });
+    });
 </script>
 <form action="index.php" method="get">
     <div class="staticpagecontent">

@@ -1,6 +1,6 @@
 /*
-Version:     3.6
-Date:        26/02/26
+Version:     3.7
+Date:        26/03/26
 Name:        service-worker.js
 Purpose:     Safe caching of static assets and images for MTG Collection.
 Notes:       Avoids caching HTML or dynamic fragments.
@@ -143,7 +143,12 @@ self.addEventListener('fetch', (event) => {
 
     if (url.pathname.endsWith('.php')) {
         logDebug('network-only php', request.url);
-        event.respondWith(fetch(request));
+        event.respondWith(
+            fetch(request).catch((error) => {
+                logDebug('network-only php failed', error);
+                return new Response('Offline', { status: 503, statusText: 'Offline' });
+            })
+        );
         return;
     }
 
