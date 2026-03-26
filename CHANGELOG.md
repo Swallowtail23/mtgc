@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Advanced search set selector now submits immediately when a set option is double-clicked in `index.php`.
+- Header inline JavaScript now renders as a single consolidated `<script>` block in `includes/header.php`
+  without changing execution order or behavior.
 
 ### Fixed
 

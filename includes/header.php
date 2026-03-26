@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.82
-Date:        05/02/26
+Version:     1.83
+Date:        27/03/26
 Name:        header.php
 Purpose:     PHP script to display header
 Notes:       -
@@ -21,23 +21,19 @@ endif;
 <script>
     window.mtgAjaxConfig = window.mtgAjaxConfig || {};
     window.mtgAjaxConfig.csrfToken = <?php echo json_encode(SessionManager::generateCsrfToken()); ?>;
-</script>
 <?php if (isset($sessionUser)) :
     $fxPending = $sessionUser->fxPending();
     $fxMissing = $sessionUser->fxMissing();
     $fxCurrency = $sessionUser->currency();
     $fxEnabled = $sessionUser->fxEnabled();
     ?>
-<script>
     window.mtgFxConfig = {
         pending: <?php echo json_encode($fxPending); ?>,
         missing: <?php echo json_encode($fxMissing); ?>,
         currency: <?php echo json_encode($fxCurrency); ?>,
         enabled: <?php echo json_encode($fxEnabled); ?>
     };
-</script>
 <?php endif; ?>
-<script>
     $(function() {
         if (!window.mtgFxConfig || window.mtgFxConfig.pending !== true) {
             return;
@@ -126,8 +122,7 @@ endif;
             }
         });
     });
-</script>
-<script>
+
     $(function() {
         var debounce = function(func, delay) {
             var inDebounce;
@@ -184,8 +179,7 @@ endif;
             jQuery("#ajaxresult").fadeIn();
         });
     });
-</script>
-<script type="text/javascript">
+
     $(document).ready(function() {
         $('#ajaxresult').click(function(e){
             e.stopPropagation();
