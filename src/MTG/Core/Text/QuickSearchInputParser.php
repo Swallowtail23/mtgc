@@ -1,7 +1,7 @@
 <?php
 
 /*
-Version:     1.0
+Version:     1.1
 Date:        27/03/26
 Name:        QuickSearchInputParser.php
 Purpose:     Parses quick-search input into typed text, search string, setcode, and number parts.
@@ -38,11 +38,12 @@ class QuickSearchInputParser
         $insideBrackets = false;
         $closingBracket = false;
         $setClosed = false;
+        $closingBracketIndex = null;
         $typedText = '';
         $number = '';
         $setcode = '';
 
-        foreach (str_split($input) as $char) :
+        foreach (str_split($input) as $charIndex => $char) :
             if ($char === '[' || $char === '(') :
                 $insideBrackets = true;
             elseif ($insideBrackets && $char !== ']' && $char !== ')' && !$setClosed && $char !== ' ') :
@@ -54,11 +55,19 @@ class QuickSearchInputParser
             elseif ($insideBrackets && ($char === ']' || $char === ')')) :
                 $setClosed = true;
                 $closingBracket = true;
+                $closingBracketIndex = $charIndex;
                 break;
             elseif (!$insideBrackets) :
                 $typedText .= $char;
             endif;
         endforeach;
+
+        if ($closingBracket && $number === '' && $closingBracketIndex !== null) :
+            $trailingText = trim(substr($input, $closingBracketIndex + 1));
+            if ($trailingText !== '') :
+                $number = $trailingText;
+            endif;
+        endif;
 
         if ($insideBrackets && !$setClosed) :
             $result['setcode'] = trim($setcode) . '%';

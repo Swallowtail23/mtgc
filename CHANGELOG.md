@@ -31,6 +31,8 @@ All notable changes to this project will be documented in this file.
   entrypoint complexity and adding focused parser regression coverage.
 - Quick header AJAX search SQL building and fallback execution are now centralized in
   `MTG\Core\Text\QuickSearchService`, reducing AJAX entrypoint responsibilities and adding query contract tests.
+- Quick header search now correctly parses collector numbers supplied after a closing set bracket, so shortcuts
+  like `(m13) 215` behave the same as `(m13 215)`.
 
 ### Fixed
 

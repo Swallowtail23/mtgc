@@ -36,6 +36,16 @@ class QuickSearchInputParserTest extends TestCase
         $this->assertSame('5', $result['number']);
     }
 
+    public function testParseBracketedSetcodeWithTrailingCollectorNumber()
+    {
+        $result = QuickSearchInputParser::parse('Balance (LEA) 5', []);
+
+        $this->assertSame('Balance', $result['typed']);
+        $this->assertSame('%Balance%', $result['search_string']);
+        $this->assertSame('LEA', $result['setcode']);
+        $this->assertSame('5', $result['number']);
+    }
+
     public function testParseBracketedNameExceptionResetsSetAndNumber()
     {
         $result = QuickSearchInputParser::parse('Name (abc)', ['abc']);
