@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.6
-Date:        11/01/26
+Version:     8.7
+Date:        11/04/26
 Name:        criteria.php
 Purpose:     PHP script to build search criteria
 Notes:       {none}
@@ -194,7 +194,14 @@ else :
                     $criteriaNTA .= "OR ";
                 endif;
                 $criteriaNTA .= "
-                    MATCH (cards_scry.ability,cards_scry.f1_ability,cards_scry.f2_ability)
+                    MATCH (
+                        cards_scry.ability,
+                        cards_scry.printed_text,
+                        cards_scry.f1_ability,
+                        cards_scry.f1_printed_text,
+                        cards_scry.f2_ability,
+                        cards_scry.f2_printed_text
+                    )
                     AGAINST (? IN BOOLEAN MODE) ";
                 $params[] = $abilitytext;
             elseif ($searchability === "yes" && $exact === "yes") :

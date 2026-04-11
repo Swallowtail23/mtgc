@@ -38,6 +38,8 @@ All notable changes to this project will be documented in this file.
 
 - Service worker now catches network failures for `.php` requests and returns a controlled `503 Offline` response
   instead of an unhandled rejected fetch promise in production.
+- Advanced search ability fulltext queries now match the `cards_scry` combined ability index again, fixing fatal
+  `Can't find FULLTEXT index matching the column list` errors.
 
 ### Security
 
