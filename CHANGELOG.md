@@ -2,13 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.10-dev] - Unreleased
+## [v0.5.10] - 2026-04-11
 
-### Added
-
--
-
-### Changed
+### Changed - 2026-04-11
 
 - Advanced search set selector now submits immediately when a set option is double-clicked in `index.php`.
 - Header inline JavaScript now renders as a single consolidated `<script>` block in `includes/header.php`
@@ -34,22 +30,14 @@ All notable changes to this project will be documented in this file.
 - Quick header search now correctly parses collector numbers supplied after a closing set bracket, so shortcuts
   like `(m13) 215` behave the same as `(m13 215)`.
 
-### Fixed
+### Fixed - 2026-04-11
 
 - Service worker now catches network failures for `.php` requests and returns a controlled `503 Offline` response
   instead of an unhandled rejected fetch promise in production.
 - Advanced search ability fulltext queries now match the `cards_scry` combined ability index again, fixing fatal
   `Can't find FULLTEXT index matching the column list` errors.
 
-### Security
-
--
-
-### Infrastructure
-
--
-
-## [v0.5.9-dev] - 2026-03-24
+## [v0.5.9] - 2026-03-24
 
 ### Changed - 2026-03-24
 
