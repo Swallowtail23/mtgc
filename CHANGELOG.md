@@ -14,7 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
--
+- Login form fields now expose standard username/current-password autofill metadata to improve mobile password
+  manager detection.
 
 ### Security
 

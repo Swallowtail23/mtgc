@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     8.29
-Date:        02/02/26
+Version:     8.30
+Date:        27/04/26
 Name:        login.php
 Purpose:     Check for existing session, process login.
 Notes:       {none}
@@ -123,14 +123,20 @@ endif;
     <div id="loginheader">
         <h2 id="h2"><?php echo $siteTitleEsc;?></h2>
         <?php
-        echo '<br><form action="login.php" method="post"><input type="hidden" name="ac" value="log"> ';
+        echo '<br><form id="loginform" name="login" action="login.php" method="post" autocomplete="on">';
+        echo '<input type="hidden" name="ac" value="log"> ';
         if ($redirectUrl) :
             $redirectEsc = htmlspecialchars($redirectUrl, ENT_QUOTES, 'UTF-8');
             echo "<input type='hidden' name='redirect_to' value='{$redirectEsc}'>";
         endif;
-        echo "<input class='textinput loginfield' type='email' name='email' autofocus placeholder='EMAIL'/>";
+        echo "<label for='login_email' style='position:absolute;left:-10000px;'>Email</label>";
+        echo "<input id='login_email' class='textinput loginfield' type='email' name='email' "
+            . "autocomplete='username' inputmode='email' autocapitalize='none' spellcheck='false' autofocus "
+            . "placeholder='EMAIL'/>";
         echo "<br><br>";
-        echo "<input class='textinput loginfield' type='password' name='password' placeholder='PASSWORD'/><br>";
+        echo "<label for='login_password' style='position:absolute;left:-10000px;'>Password</label>";
+        echo "<input id='login_password' class='textinput loginfield' type='password' name='password' "
+            . "autocomplete='current-password' placeholder='PASSWORD'/><br>";
         if ($turnstile === 1) :
             echo "<br>";
             echo "<div class='cf-turnstile' data-sitekey='$turnstile_site_key' "
