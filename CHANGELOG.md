@@ -2,28 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.5.11-dev] - Unreleased
-
-### Added
-
--
-
-### Changed
-
--
+## [v0.5.11] - 2026-04-27
 
 ### Fixed
 
 - Login form fields now expose standard username/current-password autofill metadata to improve mobile password
   manager detection.
-
-### Security
-
--
-
-### Infrastructure
-
--
 
 ## [v0.5.10] - 2026-04-11
 
