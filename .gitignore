@@ -14,6 +14,7 @@ vendor/
 .SECURITY_REPORT.md
 .vscode/
 .env
+.codex
 docker/.env
 docker/docker-compose.override.yml
 scripts/
