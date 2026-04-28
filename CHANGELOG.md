@@ -18,7 +18,8 @@ All notable changes to this project will be documented in this file.
 
 ### Security
 
--
+- Login Turnstile verification now fails closed for login submissions that omit the
+  `cf-turnstile-response` field, preventing direct POST bypass of the server-side challenge.
 
 ### Infrastructure
 

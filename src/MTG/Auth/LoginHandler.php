@@ -1,8 +1,8 @@
 <?php
 
 /*
-Version:     1.29
-Date:        02/02/26
+Version:     1.32
+Date:        28/04/26
 Name:        LoginHandler.php
 Purpose:     Encapsulate login handling logic for login.php
 Notes:       -
@@ -39,20 +39,27 @@ use MTG\Core\MyPHPMailer;
 class LoginHandler
 {
     /**
-    * @var mysqli
+    * @var \mysqli|object
     */
     private $db;
-    private $message;
-    private $turnstileEnabled;
-    private $turnstileSecretKey;
-    private $badLoginLimit;
-    private $siteTitle;
-    private $adminEmail;
-    private $emailEnabled;
-    private $baseUrl;
-    private $appConfig;
+    private Message $message;
+    private bool $turnstileEnabled;
+    private string $turnstileSecretKey;
+    private int $badLoginLimit;
+    private string $siteTitle;
+    private string $adminEmail;
+    private bool $emailEnabled;
+    private string $baseUrl;
+    private AppConfig $appConfig;
+    /**
+     * @var callable|null
+     */
     private $terminator;
 
+    /**
+     * @param \mysqli|object $db
+     * @param callable|null $terminator
+     */
     public function __construct($db, AppConfig $appConfig, $terminator = null)
     {
         $this->db = $db;
@@ -68,12 +75,15 @@ class LoginHandler
         $this->terminator = $terminator;
     }
 
-    public function logStart()
+    public function logStart(): void
     {
         $this->message->logMessage('[DEBUG]', 'Starting login.php execution. Checking for trusted device.');
     }
 
-    public function attemptTrustedDeviceLogin($redirectUrl)
+    /**
+     * @return array{trusted_login:bool,redirect:?string}
+     */
+    public function attemptTrustedDeviceLogin(?string $redirectUrl): array
     {
         $result = [
         'trusted_login' => false,
@@ -102,10 +112,10 @@ class LoginHandler
             $stmt = $this->db->prepare($user_query);
 
             if ($stmt) :
-                $userNumber = null;
-                $userName = null;
-                $userEmail = null;
-                $admin = null;
+                $userNumber = 0;
+                $userName = '';
+                $userEmail = '';
+                $admin = 0;
                 $stmt->bind_param("i", $trustedDeviceUser);
                 $stmt->execute();
                 $stmt->store_result();
@@ -140,8 +150,12 @@ class LoginHandler
         return $result;
     }
 
-    public function renderAlreadyLoggedInPage($siteTitle, $cssver, $trustedLogin, $serviceWorkerVersion)
-    {
+    public function renderAlreadyLoggedInPage(
+        string $siteTitle,
+        string $cssver,
+        bool $trustedLogin,
+        string $serviceWorkerVersion
+    ): void {
         $message = $trustedLogin
             ? 'Welcome back! You\'ve been automatically signed in using a trusted device.'
             : 'You are already logged in!';
@@ -172,7 +186,11 @@ class LoginHandler
         $this->terminate();
     }
 
-    public function logPageLoad($post, $session)
+    /**
+     * @param array<string,mixed> $post
+     * @param array<string,mixed> $session
+     */
+    public function logPageLoad(array $post, array $session): void
     {
         $this->message->logMessage('[DEBUG]', 'Mid-load check: db=' . (isset($this->db) ? 'valid' : 'null'));
 
@@ -191,14 +209,23 @@ class LoginHandler
         );
     }
 
-    public function handleTurnstileCheck($post, $remoteAddress)
+    /**
+     * @param array<string,mixed> $post
+     */
+    public function handleTurnstileCheck(array $post, string $remoteAddress): void
     {
-        if (!$this->turnstileEnabled || !isset($post['cf-turnstile-response'])) :
+        if (!$this->turnstileEnabled || !$this->isLoginSubmission($post)) :
             return;
         endif;
 
+        $turnstileResponse = $post['cf-turnstile-response'] ?? '';
+        if (!is_string($turnstileResponse) || trim($turnstileResponse) === '') :
+            $this->message->logMessage('[NOTICE]', "Cloudflare Turnstile response missing from {$remoteAddress}");
+            $this->abortTurnstileCheck();
+        endif;
+
         $turnstileClient = new Turnstile("{$this->turnstileSecretKey}");
-        $verifyResponse = $turnstileClient->verify($post['cf-turnstile-response'], $remoteAddress);
+        $verifyResponse = $turnstileClient->verify($turnstileResponse, $remoteAddress);
         if ($verifyResponse->isSuccess()) :
             $this->message->logMessage('[NOTICE]', "Cloudflare Turnstile success from {$remoteAddress}");
             return;
@@ -215,12 +242,13 @@ class LoginHandler
             $this->message->logMessage('[NOTICE]', "Cloudflare Turnstile failure (unknown) from {$remoteAddress}");
         endif;
 
-        session_destroy();
-        echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
-        $this->terminate();
+        $this->abortTurnstileCheck();
     }
 
-    public function handleTurnstileFailureFlag($query)
+    /**
+     * @param array<string,mixed> $query
+     */
+    public function handleTurnstileFailureFlag(array $query): void
     {
         if (!isset($query['turnstilefail']) || $query['turnstilefail'] !== "yes") :
             return;
@@ -232,7 +260,11 @@ class LoginHandler
         $this->terminate();
     }
 
-    public function processLoginSubmission($post)
+    /**
+     * @param array<string,mixed> $post
+     * @return array{email:string,usernumber:int,userstat_result:array<string,mixed>}|null
+     */
+    public function processLoginSubmission(array $post): ?array
     {
         if (!$this->isLoginSubmission($post)) :
             return null;
@@ -435,7 +467,10 @@ class LoginHandler
         ];
     }
 
-    public function completeLogin($loginData, $redirectUrl)
+    /**
+     * @param array{email:string,usernumber:int,userstat_result:array<string,mixed>} $loginData
+     */
+    public function completeLogin(array $loginData, string $redirectUrl): void
     {
         if (!$this->isLoggedIn()) :
             return;
@@ -510,22 +545,35 @@ class LoginHandler
             $this->terminate();
     }
 
-    public function isLoggedIn()
+    public function isLoggedIn(): bool
     {
         return isset($_SESSION['logged']) && $_SESSION['logged'] === true;
     }
 
-    private function isLoginSubmission($post)
+    /**
+     * @param array<string,mixed> $post
+     */
+    private function isLoginSubmission(array $post): bool
     {
         return isset($post['ac']) && $post['ac'] === "log";
     }
 
-    private function hasCredentials($post)
+    /**
+     * @param array<string,mixed> $post
+     */
+    private function hasCredentials(array $post): bool
     {
         return isset($post['password'], $post['email']);
     }
 
-    private function abortLogin($message, $logLevel, $logMessage, $delaySeconds = 5)
+    private function abortTurnstileCheck(): void
+    {
+        session_destroy();
+        echo "<meta http-equiv='refresh' content='0;url=login.php?turnstilefail=yes'>";
+        $this->terminate();
+    }
+
+    private function abortLogin(string $message, string $logLevel, string $logMessage, int $delaySeconds = 5): void
     {
         $this->message->logMessage($logLevel, $logMessage);
         $redirectUrl = null;
@@ -540,7 +588,7 @@ class LoginHandler
         $this->terminate();
     }
 
-    private function terminate($code = 0)
+    private function terminate(int $code = 0): void
     {
         if (is_callable($this->terminator)) :
             call_user_func($this->terminator, $code);
@@ -549,7 +597,7 @@ class LoginHandler
         exit($code);
     }
 
-    private function renderLoginErrorPage($message, $delaySeconds, $redirectUrl = null)
+    private function renderLoginErrorPage(string $message, int $delaySeconds, ?string $redirectUrl = null): void
     {
         $cssver = AdminSettings::getCssVersionSuffix($this->db, $this->appConfig);
         $serviceWorkerVersion = $this->getServiceWorkerVersion();
@@ -606,7 +654,7 @@ class LoginHandler
         return $serviceWorkerVersion;
     }
 
-    private function sendLockNotification($email)
+    private function sendLockNotification(string $email): bool
     {
         if ($this->emailEnabled !== true) :
             $this->message->logMessage('[NOTICE]', "Lock notice suppressed; email disabled for $email");
@@ -650,7 +698,10 @@ class LoginHandler
         return false;
     }
 
-    public static function loginStamp($db, AppConfig $appConfig, $userEmail)
+    /**
+     * @param \mysqli|object $db
+     */
+    public static function loginStamp($db, AppConfig $appConfig, string $userEmail): int
     {
         $msg = new Message($appConfig);
 

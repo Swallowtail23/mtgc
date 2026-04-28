@@ -490,9 +490,45 @@ namespace {
             $this->expectException(TerminateException::class);
 
             $handler->handleTurnstileCheck(
-                ['cf-turnstile-response' => 'token'],
+                [
+                    'ac' => 'log',
+                    'email' => 'user@example.com',
+                    'password' => 'secret',
+                    'cf-turnstile-response' => 'token'
+                ],
                 '127.0.0.1'
             );
+        }
+
+        public function testTurnstileMissingResponseTriggersAbortOnLoginSubmission()
+        {
+            $db = new FakeDb();
+            $handler = $this->buildHandler($db, function () {
+                throw new TerminateException();
+            }, 1);
+
+            $this->expectException(TerminateException::class);
+
+            $handler->handleTurnstileCheck(
+                [
+                    'ac' => 'log',
+                    'email' => 'user@example.com',
+                    'password' => 'secret'
+                ],
+                '127.0.0.1'
+            );
+        }
+
+        public function testTurnstileMissingResponseAllowsNonLoginPageLoad()
+        {
+            $db = new FakeDb();
+            $handler = $this->buildHandler($db, function () {
+                throw new TerminateException();
+            }, 1);
+
+            $handler->handleTurnstileCheck([], '127.0.0.1');
+
+            $this->assertSame([], $_SESSION);
         }
 
         public function testCompleteLoginRedirectsToTrustDevice()
